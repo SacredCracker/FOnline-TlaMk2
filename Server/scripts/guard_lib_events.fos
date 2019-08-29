@@ -1,0 +1,54 @@
+// Инициализация нпц. происходит при вводе нпц в игру
+void _GuardInit( Critter& npc, bool firstTime )
+{
+    // вешаем обработчики событий
+    npc.SetEvent( CRITTER_EVENT_SHOW_CRITTER, "_GuardOnAddCritter" );
+    npc.SetEvent( CRITTER_EVENT_HIDE_CRITTER, "_GuardOnRemoveCritter" );
+    // npc.SetEvent(CRITTER_EVENT_IDLE,"_GuardIdle");
+    npc.SetEvent( CRITTER_EVENT_PLANE_END, "_GuardEndPlane" );
+    npc.SetEvent( CRITTER_EVENT_MESSAGE, "_GuardOnMessage" );
+    npc.SetEvent( CRITTER_EVENT_SMTH_MOVE_ITEM, "_GuardOnMoveItem" );
+    npc.SetEvent( CRITTER_EVENT_SMTH_USE_ITEM, "_GuardOnUseItem" );
+    npc.SetEvent( CRITTER_EVENT_SMTH_STEALING, "_GuardStealing" );
+    npc.SetEvent( CRITTER_EVENT_SMTH_ATTACK, "_GuardOnSmthAttack" );
+    npc.SetEvent( CRITTER_EVENT_SMTH_DROP_ITEM, "_GuardOnDropItem" ); // r17
+
+    npc.CityRole_IsGuard = true;
+    // Создаем событие наблюдения
+    if( !firstTime && npc.GetTimeEvents( CTE_OBSERVING ) == 0 )
+        npc.AddTimeEvent( "cte_Observing", OBSERV_PERIOD, CTE_OBSERVING );
+}
+
+uint cte_Observing( Critter& npc, int, int&, int& )
+	{ return Guard.EventObserving( npc ); }
+
+void _GuardOnAddCritter( Critter& crit, Critter& showCrit )
+	{ Guard.EventOnAddCritter( crit, showCrit ); }
+
+void _GuardOnRemoveCritter( Critter& crit, Critter& hideCrit )
+	{ Guard.EventOnRemoveCritter( crit, hideCrit ); }
+
+int _GuardEndPlane( Critter& npc, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem )
+	{ Guard.EventEndPlane( npc ); return PLANE_RUN_GLOBAL; }
+
+void _GuardOnMoveItem( Critter& crit, Critter& fromCrit, Item& item, uint8 fromSlot )
+	{ Guard.EventOnMoveItem( crit, fromCrit, item, fromSlot ); }
+
+void _GuardOnMessage( Critter& crit, Critter& fromCrit, int message, int value )
+	{ Guard.EventOnMessage( crit, fromCrit, message, value ); }
+
+void _GuardOnUseItem( Critter& crit, Critter& fromCrit, Item& item, Critter@ onCritter, Item@ onItem, Scenery@ onScenery )
+	{ Guard.EventOnUseItem( crit, fromCrit, item, onCritter, onItem, onScenery ); }
+
+void _GuardOnDropItem( Critter& crit, Critter& fromCrit, Item& item ) // r17
+	{ Guard.EventOnDropItem( crit, fromCrit, item ); }
+
+void _GuardOnSmthAttack( Critter& crit, Critter& fromCrit, Critter& target )
+	{ Guard.EventOnSmthAttack( crit, fromCrit, target ); }
+
+void _GuardStealing( Critter& crit, Critter& fromCrit, Critter& thief, bool success, Item& item, uint count )
+	{ Guard.EventStealing( crit, fromCrit, thief, success, item, count ); }
+
+bool GuardItemTest( Item@ item )
+	{ return Guard.GuardItemTest( item ); }
+	

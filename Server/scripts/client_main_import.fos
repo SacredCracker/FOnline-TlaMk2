@@ -1,0 +1,73 @@
+#define _MAIN_
+#include "_client_defines.fos"
+#include "_macros.fos"
+#include "_msgstr.fos"
+#include "_maps.fos"
+#include "_animation.fos"
+#include "client_gui_h.fos"
+#include "client_merc_cmd.fos"
+#include "resources_h.fos"
+
+#define MODE_SHOW_AIMED( 0 )
+#define MODE_SHOW_ALL( 1 )
+#define MODE_SHOW_HEALTH( 3 )
+#define MODE_MOVE       ( 2 )
+#define MODE_ATTACK     ( 1 )
+#define MODE_DEFAULT    ( 0 )
+
+import int  to_hit_hex( const ProtoItem& weapon, uint8 weaponMode, CritterCl@ target, uint16 hexX, uint16 hexY ) from "combat";
+import bool hex_attack( CritterCl@ cr, uint16 hexX, uint16 hexY ) from "combat";
+import void render_hit_hex( uint layer ) from "combat";
+import void mouse_move_attack_hex( int x, int y, CritterCl@ target ) from "combat";
+import void InitHexCombat() from "combat";
+import uint GetSmokePenalty( CritterCl@ target, uint16 hexX, uint16 hexY ) from "Mk2";
+
+import string GetItemBonuses(ItemCl@ item) from "Mk2";
+
+import int  GUI_GetActiveMainScreen() from "client_gui";
+import int  GUI_GetActiveScreen() from "client_gui";
+import void InitFixBoyMainScreen() from "fix_boy";
+import void GUI_GetActiveScreens( int[]& result ) from "client_gui";
+import bool GUI_IsScreenActive( int screen ) from "client_gui";
+import void GUI_ShowScreen( int screenIndex, int p0, int p1, int p2 ) from "client_gui";
+import void GUI_HideScreen( int screenIndex, int p0, int p1, int p2 ) from "client_gui";
+import void GUI_Render( bool mainScreen ) from "client_gui";
+import bool GUI_MouseDown( int click, int x, int y ) from "client_gui";
+import bool GUI_MouseUp( int click, int x, int y ) from "client_gui";
+import void GUI_MouseMove( int x, int y ) from "client_gui";
+import bool GUI_KeyDown( uint8 key ) from "client_gui";
+import bool GUI_KeyUp( uint8 key ) from "client_gui";
+import void GUI_InputLost() from "client_gui";
+import void InitNameColorizing() from "name_colorizing";
+import bool TryColorizeCritter( CritterCl& cr ) from "name_colorizing";
+import void InitPlayersColorizing() from "playerscolorizing";
+import void TryColorizePlayer( CritterCl& cr ) from "playerscolorizing";
+import bool PlayerIgnored( CritterCl& cr ) from "ignore_list";
+import bool PlayerIgnored( string& crName ) from "ignore_list";
+import bool IgnorePlayer( string& message ) from "ignore_list";
+import bool EraseIgnoredPlayer( string& message ) from "ignore_list";
+import void InitIgnoreList() from "ignore_list";
+
+// Фракционная система
+import void InitFrButton() from "client_fraction_gui";                             // TabaK
+import void InitFrScreen( uint frId, uint leadership ) from "client_fraction_gui"; // TabaK
+import void HideFrButton() from "client_fraction_gui";
+// Замки
+import  void InitLockerScreen() from "e_locker";
+
+// Фиксбой
+import void ShowFixBoy() from "fix_boy";
+
+import void PlayAnimSound( uint crType, int gender, uint anim1, uint anim2 ) from "animation";
+
+// rifleman17
+// Аукцион
+import void AuctionBuyScreenInit() from "client_auction_buy_screen";
+import void InitAuctionSellScreen() from "client_auction_sell_screen";
+
+import void LoadFarmNames( string@[]& out n, const string& in l ) from "gen_farm_names";
+
+import bool MouseDown_DynamicScenery( int click ) from "dynamic_object";
+import void MouseMove_DynamicScenery() from "dynamic_object";
+
+import void ClearDynamic() from "dynamic_object";

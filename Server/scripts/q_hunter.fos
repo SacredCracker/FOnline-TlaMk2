@@ -1,0 +1,457 @@
+// Author: rifleman17
+// Квесты цепочки "Лучший охотник Пустоши."
+
+#include "_colors.fos"
+#include "_macros.fos"
+#include "_msgstr.fos"
+#include "_npc_pids.fos"
+
+#define MSG_COM2ME    ( 33 )
+
+import void SaveBarterLimit( uint crId, int[] sellLimits, int[] buyLimits ) from "limited_barter";
+import bool AddWalkPlane( Critter& npc, uint priority, uint16 hexX, uint16 hexY, uint8 dir, bool run, uint cut ) from "npc_planes";
+import void Explode( Map@ map, uint16 hexX, uint16 hexY, Critter@ cr, uint16 explodePid, uint ownerId, int bonusDamage, int bonusRadius ) from "explode";
+import bool AddMiscPlane( Critter& npc, uint priority, uint waitSecond, string@ funcName ) from "npc_planes";
+import bool GetFreeHex( Map& map, uint radius, uint16& hx, uint16& hy ) from "caravan";
+import bool AddAttackPlane( Critter& npc, uint priority, Critter& target ) from "npc_planes";
+
+// #define DL            # (s) ( Log( "" + s ) )
+#define DL            # ( s )
+
+// Часть первая: Тестовое задание
+
+void dlg_Colorize( Critter& player, Critter@ npc, string@ lexems )
+{
+    if( !IS_DIALOG_GENERATED( lexems ) )
+        return;
+    lexems = "$colorHugh" + "|" + COLOR_TEXT + " $colorLourence" + "|" + COLOR_CONTOUR_YELLOW + " ";
+}
+
+void OnCritterKilled( Critter& cr, Critter@ killer )
+{
+    if( valid( killer ) && cr.IsNpc() && killer.IsPlayer() )
+    {
+        uint bt = cr.Stat[ ST_BASE_CRTYPE ];
+        if( bt == CRTYPE_MOLESKIN_RAT_BIG )
+        {
+            GameVar@ qVar = GetLocalVar( LVAR_barter_lourens_rats1, killer.Id );
+            GameVar@ counter = GetLocalVar( LVAR_barter_lourens_rat_bodycount, killer.Id );
+            if( qVar == 1 )
+            {
+                if( counter < 10 )
+                    counter = counter.GetValue() + 1;
+                else
+                    qVar = 2;
+            }
+        }
+    }
+}
+
+void r_Explode( Critter& player, Critter@ npc )
+{
+    if( valid( npc ) )
+    {
+        npc.SendMessage( MSG_COM2ME, player.Id, MESSAGE_TO_ALL_ON_MAP );
+        npc.AddTimeEvent( "cte_Explode", REAL_SECOND( 3 ), 0 );
+    }
+}
+
+uint cte_Explode( Critter& cr, int identifier, uint& rate )
+{
+    Map@ map = cr.GetMap();
+    if( valid( map ) )
+    {
+        Explode( cr.GetMap(), cr.HexX, cr.HexY, null, PID_ACTIVE_DYNAMITE, cr.Stat[ ST_VAR4 ], Random( 0, 50 ), Random( 0, 1 ) );
+        cr.AddTimeEvent( "cte_Comment", REAL_SECOND( 2 ), 0 );
+
+    }
+    return 0;
+}
+
+uint cte_Comment( Critter& cr, int identifier, uint& rate )
+{
+    cr.SayMsg( SAY_NORM, TEXTMSG_DLG, DLGSTR( cr.Stat[ ST_DIALOG_ID ], 1 ) );
+    return 0;
+}
+
+import void _TraderInit( Critter& trader, bool firstTime ) from "trader";
+
+// Скрипт торговли для Хьюза
+void _HoughInit( Critter& cr, bool firstTime )
+{
+    _TraderInit( cr, firstTime );
+    cr.SetEvent( CRITTER_EVENT_BARTER, "_HoughBarter" );
+    cr.StatBase[ ST_MAX_TALKERS ]        = 1;
+    cr.ModeBase[ MODE_BARTER_ONLY_CASH ] = 1;
+    cr.ModeBase[ MODE_NO_BARTER ]        = 0;
+    cr.ModeBase[ MODE_NO_DROP ]          = 1;
+    cr.ModeBase[ MODE_NO_STEAL ]         = 1;
+    cr.ModeBase[ MODE_NO_LOOT ]          = 1;
+    cr.SetEvent( CRITTER_EVENT_MESSAGE, "_HoughMessage" );
+    cr.SetEvent( CRITTER_EVENT_PLANE_END, "_HoughPlaneEnd" );
+}
+
+void _HoughMessage( Critter& cr, Critter& fromCr, int message, int value )
+{
+    if( message == MSG_COM2ME )
+    {
+        AddWalkPlane( cr, 17, fromCr.HexX, fromCr.HexY, GetDirection( cr.HexX, cr.HexY, fromCr.HexX, fromCr.HexY ), false, 1 );
+    }
+}
+
+int _HoughPlaneEnd( Critter& cr, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem )
+{
+    if( plane.Priority == 17 && reason == REASON_SUCCESS )
+    {
+        DL( "moing end" );
+        AddMiscPlane( cr, 0, __FullSecond + REAL_SECOND( 3 ), null );
+    }
+    return PLANE_RUN_GLOBAL;
+}
+
+
+bool _HoughBarter( Critter& cr, Critter& barterCr, bool attach, uint barterCount )
+{
+    if( attach )
+    {
+        uint[] values = { cr.Id };
+        // Сюда добавить добавление в инвентарь различных девайсов
+        // 1. Дудка
+        Item@ flute =  _CritGetItem( cr, PID_LOURENCE_FLUTE );
+        Item@ fluteBarter = _CritGetItem( barterCr, PID_LOURENCE_FLUTE );
+        if( !valid( flute ) && !valid( fluteBarter ) )
+        {
+            GameVar@ to = GetLocalVar( LVAR_mod_hough_rats_flute_timeout, barterCr.Id );
+            if( valid( to ) && to < __FullSecond && to > 0 )
+            {
+                to = __FullSecond + REAL_HOUR( Random( 12, 28 ) - barterCr.Stat[ ST_LUCK ] );
+                @flute = cr.AddItem( PID_LOURENCE_FLUTE, 1 );
+                if( valid( flute ) )
+                    values.insertLast( flute.Id );
+            }
+        }
+        // 2. Cупертоксин
+        GameVar@ toxineAccepted = GetLocalVar( LVAR_q_mod_lourence_floater, barterCr.Id );
+        if( valid( toxineAccepted ) && toxineAccepted > 0 )
+        {
+            GameVar@ recipeKnown  = GetLocalVar( LVAR_mod_lourence_toxin_recipe, barterCr.Id );
+            GameVar@ toToxine = GetLocalVar( LVAR_mod_lourence_toxin_timeout, barterCr.Id );
+            if( valid( toToxine ) && toToxine < __FullSecond && toToxine > 0  && valid( recipeKnown ) )
+            {
+                if( recipeKnown > 0 )
+                {
+                    Item@ toxine =  _CritGetItem( cr, PID_DANTON_POISON );
+                    Item@ toxineBarter = _CritGetItem( barterCr, PID_DANTON_POISON );
+                    if( !valid( toxine ) && !valid( toxineBarter ) )
+                    {
+                        toToxine = __FullSecond + REAL_HOUR( Random( 12, 28 ) - barterCr.Stat[ ST_LUCK ] );
+                        @toxine = cr.AddItem( PID_DANTON_POISON, 5 );
+                        if( valid( toxine ) )
+                            values.insertLast( toxine.Id );
+                    }
+                }
+                Item@ sToxine =  _CritGetItem( cr, PID_SUPERTOXINE );
+                Item@ sToxineBarter = _CritGetItem( barterCr, PID_SUPERTOXINE );
+                if( !valid( sToxine ) && !valid( sToxineBarter ) )
+                {
+                    toToxine = __FullSecond + CLAMP( REAL_HOUR( Random( 10, 15 ) - barterCr.Stat[ ST_LUCK ] ), 1, 30 );
+                    @sToxine = cr.AddItem( PID_SUPERTOXINE, 1 );
+                    if( valid( sToxine ) )
+                        values.insertLast( sToxine.Id );
+                }
+            }
+
+        }
+
+        // После всех проверок
+        if( values.length() > 1 )
+            CreateTimeEvent( __FullSecond + REAL_MINUTE( 10 ), "e_DeleteItemsHough", values, false );
+    }
+    else
+    {
+        Item@ money = _CritGetItem( cr, PID_BOTTLE_CAPS );
+        if( valid( money ) )
+            DeleteItem( money );
+
+    }
+    return true;
+}
+
+uint e_DeleteItemsHough( uint[] @ values )
+{
+    Critter@ cr = GetCritter( values[ 0 ] );
+    if( valid( cr ) )
+    {
+        for( uint i = 1, l = values.length(); i < l; i++ )
+        {
+            Item@ item = GetItem( values[ i ] );
+            if( valid( item ) && item.CritId == cr.Id )
+                DeleteItem( item );
+        }
+    }
+    return 0;
+}
+
+// Скрипт лоуренса
+void _LourenceInit( Critter& cr, bool firstTime )
+{
+    cr.StatBase[ ST_MAX_TALKERS ]        = 1;
+    cr.ModeBase[ MODE_BARTER_ONLY_CASH ] = 1;
+    cr.ModeBase[ MODE_NO_BARTER ]        = 0;
+    cr.ModeBase[ MODE_NO_DROP ]          = 1;
+    cr.ModeBase[ MODE_NO_STEAL ]         = 1;
+    cr.ModeBase[ MODE_NO_LOOT ]          = 1;
+    int[] sellItems = { PID_LIGHTER, PID_WATER_FLASK, PID_BLUE_CONDOM, PID_COSMETIC_CASE, PID_DECK_OF_CARDS, PID_MIRROR_SHADES, PID_NECKLACE, PID_WATCH };
+    int[] buyItems = { PID_BRAHMIN_SKIN, PID_MEAT, PID_GECKO_PELT, PID_GOLDEN_GECKO_PELT, PID_RADSCORPION_PARTS };
+    SaveBarterLimit( cr.Id, sellItems, buyItems );
+}
+
+
+// Вертиберд
+void _VertiberdInit( Item& item, bool firstTime )
+{
+    _CarSetNoLockpick( item );
+    item.SetEvent( ITEM_EVENT_USE, "_VertiberdUse" );
+    item.SetEvent( ITEM_EVENT_SKILL, "_VertiberdSkill" );
+    item.Info = 2;
+    item.Update();
+}
+
+bool _VertiberdUse( Item& item, Critter& cr, Critter@ onCritter, Item@ onItem, Scenery@ onScenery )
+{
+    cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_USE_NOTHING );
+    return true;
+}
+
+bool _VertiberdSkill( Item& item, Critter& cr, int skill )
+{
+    cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_USE_NOTHING );
+    return true;
+}
+
+// Ультразвуковой свисток
+void _FluteInit( Item& item, bool firstTime )
+{
+
+    if( firstTime )
+    {
+        item.Val1 = 10;
+        item.Info = 2;
+        item.SetLexems( "$count" + item.Val1 );
+        item.Update();
+    }
+    item.SetEvent( ITEM_EVENT_USE, "_FluteUse" );
+}
+
+#define STR_RAT_CATCHED    ( 27 ) // Вы применили ультразвуковой гипнотизатор на мутировавшую крысу. Теперь ее можно положить себе в рюкзак. Если, конечно, она не очухается.
+#define STR_EMPTY          ( 28 ) // В свистке закончились заряды. При последнем неаккуратном применении прибор был уничтожен.
+#define STR_WRONGRAT       ( 29 ) // Крыса не реагирует на воздействие гипнотизатора. Попробуйте найти менее устойчивый экземпляр, где-нибудь в Пустоши.
+
+bool _FluteUse( Item& item, Critter& cr, Critter@ onCritter, Item@ onItem, Scenery@ onScenery )
+{
+    if( valid( onCritter ) && onCritter.IsNpc() &&
+        onCritter.Stat[ ST_BASE_CRTYPE ] == CRTYPE_RAT && onCritter.IsLife() )
+    {
+        item.Val1--;
+        item.SetLexems( "$count" + item.Val1 );
+        item.Update();
+        Map@ map = onCritter.GetMap();
+        if( valid( map ) )
+        {
+            Location@ loc = map.GetLocation();
+            if( valid( loc ) && loc.AutoGarbage )
+            {
+                Item@ rat = map.AddItem( onCritter.HexX, onCritter.HexY, PID_RAT_GRENADE, 1 );
+                if( valid( rat ) )
+                    rat.SetScript( "Mk2@RatGrenade::Init" );
+                DeleteNpc( onCritter );
+                cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_RAT_CATCHED );
+                GameVar@ qStatus = GetLocalVar( LVAR_q_mod_lourence_rats_flute, cr.Id );
+                GameVar@ counter = GetLocalVar( LVAR_mod_lourence_rats_flute_counter, cr.Id );
+                if( valid( qStatus ) && valid( counter ) && qStatus == 1 && counter < 5 )
+                {
+                    counter = counter.GetValue() + 1;
+                    if( counter == 5 )
+                        qStatus = 2;
+                }
+            }
+            else
+            {
+                cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_WRONGRAT );
+            }
+        }
+        if( item.Val1 <= 0 )
+        {
+            DeleteItem( item );
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_EMPTY );
+        }
+        return true;
+    }
+    return false;
+}
+
+// Диалоги, установка переменных, отвечающих за частоту появления разных предметов в инвентаре Хьюза
+void r_SetTO( Critter& player, Critter@ npc, int timeoutNum, int realHours )
+{
+    GameVar@ to = GetLocalVar( timeoutNum, player.Id );
+    if( valid( to ) )
+        to = __FullSecond + REAL_HOUR( realHours );
+    DL( "" + ( __FullSecond + REAL_HOUR( realHours ) ) );
+}
+
+// Сдача крыс лоуренсу при выполнении квеста "пляши под мою дудку"
+void r_AwakeRats( Critter& cr, Critter@ npc )
+{
+    if( valid( npc ) && npc.IsNoPlanes() )
+    {
+        Map@ map = npc.GetMap();
+        if( valid( map ) )
+        {
+            for( uint i = 0; i < 5; i++ )
+            {
+                uint16 x = npc.HexX;
+                uint16 y = npc.HexY;
+                if( GetFreeHex( map, 2, x, y ) )
+                {
+                    uint8    dir = GetDirection( x, y, npc.HexX, npc.HexY );
+                    Critter@ rat = map.AddNpc( NPC_PID_RegularRat, x, y, dir, null, null, "Mk2@RatGrenade::_RatInit" );
+                    if( valid( rat ) )
+                    {
+                        AddAttackPlane( rat, 0, npc );
+                    }
+                }
+            }
+            npc.AddTimeEvent( "cte_Comment1", REAL_SECOND( 3 ), 0 );
+        }
+    }
+}
+
+uint cte_Comment1( Critter& cr, int identifier, uint& rate )
+{
+    cr.SayMsg( SAY_NORM, TEXTMSG_DLG, DLGSTR( cr.Stat[ ST_DIALOG_ID ], 2 ) );
+    return 0;
+}
+
+// Приманка лоуренса
+
+#define STR_WRONG_PLACE    ( 33 )  // Неудачно выбрано место для использования приманки.
+#define STR_SUCCESS        ( 34 )  // Вы открываете крышку и у вас кружится голова от ужасной вони. Вы выливаете содержимое банки на свою одежду. Теперь остается только ждать, пока появятся крысы.
+#define STR_FOO            ( 35 )  // Фу!!! Чем это от тебя воняет, @lex name@@??!!@@Ну и вонища!!!@@Проклятье! @lex name@!! Отойди от меня на другую сторону улицы. Или лучше вали куда подальше!@@Дерьмо! Кто-то навалил в штаны?@@Буэ... Меня сейчас вырвет! @lex name@, пошел вон!@@Что это за ужасный запах?!@@Что это за невыносимая вонь?@@*Зажимает ноздри пальцами*@@Уберите это дерьмо от меня!!
+#define ENTIRE_SPAWN       ( 17 )
+#define ENTIRE_MOVETO      ( 18 )
+
+void _LureInit( Item& item, bool firstTime )
+{
+    item.SetEvent( ITEM_EVENT_USE, "_LureUse" );
+}
+
+bool _LureUse( Item& item, Critter& cr, Critter@ onCritter, Item@ onItem, Scenery@ onScenery )
+{
+    if( valid( onCritter ) || valid( onItem ) || valid( onScenery ) )
+        return false;
+    Map@ map = cr.GetMap();
+    if( valid( map ) && map.GetProtoId() == MAP_ratcolony1 && map.GetSceneries( cr.HexX, cr.HexY, 1, PID_SIGN_CROSS, null ) > 0 )
+    {
+        cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_SUCCESS );
+        DeleteItem( item );
+        CreateTimeEvent( __FullSecond + REAL_SECOND( 10 ), "e_MoveRat", map.GetLocation().Id, true );
+        GameVar@ lurePeriod = GetLocalVar( LVAR_mod_lourence_lure_active, cr.Id );
+        if( valid( lurePeriod ) )
+        {
+            lurePeriod = __FullSecond + REAL_HOUR( 3 );
+            cr.AddTimeEvent( "cte_Lure", REAL_SECOND( 30 ), 0 );
+        }
+    }
+    cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_WRONG_PLACE );
+    return true;
+}
+
+uint cte_Lure( Critter& cr, int identifier, uint& rate )
+{
+    GameVar@ lurePeriod = GetLocalVar( LVAR_mod_lourence_lure_active, cr.Id );
+    if( valid( lurePeriod ) && lurePeriod > __FullSecond )
+    {
+        Map@ map = cr.GetMap();
+        if( valid( map ) )
+        {
+            Critter@[] npc;
+            if( map.GetCrittersHex( cr.HexX, cr.HexY, 5, FIND_LIFE | FIND_ONLY_NPC, npc ) > 0 )
+            {
+                Critter@ crit = npc[ Random( 0, npc.length() - 1 ) ];
+                if( valid( crit ) )
+                    crit.SayMsg( SAY_NORM, TEXTMSG_TEXT, STR_FOO, "$name" + GetPlayerName( cr.Id ) );
+            }
+        }
+        return REAL_MINUTE( 2 );
+    }
+    return 0;
+}
+
+uint e_MoveRat( uint[] @ values )
+{
+    Location@ loc = GetLocation( values[ 0 ] );
+    if( valid( loc ) )
+    {
+        Map@ map = loc.GetMapByIndex( 1 );
+        Map@ mapTo = loc.GetMapByIndex( 0 );
+        if( valid( map ) && valid( mapTo ) )
+        {
+            Critter@[] rats;
+            Critter@[] allies;
+            map.GetCritters( 0, FIND_ALL, allies );
+            if( map.GetCritters( 0, FIND_ALL | FIND_ONLY_NPC, rats ) > 0 )
+            {
+                for( uint i = 0, l = rats.length(); i < l && i < 5; i++ )
+                {
+                    Critter@ cr = rats[ i ];
+                    if( valid( cr ) )
+                    {
+                        uint16 x = 0;
+                        uint16 y = 0;
+                        mapTo.GetEntireCoords( ENTIRE_SPAWN, 0, x, y );
+                        if( GetFreeHex( mapTo, 3, x, y ) )
+                        {
+                            cr.TransitToMap( mapTo.Id, x, y, Random( 0, 5 ) );
+                            cr.ModeBase[ MODE_NO_HOME ] = 1;
+                            cr.AddTimeEvent( "cte_move", REAL_SECOND( 30 ), 0 );
+                            for( uint j = 0, k = allies.length(); j < k; j++ )
+                            {
+                                Critter @crit = allies[ j ];
+                                if( valid( crit ) )
+                                {
+                                    if( crit.IsPlayer() || crit.Stat[ ST_NPC_ROLE ] == 401 )
+                                    {
+                                        AddAttackPlane( cr, 0, crit );
+                                        cr.AddEnemyInStack( crit.Id );
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                return REAL_SECOND( Random( 1, 3 ) );
+            }
+        }
+    }
+    return 0;
+}
+
+uint cte_move( Critter& cr, int identifier, uint& rate )
+{
+    if( cr.IsDead() )
+        return 0;
+    if( cr.IsNoPlanes() )
+    {
+        Map@   map = cr.GetMap();
+        uint16 x = cr.HexX;
+        uint16 y = cr.HexY;
+        if( valid( map ) && map.GetEntireCoords( ENTIRE_MOVETO, 0, x, y ) )
+        {
+            if( GetFreeHex( map, 15, x, y ) )
+            {
+                AddWalkPlane( cr, 17, x, y, Random( 0, 5 ), false, 0 );
+            }
+        }
+    }
+    return REAL_SECOND( 30 );
+}

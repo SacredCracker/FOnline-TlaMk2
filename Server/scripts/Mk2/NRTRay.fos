@@ -1,0 +1,345 @@
+// FOS Server Sort 2 
+// Author: cvet
+
+// NRTRay::Define::
+
+// —м. диалог 739 nr_t-ray
+
+enum Define
+{
+    FDNoMoney                = 5 ,
+    FDNoPlaces               = 6 ,
+    FDBuySuccessWorkShop    = 7 ,
+    FDBuySuccessCarStop     = 8 ,
+    FDModifyNoMoney         = 37 ,
+    FDModifyNoNeed          = 38 ,
+    FDGenericError           = 100 ,
+    FDTakeKeyInHand        = 101 ,
+    FDCarNotFound           = 102 ,
+    FDTakeKeyInHand2       = 103 ,
+
+    StrBuyList               = 2100 ,
+    StrCostHummer            = 2101 ,
+    StrCostBuggy             = 2102 ,
+    StrCostScout             = 2103 ,
+    StrCostHighwayman        = 2104 ,
+
+    EntireWorkshop            = 100 ,
+
+    KeyCopyCost              = 1000
+}
+
+int GetFuelCost( ::Item@ car )
+{
+    return int(car.Proto.Car_TankVolume) - car.Charge + 10;
+}
+
+int GetWearCost( ::Item@ car )
+{
+    return car.Deterioration + 10;
+}
+
+int GetBioCost( ::Item@ car )
+{
+    return Car::GetCarCost( car.GetProtoId() ) * 10 / 100;
+}
+
+void dlg_PrepareBuy( ::Critter& player, ::Critter@ tray, ::string@ lexems )
+{
+    if( ! IS_DIALOG_GENERATED( lexems ) )
+        return;
+
+    lexems += "$hummer" + Car::GetCarCost( Content::Item::HUMMER );
+    lexems += "$buggy" + Car::GetCarCost( Content::Item::BUGGY );
+    lexems += "$scout" + Car::GetCarCost( Content::Item::SCOUT );
+    lexems += "$highwayman" + Car::GetCarCost( Content::Item::HIGHWAYMAN );
+}
+
+uint r_BuyHummer( ::Critter& player, ::Critter@ tray, int val )
+{
+    return TryCreateCar( player, Content::Item::HUMMER, tray );
+}
+
+uint r_BuyBuggy( ::Critter& player, ::Critter@ tray, int val )
+{
+    return TryCreateCar( player, Content::Item::BUGGY, tray );
+}
+
+uint r_BuyScout( ::Critter& player, ::Critter@ tray, int val )
+{
+    return TryCreateCar( player, Content::Item::SCOUT, tray );
+}
+
+uint r_BuyHighwayman( ::Critter& player, ::Critter@ tray, int val )
+{
+    return TryCreateCar( player, Content::Item::HIGHWAYMAN, tray );
+}
+
+uint TryCreateCar( ::Critter& player, uint16 protoCar, ::Critter@ tray )
+{
+	if( !valid(tray) )
+        return NRTRay::Define::FDGenericError;
+	
+    if( protoCar != Content::Item::HUMMER && protoCar != Content::Item::BUGGY && protoCar != Content::Item::SCOUT && protoCar != Content::Item::HIGHWAYMAN )
+        return NRTRay::Define::FDGenericError;
+
+    uint cost = Car::GetCarCost( protoCar );
+    Log( "cost " + cost );
+    if( _CritCountItem( player, Content::Item::BOTTLE_CAPS ) < cost )
+        return NRTRay::Define::FDNoMoney;
+
+    ::Map@ map = player.GetMap();
+    if( ! valid( map ) )
+        return NRTRay::Define::FDGenericError;
+
+    Entires::Entire[] entires;
+    Entires::ParseEntires( map, entires, NRTRay::Define::EntireWorkshop );
+    Entires::ParseEntires( map, entires, Entires::Type::Car );
+
+    uint16 hx, hy, entNum;
+    for( int i = 0, iMax = entires.length(); i <= iMax; i++ )
+    {
+        if( i == iMax )
+            return NRTRay::Define::FDNoPlaces;
+
+        Entires::Entire@ ent = entires[ i ];
+        if( map.CheckPlaceForItem( ent.HexX, ent.HexY, protoCar ) )
+        {
+            hx = ent.HexX;
+            hy = ent.HexY;
+            entNum = ent.Number;
+            break;
+        }
+    }
+
+    uint  keyId = ::Random( 10000, 50000 );
+
+    ::Item@ car = map.AddItem( hx, hy, protoCar, 1 );
+    if( ! valid( car ) )
+        return NRTRay::Define::FDGenericError;
+    car.LockerId = keyId;
+    car.Charge = car.Proto.Car_TankVolume;
+    car.Deterioration = 0;
+    car.Update();
+
+    ::Item@ bag = car.GetChild( 0 );
+    if( valid( bag ) )
+    {
+        bag.LockerId = keyId;
+        bag.LockerComplexity = ::Random( 50, 100 );
+        bag.Update();
+    }
+
+    ::Item@ key = player.AddItem( Content::Item::KEY, 1 );
+    if( valid( key ) )
+    {
+        key.LockerId = keyId;
+        key.Update();
+    }
+
+    player.DeleteItem( Content::Item::BOTTLE_CAPS, cost );
+    if( entNum == NRTRay::Define::EntireWorkshop )
+        return NRTRay::Define::FDBuySuccessWorkShop;
+
+    return NRTRay::Define::FDBuySuccessCarStop;
+}
+
+::Item@ GetPlayerKey( ::Critter@ player )
+{
+    ::Item@ key = _CritGetItemHand( player );
+    if( ! valid( key ) || key.GetType() != ITEM_TYPE_KEY )
+        return null;
+    return key;
+}
+
+::Item@ GetPlayerCar( ::Critter@ player, uint& forceDialog )
+{
+    ::Map@ map = player.GetMap();
+    if( ! valid( map ) )
+    {
+        forceDialog = NRTRay::Define::FDGenericError;
+        return null;
+    }
+
+    ::Item@ key = GetPlayerKey( player );
+    if( ! valid( key ) )
+    {
+        forceDialog = NRTRay::Define::FDTakeKeyInHand;
+        return null;
+    }
+
+    Entires::Entire[] entires;
+    Entires::ParseEntires( map, entires, NRTRay::Define::EntireWorkshop );
+    Entires::ParseEntires( map, entires, Entires::Type::Car );
+    for( int i = 0, iMax = entires.length(); i < iMax; i++ )
+    {
+        ::Item@ car = map.GetCar( entires[ i ].HexX, entires[ i ].HexY );
+        if( valid( car ) && !FLAG( car.LockerCondition, LOCKER_FACTION ) && car.LockerId == key.LockerId )
+            return car;
+    }
+
+    forceDialog = NRTRay::Define::FDCarNotFound;
+    return null;
+}
+
+uint r_CheckCar( ::Critter& player, ::Critter@ tray, int val )
+{
+    uint forceDialog = 0;
+    if( ! valid( GetPlayerCar( player, forceDialog ) ) )
+        return forceDialog;
+    return 0;
+}
+
+uint dlg_SellCar( ::Critter& player, ::Critter@ tray, ::string@ lexems )
+{
+    if( ! IS_DIALOG_GENERATED( lexems ) )
+        return 0;
+    uint  forceDialog = 0;
+    ::Item@ car = GetPlayerCar( player, forceDialog );
+    if( ! valid( car ) )
+        lexems = "$sell_cost0";
+    else
+    {
+        uint     cost = Car::GetCarCost( car.GetProtoId() ) / 2;
+        ::GameVar@ isQuest = ::GetLocalVar( LIVAR_is_quest_item, car.Id );
+        if( valid( isQuest ) && isQuest.GetValue() == 1 )
+            cost = 0;
+        lexems = "$sell_cost" + cost;
+    }
+
+    return forceDialog;
+}
+
+uint r_SellCar( ::Critter& player, ::Critter@ tray, int val )
+{
+    uint  forceDialog = 0;
+    ::Item@ car = GetPlayerCar( player, forceDialog );
+    if( ! valid( car ) )
+        return forceDialog;
+    uint     cost = Car::GetCarCost( car.GetProtoId() ) / 2;
+    ::GameVar@ isQuest = ::GetLocalVar( LIVAR_is_quest_item, car.Id );
+    if( valid( isQuest ) && isQuest.GetValue() == 1 )
+        cost = 0;
+    ::Item@ key = _CritGetItemHand( player );
+    if( valid( key ) && key.GetType() == ITEM_TYPE_KEY && key.LockerId == car.LockerId )
+        ::DeleteItem( key );
+    ::DeleteItem( car );
+    player.AddItem( Content::Item::BOTTLE_CAPS, cost );
+    return 0;
+}
+
+uint dlg_Fuel( ::Critter& player, ::Critter@ tray, ::string@ lexems )
+{
+    if( ! IS_DIALOG_GENERATED( lexems ) )
+        return 0;
+    uint  forceDialog = 0;
+    ::Item@ car = GetPlayerCar( player, forceDialog );
+    if( ! valid( car ) )
+        lexems = "$fuel_cost0";
+    else
+        lexems = "$fuel_cost" + GetFuelCost( car );
+    return forceDialog;
+}
+
+uint dlg_Wear( ::Critter& player, ::Critter@ tray, ::string@ lexems )
+{
+    if( ! IS_DIALOG_GENERATED( lexems ) )
+        return 0;
+    uint  forceDialog = 0;
+    ::Item@ car = GetPlayerCar( player, forceDialog );
+    if( ! valid( car ) )
+        lexems = "$wear_cost0";
+    else
+        lexems = "$wear_cost" + GetWearCost( car );
+    return forceDialog;
+}
+
+uint dlg_Bio( ::Critter& player, ::Critter@ tray, ::string@ lexems )
+{
+    if( ! IS_DIALOG_GENERATED( lexems ) )
+        return 0;
+    uint  forceDialog = 0;
+    ::Item@ car = GetPlayerCar( player, forceDialog );
+    if( ! valid( car ) )
+        lexems = "$bio_cost0";
+    else
+        lexems = "$bio_cost" + GetBioCost( car );
+    return forceDialog;
+}
+
+uint r_DoFuel( ::Critter& player, ::Critter@ tray, int val )
+{
+    uint  forceDialog = 0;
+    ::Item@ car = GetPlayerCar( player, forceDialog );
+    if( ! valid( car ) )
+        return forceDialog;
+
+    uint cost = GetFuelCost( car );
+    uint money = player.CountItem( Content::Item::BOTTLE_CAPS );
+    if( cost > money )
+        return NRTRay::Define::FDModifyNoMoney;
+
+    if( car.Charge >= car.Proto.Car_TankVolume )
+        return NRTRay::Define::FDModifyNoNeed;
+    car.Charge = car.Proto.Car_TankVolume;
+    player.DeleteItem( Content::Item::BOTTLE_CAPS, cost );
+    return 0;
+}
+
+uint r_DoWear( ::Critter& player, ::Critter@ tray, int val )
+{
+    uint  forceDialog = 0;
+    ::Item@ car = GetPlayerCar( player, forceDialog );
+    if( ! valid( car ) )
+        return forceDialog;
+
+    uint cost = GetWearCost( car );
+    uint money = player.CountItem( Content::Item::BOTTLE_CAPS );
+    if( cost > money )
+        return NRTRay::Define::FDModifyNoMoney;
+
+    if( car.Deterioration == 0 )
+        return NRTRay::Define::FDModifyNoNeed;
+    car.Deterioration = 0;
+    player.DeleteItem( Content::Item::BOTTLE_CAPS, cost );
+    return 0;
+}
+
+uint r_DoBio( ::Critter& player, ::Critter@ tray, int val )
+{
+    uint  forceDialog = 0;
+    ::Item@ car = GetPlayerCar( player, forceDialog );
+    if( ! valid( car ) || !valid(tray))
+        return forceDialog;
+
+    uint cost = GetBioCost( car );
+    uint money = player.CountItem( Content::Item::BOTTLE_CAPS );
+    if( cost > money )
+        return NRTRay::Define::FDModifyNoMoney;
+
+    if( _CarIsBioEngine( car ) )
+        return NRTRay::Define::FDModifyNoNeed;
+    _CarSetBioEngine( car );
+    player.DeleteItem( Content::Item::BOTTLE_CAPS, cost );
+    return 0;
+}
+
+uint r_CopyKey( ::Critter& player, ::Critter@ tray, int val )
+{
+    uint money = player.CountItem( Content::Item::BOTTLE_CAPS );
+    if( money < uint( NRTRay::Define::KeyCopyCost ) || !valid(tray) )
+        return NRTRay::Define::FDModifyNoMoney;
+
+    ::Item@ key = GetPlayerKey( player );
+    if( ! valid( key ) )
+        return NRTRay::Define::FDTakeKeyInHand2;
+
+    ::Item@ keyCopy = player.AddItem( Content::Item::KEY, 1 );
+    if( ! valid( keyCopy ) )
+        return NRTRay::Define::FDGenericError;
+    keyCopy.LockerId = key.LockerId;
+    keyCopy.Update();
+
+    player.DeleteItem( Content::Item::BOTTLE_CAPS, NRTRay::Define::KeyCopyCost );
+    return 0;
+}

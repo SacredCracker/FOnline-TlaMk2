@@ -1,0 +1,1113 @@
+// FOS Server
+
+void ModuleInit( )
+{
+	::InitializeGame();
+	
+	::file versionFile;
+	if( versionFile.open( "WorldVersion","r") != -1 )
+	{	
+		::string str = "";
+		versionFile.readLine ( str );
+		versionFile.close();
+		::StrToInt( str, ::__StartServerVersion );
+	}
+	
+	::__EventStart.Subscribe( MainStart );
+	::__EventCritterIdle.Subscribe( MainCritterIdle );
+	::__EventCritterInit.Subscribe( MainCritterInit );
+	::__EventCritterAttacked.Subscribe( MainCritterAttacked );
+	::__EventCritterDead.Subscribe( MainCritterDead );
+	::__EventCritterRespawn.Subscribe( MainCritterRespawn );
+	::__EventCritterFinish.Subscribe( MainCritterFinish );
+	::__EventWorldSave.Subscribe( MainWorldSave );
+	::__EventPlayerLevelUp.Subscribe( MainPlayerLevelUp );
+	
+	::__EventCritterInMap.Subscribe( MainCritterInitMap );
+	::__EventCritterOutMap.Subscribe( MainCritterOutMap );
+	::__EventCritterStealing.Subscribe( MainCritterStealing );
+	::__EventKarmaVoting.Subscribe( MainKarmaVoting );
+	::__EventItemsBarter.Subscribe( MainItemsBarter );
+	::__EventLoop.Subscribe( Loop, REAL_MINUTE(1) );
+}
+
+bool Loop( uint& loop )
+{
+	array<uint16> time={0,0,0,0,0,0,0,0};
+	::GetTime(time[0],time[1],time[2],time[3],time[4],time[5],time[6],time[7]);
+	if( time[2] == 7 && time[4]==4 ) // Бэкапить сейвы по воскресеньям в 4 ночи
+	{
+		if(::MakeBackup("a ./save/"+time[2]+"_"+time[1]+"_"+time[0]+"_"+time[4]+"_"+time[5]+".zip ./save/*.fo")==2) Log("Не удалось создать архив сохранений"); // */
+		else Log("Архив сохранений создан");
+	}
+	loop = REAL_DAY(1);
+	return true;
+}
+
+namespace FarmLocation
+{
+	void ModuleInit( )
+	{
+		InitializeFarmLocation();
+		::__EventWorldGeneration.Subscribe( Generate );
+	}
+
+	void Generate()
+	{
+		GenerateFarmLocation();
+	}
+}
+
+void MainGenerateFarmLocation()
+{
+	GenerateFarmLocation();
+}
+
+bool MainItemsBarter( ::array< ::Item@ >& saleItems, ::array< uint >& saleItemsCount, ::array< ::Item@ >& buyItems, ::array< uint >& buyItemsCount, ::Critter& player, ::Critter& npc )
+{
+    ::Item@ item = null;
+
+    for( uint i = 0, iMax = saleItems.length(); i < iMax; i++ )
+    {
+        @ item = saleItems[ i ];
+        if( validEngineObject( item ) && ( item.GetType() == ITEM_TYPE_ANIMAL || ( item.GetType() >= Content::Item::LOCKED_CONTAINER_1 && item.GetType() <= Content::Item::LOCKED_CONTAINER_4 ) ) )
+        {
+            return false;
+        }
+    }
+
+    for( uint i = 0, iMax = buyItems.length(); i < iMax; i++ )
+    {
+        @ item = buyItems[ i ];
+        if( validEngineObject( item ) && ( item.GetType() == ITEM_TYPE_ANIMAL || ( item.GetType() >= Content::Item::LOCKED_CONTAINER_1 && item.GetType() <= Content::Item::LOCKED_CONTAINER_4 ) ) )
+        {
+            return false;
+        }
+    }
+
+    if( npc.IsNpc() )
+    {
+        if( npc.Mode[ MODE_BARTER_ONLY_CASH ] > 0 )
+        {
+            for( uint i = 0, iMax = saleItems.length(); i < iMax; i++ )
+            {
+                @ item = saleItems[ i ];
+                if( validEngineObject( item ) && item.GetProtoId() != Content::Item::BOTTLE_CAPS )
+                {
+                    player.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_BARTER_ONLY_CASH );
+                    npc.SayMsg( SAY_DIALOG, TEXTMSG_GAME, STR_BARTER_ONLY_CASH );
+                    return false;
+                }
+            }
+        }
+		
+        if( !LimitedBarter::Allowed( npc.Id, buyItems, saleItems ) )
+        {
+            player.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_BARTER_ITEM_NOT_ALLOWED );
+            return false;
+        }
+    }
+    return true;
+}
+
+bool MainKarmaVoting( ::Critter@ crFrom, ::Critter@ crTo, bool valUp )
+{
+    crFrom.RunClientScript( "playerscolorizing@__ColorizePlayer", int(0 | crTo.Id), valUp ? 1 : 0, 0, null, null );
+	return true;
+}
+
+void MainCritterStealing( ::Critter@ cr, ::Critter@ thief, bool& success, ::Item@ item, uint count )
+{
+    thief.TimeoutBase[ TO_AGGRESSOR ] = ::__FullSecond + REAL_MINUTE( 1 );
+
+    if( cr.IsKnockout() )
+    {
+        item.Steal = item.CritId == thief.Id ? 2 : 1;
+		success = true;
+        return;
+    }
+
+    if( thief.IsPlayer() )
+    {
+        if( cr.IsDead() || cr.Timeout[ TO_BATTLE ] > 0 || thief.Timeout[ TO_BATTLE ] > 0 )
+        {
+            thief.StatBase[ ST_LAST_STEAL_CR_ID ] = 0;
+            thief.StatBase[ ST_STEAL_COUNT ] = 0;
+			success = false;
+            return;
+        }
+
+        if( cr.Mode[ MODE_NO_PVP ] != 0 || thief.Mode[ MODE_NO_PVP ] != 0 )
+        {
+            thief.Say( SAY_NETMSG, "No PvP." );
+			success = false;
+            return;
+        }
+    }
+    int dir1 = cr.Dir, dir2 = thief.Dir, kDir = MAX( dir1, dir2 ) - MIN( dir1, dir2 ), steal = thief.Skill[ SK_STEAL ], size = item.Proto.Volume;
+
+    if( kDir > 3 )
+        kDir = 6 - kDir;
+    if( thief.Mode[ MODE_HIDE ] == 1 )
+        steal += thief.Skill[ SK_SNEAK ] * 0.17;
+    if( steal <= 0 )
+        steal = 1;
+    if( size <= 0 )
+        size = 1;
+    int bonusExpForSice = size;
+    if( bonusExpForSice > 1 )
+        bonusExpForSice *= 2;
+
+    // Perk pickpocket, ignore size and facing
+    if( thief.Perk[ PE_PICKPOCKET ] != 0 )
+    {
+        kDir = 0;
+        if( size < 3 )
+            size = 1;
+        else
+            size *= 0.5;
+    }
+
+    // Count modifier
+    int kCount = count / steal;
+    if( kCount <= 0 )
+        kCount = 1;
+
+    // Check time of stealing
+    uint lastStealCrId = thief.Stat[ ST_LAST_STEAL_CR_ID ], stealCount = thief.Stat[ ST_STEAL_COUNT ];
+    if( lastStealCrId == cr.Id && thief.Timeout[ TO_STEALING ] > 0 )
+        steal -= steal * stealCount * 9 * 0.01;
+
+    // Calc
+    int  k = CLAMP( ( steal - kDir * 10 ) / ( size * kCount ), 5, 160 );
+    success = !( k < ::Random( 1, 180 - ( thief.Perk[ PE_THIEF ] > 0 ? thief.Stat[ ST_LUCK ] * 4 : thief.Stat[ ST_LUCK ] * 2 ) ) );
+
+    if( success && 5 <= ::Random( 1, 100 ) )
+    {
+
+        if( lastStealCrId == cr.Id && thief.Timeout[ TO_STEALING ] > 0 )
+        {
+            stealCount++;
+            if( stealCount > 11 )
+                stealCount = 11;
+            thief.StatBase[ ST_STEAL_COUNT ] = stealCount;
+        }
+        else
+        {
+            thief.StatBase[ ST_LAST_STEAL_CR_ID ] = cr.Id;
+            thief.StatBase[ ST_STEAL_COUNT ] = 0;
+        }
+
+        thief.TimeoutBase[ TO_STEALING ] = STEAL_TIMEOUT( thief );
+        if( cr.IsNpc() )
+        {
+            ::GameVar@ stealExpCount = ::GetUnicumVar( UVAR_steal_exp_count, cr.Id, thief.Id );
+            if( stealExpCount < 12 )
+            {
+                thief.StatBase[ ST_EXPERIENCE ] += 10 * stealCount * bonusExpForSice;
+                if( thief.IsPlayer() )
+                    ScoreMk2::ChangePlayerScore( thief, SCORE_THIEF, 1 );
+            }
+            stealExpCount = stealExpCount + 1;
+        }
+    }
+    else
+    {
+        thief.StatBase[ ST_LAST_STEAL_CR_ID ] = 0;
+        thief.StatBase[ ST_STEAL_COUNT ] = 0;
+
+        if( cr.IsNpc() )
+        {
+            int thiefHp = thief.Stat[ ST_CURRENT_HP ];
+            NpcPlanes::AddAttackPlane( cr, 0, thief, thiefHp< 10 || ::Random( 1, 10 ) > cr.Stat[ ST_LUCK ] + 4 || cr.Stat[ ST_CHARISMA ] < 3 ? (::__DeadHitPoints) : ( ::Random( thiefHp * 0.25, thiefHp * 0.5 ) ) );
+        }
+    }
+
+    CityGuard::ProcessOfCrime( thief, ( success ? (City::PenaltyListing::Steal) : (City::PenaltyListing::StealNoSuccess) ), count, cr, item, false );
+
+    if( success )
+    {
+        item.Steal = item.CritId == thief.Id ? 2 : 1;
+    }
+    return;
+}
+
+void MainCritterInitMap( ::Critter@ cr, ::Map@ map )
+{
+    OnCitterMapIn( cr, map );
+    uint16 locPid = map.GetLocation().GetProtoId();
+    if( cr.IsPlayer() )
+    {
+        player_UpdateDynamicMap( cr, map );
+		
+        if( LOCATION_IS_CITY( locPid ) )
+        {
+            ::GameVar@ lastCityVar = ::GetLocalVar( LVAR_last_city, cr.Id );
+            if( !(lastCityVar is null) )
+                lastCityVar = locPid;
+        }
+        cr.StatBase[ ST_CURRENT_MAP_TIME ] = map.GetTime();
+        PlaceLoot2Container( map, cr );
+
+        if( cr.LookItems_Time != 0 )
+            cr.AddTimeEvent( "Main::cte_ReturnLook", 1, CTE_MESSAGE_DELAY );
+    }
+    else
+    {
+        if( ( locPid == LOCATION_NewbieLocation || locPid == LOCATION_NewbieIntro || locPid == LOCATION_NewbieOutro ) && cr.Merc[ MERC_MASTER_ID ] != 0 && cr.GetProtoId() != 114 )
+        {
+            ::DeleteNpc( cr );
+        }
+    }
+}
+
+void MainCritterOutMap( ::Critter@ cr, ::Map@ map )
+{
+    OnCritterMapOut( cr, map );
+	
+    ::Map@ newMap = cr.GetMap();
+    if( validEngineObject( newMap ) )
+    {
+        if( !cr.IsNoTeamTransit && cr.LastHexX > 0 && cr.LastHexX < map.GetWidth() && cr.LastHexY > 0 && cr.LastHexY < map.GetHeight() )
+        {
+            ::array< ::Critter@ > crs;
+			::Critter@ critter = null;
+			const uint newMapId = newMap.Id, mapId = map.Id, crId = cr.Id;
+			const ::string sayLex = "$pName" + cr.Name;
+			::Map@ crMap = null;
+            for( uint i = 0, len = map.GetCrittersHex( cr.LastHexX, cr.LastHexY, 10, FIND_LIFE | FIND_ONLY_PLAYERS, crs ); i < len; i++ )
+            {
+				@critter = crs[ i ];
+				@crMap = critter.GetMap();
+                if( cr.Id  == uint( critter.Stat[ ST_FOLLOW_CRIT ] ) && validEngineObject( crMap ) && mapId == crMap.Id && critter.Id != crId && map.GetPathLength( critter, cr.LastHexX, cr.LastHexY, 0 ) <= 10 && critter.Timeout[ TO_BATTLE ] == 0 )
+                {
+                    if( critter.GetTimeEvents( CTE_TEAM_NOTIFICATION_GM, null, null, null ) == 0 /*&& critter.AddTimeEvent( "team@cte_TeamNotification",  REAL_MINUTE( 1 ), CTE_TEAM_NOTIFICATION_GM, crId )*/ )
+                    {
+                        critter.ToLeader_MapId = newMapId;
+                        critter.ToLeader_HexX = cr.HexX;
+                        critter.ToLeader_HexY = cr.HexY;
+                        critter.ShowScreen( SCREEN_DIALOGBOX, 1, "Main::answer_MoveToLeader" );
+                        critter.SayMsg( SAY_DIALOGBOX_TEXT, TEXTMSG_GAME, 951, sayLex );
+						critter.SayMsg( SAY_DIALOGBOX_BUTTON( 0 ), TEXTMSG_GAME, 312 );
+                    }
+                }
+            }
+        }
+
+		if( cr.IsPlayer() )
+		{
+			cr.SetFog( cr.WorldX / ::__GlobalMapZoneLength, cr.WorldY / ::__GlobalMapZoneLength, FOG_NONE );
+			if( cr.LookItems_Time != 0 )
+				cr.StatBase[ ST_BONUS_LOOK ] = -70;
+		}
+    }
+}
+
+uint cte_ReturnLook( ::Critter& cr, int identifier, int& rate, int& )
+{
+    if( cr.LookItems_Time != 0 )
+    {
+        if( cr.LookItems_Time > 0 )
+        {
+            if( cr.Stat[ ST_BONUS_LOOK ] != -101 && cr.Stat[ ST_BONUS_LOOK ] < 0 )
+            {
+                cr.StatBase[ ST_BONUS_LOOK ] += cr.LookItems_HexRefreshCount;
+                cr.RefreshVisible();
+                if( cr.Stat[ ST_BONUS_LOOK ] > 0 )
+                    cr.StatBase[ ST_BONUS_LOOK ]  = 0;
+                else if( cr.Stat[ ST_BONUS_LOOK ] < 0 )
+                    return cr.LookItems_Time;                     // 10
+            }
+        }
+        else
+            cr.StatBase[ ST_BONUS_LOOK ]  = 0;
+    }
+    return 0;
+}
+
+void answer_MoveToLeader( ::Critter& player, uint answerI, ::string& answerS )
+{
+    if( player.Timeout[ TO_BATTLE ] == 0 )
+    {
+        if( player.ToLeader_MapId != 0 && player.GetTimeEvents( CTE_TEAM_NOTIFICATION_GM ) == 1 )
+        {
+            uint16 x = player.ToLeader_HexX;
+            uint16 y = player.ToLeader_HexY;
+            // ::Log("x " + x + " y " + y + " var[0] " + var[0]);
+            player.EraseTimeEvents( CTE_TEAM_NOTIFICATION_GM );
+            ::Critter@ leader = ::GetCritter( player.Stat[ ST_FOLLOW_CRIT ] );
+            // ::Log( "" + leader.GetGlobalGroupTimeCanFollow() + " " + leader.GetGlobalGroupProcessLastTick() + " " + player.StatBase[ST_TEAM_VAR] );
+            if( validEngineObject( leader ) )
+            {
+                ::Map@ map = ::GetMap( player.ToLeader_MapId );
+                player.ToLeader_MapId = 0;
+                player.ToLeader_HexX = 0;
+                player.ToLeader_HexY = 0;
+
+                if( validEngineObject( map ) )
+                {
+                    bool   isTransit = false;
+                    uint16 hx = 0, hy = 0, count = 0;
+                    while( count++ < 10 )
+                    {
+                        hx = x + ( ::Random( -5, 5 ) );
+                        hy = y + ( ::Random( -5, 5 ) );
+
+                        uint len = map.GetPathLength( x, y,  hx, hy, 0 );
+                        if( len <= 10 && len != 0 )
+                        {
+                            isTransit = true;
+                            break;
+                        }
+                    }
+
+                    if( isTransit )
+                    {
+                        player.TransitToMap( map.Id, hx, hy, player.Dir );
+                    }
+                }
+            }
+        }
+    }
+}
+
+bool MainPlayerLevelUp(::Critter@ player, uint skillIndex, uint skillUp, uint perkIndex)
+{
+	if(skillIndex>=SKILL_BEGIN && skillIndex<=SKILL_END)
+	{
+		for (;skillUp!=0;skillUp--)
+		{
+			int skillVal=player.SkillBase[skillIndex];
+			if(skillVal>=::GetMaxSkill(skillIndex)) break;
+
+			int needPoints=1;
+			if(skillVal>::__SkillModAdd6) needPoints=6;
+			else if(skillVal>::__SkillModAdd5) needPoints=5;
+			else if(skillVal>::__SkillModAdd4) needPoints=4;
+			else if(skillVal>::__SkillModAdd3) needPoints=3;
+			else if(skillVal>::__SkillModAdd2) needPoints=2;
+
+			if(player.Stat[ST_UNSPENT_SKILL_POINTS]<needPoints) break;
+
+			skillVal++;
+			if(_CritIsTagSkill(player,skillIndex) && skillVal<MAX_SKILL_VAL) skillVal++;
+			player.SkillBase[skillIndex]=skillVal;
+			player.StatBase[ST_UNSPENT_SKILL_POINTS]-=needPoints;
+		}
+		if(skillIndex==SK_LIONHEART) player.RefreshSpeed( );
+	}
+	else if(perkIndex>=PERK_BEGIN && perkIndex<=PERK_END)
+	{
+		if(check_perk(player,perkIndex))
+		{
+			player.PerkBase[perkIndex]++;
+			player.StatBase[ST_UNSPENT_PERKS]--;
+		}
+	}
+
+	player.StatBase[ST_REPLICATION_COST]=player.Stat[ST_LEVEL]*100;
+	return true;
+}
+
+bool MainWorldSave( uint currentIndex, ::array<uint>& deleteIndexes )
+{
+	if(Fractions::SaveFractions()) Log("Фракции сохранены успешно.");
+	else Log("Не удалось сохранить фракции\n");
+	::ClearOfflineClients();
+	// Keep only current and four last saves
+	if(!SaveWorldNextVersion())
+		Log("Версия мира в памяти не актуальна.");
+		
+	CityGuard::SaveBags();
+	
+	if(currentIndex==1)
+	{
+		deleteIndexes.resize(5);
+		for(uint i=0; i<5; i++) deleteIndexes[i]=9999-i;
+	}
+	else if(currentIndex>4)
+	{
+		deleteIndexes.resize(1);
+		deleteIndexes[0]=currentIndex-5;
+	}
+	// bboards
+	SaveMessengerData();
+	::BackupDatabase();
+	return true;
+}
+
+bool MainCritterInit( ::Critter@ cr, bool firstTime)
+{
+	cr.ModeBase[ MODE_NO_SEE ] = 0;
+	
+	if( cr.IsPlayer() )
+	{
+		if( cr.Stat[ ST_FACTION ] != 0 && Fractions::IdentifyPlayerFraction( cr ) )
+        {
+            ::Fraction @fraction = Fractions::Get( cr.Stat[ ST_FACTION ] );
+            if( fraction is null )
+                ::Dismiss( cr.Id );
+            else fraction.PlayerOnline( cr );
+        }
+
+        CheckTracker( cr );
+	}
+	
+	main_critter_init( cr, firstTime );
+
+	return true;
+}
+
+bool MainCritterFinish(::Critter@ cr, bool toDelete)
+{
+	if(cr.IsPlayer())
+	{					
+		if(!toDelete)
+		{
+			::SaveClient(::GetPlayerName(cr.Id), cr);
+			::AddOfflineClient(cr);
+		}
+	}
+	if(toDelete && cr.Stat[ST_DEAD_BLOCKER_ID]!=0)
+	{
+		::Item@ block=::GetItem(cr.Stat[ST_DEAD_BLOCKER_ID]);
+		if(validEngineObject(block)) ::DeleteItem(block);
+		cr.StatBase[ST_DEAD_BLOCKER_ID]=0;
+	}
+	if(cr.IsPlayer() && toDelete && cr.Stat[ST_FACTION]!=0)
+	{
+		::Fraction@ fraction=Fractions::Get(cr.Stat[ST_FACTION]);
+		if(valid(fraction)) fraction.DismissPlayer(cr.Name, null);
+	}
+
+	return true;
+}
+
+bool MainCritterDead( ::Critter@ cr, ::Critter@ killer )
+{
+	Replication::SetReplicationTime(cr);
+	SetTracker( cr, -1 );
+	cr.ModeBase[MODE_HIDE]=0;
+	cr.ModeBase[MODE_TERMOVISOR]=0;
+	cr.ModeBase[MODE_NIGHTVISOR]=0;
+	if(validEngineObject(killer) && killer.IsPlayer())
+	{
+		uint16 kills=(killer.StatBase[ST_DAMAGE_DONE]>>16)&0xFFFF;
+		kills++;
+		killer.StatBase[ST_DAMAGE_DONE]=(kills<<16)|(killer.StatBase[ST_DAMAGE_DONE])&0xFFFF;
+	}
+	
+	if(validEngineObject(killer))
+		CityGuard::ProcessOfCrime(killer, City::PenaltyListing::Kill, 0, cr, null, false);
+
+	if(cr.IsNpc())
+	{
+		cr.StatBase[ST_NPC_ATTACK_PLAYER_ID] = 0;
+		cr.DropPlanes();
+		if(cr.Patrol[PL_GRUP_NUMBER]!=0)
+		{
+			GrupPatrol::_Dead(cr,killer);
+		}
+	}
+// TabaK. Занесение в фракционную статистику.
+	else 
+	{
+		cr.RefreshVisible();
+		if(validEngineObject(killer))
+		{
+			// rifleman17 27.08.2013 Если убийство на пвп-арене, на фракционной статистике не отражается
+			::Map@ m0 = cr.GetMap();
+			bool arenaKill = false;
+			if(validEngineObject(m0))
+			{
+				::GameVar@ isArenaMap = ::GetLocalVar(LMVAR_map_is_pvp_arena, m0.Id);
+				if(valid(isArenaMap) && isArenaMap.GetValue() == 1)
+					arenaKill = true;
+			}
+			if(!arenaKill)
+			{
+				if(cr.Stat[ST_FACTION]==0)
+				{
+					if(killer.Stat[ST_FACTION]!=0)
+					{
+						::Fraction@ fr=Fractions::Get(killer.Stat[ST_FACTION]);
+						if(valid(fr)) fr.Stats[FR_KILLS]++;
+					}
+				}
+				else
+				{
+					::Fraction@ fr=Fractions::Get(cr.Stat[ST_FACTION]);
+					if(killer.IsPlayer())
+					{
+						if(int(fr.Stats[FR_RATING])-FR_DEATH>=0) fr.Stats[FR_RATING]-=FR_DEATH;
+						else fr.Stats[FR_RATING]=0;
+						fr.Stats[FR_DEATHS]++;
+						
+						if(killer.Stat[ST_FACTION]!=0)
+						{
+							::Fraction@ killerFr=Fractions::Get(killer.Stat[ST_FACTION]);
+							if(valid(killerFr) && killer.Stat[ST_FACTION]==cr.Stat[ST_FACTION])
+							{
+								if(int(killerFr.Stats[FR_RATING]-FR_FRIENDLY_KILL)>=0) killerFr.Stats[FR_RATING]-=FR_FRIENDLY_KILL;
+								else killerFr.Stats[FR_RATING]=0;
+								killerFr.Stats[FR_FRIENDS_KILLED]++;
+							}
+							else if(valid(fr) && valid(killerFr))
+							{
+								::array<uint8> killerStats;
+								::array<int> killerReward;
+								
+								bool isFriend=false,
+									isEnemy=false,
+									killersEnemy=false;
+								for(uint n=0, nMax=fr.Enemies.length(); n<nMax; n++)
+								{
+									if(fr.Enemies[n]== uint( killer.Stat[ST_FACTION] ) )
+									{
+										isEnemy=true;
+										break;
+									}
+								}
+								for(uint n=0, nMax=killerFr.Enemies.length(); n<nMax; n++)
+								{
+									if(killerFr.Enemies[n]== uint( cr.Stat[ST_FACTION] ) )
+									{
+										killersEnemy=true;
+										break;
+									}
+								}
+								for(uint n=0, nMax=fr.Allies.length(); n<nMax; n++)
+								{
+									if(fr.Allies[n]== uint( killer.Stat[ST_FACTION] ) )
+									{
+										isFriend=true;
+										break;
+									}
+								}
+								if(isFriend)
+								{	
+									if(int(killerFr.Stats[FR_RATING]-FR_FRIENDLY_KILL)>=0) killerFr.Stats[FR_RATING]-=FR_FRIENDLY_KILL;
+									else killerFr.Stats[FR_RATING]=0;
+									killerFr.Stats[FR_FRIENDS_KILLED]++;
+								}
+								else
+								{
+									if(killersEnemy)
+									{
+										if(fr.Stats[FR_RATING]>1000) killerFr.Stats[FR_RATING]+=FR_ENEMY_KILL;
+										killerFr.Stats[FR_ENEMIES_KILLED]++;
+										killerFr.Stats[FR_KILLS]++;
+									}
+									if(isEnemy)
+									{
+										if(int(fr.Stats[FR_RATING]-FR_PWNED)>=0) fr.Stats[FR_RATING]-=FR_PWNED;
+										else fr.Stats[FR_RATING]=0;
+									}
+								}
+								killerFr.Stats[FR_REPUTATION]-=cr.Stat[ST_KARMA];
+							}
+						}
+					}
+				}
+			} //r17
+		}
+	}
+	//TabaK. Убиваем броню при жестокой смерти
+	::Item@ armor=null;
+	if(cr.Anim2Dead>ANIM2_DEAD_BACK && cr.Anim2Dead!=ANIM2_DEAD_LASER)
+	{
+		@ armor=_CritGetItemArmor(cr);
+		if(validEngineObject(armor))
+		{
+			if( armor.GetProtoId() == Content::Item::EXP_COLLAR )
+			{
+				::DeleteItem( armor );
+				@armor = null;
+			}
+			else
+			{
+				if(FLAG(armor.BrokenFlags,BI_LOWBROKEN)) SETFLAG(armor.BrokenFlags,BI_NORMBROKEN);
+				else if(FLAG(armor.BrokenFlags,BI_NORMBROKEN)) SETFLAG(armor.BrokenFlags,BI_HIGHBROKEN);
+				else if(FLAG(armor.BrokenFlags,BI_HIGHBROKEN)) SETFLAG(armor.BrokenFlags,BI_NOTRESC);
+				else
+				{
+					if(validEngineObject(killer)) armor.Deterioration+=10000-::Random(0, killer.Stat[ST_LUCK]*1000);
+					else armor.Deterioration+=::Random(0, 10000);
+					armor.Deterioration=CLAMP(armor.Deterioration, 0, 10000);
+				}
+			}
+		}
+	}
+	::Map@ map=cr.GetMap();
+	// Move inventory items to ground
+	{
+		::array<::Item@> items;
+		cr.GetItems(-1, items);
+		if(validEngineObject(map))
+		{
+			// Disable drop of hidden items
+			for(uint i=0, iMax=items.length(); i<iMax; i++)
+			{
+				::Item@ item=items[i];
+				if(validEngineObject(item))
+				{
+					if( items[ i ].GetProtoId( ) == Content::Item::EXP_COLLAR )
+					{
+						::DeleteItem( item );
+						@items[ i ] = null;
+						continue;
+					}
+				
+					if(item.GetProtoId()==Content::Item::RADIO)
+					{
+						if(!FLAG(item.RadioFlags,RADIO_DISABLE_SHIFT_SEND))
+						{
+							item.RadioFlags^=RADIO_DISABLE_SEND;
+							item.Update();
+						}
+						if(!FLAG(item.RadioFlags,RADIO_DISABLE_SHIFT_RECV))
+						{
+							item.RadioFlags^=RADIO_DISABLE_RECV;
+							item.Update();
+						}
+						continue;
+					}
+					else if(IsExplosive(item) && (cr.Anim2Dead==ANIM2_DEAD_PULSE_DUST || cr.Anim2Dead==ANIM2_DEAD_EXPLODE)) 
+					{
+						::DeleteItem(item);
+						@items[ i ] = null;
+						continue;
+					}
+					if(FLAG(items[i].Flags,ITEM_GAG))
+					{
+						::DeleteItem(item);
+						@items[i]=null;
+						continue;
+					}
+					else if(FLAG(items[i].Flags,ITEM_HIDDEN)) @items[i]=null;
+				}
+			}
+			if(!CityGuard::PlayerDead(cr,items,map))
+			{
+				if( _CritCanDropItemsOnDead(cr) && cr.Anim2Dead == ANIM2_DEAD_EXPLODE )
+				{
+					uint16 x = 0, y = 0, moveX = 0, moveY = 0, posX = 0, posY = 0;
+					for( uint i = 0, iEnd = items.length( ); i < iEnd; i++ )
+					{		
+						if( validEngineObject( items[i] ) )
+						{
+							{
+								x = ::Random( cr.HexX-10, cr.HexX+10 );
+								y = ::Random( cr.HexY-10, cr.HexY+10 );
+								moveX = cr.HexX;
+								moveY = cr.HexY;
+								posX = moveX;
+								posY = moveY;
+								for( uint j = 0, jMax = ::GetDistantion( cr.HexX,cr.HexY,x,y ); j < jMax; j++)
+								{
+									map.MoveHexByDir (moveX, moveY, ::GetDirection( moveX, moveY,x,y ), 1);
+									if( !map.IsHexPassed (moveX, moveY) )
+										break;
+													
+									posX = moveX;
+									posY = moveY;
+											
+								}
+								
+								map.RunFlyEffect(items[i].GetProtoId( ),null,null,cr.HexX,cr.HexY,posX,posY, EFFECT_INSTRUCTION_NONE);
+								::MoveItem (items[i], items[i].GetCount( ), map, posX,posY);
+								items[i].EventDrop (cr);
+								items[i].Update ();
+							}
+						}
+					}
+				}
+			} 
+		}
+		else ::DeleteItems(items);
+	}
+
+	if(validEngineObject(killer) && killer.IsPlayer() && killer.Perk[PE_FORTUNE_FINDER]!=0 && cr.IsNpc() && IsHumanoid(cr))
+	{
+		_CritAddItem(cr,Content::Item::BOTTLE_CAPS,::Random(50,100)+cr.Stat[ST_MAX_LIFE] * 0.5);
+		if(::Random(0,20)==1) 
+		{
+			const ::array<uint16> Pids_MiscAnturage={Content::Item::DERMAL_PIP_BOY_DISK,Content::Item::LIGHTER,Content::Item::NECKLACE,Content::Item::SMALL_STATUETTE,Content::Item::ANNA_GOLD_LOCKET,Content::Item::CORNELIUS_GOLD_WATCH,Content::Item::TALISMAN,Content::Item::COSMETIC_CASE,Content::Item::DICE,Content::Item::LOADED_DICE,Content::Item::MAGIC_8_BALL,Content::Item::SPECTACLES,Content::Item::MIRROR_SHADES,Content::Item::DECK_OF_CARDS,Content::Item::MARKED_DECK_OF_CARDS};
+			_CritAddItem(cr,Pids_MiscAnturage[::Random(0,14)],1);
+		}
+	}
+
+	//if(dropPid!=0 && _CritCountItem(cr,dropPid)==0) _CritAddItem(cr,dropPid,1);
+
+	// Karma, temporary
+	if(validEngineObject(killer) && killer.IsPlayer())
+	{
+		switch (cr.Stat[ST_TEAM_ID])
+		{
+			case TEAM_Poorman:killer.StatBase[ST_KARMA]-=10; break;
+			case TEAM_Narcoman: killer.StatBase[ST_KARMA]+=10; break;
+			case TEAM_Citizen: killer.StatBase[ST_KARMA]-=10; break;
+			case TEAM_Guard: killer.StatBase[ST_KARMA]-=10; break;
+			case TEAM_PrivateGuard: killer.StatBase[ST_KARMA]-=10; break;
+			case TEAM_Trader: killer.StatBase[ST_KARMA]-=10; break;
+			case TEAM_Bandit: killer.StatBase[ST_KARMA]+=10; break;
+			case TEAM_CasinoPlayer: killer.StatBase[ST_KARMA]-=10; break;
+			case TEAM_CityElite: killer.StatBase[ST_KARMA]-=30; break;
+			case TEAM_QuestNpc: killer.StatBase[ST_KARMA]-=30; break;
+			case TEAM_Police: killer.StatBase[ST_KARMA]-=10; break;
+			case TEAM_Slaver: killer.StatBase[ST_KARMA]+=10; break;
+			case TEAM_Slave: killer.StatBase[ST_KARMA]-=10; break;
+			case TEAM_Trapper: killer.StatBase[ST_KARMA]-=10; break;
+		}
+		
+		if(cr.Stat[ST_BODY_TYPE]==BT_CHILDREN) killer.KarmaBase[KARMA_CHILDKILLER]++;
+	}
+
+	if(validEngineObject(map) && cr.Mode[MODE_NO_FLATTEN]!=0)
+	{
+		::Item@ blocker=map.AddItem(cr.HexX,cr.HexY,Content::Item::UNVISIBLE_BLOCK,1);
+		if(validEngineObject(blocker)) cr.StatBase[ST_DEAD_BLOCKER_ID]=blocker.Id;
+	}
+    OnCritterKilled( cr, killer );
+	return true;
+}
+
+bool MainCritterRespawn( ::Critter@ cr )
+{
+	cr.ModeBase[ MODE_NO_SEE ] = 0;
+	
+	CityGuard::CritterRespawn(cr);
+	
+	if(cr.IsNpc())
+	{
+		if(cr.Patrol[PL_GRUP_NUMBER]!=0)
+			GrupPatrol::_Respawn(cr);
+	}
+	
+	if(cr.Stat[ST_DEAD_BLOCKER_ID]!=0)
+	{
+		::Item@ block=::GetItem(cr.Stat[ST_DEAD_BLOCKER_ID]);
+		if(validEngineObject(block)) ::DeleteItem(block);
+		cr.StatBase[ST_DEAD_BLOCKER_ID]=0;
+	}
+	
+	cr.IsNoTeamTransit = false;
+	cr.RefreshSpeed( );
+	
+	return true;
+}
+
+bool MainStart()
+{
+	// Send info about others critters
+	// Remember:
+	// - all this info can be hacked in client;
+	// - more parameters - more traffic.
+	::SetSendParameter(ST_FIRE_DATA, true);
+	::SetSendParameter(MODE_NO_ANIMATED_DEATH, true);
+	::SetSendParameter(ST_GENDER,true);
+	::SetSendParameter(ST_AGE,true);
+	::SetSendParameter(ST_FOLLOW_CRIT,true);
+	::SetSendParameter(ST_PLAYER_KARMA,true);
+	// Armor class, uses Agility
+	::SetSendParameter(ST_ARMOR_CLASS,true);
+	//::SetSendParameter(ST_TURN_BASED_AC,true);
+	// Agility
+	::SetSendParameter(ST_AGILITY,true);
+	
+	// Hit points, uses Strenght and Endurance
+	::SetSendParameter(ST_MAX_LIFE,true, "fonline_tla.dll@_CheckAwareness");
+	::SetSendParameter(ST_CURRENT_HP,true, "fonline_tla.dll@_CheckAwareness");
+	// Strenght, uses battle timeout
+	::SetSendParameter(ST_STRENGTH,true);
+	::SetSendParameter(PE_ADRENALINE_RUSH,true);
+	// Battle timeout
+	::SetSendParameter(TO_BATTLE,true);
+	// Endurance
+	::SetSendParameter(ST_ENDURANCE,true);
+	// Injures
+	::SetSendParameter(DAMAGE_EYE,true);
+	::SetSendParameter(DAMAGE_RIGHT_ARM,true);
+	::SetSendParameter(DAMAGE_LEFT_ARM,true);
+	::SetSendParameter(DAMAGE_RIGHT_LEG,true);
+	::SetSendParameter(DAMAGE_LEFT_LEG,true);
+	// ::Item slots, passed with -
+	::SetSendParameter(-SLOT_HAND1,true,"fonline_tla.dll@allowSlot_Hand1");
+	//::SetSendParameter(-SLOT_HAND2,true ); //,"fonline_tla.dll@allowSlot_Hand1");
+	::SetSendParameter(-SLOT_ARMOR,true);
+	// Some flags for correct client working
+	::SetSendParameter(MODE_NO_BARTER,true);
+	::SetSendParameter(MODE_NO_STEAL,true);
+	::SetSendParameter(MODE_NO_LOOT,true);
+	::SetSendParameter(MODE_NO_FLATTEN,true);
+	::SetSendParameter(MODE_NO_TALK,true);
+	::SetSendParameter(ST_BASE_CRTYPE,true);
+	
+	::SetSendParameter(SK_LIONHEART,true);
+	::SetSendParameter(PE_DODGER,true);
+	::SetSendParameter(MODE_TERMOVISOR,true, "fonline_tla.dll@_CheckVisor");
+	::SetSendParameter(MODE_NIGHTVISOR,true, "fonline_tla.dll@_CheckVisor");
+	/*// 3d animation layers
+	// Enable sending 3d layers, from Skin to Backpack
+	uint fromLayer=ST_ANIM3D_LAYERS+ANIM3D_LAYER_SKIN;
+	uint toLayer=ST_ANIM3D_LAYERS+ANIM3D_LAYER_BACKPACK;
+	for(uint i=fromLayer;i<=toLayer;i++) ::SetSendParameter(i,true);*/
+	
+	::SetSendParameter(ST_FACTION, true);
+	::SetSendParameter(ST_FR_LEADERSHIP, true);
+	// Npc talk distance
+	::SetSendParameter(ST_TALK_DISTANCE,true);
+	// Dialog id
+	::SetSendParameter(ST_DIALOG_ID,true);
+	// To see pid of unarmed attack
+	::SetSendParameter(ST_HANDS_ITEM_AND_MODE,true);
+	// Scale factor
+	::SetSendParameter(ST_SCALE_FACTOR,true);
+	// Walk / Run speed
+	::SetSendParameter(ST_WALK_TIME,true);
+	::SetSendParameter(ST_RUN_TIME,true);
+	
+	::SetSendParameter(ST_ROLE_CITY,true);
+	::SetSendParameter(ST_BODY_TYPE,true);
+	
+	::SetSendParameter(PE_PICKPOCKET,true);
+	::SetSendParameter(ST_HASH_EMBLEM,true);
+	
+	::SetSendParameter(ST_NPC_NAME_ENGL,true);
+	::SetSendParameter(ST_NPC_NAME_RUSS,true);
+	::SetSendParameter(ST_NPC_NAME_UKRA,true);
+	
+	::SetSendParameter(ST_IS_FARM_CRITTER,true);
+	::SetSendParameter(MERC_MASTER_ID,true);
+	
+	for( uint i = 600; i < 630; i++)
+		::SetSendParameter( i,true);
+	for( uint i = 0; i < CITY_ROLE_COUNT; i++)
+		::SetSendParameter( CITY_ROLE_BEGIN + i,true);
+		
+	for(uint n=CUSTOM_NAME_BEGIN; n<=CUSTOM_NAME_END; n++)
+		::SetSendParameter(n, true);
+	
+	::SetSendParameter(ST_NPC_ATTACK_PLAYER_ID,true);
+
+	// Send item data masks
+    // Look fields in fonline.h 'struct ::Item::ItemData'
+    //               SortValue  Info Indicator    PicMapHash       PicInvHash   AnimWaitBase AStay[2] AShow[2] AHide[2]      Flags      Rate LightDist Inten Flags  LightColor    ScriptId TrapValue       Count             Cost                ScriptValues[10]                                                                                                   Other 36 bytes
+    // ITEM_DATA_MASK_CHOSEN                                                                                           ITEM_DATA_MASK_CHOSEN                                                                                                ITEM_DATA_MASK_CHOSEN
+    
+	::array<int8> mask0 = {
+		-1, -1, 	// 2 const uint16 SortValue; 0
+		-1,		// 1 const uint8  Info; 2
+		-1,		// 1 const uint8  Indicator; 3
+		-1, -1, -1, -1,	// 4 const uint   PicMapHash; 4
+		-1, -1, -1, -1,	// 4 const uint   PicInvHash; 8
+		0,  0,		// 2 const uint16 AnimWaitBase; 12
+		0,  0,		// 1 * 2 const uint8  AnimStay[ 2 ]; 14
+		0,  0,		// 1 * 2 const uint8  AnimShow[ 2 ]; 16
+		0,  0,		// 1 * 2 const uint8  AnimHide[ 2 ]; 18
+		-1, -1, -1, -1, // 4 const uint   Flags; 20
+		-1,		// 1 const uint8  Rate; 24
+		-1,		// 1 const int8   LightIntensity; 25
+		-1,		// 1 const uint8  LightDistance; 26
+		-1,		// 1 const uint8  LightFlags; 27
+		-1, -1, -1, -1,	// 4 const uint   LightColor; 28
+		0, 0,		// 2 const uint16 ScriptId; 32
+		0, 0,		// 2 const int16  TrapValue; 34
+		-1, -1, -1, -1,	// 4 const uint   Count; 36
+		-1, -1, -1, -1,	// 4 const uint   Cost; 40
+		
+		0, 0, 0, 0,	// 4 const int    ScriptValues[ 0 ]; 44
+		0, 0, 0, 0,	// 4 const int    ScriptValues[ 1 ];
+		0, 0, 0, 0,	// 4 const int    ScriptValues[ 2 ];
+		0, 0, 0, 0,	// 4 const int    ScriptValues[ 3 ];
+		0, 0, 0, 0,	// 4 const int    ScriptValues[ 4 ];
+		0, 0, 0, 0,	// 4 const int    ScriptValues[ 5 ];
+		0, 0, 0, 0,	// 4 const int    ScriptValues[ 6 ];
+		0, 0, 0, 0,	// 4 const int    ScriptValues[ 7 ];
+		0, 0, 0, 0,	// 4 const int    ScriptValues[ 8 ];
+		-1, -1, -1, -1,	// 4 const int    ScriptValues[ 9 ];
+		
+		-1,		// 1 const uint8  BrokenFlags;
+		-1,		// 1 const uint8  BrokenCount;
+		-1, -1,		// 2 const uint16 Deterioration;
+		-1, -1,		// 2 const uint16 AmmoPid;
+		-1, -1,		// 2 const uint16 AmmoCount;
+		-1, -1, -1, -1, // 4 const uint   LockerId;
+		-1, -1,		// 2 const uint16 LockerCondition;
+		-1, -1,		// 2 const uint16 LockerComplexity;
+		-1, -1, -1, -1,	// 4 const uint   HolodiskNumber;
+		-1, -1,		// 2 const uint16 RadioChannel;
+		-1, -1,		// 2 const uint16 RadioFlags;
+		-1,		// 1 const uint8  RadioBroadcastSend;
+		-1,		// 1 const uint8  RadioBroadcastRecv;
+		-1, -1,		// 2 const uint16 Charge;
+		-1, -1,		// 2 const int16  OffsetX;
+		-1, -1,		// 2 const int16  OffsetY;
+		-1, -1,		// 2 const int16  Dir;
+		-1, -1		// 2 const char   Reserved[ 2 ];
+		
+		//     -1, -1, 0, 0
+	};
+    // ITEM_DATA_MASK_CRITTER                                                                                          ITEM_DATA_MASK_CRITTER                                                                                               ITEM_DATA_MASK_CRITTER
+    ::array<int8> mask1 = {   0,  0,     -1,    0,      0,  0,  0,  0,   0,  0,  0,  0,    0,  0,   0,  0,   0,  0,   0,  0,   -1, -1, -1, -1,  -1,    -1,    -1,    -1,  -1, -1, -1, -1,   0, 0,     0, 0,     0,  0,  0,  0,   0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 0, 0 };
+    // ITEM_DATA_MASK_CRITTER_EXT                                                                                      ITEM_DATA_MASK_CRITTER_EXT                                                                                           ITEM_DATA_MASK_CRITTER_EXT
+    ::array<int8> mask2 = {   0,  0,     -1,   -1,      0,  0,  0,  0,   0,  0,  0,  0,    0,  0,   0,  0,   0,  0,   0,  0,   -1, -1, -1, -1,  -1,    -1,    -1,    -1,  -1, -1, -1, -1,   0, 0,     0, 0,    -1, -1, -1, -1,   0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0 };
+    // ITEM_DATA_MASK_CONTAINER                                                                                        ITEM_DATA_MASK_CONTAINER                                                                                             ITEM_DATA_MASK_CONTAINER
+    ::array<int8> mask3 = {  -1, -1,     -1,   -1,      0,  0,  0,  0,  -1, -1, -1, -1,    0,  0,   0,  0,   0,  0,   0,  0,   -1, -1, -1, -1,  -1,    -1,    -1,    -1,  -1, -1, -1, -1,   0, 0,     0, 0,    -1, -1, -1, -1,  -1, -1, -1, -1,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0 };
+    // ITEM_DATA_MASK_MAP                                                                                              ITEM_DATA_MASK_MAP                                                                                                   ITEM_DATA_MASK_MAP
+    ::array<int8> mask4 = {  -1, -1,     -1,   -1,     -1, -1, -1, -1,   0,  0,  0,  0,   -1, -1,  -1, -1,  -1, -1,  -1, -1,   -1, -1, -1, -1,  -1,    -1,    -1,    -1,  -1, -1, -1, -1,   0, 0,     0, 0,    -1,  -1,  -1,  -1,   0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0 };
+	/*
+	::SetItemDataMask(ITEM_DATA_MASK_CHOSEN,mask0);
+	::SetItemDataMask(ITEM_DATA_MASK_CRITTER,mask1);
+	::SetItemDataMask(ITEM_DATA_MASK_CRITTER_EXT,mask2);
+	::SetItemDataMask(ITEM_DATA_MASK_CONTAINER,mask3);
+	::SetItemDataMask(ITEM_DATA_MASK_MAP,mask4);*/
+	
+	// TabaK. Загрузка списка фракций
+	Fractions::LoadFractions();
+	
+	WorldmapInit();
+	CaravansInit();	
+	SetNoPvp();
+	// Game Events initialization
+	DeclareEvents();
+	CheckAllGameEvents();
+	
+	// Bulletin boards
+	StartMessenger();
+	
+	// TabaK. Счетчик статистики боя.
+	::SetParameterChangeBehaviour(TO_BATTLE, "combat@_SetBattleTimer");
+	
+	::SetParameterChangeBehaviour(ST_EXPERIENCE, "parameters@changedParam_Experience");
+	::SetParameterChangeBehaviour(ST_EXPERIENCE, "Fractions::changedParam_Experience");
+	::CreateTimeEvent(::__FullSecond+1,"Fractions::e_FractionOrder_Update", false);
+
+	
+	::SetParameterChangeBehaviour(ST_DIALOG_RESULT, "dialog@changedParam_DialogResult");
+	
+        // Состояние нуболокации в лог.
+	Log("Newbie location is Active: " + ::__NewbieLocationIsActive);	
+
+	// Статистика по перкам на сервере
+	::array<uint> perkGlobalStat;
+	if (!::GetAnyData("perk_global_stat", perkGlobalStat))
+	{
+		perkGlobalStat.resize(NO_QUEST_PERK_COUNT*2);
+		uint16 index=0;
+		for(uint i=0; i<NO_QUEST_PERK_COUNT; i++)
+		{
+			perkGlobalStat[index]=i+PERK_BEGIN;
+			perkGlobalStat[index+1]=0;
+			index+=2;
+		}
+		::SetAnyData("perk_global_stat", perkGlobalStat);
+	}
+	
+	::RestoreDatabase(); // rifleman17, восстановление последнего бекапа бд для аукциона);
+	SetAuctionLotCheckEvent(); // Запуск таймэвента на отмену лотов аукциона с истекшим сроком действия
+	SetupRadioDJQuest();// Квест радио диджея
+	CityGuard::LoadBags();
+	
+	if(GetVersionWorldSave(null)==0)
+		::__EventWorldGeneration.Raise( );
+	else CheckGlobalFarmLocation( );
+	return true;
+}
+
+bool MainCritterAttacked(::Critter@ cr, ::Critter@ attacker)
+{
+	if(cr.IsPlayer() || attacker.CityRole_IsGuard) return true; // Disable player helping
+
+	if(cr.IsNpc() && attacker.IsNpc() && cr.Stat[ST_TEAM_ID] == attacker.Stat[ST_TEAM_ID])
+		return true;
+	
+	if(cr.Stat[ST_ROLE_CITY]==CITY_NONE_PROTECT) 
+	{
+		NpcPlanes::AddAttackPlane(cr,0,attacker); // Answer on attack
+		return true;
+	}
+	
+	if( CityGuard::ProcessOfCrime( attacker, City::PenaltyListing::Attacked, 0, cr, null, true ) )
+		return true;
+
+	NpcPlanes::AddAttackPlane(cr,0,attacker); // Answer on attack
+	
+	::array<::Critter@> critters;
+	uint crlen=cr.GetCritters(true,FIND_LIFE_AND_KO|FIND_ONLY_NPC,critters);
+	
+	for(uint i=0;i<crlen;i++)
+	{
+		::Critter@ crit=critters[i];
+		if(validEngineObject(crit))
+		{
+			if(crit.CityRole_IsNotHelper) continue;
+			::NpcPlane@ plane=crit.GetCurPlane();
+			if(valid(plane) && plane.Type==AI_PLANE_ATTACK && plane.Attack_TargId==attacker.Id)
+			{
+				@critters[i] = null;
+				@crit = null;
+			}
+		}
+	}
+
+	int crHpProc=cr.Stat[ST_CURRENT_HP]*100/cr.Stat[ST_MAX_LIFE];
+	uint teamId=cr.Stat[ST_TEAM_ID], attackerTeamId=attacker.Stat[ST_TEAM_ID];
+	for(uint i=0; i<crlen; i++)
+	{
+		::Critter@ someCr=critters[i];
+		if(validEngineObject(someCr))
+		{
+			uint someCrTeamId=someCr.Stat[ST_TEAM_ID];
+			if(attackerTeamId==someCrTeamId) continue; // No attack temmate
+
+			TeamsTable::Relationship teamParity=TeamsTable::IsParity(someCrTeamId,teamId); // From -> To
+			switch(teamParity)
+			{
+				case TeamsTable::Relationship::Ignore: continue;
+				case TeamsTable::Relationship::Anyway: break;
+				case TeamsTable::Relationship::NotBusy: if(someCr.IsCurPlane(AI_PLANE_ATTACK)) continue; break;
+				case TeamsTable::Relationship::HpLess10: if(crHpProc>=10) continue; break;
+				case TeamsTable::Relationship::HpLess30: if(crHpProc>=30) continue; break;
+				case TeamsTable::Relationship::HpLess50: if(crHpProc>=50) continue; break;
+				case TeamsTable::Relationship::IfDead: if(not cr.IsDead()) continue; break;
+				case TeamsTable::Relationship::GoodPerson: if(attacker.IsNpc() || cr.Stat[ST_CHARISMA]<5 || cr.Stat[ST_KARMA]<0) continue; break;
+				default: continue;
+			}
+
+			NpcPlanes::AddAttackPlane(someCr,0,attacker);
+		}
+	}
+	return true;
+}
+
+bool MainCritterIdle( ::Critter@ cr )
+{
+	if( cr.Cond == COND_DEAD && cr.Stat[ ST_REPLICATION_TIME ] >= 0 && cr.Timeout[ TO_REPLICATION ] == 0 ) 
+	{
+		critter_idle_dead( cr );
+	}
+	else if( cr.IsNpc() )
+	{
+		if( cr.Patrol[PL_GRUP_NUMBER] != 0 )
+		{
+			GrupPatrol::_Idle( cr );
+		}
+	}
+	// Healing
+	
+	if( cr.Timeout[ TO_HEALING ] == 0 )
+	{
+		if ( cr.Cond != COND_DEAD && cr.Mode[MODE_NO_HEAL] == 0 && cr.Timeout[TO_BATTLE] == 0 && cr.Stat[ ST_CURRENT_HP ] < cr.Stat[ ST_MAX_LIFE ] )
+		{
+			cr.StatBase[ ST_CURRENT_HP ] += 1 + ( cr.Stat[ST_HEALING_RATE] * 2/3) + (cr.Perk[PE_VAMPIRE_REGENERATION] > 0 ? 5 : 0); 
+			
+			if(cr.Stat[ST_CURRENT_HP] > cr.Stat[ ST_MAX_LIFE ]) 
+			{
+				cr.StatBase[ ST_CURRENT_HP ] = cr.Stat[ ST_MAX_LIFE ];
+			}
+		}
+		cr.TimeoutBase[ TO_HEALING ] = ::__FullSecond + ::__TimeMultiplier * 60 - cr.Stat[ST_HEALING_RATE];
+	}
+	return true;
+}

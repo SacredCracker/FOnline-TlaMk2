@@ -1,0 +1,2359 @@
+
+// FOS Client
+
+// Author: cvet
+// Client GUI
+
+#define CLIENT_GUI
+#define IS_COLLISION    # ( x1, y1, x2, y2, w, h )( ( x1 ) >= ( x2 ) && ( x1 ) <= ( x2 ) + ( w ) && ( y1 ) >= ( y2 ) && ( y1 ) <= ( y2 ) + ( h ) )
+
+const bool IsCollision( int x1, int y1, int x1 )
+{
+	return 
+}
+
+GUIScreen@[] AllScreens;
+GUIScreen@[] ActiveScreens;
+KeybData@[] KbData;
+
+GUIScreen@  MouseMoveScreen = null;
+
+IGUIScreenOpt@  LastScreenOpt = null;
+IGUIElementOpt@ LastElementOpt = null;
+
+class KeybData
+{
+    KeybData( int8 r, int8 rs, int8 e, int8 es )
+    {
+        Char.resize( 4 );
+        Char[ 0 ] = r;
+        Char[ 1 ] = rs;
+        Char[ 2 ] = e;
+        Char[ 3 ] = es;
+		
+		Pressed = false;
+		Jamming = false;
+    }
+	
+    uint8[] Char;     // Russian, Rissian Shift, English, English Shift
+	bool Pressed;
+	bool Jamming;
+}
+
+class Listing
+{
+	IGUIListingElement@[]@ 	List;
+	
+    int			Width;	
+    int			Height;
+	
+	int 			Shift;
+	int 			ShiftLine;
+	uint 			ShiftStep;
+	int 			Offset;
+	
+	uint			Color;
+	uint			ColorFocus;
+	uint			ColorDown;
+	
+	uint 			CountLine;
+	
+	int			HashPosX;
+	int			HashPosY;
+	
+	int 			ScreenIndex;
+	
+	IGUIDragAndDropOpt@ DadOption;
+	IGUI::ListingElementOpt@ Option;
+	
+	Listing( IGUIListingElement@[]@ list, int w, int h, int screenIndex )
+	{
+		ScreenIndex = screenIndex;
+		Width = w;
+		Height = h;
+		Shift = 0;
+		ShiftLine = 0;
+		Offset = 5;
+		ShiftStep = 1;
+		SetColor( COLOR_GREEN, COLOR_LEMON, COLOR_WHITE );
+		SetOption( null );
+		opAssign( @list );
+	}
+	
+	void SetColor( uint color, uint focus, uint down )
+	{
+		Color = color;
+		ColorFocus = focus;
+		ColorDown = down;
+	}
+	
+	void SetOption( IGUI::ListingElementOpt@ opt ){ @Option = @opt; }
+	
+	uint NextLineIndex( uint beginIndex )
+	{
+		int w = 0;
+		IGUIListingElement@ element = null;
+		for( uint index = beginIndex, len = List.length(); index < len; index++ )
+		{			
+			@ element = @List[index];
+			if( @element !is null )
+			{			
+				if( w + Option.Width[element] > Width )
+					return index;
+					
+				w += Option.Width[element] + Offset;
+				
+				if( beginIndex != index && w > Width )
+					return index;
+			}
+		}
+		return beginIndex;
+	}
+	
+	uint ConsiderLine( )
+	{
+		uint ret = 0, beginIndex, lineIndex = 0;
+		do
+		{
+			beginIndex = lineIndex;
+			lineIndex = NextLineIndex( beginIndex );
+			ret++;
+		}
+		while( lineIndex != beginIndex );
+		return ret;
+	}
+	
+	uint CountDraw( uint beginIndex )
+	{
+		uint ret = 0;
+		
+		int h = 0, w = 0;
+		IGUIListingElement@ element = null;
+		
+		for( uint index = beginIndex, len = List.length(); index < len; index++ )
+		{
+			@ element = @List[index];
+			if( @element !is null )
+			{
+				if( w + Option.Width[element] > Width )
+				{
+					h += Option.Height[element] + Offset;
+					w = 0;
+				}
+				
+				if( Option.Height[element] + h > Height )
+					break;
+				
+				ret++;
+				
+				w += Option.Width[element] + Offset;
+			}			
+		}
+		return ret;
+	}
+	
+	uint LastDrawIndex( uint beginIndex )
+	{
+		uint ret = 0;
+		int h = 0, w = 0;
+		IGUIListingElement@ element = null;
+		
+		for( uint index = beginIndex, len = List.length(); index < len; index++ )
+		{
+			@ element = @List[index];
+			if( @element !is null )
+			{
+				if( w + Option.Width[element] > Width )
+				{
+					h += Option.Height[element] + Offset;
+					w = 0;
+				}
+				
+				if( Option.Height[element] + h > Height )
+					break;
+				
+				ret = index;
+				
+				w += Option.Width[element] + Offset;
+			}			
+		}
+		return ret;
+	}
+	
+	void SetShift( bool absolute, int shift )
+	{
+	
+		Shift = 0;
+		if( !absolute )
+			shift = ShiftLine + shift;
+		
+		ShiftLine = 0;
+		
+		if( shift <= 0 )
+			return;
+		
+		const uint lastIndex = List.length() - 1;
+		while( shift-- != 0 && LastDrawIndex( Shift ) != lastIndex )
+		{
+			Shift = NextLineIndex( Shift );
+			ShiftLine++;
+		}
+	}
+	
+	void MouseClickUp( int click, int x, int y )
+	{
+		if( @Option is null || GUI_GetMonitorScreenIndex( x, y ) != ScreenIndex || GUI_GetActiveScreen() != ScreenIndex )
+			return;
+		if( @CurrentDAD !is null )
+		{
+			if( click == MOUSE_CLICK_LEFT )
+			{
+				if( @DadOption !is null )
+				{
+					@CurrentDAD = DadOption.Drop( @CurrentDAD );
+					if( @CurrentDAD !is null )
+					{
+						IGUIListingElement@ elem = cast<IGUIListingElement>(@CurrentDAD); 
+						if( @elem !is null )
+							List.insertLast( @elem );
+					}
+				}
+				@CurrentDAD = null;
+			}
+			return;
+		}
+		
+		int h = 0, w = 0;
+		IGUIListingElement@ element = null;
+		
+		for( uint index = Shift, len = List.length(); index < len; index++ )
+		{
+			@ element = @List[index];
+			if( @element !is null )
+			{
+				if( w + Option.Width[element] > Width )
+				{
+					h += Option.Height[element] + Offset;
+					w = 0;
+				}
+				
+				if( Option.Height[element] + h > Height )
+					break;				
+				
+				if( IS_COLLISION( __MouseX, __MouseY, HashPosX + w, HashPosY + h, Option.Width[element], Option.Height[element] ) )
+				{
+					element.ClickUp( click );
+					break;
+				}
+				
+				w += Option.Width[element] + Offset;
+			}			
+		}
+	}
+	
+	void MouseClickDown( int click, int x, int y )
+	{
+		const bool isCheckCollision = ( GUI_GetMonitorScreenIndex( x, y ) == ScreenIndex && GUI_GetActiveScreen() == ScreenIndex && @CurrentDAD is null );
+		if( !isCheckCollision )
+			return;
+			
+		int h = 0, w = 0;
+		IGUIListingElement@ element = null;
+		
+		for( uint index = Shift, len = List.length(); index < len; index++ )
+		{
+			@ element = @List[index];
+			if( @element !is null )
+			{
+				if( w + Option.Width[element] > Width )
+				{
+					h += Option.Height[element] + Offset;
+					w = 0;
+				}
+				
+				if( Option.Height[element] + h > Height )
+					break;
+				
+				if( IS_COLLISION( __MouseX, __MouseY, HashPosX + w, HashPosY + h, Option.Width[element], Option.Height[element] ) )
+				{
+					element.ClickDown( click );
+					break;
+				}
+				
+				w += Option.Width[element] + Offset;
+			}			
+		}
+	}
+	
+	void Draw( int elementX, int elementY, bool isMouseDown )
+	{
+		HashPosX = elementX;
+		HashPosY = elementY;
+		if( @Option is null )
+			return;
+			
+		int h = 0, w = 0;
+		uint color;
+		const bool isCheckCollision = ( GUI_GetMouseScreenIndex( ) == ScreenIndex && GUI_GetActiveScreen() == ScreenIndex && @CurrentDAD is null );
+		IGUIListingElement@ element = null;
+		
+		for( uint index = Shift, len = List.length(); index < len; index++ )
+		{
+			@ element = @List[index];
+			if( @element !is null )
+			{
+				if( w + Option.Width[element] > Width )
+				{
+					h += Option.Height[element] + Offset;
+					w = 0;
+				}
+				
+				if( Option.Height[element] + h > Height )
+					break;
+				
+				if( isCheckCollision && IS_COLLISION( __MouseX, __MouseY, HashPosX + w, HashPosY + h, Option.Width[element], Option.Height[element] ) )
+					color = isMouseDown ? ColorDown : ColorFocus;
+				else color = Color;
+				
+				// Use
+				element.Draw( HashPosX + w, HashPosY + h, Option.Width[element], Option.Height[element], color );
+				//
+				
+				w += Option.Width[element] + Offset;
+			}			
+		}
+	}
+	
+	IGUIListingElement@[]@ opAssign( IGUIListingElement@[]@ list )
+	{ 
+		@List = @list;
+		//CountLine = ConsiderLine();
+		return @List; 
+	}
+}
+
+class GUIElement : IGUIElementOpt
+{
+    GUIElement( string@ sprName, int path, int screenIndex )
+    {
+        if( @sprName != null )
+            @Surface = Sprite( sprName, path );
+        DefaultPath = path;
+		ScreenIndex = screenIndex;
+        Init();
+    }
+	
+    GUIElement( Sprite@ spr, int screenIndex  )
+    {
+        @Surface = spr;
+        if( @spr != null )
+			DefaultPath = spr.Path;
+		else DefaultPath = PT_ART_INTRFACE;
+		ScreenIndex = screenIndex;
+		Init();
+    }
+	
+	void Init( )
+	{
+	    PosX = 0;
+        PosY = 0;
+        Width = 0;
+        Height = 0;
+        SpriteWidth = 0;
+        SpriteHeight = 0;
+        IsTextInput = false;
+        IgnoreFocus = false;
+        DigitsOnly = false;
+        InputMaxLen = 0;
+        LastInput = 0;
+        TextColorFocused = 0;
+        TextColorDown = 0;
+        TextMultiColor;
+        IsFocused = false;
+        listBoxFocused = true;
+        txtFrameX = 0;
+        txtFrameY = 0;
+        MousePressed.resize( MOUSE_CLICK_EXT4 + 1 );
+        for( uint i = 0, j = MousePressed.length(); i < j; i++ )
+            MousePressed[ i ] = false;
+        SwitchEnabled = false;
+        isHidden = false;
+        clickable = true;
+        scale = false;
+        isScrollableText = false;
+        MultiSpriteFrameDX = 0;
+        MultiSpriteFrameDY = 0;
+        isScrollBar = false;
+        sbInitialized = false;
+        sbReversed = false;
+        isListBox = false;
+        autoCursor = false;
+        isAutoCursor = false;
+        NoFocusedKeyPress = false;
+        frameId = -1;
+        firstFrame = 0;
+        lastFrame = 0;
+        textOffset = 0;
+        SoundClick = "";
+        @InitCallback = null;
+        @DrawCallback = null;
+        @MouseClickCallback = null;
+        @MouseDownCallback = null;
+        @MouseMoveCallback = null;
+        @KeyPressCallback = null;
+		@ListActiveCallback = null;
+        GroupIndex = 0;
+	}
+
+    void Draw( int screenX, int screenY )
+    {
+        if( isHidden )
+            return;
+		SurfaceCheck();
+        scrX = screenX;
+        scrY = screenY;
+        int16 dx = MultiSpriteFrameDX,
+              dy = MultiSpriteFrameDY;
+        uint  index = 0;
+
+        for( uint i = 0, iMax = MultiSprite.length(); i < iMax; i++ )
+        {
+            MultiSprite[ i ].Draw( screenX + PosX + dx, screenY + PosY + dy, MultiWidth, MultiHeight, MultiColor );
+            // Смещение
+            index++;
+            dx += MultiSpriteDX + MultiWidth;
+            if( index == MultiSpriteCountOfLine )
+            {
+                index = 0;
+                dy += MultiSpriteDY + MultiHeight;
+                dx = MultiSpriteFrameDX;
+            }
+        }
+
+        index = 0;
+        dx = 0;
+        dy = 0;
+        for( uint i = 0, iMax = multiText.length(); i < iMax; i++ )
+        {
+            DrawText( multiText[ i ], screenX + PosX + dx + MultiTextStartDx, screenY + PosY + dy + MultiTextStartDy, 200, 200, MultiTextColor, MultiTextFont, MultiTextFlag );
+
+            // Смещение
+            index++;
+            dx += MultiTextDX;
+            if( index == MultiTextCountOfLine )
+            {
+                index = 0;
+                dy += MultiTextDY;
+                dx = 0;
+            }
+        }
+
+        if( Surface.Id != 0 )
+        {
+            if( SpriteWidth == 0 || SpriteHeight == 0 )
+                DrawSprite( Surface.Id, -1, screenX + PosX, screenY + PosY, Surface.Color );
+            else
+                DrawSprite( Surface.Id, -1, screenX + PosX, screenY + PosY, SpriteWidth, SpriteHeight, scale, scale, Surface.Color );
+        }
+
+        bool isDown = ( ( MousePressed[ MOUSE_CLICK_LEFT ] || SwitchEnabled ) && DownSpr.Id != 0 );
+        if( isDown )
+            DrawSprite( DownSpr.Id, -1, screenX + PosX, screenY + PosY, DownSpr.Color );
+
+        if( isScrollableText && !isListBox )
+        {
+            text = "";
+            uint lines;
+            /*if((scrollText.length()-textOffset)>maxTextLines) lines=maxTextLines+textOffset;
+               else lines=scrollText.length();*/
+            // TabaK. Перепилил во избежание ошибки с несуществующим индексом.
+            for( uint n = textOffset; n < uint( maxTextLines + textOffset ) && n < scrollText.length(); n++ )
+                text += scrollText[ n ] + "\n";
+        }
+
+        if( isScrollBar && sbInitialized )
+        {
+            int curPos = 0;
+            if( sbReversed )
+                curPos = ( sbRange - sbCurrentValue ) * sbStep;
+            else
+                curPos = sbCurrentValue * sbStep;
+            DrawSprite( Scroll.Id, -1, screenX + PosX, ( screenY + PosY + curPos ) - Scroll.Height / 2, Scroll.Color );
+        }
+        if( !isListBox )
+        {
+            // Width=1;
+            if( text != "" )
+            {
+                string renderText = text;
+                if( IsTextInput && font == FONT_BIG_NUM )
+                {
+                    if( LastInput + REAL_MS( 150 ) > __FullSecond )
+                        renderText[ renderText.length() - 1 ] = ';';
+                    else if( LastInput + REAL_MS( 300 ) > __FullSecond && LastInput + REAL_MS( 450 ) < __FullSecond )
+                        renderText[ renderText.length() - 1 ] = ':';
+                }
+                if( Height != 0 || Width != 0 )
+                {
+                    DrawText( renderText, screenX + PosX + txtFrameX, screenY + PosY + txtFrameY,
+                              Width != 0 ? Width - txtFrameX : __ScreenWidth - txtFrameX, Height != 0 ? Height - txtFrameY : ( __ScreenHeight - txtFrameY ) - ( isDown ? 2 : 0 ),
+                              IsTextInput && IsFocused ? TextColorFocused : ( isDown && TextColorDown != 0 ? TextColorDown : TextColor ), font, TextFlags );
+                }
+                else
+                {
+                    DrawText( renderText, screenX + PosX + txtFrameX, screenY + PosY + txtFrameY,
+                              Surface.Width != 0 ? Surface.Width - txtFrameX : __ScreenWidth - txtFrameX, ( Surface.Height != 0 ? Surface.Height - txtFrameY : __ScreenHeight - txtFrameY ) - ( isDown ? 2 : 0 ),
+                              IsTextInput && IsFocused ? TextColorFocused : ( isDown && TextColorDown != 0 ? TextColorDown : TextColor ), font, TextFlags );
+                }
+            }
+        }
+        else
+        {
+            if( scrollText.length() > 0 )
+            {
+                uint8 m = 0;
+                if( textOffset + maxTextLines <= int( scrollText.length() ) )
+                    m = uint( maxTextLines - 1 );
+                else
+                    m = uint( maxTextLines - textOffset );
+                uint color;
+                for( uint n = 0; n <= m; n++ )
+                {
+                    if( lbIndex >= 0 && lbIndex == textOffset + n && listBoxFocused )
+                    {
+                        if( MousePressed[ MOUSE_CLICK_LEFT ] )
+                            color = TextColorDown;
+                        else
+                            color = TextColorFocused;
+                    }
+                    else if( TextMultiColor.length() > uint( n + textOffset ) )
+                        color = TextMultiColor[ n + textOffset ];
+                    else
+                        color = TextColor;
+                    if( int( scrollText.length() ) - 1 >= n + textOffset )
+                        DrawText( scrollText[ n + textOffset ], screenX + PosX + txtFrameX, screenY + PosY + n * fontHeight + txtFrameY, Surface.Width != 0 ? Surface.Width - txtFrameX : __ScreenWidth - txtFrameX,
+                                  Surface.Height != 0 ? Surface.Height - txtFrameY : __ScreenHeight - txtFrameY, color, font, TextFlags );
+                }
+            }
+        }
+
+		if( @RefListing !is null )
+			RefListing.Draw( screenX + PosX, screenY + PosY, MousePressed[ MOUSE_CLICK_LEFT ] );
+        
+		if( not (@DrawCallback is null) )
+            DrawCallback.OnDraw();
+        if( not (@DrawPosCallback is null) )
+            DrawPosCallback.OnDraw( screenX, screenY, PosX, PosY );
+    }
+
+    bool MouseDown( int click )
+    {
+        if( isHidden || !clickable )
+            return false;
+        if( SoundClick != "" && click == MOUSE_CLICK_LEFT )
+            PlaySound( SoundClick );
+		if( isScrollableText )
+		{
+			if( click == MOUSE_CLICK_WHEEL_DOWN )
+			{	
+				if( maxTextLines + textOffset < int( scrollText.length() ) )
+					textOffset += 1;
+			}
+			else if( click == MOUSE_CLICK_WHEEL_UP && textOffset > 0 )
+				textOffset -= 1;
+		}
+        if( click == MOUSE_CLICK_LEFT && isScrollBar && sbInitialized && sbRange > 0 )
+        {
+			SurfaceCheck();
+            if( mouseY < 0 )
+                sbCurrentValue = sbReversed ? sbRange : 0;
+            else if( mouseY > Surface.Height && sbReversed )
+                sbCurrentValue = 0;
+            else
+            {
+                float x = float(mouseY) / sbStep;
+                if( fraction( x ) * 10 > 5 )
+                    sbCurrentValue = sbReversed ? uint( floor( x ) ) : uint( ceil( x ) );
+                else
+                    sbCurrentValue = sbReversed ? uint( ceil( x ) ) : uint( floor( x ) );
+                if( sbReversed )
+                    sbCurrentValue = sbRange - sbCurrentValue;
+            }
+            if( sbCurrentValue > sbRange )
+                sbCurrentValue = sbRange;
+        }
+		
+		if( @RefListing !is null )
+		{
+			if( MOUSE_CLICK_WHEEL_DOWN == click )
+				RefListing.SetShift( false, RefListing.ShiftStep );
+			else if( MOUSE_CLICK_WHEEL_UP == click )
+				RefListing.SetShift( false, 0 - RefListing.ShiftStep );
+			
+			RefListing.MouseClickDown( click, __MouseX, __MouseY );
+		}
+		
+        if( not (@MouseDownCallback is null) )
+            MouseDownCallback.OnMouseDown( click );
+
+        if( DownSpr.Id != 0 || not (@MouseClickCallback is null) || IsTextInput || isScrollBar || @RefListing !is null || not (@MouseMoveCallback is null) || isListBox )
+        {
+            MousePressed[ click ] = true;
+            return true;
+        }
+        return false;
+    }
+
+    void MouseUp( int click, bool isCollision )
+    {
+        if( isHidden || !clickable )
+            return;
+			
+        if( MousePressed[ click ] )
+        {
+			if( isCollision )
+			{
+				if( @MouseClickCallback !is null )
+					MouseClickCallback.OnMouseClick( click );
+				if( isListBox && fontHeight > 0 && @ListActiveCallback !is null && lbIndex >= 0 )
+				{
+					if( ( mouseY - txtFrameY ) / fontHeight < maxTextLines && mouseY >= 0 + txtFrameY && mouseX >= 0 + txtFrameX && mouseX <= Surface.Width - txtFrameX )
+					{
+						lbIndex = ( mouseY - txtFrameY ) / fontHeight + textOffset;
+					}
+					else
+						lbIndex = -1;
+					if( scrollText.length() > uint( lbIndex ) )
+						ListActiveCallback.OnListActive( lbIndex, @scrollText[lbIndex], click );
+				}	
+				
+				if( @RefListing !is null )
+					RefListing.MouseClickUp( click, __MouseX, __MouseY );
+			}
+			else if( not (@MouseDropCallback is null) )
+				MouseDropCallback.OnMouseDrop( click );
+			MousePressed[ click ] = false;
+        }
+		else
+			if( isCollision && @CurrentDAD !is null && click == MOUSE_CLICK_LEFT && @RefListing !is null )
+				RefListing.MouseClickUp( click,  __MouseX, __MouseY );
+    }
+
+    void MouseMove( int x, int y )
+    {
+        if( isHidden )
+            return;
+        mouseX = x - scrX - PosX;
+        mouseY = y - scrY - PosY;
+		SurfaceCheck();
+        if( autoCursor )
+        {
+            if( mouseX > 0 && mouseY > 0 && mouseX < Surface.Width && mouseY < Surface.Height && !isAutoCursor && GetCurrentCursor() != setCursor )
+            {
+                lastCursor = GetCurrentCursor();
+                ChangeCursor( setCursor );
+                isAutoCursor = true;
+            }
+            if( mouseX < 0 || mouseY < 0 || mouseX > Surface.Width || mouseY > Surface.Height )
+            {
+                if( isAutoCursor )
+                {
+                    isAutoCursor = false;
+                    ChangeCursor( lastCursor );
+                }
+            }
+        }
+        if( MousePressed[ MOUSE_CLICK_LEFT ] && isScrollBar && sbRange > 0 )
+        {
+            if( mouseY < 0 )
+                sbCurrentValue = sbReversed ? sbRange : 0;
+            else if( mouseY > Surface.Height && sbReversed )
+                sbCurrentValue = 0;
+            else
+            {
+                float x = float(mouseY) / sbStep;
+                if( fraction( x ) * 10 > 5 )
+                    sbCurrentValue = sbReversed ? uint( floor( x ) ) : uint( ceil( x ) );
+                else
+                    sbCurrentValue = sbReversed ? uint( ceil( x ) ) : uint( floor( x ) );
+                if( sbReversed )
+                    sbCurrentValue = sbRange - sbCurrentValue;
+            }
+            if( sbCurrentValue > sbRange )
+                sbCurrentValue = sbRange;
+        }
+        if( isListBox && fontHeight > 0 )
+        {
+            if( ( mouseY - txtFrameY ) / fontHeight < maxTextLines && mouseY >= 0 + txtFrameY && mouseX >= 0 + txtFrameX && mouseX <= Surface.Width - txtFrameX )
+            {
+                lbIndex = ( mouseY - txtFrameY ) / fontHeight + textOffset;
+            }
+            else
+                lbIndex = -1;
+        }
+        if( not (@MouseMoveCallback is null) && ( ( mouseX > 0 && mouseY > 0 && mouseX < Surface.Width && mouseY < Surface.Height ) ||  isScrollBar ) )
+            MouseMoveCallback.OnMouseMove( MousePressed[ MOUSE_CLICK_LEFT ] );
+    }
+
+    bool KeyPress( uint8 key )
+    {
+        if( isHidden )
+            return false;
+        uint8 letter = 0;
+        uint  startLength = text.length();
+        bool  result = ProcessKey( key, text, letter );
+        if( text.length() > InputMaxLen )
+            text.resize( InputMaxLen );
+        if( DigitsOnly && text.length() > startLength )
+        {
+            if( letter > 0x39 || letter < 0x30 )
+                text.resize( text.length() - 1 );
+            else
+                LastInput = __FullSecond;
+        }
+        if( not (@KeyPressCallback is null) )
+            KeyPressCallback.OnKeyPress( key, letter );
+        return result;
+    }
+
+    void InputLost()
+    {
+        for( uint i = 0, j = MousePressed.length(); i < j; i++ )
+            MousePressed[ i ] = false;
+    }
+
+    GUIElement@ GetNewInstance()
+    {
+        GUIElement newElement = this;
+        return @newElement;
+    }
+
+    // Options
+    IGUIElementOpt@ CallbackInit( IGUI::ElementCallbackInit@ callback ) { @InitCallback = callback;
+                                                                        return this; }
+    IGUIElementOpt@ CallbackDraw( IGUI::ElementCallbackDraw@ callback ) { @DrawCallback = callback;
+                                                                        return this; }
+    IGUIElementOpt@ CallbackDrawPos( IGUI::ElementCallbackDrawPos@ callback ) { @DrawPosCallback = callback;
+                                                                              return this; }
+    IGUIElementOpt@ CallbackMouseClick( IGUI::ElementCallbackMouseClick@ callback ) { @MouseClickCallback = callback;
+                                                                                    return this; }
+    IGUIElementOpt@ CallbackMouseDown( IGUI::ElementCallbackMouseDown@ callback ) { @MouseDownCallback = callback;
+                                                                                  return this; }
+    IGUIElementOpt@ CallbackMouseDrop( IGUI::ElementCallbackMouseDrop@ callback ) { @MouseDropCallback = callback;
+                                                                                  return this; }
+    IGUIElementOpt@ CallbackMouseMove( IGUI::ElementCallbackMouseMove@ callback ) { @MouseMoveCallback = callback;
+                                                                                  return this; }
+    IGUIElementOpt@ CallbackKeyPress( IGUI::ElementCallbackKeyPress@ callback ) { @KeyPressCallback = callback;
+                                                                                return this; }
+	IGUIElementOpt@ CallbackListActive( IGUI::ElementCallbackCallbackListActive@ callback ){ @ListActiveCallback = @callback;
+																				return this; }
+	
+    IGUIElementOpt@ Position( int x, int y )
+    {
+        PosX = x;
+        PosY = y;
+        return this;
+    }
+
+	IGUIElementOpt@ Position( int[]& pos )
+	{
+		if( pos.length() == 4 )
+			return @Position( pos[0], pos[1], pos[2], pos[3] );
+		else return @Position( pos[0], pos[1] );
+	}
+	
+	
+    IGUIElementOpt@ Position( int x, int y, int w, int h )
+    {
+        PosX = x;
+        PosY = y;
+        Width = w;
+        Height = h;
+		SurfaceCheck();
+        Surface.Width = w;
+        Surface.Height = h;
+        SpriteWidth = w;
+        SpriteHeight = h;
+        return this;
+    }
+
+    IGUIElementOpt@ Position( string& iniKey )
+    {
+        PosX = 0;
+        PosY = 0;
+        Width = 0;
+        Height = 0;
+		SurfaceCheck();
+        Surface.Width = 0;
+        Surface.Height = 0;
+
+        // Parse four values from ini option
+        string@ str = GetIfaceIniStr( iniKey );
+        if( @str == null || str == "" )
+            return this;
+
+        string@[] @ valuesStr = splitEx( str, " " );
+        if( valuesStr.length() != 4 )
+            return this;
+
+        int[] values( 4 );
+        for( int i = 0; i < 4; i++ )
+            if( not SafeStrToInt( valuesStr[ i ], values[ i ] ) )
+                return this;
+
+        PosX = values[ 0 ];
+        PosY = values[ 1 ];
+		SurfaceCheck();
+        Surface.Width = values[ 2 ] - values[ 0 ] + 1;
+        Surface.Height = values[ 3 ] - values[ 1 ] + 1;
+        Width = values[ 2 ] - values[ 0 ] + 1;
+        Height = values[ 3 ] - values[ 1 ] + 1;
+        SpriteWidth = Width;
+        SpriteHeight = Height;
+        return this;
+    }
+
+    IGUIElementOpt@ DownPic( string@ sprName )
+    {
+        if( @sprName != null )
+            DownSpr.Load( sprName, DefaultPath );
+        else
+            DownSpr.Id = 0;
+
+		SurfaceCheck();
+        if( DownSpr.Id != 0 && Surface.Width == 0 && Surface.Height == 0 )
+        {
+            Surface.Width = DownSpr.Width;
+            Surface.Height = DownSpr.Height;
+        }
+        return this;
+    }
+
+    IGUIElementOpt@ Text( string@ t, int f, uint color, uint downColor, int flags )
+    {
+        if( @text is null )
+            text = "";
+        else
+            text = t;
+        font = f;
+        TextColor = color;
+        if( !isListBox )
+            TextColorDown = downColor;
+        TextFlags = flags;
+        int w = 0;
+        int h = 0;
+        int lines = 0;
+        GetTextInfo( "TEST", 200, 200, font, flags, w, h, lines );
+        fontHeight = h + 1;
+		SurfaceCheck();
+        maxTextLines = ( Surface.Height + 1 - txtFrameY * 2 ) / fontHeight;
+        if( isScrollableText )
+        {
+            scrollText = splitEx( text, "\n" );
+            if( scrollText.last().length() < 2 )
+                scrollText.removeLast();
+        }
+        return this;
+    }
+
+    IGUIElementOpt@ Text( string@ t, int f, uint color, uint[] multicolor, uint downColor, int flags )
+    {
+        if( @text is null )
+            text = "";
+        else
+            text = t;
+        font = f;
+        TextColor = color;
+        TextMultiColor = multicolor;
+        if( !isListBox )
+            TextColorDown = downColor;
+        TextFlags = flags;
+        int w = 0;
+        int h = 0;
+        int lines = 0;
+        GetTextInfo( "TEST", 200, 200, font, flags, w, h, lines );
+        fontHeight = h + 1;
+		SurfaceCheck();
+        maxTextLines = ( Surface.Height + 1 - txtFrameY * 2 ) / fontHeight;
+        if( isScrollableText )
+        {
+            scrollText = splitEx( text, "\n" );
+            if( scrollText.last().length() < 2 )
+                scrollText.removeLast();
+        }
+        return this;
+    }
+
+    IGUIElementOpt@ TextInput( bool enabled, uint maxLen, uint colorFocused )
+    {
+        IsTextInput = enabled;
+        InputMaxLen = maxLen;
+        TextColorFocused = colorFocused;
+        return this;
+    }
+
+    IGUIElementOpt@ Switch( bool enabled )
+    {
+        SwitchEnabled = enabled;
+        return this;
+    }
+
+    IGUIElementOpt@ ToHide( bool hide )
+    {
+        isHidden = hide;
+        if( isAutoCursor && hide )
+        {
+            isAutoCursor = false;
+            ChangeCursor( lastCursor );
+        }
+        return this;
+    }
+
+    IGUIElementOpt@ ScrollableText( bool scrollable )
+    {
+        isScrollableText = scrollable;
+        return this;
+    }
+
+    IGUIElementOpt@ SetScroll( bool add, int val )
+    {
+        if( isScrollableText )
+        {
+            if( add && maxTextLines + textOffset + val < int(scrollText.length() + 1) && textOffset + val >= 0 )
+                textOffset += val;
+            if( !add && val >= 0 && maxTextLines + val < int(scrollText.length() + 1) )
+                textOffset = val;
+        }
+        return this;
+    }
+
+    IGUIElementOpt@ SBSetRange( uint range )
+    {
+        if( range > 0 )
+        {
+            sbRange = range;
+			SurfaceCheck();
+            sbStep = float(Surface.Height) / range;
+            sbCurrentValue = 0;
+            sbInitialized = true;
+        }
+        return this;
+    }
+
+    IGUIElementOpt@ SBScrollPic( string@ sprName )
+    {
+        Scroll.Load( sprName, DefaultPath );
+		SurfaceCheck();
+        Scroll.Width = Surface.Width;
+        return this;
+    }
+
+    IGUIElementOpt@ SBSetValue( uint val )
+    {
+        if( sbInitialized )
+            sbCurrentValue = val;
+        return this;
+    }
+
+    IGUIElementOpt@ IsScrollBar( bool scroll )
+    {
+        isScrollBar = scroll;
+        return this;
+    }
+
+    IGUIElementOpt@ IsListBox( bool listbox, uint highlight, uint down )
+    {
+        isListBox = listbox;
+        TextColorFocused = highlight;
+        TextColorDown = down;
+        return this;
+    }
+
+    IGUIElementOpt@ ListBoxFocused( bool focused )
+    {
+        listBoxFocused = focused;
+        return this;
+    }
+
+    IGUIElementOpt@ List( string@[] @ list )
+    {
+        font = FONT_FALLOUT;
+        TextFlags = FT_ALIGN | FT_UPPER;
+        fontHeight = 10;
+		SurfaceCheck();
+        maxTextLines = ( Surface.Height + 1 - txtFrameY * 2 ) / fontHeight;
+        scrollText = list;
+        return this;
+    }
+
+    IGUIElementOpt@ Font( int font, uint color )
+    {
+        font = font;
+        TextColor = color;
+        int w = 0;
+        int h = 0;
+        int lines = 0;
+        GetTextInfo( "TEST", 200, 200, font, TextFlags, w, h, lines );
+        fontHeight = h + 1;
+		SurfaceCheck();
+        maxTextLines = ( Surface.Height + 1 - txtFrameY * 2 ) / fontHeight;
+        return this;
+    }
+
+    IGUIElementOpt@ TextFrame( int8 x, int8 y )
+    {
+        txtFrameX = x;
+        txtFrameY = y;
+        if( isScrollableText || isListBox )
+        {
+            if( fontHeight > 0 )
+			{
+				SurfaceCheck();
+                maxTextLines = ( Surface.Height + 1 - txtFrameY * 2 ) / fontHeight;
+			}
+        }
+        return this;
+    }
+
+    IGUIElementOpt@ MultiText( string[] texts, int16 startDx, int16 startDy, uint16 dX, uint16 dY, uint8 countOfLine, int font, uint color, int flags )
+    {
+        MultiTextStartDx = startDx;
+        MultiTextStartDy = startDy;
+        MultiTextDX = dX;
+        MultiTextDY = dY;
+        MultiTextCountOfLine = countOfLine;
+        MultiTextFont = font;
+        MultiTextColor = color;
+        MultiTextFlag = flags;
+
+        uint16 textCount = texts.length();
+        multiText = texts;
+        MultiTextCountOfLine = countOfLine;
+        return this;
+    }
+
+    IGUIElementOpt@ MultiPicture( uint[] hashs,      uint8 dir, uint16 height, uint16 width, uint16 dX, uint16 dY, uint8 countOfLine, uint color )
+    {
+        uint16 hashsCount = hashs.length();
+
+        MultiSpriteDX = dX;
+        MultiSpriteDY = dY;
+        MultiWidth = width;
+        MultiHeight = height;
+        MultiColor = color;
+        MultiSpriteCountOfLine = countOfLine;
+        MultiSprite.resize( hashsCount );
+        for( uint16 i = 0; i < hashsCount; i++ )
+        {
+            MultiSprite[ i ].Load( hashs[ i ], dir );
+        }
+        return this;
+    }
+
+    IGUIElementOpt@ MultiPictureFrame( int16 x, int16 y )
+    {
+        MultiSpriteFrameDX = x;
+        MultiSpriteFrameDY = y;
+
+        return this;
+    }
+
+    IGUIElementOpt@ Picture( string sprName )
+    {
+        @Surface = Sprite( sprName, DefaultPath );
+        return this;
+    }
+
+    IGUIElementOpt@ Picture( Sprite@ spr )
+    {
+        @Surface = @spr;
+        return this;
+    }
+
+    IGUIElementOpt@ Picture( string sprName, int path )
+    {
+		SurfaceCheck();
+        Surface.Load( sprName, path );
+        return this;
+    }
+
+    IGUIElementOpt@ Picture( uint hash, uint8 dir )
+    {
+		SurfaceCheck();
+        Surface.Load( hash, dir );
+        return this;
+    }
+
+    IGUIElementOpt@ PictureSize( uint16 width, uint16 height )
+    {
+        SpriteWidth = width;
+        SpriteHeight = height;
+        return this;
+    }
+
+	void SurfaceCheck()
+	{
+		if( @Surface == null )
+			@Surface = @Sprite( );
+	}	
+	
+	IGUIElementOpt@ ForceCallbackMouseClick( int click )
+    {
+        MouseClickCallback.OnMouseClick( click );
+        return this;
+    }
+
+    IGUIElementOpt@ AutoCursor( int cursor )
+    {
+        autoCursor = true;
+        setCursor = cursor;
+        return this;
+    }
+
+    IGUIElementOpt@ SetFocus( bool set )
+    {
+        IgnoreFocus = set;
+        return this;
+    }
+
+    IGUIElementOpt@ InputTrigger()
+    {
+        LastInput = __FullSecond;
+        return this;
+    }
+
+    IGUIElementOpt@ OnlyDigits( bool set )
+    {
+        DigitsOnly = true;
+        return this;
+    }
+
+    IGUIElementOpt@ Flags( int flags )
+    {
+        TextFlags = flags;
+        return this;
+    }
+
+
+    IGUIElementOpt@ Push( bool push )
+    {
+        MousePressed[ MOUSE_CLICK_LEFT ] = push;
+        return this;
+    }
+
+    IGUIElementOpt@ SBReversed( bool set )
+    {
+        sbReversed = set;
+        return this;
+    }
+
+    IGUIElementOpt@ ClickSound( string@ sound )
+    {
+        SoundClick = sound;
+        return this;
+    }
+
+    IGUIElementOpt@ Clickable( bool click )
+    {
+        clickable = click;
+        return this;
+    }
+
+    IGUIElementOpt@ Scale( bool toScale )
+    {
+        scale = toScale;
+        return this;
+    }
+
+    IGUIElementOpt@ SetGroupIndex( uint index )
+    {
+        GroupIndex = index;
+        return this;
+    }
+
+    IGUIElementOpt@ SetNoFocusedKeyPress( bool isF )
+    {
+        NoFocusedKeyPress = isF;
+        return this;
+    }
+
+    void KeepCursor( int cursor )
+    {
+        lastCursor = cursor;
+    }
+
+    // Info
+    int  GetPosX()  { return PosX; }
+    int  GetPosY()  { return PosY; }
+    bool IsHidden() { return isHidden; }
+    int  GetTextScroll()
+    {
+        if( int( scrollText.length() ) - maxTextLines > 0 )
+            return int( scrollText.length() ) - maxTextLines;
+        else
+            return 0;
+    }
+
+    int GetListElement() { return lbIndex; }
+
+    string GetListElementStr() { if( scrollText.length() != 0 && lbIndex >= 0 && uint( lbIndex ) < scrollText.length() ) return scrollText[ lbIndex ]; else return ""; }
+
+    int GetTextOffset() { return textOffset; }
+
+    uint    GetSBScrollValue() { return sbCurrentValue; }
+    string@ GetText()
+    {
+        if( !isScrollableText )
+            return @text;
+        else if( scrollText.length() != 0 )
+            return join( scrollText, "\n" );
+		else return @"";
+    }
+    uint GetElementsNumber() { return scrollText.length(); }
+
+    uint GetSpriteId( bool down )
+    {
+        return down ? DownSpr.Id : ( @Surface != null ) ? Surface.Id : 0;
+    }
+
+    bool IsAutoCursor() { return autoCursor; }
+
+	IGUIElementOpt@ SetName( const ::string& name  ){ Name = name; return @this; }
+	string@ GetName( ){ return Name; }
+    // Data
+    string						Name;
+    bool                           isAutoCursor;
+    bool                           autoCursor;
+    int                            lastCursor;
+    int                            setCursor;
+    bool                           isScrollableText;
+    bool                           isScrollBar;
+    string@[] 					scrollText;
+    int                            textOffset;
+    int8                           fontHeight;
+    int                            maxTextLines;
+    int                            PosX;
+    int                            PosY;
+    int                            Width;
+    int                            Height;
+    uint16                         SpriteWidth;
+    uint16                         SpriteHeight;
+    int                            scrX;
+    int                            scrY;
+    int                            mouseX;
+    int                            mouseY;
+    Sprite[] 						MultiSprite;
+    uint16                         MultiSpriteDX;
+    uint16                         MultiSpriteDY;
+    int16                          MultiSpriteFrameDX;
+    int16                          MultiSpriteFrameDY;
+    uint16                         MultiWidth;
+    uint16                         MultiHeight;
+    string[] 						multiText;
+    uint16                         MultiTextDX;
+    uint16                         MultiTextDY;
+    int16                          MultiTextStartDx;
+    int16                          MultiTextStartDy;
+    uint                           MultiColor;
+    uint8                          MultiSpriteCountOfLine;
+    uint8                          MultiTextCountOfLine;
+    int                            MultiTextFont;
+    uint                           MultiTextColor;
+    int                            MultiTextFlag;
+    Sprite@                        Surface;
+    Sprite                         DownSpr;
+
+    int                            frameId;
+    int                            firstFrame;
+    int                            lastFrame;
+    uint8                          fps;
+    uint                           lastTick;
+
+    Sprite                         Scroll;
+    uint                           sbRange;
+    float                          sbStep;
+    uint                           sbCurrentValue;
+    bool                           sbInitialized;
+    bool                           sbReversed;
+
+    int8                           txtFrameX;
+    int8                           txtFrameY;
+
+    uint                           GroupIndex;
+    bool                           isListBox;
+    bool                           listBoxFocused;
+    int                            lbIndex;
+    int                            DefaultPath;
+    string                         text;
+    int                            font;
+    uint                           TextColor;
+    uint                           TextColorFocused;
+    uint                           TextColorDown;
+    uint[] TextMultiColor;
+    int                            TextFlags;
+    bool                           IsTextInput;
+    bool                           IgnoreFocus;
+    bool                           DigitsOnly;
+    uint                           InputMaxLen;
+    uint                           LastInput;
+    bool                           IsFocused;
+    bool                           NoFocusedKeyPress;
+    bool[] MousePressed;
+    bool                           SwitchEnabled;
+    bool                           isHidden;
+    bool                           clickable;
+    bool                           scale;
+    string                         SoundClick;
+	
+	int 							ScreenIndex;
+	
+	Listing@						RefListing;
+	
+    IGUI::ElementCallbackInit@       				InitCallback;
+    IGUI::ElementCallbackDraw@       				DrawCallback;
+    IGUI::ElementCallbackDrawPos@    			DrawPosCallback;
+    IGUI::ElementCallbackMouseClick@ 			MouseClickCallback;
+    IGUI::ElementCallbackKeyPress@   			KeyPressCallback;
+    IGUI::ElementCallbackMouseDown@  			MouseDownCallback;
+    IGUI::ElementCallbackMouseDrop@  			MouseDropCallback;
+    IGUI::ElementCallbackMouseMove@  			MouseMoveCallback;
+	
+	IGUI::ElementCallbackCallbackListActive@ ListActiveCallback;
+	
+	IGUIElementOpt@ ListingOption( IGUI::ListingElementOpt@ opt )
+	{
+		if( @RefListing !is null )
+			RefListing.SetOption( @opt );
+		return @this;	
+	}
+	
+    IGUIElementOpt@ ListingColor( uint color, uint focus, uint down )
+	{
+		if( @RefListing !is null )
+			RefListing.SetColor( color, focus, down );
+		return @this;
+	}
+	
+	IGUIElementOpt@ SetListingShift( int shift ){ return @SetListingShift( false, shift ); }
+	IGUIElementOpt@ SetListingShift( bool absolute, int shift )
+	{
+		if( @RefListing !is null )
+			RefListing.SetShift( absolute, shift );
+		return @this;
+	}
+	
+	
+	uint get_ListingShift( )
+	{
+		if( @RefListing !is null )
+			return RefListing.Shift;
+		return 0;
+	}
+	
+	IGUIElementOpt@ ListingStep( uint step )
+	{
+		if( @RefListing !is null )
+			RefListing.ShiftStep = step;
+		return @this;
+	}
+	
+    IGUIElementOpt@ ListingDad( IGUIDragAndDropOpt@ dadOpt )
+	{
+		if( @RefListing !is null )
+			@RefListing.DadOption = dadOpt;
+		return @this;
+	}
+	
+    IGUIElementOpt@ Listing( IGUIListingElement@[]@ list )
+    {
+		if( @RefListing is null )
+			@RefListing = @Listing( list, Width, Height, ScreenIndex );
+		else 
+			RefListing = list;
+        return @this;
+    }
+}
+
+class GUIScreen : IGUIScreenOpt
+{
+    GUIScreen( string@ sprName, int path )
+    {
+        if( @sprName != null )
+            Surface.Load( sprName, path );
+        Index = 0;
+
+        IsCanMove = true;
+        IsModal = true;
+        IsMultiinstance = false;
+        IsIgnoreBorders = false;
+        IsCloseOnMiss = false;
+        IsAutoCursor = false;
+
+        AutoCursorType = CURSOR_DEFAULT;
+        AutoCursorPrev = CURSOR_DEFAULT;
+
+        IsHardcoded = false;
+		IsHidden = false;
+		
+        PosX = __ScreenWidth / 2 - Surface.Width / 2;
+        PosY = __ScreenHeight / 2 - Surface.Height / 2;
+        LastX = 0;
+        LastY = 0;
+        SpriteWidth = 0;
+        SpriteHeight = 0;
+        @ShowCallback = null;
+        @HideCallback = null;
+        @MoveCallback = null;
+    }
+
+	bool IsCollision( int x, int y )
+	{
+		return IS_COLLISION( x, y, PosX, PosY, Surface.Width, Surface.Height );
+	}
+	
+    void Draw()
+    {
+        if( Surface.Id != 0 )
+        {
+            if( SpriteWidth == 0 || SpriteHeight == 0 )
+                DrawSprite( Surface.Id, -1, PosX, PosY, Surface.Color );
+            else
+                DrawSprite( Surface.Id, -1, PosX, PosY, SpriteWidth, SpriteHeight, false, false, Surface.Color );
+        }
+        for( uint i = 0, j = Elements.length(); i < j; i++ )
+            Elements[ i ].Draw( PosX, PosY );
+    }
+
+    bool MouseDown( int click, int x, int y )
+    {
+        for( uint i = 0, j = Elements.length(); i < j; i++ )
+            Elements[ i ].IsFocused = false;
+        for( uint i = Elements.length(); i > 0;)
+        {
+            i--;
+            GUIElement@ e = Elements[ i ];
+            if( IS_COLLISION( x, y, PosX + e.PosX, PosY + e.PosY, e.Surface.Width, e.Surface.Height ) && e.MouseDown( click ) && !e.IsHidden() )
+            {
+                e.IsFocused = true;
+                return true;
+            }
+        }
+
+        if( not IsHardcoded && click == MOUSE_CLICK_LEFT )
+        {
+            if( IsCollision( x, y ) )
+            {
+                @MouseMoveScreen = @this;
+                LastX = x;
+                LastY = y;
+                return true;
+            }
+            else if( IsCloseOnMiss )
+            {
+                HideScreen( 0, 0, 0, 0 );
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool MouseUp( int click, int x, int y )
+    {
+		// MouseMoveScreen
+		if( @MouseMoveScreen is @this )
+			@ MouseMoveScreen = null;
+			
+		bool result = false;
+        for( uint i = Elements.length(); i > 0;)
+        {
+            i--;
+            GUIElement@ e = Elements[ i ];
+            uint        w = e.Width > 0 ? e.Width : e.Surface.Width,
+                        h = e.Height > 0 ? e.Height : e.Surface.Height;
+            if( IS_COLLISION( x, y, PosX + e.PosX, PosY + e.PosY, w, h ) && !e.IsHidden() )
+            {
+                e.MouseUp( click, true );
+                result = true;
+            }
+            else
+            {
+                e.MouseUp( click, false );
+            }
+        }
+        return result;
+    }
+
+    void MouseMove( int x, int y )
+    {
+        if( IsCanMove && @MouseMoveScreen is @this )
+        {
+            int lastPosX = PosX;
+            int lastPosY = PosY;
+            int offsX = x - LastX;
+            int offsY = y - LastY;
+            LastX = x;
+            LastY = y;
+            PosX += offsX;
+            PosY += offsY;
+
+            // Check screen borders
+            if( not IsIgnoreBorders )
+            {
+                int px = PosX;
+                int py = PosY;
+                if( PosX < 0 )
+                    PosX = 0;
+                if( PosY < 0 )
+                    PosY = 0;
+                if( PosX + Surface.Width > __ScreenWidth )
+                    PosX = __ScreenWidth - Surface.Width;
+                if( PosY + Surface.Height > __ScreenHeight )
+                    PosY = __ScreenHeight - Surface.Height;
+                LastX += PosX - px;
+                LastY += PosY - py;
+            }
+            if( not (MoveCallback is null) && ( lastPosX != PosX || lastPosY != PosY ) )
+                MoveCallback.OnMove( PosX, PosY );
+        }
+
+        for( uint i = 0, j = Elements.length(); i < j; i++ )
+            Elements[ i ].MouseMove( x, y );
+    }
+
+    bool KeyPress( uint8 key )
+    {
+
+        for( uint i = 0, j = Elements.length(); i < j; i++ )
+        {
+            GUIElement@ e = Elements[ i ];
+            if( ( ( e.IsFocused || e.IgnoreFocus ) && e.IsTextInput ) || ( e.NoFocusedKeyPress ) && not ( @e.KeyPressCallback is null ) )
+                return e.KeyPress( key );
+        }
+        return false;
+    }
+
+    void InputLost()
+    {
+        for( uint i = 0, j = Elements.length(); i < j; i++ )
+            Elements[ i ].InputLost();
+    }
+
+    GUIScreen@ GetNewInstance()
+    {
+        GUIScreen               screen = this;
+        IGUI::ScreenCallbackShow@ newCallback = ShowCallback;
+        for( uint i = 0, j = Elements.length(); i < j; i++ )
+            @screen.Elements[ i ] = Elements[ i ].GetNewInstance();
+        return @screen;
+    }
+
+    // Options
+    IGUIScreenOpt@ CallbackShow( IGUI::ScreenCallbackShow@ callback ) { @ShowCallback = callback;
+                                                                      return this; }
+    IGUIScreenOpt@ CallbackHide( IGUI::ScreenCallbackHide@ callback ) { @HideCallback = callback;
+                                                                      return this; }
+    IGUIScreenOpt@ CallbackMove( IGUI::ScreenCallbackMove@ callback ) { @MoveCallback = callback;
+                                                                      return this; }
+    IGUIScreenOpt@ Position( int x, int y ) { PosX = x;
+                                              PosY = y;
+                                              return this; }
+    IGUIScreenOpt@ CanMove( bool enabled ) { IsCanMove = enabled;
+                                             return this; }
+    IGUIScreenOpt@ Modal( bool enabled ) { IsModal = enabled;
+                                           return this; }
+    IGUIScreenOpt@ Multiinstance( bool enabled ) { IsMultiinstance = enabled;
+                                                   return this; }
+    IGUIScreenOpt@ IgnoreBorders( bool enabled ) { IsIgnoreBorders = enabled;
+                                                   return this; }
+    IGUIScreenOpt@ CloseOnMiss( bool enabled ) { IsCloseOnMiss = enabled;
+                                                 return this; }
+    IGUIScreenOpt@ AutoCursor( bool enabled, int cursorType ) { IsAutoCursor = enabled;
+                                                                AutoCursorType = cursorType;
+                                                                return this; }
+
+    void AllGroupElementChangePos( uint index, int x, int y )
+    {
+        if( index != 0 )
+        {
+            for( uint i = 0, j = Elements.length(); i < j; i++ )
+            {
+                GUIElement@ e = Elements[ i ];
+                if( valid( e ) && e.GroupIndex == index )
+                {
+                    e.PosX += x;
+                    e.PosY += y;
+                }
+            }
+        }
+    }
+
+    // Info
+    int GetPosX() { return PosX; }
+    int GetPosY() { return PosY; }
+	IGUIElementOpt@[]@ GetElements()
+    {
+		IGUIElementOpt@[] result;
+		result.resize(Elements.length());
+		for(uint i=0,j=Elements.length();i<j;i++) @result[i]=Elements[i];
+		return result;
+	}
+	
+	IGUIElementOpt@ get_ElementOpt( const string name ) override
+    {
+		for( uint i = 0, iEnd = Elements.length(); i < iEnd; i++ )
+			if( Elements[i].Name == name )
+				return @Elements[i];
+		return null;
+	}
+	
+	
+    IGUIScreenOpt@ ToHide( bool hide )
+    {
+        IsHidden = hide;
+        return this;
+    }
+
+    // Data
+    int                     Index;
+    int                     PosX;
+    int                     PosY;
+    int                     Width;
+    int                     Height;
+    uint16                  SpriteWidth;
+    uint16                  SpriteHeight;
+    int                     LastX;
+    int                     LastY;
+    Sprite                  Surface;
+
+    bool                    IsCanMove;
+    bool                    IsModal;
+    bool                    IsMultiinstance;
+    bool                    IsIgnoreBorders;
+    bool                    IsCloseOnMiss;
+	
+	bool					 RealAutoCursor;
+	bool					 IsHidden;
+	
+    bool                    IsAutoCursor
+	{
+		get
+		{
+			return RealAutoCursor && !IsHidden;
+		}
+		
+		set
+		{
+			RealAutoCursor = value;
+		}
+	}
+
+    int                     AutoCursorType;
+    int                     AutoCursorPrev;
+
+    bool                    IsHardcoded;
+    bool                    IsLMouseDown;
+
+    IGUI::ScreenCallbackShow@ ShowCallback;
+    IGUI::ScreenCallbackHide@ HideCallback;
+    IGUI::ScreenCallbackMove@ MoveCallback;
+    GUIElement@[] Elements;
+}
+
+class GUIInformer : IGUIInformerOpt
+{
+	GUIInformer( ::string& name )
+	{
+		prv_Name = name;
+		prv_Delay = -1;
+	}
+
+    IGUIInformerOpt@ AddDescriptor( IGUIDescriptor@ descriptor )
+	{
+		return @this;
+	}
+	
+    IGUIInformerOpt@ SetDealy( uint delay )
+	{
+		prv_Delay = delay;
+		return @this;
+	}
+	
+    IGUIInformerOpt@ SetPosition( int x, int y )
+	{
+		prv_PosX = x;
+		prv_PosY = y;
+		return @this;
+	}
+	
+    IGUIInformerOpt@ SetMouse( )
+	{
+		SetPosition( ::__MouseX, ::__MouseY );
+		return @this;
+	}
+	
+    ::string@ get_Name( )
+	{
+		return @prv_Name;
+	}
+	
+	private int prv_PosX;
+	private int prv_PosY;
+	
+	private int prv_Delay;
+	private ::string prv_Name;
+}
+
+IGUIInformerOpt@ GUI_CreateInformer( ::string@ name )
+{
+	return @GUIInformer( name );
+}
+
+//
+// API
+//
+
+// Create new screen
+IGUIScreenOpt@ GUI_CreateScreen( int screenIndex, string@ sprName )
+{
+    if( screenIndex == 0 )
+        return null;
+    DeleteScreen( screenIndex );
+    return CreateScreen( screenIndex, sprName );
+}
+
+// Delete old screen, hardcoded screens included
+void GUI_DeleteScreen( int screenIndex )
+{
+    if( screenIndex == 0 )
+        return;
+    DeleteScreen( screenIndex );
+}
+
+// Add element on screen
+IGUIElementOpt@ GUI_AddScreenElement( int screenIndex, string@ sprName, int x, int y )
+{
+    if( screenIndex == 0 )
+        return null;
+    if( @(GetScreen( screenIndex )) is null )
+        CreateScreen( screenIndex, null );
+
+    GUIScreen@ screen = GetScreen( screenIndex );
+    GUIElement element( sprName, PT_ART_INTRFACE, screenIndex );
+    element.Position( x, y );
+
+    screen.Elements.insertLast( @element );
+    return @element;
+}
+
+IGUIElementOpt@ GUI_AddScreenElementBySprite( int screenIndex, Sprite@ spr, int x, int y )
+{
+    if( screenIndex == 0 )
+        return null;
+    if( @GetScreen( screenIndex ) is null )
+        CreateScreen( screenIndex, null );
+
+    GUIScreen@ screen = GetScreen( screenIndex );
+    GUIElement element( @spr, screenIndex );
+    element.Position( x, y );
+
+    screen.Elements.insertLast( @element );
+    return @element;
+}
+
+// Screen options
+IGUIScreenOpt@ GUI_GetScreenOptions( int screenIndex )
+{
+    return @GetScreen( screenIndex );
+}
+
+// Screen options
+IGUIScreenOpt@ GUI_GetActiveScreenOptions( int screenIndex, int ignore )
+{
+    // ActiveScreens //Index
+    IGUIScreenOpt@ LastOpt = null;
+    for( uint i = 0, iEnd = ActiveScreens.length(); i < iEnd; i++ )
+    {
+        if( valid( ActiveScreens[ i ] ) && ActiveScreens[ i ].Index == screenIndex )
+        {
+            @ LastOpt = ActiveScreens[ i ];
+            if( ignore-- == 0 )
+                break;
+        }
+    }
+    return LastOpt;
+}
+
+// Valid only on IGUI::ScreenCallbackShow::OnShow callback
+IGUIScreenOpt@ GUI_GetScreenOptions()
+{
+    return LastScreenOpt;
+}
+
+// Valid only on IGUI::ElementCallbackInit::OnInit callback
+IGUIElementOpt@ GUI_GetElementOptions()
+{
+    return LastElementOpt;
+}
+
+//
+// Engine callbacks
+//
+
+void GUI_Init()
+{
+	HiddensCursor.resize( 0 );
+    AllScreens.resize( 0 );
+    ActiveScreens.resize( 0 );
+			
+    // Register hardcoded screens
+    CreateScreen( CLIENT_MAIN_SCREEN_LOGIN, null );
+    CreateScreen( CLIENT_MAIN_SCREEN_REGISTRATION, null );
+    CreateScreen( CLIENT_MAIN_SCREEN_OPTIONS, null );
+    CreateScreen( CLIENT_MAIN_SCREEN_CREDITS, null );
+    CreateScreen( CLIENT_MAIN_SCREEN_GAME, null );
+    CreateScreen( CLIENT_MAIN_SCREEN_GLOBAL_MAP, null );
+    CreateScreen( CLIENT_MAIN_SCREEN_WAIT, null );
+    // CreateScreen( CLIENT_SCREEN_INVENTORY, null );
+    CreateScreen( CLIENT_SCREEN_PICKUP, null );
+    CreateScreen( CLIENT_SCREEN_MINIMAP, null );
+    CreateScreen( CLIENT_SCREEN_CHARACTER, null );
+    CreateScreen( CLIENT_SCREEN_DIALOG, null );
+    CreateScreen( CLIENT_SCREEN_BARTER, null );
+    CreateScreen( CLIENT_SCREEN_PIP_BOY, null );
+    CreateScreen( CLIENT_SCREEN_FIX_BOY, null );
+    CreateScreen( CLIENT_SCREEN_MENU, null );
+    CreateScreen( CLIENT_SCREEN_AIM, null );
+    CreateScreen( CLIENT_SCREEN_TEST, null );
+    CreateScreen( CLIENT_SCREEN_SPLIT, null );
+    CreateScreen( CLIENT_SCREEN_TIMER, null );
+    CreateScreen( CLIENT_SCREEN_DIALOGBOX, null );
+    CreateScreen( CLIENT_SCREEN_ELEVATOR, null );
+    CreateScreen( CLIENT_SCREEN_SAY, null );
+    CreateScreen( CLIENT_SCREEN_CHA_NAME, null );
+    CreateScreen( CLIENT_SCREEN_CHA_AGE, null );
+    CreateScreen( CLIENT_SCREEN_CHA_SEX, null );
+    CreateScreen( CLIENT_SCREEN_GM_TOWN, null );
+    CreateScreen( CLIENT_SCREEN_INPUT_BOX, null );
+    CreateScreen( CLIENT_SCREEN_SKILLBOX, null );
+    CreateScreen( CLIENT_SCREEN_USE, null );
+    CreateScreen( CLIENT_SCREEN_PERK, null );
+    CreateScreen( CLIENT_SCREEN_TOWN_VIEW, null );
+    CreateScreen( CLIENT_SCREEN_SAVE_LOAD, null );
+    for( uint i = 0, iMax = AllScreens.length(); i < iMax; i++ )
+        AllScreens[ i ].IsHardcoded = true;
+
+    // Keyboard init
+    KbData.resize( 0x100 );
+    @KbData[ DIK_1 ] =                         KeybData( '1', '!', '1', '!' );
+    @KbData[ DIK_2 ] =                         KeybData( '2', '"', '2', '@' ); // "
+    @KbData[ DIK_3 ] =                         KeybData( '3', '№', '3', '#' );
+    @KbData[ DIK_4 ] =                         KeybData( '4', ';', '4', '$' );
+    @KbData[ DIK_5 ] =                         KeybData( '5', '%', '5', '%' );
+    @KbData[ DIK_6 ] =                         KeybData( '6', ':', '6', '^' );
+    @KbData[ DIK_7 ] =                         KeybData( '7', '?', '7', '&' );
+    @KbData[ DIK_8 ] =                         KeybData( '8', '*', '8', '*' );
+    @KbData[ DIK_9 ] =                         KeybData( '9', '(', '9', '(' );
+    @KbData[ DIK_0 ] =                         KeybData( '0', ')', '0', ')' );
+    @KbData[ DIK_MINUS ] =                   KeybData( '-', '_', '-', '_' );
+    @KbData[ DIK_EQUALS ] =            	  KeybData( '=', '+', '=', '+' );
+    @KbData[ DIK_Q ] =                         KeybData( 'й', 'Й', 'q', 'Q' );
+    @KbData[ DIK_W ] =                         KeybData( 'ц', 'Ц', 'w', 'W' );
+    @KbData[ DIK_E ] =                         KeybData( 'у', 'У', 'e', 'E' );
+    @KbData[ DIK_R ] =                         KeybData( 'к', 'К', 'r', 'R' );
+    @KbData[ DIK_T ] =                         KeybData( 'е', 'Е', 't', 'T' );
+    @KbData[ DIK_Y ] =                         KeybData( 'н', 'Н', 'y', 'Y' );
+    @KbData[ DIK_U ] =                         KeybData( 'г', 'Г', 'u', 'U' );
+    @KbData[ DIK_I ] =                         KeybData( 'ш', 'Ш', 'i', 'I' );
+    @KbData[ DIK_O ] =                         KeybData( 'щ', 'Щ', 'o', 'O' );
+    @KbData[ DIK_P ] =                         KeybData( 'з', 'З', 'p', 'P' );
+    @KbData[ DIK_LBRACKET ] =          	 KeybData( 'х', 'Х', '[', '{' );
+    @KbData[ DIK_RBRACKET ] =          	 KeybData( 'ъ', 'Ъ', ']', '}' );
+    @KbData[ DIK_A ] =                         KeybData( 'ф', 'Ф', 'a', 'A' );
+    @KbData[ DIK_S ] =                         KeybData( 'ы', 'Ы', 's', 'S' );
+    @KbData[ DIK_D ] =                         KeybData( 'в', 'В', 'd', 'D' );
+    @KbData[ DIK_F ] =                         KeybData( 'а', 'А', 'f', 'F' );
+    @KbData[ DIK_G ] =                         KeybData( 'п', 'П', 'g', 'G' );
+    @KbData[ DIK_H ] =                         KeybData( 'р', 'Р', 'h', 'H' );
+    @KbData[ DIK_J ] =                         KeybData( 'о', 'О', 'j', 'J' );
+    @KbData[ DIK_K ] =                         KeybData( 'л', 'Л', 'k', 'K' );
+    @KbData[ DIK_L ] =                         KeybData( 'д', 'Д', 'l', 'L' );
+    @KbData[ DIK_SEMICOLON ] =         KeybData( 'ж', 'Ж', ';', ':' );
+    @KbData[ DIK_APOSTROPHE ] =        KeybData( 'э', 'Э', 39, 39 ); // 39=='
+    @KbData[ DIK_Z ] =                         KeybData( 'я', 'Я', 'z', 'Z' );
+    @KbData[ DIK_X ] =                         KeybData( 'ч', 'Ч', 'x', 'X' );
+    @KbData[ DIK_C ] =                         KeybData( 'с', 'С', 'c', 'C' );
+    @KbData[ DIK_V ] =                         KeybData( 'м', 'М', 'v', 'V' );
+    @KbData[ DIK_B ] =                         KeybData( 'и', 'И', 'b', 'B' );
+    @KbData[ DIK_N ] =                         KeybData( 'т', 'Т', 'n', 'N' );
+    @KbData[ DIK_M ] =                         KeybData( 'ь', 'Ь', 'm', 'M' );
+    @KbData[ DIK_COMMA ] =                     KeybData( 'б', 'Б', ',', '<' );
+    @KbData[ DIK_PERIOD ] =            KeybData( 'ю', 'Ю', '.', '>' );
+    @KbData[ DIK_SLASH ] =                     KeybData( '.', ',', '/', '?' );
+    @KbData[ DIK_MULTIPLY ] =          KeybData( '*', '*', '*', '*' );
+    @KbData[ DIK_SPACE ] =                     KeybData( ' ', ' ', ' ', ' ' );
+    @KbData[ DIK_GRAVE ] =                     KeybData( 'ё', 'Ё', '`', '~' );
+    @KbData[ DIK_NUMPAD1 ] =           KeybData( '1', '1', '1', '1' );
+    @KbData[ DIK_NUMPAD2 ] =           KeybData( '2', '2', '2', '2' );
+    @KbData[ DIK_NUMPAD3 ] =           KeybData( '3', '3', '3', '3' );
+    @KbData[ DIK_NUMPAD4 ] =           KeybData( '4', '4', '4', '4' );
+    @KbData[ DIK_NUMPAD5 ] =           KeybData( '5', '5', '5', '5' );
+    @KbData[ DIK_NUMPAD6 ] =           KeybData( '6', '6', '6', '6' );
+    @KbData[ DIK_NUMPAD7 ] =           KeybData( '7', '7', '7', '7' );
+    @KbData[ DIK_NUMPAD8 ] =           KeybData( '8', '8', '8', '8' );
+    @KbData[ DIK_NUMPAD9 ] =           KeybData( '9', '9', '9', '9' );
+    @KbData[ DIK_NUMPAD0 ] =           KeybData( '0', '0', '0', '0' );
+    @KbData[ DIK_SUBTRACT ] =          KeybData( '-', '-', '-', '-' );
+    @KbData[ DIK_ADD ] =                       KeybData( '+', '+', '+', '+' );
+    @KbData[ DIK_DECIMAL ] =           KeybData( '.', '.', '.', '.' );
+    @KbData[ DIK_DIVIDE ] =            KeybData( '/', '/', '/', '/' );
+    @KbData[ DIK_RETURN ] =            KeybData( '\n', '\n', '\n', '\n' );
+    @KbData[ DIK_NUMPADENTER ] =       KeybData( '\n', '\n', '\n', '\n' );
+    @KbData[ DIK_TAB ] =                       KeybData( '\t', '\t', '\t', '\t' );
+}
+
+int GUI_GetMouseScreenIndex( )
+{
+	return GUI_GetMonitorScreenIndex( __MouseX, __MouseY );
+}
+
+int GUI_GetMonitorScreenIndex( int x, int y )
+{
+    for( uint i = ActiveScreens.length(); i-- > 0; )
+    {
+        GUIScreen@ screen = ActiveScreens[ i ];
+        if( screen.IsCollision( x, y ) )
+            return screen.Index;
+    }
+	return CLIENT_SCREEN_NONE;
+}
+
+int GUI_GetActiveMainScreen()
+{
+    return ActiveScreens.length() > 0 ? ActiveScreens.first().Index : CLIENT_SCREEN_NONE;
+}
+
+int GUI_GetActiveScreen()
+{
+    return ActiveScreens.length() > 0 ? ActiveScreens.last().Index : CLIENT_SCREEN_NONE;
+}
+
+void GUI_GetActiveScreens( int[]& result )
+{
+    result.resize( ActiveScreens.length() );
+    for( uint i = 0, iMax = result.length(); i < iMax; i++ )
+        result[ i ] = ActiveScreens[ i ].Index;
+}
+
+bool GUI_IsScreenActive( int screen )
+{
+    for( uint n = 0; n < ActiveScreens.length(); n++ )
+    {
+        if( ActiveScreens[ n ].Index == screen )
+            return true;
+    }
+    return false;
+}
+
+void GUI_ShowScreen( int screenIndex, int p0, int p1, int p2 )
+{
+    GUIScreen@ screen = GetScreen( screenIndex );
+    if( not (@screen is null) )
+    {
+        if( not screen.IsMultiinstance )
+        {
+            // Close all another instances
+            for( uint i = ActiveScreens.length(); i > 0;)       // From end
+            {
+                i--;
+                if( ActiveScreens[ i ].Index == screenIndex )
+                {
+                    ActiveScreens.removeAt( i );
+                    if( not ( @screen.HideCallback is null ) )
+                        screen.HideCallback.OnHide( p0, p1, p2 );
+                }
+            }
+        }
+
+        // Create new instance
+        @screen = screen.GetNewInstance();
+        ActiveScreens.insertLast( @screen );
+
+        // Set screen cursor
+        if( screen.IsAutoCursor )
+        {
+            screen.AutoCursorPrev = GetCurrentCursor();
+            ChangeCursor( screen.AutoCursorType );
+        }
+
+        // Call init callbacks
+        @LastScreenOpt = screen;
+        // First init elements
+        for( uint i = 0, iMax = screen.Elements.length(); i < iMax; i++ )
+        {
+            GUIElement@ e = screen.Elements[ i ];
+            if( not ( @e.InitCallback is null ) )
+            {
+                @LastElementOpt = e;
+                e.InitCallback.OnInit();
+                @LastElementOpt = null;
+            }
+        }
+        // Then show
+        if( not ( @screen.ShowCallback is null ) )
+        {
+            screen.ShowCallback.OnShow( p0, p1, p2 );
+        }
+        @LastScreenOpt = null;
+    }
+}
+
+void GUI_HideScreen( int screenIndex, int p0, int p1, int p2 )
+{
+    for( uint i = ActiveScreens.length(); i > 0;) // From end
+    {
+        i--;
+        GUIScreen@ screen = ActiveScreens[ i ];
+        if( screen.Index == screenIndex )
+        {
+            // Remove
+            ActiveScreens.removeAt( i );
+
+            // Hide callback
+            if( not ( @screen.HideCallback is null ) )
+            {
+                screen.HideCallback.OnHide( p0, p1, p2 );
+            }
+
+            // Restore cursor
+            if( screen.IsAutoCursor )
+            {
+                ::ChangeCursor( screen.AutoCursorPrev );
+            }
+
+            // Store position for non-multiinstance screens
+            if( not screen.IsMultiinstance )
+            {
+                GUIScreen@ instance = GetScreen( screenIndex );
+                instance.PosX = screen.PosX;
+                instance.PosY = screen.PosY;
+            }
+            break;
+        }
+    }
+}
+
+void GUI_Render( bool mainScreen )
+{
+    if( mainScreen )
+    {
+        if( ActiveScreens.length() > 0 )
+        {
+            GUIScreen@ screen = ActiveScreens[ 0 ];
+            DrawHardcodedScreen( screen.Index );
+            GetHardcodedScreenPos( screen.Index, screen.PosX, screen.PosY );
+            screen.Draw();
+        }
+    }
+    else
+    {
+        for( uint i = 1, j = ActiveScreens.length(); i < j; i++ )
+        {
+            GUIScreen@ screen = ActiveScreens[ i ];
+			if( !screen.IsHidden )
+			{
+				if( screen.IsHardcoded )
+				{
+					DrawHardcodedScreen( screen.Index );
+					GetHardcodedScreenPos( screen.Index, screen.PosX, screen.PosY );
+				}
+				screen.Draw();
+			}
+        }
+		
+		if( @CurrentDAD !is null )
+			CurrentDAD.Draw( __MouseX, __MouseY );
+    }
+}
+
+bool GUI_MouseDown( int click, int x, int y )
+{
+	if( @MouseMoveScreen !is null )
+		return true;
+		
+    uint len = ActiveScreens.length();
+    if( len != 0 )
+    {
+        GUIScreen@ screen = ActiveScreens[ len - 1 ];
+        bool       result = screen.MouseDown( click, x, y );
+        if( result )
+        {
+            if( click == MOUSE_CLICK_WHEEL_UP || click == MOUSE_CLICK_WHEEL_DOWN )
+                return GUI_MouseUp( click, x, y );
+            return true;
+        }
+
+        if( len > 1 && not screen.IsHardcoded && not screen.IsModal && click == MOUSE_CLICK_LEFT &&
+            not screen.IsCollision( x, y ) )
+        {
+            for( uint i = ActiveScreens.length() - 1; i > 0;)     // From end
+            {
+                i--;
+                GUIScreen@ nextScreen = ActiveScreens[ i ];
+                if( nextScreen.IsCollision( x, y ) )
+                {
+                    // Swap screens
+                    GUIScreen@ tmpScreen = ActiveScreens[ i ];
+                    @ActiveScreens[ i ] = ActiveScreens[ len - 1 ];
+                    @ActiveScreens[ len - 1 ] = tmpScreen;
+                    return GUI_MouseDown( click, x, y );                 // Click new screen
+                }
+            }
+        }
+    }
+    return false;
+}
+
+bool GUI_MouseUp( int click, int x, int y )
+{
+	if( @MouseMoveScreen !is null )
+	{
+		MouseMoveScreen.MouseUp( click, x, y );
+		return true;
+	}
+	
+	bool result = false;
+    uint len = ActiveScreens.length();
+    if( len != 0 )
+        result = ActiveScreens[ len - 1 ].MouseUp( click, x, y );
+    if( click == MOUSE_CLICK_LEFT && @CurrentDAD !is null )
+		@CurrentDAD = null;
+	return result;
+}
+
+void GUI_MouseMove( int x, int y )
+{
+	if( @MouseMoveScreen !is null )
+		MouseMoveScreen.MouseMove( x, y );
+	else
+	{
+		uint len = ActiveScreens.length();
+		if( len != 0 )
+			ActiveScreens[ len - 1 ].MouseMove( x, y );
+	}
+}
+
+bool GUI_KeyDown( uint8 key )
+{
+	KeybData@ k = KbData[ key ];
+	if( @k !is null )
+	{
+		k.Pressed = true;
+		k.Jamming = !k.Jamming;
+	}
+	
+    uint len = ActiveScreens.length();
+    if( len != 0 )
+        return ActiveScreens[ len - 1 ].KeyPress( key );
+    return false;
+}
+
+bool GUI_KeyUp( uint8 key )
+{
+	KeybData@ k = KbData[ key ];
+	if( @k !is null )
+		k.Pressed = false;
+    return false;
+}
+
+
+const bool get_CtrlPressed(  )
+{
+	return KeyPressed[ DIK_LCONTROL ] || KeyPressed[ DIK_RCONTROL ];
+}
+
+const bool get_ShiftPressed(  )
+{
+	return KeyPressed[ DIK_LSHIFT ] || KeyPressed[ DIK_RSHIFT ];
+}
+
+const bool get_KeyPressed( uint index )
+{
+	KeybData@ k = KbData[ index ];
+	if( @k !is null )
+		return k.Pressed;
+	return false;
+}
+
+const bool get_KeyJamming( uint index )
+{
+	KeybData@ k = KbData[ index ];
+	if( @k !is null )
+		return k.Jamming;
+	return false;
+}
+
+void GUI_InputLost()
+{
+	@MouseMoveScreen = null;
+    for( uint i = 0, iMax = KbData.length(); i < iMax; i++ )
+	{
+		if( @KbData[ i ] !is null )
+		{
+			KbData[ i ].Jamming = false;
+			KbData[ i ].Pressed = false;
+		}
+    }
+	@CurrentDAD = null;
+    uint len = ActiveScreens.length();
+    if( len != 0 )
+        ActiveScreens[ len - 1 ].InputLost();
+}
+
+//
+// Internal
+//
+
+IGUIScreenOpt@ CreateScreen( int screenIndex, string@ sprName )
+{
+    GUIScreen screen( sprName, PT_ART_INTRFACE );
+    screen.CanMove( true );
+    screen.Position( __ScreenWidth / 2 - screen.Surface.Width / 2, __ScreenHeight / 2 - screen.Surface.Height / 2 );
+    screen.Index = screenIndex;
+    AllScreens.insertLast( @screen );
+    return @screen;
+}
+
+void DeleteScreen( int screenIndex )
+{
+    for( uint i = 0; i < ActiveScreens.length();)
+    {
+        if( ActiveScreens[ i ].Index == screenIndex )
+        {
+            ActiveScreens.removeAt( i );
+            i = 0;
+        }
+        else
+        {
+            i++;
+        }
+    }
+
+    for( uint i = 0, j = AllScreens.length(); i < j; i++ )
+    {
+        if( AllScreens[ i ].Index == screenIndex )
+        {
+            AllScreens.removeAt( i );
+            break;
+        }
+    }
+}
+
+IGUIDragAndDropElement@ RealCurrentDAD = null;
+HideCursorDAD HideCursorDADPattern;
+
+class HideCursorDAD : IGUIHiddenCursorInfo
+{
+
+}
+
+IGUIDragAndDropElement@ CurrentDAD
+{
+	get
+	{
+		return @RealCurrentDAD;
+	}
+	
+	set
+	{
+		if( @RealCurrentDAD !is @value )
+		{
+			if( @RealCurrentDAD !is null )
+				RealCurrentDAD.Drop();
+			
+			if( ( @value !is null && value.Drag( ) ) || @value is null )
+				@ RealCurrentDAD = @value;
+		}
+		
+		if( @RealCurrentDAD !is null )
+			GUI_HideCursor( @HideCursorDADPattern );
+		else
+			GUI_FreeCursor( @HideCursorDADPattern );
+	}
+}
+
+void GUI_SetDragAndDrop( IGUIDragAndDropElement@ dad )
+{
+	@CurrentDAD = @dad;
+}
+
+IGUIDragAndDropElement@ GUI_GetDragAndDrop( )
+{
+	return @CurrentDAD;
+}
+
+GUIScreen@ GetScreen( int screenIndex )
+{
+    if( screenIndex == 0 )
+        return null;
+    for( uint i = 0, iMax = AllScreens.length(); i < iMax; i++ )
+        if( AllScreens[ i ].Index == screenIndex )
+            return @AllScreens[ i ];
+    return null;
+}
+
+bool ProcessKey( uint8 key, string& text, uint8& letter )
+{
+    if( KbData.length() == 0 )
+        return false;
+
+    if( key == DIK_BACK )
+    {
+        if( text.length() > 0 )
+            text.resize( text.length() - 1 );
+        return true;
+    }
+
+    KeybData@ k = KbData[ key ];
+    if( not (@k is null) )
+    {
+        uint len = text.length();
+        text.resize( len + 1 );
+        text[ len ] = k.Char[ ::GetKeybLang() * 2 + ( ShiftPressed ? 1 : 0 ) ];
+        letter = text[ len ];
+        return true;
+    }
+    return false;
+}
+
+void SwitchPicture( IGUIElementOpt@ elementOpt, Sprite@ newSpr )
+{	
+	GUIElement@ element = cast<GUIElement>(@elementOpt);
+	if(  @element != null )
+		element.Picture( @newSpr );
+}
+
+IGUIHiddenCursorInfo@[] HiddensCursor;
+
+void GUI_HideCursor( IGUIHiddenCursorInfo@ info )
+{
+	for( uint i = 0, iEnd = HiddensCursor.length(); i < iEnd; i++ )
+		if( @HiddensCursor[i] == @info )
+			return;
+	
+	HiddensCursor.insertLast( @info );
+	__HideCursor = true;
+}
+
+const bool GUI_FreeCursor( IGUIHiddenCursorInfo@ info )
+{
+	for( uint i = 0, iEnd = HiddensCursor.length(); i < iEnd; i++ )
+	{
+		if( @HiddensCursor[i] == @info )
+		{
+			HiddensCursor.removeAt( i );
+			::__HideCursor = ( HiddensCursor.length() != 0 );
+			return true;
+		}
+	}
+	return false;
+}

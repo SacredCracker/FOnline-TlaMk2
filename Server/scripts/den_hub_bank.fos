@@ -1,0 +1,66 @@
+#include "_macros.fos"
+
+import bool AddAttackPlane( Critter& npc, uint priority, Critter& target ) from "npc_planes";
+import bool AddAttackPlane( Critter& npc, uint priority, uint critId ) from "npc_planes";
+
+#define STR_ALARM    ( 124 * 1000 + Random( 1, 4 ) )
+
+int AttackId = -1;
+
+void r_getMyMoney( Critter& master, Critter@ slave, int val )
+{
+    GameVar@ money = GetLocalVar( LVAR_bank_money, master.Id );
+    master.AddItem( PID_BOTTLE_CAPS, money.GetValue() * 8 / 10 );
+    money = 0;
+}
+
+void _BankerInit( Critter& banker, bool firstTime )
+{
+    banker.SetEvent( CRITTER_EVENT_ATTACKED, "_BankerAttacked" );
+    banker.SetEvent( CRITTER_EVENT_MESSAGE, "_BankerMessage" );
+    banker.SetEvent( CRITTER_EVENT_STEALING, "_BankerStealing" );
+    banker.StatBase[ ST_VAR5 ] = 13;
+}
+
+// void idle(Critter& npc)
+// {
+//	_NpcEraseAllPlanesAttack(npc);
+//	AttackId=-1;
+//	npc.Wait(20000);
+// }
+
+bool _BankerAttacked( Critter& banker, Critter& attacker )
+{
+    if( attacker.StatBase[ ST_VAR5 ] != 13 )
+    {
+        banker.SendMessage( 124, attacker.Id, MESSAGE_TO_ALL_ON_MAP );
+        _NpcEraseAllPlanesAttack( banker );
+        AddAttackPlane( banker, 0, attacker );
+        return true;
+    }
+    return false;
+}
+
+void _BankerMessage( Critter& banker, Critter& cr, int num, int val )
+{
+    if( banker.Cond != COND_LIFE )
+        return;
+    if( num == 124 )
+    {
+        banker.StatBase[ ST_VAR1 ] = 1;
+        _NpcEraseAllPlanesAttack( banker );
+        AddAttackPlane( banker, 0, uint( val ) );
+    }
+}
+
+void _BankerStealing( Critter& banker, Critter& thief, bool success, Item& item, uint count )
+{
+    if( success == false )
+    {
+        banker.SendMessage( 124, thief.Id, MESSAGE_TO_ALL_ON_MAP );     // и сообщает об этом охране
+        AttackId = thief.Id;
+        banker.SayMsg( SAY_SHOUT_ON_HEAD, TEXTMSG_TEXT, STR_ALARM );
+        _NpcEraseAllPlanesAttack( banker );
+        AddAttackPlane( banker, 0, thief );
+    }
+}

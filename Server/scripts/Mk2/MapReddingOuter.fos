@@ -1,0 +1,18 @@
+// FOS Server
+// Author: Dagnir
+
+enum Defines
+{
+	StrReddingIn = 5430
+}
+
+void _MapInit( ::Map& reddOut, bool firstTime)
+{
+	reddOut.SetEvent(MAP_EVENT_IN_CRITTER,"MapReddingOuter::_ReddingCritterIn");
+}
+
+void _ReddingCritterIn( ::Map& denBus, ::Critter& player)
+{
+	if(player.IsPlayer()) 
+		player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT,  MapReddingOuter::Defines::StrReddingIn);
+}

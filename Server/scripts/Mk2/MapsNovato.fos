@@ -1,0 +1,675 @@
+// FOS Server
+// Author: Ra
+// MapsNovato
+// MapsNovato::Defines::RadiationDoseMax
+
+enum Defines
+{
+	RoleQuestRobobrain = 1,
+	RoleSilosQuard = 1,
+	EntranceCrater = 3,
+	TrapDoorsEntire = 190,
+	RadiationDoseMin = 1,
+	RadiationDoseMax = 5
+}
+
+uint get_Lvl9TrapCooldown()
+{
+	return REAL_MINUTE(5);
+}
+
+uint get_Lvl9TrapDuration()
+{
+	return REAL_MINUTE(3);
+}
+
+uint get_Lvl9TrapSuspend()
+{
+	return REAL_SECOND(30);
+}
+
+uint RadiationLoop 
+{
+    get
+	{
+		return (::Random(10000,20000)); // Radiation damage time, in milliseconds
+	}
+}
+
+// Игрок наступил на решетку с гарячим паром
+void t_Steam(::Critter& cr, ::Scenery& trigger, bool entered, uint8 dir)
+{
+	if(entered)
+	{
+		cr.AddTimeEvent("MapsNovato::cte_SteamDamage", 1, CTE_STEAM_DAMAGE);
+	}
+	else cr.EraseTimeEvents(CTE_STEAM_DAMAGE);
+}
+
+void t_Lvl9Trap(::Critter& cr, ::Scenery& trigger, bool entered, uint8 dir, int dir1, int dir2) //Ловушка с силовыми полями на 9 уровне Новато
+{
+	if(!entered)
+	{
+		::Map@ map=cr.GetMap();
+		if(map.GetData(3)>0) return; //Ничего не предпринимать, если ловушка в действии, или не истек таймаут.
+		if(dir==uint8(dir1)||dir==uint8(dir2))
+		{
+			//cr.Say(SAY_NETMSG, "Вы вошли в зону ловушки");
+			if(map.GetData(2)==0)
+			{
+				//cr.Say(SAY_NETMSG, "Начинается отсчет до события");
+				::CreateTimeEvent(::__FullSecond+Lvl9TrapSuspend, "MapsNovato::e_StartTrap", 0, true);
+			}
+			map.SetData(2, map.GetData(2)+1);
+		}
+		else
+		{
+			map.SetData(2, MAX(map.GetData(2)-1, 0));
+		}
+	}
+}
+
+uint e_StartTrap(::array<uint>@ values)        
+{
+	::Map@ map=::GetMapByPid(MAP_lfo_lvl9, 0);
+	if(!validEngineObject(map))
+	{
+		return 0;
+	}
+	if((values[0]==0 && map.GetData(3)>0) || map.GetData(2)==0) return 0; //Избегаем посторного вызова события, а также делаем отбой, если в зоне ловушки нет игроков.
+	map.SetData(3,1);
+	::array<uint> sendvalues={1, map.GetLocation().Id};
+	uint16 x=0,y=0;
+	
+	switch(values[0])
+	{
+		case 0:                              // Запираем игроков, открываем силовые поля с мутантами. И да начнется террор!
+		{	
+			for(uint n=0; n<map.CountEntire(MapsNovato::Defines::TrapDoorsEntire);n++)
+			{
+				map.GetEntireCoords(MapsNovato::Defines::TrapDoorsEntire, n, x, y);
+				::Item@ trapDoor=map.GetDoor(x,y);
+				if(validEngineObject(trapDoor))
+				{
+					trapDoor.LockerId=::Random(100000000, 999999999);
+					trapDoor.LockerComplexity=::Random(130, 300);
+					if(trapDoor.LockerComplexity<=200) SETFLAG(trapDoor.LockerCondition, LOCKER_ELECTRO);
+					if (FLAG(trapDoor.LockerCondition,LOCKER_ISOPEN)) trapDoor.LockerClose();
+				}
+			}
+			map.SetTime(1);
+			::e_DisableForceField(sendvalues);
+			sendvalues[0]=2;
+			::e_EnableForceField(sendvalues);
+			values[0]=1;
+			
+			return Lvl9TrapDuration;
+		}
+		
+		case 1:                            //Заканчиваем событие. Пусть расслабят сфинктеры. Устанавливаем таймаут на следующее включение.
+		{
+			//Log("Ловушка деактивирована");
+			::e_EnableForceField(sendvalues);
+			sendvalues[0]=2;
+			::e_DisableForceField(sendvalues);
+			map.SetTime(1380);
+			values[0]=2;
+		} return Lvl9TrapCooldown;
+		
+		case 2:
+		{
+			//Log("Таймаут истек");
+			map.SetData(3,0);
+			map.SetData(2,0);
+		} return 0;
+		
+		default: return 0;
+	}
+	return 0;
+}
+
+uint r_Lvl9PickTerminal(::Critter& master, ::Critter@ slave) //Возвращает ветку диалога в nov_lvl9_terminals(описания объектов экспериментов на 9 уровне Новато)
+{
+	return master.Param[ST_VAR0];
+}
+
+bool s_L9Terminal(::Critter& cr, ::Scenery& scen, int skill, ::Item@ item, int param) //Активирует терминал с описанием объекта экспериментов на 9-м уровне Новато
+{
+	if(validEngineObject(item) || skill!=SKILL_PICK_ON_GROUND) return false;
+	cr.SkillBase[ST_VAR0]=param;
+	::Mk2RunDialog(cr, 904, cr.GetMap(), scen.HexX, scen.HexY, false);
+	return true;
+}
+
+uint cte_SteamDamage(::Critter& cr, int identifier, int& rate, int&)
+{
+	if(cr.Cond==COND_DEAD) return 0;
+	if(cr.Cond!=COND_KNOCKOUT) cr.SayMsg(SAY_SHOUT_ON_HEAD, TEXTMSG_TEXT, ::Random(102050, 102053));
+	::InjureCritter(cr, ::Random(10, 15), DAMAGE_UNCALLED, 0, 0);
+	::Map@ map = cr.GetMap();
+	if( !validEngineObject( map ) )
+		return 0;
+	map.PlaySound("HMXXXXBN.ACM", cr.HexX, cr.HexY, 25);	
+	return REAL_SECOND(3);
+}
+
+//Квест "Охотник за головами"
+
+void _Lvl10Init(::Map& map, bool firstTime)
+{
+	map.SetEvent(MAP_EVENT_IN_CRITTER, "MapsNovato::_lvl10CritterIn");
+	_MapInit(map, firstTime);
+}
+
+void _lvl10CritterIn(::Map& map, ::Critter& cr)
+{
+	if(cr.IsPlayer())
+	{
+		::GameVar@ roboquest=::GetLocalVar(LVAR_q_nov_robobrain, cr.Id);
+		::Critter@ robobrain=map.GetNpc(MapsNovato::Defines::RoleQuestRobobrain, FIND_LIFE_AND_KO , 0);
+		if(!validEngineObject(robobrain) && roboquest.GetValue()>0 && roboquest.GetValue()<2)
+		{
+			uint16[] coords={0,0};
+			for(uint n=0, nMax=map.CountEntire(80); n<nMax; n++)
+			{
+				map.GetEntireCoords(80, n, coords[0], coords[1]);
+				if(map.IsHexPassed(coords[0], coords[1]))
+				{
+					::array<int> params={ ST_NPC_ROLE, MapsNovato::Defines::RoleQuestRobobrain};
+					@robobrain=map.AddNpc(79, coords[0], coords[1], ::Random(0,5), params, null, null);
+					if(validEngineObject(robobrain))
+					{
+						robobrain.SetScript("MapsNovato::RoboInit");
+						roboquest=2;
+						break;
+					}
+				}
+			}
+		}
+	}
+}
+
+void RoboInit( Critter& cr, bool firstTime)
+{
+	cr.ShowCritterDist1=25;
+	cr.ShowCritterDist2=10;
+	if(firstTime)
+	{
+		::Item@ item=cr.AddItem(Content::Item::M72_GAUSS_RIFLE, 1);
+#ifndef __NO_FAVORIT_ITEMS
+		if(validEngineObject(item))
+		{
+			if(cr.IsAnim1(item.Proto.Weapon_Anim1))
+				cr.SetFavoriteItem(SLOT_HAND1, Content::Item::M72_GAUSS_RIFLE);
+		}
+#endif
+	}
+	cr.SetEvent(CRITTER_EVENT_SHOW_CRITTER_1, "MapsNovato::_qRoboWarning");
+	cr.SetEvent(CRITTER_EVENT_SHOW_CRITTER_2, "MapsNovato::_qRoboAttack");
+	cr.SetEvent(CRITTER_EVENT_IDLE, "MapsNovato::_qRoboIdle");
+	cr.SetEvent(CRITTER_EVENT_DEAD, "MapsNovato::_qRoboDead");
+}
+
+void _qRoboWarning(::Critter& cr, ::Critter& showCr)
+{
+	if(showCr.IsPlayer()) cr.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_TEXT, 1571);
+}
+
+void _qRoboAttack(::Critter& cr, ::Critter& showCr)
+{
+	if(showCr.IsPlayer()) NpcPlanes::AddAttackPlane(cr, 1, showCr.Id, false);
+}
+
+void _qRoboIdle(::Critter& cr)
+{
+	if(::Random(0,2)==2) cr.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_TEXT, 1570);
+}
+
+void _qRoboDead(::Critter& cr, ::Critter@ killer)
+{
+	if(validEngineObject(killer))
+	{
+		if(killer.IsPlayer())
+		{
+			::GameVar@ quest=::GetLocalVar(LVAR_q_nov_robobrain, killer.Id);
+			if(quest.GetValue()>0&&quest.GetValue()<3)
+			{
+				quest=3;
+				killer.StatBase[ST_EXPERIENCE]+=5000;
+			}
+		}
+	}
+	cr.AddItem(Content::Item::CYBERNETIC_BRAIN, 1);
+	cr.AddTimeEvent("MapsNovato::cte_DeleteSelf", REAL_MINUTE(5), CTE_STEAM_DAMAGE);
+}
+
+uint cte_DeleteSelf(::Critter& cr, int identifier, int& rate, int&)
+{
+	::DeleteNpc(cr);
+	return 0;
+}
+
+//Диалог с Бартом(включая ремонт)
+
+uint r_AskFix(::Critter& master, ::Critter@ slave)
+{
+	::array<::Item@> items = {};
+	if(master.GetItems(SLOT_HAND1, items)>0)
+	{
+		if(items[0].IsDeteriorable())
+		{
+			int maxRepairCount = (items[0].Proto.MaxRepairCount>0)?((items[0].Proto.MaxRepairCount+10)*10):DEFAULT_MAX_REPAIR_COUNT;
+			if(FLAG(items[0].BrokenFlags, BI_ETERNAL) || FLAG(items[0].BrokenFlags, BI_NOTRESC) || items[0].RadioChannel>=maxRepairCount) return 15;
+			if(items[0].Deterioration<100) return 16;
+			return 8;
+		}
+	}
+	return 9;
+}
+
+void dlg_GetFixCost(::Critter& player, ::Critter@ npc, ::string@ lexems)
+{
+	if(!IS_DIALOG_GENERATED(lexems)) return; 
+	lexems="$cost"+GetFixCost(player);
+	::array<::Item@> items = {};
+	if( player.GetItems(SLOT_HAND1, items) != 0 && validEngineObject(items[0])) lexems+="$itemname@msg ITEM "+items[0].GetProtoId()*100+"@";
+}
+
+bool d_FixEnoughMoney(::Critter& master, ::Critter@ slave)
+{
+	::Item@ money=master.GetItem(Content::Item::BOTTLE_CAPS, -1);
+	return (validEngineObject(money) && money.GetCount()>=GetFixCost(master));
+}
+
+uint GetFixCost(::Critter& cr)
+{
+	uint cost=0;
+	::array<::Item@> items = {};
+	if(cr.GetItems(SLOT_HAND1, items)>0)
+	{
+		::GameVar@ quest=::GetLocalVar(LVAR_q_nov_robobrain, cr.Id);
+		if(valid(quest))
+		{
+			cost=items[0].Proto.Cost*items[0].Deterioration/10000;
+			if(FLAG(items[0].BrokenFlags,BI_BROKEN)) cost*=2;
+			if(quest.GetValue()==4 && cost>0) cost/=2;
+		}
+	}
+	return cost;
+}
+
+void r_Fix(::Critter& master, ::Critter@ slave)
+{
+	if( d_FixEnoughMoney( master, slave ) )
+	{
+		master.DeleteItem(Content::Item::BOTTLE_CAPS, GetFixCost(master));
+		::array<::Item@> items = {};
+		if( master.GetItems(SLOT_HAND1, items) > 0 && validEngineObject(items[0]) )
+		{
+			::Item@ money = items[0];
+			int maxRepairCount = (money.Proto.MaxRepairCount>0)?((money.Proto.MaxRepairCount+10)*10):DEFAULT_MAX_REPAIR_COUNT;
+			
+			if(money.Deterioration/100>uint(maxRepairCount-money.RadioChannel))
+			{
+				money.Deterioration=money.Deterioration-100*(maxRepairCount-money.RadioChannel);
+				money.RadioChannel=maxRepairCount;
+			}
+			else
+			{
+				money.RadioChannel+=money.Deterioration/100;
+				money.Deterioration=0;
+			}
+			UNSETFLAG(money.BrokenFlags,BI_BROKEN);
+			SETFLAG(money.BrokenFlags,BI_SERVICE);
+			money.Update();
+		}
+	}
+}
+
+// Скрипт карты "воронка". Делаем локу видимой с глобала, если игрок хотя бы однажды на нее зашел.
+
+void Crater(::Map& map, bool firstTime)
+{
+	//map.SetEvent(MAP_EVENT_IN_CRITTER, "_CraterCritterIn");
+	_MapInit(map, firstTime);
+}
+
+void _CraterCritterIn(::Map& map, ::Critter& cr)
+{
+	if( cr.IsNpc()) return;
+	::GameVar@ known=::GetLocalVar(LVAR_map_nov2_known, cr.Id);
+	if(valid(known) && known.GetValue()==0)
+		known=1;
+}
+
+bool entrance_Novato(::Location& novato, ::array<::Critter@>& critters, uint8 entrance)
+{
+	return (entrance!=MapsNovato::Defines::EntranceCrater);
+}
+
+void t_Crater(::Critter& cr, ::Scenery& trigger, bool entered, uint8 dir)
+{
+	if(not entered) return;
+	::Map@ map=cr.GetMap();
+	::Map@ targetMap = null;
+	if(map.GetProtoId()==MAP_lfo_lvl9)
+	{
+		@targetMap=::GetMapByPid(MAP_lfo_lvl10, 0);
+		t_Lvl9Trap(cr, trigger, false, 1, 0, 0);
+	}
+	else
+	{
+		uint targetPid=::Random(MAP_lfo_lvl9, MAP_lfo_lvl10);
+		if(targetPid==MAP_lfo_lvl9) t_Lvl9Trap(cr, trigger, false, 1, 1, 1);
+		@targetMap=::GetMapByPid(targetPid, 0);
+	}
+	if(validEngineObject(targetMap))
+	{
+		::InjureCritter(cr, ::Random(10, 100), DAMAGE_UNCALLED, 0, 0);
+		cr.TransitToMap(targetMap.Id, 180);
+		cr.ToKnockout(KNOCKOUT_ANIM2_DEFAULT(::Random(0,1)==1), cr.Stat[ST_ACTION_POINTS]*3, cr.HexX, cr.HexY);
+		for(uint n=0; n<4; n++)
+		{
+			if(::Random(1, 100)>74)
+			{
+				cr.DamageBase[DAMAGE_RIGHT_ARM+n]=1;
+				cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 1575+n);
+			}
+		}
+	}
+}
+
+void t_Drop(::Critter& cr, ::Scenery& trigger, bool entered, uint8 dir, int targetMapPid, int entId)
+{
+  ::Map@ map = cr.GetMap();
+  if( validEngineObject( map ) )
+  {
+    ::Location@ loc = map.GetLocation();
+    if( validEngineObject( loc ) )
+    {
+      ::Map@ targetMap=loc.GetMap(targetMapPid);
+      if(validEngineObject(targetMap))
+      {
+        ::InjureCritter(cr, ::Random(10, 100), DAMAGE_UNCALLED, 0, 0);
+        if( cr.Timeout[TO_BATTLE] != 0 ) cr.TimeoutBase[TO_BATTLE] = 0;
+        cr.TransitToMap( targetMap.Id, entId );
+        cr.ToKnockout(KNOCKOUT_ANIM2_DEFAULT(::Random(0,1)==1), cr.Stat[ST_ACTION_POINTS]*3, cr.HexX, cr.HexY);
+        for(uint n=0; n<4; n++)
+        {
+          if(::Random(1, 100)>74)
+          {
+            cr.DamageBase[DAMAGE_RIGHT_ARM+n]=1;
+            cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 1575+n);
+          }
+        }
+      }
+    }
+  }
+}
+//Квест "Крутые разборки"
+
+bool d_OrgRatingFits(::Critter& master, ::Critter@ slave)
+{
+	if(master.Param[ST_FACTION]!=0)
+	{
+		::Fraction@ fr=Fractions::Get(master.Param[ST_FACTION]);
+		if(!valid(fr)) 	
+			return false;
+		if(fr.Stats[FR_RATING]>=6000 && fr.Stats[FR_QUEST_MUTANTS]==0) 
+			return true;
+	}
+	return false;
+}
+
+void dlg_GetOrgName(::Critter& player, ::Critter@ npc, ::string@ lexems)
+{
+	if(!IS_DIALOG_GENERATED(lexems)) return; 
+	lexems="$frname"+Fractions::GetName(player.Param[ST_FACTION]);
+}
+
+CVariableController VariableController;
+
+class ParseFixer{}
+class CVariableController : ParseFixer, ::IVariableCallback
+{
+	void ChangeVariable( ::Critter @critter, ::OffClient @client, int variable, int value ) override
+	{
+		if( critter !is null && variable == LVAR_q_nov_mutants && value == 5 )
+			critter.StatBase[ST_EXPERIENCE]+=10000;
+	}
+} 
+
+void r_SetMutQuest(::Critter& master, ::Critter@ slave, int value)
+{
+	::Fraction @fraction = Fractions::Get(master.Stat[ST_FACTION]);
+	if( fraction is null ) 
+	{
+		master.Say(SAY_NETMSG, "ERROR: Faction not found!");
+		Log( "ERROR: Faction not found!" );
+		return;
+	}
+	
+	fraction.Stats[FR_QUEST_MUTANTS]=value;
+	if( value == 1 )
+	{
+		uint locId=::CreateLocation(231, 425-::Random(50, 150), 1075-::Random(50, 250), null);
+		::GameVar@ frId=::GetLocalVar(LLVAR_questloc_frid, locId);
+		frId=master.Stat[ST_FACTION];
+		fraction.AddLocation(locId);
+		::CreateTimeEvent(::__FullSecond+REAL_HOUR(3), "MapsNovato::e_DeleteLoc", locId, true);
+	}
+	if( value == 5 ) fraction.Stats[FR_MONEY]+= 200000;
+	fraction.SetVariable( LVAR_q_nov_mutants, value, VariableController );
+}
+
+void t_Approach(::Critter& cr, ::Scenery& trigger, bool entered, uint8 dir)
+{
+	::Map@ map=cr.GetMap();
+	if(map.GetData(0)==0)
+	{
+		::Critter@ npc=map.GetNpc(MapsNovato::Defines::RoleSilosQuard, FIND_LIFE, 0);
+		if(validEngineObject(npc)) npc.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_TEXT, 1572);
+		map.SetData(0,1);
+	}
+}
+
+void t_TryEntCave(::Critter& cr, ::Scenery& trigger, bool entered, uint8 dir)
+{
+	if(cr.IsNpc()) return;
+	::Map@ map=cr.GetMap();
+	if(map.GetData(0)!=2)
+	{
+		for(uint n=0, nMax=map.GetNpcCount(MapsNovato::Defines::RoleSilosQuard, FIND_LIFE); n<nMax; n++)
+		{
+			::Critter@ npc=map.GetNpc(MapsNovato::Defines::RoleSilosQuard, FIND_LIFE, n);
+			if(validEngineObject(npc)) NpcPlanes::AddAttackPlane(npc, 1, cr.Id, false);
+		}
+	}
+}
+
+void t_EnterCave(::Critter& cr, ::Scenery& trigger, bool entered, uint8 dir)
+{
+	::Map@ map=cr.GetMap();
+	if(map.GetLocation().GetMapByIndex(0).GetData(0)!=2)
+	{
+		map.GetLocation().GetMapByIndex(0).SetData(0,3);
+		for(uint n=0, nMax=map.GetNpcCount(MapsNovato::Defines::RoleSilosQuard, FIND_LIFE); n<nMax; n++)
+		{
+			::Critter@ npc=map.GetNpc(MapsNovato::Defines::RoleSilosQuard, FIND_LIFE, n);
+			if(validEngineObject(npc)) NpcPlanes::AddAttackPlane(npc, 1, cr.Id, false);
+		}
+	}
+}
+
+void SilosGuard(::Critter& cr, bool firstTime)
+{
+	::array<uint> weaponList={ Content::Item::VINDICATOR_MINIGUN, Content::Item::TURBO_PLASMA_RIFLE, Content::Item::BOZAR, Content::Item::ROCKET_LAUNCHER};
+	cr.StatBase[ST_REPLICATION_TIME]=-1;
+	cr.ModeBase[MODE_NO_LOOSE_LIMBS]=1;
+	cr.ModeBase[MODE_NO_STEAL]=1;
+	cr.SetEvent(CRITTER_EVENT_SHOW_CRITTER, "MapsNovato::_SGSeeMeat");
+	cr.SetEvent(CRITTER_EVENT_SMTH_ATTACK, "MapsNovato::_SGAssist");
+	if(firstTime)
+	{
+		uint pid=weaponList[::Random(0, weaponList.length()-1)];
+		::array<::Item@> weapons;
+		::Item@ weapon;
+		if(cr.GetItemsByType(ITEM_TYPE_WEAPON, weapons)>0) @weapon=weapons[0];
+		else @weapon=cr.AddItem(pid,1);
+		::Item@ ammo=cr.AddItem(weapon.Proto.Weapon_DefaultAmmoPid, weapon.Proto.Weapon_MaxAmmoCount*::Random(3,6));
+#ifndef __NO_FAVORIT_ITEMS
+		if(validEngineObject(weapon))
+		{
+			if(cr.IsAnim1(weapon.Proto.Weapon_Anim1))
+				cr.SetFavoriteItem(SLOT_HAND1, pid);
+		}
+		cr.SetFavoriteItem(SLOT_HAND2, ammo.GetProtoId());
+#endif
+		cr.SkillBase[weapon.Proto.Weapon_Skill_0]=300;
+		weapon.Deterioration=::Random(0, 9500);
+		weapon.Update();
+		cr.StatBase[ST_MAX_LIFE]+=::Random(800, 2400);
+		cr.StatBase[ST_CURRENT_HP]=cr.Stat[ST_MAX_LIFE];
+		cr.StatBase[ST_ACTION_POINTS]+=15;
+		cr.MoveItem(ammo.Id, ammo.GetCount(), SLOT_HAND2);
+	}
+}
+
+void _SGAssist(::Critter& cr, ::Critter& fromCr, ::Critter& target)
+{
+	if(target.IsPlayer() && fromCr.Stat[ST_TEAM_ID]==cr.Stat[ST_TEAM_ID]) NpcPlanes::AddAttackPlane(cr,1, target.Id, false);
+	else if(fromCr.IsPlayer() && target.Stat[ST_TEAM_ID]==cr.Stat[ST_TEAM_ID]) NpcPlanes::AddAttackPlane(cr,1, fromCr.Id, false);
+}
+
+
+void _SilosInit(::Critter& cr, bool firstTime)
+{
+	::array<uint> weaponList={ Content::Item::PLASMA_CANNON, Content::Item::TESLA_RIFLE};
+	cr.SetEvent(CRITTER_EVENT_SMTH_ATTACK, "MapsNovato::_SGAssist");
+	cr.SetEvent(CRITTER_EVENT_DEAD, "MapsNovato::_SilosDead");
+	cr.StatBase[ST_REPLICATION_TIME]=-1;
+	cr.ModeBase[MODE_NO_LOOSE_LIMBS]=1;
+	cr.ModeBase[MODE_NO_STEAL]=1;
+	if(firstTime)
+	{
+		uint pid=weaponList[::Random(0, weaponList.length()-1)];
+		::array<::Item@> weapons;
+		::Item@ weapon;
+		if(cr.GetItemsByType(ITEM_TYPE_WEAPON, weapons)>0) @weapon=weapons[0];
+		else @weapon=cr.AddItem(pid,1);
+		::Item@ ammo=cr.AddItem(weapon.Proto.Weapon_DefaultAmmoPid, weapon.Proto.Weapon_MaxAmmoCount*::Random(1,3));
+#ifndef __NO_FAVORIT_ITEMS
+		if(validEngineObject(weapon))
+		{
+			if(cr.IsAnim1(weapon.Proto.Weapon_Anim1))
+				cr.SetFavoriteItem(SLOT_HAND1, pid);
+		}
+		cr.SetFavoriteItem(SLOT_HAND2, ammo.GetProtoId());
+#endif
+		cr.StatBase[ST_MAX_LIFE]+=::Random(1000, 2500);
+		cr.StatBase[ST_CURRENT_HP]=cr.Stat[ST_MAX_LIFE];
+		cr.StatBase[ST_ACTION_POINTS]+=15;
+		cr.SkillBase[weapon.Proto.Weapon_Skill_0]=300;
+	}
+}
+
+void _SilosDead(::Critter& cr, ::Critter@ killer)
+{
+	::Fraction @fraction = Fractions::Get(::GetLocalVar(LLVAR_questloc_frid, cr.GetMap().GetLocation().Id).GetValue());
+	if( fraction is null )
+	{
+		::CreateTimeEvent(::__FullSecond+REAL_MINUTE(5), "MapsNovato::e_DeleteLoc", cr.GetMap().GetLocation().Id, true);
+		return;
+	}
+	fraction.Stats[FR_QUEST_MUTANTS]=4;
+	fraction.SetVariable( LVAR_q_nov_mutants, 4 );
+	::CreateTimeEvent(::__FullSecond+REAL_MINUTE(5), "MapsNovato::e_DeleteLoc", cr.GetMap().GetLocation().Id, true);
+}
+
+
+void _SGSeeMeat(::Critter& cr, ::Critter& showCr)
+{
+	if(showCr.IsPlayer() || showCr.Merc[MERC_MASTER_ID] != 0 )
+	{
+		/*if(cr.GetMap().GetLocation().GetMapByIndex(0).GetData(0)==3)*/ NpcPlanes::AddAttackPlane(cr, 1, showCr.Id, false);
+	}
+}
+
+//Диалог с охраной на входе в пещеру Сайлоса.
+uint r_AskAudience(::Critter& master, ::Critter@ slave)
+{
+	if(master.Skill[SK_SPEECH]+master.Stat[ST_LUCK]*::Random(1,10)>150)
+	{
+		master.GetMap().SetData(0,2);
+		return 5;
+	}
+	return 3;
+}
+
+bool d_SilosOkGo(::Critter& master, ::Critter@ slave)
+{
+	return master.GetMap().GetLocation().GetMapByIndex(0).GetData(0)==2;
+}
+
+bool d_SilosFuckOff(::Critter& master, ::Critter@ slave)
+{
+	return master.GetMap().GetLocation().GetMapByIndex(0).GetData(0)!=2;
+}
+
+bool d_SilosEnoughMoney(::Critter& master, ::Critter@ slave)
+{
+	if(master.Param[ST_FACTION]==0) return false;
+	::Fraction@ fr=Fractions::Get(master.Param[ST_FACTION]);
+	if(!valid(fr)) return false;
+	if(fr.Stats[FR_MONEY]>=50000) return true;
+	return false;
+}
+
+void r_SilosGiveMoney(::Critter& master, ::Critter@ slave)
+{
+	::Fraction@ fr=Fractions::Get(master.Param[ST_FACTION]);
+	if(!valid(fr)) return;
+	fr.Stats[FR_MONEY]-=50000;
+	::CreateTimeEvent(::__FullSecond+REAL_MINUTE(5), "MapsNovato::e_DeleteLoc", master.GetMap().GetLocation().Id, true);
+}
+
+uint e_DeleteLoc(::array<uint>@ values)
+{
+	::Location@ loc=::GetLocation(values[0]);
+	if(@loc==null) return 0;
+	::DeleteLocation(values[0]);
+	::GameVar@ frId=::GetLocalVar(LLVAR_questloc_frid, values[0]);
+	if(frId.GetValue()>0)
+	{
+		::Fraction@ fr=Fractions::Get(frId.GetValue());
+		if(!valid(fr)) return 0;
+		fr.DeleteLocation(values[0]);
+	}
+	return 0;
+}
+
+
+uint r_SilosGiveBribe(::Critter& master, ::Critter@ slave)
+{
+	if(master.Skill[SK_SPEECH]+master.Stat[ST_LUCK]*::Random(1,10)>150) return 5;
+	return 4;
+}
+
+void dlg_SilosAttack(::Critter& player, ::Critter@ npc, ::string@ lexems)
+{
+	player.GetMap().GetLocation().GetMapByIndex(0).SetData(0,3);
+	NpcPlanes::AddAttackPlane(npc,1, player.Id, false);
+}
+
+void _MapInit(::Map& map, bool firstTime)
+{
+	_RadiationNovato(map, firstTime);
+}
+
+void _RadiationNovato(::Map& map, bool firstTime)
+{
+	map.SetLoopTime(0,RadiationLoop);
+	map.SetData(0,MapsNovato::Defines::RadiationDoseMin);
+	map.SetData(1,MapsNovato::Defines::RadiationDoseMax);
+	map.SetEvent(MAP_EVENT_LOOP_0,"Mk2@MapRadiation::_MapLoop0");
+}

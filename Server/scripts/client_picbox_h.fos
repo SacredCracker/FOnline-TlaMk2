@@ -1,0 +1,189 @@
+// rifleman17
+// Элемент для отображения картинок предметов в инвентаре
+// Также выводит поверх изображения текст в левом нижнем углу
+/*
+   Пример добавления на экран CLIENT_SCREEN_TEST:
+        Rectangle@ bounds(100, 100, 100, 100);
+        ItemPictureBox@ picBox(PID_BOTTLE_CAPS, 0, 0, true, bounds);
+        picBox.Init(CLIENT_SCREEN_TEST); // Эта функция добавляет picturebox на экран
+        picBox.ChangeText("17 руб 29 коп");
+ */
+
+#ifndef __CLIENT_Picbox__
+#define __CLIENT_Picbox__
+
+#include "_client_defines.fos"
+#include "client_gui_h.fos"
+#include "_macros.fos"
+#include "_colors.fos"
+#include "client_rectangle_h.fos"
+
+
+// Специальный интерфейс для ItemPictureBoxList, используется при выборе позиции в списке картинок и организации скроллинга
+interface IPictureBoxScroll {
+    void SetPicListScroll( int dir, int steps );
+    void OnPicBoxSelected( ItemPictureBox@ selectedPicBox );
+}
+
+// Рисует картинку предмета для инвентаря в заданном регионе
+class ItemPictureBox : IGUI::ElementCallbackInit, IGUI::ElementCallbackDraw, IGUI::ElementCallbackMouseClick
+{
+    Rectangle@         Bounds;
+    bool               Center;        // Центрировать изображение
+    uint               Color;         // Оттенок спрайта, если 0 - цвет по умолчанию
+    uint               ColorSelected; // Цвет выбранного изображения
+    uint16             ProtoId;       // Код прототипа предмета
+    uint               SpriteId;      // Код спрайта, если он был загружен
+    bool               Selected;      // Признак: изображение выбрано
+    int                Param1;        // Вспомогательное поле
+
+    IPictureBoxScroll@ PicBoxScroll;
+    IGUIScreenOpt@     ScreenOptions;
+    PictureBoxLabel@   Label;         // Ярлык с текстом
+
+    ItemPictureBox( uint16 pid, uint color, uint colorSelected, bool center, Rectangle & bounds )
+    {
+        SpriteId = 0;
+        ProtoId = pid;
+        Center = center;
+        Color = color;
+        ColorSelected = colorSelected;
+        @Bounds = bounds;
+        Selected = false;
+        Rectangle@ rec = bounds.Copy();
+        rec.Location.X += 5;
+        rec.Region.Width -= 5;
+        @Label = PictureBoxLabel( FT_BOTTOM | FT_BORDERED | FT_ALIGN, FONT_FALLOUT, rec );
+
+    }
+
+    void Init( int screenIndex )
+    {
+        GUI_AddScreenElement( screenIndex, null, Bounds.X, Bounds.Y )
+        .Position( Bounds.X, Bounds.Y, Bounds.Width, Bounds.Height )
+        .CallbackInit( this )
+        .CallbackMouseClick( this )
+        .CallbackDraw( this );
+        Label.Init( screenIndex );
+    }
+
+    void OnInit()
+    {
+        @ScreenOptions = GUI_GetScreenOptions();
+    }
+
+    void OnDraw()
+    {
+        if( ProtoId > 0 )
+        {
+            const ProtoItem@ proto = GetProtoItem( ProtoId );
+            if( valid( proto ) )
+            {
+                if( SpriteId == 0 )
+                    SpriteId = LoadSprite( proto.PicInv, 0 );
+                DrawSprite(
+                    SpriteId,
+                    -1,
+                    Bounds.X + ScreenOptions.GetPosX(),
+                    Bounds.Y + ScreenOptions.GetPosY(),
+                    Bounds.Width, Bounds.Height,
+                    false,
+                    Center,
+                    ( Selected ? ColorSelected : Color ) );
+            }
+        }
+    }
+
+    void PicBoxScrollCallback( IPictureBoxScroll@ callback )
+    {
+        @PicBoxScroll = callback;
+    }
+
+    void OnMouseClick( int click )
+    {
+        // Обработка нажатий мыши, если известен колбак на скролл
+        if( valid( PicBoxScroll ) )
+        {
+            if( click == MOUSE_CLICK_WHEEL_UP )
+                PicBoxScroll.SetPicListScroll( DIR_BACK, 1 );
+            else if( click == MOUSE_CLICK_WHEEL_DOWN )
+                PicBoxScroll.SetPicListScroll( DIR_FORWARD, 1 );
+            else if( click == MOUSE_CLICK_LEFT )
+                PicBoxScroll.OnPicBoxSelected( this );
+        }
+    }
+
+    void ChangePid( uint16 newPid )
+    {
+        if( ProtoId != newPid )
+        {
+            ProtoId = newPid;
+            Refresh();
+        }
+    }
+
+    void ChangeSelected( bool selected )
+    {
+        if( Selected != selected )
+        {
+            Selected = selected;
+            if( valid( ScreenOptions ) )
+                OnDraw();
+        }
+    }
+
+    void ChangeText( string text )
+    {
+        Label.SetText( text );
+        if( valid( ScreenOptions ) )
+            OnDraw();
+    }
+
+    // Перерисовка с загрузкой спрайта
+    void Refresh()
+    {
+        SpriteId = 0;
+        if( valid( ScreenOptions ) )
+            OnDraw();
+    }
+}
+
+// Ярлык в левом нижнем углу картинки
+// Длину текста нужно подгонять самостоятельно
+class PictureBoxLabel : IGUI::ElementCallbackInit
+{
+    IGUIElementOpt@ Options;
+    string          Text;
+    int             Format;
+    int             Font;
+    Rectangle@      Bounds;
+
+    PictureBoxLabel( int format, int font, Rectangle & rec )
+    {
+        Format = format;
+        Font = font;
+        @Bounds = rec;
+    }
+
+    void OnInit()
+    {
+        @Options = GUI_GetElementOptions();
+        Options.Text( Text, Font, COLOR_GREEN, COLOR_GREEN, Format );
+    }
+
+    void SetText( string text )
+    {
+        Text = text;
+        if( valid( Options ) )
+            Options.Text( Text, Font, COLOR_GREEN, COLOR_GREEN, Format );
+    }
+
+    void Init( int screenIndex )
+    {
+        GUI_AddScreenElement( screenIndex, null, Bounds.X, Bounds.Y )
+        .Position( Bounds.X, Bounds.Y, Bounds.Width, Bounds.Height )
+        .CallbackInit( this );
+    }
+}
+
+#endif // __CLIENT_Picbox__

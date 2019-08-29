@@ -1,0 +1,2306 @@
+// FOS Server Client
+
+#ifdef __SERVER
+Dialog@[] Listing;
+::dictionary Lybrary;
+funcdef void ParseSpace( Dialog&, ::string&, Context@ );
+ScriptInfo::Enum@ GameVarEnum 	= @ScriptInfo::Enum( "Content", "GameVar", "Mk2" );
+ScriptInfo::Enum@ GVarEnum 		= @ScriptInfo::Enum( "Content", "GVAR", "Mk2" );
+ScriptInfo::Enum@ LVarEnum 		= @ScriptInfo::Enum( "Content", "LVAR", "Mk2" );
+ScriptInfo::Enum@ UVarEnum 		= @ScriptInfo::Enum( "Content", "UVAR", "Mk2" );
+ScriptInfo::Enum@ LLVarEnum 		= @ScriptInfo::Enum( "Content", "LLVAR", "Mk2" );
+ScriptInfo::Enum@ LIVarEnum 		= @ScriptInfo::Enum( "Content", "LIVAR", "Mk2" );
+ScriptInfo::Enum@ LMVarEnum 		= @ScriptInfo::Enum( "Content", "LMVAR", "Mk2" );
+
+Dialog@ GetDialog( ::Critter& cr )
+{
+	if( cr.IsNpc() )
+		return @GetDialog( cr.Stat[ST_DIALOG_ID] );
+	return null;
+}
+
+Dialog@ GetDialog( const int&in number )
+{
+	if( number != 0 )
+	{
+		if( number < Content::Dialog::Count )
+			return @Listing[number];
+		Log( "Номер диалога слишком велик для этого сервера " + number );
+	}
+	return null;
+}
+
+void RunCritter( ::Critter& cr, ::Critter& targetCr, uint branch )
+{
+	Dialog::Master@ master = cast<Dialog::Master>(@cr.ScriptDescriptor);
+	if( @master !is null && master.IsSpeakCritter( targetCr ) )
+	{
+		Dialog@ dialog = @GetDialog( targetCr );
+		if( @dialog !is null )
+		{
+			dialog.Run( cr, targetCr, branch, cr.GetMap(), targetCr.HexX, targetCr.HexY );
+		}
+		else Log( "Не найден диалог с номером: " + cr.Stat[ST_DIALOG_ID] );
+	}
+}
+
+funcdef void DebugLogFuncdef( const ::string& str, Dialog@ dialog );
+
+void DebugLogNoValid( const ::string& str, Dialog@ dialog ){ Log( str ); }
+void DebugLogValid( const ::string& str, Dialog@ dialog ){ dialog.Debug( str ); }
+
+void CallAnswer( ::Critter& cr, uint index, ::string@ say )
+{
+	Master@ master = cast<Master>(cr.ScriptDescriptor);
+	if( @master !is null )
+	{
+		::Critter@ targetCr = null;
+		Dialog@ dialog = null;
+		Branch@ branch = null, lastBranch = null; 
+		Answer@[]@ answers;
+		::Map@ map = null;
+		uint16 hexX = 0, hexY = 0;
+		master.GetAnswers( @targetCr, @dialog, @branch, @answers, @map, hexX, hexY, @lastBranch );
+		bool isSpeak = false;
+		if( @targetCr !is null )
+			isSpeak = master.IsSpeakCritter( targetCr );
+		else if( @map !is null ) 
+			isSpeak = master.IsSpeakHex( map, hexX, hexY, ::__TalkDistance );
+		if( isSpeak )
+		{
+			if( @dialog !is null && @branch !is null && @answers !is null && answers.length() > index )
+				dialog.CallAnswer( cr, @targetCr, branch, answers[index], map, hexX, hexY, @lastBranch );
+			else 
+			{
+				switch( index )
+				{
+					case DIALOG_BARTER:
+					{
+						if( @targetCr !is null )
+							Barter::Call( cr, targetCr );
+					}
+					break;
+					
+					case uint(-5):
+					{
+						if( @say !is null && @branch !is null )
+						{
+							if( branch.FuncId != 0 )
+							{
+								if( branch.IsReturnValue )
+								{
+									uint resultIndex = ScriptInfo::RunDialogBranchFunctionId( cr, @targetCr, branch.FuncId, @say, branch.IsReturnValue );
+									dialog.CallAnswer( cr, @targetCr, branch, null, map, hexX, hexY, @lastBranch, resultIndex );
+									//CallAnswer( cr, resultIndex, null );
+								}
+								else
+									ScriptInfo::RunDialogBranchFunctionId( cr, @targetCr, branch.FuncId, @say, branch.IsReturnValue );
+							}
+						}
+					}
+					break;
+					
+					default:
+					{
+						DebugLogFuncdef@ log = @DebugLogNoValid;
+						if( @dialog !is null )
+							@log = @DebugLogValid;
+						log( "Порченный ответ от игрока : <" + ::GetPlayerName( cr.Id ) + ">", @dialog );
+	
+						if( @branch !is null )
+							log( "Branch : <" + branch.Index + ">", @dialog );
+						else log( "Branch none", @dialog );
+	
+						if( @answers !is null )
+							log( "Count answers : <" + answers.length() + ">", @dialog );
+						else log( "Count answers : none", @dialog );
+						
+						log( "index " + index, @dialog );
+					}
+					break;
+				}
+			}
+		}
+	} 
+}
+
+void RunHex( ::Critter& cr, ::Map& map, uint16 x, uint16 y, int number )
+{
+	Dialog::Master@ master = cast<Dialog::Master>(@cr.ScriptDescriptor); 
+	if( @master !is null && @cr.GetMap() is @map && master.IsSpeakHex( map, x, y, ::__TalkDistance ) )
+	{
+		Dialog@ dialog = @GetDialog( number );
+		if( @dialog !is null )
+			dialog.Run( cr, null, 1, map, x, y );
+		else Log( "Не найден диалог с номером: " + number );
+	}
+}
+
+void DialogInit( ::string& nameDialog, Content::Dialog number )
+{
+	if( nameDialog != "None" && nameDialog != "Count" && nameDialog != "End" )
+	{
+		if( Listing.length() < uint( number ) )
+			Listing.resize( Content::Dialog::Count );
+		Dialog dialog( nameDialog, number );
+		dialog.ParseFile( "./dialogs/" + nameDialog + ".fodlg" );
+		@Listing[number] = @dialog;
+		Lybrary.set( nameDialog, @dialog );
+	}
+	else if( nameDialog == "End" )
+	{
+		BuilderCall::WriteDlgMsg( );
+	}
+}
+
+void DataSpace( Dialog& dialog, ::string& line, Dialog::Context@ context )
+{
+	::string@[] split = ::splitEx( line, "=" );
+	if( split.length() == 2 && split[0] == "lang" )
+	{ }
+}
+
+void DialogSpace( Dialog& dialog, ::string& line, Context@ context  )
+{
+	if( @context is null )
+	{
+		dialog.Debug( "Не валиден контекст.");
+		return;
+	}	
+	context.ParseLine( line );
+}
+
+void CommentSpace( Dialog& dialog, ::string& line, Context@ context  ){}
+
+void LanguageSpace( Dialog& dialog, ::string& line, Context@ context )
+{
+	line = ::substring( line, 1, line.length() - 2 );
+	int index = ::findFirst ( line, "}");
+	if( index != -1 )
+	{
+		::string number = ::substring( line, 0, index );
+		
+		index = ::findFirst ( line, "}", index + 1 );
+		if( index != -1 )
+		{
+			
+			line = ::substring( line, index + 2, line.length() );
+			
+			int inumber = 0;
+			if( StrToValue( number, inumber ) )
+			{
+				uint unumber = uint( inumber );
+			
+				if( unumber < 1000 )
+					unumber = 100000 + ( dialog.Id  ) * 1000 + unumber;
+				else unumber = uint( DLGSTR( uint( dialog.Id ), unumber ) );
+				Dialog::BuilderWriter@ file = cast<Dialog::BuilderWriter>(@context);
+				if( @file is null )
+					dialog.Debug( "Не найден файл в контексте" );
+				else file.Add( line, unumber );
+			}
+			else dialog.Debug( "Не опознан номер <" + number + ">"  );
+		}
+	}
+}
+
+interface Context
+{
+	void ParseLine( ::string&in line );
+}
+/* 
+константы:
+
+65506 - номер бартера
+0 - выход из диалога
+None - ничего
+
+Значения символов и формат линии:
+& - конец или начало опций диалога, нам оно не нужно, будем пропускать
+# - следующая линия относится к текущей опции
+@ - следующая линия начало новой опции
+
+Линия начинается с двух чисел, 
+	первое число это номер ветки или ответа ( Для ответов это номер перехода, для ветки номер самой ветки )
+	второе число это реальный номер ветки или ответа ( номер самого текста )
+	
+D или d - условие
+R или r - результат
+
+_var 	m - означает что это переменная для m, где m это либо p ( игрок ) лмбо n ( нпц )
+_param 	m - означает параметр для m
+_item   m - означает итем для m
+	
+_script module@function argCount args - скрипт с модулем module функцией function аргументами args через пробел, в количестве argCount
+
+Про операторы:
+
+} - больше либо равно
+{ меньше либо равно
+Остальное и так понятно
+*/
+enum State
+{
+	None,
+	Start,
+	Resume,
+	New,
+	Finish
+}
+
+interface Interlocutor
+{
+	
+}
+
+interface Master
+{
+	void SetAnswers( ::Critter@ interlocutor, Dialog::Dialog@ dialog, Dialog::Branch@ branch, Dialog::Answer@[]@ answers, ::Map& map, uint16 hexX, uint16 hexY );
+	void GetAnswers( ::Critter@& interlocutor, Dialog::Dialog@& dialog, Dialog::Branch@& branch, Dialog::Answer@[]@& answers, ::Map@& map, uint16& hexX, uint16& hexY, Dialog::Branch@& lastBranch );
+	bool IsSpeakCritter( ::Critter& npc );
+	bool IsSpeakHex( ::Map& map, uint16 hexX, uint16 hexY, uint dist );
+}
+
+bool GetConstantValue( const int& in constCollection, ::string@ name, int& out value )
+{
+	value = ::GetConstantValue( constCollection, name );
+	return ( value != -1 );
+}
+
+bool GetParamConstant( ::string@ name, uint& out value ){ return GetConstantValue( CONSTANTS_PARAM, @name, value ); }
+bool GetItemConstant( ::string@ name, uint& out value ){ return GetConstantValue( CONSTANTS_ITEM, @name, value ); }
+bool GetDefineConstant( ::string@ name, uint& out value ){ return GetConstantValue( CONSTANTS_DEFINE, @name, value ); }
+
+bool FindConstant( ::string@ name, uint& out value )
+{
+	if( GetParamConstant( @name, value ) )
+		return true;
+	if( GetItemConstant( @name, value ) )
+		return true;
+	if( GetDefineConstant( @name, value ) )
+		return true;
+	return false;
+}
+
+bool StrToValue( ::string@ name, int& out value )
+{
+	if( ::StrToInt( @name, value ) )
+		return true;
+	uint uv = 0;
+	if( FindConstant( @name, uv ) )
+	{
+		value = int( uv );
+		return true;
+	}
+	return false;
+}
+
+// BuilderCall::
+// WriteDlgMsg( )
+// DlgMsgAddText( uint number, ::string& text, ::string& lang )
+
+class BuilderWriter : Context
+{
+	BuilderWriter( ::string& name )
+	{
+		@FileName = name;
+	}
+
+	void ParseLine( ::string&in line ) override 
+	{
+	
+	}
+
+	void Add( ::string& line, uint number )
+	{
+		BuilderCall::DlgMsgAddText( number, line, FileName );
+	}
+	
+	::string@ FileName;
+}
+
+class DialogSpaceContext : Context
+{
+	DialogSpaceContext( Dialog::Dialog& pattern )
+	{
+		@Pattern = @pattern;
+		RealState = Dialog::State::None;
+		Drop( );
+	}
+
+	void ParseLine( ::string&in line ) override
+	{			
+		::string@[] words = ::splitEx( line, " " );
+		for( uint i = 0, iEnd = words.length(); i < iEnd; i++ )
+			ParseWord( words[i], i, words, iEnd );
+	}
+	
+	void Drop( )
+	{
+		@ Number = null;
+		@ Index = null;
+		@ CurrentBranch = null;
+		Demands.resize( 0 );
+		AllDemands.resize( 0 );
+		Results.resize( 0 );
+	}	
+
+	/* None,
+	Start,		// first &
+	Resume,	// #
+	New,		// @
+	Finish	// second & */
+	
+	const Dialog::State get_State( )
+	{
+		return RealState;
+	}
+	
+	const Dialog::State set_State( const Dialog::State value )
+	{
+		switch( RealState ) // Сейчас
+		{
+			case Dialog::State::Start:	
+			case Dialog::State::New:	
+				{
+					if( @CurrentBranch is null && @Index !is null && @Number !is null )
+						@ CurrentBranch = @Pattern.AddBranch( Index, Number );
+				}
+				break;
+				
+			case Dialog::State::Resume:
+				{
+					Dialog::Answer@ answer = null;
+					if( @Index !is null && @Number !is null && @CurrentBranch !is null )
+						@ answer = CurrentBranch.AddAnswer( Index, Number, uint( Pattern.Id ) );
+					
+					if( @answer !is null )
+					{
+						Dialog::Demand@[] demands = Demands;
+						AllDemands.insertLast( demands );
+						answer.Demands = AllDemands;
+						answer.Results = Results;
+					}
+					
+					AllDemands.resize( 0 );
+					Demands.resize( 0 );
+					Results.resize( 0 );
+				}
+				break;
+		
+			case Dialog::State::None:	
+			case Dialog::State::Finish:
+				break;
+		}
+		switch( value ) // Будет
+		{
+			case Dialog::State::None:
+			case Dialog::State::Start:				
+			case Dialog::State::Resume:
+				break;
+				
+			case Dialog::State::New:	
+			case Dialog::State::Finish:
+				Drop( );
+				break;
+		}
+		RealState = value;
+		return RealState; 
+	}
+	
+	bool NextWord( ::string& word, uint& index, ::string@[]&in words, const uint&in countWords )
+	{
+		if( index + 1 == countWords ) 
+			return false;
+		word = words[++index];
+		return true;
+	}
+
+	void ParseWord( ::string&in word, uint& index, ::string@[]&in words, const uint&in countWords )
+	{
+		if( index + 1 == countWords )
+		{
+			if( word == "&" )
+			{
+				if( State == Dialog::State::None || State == Dialog::State::Finish )
+					State = Dialog::State::Start;
+				else State = Dialog::State::Finish;
+			}
+			else if( word == "#" )
+				State = Dialog::State::Resume;
+			else if( word == "@" )
+				State = Dialog::State::New;
+		}
+		else 
+		{
+			switch( index )
+			{
+				case 0:
+					@Index = word;
+					break;
+					
+				case 1:
+					@Number = word;
+					break;
+					
+				default: 
+					{
+						if( word == "D" )
+						{
+							if( NextWord( word, index, words, countWords ) )
+							{
+								if( word == "no_recheck" )
+								{
+									NextWord( word, index, words, countWords );
+								}
+							
+								if( word == "_param" )
+								{
+									NextWord( word, index, words, countWords );
+									bool isPlayer = ::strlwr( word ) == "p";
+									NextWord( word, index, words, countWords );
+									int param = 0;
+									if( GetParamConstant( word, param ) || ::StrToInt( word, param ) )
+									{
+										NextWord( word, index, words, countWords );
+										Dialog::OperatorDemand@ oper = GetDemandOperator( word );
+										string oper_name = word;
+										if( @oper is null )
+											Pattern.Debug( "Неопознанный оператор <" + word + ">" );
+										NextWord( word, index, words, countWords );
+										int value = -1;
+										if( StrToValue( word, value ) )
+										{
+											Dialog::Demand_param demand( isPlayer, @oper, param, value );
+											demand.OperationName = oper_name;
+											Demands.insertLast( @demand );
+										}
+										else Pattern.Debug( "Неопознанное значение <" + word + ">" );
+									}
+									else Pattern.Debug( "Неопознанный парам <" + word + ">" ); 
+								}
+								else if( word == "_item" )
+								{
+									NextWord( word, index, words, countWords );
+									bool isPlayer = ::strlwr( word ) == "p";
+									NextWord( word, index, words, countWords );
+									int pid = 0;
+									if( GetItemConstant( word, pid ) || ::StrToInt( word, pid ) )
+									{
+										NextWord( word, index, words, countWords );
+										Dialog::OperatorDemand@ oper = GetDemandOperator( word );
+										if( @oper is null )
+											Pattern.Debug( "Неопознанный оператор <" + word + ">" );
+										NextWord( word, index, words, countWords );
+										int value = -1;									
+										if( StrToValue( word, value ) )
+											Demands.insertLast( @Dialog::Demand_item( isPlayer, @oper, pid, value ) );
+										else Pattern.Debug( "Неопознанное значение <" + word + ">" );
+									}
+									else Pattern.Debug( "Неопознанный пид <" + word + ">" );
+								}
+								else if( word == "_var" )
+								{
+									NextWord( word, index, words, countWords );
+									bool isPlayer = ::strlwr( word ) == "p";
+									::string varName = "";
+									NextWord( varName, index, words, countWords );
+									
+									NextWord( word, index, words, countWords );
+									Dialog::OperatorDemand@ oper = GetDemandOperator( word );
+									if( @oper is null )
+										Pattern.Debug( "Неопознанный оператор <" + word + ">" );
+									NextWord( word, index, words, countWords );
+									int value = -1;
+									if( StrToValue( word, value ) )
+									{
+										int number = 0;									
+										if( ( number = LVarEnum.Value[varName] ) != -1 )
+											Demands.insertLast( @Dialog::Demand_lvar( isPlayer, @oper, number, value ) );
+										else if( ( number = UVarEnum.Value[varName] ) != -1 )
+											Demands.insertLast( @Dialog::Demand_uvar( isPlayer, @oper, number, value ) );
+										else if( ( number = GVarEnum.Value[varName] ) != -1 )
+											Demands.insertLast( @Dialog::Demand_gvar( isPlayer, @oper, number, value ) );
+											
+										else if( ( number = LLVarEnum.Value[varName] ) != -1 )
+											Demands.insertLast( @Dialog::Demand_llvar( isPlayer, @oper, number, value ) );
+										else if( ( number = LMVarEnum.Value[varName] ) != -1 )
+											Demands.insertLast( @Dialog::Demand_lmvar( isPlayer, @oper, number, value ) );
+										else Pattern.Debug( "Неопознанная переменная " + varName );
+									}
+									else Pattern.Debug( "Неопознанное значение <" + word + ">" );	
+								}
+								else if( word == "or")
+								{
+									Dialog::Demand@[] demands = Demands;
+									AllDemands.insertLast( demands );
+									Demands.resize( 0 );
+								}
+								else if( word == "_script" )
+								{
+									NextWord( word, index, words, countWords );
+									
+									::string@[] functionFull = ::split( word, "@" );
+									::string function = functionFull[0];
+									::string module = "Mk2";
+									if( functionFull.length() == 2 )
+									{
+										module = functionFull[0];
+										function = functionFull[1];
+									}
+									
+									NextWord( word, index, words, countWords );
+									int countArg = 0;									
+									if( StrToValue( word, countArg ) )
+									{
+										int[] arrArg( countArg );
+										for( int i = 0; i < countArg; i++ )
+										{
+											NextWord( word, index, words, countWords );
+											int arg = -1;
+											if( StrToValue( word, arg ) )
+												arrArg[i] = arg;
+											else Pattern.Debug( "Неопознанное значение " + word );
+										}
+										
+										Demands.insertLast( @Dialog::Demand_script( function, module, arrArg ) );
+									}
+									else Pattern.Debug( "Неопознанное значение " + word );
+								}
+								else Pattern.Debug( "Неопознанное условие " + word );
+							}
+						}
+						else if( word == "R" )
+						{
+							if( NextWord( word, index, words, countWords ) )
+							{
+								if( word == "_param" )
+								{
+									NextWord( word, index, words, countWords );
+									bool isPlayer = ::strlwr( word ) == "p";
+									NextWord( word, index, words, countWords );
+									int param = 0;
+									if( GetParamConstant( word, param ) || ::StrToInt( word, param ) )
+									{
+										NextWord( word, index, words, countWords );
+										Dialog::OperatorResult@ oper = GetResultOperator( word );
+										if( @oper is null )
+											Pattern.Debug( "Неопознанный оператор <" + word + ">" );
+										NextWord( word, index, words, countWords );
+										int value = -1;
+										if( StrToValue( word, value ) )
+											Results.insertLast( @Dialog::Result_param( isPlayer, @oper, param, value ) );
+										else Pattern.Debug( "Неопознанное значение " + word );
+									}
+									else Pattern.Debug( "Неопознанный парам <" + word + ">" );
+								}
+								else if( word == "_item" )
+								{
+									NextWord( word, index, words, countWords );
+									bool isPlayer = ::strlwr( word ) == "p";
+									NextWord( word, index, words, countWords );
+									int pid = 0;
+									if( GetItemConstant( word, pid ) || ::StrToInt( word, pid ) )
+									{
+										NextWord( word, index, words, countWords );
+										Dialog::OperatorResult@ oper = GetResultOperator( word );
+										if( @oper is null )
+											Pattern.Debug( "Неопознанный оператор <" + word + ">" );
+										NextWord( word, index, words, countWords );
+										int value = -1;
+										
+										if( StrToValue( word, value ) )
+											Results.insertLast( @Dialog::Result_item( isPlayer, @oper, pid, value ) );
+										else Pattern.Debug( "Неопознанное значение " + word );
+									}
+									else Pattern.Debug( "Неопознанный пид <" + word + ">" );
+								}
+								else if( word == "_var" )
+								{
+									NextWord( word, index, words, countWords );
+									bool isPlayer = ::strlwr( word ) == "p";
+									::string varName = "";
+									NextWord( varName, index, words, countWords );
+									
+									NextWord( word, index, words, countWords );
+									Dialog::OperatorResult@ oper = GetResultOperator( word );
+									if( @oper is null )
+										Pattern.Debug( "Неопознанный оператор <" + word + ">" );
+									NextWord( word, index, words, countWords );
+									int value = -1;
+									if( StrToValue( word, value ) )
+									{
+										int number = 0;									
+										if( ( number = LVarEnum.Value[varName] ) != -1 )
+											Results.insertLast( @Dialog::Result_lvar( isPlayer, @oper, number, value ) );
+										else if( ( number = UVarEnum.Value[varName] ) != -1 )
+											Results.insertLast( @Dialog::Result_uvar( isPlayer, @oper, number, value ) );
+										else if( ( number = GVarEnum.Value[varName] ) != -1 )
+											Results.insertLast( @Dialog::Result_gvar( isPlayer, @oper, number, value ) );
+										else if( ( number = LLVarEnum.Value[varName] ) != -1 )
+											Results.insertLast( @Dialog::Result_llvar( isPlayer, @oper, number, value ) );
+										else if( ( number = LMVarEnum.Value[varName] ) != -1 )
+											Results.insertLast( @Dialog::Result_lmvar( isPlayer, @oper, number, value ) );
+										else Pattern.Debug( "Неопознанная переменная " + varName );
+									}
+									else Pattern.Debug( "Неопознанное значение " + word );
+								}
+								else if( word == "_script" )
+								{
+									NextWord( word, index, words, countWords );
+									
+									::string@[] functionFull = ::split( word, "@" );
+									::string function = functionFull[0];
+									::string module = "Mk2";
+									if( functionFull.length() == 2 )
+									{
+										module = functionFull[0];
+										function = functionFull[1];
+									}
+									
+									NextWord( word, index, words, countWords );
+									int countArg = 0;
+									if( StrToValue( word, countArg ) )
+									{
+										
+										int[] arrArg( countArg );
+										for( int i = 0; i < countArg; i++ )
+										{
+											NextWord( word, index, words, countWords );
+											int arg = -1;
+											if( StrToValue( word, arg ) )
+												arrArg[i] = arg;
+											else Pattern.Debug( "Неопознанное значение " + word );
+										}
+										
+										Results.insertLast( @Dialog::Result_script( function, module, arrArg ) );
+									}
+									else Pattern.Debug( "Неопознанное значение " + word );
+								}
+								else Pattern.Debug( "Неопознанный результат " + word );
+							}
+						}
+						else
+						{
+							if( @CurrentBranch is null && @Index !is null && @Number !is null )
+								@ CurrentBranch = @Pattern.AddBranch( Index, Number );
+						
+							if( word == "None" )
+							{
+								NextWord( word, index, words, countWords );
+							}
+							else if( word == "Attack" )
+							{
+								NextWord( word, index, words, countWords );
+								CurrentBranch.Result = DIALOG_ATTACK; 
+							}
+							else
+							{
+								::string@[] functionFull = ::split( word, "@" );
+								if( functionFull.length() == 2 && @CurrentBranch !is null )
+								{									
+									CurrentBranch.FuncId = ScriptInfo::GetDialogBranchFunctionId( functionFull[0], functionFull[1], CurrentBranch.IsReturnValue );
+									NextWord( word, index, words, countWords );
+								}
+								else
+									Pattern.Debug( "Необработанный символ " + word );
+							}
+						}
+					}
+					break;
+			}
+		}
+	}
+	
+	OperatorDemand@ GetDemandOperator( ::string& word )
+	{
+		if( word == ">")
+			return @OperatorIsLarger;
+		if( word == "<")
+			return @OperatorIsLess;
+		if( word == "{" )
+			return @OperatorIsLessOrEqually;
+		if( word == "}" )
+			return @OperatorIsLargerOrEqually;
+		if( word == "=" )
+			return @OperatorIsEqually;	
+		if( word == "!" )
+			return @OperatorNoEqually;			
+		return null;
+	}
+	
+	OperatorResult@ GetResultOperator( ::string& word )
+	{
+		if( word == "*")
+			return @OperatorMul;
+		if( word == "/")
+			return @OperatorDiv;
+		if( word == "+" )
+			return @OperatorAdd;
+		if( word == "-" )
+			return @OperatorSub;
+		if( word == "=" )
+			return @OperatorAssign;
+		return null;
+	}
+	
+	::string@ Index;
+	::string@ Number;	
+	
+	Dialog::State RealState;
+	Dialog::Branch@ CurrentBranch;
+	Dialog::Dialog@ Pattern;
+	
+	Demand@[][] AllDemands;
+	Demand@[] Demands;
+	Result@[] Results;
+}
+
+class Dialog
+{
+	Dialog( ::string& name, Content::Dialog& id )
+	{
+		@Name = @name;
+		Id = id;
+	}
+	
+	ParseSpace@ GetSpace( ::string& line, Dialog::Context@& context )
+	{
+		@context = null;
+		if( line == "[data]" )
+			return @DataSpace;
+		else if( line == "[dialog]" )
+		{
+			@context = @Dialog::DialogSpaceContext( this );
+			return @DialogSpace;
+		}
+		else if( line == "[comment]" )
+			return @CommentSpace;
+		else
+		{
+			@context = @Dialog::BuilderWriter( ::substring( line, 1, 4 ) );
+			return @LanguageSpace;
+		}
+	}
+	
+	void ParseFile( const ::string& fileName )
+	{
+		::string@ txt = @ReadFile( fileName );
+		if( @txt !is null )
+		{
+			::string@[] txts = ::splitEx( txt, "\n" );
+			ParseSpace@ parse = null;
+			Dialog::Context@ context = null;
+			for( uint i = 0, iEnd = txts.length(); i < iEnd; i++ )
+				if( txts[i].length() > 0 )
+				{
+					if( txts[i][0] == '[' )
+						@parse = @GetSpace(txts[i], @context );
+					else if( @parse !is null )
+						parse( this, txts[i], @context );
+				}
+		}
+		else Debug( "Не найден файл диалога");
+	}
+	
+	private ::string@ ReadFile( const ::string& fileName )
+	{
+		::file f;
+		if( f.open( fileName, "r" ) != -1 )
+		{
+			::string txt = "";
+			f.readString( f.getSize(), txt); 
+			f.close();
+			return @txt;
+		}
+		return null;
+	}
+	
+	void Debug( string& txt )
+	{
+		Log( txt + " : <" + Name + ">" );
+	}
+	
+	Dialog::Branch@ GetBranch( uint index )
+	{
+		if( index >= Branchs.length() )
+			return null;
+		return @Branchs[index];
+	}
+	
+	void CallAnswer( ::Critter& cr, ::Critter@ npc, Dialog::Branch@ argument_branch, const Dialog::Answer@ answer, ::Map& map, uint16 hexX, uint16 hexY, Dialog::Branch@ lastBranch, uint answerResult = 0 )
+	{
+		Dialog::Master@ master = cast<Dialog::Master>(@cr.ScriptDescriptor);
+		if( @master !is null )
+		{
+			uint result = answerResult == 0 ? ( @answer !is null ? answer.Result( cr, @npc ) : 0 ) : answerResult;
+			Dialog::Branch@ branch = @GetBranch( result ), oldBranch = ( ( @answer !is null ) ? @GetBranch( answer.Index ) : @argument_branch );
+			//Result
+	
+			if( @oldBranch !is null && oldBranch.FuncId != 0 )
+			{
+				if( oldBranch.IsReturnValue )
+					result = ScriptInfo::RunDialogBranchFunctionId( cr, @npc, oldBranch.FuncId, null, oldBranch.IsReturnValue );
+				else ScriptInfo::RunDialogBranchFunctionId( cr, @npc, oldBranch.FuncId, null, oldBranch.IsReturnValue );
+			}
+			
+			if( @lastBranch !is null && ( result == 65505 || result == DIALOG_BACK ) )
+				@branch = @lastBranch;
+			
+			if( @branch !is null )
+			{
+				if( branch.Result == DIALOG_ATTACK )
+				{
+					if( @npc !is null )
+					{
+						npc.StatBase[ ST_NPC_ATTACK_PLAYER_ID ] = cr.Id;
+						NpcPlanes::AddAttackPlane( npc, 0, cr );
+					}
+					cr.Say( SAY_DIALOG_HIDE, " " );
+					return;
+				}
+			
+				::string@ lexems = "";
+				if( branch.FuncId != 0 )
+					ScriptInfo::RunDialogBranchFunctionId( cr, @npc, branch.FuncId, @lexems, branch.IsReturnValue );
+			
+				Dialog::Answer@[] answers = branch.GetAnswers( cr, @npc );
+				if( answers.length() > 0 )
+				{
+					cr.SayMsg( SAY_DIALOG_BRANCH, TEXTMSG_DLG, branch.Number, lexems );
+					for( uint i = 0, iEnd = answers.length(); i < iEnd; i++ )
+						cr.SayMsg( SAY_DIALOG_ANSWER, TEXTMSG_DLG, answers[i].Number, lexems ); 
+					cr.Say( SAY_DIALOG_SHOW, " " );
+					master.SetAnswers( @npc, @this, @branch, @answers, map, hexX, hexY );
+				}
+				else 
+				{
+					if( @npc !is null && branch.Index != 1 )
+						npc.SayMsg( SAY_NORM_ON_HEAD, TEXTMSG_DLG, branch.Number, lexems );
+					cr.Say( SAY_DIALOG_HIDE, " " );
+					if( branch.FuncId != 0 )
+						ScriptInfo::RunDialogBranchFunctionId( cr, @npc, branch.FuncId, null, branch.IsReturnValue );
+				}
+			}
+			else
+			{
+			
+				switch( result )
+				{
+					case DIALOG_END: //Exit
+					case 0: //Exit
+						{
+							cr.Say( SAY_DIALOG_HIDE, " " );
+							if( @oldBranch !is null && oldBranch.FuncId != 0 )
+								ScriptInfo::RunDialogBranchFunctionId( cr, @npc, oldBranch.FuncId, null, oldBranch.IsReturnValue );
+						}
+						break;
+					
+					case DIALOG_BARTER: // Barter
+					case 65506: // Barter
+						Barter::Call( cr, npc );
+						break;
+					
+					default:
+						Debug( "Неверный индекс ветки диалога " + result );
+						break;
+				}
+			}
+		}
+	}
+	
+	void Run( ::Critter& cr, ::Critter@ npc, uint number, ::Map@ map, uint16 hexX, uint16 hexY )
+	{
+		Dialog::Master@ master = cast<Dialog::Master>(@cr.ScriptDescriptor);
+		if( @master !is null )
+		{
+			Dialog::Branch@ branch = @GetBranch( number );
+			if( number == 1 && @branch !is null )
+			{
+				Dialog::Answer@ answer = branch.GetFirstAnswer( cr, @npc );
+				if( @answer !is null )
+				{
+					@ branch = @GetBranch( answer.Result( cr, @npc )  );
+				}
+			}
+			
+			if( @branch !is null )
+			{
+				if( branch.Result == DIALOG_ATTACK )
+				{
+					if( @npc !is null )
+					{
+						npc.StatBase[ ST_NPC_ATTACK_PLAYER_ID ] = cr.Id;
+						NpcPlanes::AddAttackPlane( npc, 0, cr );
+					}
+					cr.Say( SAY_DIALOG_HIDE, " " );
+					return;
+				}
+			
+				::string@ lexems = "";
+				if( branch.FuncId != 0 )
+					ScriptInfo::RunDialogBranchFunctionId( cr, @npc, branch.FuncId, @lexems, branch.IsReturnValue );
+				
+				Dialog::Answer@[] answers = branch.GetAnswers( cr, @npc );
+				
+				if( answers.length() > 0 )
+				{
+					cr.SayMsg( SAY_DIALOG_BRANCH, TEXTMSG_DLG, branch.Number, lexems );
+					for( uint i = 0, iEnd = answers.length(); i < iEnd; i++ )
+						cr.SayMsg( SAY_DIALOG_ANSWER, TEXTMSG_DLG, answers[i].Number, lexems );
+					string option = " ";
+					if( @npc !is null )
+						option += "|Interlocutor:" + npc.Id;
+					
+					cr.Say( SAY_DIALOG_SHOW, " " );
+					master.SetAnswers( @npc, @this, @branch, @answers, map, hexX, hexY );
+					
+				}
+				else
+				{
+					if( @npc !is null && branch.Index != 1 )
+						npc.SayMsg( SAY_NORM_ON_HEAD, TEXTMSG_DLG, branch.Number, lexems );
+					if( branch.FuncId != 0 )
+						ScriptInfo::RunDialogBranchFunctionId( cr, @npc, branch.FuncId, null, branch.IsReturnValue );
+				}
+			}
+			else Debug( "No found branch");
+		}
+	}
+	
+	Dialog::Branch@ AddBranch( const uint& index, const uint& number )
+	{
+		if( Branchs.length() <= index )
+			Branchs.resize( index + 1 );
+		Dialog::Branch branch( index, number );	
+		@Branchs[index] = @branch;
+		return @branch;
+	}
+	
+	Dialog::Branch@ AddBranch( ::string&in indexStr, ::string&in numberStr )
+	{
+		int index = -1, number = -1;
+		if( StrToValue( indexStr, index ) && StrToValue( numberStr, number ))
+			return @AddBranch( uint( index ), DLGSTR( uint( Id ), uint( number ) ) );
+		Debug( "Ветка не составлена: <" + indexStr + "><" + numberStr + ">");
+		return null;
+	}
+	
+	Branch@[] Branchs;
+	
+	::string@ Name;
+	Content::Dialog Id;
+}
+
+class Branch
+{
+	Branch( const uint& index, const uint& number )
+	{
+		Index = index;
+		Number = number;
+		FuncId = 0;
+		IsReturnValue = false;
+	}
+
+	Dialog::Answer@ AddAnswer( ::string& indexStr, ::string& numberStr, const uint& dialogId )
+	{
+		int index = -1, number = -1;
+		if( StrToValue( indexStr, index ) && StrToValue( numberStr, number ))
+			return @AddAnswer( uint( index ), DLGSTR( dialogId, uint( number ) ) );
+		Log( "Ответ не составлен: <" + indexStr + "><" + numberStr + ">");
+		return null;
+	}
+
+	Dialog::Answer@ AddAnswer( const uint& index, const uint& number )
+	{
+		Dialog::Answer answer( index, number );	
+		Answers.insertLast( @answer );
+		return @answer;
+	}
+	
+	Dialog::Answer@[]@ GetAnswers( ::Critter& master, ::Critter@ npc )
+	{
+		Dialog::Answer@[] ret;
+		for( uint i = 0, iEnd = Answers.length(); i < iEnd; i++ )
+		{
+			int index = GetAnswer( master, @npc, i );
+			if( index != -1 )
+			{
+				//master.SayMsg( SAY_NETMSG, TEXTMSG_DLG, Answers[i].Number );
+				//master.Say( SAY_NETMSG, "true" );
+				ret.insertLast( @Answers[i] );
+			}
+			else
+			{
+				//master.SayMsg( SAY_NETMSG, TEXTMSG_DLG, Answers[i].Number );
+				//master.Say( SAY_NETMSG, "false" );
+			}
+		}
+		return @ret;
+	}
+	
+	int GetAnswer( ::Critter& master, ::Critter@ npc, const uint&in index )
+	{
+		int number = -1;
+		if( @Answers[index] !is null )
+		{
+			if( !Answers[index].Get( master, @npc, number ) )
+				return -1;
+		}
+		else
+		{
+			master.Say( SAY_NETMSG, "Error, answer nullptr" );
+		}
+		return number;
+	}
+	
+	Dialog::Answer@ GetFirstAnswer( ::Critter& master, ::Critter@ npc )
+	{
+		for( uint i = 0, iEnd = Answers.length(); i < iEnd; i++ )
+		{
+			if( GetAnswer( master, @npc, i ) != -1 )
+				return @Answers[i];
+		}
+		return null;
+	}
+	
+	Dialog::Answer@ GetLastAnswer( ::Critter& master, ::Critter@ npc )
+	{
+		Dialog::Answer@ ret = null;
+		for( uint i = 0, iEnd = Answers.length(); i < iEnd; i++ )
+		{
+			if( GetAnswer( master, @npc, i ) != -1 )
+				@ret = @Answers[i];
+		}
+		return @ret;
+	}
+	
+	uint FuncId;
+	bool IsReturnValue;
+	
+	uint Result;
+	
+	uint Index;
+	uint Number;
+	Answer@[] Answers;
+}
+
+class Answer
+{
+	Answer( const uint& index, const uint& number )
+	{
+		Number = number;
+		Index = index;
+	}
+	
+	bool Get( ::Critter& cr, ::Critter@ npc, int& number )
+	{
+		if( IsDemand( cr, @npc ) )
+		{
+			number = Number;
+			return true;
+		}
+		return false;
+	}
+	
+	bool IsDemand( ::Critter& cr, ::Critter@ npc )
+	{
+		for( uint j = 0, jEnd = Demands.length(); j < jEnd; j++ )
+		{	
+			for( uint i = 0, iEnd = Demands[j].length(); i < iEnd; i++ )
+			{
+				if( !Demands[j][i].IsAllow( cr, @npc ) )
+				{
+					return false;
+				}
+			}
+		}		
+		return true;
+	}
+	
+	uint Result( ::Critter& cr, ::Critter@ npc ) const
+	{
+		if( IsDemand( cr, @npc ) )
+		{
+			uint ret = 0;
+			for( uint i = 0, iEnd = Results.length(); i < iEnd; i++ )
+			{
+				ret = Results[i].Select( cr, @npc );
+			}
+			if( ret == 0 )
+				return Index;
+			return ret;
+		}
+		else
+		{
+			Log( "Ошибка, игрок <" + ::GetPlayerName( cr.Id ) + "> ломает диалоги." );
+			return 0;
+		}
+	}
+
+	uint Index;
+	uint Number;
+	Demand@[][] Demands;
+	Result@[] Results;
+}
+
+class Demand_item : Demand
+{
+	Demand_item( bool isPlayer, OperatorDemand@ oper, uint pid, int value )
+	{
+		@ Operation = @oper;
+		IsPlayer = isPlayer;
+		Pid = pid;
+		Value = value;
+	}
+
+	bool IsAllow( ::Critter& player, ::Critter@ npc ) override
+	{
+		::Critter@ who = @player;
+		if( !IsPlayer )
+			@ who = @npc;
+		if( @who is null )
+			return false;
+		uint count = who.CountItem( Pid );
+		return Operation( count, Value );
+	}
+	
+	const string get_Name() override { return "_item"; }
+	
+	bool IsPlayer;
+	OperatorDemand@ Operation;
+	uint Pid;
+	int Value;
+}
+
+class Demand_lvar : Demand
+{
+	Demand_lvar( bool isPlayer, OperatorDemand@ oper, int number, int value )
+	{
+		@ Operation = @oper;
+		IsPlayer = isPlayer;
+		Number = number;
+		Value = value;
+	}
+
+	bool IsAllow( ::Critter& player, ::Critter@ npc ) override
+	{
+		::Critter@ who = @player;
+		if( !IsPlayer )
+			@ who = @npc;
+		if( @who is null )
+			return false;
+			
+		::GameVar@ gameVar = ::GetLocalVar( Number, who.Id );
+		if( @gameVar is null )
+			return false;
+			
+		return Operation( gameVar.GetValue( ), Value );
+	}
+	
+	const string get_Name() override { return "_lvar"; }
+	
+	bool IsPlayer;
+	OperatorDemand@ Operation;
+	int Number;
+	int Value;
+}
+
+class Demand_llvar : Demand
+{
+	Demand_llvar( bool isPlayer, OperatorDemand@ oper, int number, int value )
+	{
+		@ Operation = @oper;
+		IsPlayer = isPlayer;
+		Number = number;
+		Value = value;
+	}
+
+	bool IsAllow( ::Critter& player, ::Critter@ npc ) override
+	{
+		::Critter@ who = @player;
+		if( !IsPlayer )
+			@ who = @npc;
+		if( @who is null )
+			return false;
+			
+		::Map@ map = who.GetMap( );
+		if( @map is null )
+			return false;
+			
+		::GameVar@ gameVar = ::GetLocalVar( Number, map.GetLocation().Id );
+		if( @gameVar is null )
+			return false;
+			
+		return Operation( gameVar.GetValue( ), Value );
+	}
+	
+	const string get_Name() override { return "_llvar"; }
+	
+	bool IsPlayer;
+	OperatorDemand@ Operation;
+	int Number;
+	int Value;
+}
+
+class Demand_lmvar : Demand
+{
+	Demand_lmvar( bool isPlayer, OperatorDemand@ oper, int number, int value )
+	{
+		@ Operation = @oper;
+		IsPlayer = isPlayer;
+		Number = number;
+		Value = value;
+	}
+
+	bool IsAllow( ::Critter& player, ::Critter@ npc ) override
+	{
+		::Critter@ who = @player;
+		if( !IsPlayer )
+			@ who = @npc;
+		if( @who is null )
+			return false;
+			
+		::Map@ map = who.GetMap( );
+		if( @map is null )
+			return false;
+			
+		::GameVar@ gameVar = ::GetLocalVar( Number, map.Id );
+		if( @gameVar is null )
+			return false;
+			
+		return Operation( gameVar.GetValue( ), Value );
+	}
+	
+	const string get_Name() override { return "_lmvar"; }
+	
+	bool IsPlayer;
+	OperatorDemand@ Operation;
+	int Number;
+	int Value;
+}
+
+class Demand_uvar : Demand
+{
+	Demand_uvar( bool isPlayer, OperatorDemand@ oper, int number, int value )
+	{
+		@ Operation = @oper;
+		IsPlayer = isPlayer;
+		Number = number;
+		Value = value;
+	}
+
+	bool IsAllow( ::Critter& player, ::Critter@ npc ) override
+	{
+		::GameVar@ gameVar = null;
+		if( IsPlayer )
+			@ gameVar = @::GetUnicumVar( Number, player.Id, npc.Id );
+		else 
+			@ gameVar = @::GetUnicumVar( Number, npc.Id, player.Id );
+		if( @gameVar is null )
+		{
+			Log( "var no valid");
+			return false;
+		}
+		
+		return Operation( gameVar.GetValue( ), Value );
+	}
+	
+	const string get_Name() override { return "_uvar"; }
+	
+	bool IsPlayer;
+	OperatorDemand@ Operation;
+	int Number;
+	int Value;
+}
+
+class Demand_gvar : Demand
+{
+	Demand_gvar( bool isPlayer, OperatorDemand@ oper, int number, int value )
+	{
+		@ Operation = @oper;
+		Number = number;
+		Value = value;
+	}
+
+	bool IsAllow( ::Critter& player, ::Critter@ npc ) override
+	{ 
+		::GameVar@ gameVar = @::GetGlobalVar( Number );
+		if( @gameVar is null )
+		{
+			Log( "Error find global var №" + Number );
+			return false;
+		}
+		
+		return Operation( gameVar.GetValue( ), Value );
+	}
+	
+	const string get_Name() override { return "_gvar"; }
+	
+	OperatorDemand@ Operation;
+	int Number;
+	int Value;
+}
+
+class Demand_script : Demand
+{
+	Demand_script( ::string& function, ::string& module, int[]& arrArg )
+	{
+		@ Arguments = arrArg;
+		FuncId = ScriptInfo::GetDialogDemandFunctionId( module, function, arrArg );
+		if( FuncId == 0 )
+			Log( "Не найдена функция " + module + "@" + function );
+	}
+
+	bool IsAllow( ::Critter& player, ::Critter@ npc ) override
+	{
+		return ScriptInfo::RunDialogDemandFunctionId( player, npc, FuncId, Arguments );
+	}
+	
+	const string get_Name() override { return "_script"; }
+	
+	uint FuncId;
+	int[]@ Arguments;
+}
+
+class Demand_param : Dialog::Demand
+{
+	Demand_param( bool isPlayer, OperatorDemand@ oper, uint param, int value )
+	{
+		@ Operation = @oper;
+		IsPlayer = isPlayer;
+		Param = param;
+		Value = value;
+		OperationName = "?";
+	}
+
+	bool IsAllow( ::Critter& player, ::Critter@ npc ) override
+	{
+		::Critter@ who = @player;
+		if( !IsPlayer )
+			@ who = @npc;
+		if( @who is null )
+			return false;
+		if( this.Param >= 1000 )
+			Log( "Unbound param " + this.Param );
+		bool result = Operation( who.Param[ this.Param ], Value );
+		// player.Say( SAY_NETMSG, "PARAM["+ this.Param +"] = " + who.ParamBase[ this.Param ] + " " + OperationName + " " + Value + " " + result);
+		return result;
+	}
+	
+	const string get_Name() override { return "_param"; }
+	
+	bool IsPlayer;
+	OperatorDemand@ Operation;
+	string OperationName;
+	uint Param;
+	int Value;
+}
+
+funcdef bool OperatorDemand( int v0, int v1 );
+
+bool OperatorIsEqually( int v0, int v1 ){ return v0 == v1; }
+bool OperatorNoEqually( int v0, int v1 ){ return !OperatorIsEqually( v0, v1 ); }
+bool OperatorIsLess( int v0, int v1 ){ return v0 < v1; }
+bool OperatorIsLessOrEqually( int v0, int v1 ){ return OperatorIsLess( v0, v1) || OperatorIsEqually( v0, v1 ); }
+bool OperatorIsLarger( int v0, int v1 ){ return v0 > v1; }
+bool OperatorIsLargerOrEqually( int v0, int v1 ){ return OperatorIsLarger( v0, v1) || OperatorIsEqually( v0, v1 ); }
+
+interface Demand
+{ 
+	bool IsAllow( ::Critter& player, ::Critter@ npc ); 
+	const string get_Name();
+}
+
+interface Result
+{ 
+	uint Select( ::Critter& player, ::Critter@ npc ); 
+	const string get_Name();
+}
+
+funcdef void OperatorResult( Dialog::ResultEntity@ entite, int value );
+
+void OperatorMul( Dialog::ResultEntity@ entite, int value ){ entite *= value; }
+void OperatorDiv( Dialog::ResultEntity@ entite, int value ){ entite /= value; }
+void OperatorAdd( Dialog::ResultEntity@ entite, int value ){ entite += value; }
+void OperatorSub( Dialog::ResultEntity@ entite, int value ){ entite -= value; }
+void OperatorAssign( Dialog::ResultEntity@ entite, int value ){ entite = value; }
+
+interface ResultEntity
+{
+	Dialog::ResultEntity@ opMulAssign( int value );
+	Dialog::ResultEntity@ opDivAssign( int value );
+	Dialog::ResultEntity@ opAddAssign( int value );
+	Dialog::ResultEntity@ opSubAssign( int value );
+	Dialog::ResultEntity@ opAssign( int value );
+}
+
+class Result_script : Result
+{
+	Result_script( ::string& function, ::string& module, int[]& arrArg )
+	{
+		@ Arguments = arrArg;
+		FuncId = ScriptInfo::GetDialogResultFunctionId( module, function, arrArg, IsReturn );
+		if( FuncId == 0 )
+			Log( "Не найдена функция " + module + "@" + function );
+	}
+
+	uint Select( ::Critter& player, ::Critter@ npc ) override
+	{
+		return ScriptInfo::RunDialogResultFunctionId( player, npc, FuncId, Arguments, IsReturn );
+	}
+	
+	const string get_Name() override { return "_script"; }
+	
+	bool IsReturn;
+	uint FuncId;
+	int[]@ Arguments;
+}
+
+class Result_lvar : Result
+{
+	Result_lvar( bool isPlayer, OperatorResult@ oper, int number, int value )
+	{
+		@ Operation = @oper;
+		IsPlayer = isPlayer;
+		Number = number;
+		Value = value;
+	}
+
+	uint Select( ::Critter& player, ::Critter@ npc ) override
+	{
+		::Critter@ who = @player;
+		if( !IsPlayer )
+			@ who = @npc;
+		if( @who is null )
+			return DIALOG_END;
+			
+		::GameVar@ gameVar = ::GetLocalVar( Number, who.Id );
+		if( @gameVar is null )
+			return DIALOG_END;
+			
+		Operation( Dialog::ResultEntity_var( @gameVar ), Value );
+		return 0;
+	}
+	
+	const string get_Name() override { return "_lvar"; }
+	
+	bool IsPlayer;
+	OperatorResult@ Operation;
+	int Number;
+	int Value;
+}
+
+class Result_llvar : Result
+{
+	Result_llvar( bool isPlayer, OperatorResult@ oper, int number, int value )
+	{
+		@ Operation = @oper;
+		IsPlayer = isPlayer;
+		Number = number;
+		Value = value;
+	}
+
+	uint Select( ::Critter& player, ::Critter@ npc ) override
+	{
+		::Critter@ who = @player;
+		if( !IsPlayer )
+			@ who = @npc;
+		if( @who is null )
+			return DIALOG_END;
+			
+		::Map@ map = who.GetMap( );
+		if( @map is null )
+			return DIALOG_END;
+			
+		::GameVar@ gameVar = ::GetLocalVar( Number, map.GetLocation().Id );
+		if( @gameVar is null )
+			return DIALOG_END;
+			
+		Operation( Dialog::ResultEntity_var( @gameVar ), Value );
+		return 0;
+	}
+	
+	const string get_Name() override { return "_llvar"; }
+	
+	bool IsPlayer;
+	OperatorResult@ Operation;
+	int Number;
+	int Value;
+}
+
+class Result_lmvar : Result
+{
+	Result_lmvar( bool isPlayer, OperatorResult@ oper, int number, int value )
+	{
+		@ Operation = @oper;
+		IsPlayer = isPlayer;
+		Number = number;
+		Value = value;
+	}
+
+	uint Select( ::Critter& player, ::Critter@ npc ) override
+	{
+		::Critter@ who = @player;
+		if( !IsPlayer )
+			@ who = @npc;
+		if( @who is null )
+			return DIALOG_END;
+			
+		::Map@ map = who.GetMap( );
+		if( @map is null )
+			return DIALOG_END;
+			
+		::GameVar@ gameVar = ::GetLocalVar( Number, map.Id );
+		if( @gameVar is null )
+			return DIALOG_END;
+			
+		Operation( Dialog::ResultEntity_var( @gameVar ), Value );
+		return 0;
+	}
+	
+	const string get_Name() override { return "_lmvar"; }
+	
+	bool IsPlayer;
+	OperatorResult@ Operation;
+	int Number;
+	int Value;
+}
+
+class Result_uvar : Result
+{
+	Result_uvar( bool isPlayer, OperatorResult@ oper, int number, int value )
+	{
+		@ Operation = @oper;
+		IsPlayer = isPlayer;
+		Number = number;
+		Value = value;
+	}
+
+	uint Select( ::Critter& player, ::Critter@ npc ) override
+	{
+		::GameVar@ gameVar = null;
+		if( IsPlayer )
+			@ gameVar = @::GetUnicumVar( Number, player.Id, npc.Id );
+		else 
+			@ gameVar = @::GetUnicumVar( Number, npc.Id, player.Id );
+		if( @gameVar is null )
+		{
+			Log( "var no valid");
+			return DIALOG_END;
+		}
+		Operation( Dialog::ResultEntity_var( @gameVar ), Value );
+		return 0;
+	}
+	
+	const string get_Name() override { return "_uvar"; }
+	
+	bool IsPlayer;
+	OperatorResult@ Operation;
+	int Number;
+	int Value;
+}
+
+class Result_gvar : Result
+{
+	Result_gvar( bool isPlayer, OperatorResult@ oper, int number, int value )
+	{
+		@ Operation = @oper;
+		Number = number;
+		Value = value;
+	}
+
+	uint Select( ::Critter& player, ::Critter@ npc ) override
+	{ 
+		::GameVar@ gameVar = @::GetGlobalVar( Number );
+		if( @gameVar is null )
+			return DIALOG_END;
+			
+		Operation( Dialog::ResultEntity_var( @gameVar ), Value );
+		return 0;
+	}
+	
+	const string get_Name() override { return "_gvar"; }
+	
+	OperatorResult@ Operation;
+	int Number;
+	int Value;
+}
+
+class Result_item : Result
+{
+	Result_item( bool isPlayer, OperatorResult@ oper, uint pid, int value )
+	{
+		@ Operation = @oper;
+		IsPlayer = isPlayer;
+		Pid = pid;
+		Value = value;
+	}
+
+	uint Select( ::Critter& player, ::Critter@ npc ) override
+	{
+		::Critter@ who = @player;
+		if( !IsPlayer )
+			@ who = @npc;
+		if( @who is null )
+			return DIALOG_END;
+		Operation( @Dialog::ResultEntity_item( who, Pid ), Value );
+		return 0;
+	}
+	
+	const string get_Name() override { return "result_item"; }
+	
+	bool IsPlayer;
+	OperatorResult@ Operation;
+	uint Pid;
+	int Value;
+}
+
+class Result_param : Result
+{
+	Result_param( bool isPlayer, OperatorResult@ oper, uint param, int value )
+	{
+		@ Operation = @oper;
+		IsPlayer = isPlayer;
+		Param = param;
+		Value = value;
+	}
+
+	uint Select( ::Critter& player, ::Critter@ npc ) override
+	{
+		::Critter@ who = @player;
+		if( !IsPlayer )
+			@ who = @npc;
+		if( @who is null )
+			return DIALOG_END;
+			
+		Operation( @Dialog::ResultEntity_param( who, Param ), Value );
+		return 0;
+	}
+	
+	const string get_Name() override { return "result_param"; }
+	
+	bool IsPlayer;
+	OperatorResult@ Operation;
+	uint Param;
+	int Value;
+}
+
+class ResultEntity_item : ResultEntity
+{
+	ResultEntity_item( ::Critter& master, uint proto )
+	{
+		@Master = master;
+		@Proto = ::GetProtoItem( proto );
+	}
+	
+	int get_Count()
+	{
+		return Master.CountItem ( Proto.ProtoId );
+	}
+	
+	Dialog::ResultEntity@ opMulAssign( int value ) override
+	{
+		int count = Count;
+		count *= value;
+		return @(this = count);
+	}
+	
+	Dialog::ResultEntity@ opDivAssign( int value ) override
+	{
+		int count = Count;
+		if( count != 0 && value > 0 )
+			count /= value;
+		return @(this = count);
+	}
+	
+	Dialog::ResultEntity@ opAddAssign( int value ) override
+	{
+		uint count = Count;
+		count += value;
+		return @(this = count);
+	}
+	
+	Dialog::ResultEntity@ opSubAssign( int value ) override
+	{
+		uint count = Count;
+		count -= value;
+		return @(this = count);
+	}
+	
+	Dialog::ResultEntity@ opAssign( int value ) override
+	{
+		int oldCount = Count;
+		if( value < 0 ) value = 0;
+		if( oldCount != value )
+		{
+			if( oldCount > value )
+			{
+				::Item@ item = Master.GetItem( Proto.ProtoId, -1 );
+				if( @item !is null )
+				{
+					if( value == 0 )
+						::DeleteItem( item );
+					else item.SetCount( value );
+				}
+			}
+			else
+				Master.AddItem( Proto.ProtoId, value - oldCount );
+		}
+		return @this;
+	}
+	
+	::ProtoItem@ Proto;
+	::Critter@ Master;
+}
+
+class ResultEntity_param : ResultEntity
+{
+	ResultEntity_param( ::Critter& master, uint param )
+	{
+		@Master = master;
+		Param = param;
+	}
+	
+	Dialog::ResultEntity@ opMulAssign( int value ) override
+	{
+		Master.ParamBase[Param] *= value;
+		return @this;
+	}
+	
+	Dialog::ResultEntity@ opDivAssign( int value ) override
+	{
+		Master.ParamBase[Param] /= value;
+		return @this;
+	}
+	
+	Dialog::ResultEntity@ opAddAssign( int value ) override
+	{
+		Master.ParamBase[Param] += value;
+		return @this;
+	}
+	
+	Dialog::ResultEntity@ opSubAssign( int value ) override
+	{
+		Master.ParamBase[Param] -= value;
+		return @this;
+	}
+	
+	Dialog::ResultEntity@ opAssign( int value ) override
+	{
+		Master.ParamBase[Param] = value;
+		return @this;
+	}
+	
+	uint Param;
+	::Critter@ Master;
+}
+
+class ResultEntity_var : ResultEntity
+{
+	ResultEntity_var( ::GameVar@ var )
+	{
+		@Var = @var;
+	}
+	
+	int get_Count()
+	{
+		return Var.GetValue( );
+	}
+	
+	Dialog::ResultEntity@ opMulAssign( int value ) override
+	{
+		Var *= value;
+		return @this;
+	}
+	
+	Dialog::ResultEntity@ opDivAssign( int value ) override
+	{
+		Var /= value;
+		return @this;
+	}
+	
+	Dialog::ResultEntity@ opAddAssign( int value ) override
+	{
+		Var += value;
+		return @this;
+	}
+	
+	Dialog::ResultEntity@ opSubAssign( int value ) override
+	{
+		Var -= value;
+		return @this;
+	}
+	
+	Dialog::ResultEntity@ opAssign( int value ) override
+	{
+		Var = value;
+		return @this;
+	}
+	
+	::GameVar@ Var;
+}
+
+/*
+Операторы:
+
+* умножение
+/ деление
+= приравнивание
++ добавление
+- убавление
+
+*/
+
+#endif
+#ifdef __CLIENT
+
+AnswerOption Option;
+
+namespace GUI
+{
+	Main Master;
+	
+	class Main : IGUI::ScreenCallbackHide, IGUI::ScreenCallbackShow, Say::SayResult, GuiKit::GUIScreenPattern
+	{	
+		::string@ get_Name( )
+		{
+			return "Dlg";
+		}
+		
+		void Build( int screenIndex, ::IGUIScreenOpt@ opt )
+		{
+			opt.SetNoCollision( true );
+
+			AnswerDisplay.Coords = IniParser::GetCoord( GuiKit::FormatKey( "Answ" ) );
+			AnswerDisplay.MoneyDisplay.TextCoords = IniParser::GetCoord( GuiKit::FormatKey( "Money" ) );
+			TimerCoords = IniParser::GetCoord( GuiKit::FormatKey( "Timer" ) );
+			AvatarCoords = IniParser::GetCoord( GuiKit::FormatKey( "Avatar" ) );
+			AnswerDisplay.OffsetX = IniParser::GetIniValue( GuiKit::FormatKey( "NextAnswX" ), 0 );
+			AnswerDisplay.OffsetY = IniParser::GetIniValue( GuiKit::FormatKey( "NextAnswY" ), 4 );
+			AnswerDisplay.TextCoords = IniParser::GetCoord( GuiKit::FormatKey( "AnswText" ), AnswerDisplay.Coords );
+			Dialog::Option.ScreenWidth = AnswerDisplay.TextCoords[2];
+			
+			GUI_AddScreenElement( screenIndex, ::GetIfaceIniStr( GuiKit::FormatKey( "AnswPic" ) ), 0, 0 )
+				.CallbackDrawPos( @AnswerDisplay )
+				.CallbackKeyPress( @AnswerDisplay )
+				.SetNoFocusedKeyPress( true )
+				.Position( AnswerDisplay.Coords );
+			
+			GUI_AddScreenElement( screenIndex, null, 0, 0 )
+				.SetName( "Listing" )
+				.Position( AnswerDisplay.TextCoords )
+				.Listing( @AnswerDisplay.List )
+				.ListingOption( @Dialog::Option )
+				.ListingColor( Dialog::Option::GUI::ColorAnswerText, Dialog::Option::GUI::ColorAnswerFocusText, Dialog::Option::GUI::ColorAnswerDownText )
+				.ListingStep( Dialog::Option::GUI::AnswerStepScroll );
+				
+			GuiKit::Button( @ThisModule::BarterFuncdef, "Barter", @AnswerDisplay.Coords );
+			GuiKit::Text( "BarterText", STR_DIALOG_BARTER )
+				.SetDefPosition( @AnswerDisplay.Coords )
+				.SetColor( Dialog::Option::GUI::ColorSayBarterText );
+			
+			GuiKit::Button( @ThisModule::SayFuncdef, "Say", @AnswerDisplay.Coords );
+			GuiKit::Text( "SayText", STR_DIALOG_SAY )
+				.SetDefPosition( @AnswerDisplay.Coords )
+				.SetColor( Dialog::Option::GUI::ColorSayAskText );
+				
+			GUI_AddScreenElement( screenIndex, null, 0, 0 )
+				.SetName( "Scroll" )
+				.Position( IniParser::GetCoord( GuiKit::FormatKey( "Text" ) ) )
+				.ScrollableText( true );
+			
+			GuiKit::Button( @ThisModule::ScrollUpFuncdef, "ScrUp" );
+			GuiKit::Button( @ThisModule::ScrollDnFuncdef, "ScrDn" );
+		}
+	
+		void Say( ::string& say )
+		{
+			::RunServerScriptUnsafe( "Mk2@unsafe_Dialog::Answer", -5, 0, 0, say, null );
+		}
+		
+		void Drop( ::string&in txt )
+		{
+			Text = txt;
+			UpdateScroll();
+			AnswerDisplay.Drop();
+		}
+		
+		void UpdateScroll( )
+		{
+			if( @ScreenOpt !is null )
+			{
+				@Scroll = @ScreenOpt.ElementOpt["Scroll"];
+				if( @Scroll !is null )
+					Scroll.Text( Text, FONT_FALLOUT, Dialog::Option::GUI::ColorNpcText, Dialog::Option::GUI::ColorNpcText, 0 );
+			}
+		}
+		
+		void OnDraw( int ScreenX, int ScreenY, int ElementX, int ElementY )
+		{
+		
+		}
+		
+		void OnHide( int p0, int p1, int p2 )
+		{
+			IsShow = false;
+			Drop("");
+		}
+		
+		void OnShow( int p0, int p1, int p2 )
+		{
+			@ ScreenOpt = GUI_GetActiveScreenOptions( CLIENT_SCREEN_DIALOG_MK2, 0 );
+			IsShow = true;
+			UpdateScroll();
+			
+			PosX = ScreenOpt.GetPosX();
+			PosY = ScreenOpt.GetPosY();
+		}
+		
+		void Show( ::string& option )
+		{
+			::string@[] optionList = ::splitEx( option, "|");
+			for( uint i = 0, iEnd = optionList.length(); i < iEnd; i++ )
+			{
+				::string@[] options = ::splitEx( optionList[i], ":");
+				if( options[0] == "Interlocutor" )
+				{
+					int id = -1;
+					::StrToInt( options[1], id );
+					InterlocutorId = id;
+				}
+			}
+			AnswerDisplay.Show( @ScreenOpt );
+		}
+		
+		void AddAnswer( ::string& text )
+		{
+			AnswerDisplay.Add( text );
+		}
+		
+		int[] TimerCoords;
+		int[] AvatarCoords;
+		
+		::string Text;
+		
+		Dialog::ScreenAnswer AnswerDisplay;
+		
+		::IGUIScreenOpt@ ScreenOpt;
+		::IGUIElementOpt@ Scroll;
+		
+		bool IsShow = false;
+		uint InterlocutorId = 0;
+		
+		int PosX;
+		int PosY;
+	}
+}
+
+void ModuleInit()
+{
+	::__EventInMessage.Subscribe( @ThisModule::InMessage );
+	::__EventScreenChange.Subscribe( @ThisModule::ScreenChange );
+	
+	GuiKit::Add(	CLIENT_SCREEN_DIALOG_MK2, @Dialog::GUI::Master );
+}
+
+bool ScreenChange( bool show, int screen, int p0, int p1, int p2 )
+{
+	if( screen == CLIENT_SCREEN_BARTER )
+	{
+		::IGUIScreenOpt@ dialogOpt = GUI_GetActiveScreenOptions( CLIENT_SCREEN_DIALOG_MK2, 0 );
+		if( @dialogOpt !is null )
+			dialogOpt.ToHide( show );
+	}
+	return true;
+}
+
+namespace Option
+{
+	namespace GUI
+	{
+		uint ColorMoney = COLOR_WHITE;
+		uint ColorMoneyImage = 0;
+		bool DrawMoneyImage = true;
+		
+		uint ColorNpcText = COLOR_GREEN;
+		uint ColorAnswerText = COLOR_DGREEN;
+		uint ColorAnswerFocusText = COLOR_LEMON;
+		uint ColorAnswerDownText = COLOR_WHITE;
+		
+		uint ColorSayAskText = COLOR_SAND;
+		uint ColorSayBarterText = COLOR_SAND;
+		
+		uint AnswerStepScroll = 1;
+		::string AnswerPrefix = "•";
+		
+		bool GetOption( ::string& option, ::string& arg, ::string& declaration )
+		{	
+			arg = option;
+			return false;
+		}
+
+		bool SetOption( ::string& option, ::string& arg, ::string& declaration )
+		{	
+			option = arg;
+			return false;
+		}
+	}
+}
+
+void BarterFuncdef( int click )
+{
+	if( click == MOUSE_CLICK_LEFT )
+		::RunServerScriptUnsafe( "Mk2@unsafe_Dialog::Answer", -3, 0, 0, null, null );
+}
+
+void SayFuncdef( int click )
+{
+	if( click == MOUSE_CLICK_LEFT )
+		Say::Show( @Dialog::GUI::Master );
+}
+
+void ScrollDnFuncdef( int click )
+{
+	if( click == MOUSE_CLICK_LEFT )
+			Dialog::GUI::Master.Scroll.SetScroll( true, 1 );
+}
+
+void ScrollUpFuncdef( int click )
+{
+	if( click == MOUSE_CLICK_LEFT )
+			Dialog::GUI::Master.Scroll.SetScroll( true, -1 );
+}
+
+class ScreenAnswer : IGUI::ElementCallbackDrawPos, IGUI::ElementCallbackKeyPress
+{
+	ScreenAnswer()
+	{
+		TextCoords.resize( 4 );
+		Coords.resize( 4 );
+		List.resize( 0 );
+	}
+	
+	void OnKeyPress( uint8 key, uint8 letter, bool& result ) override
+	{
+		::string txt = " ";
+		txt[0] = letter;
+		int value = 0;
+		if( ::StrToInt( txt, value ) )
+		{
+			value += -1 + Dialog::GUI::Master.ScreenOpt.ElementOpt["Listing"].ListingShift;
+			if( uint( value ) < List.length() )
+			{
+				Dialog::Answer@ answer = cast<Dialog::Answer>(@List[value]);
+				if( @answer !is null )
+				{
+					answer.ClickUp( MOUSE_CLICK_LEFT );
+				}
+			}
+		}
+		//else if( key == DIK_ESCAPE )
+		//	::HideScreen( CLIENT_SCREEN_DIALOG_MK2, 0, 0, 0 );
+	}
+	
+	void OnDraw( int ScreenX, int ScreenY, int ElementX, int ElementY ) override
+	{
+		MoneyDisplay.OnDraw( ScreenX, ScreenY, ElementX, ElementY );
+	}
+	
+	void Add( ::string& text )
+	{
+		List.insertLast( @Dialog::Answer( text, List.length() ) );
+	}
+	
+	void Show( ::IGUIScreenOpt@ screenOpt )
+	{
+		screenOpt.ElementOpt["Listing"].Listing( this.List )
+			.SetListingShift( true, 0 );
+	}
+	
+	void Drop( )
+	{
+		List.resize( 0 );
+		MoneyDisplay.Drop();
+	}
+	
+	int OffsetX;
+	int OffsetY;
+	
+	ScreenMoney MoneyDisplay;
+	int[] TextCoords;
+	int[] Coords;
+	
+	IGUIListingElement@[] List;
+	::IGUIElementOpt@ Listing;
+}
+
+class ScreenMoney
+{
+	ScreenMoney()
+	{
+		TextCoords.resize( 4 );
+		Text = "";
+		ProtoMoney = Content::Item::BOTTLE_CAPS;
+		@MoneySpr = null;
+	}
+	
+	void OnDraw( int ScreenX, int ScreenY, int ElementX, int ElementY )
+	{
+		int x = ScreenX + ElementX + TextCoords[0],
+			y = ScreenY + ElementY + TextCoords[1],
+			w = TextCoords[2],
+			h = TextCoords[3];
+		
+		if( @MoneySpr !is null )
+			::DrawSprite( MoneySpr.Id, -1, x, y, w, h, true, true, Dialog::Option::GUI::ColorMoneyImage );
+		if( Text !is "" )
+			::DrawText( Text, x, y, w, h, Dialog::Option::GUI::ColorMoney, FONT_FALLOUT, FT_CENTERXY | FT_BORDERED );
+			
+		Update( );
+	}
+	
+	uint LastTick;
+	
+	void Update( )
+	{
+		if( ::GetTick() - LastTick > 10 )
+		{
+			LastTick = ::GetTick();
+			Drop();
+		}
+	}
+	
+	void Drop()
+	{
+		Text = "";
+		::CritterCl@ chosen = @::GetChosen();
+		if( @chosen !is null )
+		{
+			if( Dialog::Option::GUI::DrawMoneyImage )
+			{
+				@MoneySpr = @Sprite::Sprite();
+				MoneySpr.LoadItem( ProtoMoney );
+			}
+			Text = "" + chosen.CountItem( ProtoMoney );
+			if( ProtoMoney == uint( Content::Item::BOTTLE_CAPS ) )
+				Text += "$";
+		}	
+	}
+	
+	Sprite::Sprite@ MoneySpr;
+	uint ProtoMoney;
+	::string Text;
+	int[] TextCoords;
+}
+
+class Answer : IGUIListingElement
+{
+	Answer( ::string& text, uint index )
+	{
+		Text = Dialog::Option::GUI::AnswerPrefix + " " + text;
+		Index = index;
+	}
+
+	void Draw( int x, int y, int w, int h, uint color ) override
+	{
+		::DrawText( Text , x, y, w, h, color, FONT_FALLOUT, 0 );
+	}
+	
+	void Focus( ) override
+	{
+	
+	}
+	
+	void LoseFocus( ) override
+	{
+	
+	}
+	
+	void MouseMove( int x, int y ) override
+	{
+	
+	}
+	
+	void ClickUp( int click ) override
+	{
+		if( MOUSE_CLICK_LEFT == click )
+			::RunServerScriptUnsafe( "Mk2@unsafe_Dialog::Answer", Index, 0, 0, null, null );
+	}
+	
+	void ClickDown( int click ) override
+	{
+	
+	}
+	
+	::string Text;
+	uint Index;
+}
+
+class AnswerOption : IGUI::ListingElementOpt
+{
+	int get_Height( IGUIListingElement@ element )
+	{
+		Dialog::Answer@ answer = cast<Dialog::Answer>(@element);
+		if( @answer !is null )
+		{
+			int h = 0, lines, w;
+			::GetTextInfo( answer.Text, ScreenWidth, 0, FONT_FALLOUT, 0, w, h, lines );
+			return h;
+		}
+		return 0;
+	}
+	
+	bool get_Hide( IGUIListingElement@ ) override
+	{
+		return false;
+	}
+	
+	void Shift( uint shift ) override
+	{
+	
+	}
+	
+	int get_Width( IGUIListingElement@ ){ return ScreenWidth; }
+	
+	int ScreenWidth;
+}
+
+bool InMessage( ::string& message, int& sayType, uint& critterId, uint& delay )
+{
+	if( SAY_DIALOG_BEGIN <= sayType && sayType <= SAY_DIALOG_END )
+	{
+		if( ::__ChosenId != critterId )
+			return false;
+		
+		switch( sayType )
+		{
+			case SAY_DIALOG_BRANCH:		// Текст от нпц
+					Dialog::GUI::Master.Drop( message );
+					return false;
+					
+			case SAY_DIALOG_ANSWER:		// Текст ответа
+					Dialog::GUI::Master.AddAnswer( message );
+					return false;
+					
+			case SAY_DIALOG_SHOW:			// Сигнал о том что все данные диалога уже у нас, его нужно показать. Текстом передаются опции.
+					if(!Dialog::GUI::Master.IsShow)
+						::ShowScreen( CLIENT_SCREEN_DIALOG_MK2, 0, 0, 0 );
+					Dialog::GUI::Master.Show( message );
+					return false;
+					
+			case SAY_DIALOG_HIDE:
+					{
+						::HideScreen( CLIENT_SCREEN_DIALOG_MK2, 0, 0, 0 );
+						if( message != " " )
+							::Message( "Dialog: " + message );
+					}
+					return false;
+					
+			default: 
+				return true;
+		}
+	}
+	return true;
+}
+#endif

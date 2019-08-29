@@ -1,0 +1,71 @@
+// Общий скрипт для обработки квестов на поимку различных животных
+// Author: TabaK
+
+#include "_macros.fos"
+#include "_defines.fos"
+#include "_itempid.fos"
+
+import uint GetPlayerMercs( Critter& player, Critter@[]& mercs ) from "merc";
+
+bool d_HasAnimal( Critter& player, Critter@ npc, int body )
+{
+    Critter@[] mercs;
+    uint count = GetPlayerMercs( player, mercs );
+    for( uint n = 0; n < count; n++ )
+    {
+        if( mercs[ n ].IsNpc() && mercs[ n ].Stat[ ST_BODY_TYPE ] == body )
+            return true;
+    }
+    return false;
+}
+
+uint GetAnimalCount( Critter& player, int body )
+{
+    Critter@[] mercs;
+    uint count = GetPlayerMercs( player, mercs ), aCount = 0;
+    for( uint n = 0; n < count; n++ )
+    {
+        if( mercs[ n ].IsNpc() && mercs[ n ].Stat[ ST_BODY_TYPE ] == body )
+            aCount++;
+    }
+    return aCount;
+}
+
+Critter@[] GetAnimals( Critter& player, int body )
+{
+    Critter@[] mercs, animals;
+    uint count = GetPlayerMercs( player, mercs ), aCount = 0;
+    for( uint n = 0; n < count; n++ )
+    {
+        if( mercs[ n ].IsNpc() && mercs[ n ].Stat[ ST_BODY_TYPE ] == body )
+            animals.insertLast( @mercs[ n ] );
+    }
+    return animals;
+}
+
+void r_SellAnimals( Critter& cr, Critter@ npc, int body, int money, int exp, int varCounter )
+{
+    Critter@[] animals = GetAnimals( cr, body );
+    int required = animals.length();
+    if( varCounter != 0 )
+    {
+        GameVar@ var = GetLocalVar( varCounter, cr.Id );
+        if( valid( var ) )
+        {
+            required = MIN( required, var.GetMax() - var.GetValue() );
+            var += required;
+        }
+    }
+    int totalExp = 0, totalMoney = 0;
+    for( int n = 0; n < required; n++ )
+    {
+        cr.DeleteMerc( animals[ n ] );
+        DeleteNpc( animals[ n ] );
+        totalMoney += money;
+        totalExp += exp;
+    }
+    if( totalExp > 0 )
+        cr.StatBase[ ST_EXPERIENCE ] += totalExp;
+    if( totalMoney > 0 )
+        cr.AddItem( PID_BOTTLE_CAPS, totalMoney );
+}

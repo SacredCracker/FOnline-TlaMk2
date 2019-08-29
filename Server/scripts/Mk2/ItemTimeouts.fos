@@ -1,0 +1,27 @@
+// FOS Server
+// Скрипт, для роботи з таймаутами предметів на сервері
+
+// Таймаути на військових базах
+void setItemTimeoutMinute(uint16 gVar, uint16 value)
+{
+	::GameVar@ item_timeout = ::GetGlobalVar(gVar);
+	if(!valid(item_timeout)) return;
+	item_timeout = ::__FullSecond + REAL_MINUTE(value);
+}
+
+void setItemTimeoutHour(uint16 gVar, uint16 value)
+{
+	setItemTimeoutMinute(gVar, value*60);
+}
+
+uint getItemTimeout(uint16 gVar)
+{
+	::GameVar@ item_timeout = ::GetGlobalVar(gVar);
+	if(!valid(item_timeout)) return 0;
+	return item_timeout.GetValue();
+}
+
+bool checkItemTimeout(uint16 gVar)
+{
+	return getItemTimeout(gVar) < ::__FullSecond;
+}

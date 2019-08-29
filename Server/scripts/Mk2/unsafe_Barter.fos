@@ -1,0 +1,36 @@
+// FOS Server
+
+void UnsafeFunc( Offer )
+{
+	Critter::CritterDescriptor@ descriptor = cast<Critter::CritterDescriptor>(@player.ScriptDescriptor);
+	if( @descriptor is null )
+		return;
+		
+	::Critter@ cr = ::GetCritter( descriptor.CritterBarterId );
+	
+	if( @cr !is null && cr.Mode[MODE_NO_BARTER] == 0 )
+	{
+		if( Barter::IsOffer( player, cr, param4 ) )
+		{
+			uint index = 0,
+				  count = uint( param4[index++] );
+			while( index < count )
+			{
+				::Item@ item = cr.GetItemById( param4[index++] );
+				if( @item !is null )
+					::MoveItem( item, param4[index++], player );
+			}
+			
+			count = param4.length();
+			index++;
+			while( index < count )
+			{
+				::Item@ item = player.GetItemById( param4[index++] );
+				if( @item !is null )
+					::MoveItem( item, param4[index++], cr );
+			}
+		}
+		
+		Barter::Call( player, cr );
+	}
+}

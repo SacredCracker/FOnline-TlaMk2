@@ -1,0 +1,341 @@
+[comment]
+Ваши комментарии / Your comments.
+
+[data]
+lang=russ engl ukra
+
+[dialog]
+&
+1 1000 None 0 #
+9 1010 D _param p ST_INTELLECT < 4 #
+2 1020 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 #
+4 1030 D _var n name_mem_npc_player = 1 @
+2 2000 None 0 #
+3 2010 #
+26 2020 D _script Mk2@Jukebox::d_NotJukeboxesCheck 0  D _var p nr_jukebox_seen } 1 D _param p ST_LUCK > 20 #
+26 2030 D _script Mk2@Jukebox::d_JukeboxesCheck 0  D _var p nr_jukebox_seen } 1 D _param p ST_LUCK > 20 @
+3 3000 None 0 #
+6 3010 D _var p q_den_jane_guns = 1 #
+65506 3020 #
+5 3030 #
+0 3040 @
+4 4000 None 0 #
+6 4010 D _var p q_den_jane_guns = 1 #
+65506 4020 #
+5 4030 #
+0 4040 #
+26 4050 D _script Mk2@Jukebox::d_NotJukeboxesCheck 0  D _var p nr_jukebox_seen } 1 #
+26 4060 D _script Mk2@Jukebox::d_JukeboxesCheck 0  D _var p nr_jukebox_seen } 1 @
+5 5000 None 0 #
+10 5010 D _script Mk2@RandomParametersItems::d_notWeaponInHand 0  #
+11 5020 D _script Mk2@RandomParametersItems::d_WeaponInHand 0  R _script Mk2@NREldrid::r_CheckWeaponType 0  #
+65506 5030 #
+0 5040 @
+6 6000 None 0 #
+8 6010 D _item p PID_BOTTLE_CAPS > 2999 R _var p q_den_jane_guns = 3 R _item p PID_SHOTGUN + 1 R _item p PID_10MM_SMG + 1 R _item p PID_14MM_PISTOL + 1 R _item p PID_BOTTLE_CAPS - 3000 #
+7 6020 D _item p PID_BOTTLE_CAPS < 3000 #
+0 6030 @
+7 7000 None 0 @
+8 8000 None 0 @
+9 9000 None 0 #
+65506 9010 #
+0 9020 @
+10 10000 None 0 @
+11 11000 Mk2@NREldrid::dlg_PrepareNameWeapon 0 #
+0 11010 #
+19 11020 D _script Mk2@NREldrid::d_CheckPosUpgrade 1 7664 #
+20 11030 D _script Mk2@NREldrid::d_CheckPosUpgrade 1 7660 D _script Mk2@NREldrid::d_CheckPosUpgrade 1 7662 D _script Mk2@NREldrid::d_CheckPosUpgrade 1 7668 @
+12 12000 Mk2@NREldrid::dlg_PrepareNameWeapon 0 #
+0 12010 #
+19 12020 D _script Mk2@NREldrid::d_CheckPosUpgrade 1 7664 #
+21 12030 D _script Mk2@NREldrid::d_CheckPosUpgrade 1 7661 D _script Mk2@NREldrid::d_CheckPosUpgrade 1 7663 D _script Mk2@NREldrid::d_CheckPosUpgrade 1 7669 @
+13 13000 Mk2@NREldrid::dlg_PrepareNameWeapon 0 #
+0 13010 #
+19 13020 D _script Mk2@NREldrid::d_CheckPosUpgrade 1 7664 #
+20 13030 D _script Mk2@NREldrid::d_CheckPosUpgrade 1 7660 D _script Mk2@NREldrid::d_CheckPosUpgrade 1 7662 D _script Mk2@NREldrid::d_CheckPosUpgrade 1 7668 #
+23 13040 D _script Mk2@NREldrid::d_CheckPosUpgrade 1 7669 D _script Mk2@NREldrid::d_CheckPosUpgrade 1 7663 @
+14 14000 Mk2@NREldrid::dlg_PrepareNameWeapon 0 #
+0 14010 #
+22 14020 D _script Mk2@NREldrid::d_CheckPosUpgrade 1 7665 #
+19 14030 D _script Mk2@NREldrid::d_CheckPosUpgrade 1 7664 @
+15 15000 None 0 #
+18 15010 @
+16 16000 None 0 @
+17 17000 None 0 @
+18 18000 None 0 @
+19 19000 Mk2@NREldrid::dlg_PrepareCost 0 #
+0 19010 #
+24 19020 D _script Mk2@NREldrid::d_CheckMoney 1 1 R _script Mk2@NREldrid::r_DelMoney 1 1 R _script Mk2@NREldrid::r_SetBonusWeapon 3 3 7664 1 @
+20 20000 Mk2@NREldrid::dlg_PrepareCost 0 #
+0 20010 #
+24 20020 D _script Mk2@NREldrid::d_CheckMoney 1 1 R _script Mk2@NREldrid::r_DelMoney 1 1 R _script Mk2@NREldrid::r_SetBonusWeapon 3 0 7660 1 R _script Mk2@NREldrid::r_SetBonusWeapon 3 1 7662 1 R _script Mk2@NREldrid::r_SetBonusWeapon 3 2 7668 1 @
+21 21000 Mk2@NREldrid::dlg_PrepareUnicumCost 0 #
+0 21010 #
+24 21020 D _script Mk2@NREldrid::d_CheckMoney 1 2 R _script Mk2@NREldrid::r_DelMoney 1 2 R _script Mk2@NREldrid::r_SetBonusWeapon 3 2 7669 1 R _script Mk2@NREldrid::r_SetBonusWeapon 3 0 7661 2 R _script Mk2@NREldrid::r_SetBonusWeapon 3 1 7663 2 @
+22 22000 Mk2@NREldrid::dlg_PrepareUnicumCost 0 #
+0 22010 #
+24 22020 D _script Mk2@NREldrid::d_CheckMoney 1 2 R _script Mk2@NREldrid::r_DelMoney 1 2 R _script Mk2@NREldrid::r_SetBonusWeapon 3 3 7665 2 @
+23 23000 Mk2@NREldrid::dlg_PrepareUnicumCost 0 #
+0 23010 #
+24 23020 D _script Mk2@NREldrid::d_CheckMoney 1 2 R _script Mk2@NREldrid::r_DelMoney 1 2 R _script Mk2@NREldrid::r_SetBonusWeapon 3 2 7669 2 R _script Mk2@NREldrid::r_SetBonusWeapon 3 1 7663 2 @
+24 24000 None 0 @
+25 25000 None 0 @
+26 26000 None 0 #
+0 26010 &
+
+[russ]
+{100}{}{Элдридж}
+{200}{}{Вы видите Элдриджа.}
+{210}{}{Вы видите тяжело вооруженного человека, покрытого потом. Он осматривает коллекцию своего оружия на стенах и мечтательно улыбается.}
+{210}{}{Вы видите Элдриджа. Он осматривает коллекцию своего оружия на стенах и мечтательно улыбается.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{дурак}
+{1020}{}{не знаком}
+{1030}{}{знаком}
+{2000}{}{Добро пожаловать @sex@|мистер||мисс|! Мое имя Элдридж. Вы хотите наполнить свой мешок железом?}
+{2010}{}{Смотря что вы продаете.}
+{2020}{}{Мистер Элдридж, я бы хотел купить у вас музыкальный автомат. Они продаются?}
+{2030}{}{Мистер Элдридж, я бы хотел купить у вас музыкальный автомат. Они продаются?}
+{3000}{}{Здесь, в оружейной Рено есть все новейшее оружие и все средства защиты, чтобы усмирить любого сукиного сына.}
+{3010}{}{Я представитель Джеймса, он хотел бы пополнить запасы оружия.}
+{3020}{}{Вы тот человек, которого я ищу. Можно посмотреть что у вас есть?}
+{3030}{}{Вы можете модифицировать или улучшить оружие?}
+{3040}{}{Мне ничего не надо прямо сейчас.}
+{4000}{}{Привет снова, друг. Чем могу служить?}
+{4010}{}{Я представитель Джеймса, он хотел бы пополнить запасы оружия.}
+{4020}{}{Можно посмотреть, что у вас есть?}
+{4030}{}{Вы можете модифицировать или улучшить оружие?}
+{4040}{}{Нет не сегодня, спасибо.}
+{4050}{}{Мистер Элдридж, я бы хотел купить у вас музыкальный автомат. Они продаются?}
+{4060}{}{Мистер Элдридж, я бы хотел купить у вас музыкальный автомат. Они продаются?}
+{5000}{}{Если вам нужно переделать пушку - вы обратились по адресу. Правда специалистов по тяжелому вооружению сейчас нет. Итак, что у вас за оружие?}
+{5010}{}{Ну.. вот у меня тут ствол..}
+{5020}{}{Вот, посмотрите пушку [Протягиваете оружие из рук].}
+{5030}{}{Да я так спросил, давайте торговать лучше.}
+{5040}{}{Никакого, я на будущее спрашиваю.}
+{6000}{}{Конечно, все уже упаковано. С вас 3000 монет.}
+{6010}{}{Ну так давай сюда.}
+{6020}{}{У меня нет таких денег сейчас.}
+{6030}{}{Мне ничего не нужно.}
+{7000}{}{Очень жаль.}
+{8000}{}{Вот тут все, что тебе нужно. Передай привет Джеймсу. }
+{9000}{}{Добро пожаловать @sex@|мистер||мисс|! Мое имя Элдридж. Вы хотите наполнить свой мешок железом?}
+{9010}{}{Наполнять! Наполнять!!}
+{9020}{}{Нет мешок... неа.}
+{10000}{}{Эй, возьми оружие в руки уже, я не вижу о чем ты говоришь.}
+{11000}{}{@lex item_name@? Хм, посмотрим. [Внимательно осматривает ваш ствол]
+Это стандартное оружие. Мы можем усовершенствовать прицел, сменить некоторые изношенные части, что улучшит пробивную способность и убойность.}
+{11010}{}{Нет, пожалуй в другой раз.}
+{11020}{}{Поработайте над прицельной системой.}
+{11030}{}{Убойность, это хорошо. Прошу, поработайте как следует, это оружие мне очень дорого.}
+{12000}{}{Что? Да это же @lex item_name@! Где вам удалось это достать?! Для этого чуда у меня есть набор усовершенствованных электромагнитов, значительно увеличивающий начальную скорость иглы.
+Кроме того, мы можем отрегулировать прицельную планку, что немного повысит точность. Вам это подходит?}
+{12010}{}{Нет, пожалуй в другой раз.}
+{12020}{}{Поработайте над прицельной системой.}
+{12030}{}{А.. пушка от дедушки осталась. Так что вы говорили о электромагнитах?}
+{13000}{}{@lex item_name@? Хех, да вы настоящий маньяк. Главное не точность, а чтобы головы разлетались как арбузы, да? [Подмигивает]. 
+Можно проделать некоторые фокусы с стволом, чтобы усилить убойность и несколько подстроить прицел... ну и я бы изменил газовыпускную систему, но это сложная работа.}
+{13010}{}{Нет, пожалуй в другой раз.}
+{13020}{}{Неплохо, если вы хоть как-то отрегулируете прицел. }
+{13030}{}{Да, что бы головы, как арбузы! Делайте скорее же!}
+{13040}{}{Газовыпускную систему? Почему сложная?}
+{14000}{}{Ого! @lex item_name@ - выбор настоящего снайпера. По желанию, мы можем установить вам новую оптику и отрегулировать её, значительно увеличив точность вашего оружия.
+Кроме того, можно установить компенсатор отдачи или более удобный приклад.}
+{14010}{}{Нет, пожалуй в другой раз.}
+{14020}{}{Нормальный приклад - именно то, чего мне не хватало.}
+{14030}{}{Да, новая оптика мне не помешает.}
+{15000}{}{Я же сказал, что на данный момент нет специалиста по тяжелым вооружениям. }
+{15010}{}{Возможно, я его вам заменю? Я мастер по части тяжелого вооружения!}
+{16000}{}{Ох, не люблю я эти энергетические  штуковины. Спрятал бы ты это лучше. [Косится на охрану]}
+{17000}{}{Эм.. говоря ПУШКА, я не совсем ЭТО имел в виду.}
+{18000}{}{Не думаю, что у вас достаточно навыков.}
+{19000}{}{Усовершенствование и калибровка прицела вам обойдется в @lex cost@ монет.}
+{19010}{}{Нет, пожалуй в другой раз.}
+{19020}{}{Держите деньги.@@Конечно, возьмите нужную сумму.}
+{20000}{}{Вы останетесь довольны нашей работой. Разумеется, с вас @lex cost@ монет.}
+{20010}{}{Нет, обойдусь.}
+{20020}{}{Держите деньги.@@Конечно, возьмите нужную сумму.}
+{21000}{}{Я не разбираюсь в электрике, но с ними гаусс становится намного мощнее. Сможете сами проверить после изготовления. Увы, эти электромагниты нынче тяжело достать, так что вы влетите аж в @lex cost@ монет. По рукам?}
+{21010}{}{Нет, я наверное пойду.}
+{21020}{}{Держите деньги.@@Конечно, возьмите нужную сумму.}
+{22000}{}{Да, идеально подобраный приклад сделает стрельбу более удобной и точной! Само собой, это работа не из дешевых -  @lex cost@ монет. По рукам?}
+{22010}{}{Нет, я наверное пойду.}
+{22020}{}{Держите деньги.@@Конечно, возьмите нужную сумму.}
+{23000}{}{Да, именно её. Чем меньше пороховых газов выходит впустую, тем большая вероятность, что зубы вашего врага будут удалены через заднюю стенку черепа [еле сдерживает смех].
+Вот только, чтобы потом ствольная коробка не вылетела вам же в голову, придется отдать @lex cost@ монет. У вас есть такая наличность?}
+{23010}{}{Нет, пожалуй в другой раз.}
+{23020}{}{Держите деньги.@@Конечно, возьмите нужную сумму.}
+{24000}{}{Готово, принимайте товар.@@Вот сделано, можете осмотреть оружие.@@Ну вот, можете оценить работу.}
+{25000}{}{При предварительном осмотре я не увидел, но у вашего оружия уже были данные модификации. К сожалению, мы не можем его доработать. Вот, заберите деньги.}
+{26000}{}{Не хочу об этом слышать.}
+{26010}{}{Ясно.}
+
+[engl]
+{100}{}{Eldridge}
+{200}{}{You see Eldridge.}
+{210}{}{You see a heavily armed man covered with grease. He is gazing at his weapon collection on the walls and smiling dreamily.}
+{210}{}{You see Eldridge. He is gazing at his weapon collection and smiling dreamily.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{дурак}
+{1020}{}{не знаком}
+{1030}{}{знаком}
+{2000}{}{Welcome, @sex@|mister||miss|! Eldridge's the name. You in the market for some iron to fill that holster of yours?}
+{2010}{}{Depends on what you're selling.}
+{2020}{}{Mr. Eldridge, I'd like to purchase a jukebox. Are they for sale?}
+{2030}{}{Mr. Eldridge, I'd like to purchase a jukebox. Are they for sale?}
+{3000}{}{Here at New Reno Arms, we have the latest personal protection devices needed to stop any yellow-bellied sonuvabitch dead in his tracks. [Smiles evilly]}
+{3010}{}{James told me to come here if I was looking for weapons.}
+{3020}{}{You're just the man I was looking for then. Can I see what you got in stock?}
+{3030}{}{Can you modify or upgrade weapons?}
+{3040}{}{Not interested right now, thanks.}
+{4000}{}{Hello again, friend. What can I do for you?}
+{4010}{}{James told me to come here if I was looking for weapons.}
+{4020}{}{Can I see what you got in stock?}
+{4030}{}{Can you modify or upgrade weapons?}
+{4040}{}{Not interested right now, thanks.}
+{4050}{}{Mr. Eldridge, I'd like to purchase a jukebox. Are they for sale?}
+{4060}{}{Mr. Eldridge, I'd like to purchase a jukebox. Are they for sale?}
+{5000}{}{No, at the moment all maintenance personnel is on vacation.}
+{5010}{}{Well... I got a gun here...}
+{5020}{}{Have a look at this gun [Hand him the weapon].}
+{5030}{}{I just asked out of interest. Let's barter.}
+{5040}{}{I'm just asking 'cause I might need it later.}
+{6000}{}{Of course, it's all already packed. That'll be $3000.}
+{6010}{}{Give it to me then.}
+{6020}{}{I don't have that much at the moment.}
+{6030}{}{I don't need anything.}
+{7000}{}{What a pity.}
+{8000}{}{Here's everything you need. Give my regards to James.}
+{9000}{}{Welcome, @sex@|mister||miss|! Eldridge's the name. You in the market for some iron to fill that holster of yours?}
+{9010}{}{Yuh! Yuh!}
+{9020}{}{Nuh...}
+{10000}{}{If you had the gun you're talking about in your hands, that'd help, you know.}
+{11000}{}{@lex item_name@? Hmm, let's have a look [Thoroughly examines your gun]. It's a standard weapon, we can improve the sight and replace some deteriorated parts, which will improve piercing qualities and stopping power.}
+{11010}{}{Maybe some other time.}
+{11020}{}{Work on improving the sights.}
+{11030}{}{Stopping power is a good thing. Please do your best, this weapon has sentimental value.}
+{12000}{}{What? But that's @lex item_name@! Where did you get it?! I got a set of improved electromagnets that will considerably increase the initial speed of the needle. Besides, we can adjust the backsight leaf, which will improve accuracy. Does that suit you?}
+{12010}{}{Maybe some other time.}
+{12020}{}{Work on improving the sights.}
+{12030}{}{Inherited it from my grandpa. What were you talking about magnets?}
+{13000}{}{@lex item_name@? Heh, you're a real maniac, aren't you. It's not about accuracy, it's about popping heads like watermelons, right? [Winks]. I can do some tricks on the barrel to improve stopping power and adjust sights... Well, I'd also replace gas exhaust system, but it's a lot of complicated work.}
+{13010}{}{Maybe some other time.}
+{13020}{}{Adjusting the sight would be nice. }
+{13030}{}{Yes! Like Watermelons! Get down to work!}
+{13040}{}{Exhaust system? Why is it complicated?}
+{14000}{}{Wow! @lex item_name@ - a real sniper's choice. We can install new optics and adjust it, thus greatly improving the accuracy. Besides, we can install a recoil compensator and a more comfortable butt.}
+{14010}{}{Maybe some other time.}
+{14020}{}{A comfortable butt is what I always wanted.}
+{14030}{}{New optics sounds great.}
+{15000}{}{Like I told you before, we don't have heavy weapons expert at the moment. }
+{15010}{}{Maybe I could substitute him? I'm very good with big guns!}
+{16000}{}{Oh, I don't like this energy stuff. You'd better put it away [Looks sideways at the guard]}
+{17000}{}{Err... that's not really what I meant when I said "GUN".}
+{18000}{}{I don't think you're skilled enough.}
+{19000}{}{Improved sight adjustment will cost you в $@lex cost@.}
+{19010}{}{Maybe some other time.}
+{19020}{}{Here's the money.@@Sure, take it.}
+{20000}{}{I promise you'll be satisfied with our work. It will be $@lex cost@.}
+{20010}{}{I think I'll go without it.}
+{20020}{}{Here's the money.@@Sure, take it.}
+{21000}{}{I'm not much of an electrician, but Gauss weapons are much more powerful with them. You can test it yourself afterwards. But these electromagnets are hard to get, so it will cost you $@lex cost@. Do we have a deal?}
+{21010}{}{No, I'd rather go.}
+{21020}{}{Here's the money.@@Sure, take it.}
+{22000}{}{Yes, a personally fitted butt will make your fire more accurate and comfortable! But of course it isn't cheap -  $@lex cost@. Do we have a deal?}
+{22010}{}{No, I'd rather go.}
+{22020}{}{Here's the money.@@Sure, take it.}
+{23000}{}{Yeah, the exhaust. The less gunpowder combustion gases wasted, the higher the possibility of your adversary's teeth being removed through an opening in the back of his skull [Tries to suppress laughter]. But if you don't want the receiver to blow into your face, you'll have to pay $@lex cost@. Do you have such an amount of money?}
+{23010}{}{Maybe some other time.}
+{23020}{}{Here's the money.@@Sure, take it.}
+{24000}{}{It's all ready.@@Here it is, you can test it at the aiming rest.@@Voila. She's a beauty, isn't she?}
+{25000}{}{At the initial examination I failed to see that your weapon already had modifications. Unfortunately we can't improve it. We're really sorry, here's your money.}
+{26000}{}{Not.}
+{26010}{}{Ясно.}
+
+[ukra]
+{100}{}{Элдридж}
+{200}{}{Вы видите Элдриджа.}
+{210}{}{Вы видите тяжело вооруженного человека, покрытого потом. Он осматривает коллекцию своего оружия на стенах и мечтательно улыбается.}
+{210}{}{Вы видите Элдриджа. Он осматривает коллекцию своего оружия на стенах и мечтательно улыбается.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{дурак}
+{1020}{}{не знаком}
+{1030}{}{знаком}
+{2000}{}{Добро пожаловать @sex@|мистер||мисс|! Мое имя Элдридж. Вы хотите наполнить свой мешок железом?}
+{2010}{}{Смотря что вы продаете.}
+{2020}{}{Мистер Элдридж, я бы хотел купить у вас музыкальный автомат. Они продаются?}
+{2030}{}{Мистер Элдридж, я бы хотел купить у вас музыкальный автомат. Они продаются?}
+{3000}{}{Здесь, в оружейной Рено есть все новейшее оружие и все средства защиты, чтобы усмирить любого сукиного сына.}
+{3010}{}{Я представитель Джеймса, он хотел бы пополнить запасы оружия.}
+{3020}{}{Вы тот человек, которого я ищу. Можно посмотреть что у вас есть?}
+{3030}{}{Вы можете модифицировать или улучшить оружие?}
+{3040}{}{Мне ничего не надо прямо сейчас.}
+{4000}{}{Привет снова, друг. Чем могу служить?}
+{4010}{}{Я представитель Джеймса, он хотел бы пополнить запасы оружия.}
+{4020}{}{Можно посмотреть, что у вас есть?}
+{4030}{}{Вы можете модифицировать или улучшить оружие?}
+{4040}{}{Нет не сегодня, спасибо.}
+{4050}{}{Мистер Элдридж, я бы хотел купить у вас музыкальный автомат. Они продаются?}
+{4060}{}{Мистер Элдридж, я бы хотел купить у вас музыкальный автомат. Они продаются?}
+{5000}{}{Если вам нужно переделать пушку - вы обратились по адресу. Правда специалистов по тяжелому вооружению сейчас нет. Итак, что у вас за оружие?}
+{5010}{}{Ну.. вот у меня тут ствол..}
+{5020}{}{Вот, посмотрите пушку [Протягиваете оружие из рук].}
+{5030}{}{Да я так спросил, давайте торговать лучше.}
+{5040}{}{Никакого, я на будущее спрашиваю.}
+{6000}{}{Конечно, все уже упаковано. С вас 3000 монет.}
+{6010}{}{Ну так давай сюда.}
+{6020}{}{У меня нет таких денег сейчас.}
+{6030}{}{Мне ничего не нужно.}
+{7000}{}{Очень жаль.}
+{8000}{}{Вот тут все, что тебе нужно. Передай привет Джеймсу. }
+{9000}{}{Добро пожаловать @sex@|мистер||мисс|! Мое имя Элдридж. Вы хотите наполнить свой мешок железом?}
+{9010}{}{Наполнять! Наполнять!!}
+{9020}{}{Нет мешок... неа.}
+{10000}{}{Эй, возьми оружие в руки уже, я не вижу о чем ты говоришь.}
+{11000}{}{@lex item_name@? Хм, посмотрим. [Внимательно осматривает ваш ствол]
+Это стандартное оружие. Мы можем усовершенствовать прицел, сменить некоторые изношенные части, что улучшит пробивную способность и убойность.}
+{11010}{}{Нет, пожалуй в другой раз.}
+{11020}{}{Поработайте над прицельной системой.}
+{11030}{}{Убойность, это хорошо. Прошу, поработайте как следует, это оружие мне очень дорого.}
+{12000}{}{Что? Да это же @lex item_name@! Где вам удалось это достать?! Для этого чуда у меня есть набор усовершенствованных электромагнитов, значительно увеличивающий начальную скорость иглы.
+Кроме того, мы можем отрегулировать прицельную планку, что немного повысит точность. Вам это подходит?}
+{12010}{}{Нет, пожалуй в другой раз.}
+{12020}{}{Поработайте над прицельной системой.}
+{12030}{}{А.. пушка от дедушки осталась. Так что вы говорили о электромагнитах?}
+{13000}{}{@lex item_name@? Хех, да вы настоящий маньяк. Главное не точность, а чтобы головы разлетались как арбузы, да? [Подмигивает]. 
+Можно проделать некоторые фокусы с стволом, чтобы усилить убойность и несколько подстроить прицел... ну и я бы изменил газовыпускную систему, но это сложная работа.}
+{13010}{}{Нет, пожалуй в другой раз.}
+{13020}{}{Неплохо, если вы хоть как-то отрегулируете прицел. }
+{13030}{}{Да, что бы головы, как арбузы! Делайте скорее же!}
+{13040}{}{Газовыпускную систему? Почему сложная?}
+{14000}{}{Ого! @lex item_name@ - выбор настоящего снайпера. По желанию, мы можем установить вам новую оптику и отрегулировать её, значительно увеличив точность вашего оружия.
+Кроме того, можно установить компенсатор отдачи или более удобный приклад.}
+{14010}{}{Нет, пожалуй в другой раз.}
+{14020}{}{Нормальный приклад - именно то, чего мне не хватало.}
+{14030}{}{Да, новая оптика мне не помешает.}
+{15000}{}{Я же сказал, что на данный момент нет специалиста по тяжелым вооружениям. }
+{15010}{}{Возможно, я его вам заменю? Я мастер по части тяжелого вооружения!}
+{16000}{}{Ох, не люблю я эти энергетические  штуковины. Спрятал бы ты это лучше. [Косится на охрану]}
+{17000}{}{Эм.. говоря ПУШКА, я не совсем ЭТО имел в виду.}
+{18000}{}{Не думаю, что у вас достаточно навыков.}
+{19000}{}{Усовершенствование и калибровка прицела вам обойдется в @lex cost@ монет.}
+{19010}{}{Нет, пожалуй в другой раз.}
+{19020}{}{Держите деньги.@@Конечно, возьмите нужную сумму.}
+{20000}{}{Вы останетесь довольны нашей работой. Разумеется, с вас @lex cost@ монет.}
+{20010}{}{Нет, обойдусь.}
+{20020}{}{Держите деньги.@@Конечно, возьмите нужную сумму.}
+{21000}{}{Я не разбираюсь в электрике, но с ними гаусс становится намного мощнее. Сможете сами проверить после изготовления. Увы, эти электромагниты нынче тяжело достать, так что вы влетите аж в @lex cost@ монет. По рукам?}
+{21010}{}{Нет, я наверное пойду.}
+{21020}{}{Держите деньги.@@Конечно, возьмите нужную сумму.}
+{22000}{}{Да, идеально подобраный приклад сделает стрельбу более удобной и точной! Само собой, это работа не из дешевых -  @lex cost@ монет. По рукам?}
+{22010}{}{Нет, я наверное пойду.}
+{22020}{}{Держите деньги.@@Конечно, возьмите нужную сумму.}
+{23000}{}{Да, именно её. Чем меньше пороховых газов выходит впустую, тем большая вероятность, что зубы вашего врага будут удалены через заднюю стенку черепа [еле сдерживает смех].
+Вот только, чтобы потом ствольная коробка не вылетела вам же в голову, придется отдать @lex cost@ монет. У вас есть такая наличность?}
+{23010}{}{Нет, пожалуй в другой раз.}
+{23020}{}{Держите деньги.@@Конечно, возьмите нужную сумму.}
+{24000}{}{Готово, принимайте товар.@@Вот сделано, можете осмотреть оружие.@@Ну вот, можете оценить работу.}
+{25000}{}{При предварительном осмотре я не увидел, но у вашего оружия уже были данные модификации. К сожалению, мы не можем его доработать. Вот, заберите деньги.}
+{26000}{}{Не хочу об этом слышать.}
+{26010}{}{Ясно.}
+

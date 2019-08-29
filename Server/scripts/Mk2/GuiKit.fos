@@ -1,0 +1,486 @@
+// FOS Client
+
+funcdef void ButtonClickFuncdef( int click );
+
+interface ButtonCallback
+{
+	void ButtonClick( int click );
+}
+
+ThisModule::RefKit@	 Current = null;
+ThisModule::RefKit@[] AllKits = {};
+ThisModule::RefKit@[] SecondKits = {};
+
+void ModuleInit( )
+{
+	::__EventStart.Subscribe( @ThisModule::Build );
+}
+
+::string@ FormatKey( ::string@ key ){
+	return ( @Current is null ? @key : @Current.FormatKey( @key ) );
+}
+
+void Add( int index, ThisModule::GUIScreenPattern@ pattern, ThisModule::IGuiKitElement@ element = null ){
+	if( @pattern !is null )	AllKits.insertLast( @ThisModule::RefKit( index, @pattern ) );
+	else 						SecondKits.insertLast( @ThisModule::RefKit( index, null, @element ) );
+}
+
+bool Build( )
+{
+	for( uint i = 0, iEnd = AllKits.length(); i < iEnd; i++ )	AllKits[i].Build();
+	return true;
+}
+
+interface GUIScreenPattern{
+	::string@ get_Name();
+	void Build( int screenIndex, ::IGUIScreenOpt@ opt );
+}
+
+interface IGuiKitElement{
+	::string@ get_Name( );
+	GuiKit::IGuiKitElement@ Build( int screenIndex );
+}
+
+::IGUIScreenOpt@ CreateScreen( int index, ThisModule::GUIScreenPattern@ pattern )
+{	
+	::IGUIScreenOpt@ screen = @ GUI_GetScreenOptions( index );
+	if( @screen !is null )
+		return @screen;
+		
+	@screen = @GUI_CreateScreen( index, ::GetIfaceIniStr ( FormatKey( "MainPic" ) ) )
+		.AutoCursor( true, CURSOR_DEFAULT );
+		
+	IGUI::ScreenCallbackShow@ show = cast< IGUI::ScreenCallbackShow@ >( @pattern );
+	if( @show !is null )
+		screen.CallbackShow(@show);
+	
+	IGUI::ScreenCallbackHide@ hide = cast< IGUI::ScreenCallbackHide@ >( @pattern );
+	if( @hide !is null )
+		screen.CallbackHide(@hide);
+		
+	return @screen;
+}
+
+class RefKit
+{
+	int ScreenIndex;
+	ThisModule::GUIScreenPattern@ Kit;
+	ThisModule::IGuiKitElement@[] ListElement;
+	
+	RefKit( int si, ThisModule::GUIScreenPattern@ ref, ThisModule::IGuiKitElement@ element = null )
+	{
+		@Kit = @ref;
+		ListElement.resize( 0 );
+		ScreenIndex = si;
+		if( @element !is null )
+			ListElement.insertLast( @element );
+	}
+	
+	void Build( )
+	{
+		@Current = @this;
+		if( ScreenIndex != CLIENT_SCREEN_NONE )
+		{
+			::IGUIScreenOpt@ opt = @CreateScreen( ScreenIndex, @Kit );
+			if( @opt !is null )
+			{
+				if( @Kit !is null )
+					Kit.Build( ScreenIndex, @opt );
+				
+				for( uint i = 0, iEnd = ListElement.length(); i < iEnd; i++ )
+					ListElement[i].Build( ScreenIndex );
+					
+				for( uint i = 0, iEnd = SecondKits.length(); i < iEnd; i++ )
+					if( SecondKits[i].ScreenIndex == ScreenIndex )
+					{
+						ThisModule::RefKit@ ref = SecondKits[i];
+						for( uint e = 0, eEnd = ref.ListElement.length(); e < eEnd; e++ )
+							ref.ListElement[e].Build( ScreenIndex );
+					}
+			}
+		}
+		@Current = null;
+	}
+	
+	::string@ FormatKey( ::string@ key ){
+		return ( @Kit is null ? @key : Kit.Name + "" + key  );
+	}
+	
+	void Add( ThisModule::IGuiKitElement@ elem ){
+		ListElement.insertLast( @elem );
+	}
+}
+
+class CustomSpace : ThisModule::IGuiKitElement
+{
+	CustomSpace( const ::string name )
+	{
+		MyName = name;
+		@Position = null;
+
+		if( @Current !is null )
+			Current.Add( @this );
+	}
+	
+	ThisModule::IGuiKitElement@ Build( int screenIndex  ) override
+	{
+		if( IniParser::IsKey( Name ) )
+		{
+			@Position = IniParser::GetCoord( Name );
+
+			for( uint i = 0, iEnd = Position.length(); i < iEnd; i++ )
+				if( Position[i] != 0 )
+				{
+					GUI_AddScreenElement( screenIndex, null, 0, 0 )
+						.Position( Position );
+					break;
+				}
+		}
+		return @this;
+	}
+	
+	::string@ get_Name( ){
+		return @FormatKey( MyName );
+	}
+	
+	::string@ set_Name( ::string@ value )
+	{
+		if( @value is null )
+			MyName = "";
+		else
+			MyName = value;
+			
+		return @get_Name();
+	}
+	
+	::string MyName;
+	
+	int[]@ Position;
+}
+
+class CritterAnimation : ThisModule::IGuiKitElement, IGUI::ElementCallbackDrawPos
+{
+	CritterAnimation( const ::string name )
+	{
+		MyName = name;
+		@Position = null;
+
+		if( @Current !is null )
+			Current.Add( @this );
+	}
+	
+	void OnDraw( int ScreenX, int ScreenY, int ElementX, int ElementY ) override
+	{
+		::CritterCl@ critter = ::GetCritter( CritterId );
+		if( ::GetTick() - DirTick >= 800 )
+		{
+			if( ++Dir > 5 ) Dir = 0;
+			DirTick = ::GetTick();
+		}
+		
+		if( @critter !is null && @Position !is null )
+		{
+			::DrawCritter2d( critter.CrType, critter.GetAnim1(), 1, Dir, 
+				ScreenX + ElementX, ScreenY + ElementY, ScreenX + ElementX + Position[2], ScreenY + ElementY + Position[3], false, true, 0 );
+		}
+	}
+	
+	ThisModule::IGuiKitElement@ Build( int screenIndex  ) override
+	{
+		if( IniParser::IsKey( Name ) )
+		{
+			@Position = IniParser::GetCoord( Name );
+			for( uint i = 0, iEnd = Position.length(); i < iEnd; i++ )
+				if( Position[i] != 0 )
+				{
+					GUI_AddScreenElement( screenIndex, null, 0, 0 )
+						.Position( Position )
+						.CallbackDrawPos( @this );
+					break;
+				}
+		}
+		else Log( "NoFoundName<" + Name + ">" );
+		return @this;
+	}
+	
+	void OnShow( uint critterId )
+	{
+		CritterId = critterId;
+		Dir = 0;
+		DirTick = ::GetTick();
+	}
+	
+	::string@ get_Name( ){
+		return @FormatKey( MyName );
+	}
+	
+	::string@ set_Name( ::string@ value )
+	{
+		if( @value is null )
+			MyName = "";
+		else
+			MyName = value;
+			
+		return @get_Name();
+	}
+	
+	::string MyName;
+	
+	uint8 Dir = 0;
+	uint DirTick = 0;
+	uint CritterId = 0;
+	int[]@ Position;
+	IGUIElementOpt@ Option;
+}
+
+class DynamicText : ThisModule::IGuiKitElement, IGUI::ElementCallbackDrawPos
+{
+	DynamicText( const ::string name )
+	{
+		MyName = name;
+		SetTextUp( true );
+		SetOption( FONT_FAT, FT_CENTERXY );
+		SetColor( int COLOR_SAND );
+		@DefPos = null;
+		@Position = null;
+		
+		if( @Current !is null )
+			Current.Add( @this );
+	}
+	
+	ThisModule::DynamicText@ SetDefPosition( int[]@ defPos )
+	{
+		@DefPos = @defPos;
+		return @this;
+	}
+	
+	ThisModule::DynamicText@ SetOption( int font, int flag )
+	{
+		Font = font;
+		Flag = flag;
+		return @this;
+	}
+	
+	ThisModule::DynamicText@ SetColor( int c )
+	{
+		Color = c; 
+		return this;
+	}
+	
+	ThisModule::DynamicText@ SetTextUp( bool isUp )
+	{
+		IsUpText = isUp;
+		return @this;
+	}
+	
+	void OnDraw( int ScreenX, int ScreenY, int ElementX, int ElementY ) override
+	{
+		if( Position !is null )
+			DrawText( DynamicText_GetText(), ScreenX + ElementX, ScreenY + ElementY, Position[2], Position[3], Color,  Font, Flag );
+	}
+	
+	ThisModule::IGuiKitElement@ Build( int screenIndex  ) override
+	{
+		if( IniParser::IsKey( Name ) )
+		{
+			@Position = IniParser::GetCoord( Name );
+			for( uint i = 0, iEnd = Position.length(); i < iEnd; i++ )
+				if( Position[i] != 0 )
+				{
+					GUI_AddScreenElement( screenIndex, null, 0, 0 )
+						.Position( Position )
+						.CallbackDrawPos( @this );
+					break;
+				}
+		}
+		else Log( "NoFoundName<" + Name + ">" );
+		return @this;
+	}
+	
+	string DynamicText_GetText()
+	{
+		return "";
+	}
+	
+	::string@ get_Name( ){
+		return @FormatKey( MyName );
+	}
+	
+	::string@ set_Name( ::string@ value )
+	{
+		if( @value is null )
+			MyName = "";
+		else
+			MyName = value;
+			
+		return @get_Name();
+	}
+	
+	int Font;
+	int Color;
+	int Flag;
+	
+	int[]@ DefPos;
+	bool IsUpText;
+	int[]@ Position;
+	::string MyName;
+}
+
+class Text : ThisModule::IGuiKitElement
+{
+	Text( const ::string name, int text, int msgNum = TEXTMSG_GAME )
+	{
+		MyName = name;
+		TextNumber = text;
+		MsgNumber = msgNum;
+		SetTextUp( true );
+		SetOption( FONT_FAT, FT_CENTERXY );
+		SetColor( COLOR_SAND );
+		@DefPos = null;
+		
+		if( @Current !is null )
+			Current.Add( @this );
+	}
+	
+	ThisModule::Text@ SetDefPosition( int[]@ defPos )
+	{
+		@DefPos = @defPos;
+		return @this;
+	}
+	
+	ThisModule::Text@ SetOption( int font, int flag )
+	{
+		Font = font;
+		Flag = flag;
+		return @this;
+	}
+	
+	ThisModule::Text@ SetColor( uint c0, uint c1 )
+	{
+		Color0 = c0;
+		Color1 = c1;
+		return @this;
+	}
+	
+	ThisModule::Text@ SetColor( uint c ){
+		return @SetColor( c, c );
+	}
+	
+	ThisModule::Text@ SetTextUp( bool isUp )
+	{
+		IsUpText = isUp;
+		return @this;
+	}
+	
+	ThisModule::IGuiKitElement@ Build( int screenIndex  )
+	{
+		if( IniParser::IsKey( Name ) )
+		{
+			int[] coord = IniParser::GetCoord( Name, @DefPos );
+			for( uint i = 0, iEnd = coord.length(); i < iEnd; i++ )
+				if( coord[i] != 0 )
+				{
+					GUI_AddScreenElement( screenIndex, null, 0, 0 )
+						.Position( coord )
+						.Text( IsUpText ? ( ::strupr( ::GetMsgStr( MsgNumber, TextNumber ) ) ) : ( ::GetMsgStr( MsgNumber, TextNumber ) )
+								, Font, Color0, Color1, Flag );
+					break;
+				}
+		}
+		return @this;
+	}
+	
+	::string@ get_Name( ){
+		return @FormatKey( MyName );
+	}
+	
+	::string@ set_Name( ::string@ value )
+	{
+		if( @value is null )
+			MyName = "";
+		else
+			MyName = value;
+			
+		return @get_Name();
+	}
+	
+	int Font;
+	uint Color0;
+	uint Color1;
+	int Flag;
+	
+	int[]@ DefPos;
+	
+	bool IsUpText;
+	
+	::string MyName;
+	int TextNumber;
+	int MsgNumber;
+}
+
+class Button : ThisModule::IGuiKitElement, IGUI::ElementCallbackMouseClick
+{
+	Button( ThisModule::ButtonClickFuncdef@ func, const ::string name, int[]@ defPos = null, bool scale = true )
+	{
+		construct( name, defPos, scale );
+		@Funcdef = @func;
+	}
+	
+	Button( ThisModule::ButtonCallback@ callback, const ::string name, int[]@ defPos = null, bool scale = true )
+	{
+		construct( name, defPos, scale );
+		@Callback = @callback;
+	}
+	
+	private void construct( const ::string name, int[]@ defPos, bool scale  )
+	{
+		@Option = null;
+		@Callback = null;
+		@Funcdef = null;
+		MyName = name;
+		@DefPos = @defPos;
+		
+		Scale = scale;
+		
+		if( @Current !is null )
+			Current.Add( @this );
+	}
+	
+	ThisModule::IGuiKitElement@ Build( int screenIndex )
+	{
+		@RealPos = IniParser::GetCoord( Name, @DefPos );
+		@Option = @GUI_AddScreenElement( screenIndex, ::GetIfaceIniStr( Name + "Pic"), 0, 0 )
+			.Position( RealPos )
+			.CallbackMouseClick( @this )
+			.Scale( this.Scale );
+			
+		if( IniParser::IsKey( Name + "PicDn" ) )
+			Option.DownPic( ::GetIfaceIniStr( Name + "PicDn" ) );		
+		return @this;
+	}
+	
+	void OnMouseClick ( int click ) override{
+		
+		if( Funcdef !is null ) Funcdef(click);
+		if( Callback !is null ) Callback.ButtonClick(click);
+	}
+	
+	::string@ get_Name( ){
+		return @FormatKey( MyName );
+	}
+	
+	::string@ set_Name( ::string@ value )
+	{
+		MyName = @value is null ? "" : value;		
+		return @get_Name();
+	}
+	
+	int[]@ DefPos;
+	int[]@ RealPos;
+	
+	bool Scale;
+	::string MyName;
+	ThisModule::ButtonClickFuncdef@ Funcdef;
+	ThisModule::ButtonCallback@ Callback;
+	IGUIElementOpt@ Option;
+}

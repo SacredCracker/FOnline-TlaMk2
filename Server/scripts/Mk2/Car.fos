@@ -1,0 +1,426 @@
+// FOS Server Client
+
+#ifdef __SERVER
+
+enum Define
+{
+	
+   StrCarInfo                 = 2100 ,
+
+// бонусы у авто
+   CarBonusSpeed              = 1 ,
+   CarBonusNegotiability      = 2 ,
+   CarBonusWearConsumption    = 3 ,
+   CarBonusCritCapacity       = 4 ,
+   CarBonusFuelTank           = 5 , // Объем бака. Val2
+   CarBonusFuelConsumption    = 6 ,
+   CarBonusRunToBreak         = 7
+}
+
+uint GetCarCost( uint16 protoCar ) // Export
+{
+    const ::ProtoItem@ car = ::GetProtoItem( protoCar );
+    if( valid( car ) )
+    {
+        uint count = ::WorldItemCount( protoCar );
+        uint cost = 0;
+        if( protoCar == Content::Item::BUGGY )
+            cost = CLAMP( car.Cost + car.Cost * count, 1000, 97000 );
+        else
+            cost = car.Cost + car.Cost * count;
+        return cost;
+    }
+    return 0;
+}
+
+bool UseItemOnCar( ::Critter& cr, ::Item& car, ::Item& item ) // Export
+{
+    uint16 pid = item.GetProtoId();
+    bool   isEnergo = ( pid == Content::Item::AMMO_SMALL_ENERGY_CELL || pid == Content::Item::AMMO_MICRO_FUSION_CELL ),
+           isBio = ( pid == Content::Item::BEER || pid == Content::Item::BOOZE || pid == Content::Item::GAMMA_GULP_BEER || pid == Content::Item::ROT_GUT || pid == Content::Item::ROENTGEN_RUM );
+
+    if( !isEnergo && !isBio )
+        return false;
+
+    if( isBio && !_CarIsBioEngine( car ) )
+    {
+        cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_CAR_FUEL_NOT_SUPPORTED );
+        return true;
+    }
+
+    int octane = 100;
+    switch( pid )
+    {
+    case Content::Item::BEER:
+    case Content::Item::GAMMA_GULP_BEER:
+        octane = 30;
+        break;
+    case Content::Item::AMMO_SMALL_ENERGY_CELL:
+        octane = 100;
+    case Content::Item::AMMO_MICRO_FUSION_CELL:
+        octane = 150;
+    default:
+        octane = 70;
+        break;                            // Bio energy
+    }
+
+    int need = int(car.Proto.Car_TankVolume) - car.Charge + car.Val2,
+        count = item.GetCount() * octane;
+    if( count > need )
+        count = need;
+
+    if( count <= 0 )
+        cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_CAR_FUEL_TANK_FULL );
+    else
+    {
+        int newCount = item.GetCount() - count / octane;
+        if( newCount <= 0 )
+        {
+            ::DeleteItem( item );
+        }
+        else
+            item.SetCount( newCount );
+        car.Charge += count;
+        cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_CAR_FUEL_TANK_FILL );
+    }
+
+    return true;
+}
+
+bool UseSkillOnCar( ::Critter& cr, ::Item& car, int skill ) // Export
+{
+    switch( skill )
+    {
+    case SKILL_PICK_ON_GROUND:
+    {
+        if( ! Lockers::IsKeyAviable( cr, car.LockerId, car ) )
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_ITEM_LOCKER_NEED_KEY );
+        else if( validEngineObject( cr.GetMap() ) )             // ::Critter on local map
+        {
+            if( cr.Timeout[ TO_TRANSFER ] > 0 )
+                cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_TIMEOUT_TRANSFER_WAIT );
+            else if( cr.Timeout[ TO_BATTLE ] > 0 )
+                cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_TIMEOUT_BATTLE_WAIT );
+            else
+                DriveToGlobal( cr, car, true );
+        }
+    } break;
+
+    case SK_SCIENCE:
+    {
+        cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, Car::Define::StrCarInfo, "$number" + car.LockerId +
+                   "$fuel" + ( car.Charge * 0.01 ) + "$fuel_tank" + ( ( car.Proto.Car_TankVolume + car.Val2 ) * 0.01 ) +
+                   "$wear" + ( car.Deterioration * 100 / car.Proto.Car_MaxDeterioration ) );
+    } break;
+
+    case SK_REPAIR:
+    {
+        if( car.Deterioration == 0 )
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_CAR_REPAIR_NO_NEED );
+        else if( cr.IsPlayer() && cr.Timeout[ TO_SK_REPAIR ] > 0 )
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_SKILL_WEARINESS );
+        else
+        {
+            int fix = car.Deterioration - ( cr.Skill[ SK_REPAIR ] > 0 ? cr.Skill[ SK_REPAIR ] : 1 ) * 100;
+            if( fix < 0 )
+                fix = 0;
+            car.Deterioration = fix;
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_CAR_REPAIR_SUCCESS );
+            cr.TimeoutBase[ TO_SK_REPAIR ] = REPAIR_TIMEOUT( cr );
+            cr.StatBase[ ST_EXPERIENCE ] += 10;
+            cr.PlaySound( "CARREPAR.ACM", true );
+        }
+    } break;
+
+    case SK_LOCKPICK:
+    {
+        if( cr.GetAccess() == ACCESS_ADMIN )
+        {
+            DriveToGlobal( cr, car, true );
+            return true;
+        }
+        if( cr.Timeout[ TO_SK_LOCKPICK ] > 0 || cr.Timeout[ TO_BATTLE ] > 0 )
+        {
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_SKILL_WEARINESS );
+            return true;
+        }
+
+        if( _CarIsNoLockpick( car ) )
+        {
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_SKILL_LOCKPICK_FAIL );
+            return true;
+        }
+        uint timeout = ( 400 - cr.Skill[ SK_LOCKPICK ] ) * 0.05;
+        cr.AddTimeEvent( "Car::cte_CarLock", REAL_SECOND( timeout ), CTE_CAR_LOCKPICK, car.Id );
+        if( cr.IsPlayer() )
+            cr.RunClientScript( "Mk2@Car::_RunCarLockpick", timeout, 0, 0, null, null );
+    } break;
+
+    default:
+        cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_USE_NOTHING );
+        break;
+    }
+    return true;
+}
+
+uint cte_CarLock( ::Critter& cr, int, int& carId, int& )
+{
+    if( cr.IsPlayer() )
+        cr.RunClientScript( "Mk2@Car::_CancelCarLockpick", 0, 0, 0, null, null );
+    if( cr.Timeout[ TO_BATTLE ] > 0 )
+    {
+        cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_SKILL_WEARINESS );
+        return 0;
+    }
+    ::Item@ car = ::GetItem( carId );
+    if( !validEngineObject( car ) )
+        return 0;
+    if( ::GetDistantion( cr.HexX, cr.HexY, car.HexX, car.HexY ) > 1 )
+    {
+        return 0;
+    }
+    int    base = cr.Skill[ SK_LOCKPICK ] - 200;
+    uint8  mode = 0;
+    uint16 activePid = cr.GetSlotProto( SLOT_HAND1, mode ).ProtoId;
+    if( activePid == Content::Item::LOCKPICKS )
+    {
+        base += 25;
+        if( ::Random( 0, 30 ) == 0 )
+            cr.DeleteItem( Content::Item::LOCKPICKS, 1 );
+    }
+    else if( activePid == Content::Item::EXP_LOCKPICK_SET )
+    {
+        base += 50;
+        if( ::Random( 0, 30 ) == 0 )
+            cr.DeleteItem( Content::Item::EXP_LOCKPICK_SET, 1 );
+    }
+
+    int minChance = cr.Stat[ ST_LUCK ] * 0.5;
+    base = CLAMP( base, minChance, 95 );
+    if( base >= ::Random( 1, 100 ) && car.LockerId != 1 )
+    {
+        DriveToGlobal( cr, car, true );
+        cr.StatBase[ ST_EXPERIENCE ] += 200;
+        ScoreMk2::ChangePlayerScore( cr, SCORE_CRACKER, 1 );
+        ::Item@[] keys;
+        ::Item@ key = null;      
+		
+        if( !FLAG( car.LockerCondition, LOCKER_FACTION ) )
+            for( uint i = 0, iEnd = cr.GetItems( -1, keys ); i < iEnd; i++ )
+            {
+                @ key = keys[ i ];
+                if( validEngineObject( key ) && key.GetProtoId() == Content::Item::KEY && ( key.CritSlot == SLOT_HAND1 || key.CritSlot == SLOT_HAND2 ) )
+                {
+                    key.LockerId = car.LockerId;
+                    key.Update();
+                    break;
+                }
+            }
+    }
+    else
+        cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_SKILL_LOCKPICK_FAIL );
+    cr.TimeoutBase[ TO_SK_LOCKPICK ] = LOCKPICK_TIMEOUT( cr );
+
+    return 0;
+}
+
+void DriveToGlobal( ::Critter& cr, ::Item& car, bool )
+{
+    // Place car and bags to inventory
+    for( uint i = 0; i < 3; i++ )
+    {
+        ::Item@ bag = car.GetChild( i );
+        if( validEngineObject( bag ) )
+        {
+            SETFLAG( bag.Flags, ITEM_HIDDEN );
+            ::MoveItem( bag, 0, cr );
+        }
+    }
+    SETFLAG( car.Flags, ITEM_HIDDEN );
+    ::MoveItem( car, 0, cr );
+    ::Map@ map = cr.GetMap();
+    if( validEngineObject( map ) )
+    {
+        map.EventOutCritter( cr );
+    }
+    cr.TransitToGlobal( true );
+}
+
+void ToDrive( ::Critter& cr, int carId, int, int )
+{
+    ::Item@ it = ::GetItem( carId );
+    if( validEngineObject( it ) )
+        DriveToGlobal( cr, it, true );
+}
+
+// Создать машину с ключами
+void CreateCarRegular( ::Critter& cr, int pid, int ox, int oy )
+{
+    ::Item@ car = cr.GetMap().AddItem( cr.HexX + ox, cr.HexY + oy, pid, 1 );
+    if( !validEngineObject( car ) || car.GetType() != ITEM_TYPE_CAR )
+        return;
+
+    uint keyId = ::Random( 100000, 500000 );
+
+    car.LockerId = keyId;
+    car.Charge = car.Proto.Car_TankVolume;
+    car.LockerComplexity = 300;
+    car.Deterioration = 0;
+    car.Update();
+
+    ::Item@ bag = car.GetChild( 0 );
+    if( validEngineObject( bag ) )
+    {
+        bag.LockerId = keyId;
+        bag.LockerComplexity = ::Random( 50, 100 );
+        bag.Update();
+    }
+
+    ::Item@ key = cr.AddItem( Content::Item::KEY, 1 );
+    if( validEngineObject( key ) )
+    {
+        key.LockerId = keyId;
+        key.Update();
+    }
+}
+
+void GetPersonalCar( ::Critter& cr, int pid, int crId, int oy )
+{
+    ::Item@[] items;
+    uint count = ::GetAllItems( pid, items );
+    for( uint n = 0; n < count; n++ )
+    {
+        if( items[ n ].LockerId == _CritEyesDoorId( crId ) )
+        {
+            cr.Say( SAY_NETMSG, "Id " + items[ n ].Id );
+        }
+    }
+    // cr.Say(SAY_NETMSG, "Удалено "+count+" предметов.");
+}
+
+void CreateCarPersonal( ::Critter& cr, int pid, int crId, int oy )
+{
+    ::Item@ car = cr.GetMap().AddItem( cr.HexX + 8, cr.HexY + oy, pid, 1 );
+    if( !validEngineObject( car ) || car.GetType() != ITEM_TYPE_CAR )
+        return;
+
+    car.Charge = car.Proto.Car_TankVolume;
+    car.Deterioration = 0;
+    _CarSetNoLockpick( car );
+
+    uint keyId = _CritEyesDoorId( crId );
+    car.LockerId = keyId;
+    car.LockerComplexity = 1000;
+    car.GetChild( 0 ).LockerId = keyId;
+    car.GetChild( 0 ).LockerComplexity = 1000;
+
+    car.Update();
+    cr.Say( SAY_NETMSG, "Done." );
+}
+
+#endif
+
+#ifdef __CLIENT
+
+bool CarInit( )
+{
+    Car::CarLockpick car;
+
+    int         memm = 0;
+
+    if( ! ::StrToInt( ::GetIfaceIniStr( "CarLockpickTxtPositionX" ), memm ) )
+        memm = 25;
+    car.DrawText_OffPositionX = memm;
+    if( ! ::StrToInt( ::GetIfaceIniStr( "CarLockpickTxtPositionY" ), memm ) )
+        memm = 25;
+    car.DrawText_OffPositionY = memm;
+
+    if( ! ::StrToInt( ::GetIfaceIniStr( "CarLockpickCancelButtonPositionX" ), memm ) )
+        memm = 16;
+    int CarLockpickCancelButtonPositionX = memm;
+    if( ! ::StrToInt( ::GetIfaceIniStr( "CarLockpickCancelButtonPositionY" ), memm ) )
+        memm = 103;
+    int CarLockpickCancelButtonPositionY = memm;
+    car.Color = GetIfaceColorUD( "CarLockpickTextColor", COLOR_GREEN );
+
+    ::string CarLockpickImage = ::GetIfaceIniStr( "CarLockpickImage" ),
+           CarLockpickCancelButtonImage = ::GetIfaceIniStr( "CarLockpickCancelButtonImage" ),
+           CarLockpickCancelButtonImageDn = ::GetIfaceIniStr( "CarLockpickCancelButtonImageDn" );
+
+    if( CarLockpickImage.length() == 0 )
+        CarLockpickImage = "car_lockpick.png";
+    if( CarLockpickCancelButtonImage.length() == 0 )
+        CarLockpickCancelButtonImage = "DI_REST1.frm";
+    if( CarLockpickCancelButtonImageDn.length() == 0 )
+        CarLockpickCancelButtonImageDn = "DI_REST2.frm";
+
+    GUI_CreateScreen( CLIENT_SCREEN_CAR_LOCKER, CarLockpickImage )
+		.CallbackShow( car )
+		.CallbackHide( car );
+    GUI_AddScreenElement( CLIENT_SCREEN_CAR_LOCKER, null, 0, 0 )
+		.CallbackDrawPos( car );
+    GUI_AddScreenElement( CLIENT_SCREEN_CAR_LOCKER, CarLockpickCancelButtonImage, CarLockpickCancelButtonPositionX, CarLockpickCancelButtonPositionY )
+		.DownPic( CarLockpickCancelButtonImageDn )
+		.CallbackMouseClick( car );
+	return true;
+}
+
+void ModuleInit()
+{
+	::__EventStart.Subscribe( @CarInit );
+}
+
+void _RunCarLockpick( int timeout, int, int, ::string@, int[] @ )
+{
+    ::ShowScreen( CLIENT_SCREEN_CAR_LOCKER, timeout, 0, 0 );
+}
+
+void _CancelCarLockpick( int, int, int, ::string@, int[] @ )
+{
+    ::HideScreen( CLIENT_SCREEN_CAR_LOCKER, -10, 0, 0 );
+}
+
+class CarLockpick : IGUI::ScreenCallbackShow, IGUI::ScreenCallbackHide, IGUI::ElementCallbackDrawPos, IGUI::ElementCallbackMouseClick
+{
+
+    uint Timeout = 0;
+    CarLockpick()
+    {
+        TickShow = 0;
+        DrawText_OffPositionX = 0;
+        DrawText_OffPositionY = 0;
+
+        Color = COLOR_GREEN;
+    }
+
+    void OnMouseClick( int click )
+    {
+        ::HideScreen( CLIENT_SCREEN_CAR_LOCKER, 0, 0, 0 );
+    }
+
+    void OnShow( int p0, int p1, int p2 )
+    {
+        TickShow = ::GetTick();
+        Timeout = p0 * 1000;
+    }
+
+    void OnHide( int p0, int p1, int p2 )
+    {
+        if( p0 >= -5 )
+            ::RunServerScriptUnsafe( "Mk2@unsafe_Car::Lockpick", 0, 0, 0, null, null );
+    }
+
+    void OnDraw( int ScreenX, int ScreenY, int ElementX, int ElementY )
+    {
+        ::DrawText( "" + uint( ( TickShow + Timeout - ::GetTick() ) * 0.001 ), ScreenX + DrawText_OffPositionX, ScreenY + DrawText_OffPositionY, 200, 200, Color, FONT_BIG, FT_ALIGN | FT_UPPER );
+    }
+
+    uint TickShow;
+
+    int  DrawText_OffPositionX;
+    int  DrawText_OffPositionY;
+
+    uint Color;
+}
+
+#endif

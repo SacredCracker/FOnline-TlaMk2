@@ -1,0 +1,249 @@
+#include "_client_defines.fos"
+#include "client_gui_h.fos"
+#include "_macros.fos"
+#include "_colors.fos"
+#include "client_rectangle_h.fos"
+
+
+#ifndef __CLIENT_ScrollableLabel__
+# define __CLIENT_ScrollableLabel__
+
+
+# define BUTTON_TYPE_UP      ( 1 )
+# define BUTTON_TYPE_DOWN    ( -1 )
+# define BTN_HEIGHT          ( 14 )
+# define BTN_WIDTH           ( 11 )
+
+class ScrollableLabel : IGUI::ElementCallbackInit, IGUI::ElementCallbackMouseClick, IGUI::ElementCallbackDraw
+{
+    Rectangle@                     Bounds;
+    IGUIElementOpt@                Options;
+    IGUIScreenOpt@                 Screen;
+    string                         Text;
+    int                            BaseFormat;
+    int                            Font;
+    int                            Color;
+    int                            Scroll;
+    int                            MaxVisibleLines;
+    int                            TotalLines;
+    string[]         MultilineText;
+    ScrollableLabelUpAnDownButton@ BtnUp;
+    ScrollableLabelUpAnDownButton@ BtnDn;
+
+
+    ScrollableLabel( int format, int font, int color, Rectangle & bounds )
+    {
+        MaxVisibleLines = 0;
+        TotalLines = 0;
+        Scroll = 0;
+        Text = "";
+        @Bounds = bounds;
+        Font = font;
+        Color = color;
+        BaseFormat = format;
+        MultilineText.resize( 0 );
+
+        @BtnUp = ScrollableLabelUpAnDownButton( Rectangle( bounds.X + bounds.Width - BTN_WIDTH, bounds.Y, BTN_WIDTH, BTN_HEIGHT ),
+                                                "UPARWOFF.FRM", "UPARWON.FRM", DIR_BACK, this );
+        @BtnDn = ScrollableLabelUpAnDownButton( Rectangle( bounds.X + bounds.Width - BTN_WIDTH, bounds.Y + bounds.Height - BTN_HEIGHT, BTN_WIDTH, BTN_HEIGHT ),
+                                                "DNARWOFF.FRM", "DNARWON.FRM", DIR_FORWARD, this );
+    }
+    // ScrollableLabelUpAnDownButton(Rectangle& bounds, string pic, string picDown, int type, ScrollableLabel& label)
+    void OnInit()
+    {
+        @Options = GUI_GetElementOptions();
+        @Screen = GUI_GetScreenOptions();
+        MultilineText.resize( 0 );
+        OnDraw();
+    }
+
+    void OnMouseClick( int click )
+    {
+        if( click == MOUSE_CLICK_WHEEL_UP )
+            OnScroll( DIR_BACK );
+        else if( click == MOUSE_CLICK_WHEEL_DOWN )
+            OnScroll( DIR_FORWARD );
+    }
+
+    void OnDraw()
+    {
+        DrawLabel();
+    }
+
+    void OnScroll( int dir )
+    {
+        if( dir == DIR_BACK && Scroll > 0 )
+        {
+            Scroll--;
+        }
+        if( dir == DIR_FORWARD && Scroll + MaxVisibleLines < TotalLines )
+        {
+            Scroll++;
+        }
+        DrawLabel();
+    }
+
+    void SetText( string text )
+    {
+        if( text == Text )
+            return;
+        Text = text;
+        // MK2 вариант
+        MultilineText.resize( 0 );
+        Scroll = 0;
+
+        string@[] @ sentences = splitEx( text, "\n" );
+        string@[] @ words = splitEx( text, " " );
+
+        string row = "";
+        int    textWidth = 0;
+        int    textHeight = 0;
+        int    linesCount = 0;
+
+        for( uint i = 0, l = sentences.length(); i < l; i++ )
+        {
+            string@[] @ words = splitEx( sentences[ i ], " " );
+            row = "";
+            for( uint j = 0, k = words.length(); j < k; j++ )
+            {
+                GetTextInfo( row + words[ j ] + " ", Bounds.Width - 3, Bounds.Height, Font, BaseFormat, textWidth, textHeight, linesCount );
+                if( linesCount > 1 )
+                {
+
+                    MultilineText.insertLast( row );
+                    row = "";
+
+                }
+                row += words[ j ] + " ";
+            }
+            MultilineText.insertLast( row );
+        }
+        MultilineText.insertLast( "" );
+        GetTextInfo( Text, Bounds.Width, Bounds.Height * 50, Font, BaseFormat, textWidth, textHeight, linesCount );
+        MaxVisibleLines = int( Bounds.Height / ( textHeight / linesCount ) );
+        TotalLines = MultilineText.length();
+        // На МК формат текста не работает нормально GetLinesCount();
+        DrawLabel();
+    }
+
+    void DrawLabel()
+    {
+        if( valid( BtnUp ) )
+            BtnUp.ChangeEnabled( Scroll > 0 );
+        if( valid( BtnDn ) )
+            BtnDn.ChangeEnabled( Scroll + MaxVisibleLines < TotalLines );
+
+        if( valid( Options ) && valid( Screen ) )
+        {
+            int screenX = Screen.GetPosX();
+            int screenY = Screen.GetPosY();
+
+            int flags = BaseFormat;
+            int firstVisibleLine = Scroll;
+            int lastVisibleLine = Scroll + MaxVisibleLines;
+            /* Не работает на mk2
+               if (firstVisibleLine > 0)
+               {
+                    Message("first vis line " + firstVisibleLine + "="+((0x0400|((0)<<16))+(0x0800|((firstVisibleLine)<<16))));
+                    flags |= (0x0400|((0)<<16));
+                    flags |= (0x0800|((firstVisibleLine)<<16));
+               }
+               if (lastVisibleLine<TotalLines-1)
+               {
+                    Message("lastVisibleLine " + lastVisibleLine + "s" + Bounds.Height);
+                    flags |= (0x0400|((lastVisibleLine)<<16));
+                    flags |= (0x0800|((TotalLines-1)<<16));
+               }
+               DrawText( Text, screenX + Bounds.X, screenY + Bounds.Y,
+               Bounds.Width, Bounds.Height, Color, Font, flags );
+             */
+            string text = "";
+            for( int i = firstVisibleLine; i <= lastVisibleLine && i < int( MultilineText.length() ); i++ )
+            {
+                text += MultilineText[ i ] + "\n";
+            }
+            Options.Text( text, Font, Color, Color, BaseFormat );          // MK2
+        }
+    }
+
+    void GetLinesCount()
+    {
+        int textWidth = 0;
+        int textHeight = 0;
+        int linesCount = 0;
+        int calcH = Bounds.Height * 10;
+        GetTextInfo( Text, Bounds.Width, calcH, Font, BaseFormat, textWidth, textHeight, linesCount );
+        MaxVisibleLines = int( Bounds.Height / ( textHeight / linesCount ) );
+        TotalLines = linesCount;
+    }
+
+    void Init( int screen )
+    {
+        GUI_AddScreenElement( screen, null, Bounds.X, Bounds.Y )
+        .Position( Bounds.X, Bounds.Y, Bounds.Width, Bounds.Height )
+        .CallbackInit( this )
+        .CallbackDraw( this )
+        .CallbackMouseClick( this );
+        BtnUp.Init( screen );
+        BtnDn.Init( screen );
+    }
+
+}
+
+class ScrollableLabelUpAnDownButton : IGUI::ElementCallbackInit, IGUI::ElementCallbackMouseClick
+{
+    Rectangle@       Bounds;
+    IGUIElementOpt@  Options;
+    int              Type;
+    string           Pic;
+    string           PicDown;
+    ScrollableLabel@ Label;
+
+    ScrollableLabelUpAnDownButton( Rectangle & bounds, string pic, string picDown, int type, ScrollableLabel & label )
+    {
+        Pic = pic;
+        PicDown = picDown;
+        @Bounds = bounds;
+        Type = type;
+        @Label = label;
+    }
+
+    void OnInit()
+    {
+        @Options = GUI_GetElementOptions();
+    }
+
+    void Init( int screen )
+    {
+        GUI_AddScreenElement( screen, Pic, Bounds.X, Bounds.Y )
+        .Position( Bounds.X, Bounds.Y, Bounds.Width, Bounds.Height )
+        .CallbackInit( this )
+        .CallbackMouseClick( this );
+    }
+
+    void OnMouseClick( int click )
+    {
+        if( click == MOUSE_CLICK_LEFT )
+            Label.OnScroll( Type );
+    }
+
+    void ChangeEnabled( bool enable )
+    {
+        if( valid( Options ) )
+        {
+            if( enable )
+            {
+                Options.DownPic( PicDown );
+                Options.Picture( Pic );
+            }
+            else
+            {
+                Options.DownPic( "" );
+                Options.Picture( "" );
+
+            }
+        }
+    }
+}
+
+#endif // __CLIENT_PicboxList__

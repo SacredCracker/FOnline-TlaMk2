@@ -1,0 +1,171 @@
+// Скрипты терминалов в Новато
+// Автор: TabaK
+
+#include "_itempid.fos"
+#include "_macros.fos"
+#include "_vars.fos"
+
+#define LOCKED_DOOR_ENTIRE     ( 232 )               // Номер энтайра с закрытой дверью.
+#define DISK_TIMEOUT           ( REAL_MINUTE( 15 ) ) // Время пребывания компьютера в исправности после установки холодиска
+#define DIALOG_FAIL_TIMEOUT    ( REAL_MINUTE( 15 ) ) // Время блокировки компьютера после неудачной попытки взлома
+#define REASON_DROP_DISK       ( 0 )                 // Таймивент был вызван для сброса состояния диска
+
+
+// Обработчики диалога для терминала на уровне lf0_lvl4(открывает двери на уровне lf0_lvl12)
+bool s_lvl4_terminal( Critter& cr, Scenery& scen, int skill, Item@ item )
+{
+    uint     id = cr.GetMap().Id | scen.HexY | ( scen.HexX << 16 );
+    GameVar@ state = GetLocalVar( LIVAR_item_quest_state, id );
+    if( valid( item ) && item.GetProtoId() == PID_HOLODISK && state.GetValue() == 0 )
+    {
+        if( cr.Skill[ SK_SCIENCE ] + cr.Skill[ SK_REPAIR ] + cr.Stat[ ST_LUCK ] > 180 )
+        {
+            DeleteItem( item );
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, 150 );
+            state = 1;
+            uint[] values = { REASON_DROP_DISK, id };
+            CreateTimeEvent( __FullSecond + DISK_TIMEOUT, "e_DropTerminalState", values, true );
+            return true;
+        }
+        cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, 151 );
+        return true;
+    }
+    if( skill == SK_SCIENCE || skill == SK_REPAIR )
+    {
+        if( state.GetValue() > 0 )
+        {
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, 154 );
+            return true;
+        }
+        if( cr.Skill[ skill ] + cr.Stat[ ST_LUCK ] * Random( 1, 3 ) > 115 )
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, 152 );
+        else
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, 153 );
+        return true;
+    }
+    if( skill == SKILL_PICK_ON_GROUND && item is null )
+    {
+        cr.StatBase[ ST_VAR1 ] = int(id);
+        Mk2RunDialog( cr, 905, cr.GetMap(), scen.HexX, scen.HexY, false );
+        return true;
+    }
+    return false;
+}
+
+uint e_DropTerminalState( uint[] @ values )
+{
+    GameVar@ state = GetLocalVar( LIVAR_item_quest_state, values[ 1 ] );
+    Map@     map = GetMapByPid( MAP_lfo_lvl12, 0 );
+    Item@    door;
+    uint16   hexX = 0, hexY = 0;
+    if( valid( map ) )
+    {
+        map.GetEntireCoords( LOCKED_DOOR_ENTIRE, 0, hexX, hexY );
+        @door = map.GetDoor( hexX, hexY );
+    }
+    switch( values[ 0 ] )
+    {
+    case REASON_DROP_DISK:
+        state = 0;
+
+        if( !valid( map ) )
+        {
+            Log( "ERROR: Map not found!" );
+            return 0;
+        }
+        if( !valid( door ) )
+        {
+            Log( "ERROR: Door not found!" );
+            return 0;
+        }
+        SETFLAG( door.LockerCondition, LOCKER_NOOPEN );
+        door.LockerId = 1;
+        door.LockerClose();
+        return 0;
+    default:
+        break;
+    }
+    return 0;
+}
+
+uint r_lvl4_GetStartNode( Critter& cr, Critter@ term ) // Получаем стартовую ветку диалога для терминала.
+{
+    GameVar@ timeout = GetLocalVar( LVAR_timeout, uint( cr.Stat[ ST_VAR1 ] ) );
+    if( uint( timeout.GetValue() + DIALOG_FAIL_TIMEOUT ) > __FullSecond )
+        return 9;
+    GameVar@ state = GetLocalVar( LIVAR_item_quest_state, uint( cr.Stat[ ST_VAR1 ] ) );
+    return state.GetValue() + 2;
+}
+
+uint r_tryRestore( Critter& cr, Critter@ term ) // Пытаемся восстановить ОС с резервных копий.
+{
+    if( cr.Skill[ SK_SCIENCE ] + cr.Stat[ ST_LUCK ] * Random( 1, 3 ) > 90 )
+    {
+        GameVar@ state = GetLocalVar( LIVAR_item_quest_state, uint( cr.Stat[ ST_VAR1 ] ) );
+        state = 2;
+        return 4;
+    }
+    GameVar@ timeout = GetLocalVar( LVAR_timeout, uint( cr.Stat[ ST_VAR1 ] ) );
+    timeout = __FullSecond;
+    return 9;
+}
+
+uint r_tryRestoreKick( Critter& cr, Critter@ term ) // Пытаемся восстановить ОС с резервных копий. УДАРОМ НОГИ.
+{
+    if( cr.Stat[ ST_STRENGTH ] + cr.Stat[ ST_LUCK ] * Random( 1, 5 ) > 40 )
+    {
+        GameVar@ state = GetLocalVar( LIVAR_item_quest_state, uint( cr.Stat[ ST_VAR1 ] ) );
+        state = 2;
+        return 4;
+    }
+    GameVar@ state = GetLocalVar( LIVAR_item_quest_state, uint( cr.Stat[ ST_VAR1 ] ) );
+    state = 0;
+    return 2;
+}
+
+uint r_tryUnlock( Critter& cr, Critter@ term ) // Пытаемся взломать дверь.
+{
+    if( cr.Skill[ SK_SCIENCE ] + cr.Stat[ ST_LUCK ] * Random( 1, 3 ) > 130 )
+        return 10;
+    GameVar@ timeout = GetLocalVar( LVAR_timeout, uint( cr.Stat[ ST_VAR1 ] ) );
+    timeout = __FullSecond;
+    return 9;
+}
+
+uint r_tryUnlockKick( Critter& cr, Critter@ term ) // Пытаемся взломать дверь. КУЛАКОМ
+{
+    if( cr.Stat[ ST_STRENGTH ] + cr.Stat[ ST_LUCK ] * Random( 1, 5 ) > 50 )
+        return 10;
+    GameVar@ state = GetLocalVar( LIVAR_item_quest_state, uint( cr.Stat[ ST_VAR1 ] ) );
+    state = 0;
+    return 2;
+}
+
+void dlg_Unlock( Critter& cr, Critter@ npc, string@ str ) // Срабатывает при удачном открытии двери.
+{
+    if( !IS_DIALOG_GENERATED( str ) )
+        return;
+    Map@ map = GetMapByPid( MAP_lfo_lvl12, 0 );
+    if( !valid( map ) )
+    {
+        cr.Say( SAY_NETMSG, "ERROR: Map not found!" );
+        return;
+    }
+    uint16 hexX = 0, hexY = 0;
+    map.GetEntireCoords( LOCKED_DOOR_ENTIRE, 0, hexX, hexY );
+    Item@  door = map.GetDoor( hexX, hexY );
+    if( !valid( door ) )
+    {
+        cr.Say( SAY_NETMSG, "ERROR: Door not found!" );
+        return;
+    }
+    UNSETFLAG( door.LockerCondition, LOCKER_NOOPEN );
+    door.LockerId = 0;
+    door.LockerOpen();
+}
+
+void r_setTimeout( Critter& cr, Critter@ term )
+{
+    GameVar@ timeout = GetLocalVar( LVAR_timeout, uint( cr.Stat[ ST_VAR1 ] ) );
+    timeout = __FullSecond;
+}

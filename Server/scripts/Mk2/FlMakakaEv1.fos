@@ -1,0 +1,29 @@
+// FOS Server
+
+// Mk2@FlMakakaEv1::Conteiner
+void Conteiner(::Item& container, bool)
+{
+	container.SetEvent(ITEM_EVENT_SKILL, "FlMakakaEv1::itemEvent_Open");
+	SETFLAG(container.LockerCondition, LOCKER_TIMER_LOCK);
+	container.LockerComplexity = 2000;
+}
+
+bool itemEvent_Open(::Item& container, ::Critter& crit, int skill)
+{
+	if( skill == SKILL_UNLOCK )
+	{
+		uint16 hexX = 0, hexY = 0;
+		::Location@ loc = container.GetMapPosition( hexX,  hexY).GetLocation();
+		if(validEngineObject(loc))
+		{
+			loc.Visible = false;
+			loc.AutoGarbage = true;
+			loc.Update();
+	
+			::array< uint > data = { loc.Id, loc.FarmLocPId, loc.WorldX, loc.WorldY };
+			::CreateTimeEvent( ::__FullSecond + REAL_MINUTE( 30 ), "farm_location@e_RefreshFarmLocation", data, true );
+		}
+		return true;
+	}
+	return false;
+}

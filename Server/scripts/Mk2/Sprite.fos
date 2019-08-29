@@ -1,0 +1,296 @@
+// FOS Client Mapper
+// Author: cvet
+// Used in client
+
+#ifndef _SPRITE_
+#define _SPRITE_
+
+shared class Sprite : iVisual
+{
+    Sprite()
+    {
+        this.Id = 0;
+        this.width = 0;
+        this.height = 0;
+        this.FrmCount = 0;
+    }
+
+    Sprite( ::string& name, int path )
+    {
+        this.Id = 0;
+        this.width = 0;
+        this.height = 0;
+        this.FrmCount = 0;
+		this.Load( name, path );
+    }
+	
+	void Load( ::string& name, int path, uint _color )
+    {
+        this.Load( name, path );
+		this.Path = path;
+		if( this.Id != 0 )
+			this.color = _color;
+    }
+	
+    void Load( ::string& name, int path )
+    {
+		this.Path = path;
+        if( name.length() > 0 )
+            this.Id = ::LoadSprite( name, path );
+		else
+            this.Id = 0;
+		if( this.Id != 0 )
+			this.NameImage = name;
+        this.RefreshData();
+    }
+	
+#ifndef ThisModule
+    void Copy( Sprite& spr )
+#endif
+#ifdef ThisModule
+    void Copy( ThisModule::Sprite& spr )
+#endif
+    {
+        this.Id = spr.Id;
+		this.Path = spr.Path;
+		this.NameImage = spr.NameImage;
+		this.color = spr.Color;
+        this.RefreshData();
+    }
+
+    void Load( uint nameHash, uint8 dir )
+    {
+        this.Id = ::LoadSprite( nameHash, dir );
+		if( this.Id != 0 )
+			Mk2::HashToStr( nameHash, this.NameImage );
+        this.RefreshData();
+    }
+
+    void LoadItem( uint pid )
+    {
+        const ::ProtoItem@ proto = ::GetProtoItem( pid );
+		if( @proto !is null )
+		{
+			ScriptInfo::Enum@ itemEnum = @ScriptInfo::Enum( "Content", "Item", "Mk2" );
+			if( @itemEnum !is null )
+				this.NameImage = "Item:" + itemEnum.ValueName[ pid ];
+
+			Load( proto.PicInv, 0 );
+		}
+    }
+	
+    void LoadByIni( ::string& iniKey, int path )
+    {
+		this.Path = path;
+        ::string@ name = ::GetIfaceIniStr( iniKey );
+        if( @name != null && name.length() > 0 )
+            this.Id = ::LoadSprite( name, path );
+        else
+            this.Id = 0;
+		if( this.Id != 0  && @name != null )
+			this.NameImage = name;
+        this.RefreshData();
+    }
+
+    void Draw( int x, int y )
+    {
+        this.Draw( x,y,this.Width,this.Height,this.Color );
+    }
+
+    void Draw( int x, int y, uint color )
+    {
+        this.Draw( x,y,this.Width,this.Height,color );
+    }
+
+    void Draw( int x, int y, int w, int h )
+    {
+        this.Draw( x,y,w,h, this.Color );
+    }
+
+    void Draw( int x, int y, int w, int h, uint color )
+    {
+        this.Draw( x,y,this.Width,this.Height, VISUAL_FLAG_ZOOM, color );
+    }
+
+    void Draw( int x, int y, int w, int h, int flag, uint color )
+	{
+        if( Id != 0 )
+            ::DrawSprite( Id, -1, x, y, w, h, flag == VISUAL_FLAG_ZOOM, flag == VISUAL_FLAG_ZOOM, color );
+	}
+
+    void Draw( int x, int y, int w, int h, int flag0, int flag1, uint color )
+	{
+        if( Id != 0 )
+            ::DrawSprite( Id, -1, x, y, w, h, flag0 == VISUAL_FLAG_ZOOM, flag1 == VISUAL_FLAG_ZOOM, color );
+	}
+	
+    void Pattern( int x, int y, int w, int h )
+    {
+		this.Pattern( x, y, w, h, this.Color );
+    }
+	
+    void Pattern( int x, int y, int w, int h, int color )
+    {
+		if( this.Id != 0 )
+			::DrawSpritePattern( this.Id, -1, x, y, w, h, Width, Height, color );
+    }
+	
+    void RefreshData()
+    {
+        if( this.Id != 0 )
+        {
+            this.width = ::GetSpriteWidth( Id, 0 );
+            this.height = ::GetSpriteHeight( Id, 0 );
+            this.FrmCount = ::GetSpriteCount( Id );
+        }
+        else
+        {
+            this.width = 0;
+            this.height = 0;
+            this.FrmCount = 0;
+        }
+    }
+	
+	
+	int Height
+	{
+		get
+		{ 
+			return height; 
+		}
+		
+		set
+		{
+			height = value;
+		}
+	}
+	
+	int Width
+	{
+		get
+		{ 
+			return width; 
+		}
+		
+		set
+		{
+			width = value;
+		}
+	}
+	
+	uint Color
+	{
+		get
+		{ 
+			return color; 
+		}
+		
+		set
+		{
+			color = value;
+		}
+	}
+
+    uint Id = 0;
+    int  width = 0;
+    int  height = 0;
+    uint FrmCount = 0;
+	::string NameImage = "none";
+	int Path = PT_ART_INTRFACE;
+	uint color = 0;
+}
+
+namespace Options
+{
+#ifdef ThisModule
+	bool GetOption( ThisModule::Sprite& option, ::string& arg, ::string& declaration )
+#endif
+#ifndef ThisModule
+	bool GetOption( ::Sprite& option, ::string& arg, ::string& declaration )
+#endif
+	{
+		if( option.Id != 0 )
+		{
+			arg = " " + option.NameImage;
+			if( option.Color != 0 )
+			{
+				arg += " " + ((option.Color&0x00FF0000)>>16) + " " + ((option.Color&0x0000FF00)>>8) + " " + (option.Color&0x000000FF);
+				uint8 a = ((option.Color&0xFF000000)>>24);
+				if( a != 0 && a != 255 )
+					arg += " " + a; 
+			}	
+			switch( option.Path )
+				{
+				case PT_ART_INTRFACE: break;
+				case PT_ART_MISC: arg += " path:misc"; break;
+				case PT_ART: arg += " path:art"; break;
+				default: break;
+				}
+		}
+		else arg = " none";
+		return false;
+	}
+	
+#ifdef ThisModule
+	bool SetOption( ThisModule::Sprite& option, ::string& arg, ::string& declaration )
+#endif
+#ifndef ThisModule
+	bool SetOption( ::Sprite& option, ::string& arg, ::string& declaration )
+#endif
+	{
+		if(  ::strlwr( arg ) != "none" )
+		{
+			uint8 colorCount = 0;
+			uint8[] colors = {};
+			::string name = "";
+			int path = PT_ART_INTRFACE;
+			int buffer = 0;
+			uint pidItem = 0;
+			
+			::string@[] colorsStr = ::splitEx( arg, " " );
+			for( uint i = 0, iEnd = colorsStr.length(); i < iEnd; i++ )
+			{
+				if( ::StrToInt( colorsStr[ i ], buffer ) )
+				{
+					if( colorCount++ < 4 )
+					{
+						colors.insertLast( uint8( buffer ) );
+					}
+				}
+				else 
+				{
+					if( ::findFirst( ::strlwr( colorsStr[ i ] ), "path:" ) != -1 )
+					{
+						if( ::strlwr( colorsStr[ i ] ) == "path:misc" )
+							path = PT_ART_MISC;
+						else if( ::strlwr( colorsStr[ i ] ) == "path:art" )
+							path = PT_ART;
+					}
+					else if( ::findFirst( ::strlwr( colorsStr[ i ] ), "Item:" ) != -1 )
+					{
+						ScriptInfo::Enum@ itemEnum = @ScriptInfo::Enum( "Content", "Item", "Mk2" );
+						if( @itemEnum !is null )
+						{
+							::string@[] params = ::splitEx( colorsStr[ i ], ":" );
+							pidItem = itemEnum.Value[params[1]];
+						}
+					}
+					else name = colorsStr[ i ];
+				}
+			}
+			
+			if( pidItem != 0 )
+				option.LoadItem( pidItem );	
+			else option.Load( name, path );			
+			if( colorCount >= 3 )
+			{
+				if( colorCount == 4 )
+					option.color =  COLOR_CHANGE_ALPHA( COLOR_RGB( colors[0], colors[1], colors[2] ), colors[3] );
+				else option.color =  COLOR_RGB( colors[0], colors[1], colors[2] );
+			}
+		}
+		return false;
+	}
+}
+
+#endif // _SPRITE_

@@ -1,0 +1,767 @@
+// FOS Server
+// Author: cvet, rifleman17
+//
+// ReplicationBank::Define::EnterMoneyNeed
+//
+
+enum Define
+{
+    EnterMoneyNeed                 = 100 ,
+
+    MessageTryPassPlayer          = 0 ,                // Спросить у охраны можно ли запустить нового игрока, см. Var2.
+    MessageBeginPassPlayer        = 1 ,                // Уведомить охрану что бы пропустили игрока.
+    MessageEndPassPlayer          = 2 ,                // Сообщить охране выкинуть зазевавшегося игрока.
+    MessageThrowOutPlayer         = 3 ,                // Сообщить охране выкинуть зазевавшегося игрока.
+    MessagePlayerOnWarningHex    = 4 ,                // Игрок наступил на предупредительный хекс.
+    MessagePlayerOnAttackHex     = 5 ,                // Игрок наступил на атакующий хекс.
+
+    RoleBanker                      = 1 ,                // Банкир.
+    RoleGuard                       = 2 ,                // Охранник.
+    RoleKeeper                      = 3 ,                // Кладовщик.
+
+    EntHideCont                    = 100 ,              // Хекс со скрытым контейнером.
+    EntShowCont                    = 101 ,              // Хекс с видимым контейнером.
+    EntDoorGuard                   = 110 ,              // Хекс охранника около двери.
+    EntDoorHex                     = 120 ,              // Хекс где расположена дверь.
+    EntBankStart                   = 150 ,              // Начало периметра камеры хранения.
+    EntBankEnd                     = 153 ,              // Хекс, замыкающий периметр камеры хранения.
+
+// Пиды контейнеров.
+    HideContainerPid               = Content::Item::FOOTLOCKER_CLEAN_LEFT ,
+    ShowContainerPid               = Content::Item::FOOTLOCKER_CLEAN_LEFT ,
+
+    ForceDialogMoveItemsError    = 4 ,
+    ForceDialogRoomBusy           = 5 ,
+    ForceDialogNoMoney            = 6 ,
+
+    StrNext                         = 1000 ,
+    StrStop                         = 1001 ,
+    StrTimeLeft                    = 1002 ,
+    StrTimeEnd                     = 1003 ,
+    StrThief                        = 1004 ,
+    StrNoSlaves                    = 1005 ,
+
+// Борьба с затыканием проходов в банках.
+// id игрока сохраняется в Var9
+    ForceDialogPlayerNotfound     = 5 ,
+    ForceDialogPlayerFound        = 4 ,
+    StrWarnPlayer                  = 1 ,
+    StrAttackPlayer                = 2
+}
+
+// Время отпущенное игроку на манипуляции с контейнером.
+const uint get_MaxTimeForEnter( ){	return REAL_MINUTE( 2 ); } 
+const uint get_WarnTime( ){	return REAL_SECOND ( 60 ); }
+const uint get_AttackTime( ){	return WarnTime + REAL_SECOND ( 10 ); }
+
+
+//
+// Bank
+//
+class CBank
+{
+    Entires::Entire[] HideContPos;       // Координаты скрытого контейнера.
+    Entires::Entire[] ShowContPos;       // Координаты видимых контейнеров.
+    Entires::Entire[] DoorHexPos;        // Координаты хекса двери.
+    Entires::Entire[] DoorGuardPos;      // Координаты хекса, где стоят охранники у двери.
+    uint   PassedTime;          // Время пропуска.
+    bool   PlayerNotify;        // Предупрежден ли игрок о том, что задерживается.
+    bool   PlayerEntered;       // Вошел ли игрок в помещение.
+    uint   PassedPlayerId;      // Id пропущенного к контейнерам игрока.
+    uint   ThrowOutPlayerId;    // Id игрока, которого банкир просил выкинуть.
+    bool   DoorGuardSayWarning; // Указывает предупредил ли кто-нибудь из охранников игрока.
+    bool   PlayerPassed;        // Id пропущенного к контейнерам игрока.
+    uint16 DoorPid;
+
+    void Init( ::Map@ map )
+    {
+        PassedTime = 0;
+        PlayerNotify = false;
+        PlayerEntered = false;
+        PassedPlayerId = 0;
+        ThrowOutPlayerId = 0;
+        DoorGuardSayWarning = false;
+        Entires::ParseEntires( map, HideContPos, ReplicationBank::Define::EntHideCont );
+        Entires::ParseEntires( map, ShowContPos, ReplicationBank::Define::EntShowCont );
+        Entires::ParseEntires( map, DoorGuardPos, ReplicationBank::Define::EntDoorGuard );
+        Entires::ParseEntires( map, DoorHexPos, ReplicationBank::Define::EntDoorHex );
+    }
+}
+
+uint[] BanksMapId;
+ReplicationBank::CBank[] Banks;
+
+ReplicationBank::CBank@ GetBank( ::Critter& cr )
+{
+    uint id = cr.GetMapId();
+    if( id == 0 )
+        return null;
+	int index = BanksMapId.find( id );
+	
+	if( index != -1 )
+		return @Banks[ uint(index) ];
+		
+    return null;
+}
+
+void ParseBank( ::Critter& cr )
+{
+    ::Map@ map = cr.GetMap();
+    if( valid( map ) && ! valid( GetBank( cr ) ) )
+    {
+        BanksMapId.insertLast( map.Id );
+        Banks.grow( 1 );
+        Banks.last().Init( @map );
+    }
+}
+
+bool IsBank( ::Map@ map )
+{
+    if( @map is null )
+        return false;
+		
+    return BanksMapId.find( map.Id ) != -1;
+}
+
+//
+// Banker
+//
+void Banker( ::Critter& banker, bool firstTime )
+{
+    banker.SetEvent( CRITTER_EVENT_FINISH, "ReplicationBank::_BankerFinish" );
+    banker.SetEvent( CRITTER_EVENT_IDLE, "ReplicationBank::_BankerIdle" );
+    banker.SetEvent( CRITTER_EVENT_MESSAGE, "ReplicationBank::_BankerOnMessage" );
+    ParseBank( banker );
+    banker.StatBase[ ST_NPC_ROLE ] = ReplicationBank::Define::RoleBanker;
+    banker.ModeBase[ MODE_NO_ENEMY_STACK ] = 1;
+}
+
+void _BankerFinish( ::Critter& banker, bool deleted )
+{
+    ReplicationBank::CBank@ bank = @GetBank( banker );
+    if( @bank !is null && bank.PassedPlayerId != 0 )
+        TransferItems( banker, bank.PassedPlayerId, true );
+}
+
+void _BankerIdle( ::Critter& banker )
+{
+    ReplicationBank::CBank@ bank = @GetBank( banker );
+    if( @bank is null )
+        return;
+
+    // Никого нет.
+    if( bank.PassedPlayerId == 0 )
+        return;
+
+    // Проверим вошел ли игрок.
+    if( !bank.PlayerEntered && ::__FullSecond > bank.PassedTime + REAL_SECOND( 15 ) )
+    {
+        banker.SayMsg( SAY_NORM_ON_HEAD, TEXTMSG_TEXT, ReplicationBank::Define::StrNext );
+        EndEnter( banker, bank.PassedPlayerId );
+    }
+    // Время игрока подходит к концу.
+    else if( bank.PlayerEntered && ! bank.PlayerNotify && ::__FullSecond > bank.PassedTime + MaxTimeForEnter - REAL_SECOND( 20 ) )
+    {
+        banker.SayMsg( SAY_NORM, TEXTMSG_TEXT, ReplicationBank::Define::StrTimeLeft );
+        bank.PlayerNotify = true;
+        banker.Wait( 5000 );
+    }
+    // Игрок задержался больше положенного.
+    else if( ::__FullSecond > bank.PassedTime + MaxTimeForEnter )
+    {
+        banker.SendMessage( ReplicationBank::Define::MessageThrowOutPlayer, bank.PassedPlayerId, MESSAGE_TO_ALL_ON_MAP );
+        banker.SayMsg( SAY_SHOUT_ON_HEAD, TEXTMSG_TEXT, ReplicationBank::Define::StrTimeEnd );
+        EndEnter( banker, bank.PassedPlayerId );
+    }/* 
+    // Ждем дальше
+    else
+        banker.Wait( 5000 ); */
+}
+
+void _BankerOnMessage( ::Critter& banker, ::Critter& player, int num, int val )
+{
+    // Обработка сообщений игрока.
+    // Убедимся пропущенный игрок ли это послал сообщение и банкир ли принял.
+    if( banker.Stat[ ST_NPC_ROLE ] != ReplicationBank::Define::RoleBanker )
+        return;
+
+    ReplicationBank::CBank@ bank = @GetBank( banker );
+    if( @bank is null )
+        return;
+
+    if( player.Id != bank.PassedPlayerId )
+        return;
+
+    // С помощью этих сообщений вычисляем зашел ли игрок или вышел.
+    if( num == ReplicationBank::Define::MessagePlayerOnWarningHex )
+    {
+        if( !bank.PlayerEntered )
+            return;
+        banker.SayMsg( SAY_NORM_ON_HEAD, TEXTMSG_TEXT, ReplicationBank::Define::StrNext );
+        EndEnter( banker, bank.PassedPlayerId );
+    }
+    else if( num == ReplicationBank::Define::MessagePlayerOnAttackHex )
+        bank.PlayerEntered = true;
+}
+
+// Начало работы с контейнерами.
+bool IsCanEnter( ::Critter& player, ::Critter& banker )
+{
+    ReplicationBank::CBank@ bank = @GetBank( banker );
+    if( @bank is null )
+        return false;
+    // Зашел ли другой игрок.
+    if( bank.PassedPlayerId != 0 )
+        return false;
+    // Если нет, то спросим охрану, все ли в порядке.
+    banker.StatBase[ ST_VAR0 ] = 1;
+    banker.SendMessage( ReplicationBank::Define::MessageTryPassPlayer, int(player.Id), MESSAGE_TO_ALL_ON_MAP );
+    // Охрана одобрила.
+	if( banker.Stat[ ST_VAR0 ] != 0 )
+	{
+		banker.StatBase[ ST_VAR0 ] = 0;
+		return true;
+	}
+    return false;
+}
+
+uint r_TryEnter( ::Critter& player, ::Critter@ banker )
+{
+    // Проверим можно ли войти в комнату.
+	if( @banker is null )
+		return ReplicationBank::Define::ForceDialogRoomBusy;
+		
+    if( !IsCanEnter( banker, player ) )
+        return ReplicationBank::Define::ForceDialogRoomBusy;
+
+    // Достаточно ли у игрока денег.
+    if( _CritCountItem( player, Content::Item::BOTTLE_CAPS ) < uint( ReplicationBank::Define::EnterMoneyNeed ) )
+        return ReplicationBank::Define::ForceDialogNoMoney;
+
+    ReplicationBank::CBank@ bank = @GetBank( banker );
+    if( @bank is null )
+        return ReplicationBank::Define::ForceDialogMoveItemsError;
+    
+    // Перемещаем итемы игрока в видимый контейнер.
+    if( !TransferItems( banker, player.Id, false ) )
+        return ReplicationBank::Define::ForceDialogMoveItemsError;
+
+    // Пропускаем игрока.
+    player.DeleteItem( Content::Item::BOTTLE_CAPS, ReplicationBank::Define::EnterMoneyNeed );
+    bank.PassedPlayerId = player.Id;
+    bank.PassedTime = ::__FullSecond;
+    bank.PlayerNotify = false;
+    bank.PlayerEntered = false;
+    banker.SendMessage( ReplicationBank::Define::MessageBeginPassPlayer, int(player.Id), MESSAGE_TO_ALL_ON_MAP );
+
+    return 0;
+}
+
+// Условие и результат на завершение работы с контейнерами.
+bool d_IsNotEntered( ::Critter& player, ::Critter@ banker )
+{
+	if( @banker is null )
+		return true;
+	
+    ReplicationBank::CBank@ bank = @GetBank( banker );
+    if( @bank is null )
+        return true;
+    return bank.PassedPlayerId != player.Id;
+}
+
+bool d_IsEntered( ::Critter& player, ::Critter@ banker )
+{
+    if( @banker is null )
+        return false;
+    ReplicationBank::CBank@ bank = @GetBank( banker );
+    if( @bank is null )
+        return false;
+    // Проверяем тот ли игрок работал с контейнером.
+    return bank.PassedPlayerId == player.Id;
+}
+
+void r_EndEnter( ::Critter& player, ::Critter@ banker )
+{
+    if( @banker is null )
+        return;
+    EndEnter( banker, player.Id );
+}
+
+// Завершаем сеанс.
+void EndEnter( ::Critter& banker, uint playerId )
+{
+    ReplicationBank::CBank@ bank = @GetBank( banker );
+    if( @bank is null )
+        return;
+    // Завершаем работу с игроком.
+    bank.PassedPlayerId = 0;
+    // Перемещаем итемы игрока в невидимый контейнер.
+    TransferItems( banker, playerId, true );
+    banker.SendMessage( ReplicationBank::Define::MessageEndPassPlayer, playerId, MESSAGE_TO_ALL_ON_MAP );
+}
+
+// Поиск контейнера
+// Банкир ищется по ST_NPC_ROLE
+::Item@ GetBankContainer( ::Map@ map )
+{
+    ::Critter@ npc;
+    if( @map !is null )
+    {
+        ::Location@ loc = @map.GetLocation();
+        if( @loc !is null )
+        {
+            for( uint i = 0, l = loc.GetMapCount(); i < l; i++ )
+            {
+                @map = @loc.GetMapByIndex( i );
+                if( @map !is null )
+                {
+                    for( uint j = 0, k = map.GetNpcCount( ReplicationBank::Define::RoleBanker, FIND_ALL ); j < k; j++ )
+                    {
+                        @npc = @map.GetNpc( ReplicationBank::Define::RoleBanker, FIND_ALL, j );
+                        if( @npc !is null )
+                        {
+                            ReplicationBank::CBank@ bank = @GetBank( npc );
+                            if( @bank !is null && bank.HideContPos.length() >= 1 )
+                            {
+                                ::Item@ contHide = map.GetItem( bank.HideContPos[ 0 ].HexX, bank.HideContPos[ 0 ].HexY, ReplicationBank::Define::HideContainerPid );
+                                if( @contHide !is null )
+                                    return @contHide;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return null;
+}
+
+// Перемещение итемов между видимым и невидимым контейнером.
+bool TransferItems( ::Critter& banker, uint playerId, bool hide )
+{
+    ReplicationBank::CBank@ bank = @GetBank( banker );
+    if( @bank is null )
+        return false;
+    // Находим контейнеры.
+    uint num = playerId % 10;
+    if( num >= bank.ShowContPos.length() )
+        num = 0;
+    if( bank.HideContPos.length() == 0 || bank.ShowContPos.length() == 0 )
+        return false;
+    ::Map@ map = @banker.GetMap();
+    if( @map is null )
+        return false;
+    ::Item@ contHide = @map.GetItem( bank.HideContPos[ 0 ].HexX, bank.HideContPos[ 0 ].HexY, ReplicationBank::Define::HideContainerPid );
+    if( @contHide is null )
+        return false;
+    ::Item@ contShow = @map.GetItem( bank.ShowContPos[ num ].HexX, bank.ShowContPos[ num ].HexY, ReplicationBank::Define::ShowContainerPid );
+    if( @contShow is null )
+        return false;
+
+    // +heX
+    // Fix: запираем ящики - чтобы игроки не тупили.
+    for( int i = 0; i < 10; i++ )
+    {
+        ::Item@ contTmp = @map.GetItem( bank.ShowContPos[ i ].HexX, bank.ShowContPos[ i ].HexY, ReplicationBank::Define::ShowContainerPid );
+        if( @contTmp !is null )
+            contTmp.LockerId = 1;
+    }
+    // Cнимаем запор на ящике игрока
+    contShow.LockerId = 0;
+
+    // Перемещаем итемы.
+    ::Item@[] items;
+    if( hide )
+    {
+        contShow.GetItems( 0, items );
+        ::MoveItems( items, contHide, playerId );
+    }
+    else
+    {
+        contHide.GetItems( playerId, items );
+        ::MoveItems( items, contShow, 0 );
+    }
+    return true;
+}
+
+//
+// Guard
+//
+void Guard( ::Critter& guard, bool firstTime )
+{
+    guard.SetEvent( CRITTER_EVENT_IDLE, "ReplicationBank::_GuardIdle" );
+    guard.SetEvent( CRITTER_EVENT_MESSAGE, "ReplicationBank::_GuardOnMessage" );
+    guard.SetEvent( CRITTER_EVENT_SMTH_ATTACK, "ReplicationBank::_GuardSmthAttack" );      // Добавил Дагнир, 11.02.2010.
+    guard.SetEvent( CRITTER_EVENT_SMTH_STEALING, "ReplicationBank::_GuardSmthStealing" );  // Добавил rifleman17, 22.02.2010.
+    guard.SetEvent( CRITTER_EVENT_SMTH_USE_ITEM, "ReplicationBank::_GuardSmthUseItem" );   // r17 23.03.10
+    guard.SetEvent( CRITTER_EVENT_SMTH_DROP_ITEM, "ReplicationBank::_GuardSmthDropItem" ); // r17 23.03.10
+    ParseBank( guard );
+    guard.StatBase[ ST_NPC_ROLE ] = ReplicationBank::Define::RoleGuard;
+    guard.StatBase[ ST_EXPLODE_ABSORB ] = 30;
+    guard.StatBase[ ST_EXPLODE_RESIST ] = 60; // Дагнир, 22.02.2010 - полумера от подрывов с глобала.
+    guard.ModeBase[ MODE_NO_ENEMY_STACK ] = 1;
+    guard.ModeBase[ MODE_NO_LOOT ] = 1;
+    guard.ModeBase[ MODE_NO_DROP ] = 1;
+    guard.ModeBase[ MODE_NO_STEAL ] = 1;
+    guard.ModeBase[ MODE_NO_KNOCK ] = 1;
+    guard.ModeBase[ MODE_UNLIMITED_AMMO ] = 1; // в противном случае у них воруют оружие
+    guard.StatBase[ ST_ACTION_POINTS ] = 12;
+    guard.StatBase[ ST_BONUS_LOOK ] = 300;     // Чтобы реагировали на атаки других игроков сникерами.
+    guard.CityRole_IsGuard = true;
+    guard.StatBase[ ST_TEAM_ID ] =  TEAM_ReplictionHubb;
+}
+
+void _GuardIdle( ::Critter& guard )
+{
+    ReplicationBank::CBank@ bank = @GetBank( guard );
+    if( @bank is null )
+        return;
+    bank.ThrowOutPlayerId = 0;
+}
+
+// Сообщения от банкира или игрока.
+void _GuardOnMessage( ::Critter& guard, ::Critter& crit, int num, int val )
+{
+    // Проверяем, охрана ли приняла.
+    if( guard.Stat[ ST_NPC_ROLE ] != ReplicationBank::Define::RoleGuard )
+        return;
+    // if(guard.Cond==COND_DEAD) return;
+
+    ReplicationBank::CBank@ bank = @GetBank( guard );
+    if( @bank is null )
+        return;
+
+    // Обработка сообщений игрока.
+    // Убедимся игрок ли это послал сообщение.
+    if( crit.IsPlayer() || crit.Merc[ MERC_MASTER_ID ] != 0 )
+    {
+        if( num == ReplicationBank::Define::MessagePlayerOnWarningHex )
+        {
+            uint msgNum = ReplicationBank::Define::StrStop;
+            ::string lexems = "";
+            if( crit.IsNpc() )
+            {
+                if( uint( crit.Merc[ MERC_MASTER_ID ] ) != bank.PassedPlayerId )         // Атакуем чужих рабов сразу же.
+                {
+                    NpcPlanes::AddAttackPlane( guard, 0, crit );
+                    return;
+                }
+                msgNum = ReplicationBank::Define::StrNoSlaves;
+                lexems = "$name" + ::GetPlayerName( crit.Merc[ MERC_MASTER_ID ] );
+            }
+            // Предупреждаем игрока, если прошел без предупреждения.
+            if( bank.PassedPlayerId == crit.Id || bank.ThrowOutPlayerId == crit.Id )
+                return;
+            if( bank.DoorGuardSayWarning )
+                return;
+            // Ищем охранника около двери.
+            for( uint i = 0, iMax = bank.DoorGuardPos.length(); i < iMax; i++ )
+            {
+                if( guard.HexX != bank.DoorGuardPos[ i ].HexX || guard.HexY != bank.DoorGuardPos[ i ].HexY )
+                    continue;
+                guard.SayMsg( SAY_SHOUT_ON_HEAD, TEXTMSG_TEXT, msgNum, lexems );
+                bank.DoorGuardSayWarning = true;
+                break;
+            }
+        }
+        else if( num == ReplicationBank::Define::MessagePlayerOnAttackHex )
+        {
+            // Атакуем наглеца, если он прошел без рзрешения.
+            if( bank.PassedPlayerId == crit.Id || bank.ThrowOutPlayerId == crit.Id )
+                return;
+            NpcPlanes::AddAttackPlane( guard, 0, crit );
+        }
+        return;
+    }
+
+    // Обработка сообщений банкира.
+    // Убедимся банкир ли это послал сообщение.
+    if( crit.Stat[ ST_NPC_ROLE ] != ReplicationBank::Define::RoleBanker )
+        return;
+
+    // Спрашивает возможно ли пустить игрока.
+    if( num == ReplicationBank::Define::MessageTryPassPlayer )
+    {
+        if( !guard.IsNoPlanes() )
+            crit.StatBase[ ST_VAR0 ] = 0;                          // См. den_sh_banker IsCanEnter
+        else if( guard.Cond != COND_LIFE )
+            crit.StatBase[ ST_VAR0 ] = 0;                          // См. den_sh_banker IsCanEnter
+    }
+    // Сообщает что игрок начал манипуляции с контейнерами.
+    else if( num == ReplicationBank::Define::MessageBeginPassPlayer )
+    {
+        ::Map@ map = guard.GetMap();
+        uint priority = 0;
+        ::Critter@[] crits;
+        for( uint n = 0, nMax = map.GetCritters( 0, FIND_ONLY_PLAYERS | FIND_LIFE_AND_KO, crits ); n < crits.length(); n++ )
+        {
+            if( bank.PassedPlayerId == crits[ n ].Id )
+                continue;
+            if( Entires::IsCritterInDeadZone( crits[ n ], map, 0, ReplicationBank::Define::EntBankStart, ReplicationBank::Define::EntBankEnd ) )
+                NpcPlanes::AddAttackPlane( guard, priority++, crits[ n ] );
+        }
+    }
+    // Сообщает что игрок звершил манипуляции с контейнерами.
+    else if( num == ReplicationBank::Define::MessageEndPassPlayer )
+    {}
+    // Просит выкинуть зеваку.
+    else if( num == ReplicationBank::Define::MessageThrowOutPlayer )
+    {
+        ::Map@ map = guard.GetMap();
+        if( ! valid( map ) )
+            return;
+        ::Critter@ player = map.GetCritter( uint( val ) );
+        if( valid( player ) )
+        {
+            NpcPlanes::AddAttackPlane( guard, 0, player );
+            bank.ThrowOutPlayerId = uint( val );
+        }
+    }
+}
+
+void _GuardSmthAttack( ::Critter& guard, ::Critter& attacker, ::Critter& target )
+{
+    if( attacker.IsPlayer() && ( ! target.CityRole_IsProtected ) )
+        NpcPlanes::AddAttackPlane( guard, 0, attacker );
+}
+
+void _GuardSmthStealing( ::Critter& guard, ::Critter& fromCr, ::Critter& thief, bool success, ::Item& item, uint count )
+{
+    if( thief.IsPlayer() && guard.IsLife() )
+    {
+        guard.SayMsg( SAY_SHOUT_ON_HEAD, TEXTMSG_TEXT, ReplicationBank::Define::StrThief );
+        NpcPlanes::AddAttackPlane( guard, 0, thief, 1 );
+    }
+}
+
+void _GuardSmthDropItem( ::Critter& npc, ::Critter& fromCr, ::Item& item )
+{
+    if( fromCr.IsPlayer() && npc.IsLife() )
+    {
+        uint pid = item.GetProtoId();
+        if( pid == uint( Content::Item::ACTIVE_PLASTIC_EXPLOSIVE ) || pid == uint( Content::Item::ACTIVE_MINE ) || pid == uint( Content::Item::ACTIVE_DYNAMITE ) ) 
+        {
+            NpcPlanes::AddAttackPlane( npc, 0, fromCr );
+        }
+    }
+}
+
+void _GuardSmthUseItem( ::Critter& npc, ::Critter& fromCr, ::Item& item, ::Critter@ onCritter, ::Item@ onItem, ::Scenery@ onScenery )
+{
+    if( fromCr.IsPlayer() && npc.IsLife() )
+    {
+        uint pid = item.GetProtoId();
+        if( pid == uint( Content::Item::PLASTIC_EXPLOSIVES ) || pid == uint( Content::Item::MINE ) || pid == uint( Content::Item::TOGGLE_SWITCH ) || pid == uint( Content::Item::DYNAMITE ) )
+        {
+            NpcPlanes::AddAttackPlane( npc, 0, fromCr );
+        }
+    }
+}
+// Триггеры около двери.
+void t_Danger( ::Critter& player, ::Scenery& trigger, bool entered, uint8 dir )
+{
+    if( ! entered )
+        return;
+    // Проверяем игрок ли это и тот кторого пустил банкир.
+    if( player.IsNpc() && player.Merc[ MERC_MASTER_ID ] == 0 )
+        return;
+
+    ReplicationBank::CBank@ bank = GetBank( player );
+    if( ! valid( bank ) )
+        return;
+
+    // Посылаем сообщение о том, что наступили на этот хекс.
+    bank.DoorGuardSayWarning = false;
+    player.SendMessage( ReplicationBank::Define::MessagePlayerOnWarningHex, 0, MESSAGE_TO_ALL_ON_MAP );
+}
+
+void t_Attack( ::Critter& player, ::Scenery& trigger, bool entered, uint8 dir )
+{
+    if( ! entered )
+        return;
+    // Проверяем игрок ли это и тот которого пустил банкир.
+    if( player.IsNpc() && player.Merc[ MERC_MASTER_ID ] == 0 )
+        return;
+
+    // Посылаем сообщение о том, что наступили на этот хекс.
+    player.SendMessage( ReplicationBank::Define::MessagePlayerOnAttackHex, 0, MESSAGE_TO_ALL_ON_MAP );
+}
+
+//
+// Keeper
+//
+uint16[] ShowContPos;        // Координаты видимых контейнеров.
+uint16[] DoorHexPos;         // Координаты хекса двери.
+bool   PlayerPassed = false; // Id пропущенного к контейнерам игрока.
+uint16 DoorPid = 0;
+
+void Keeper( ::Critter& keeper, bool firstTime )
+{
+    keeper.SetEvent( CRITTER_EVENT_IDLE, "ReplicationBank::_KeeperIdle" );
+    keeper.SetEvent( CRITTER_EVENT_MESSAGE, "ReplicationBank::_KeeperOnMessage" );
+    ParseBank( keeper );
+    keeper.StatBase[ ST_NPC_ROLE ] = ReplicationBank::Define::RoleKeeper;
+    keeper.ModeBase[ MODE_NO_ENEMY_STACK ] = 1;
+}
+
+void _KeeperIdle( ::Critter& keeper )
+{
+    ReplicationBank::CBank@ bank = GetBank( keeper );
+    if( ! valid( bank ) )
+        return;
+    if( bank.PlayerPassed )
+        keeper.Wait( 10000 );
+}
+
+void _KeeperOnMessage( ::Critter& keeper, ::Critter& banker, int num, int val )
+{
+    // Проверяем, что передал банкир кладовщику.
+    if( keeper.StatBase[ ST_NPC_ROLE ] != ReplicationBank::Define::RoleKeeper || banker.StatBase[ ST_NPC_ROLE ] != ReplicationBank::Define::RoleBanker )
+        return;
+
+    ReplicationBank::CBank@ bank = GetBank( keeper );
+    if( ! valid( bank ) )
+        return;
+
+    // Сообщает что игрок начал манипуляции с контейнерами.
+    if( num == ReplicationBank::Define::MessageBeginPassPlayer )
+    {
+        uint contNum = uint( val ) % 10;
+        if( contNum >= bank.ShowContPos.length() )
+            contNum = 0;
+        if( bank.ShowContPos.length() == 0 )
+            return;
+        bank.PlayerPassed = true;
+        NpcPlanes::AddWalkPlane( keeper, 0, bank.ShowContPos[ contNum ].HexX, bank.ShowContPos[ contNum ].HexY, 0xFF, false, 1 );
+        // AddPickPlane(keeper,0,ShowContPos[contNum*2],ShowContPos[contNum*2+1],ReplicationBank::Define::ShowContainerPid);
+    }
+    // Сообщает что игрок завершил манипуляции с контейнерами или просит выкинуть зеваку.
+    else if( num == ReplicationBank::Define::MessageEndPassPlayer || num == ReplicationBank::Define::MessageThrowOutPlayer )
+    {
+        bank.PlayerPassed = false;
+        keeper.Wait( 0 );
+        ::Map@ map = keeper.GetMap();
+        if( ! valid( map ) )
+            return;
+
+        // Закрываем дверь.
+        if( bank.DoorHexPos.length() > 0 )
+        {
+            ::Item@ door = map.GetDoor( bank.DoorHexPos[ 0 ].HexX, bank.DoorHexPos[ 0 ].HexY );
+            if( valid( door ) && _LockerIsOpen( door ) )
+                NpcPlanes::AddPickPlane( keeper, 0, door, 0, false );
+        }
+
+        // Закрываем открытые контейнеры.
+        for( uint i = 0, iMax = bank.ShowContPos.length(); i < iMax; i++ )
+        {
+            ::Item@ cont = map.GetItem( bank.ShowContPos[ i ].HexX, bank.ShowContPos[ i ].HexY, ReplicationBank::Define::ShowContainerPid );
+            if( ! valid( cont ) || _LockerIsClose( cont ) )
+                continue;
+            NpcPlanes::AddPickPlane( keeper, 0, cont, 0, false );
+        }
+    }
+}
+
+uint dlg_TalkAboutGagPlayer( ::Critter& player, ::Critter@ npc, ::string@ playerName )
+{
+    if( !IS_DIALOG_SAY_MODE( playerName ) )
+        return 0;
+
+    if( !valid( npc ) )
+        return 0;
+    if( npc.IsDead() )
+        return 0;
+
+    ::Critter@ cr = ::GetPlayer( playerName );
+    if( valid( cr ) )
+    {
+        if( !cr.IsDead() )
+        {
+
+            // не следит ни за кем
+            if( npc.IsSee( cr ) && npc.StatBase[ ST_VAR9 ] == 0 && cr.Id != player.Id )
+            {
+                if( AddCheckPlayerPosition( npc, cr ) )
+                {
+                    return ReplicationBank::Define::ForceDialogPlayerFound;
+                }
+            }
+        }
+    }
+
+    return ReplicationBank::Define::ForceDialogPlayerNotfound;
+}
+
+bool AddCheckPlayerPosition( ::Critter& guard, ::Critter& player )
+{
+    ::Map @ guardMap = guard.GetMap();
+    ::Map @ playerMap = player.GetMap();
+    if( !valid( guardMap ) || !valid( playerMap ) )
+        return false;
+    if( guardMap.Id != playerMap.Id )
+        return false;
+
+    uint[] values = { guard.Id, player.Id,  player.HexX, player.HexY };
+
+    if( ::CreateTimeEvent( ::__FullSecond + WarnTime, "ReplicationBank::e_WarnGagPlayer", values, false ) > 0 )
+    {
+        guard.StatBase[ ST_VAR9 ] = ::CreateTimeEvent( ::__FullSecond + AttackTime, "ReplicationBank::e_AttackGagPlayer", values, false );
+        return true;
+    }
+    return false;
+}
+
+uint e_WarnGagPlayer( uint[] @ values )
+{
+    ::Critter @ guard = ::GetCritter( values[ 0 ] );
+    if( valid( guard ) )
+    {
+        ::Critter @ player = ::GetCritter( values[ 1 ] );
+        if( valid( player ) )
+        {
+            if( guard.IsSee( player ) )
+            {
+                if( player.IsPlayer() )
+                    guard.SayMsg( SAY_SHOUT, TEXTMSG_DLG, DLGSTR( guard.Stat[ ST_DIALOG_ID ], ReplicationBank::Define::StrWarnPlayer ),  "$pname " + ::GetPlayerName( player.Id ) );
+            }
+        }
+    }
+    return 0;
+}
+
+uint e_AttackGagPlayer( uint[] @ values )
+{
+    ::Critter @ guard = ::GetCritter( values[ 0 ] );
+    if( valid( guard ) )
+    {
+        guard.StatBase[ ST_VAR9 ] = 0;
+        ::Critter @ player = ::GetCritter( values[ 1 ] );
+        if( valid( player ) )
+        {
+            if( player.IsPlayer() )
+            {
+                ::Map @ guardMap = guard.GetMap();
+                ::Map @ playerMap = player.GetMap();
+                if( !valid( guardMap ) || !valid( playerMap ) )
+                    return 0;
+                if( guardMap.Id != playerMap.Id )
+                    return 0;
+
+                uint oldX = values[ 2 ];
+                uint oldY = values[ 3 ];
+                uint newX = player.HexX;
+                uint newY = player.HexY;
+
+                if( oldX == newX && oldY == newY )
+                {
+                    guard.SayMsg( SAY_SHOUT, TEXTMSG_DLG, DLGSTR( guard.Stat[ ST_DIALOG_ID ], ReplicationBank::Define::StrAttackPlayer ) );
+                    NpcPlanes::AddAttackPlane( guard, 0, player );
+                    player.SendMessage( ReplicationBank::Define::MessagePlayerOnAttackHex, 0, MESSAGE_TO_ALL_ON_MAP );
+                }
+            }
+        }
+    }
+
+    return 0;
+}

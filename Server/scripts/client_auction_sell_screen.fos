@@ -1,0 +1,482 @@
+#include "_client_defines.fos"
+#include "client_gui_h.fos"
+#include "_colors.fos"
+#include "_macros.fos"
+#include "_msgstr.fos"
+#include "client_picbox_list_h.fos"
+#include "client_scrollable_label.fos"
+#include "client_numeric_updown_h.fos"
+#include "client_radiobutton_h.fos"
+#include "auction_h.fos"
+
+
+import string item_description( ItemCl& item, int lookType ) from "client_main";
+
+// Массив доступных для продажи предметов
+int[] AvailableItemsData;
+
+class AuctionSellScreen : IGUI::ScreenCallbackShow, IGUI::ScreenCallbackHide, IGUI::ElementCallbackMouseClick
+{
+    AuctionItemPictureBoxList@ PicList;
+    void OnShow( int p0, int p1, int p2 )
+    {
+        if( valid( PicList ) )
+        {
+            PicList.Reset();
+            PicList.SetItems( AvailableItemsData );
+            PicList.RefreshItems();
+        }
+    }
+
+    void OnHide( int p0, int p1, int p2 )
+    {
+        AvailableItemsData.resize( 0 );
+        if( valid( PicList ) )
+        {
+            PicList.Reset();
+        }
+    }
+
+    void OnMouseClick( int click )
+    {
+        if( click == MOUSE_CLICK_LEFT )
+            ::HideScreen( 0, 0, 0, 0 );
+
+    }
+
+    void SubmitLot()
+    {
+        if( valid( PicList ) )
+        {
+            if( PicList.NudLot.Value == 0 )
+            {
+                Message( "|0xFFFF8000 " + GetMsgStr( TEXTMSG_TEXT, STR_ZERO_RESTRICTED ) );
+                return;
+            }
+            if( PicList.LastSelectedId > 0 )
+            {
+                AuctionOpenLot( PicList.LastSelectedId, PicList.NudLot.Value, PicList.NudPrice.Value, PicList.RadioButtons.GetValue() );
+                PicList.RemoveItem( PicList.LastSelectedId );
+            }
+            else
+            {
+                Message( "|0xFFFF8000 " + GetMsgStr( TEXTMSG_TEXT, STR_LOT_NOT_SELECTED ) );
+                return;
+            }
+        }
+    }
+
+    void OpenBuyScreen()
+    {
+        ::HideScreen( 0, 0, 0, 0 );
+        RunServerScriptUnsafe( "auction@unsafe_ShowAuctionBuyScreen", 0, 0, 0, null, null );
+    }
+}
+
+void InitAuctionSellScreen()
+{
+    AuctionSellScreen screen();
+    GUI_CreateScreen( CLIENT_SCREEN_AUCTION_SELL, "auction/auction_sell.png" )
+    .CallbackShow( screen )
+    .CallbackHide( screen )
+    .AutoCursor( true, CURSOR_DEFAULT );
+    Rectangle@ rec = Rectangle( 44, 43, 65, 295 );
+
+    AuctionItemPictureBoxList picList( rec, 55 );
+    @screen.PicList = picList;
+    picList.Init( CLIENT_SCREEN_AUCTION_SELL );
+
+    @rec = Rectangle( 182, 46, 179, 115 );
+
+    ScrollableLabel label( 0, FONT_FALLOUT, int(COLOR_GREEN), rec.Copy() );
+    @picList.ItemLabel = label;
+    label.Init( CLIENT_SCREEN_AUCTION_SELL );
+    @rec = Rectangle( 264, 268, 117, 18 );
+    NumericUpAndDown nudLot( 0, 0, null, rec.Copy(), COLOR_GREEN );
+    nudLot.Init( CLIENT_SCREEN_AUCTION_SELL );
+    rec.Y = 239;
+    NumericUpAndDown nudPrice( 0, 0, null, rec.Copy(), COLOR_GREEN );
+    nudPrice.Init( CLIENT_SCREEN_AUCTION_SELL );
+    @picList.NudPrice = nudPrice;
+    @picList.NudLot = nudLot;
+    @nudLot.ValueChangedCallbak = picList;
+    @rec = Rectangle( 122, 108, 22, 23 );
+    ASellScrollButton btnUp( rec.Copy(), DIR_BACK, picList, "INVUPOUT.FRM", "INVUPDS.FRM", "INVUPIN.FRM" );
+    btnUp.Init( CLIENT_SCREEN_AUCTION_SELL );
+    @picList.BtnScrollUp = btnUp;
+    rec.Y = 131;
+    ASellScrollButton btnDn( rec.Copy(), DIR_FORWARD, picList, "INVDNOUT.FRM", "INVDNDS.FRM", "INVDNIN.FRM" );
+    btnDn.Init( CLIENT_SCREEN_AUCTION_SELL );
+    @picList.BtnScrollDown = btnDn;
+
+    RadioButtonGroup@ rbGroup = RadioButtonGroup();
+    @rec = Rectangle( 147, 306, 75, 18 );
+    // rbGroup.AddButton(rec.Copy(), Size(17, 11),"8 ч", true, "TGSKLON.FRM", "TGSKLOFF.FRM", COLOR_GREEN, 8);
+    rbGroup.AddButton( rec.Copy(), Size( 17, 11 ), " ", true, "TGSKLON.FRM", "TGSKLOFF.FRM", COLOR_GREEN, 8 );
+    rec.Location.Y += 16;
+    // rbGroup.AddButton(rec.Copy(), Size(17, 11),"Сутки", false, "TGSKLON.FRM", "TGSKLOFF.FRM", COLOR_GREEN, 24);
+    rbGroup.AddButton( rec.Copy(), Size( 17, 11 ), " ", false, "TGSKLON.FRM", "TGSKLOFF.FRM", COLOR_GREEN, 24 );
+    rec.Location.Y += 16;
+    // rbGroup.AddButton(rec.Copy(), Size(17, 11),"Неделя", false, "TGSKLON.FRM", "TGSKLOFF.FRM", COLOR_GREEN, 168);
+    rbGroup.AddButton( rec.Copy(), Size( 17, 11 ), " ", false, "TGSKLON.FRM", "TGSKLOFF.FRM", COLOR_GREEN, 168 );
+    rbGroup.Init( CLIENT_SCREEN_AUCTION_SELL );
+    rbGroup.SetRadioButtonsCallBack( picList );
+    @picList.RadioButtons = rbGroup;
+    // Ярлык с комиссией
+    @rec = Rectangle( 234, 208, 80, 13 );
+    AuctionComissionLabel labelC( rec );
+    labelC.Init( CLIENT_SCREEN_AUCTION_SELL );
+    @picList.CommisionLabel = labelC;
+
+    AuctionSellSubmitButton@ btn = AuctionSellSubmitButton();
+    @btn.Screen = screen;
+    // Sell button
+    GUI_AddScreenElement( CLIENT_SCREEN_AUCTION_SELL, "DI_RDBT2.FRM", 170, 217 )
+    .Position( 170, 218, 14, 14 )
+    // .Text("Объявить",FONT_FAT, COLOR_ORANGE, COLOR_GOLD, FT_CENTERXY)
+    .DownPic( "DI_RDBT1.FRM" )
+    .CallbackMouseClick( btn );
+    // View buy screen button
+    AuctionViewBuyScreenButton@ btnV = AuctionViewBuyScreenButton();
+    @btnV.Screen = screen;
+    GUI_AddScreenElement( CLIENT_SCREEN_AUCTION_SELL, "DI_RDBT2.FRM", 170, 271 )
+    .Position( 170, 272, 14, 14 )
+    // .Text("Просмотр",FONT_FAT, COLOR_ORANGE, COLOR_GOLD, FT_CENTERXY)
+    .DownPic( "DI_RDBT1.FRM" )
+    .CallbackMouseClick( btnV );
+    // Cancel button
+    GUI_AddScreenElement( CLIENT_SCREEN_AUCTION_SELL, "DI_RDBT2.FRM", 354, 326 )
+    .Position( 354, 327, 14, 14 )
+    // .Text("Отмена",FONT_FAT, COLOR_ORANGE, COLOR_GOLD, FT_CENTERXY)
+    .DownPic( "DI_RDBT1.FRM" )
+    .CallbackMouseClick( screen );
+
+
+    /*	Ярлыки теперь не требуются, изображаются картинками
+       GUI_AddScreenElement( CLIENT_SCREEN_AUCTION_SELL, null, 158, 206)
+            .Position(158, 206, 120, 24)
+            .Text("ЛОТ:",FONT_FAT, COLOR_ORANGE, COLOR_ORANGE, 0);
+
+       GUI_AddScreenElement( CLIENT_SCREEN_AUCTION_SELL, null, 158, 227)
+            .Position(158, 227, 120, 24)
+            .Text("Цена:",FONT_FAT, COLOR_ORANGE, COLOR_ORANGE, 0);*/
+    // Message("Auction sell init ok");
+}
+
+void ShowSellScreen( int p1, int p2, int p3, string@ p4, int[] @ availableItems )
+{
+    AvailableItemsData.resize( 0 );
+    if( valid( availableItems ) )
+    {
+
+        for( uint i = 0, l = availableItems.length(); i < l; i++ )
+        {
+            AvailableItemsData.insertLast( availableItems[ i ] );
+        }
+    }
+    ShowScreen( CLIENT_SCREEN_AUCTION_SELL, 0, 0, 0 );
+}
+
+
+// Элементы
+
+class AuctionViewBuyScreenButton : IGUI::ElementCallbackMouseClick
+{
+    AuctionSellScreen@ Screen;
+
+    void OnMouseClick( int click )
+    {
+        if( click == MOUSE_CLICK_LEFT && valid( Screen ) )
+            Screen.OpenBuyScreen();
+    }
+}
+
+class AuctionSellSubmitButton : IGUI::ElementCallbackMouseClick
+{
+    AuctionSellScreen@ Screen;
+
+    void OnMouseClick( int click )
+    {
+        if( click == MOUSE_CLICK_LEFT && valid( Screen ) )
+            Screen.SubmitLot();
+    }
+
+}
+
+class AuctionComissionLabel : IGUI::ElementCallbackInit
+{
+    IGUIElementOpt@ Options;
+    Rectangle@      Bounds;
+
+    AuctionComissionLabel( Rectangle & bounds )
+    {
+        @Bounds = bounds.Copy();
+    }
+
+    void OnInit()
+    {
+        @Options = GUI_GetElementOptions();
+        ChangeText( "" );
+    }
+
+    void Init( int screen )
+    {
+        GUI_AddScreenElement( screen, null, Bounds.X, Bounds.Y )
+        .Position( Bounds.X, Bounds.Y, Bounds.Width, Bounds.Height )
+        .CallbackInit( this );
+    }
+
+    void ChangeText( string@ text )
+    {
+        if( valid( Options ) )
+            Options.Text( text, FONT_FALLOUT, COLOR_GREEN, COLOR_GREEN, FT_NOBREAK_LINE | FT_CENTERXY );
+    }
+}
+
+class ASellScrollButton : IGUI::ElementCallbackInit, IGUI::ElementCallbackMouseClick
+{
+    Rectangle@                 Bounds;
+    IGUIElementOpt@            Options;
+    int                        Type;
+    AuctionItemPictureBoxList@ PicBox;
+    string                     PictureEnabled;
+    string                     PictureDisabled;
+    string                     PictureDown;
+    bool                       Enabled;
+
+    ASellScrollButton( Rectangle & bounds, int type, AuctionItemPictureBoxList & picBox, string picEn, string picDis, string picDn )
+    {
+        @Bounds = bounds.Copy();
+        Type = type;
+        @PicBox = picBox;
+        PictureEnabled = picEn;
+        PictureDisabled = picDis;
+        PictureDown = picDn;
+        Enabled = true;
+    }
+
+    void OnInit()
+    {
+        @Options = GUI_GetElementOptions();
+    }
+
+    void OnMouseClick( int click )
+    {
+        if( click == MOUSE_CLICK_LEFT && Enabled && valid( PicBox ) )
+            PicBox.SetPicListScroll( Type, 1 );
+    }
+
+    void ChangeEnabled( bool enable )
+    {
+        Enabled = enable;
+        if( enable )
+        {
+            Options.Picture( PictureEnabled );
+            Options.DownPic( PictureDown );
+        }
+        else
+        {
+            Options.Picture( PictureDisabled );
+            Options.DownPic( null );
+        }
+    }
+
+    void Init( int screen )
+    {
+        GUI_AddScreenElement( screen, null, Bounds.X, Bounds.Y )
+        .Position( Bounds.X, Bounds.Y, Bounds.Width, Bounds.Height )
+        .Picture( PictureEnabled )
+        .DownPic( PictureDown )
+        .CallbackInit( this )
+        .CallbackMouseClick( this );
+    }
+}
+
+class AuctionItemPictureBoxList : ItemPictureBoxList, IRadioGroupCallback, INumericUpAndDownCallback
+{
+
+    // Для аукциона важны Id предметов, количество
+    // Запоминаются все эти параметры, потому что, знач Id предмета не обязательно можно найти его на клиенте
+    int[][] ItemsData;
+    int                    LastSelectedId;
+    // Отображение описания предмета
+    ScrollableLabel@       ItemLabel;
+    // Поле для ввода цены
+    NumericUpAndDown@      NudPrice;
+    // Поле для ввода количества
+    NumericUpAndDown@      NudLot;
+    // Кнопка скролла вверх
+    ASellScrollButton@     BtnScrollUp;
+    // Кнопка скролла вниз
+    ASellScrollButton@     BtnScrollDown;
+    // Текст с суммой комиссии
+    AuctionComissionLabel@ CommisionLabel;
+    // Кнопки 8 ч/день/неделя
+    RadioButtonGroup@      RadioButtons;
+
+    void Reset()
+    {
+        ItemPictureBoxList::Reset();
+        LastSelectedId = 0;
+        if( valid( ItemLabel ) )
+            ItemLabel.SetText( "" );
+    }
+
+    AuctionItemPictureBoxList( Rectangle & bounds, int itemHeight )
+    {
+        super( bounds, itemHeight );
+        ItemsData.resize( 0 );
+        LastSelectedId = 0;
+    }
+
+    void OnRadioButtonChecked( int selectedValue )
+    {
+        if( !valid( RadioButtons ) )
+            return;
+        uint            cost = 100;
+        const ProtoItem @proto = GetProtoItem( LastSelectedPid );
+        if( valid( proto ) )
+            cost = proto.Cost;
+        int qty = 0;
+        if( valid( NudLot ) )
+            qty = NudLot.Value;
+        int    comission = int( COMISSION( RadioButtons.GetValue(), cost, qty ) );
+        string text = "";
+        if( comission > 0 )
+            text = "" + comission;   // "Комиссия: "  + comission + " монет.";
+        else
+            text = "N/A";            // "Комиссия: нет.";
+        if( valid( CommisionLabel ) )
+            CommisionLabel.ChangeText( text );
+
+    }
+
+    void OnNumericValueChanged( int value )
+    {
+        OnRadioButtonChecked( 0 );
+    }
+    // Id, Pid, Qty,
+    void SetItems( int[] data )
+    {
+        ItemsData.resize( 0 );
+        for( uint i = 0, l = data.length(); i < l; i++ )
+        {
+            ItemsData.grow( 1 );
+            ItemsData.last().insertLast( data[ i ] );
+            i++;
+            ItemsData.last().insertLast( data[ i ] );
+            i++;
+            ItemsData.last().insertLast( data[ i ] );
+        }
+        RefreshItems();
+    }
+
+    int GetLastItem()
+    {
+        return int( ItemsData.length() );
+    }
+
+    void OnPicBoxSelected( ItemPictureBox@ selectedPicBox )
+    {
+        if( LastSelectedId == selectedPicBox.Param1 )
+            return;
+        LastSelectedId = selectedPicBox.Param1;
+        LastSelectedPid = selectedPicBox.ProtoId;
+        if( valid( ItemLabel ) )
+        {
+            CritterCl@ cr = GetChosen();
+            if( valid( cr ) )
+            {
+                ItemCl@[] items;
+                if( cr.GetItems( -1, items ) > 0 )
+                {
+                    for( uint i = 0, l = items.length(); i < l; i++ )
+                    {
+                        ItemCl@ item = items[ i ];
+
+                        if( valid( item ) && int(item.Id) == selectedPicBox.Param1 )
+                        {
+                            string info = item_description( item, ITEM_LOOK_INVENTORY );
+                            ItemLabel.SetText( info );
+                            if( valid( NudPrice ) )
+                                NudPrice.SetValue( 20000000, 0 );
+                            if( valid( NudLot ) )
+                            {
+                                int maxItems = 1;
+                                // if( item.IsStackable() )
+                                maxItems = int( CLAMP( int( item.GetCount() ), 1, 1000 ) );
+                                NudLot.SetValue( maxItems, maxItems );
+                            }
+                            OnRadioButtonChecked( 0 );
+                            break;
+                        }
+                    }
+                }
+            }
+
+        }
+        RefreshItems();
+    }
+
+    void RemoveItem( int itemId )
+    {
+        for( uint i = 0, l = ItemsData.length(); i < l; i++ )
+        {
+            if( ItemsData[ i ][ 0 ] == itemId )
+            {
+                LastSelectedId = 0;
+                LastSelectedPid = 0;
+                ItemsData.removeAt( i );
+                RefreshItems();
+                return;
+            }
+        }
+    }
+
+    void RefreshItems()
+    {
+        if( valid( BtnScrollUp ) )
+        {
+            if( Scroll == 0 )
+                BtnScrollUp.ChangeEnabled( false );
+            else
+                BtnScrollUp.ChangeEnabled( true );
+        }
+        if( valid( BtnScrollDown ) )
+        {
+            if( Scroll + MaxItems < int( ItemsData.length() ) )
+                BtnScrollDown.ChangeEnabled( true );
+            else
+                BtnScrollDown.ChangeEnabled( false );
+        }
+        int j = 0;
+        for( int i = 0, l = Items.length(); i < l; i++ )
+        {
+            j = i + Scroll;
+            if( j < int( ItemsData.length() ) )
+            {
+                // Форматирование строки с количеством, чтобы сократить длину текста
+                int    qty = ItemsData[ j ][ 2 ];
+                string strQty = "";
+                if( qty > 1000000 )
+                    strQty = "" + int(qty / 1000000) + "kk";
+                else if( qty > 1000 )
+                    strQty = "" + int(qty / 1000) + "k";
+                else
+                    strQty = "" + qty;
+
+                Items[ i ].Param1 = ItemsData[ j ][ 0 ];
+                Items[ i ].ChangePid( ItemsData[ j ][ 1 ] );
+                Items[ i ].ChangeText( strQty );
+                Items[ i ].ChangeSelected( ItemsData[ j ][ 0 ] == LastSelectedId );
+            }
+            else
+            {
+                Items[ i ].Param1 = 0;
+                Items[ i ].ChangePid( 0 );
+                Items[ i ].ChangeText( "" );
+                Items[ i ].ChangeSelected( false );
+            }
+        }
+    }
+}

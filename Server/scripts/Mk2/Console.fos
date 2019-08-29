@@ -1,0 +1,192 @@
+// FOS Server Client 
+
+#ifdef __CLIENT
+
+dictionary libraryItems;
+Parser@ LastCommand = null;
+
+void ItemInit( string& name, Content::Item number )
+{	
+	if( name != "End" && name != "Begin" )
+	{
+		string str = join( split( strlwr( name ), "_" ), "" );
+		libraryItems.set( str, number );
+	}
+}
+
+void ModuleInit( )
+{
+	__EventOutMessage.Subscribe( @OutMessageParser );
+}
+
+class Parser
+{
+	Parser( string message )
+	{
+		Default = message;
+		message = strlwr( substring( message, 1, message.length() ) );
+		args = split( message, " " );
+		
+		@resultargs = split( substring( Default, 1, Default.length() ), " " );
+	}
+	
+	string End()
+	{
+		@LastCommand = @this;
+		return this.Get();
+	}
+	
+	string Get( )
+	{
+		return "~" + join( resultargs, " " );
+	}
+		
+	bool Is( uint index )
+	{
+		return Commands[index].find( args[0] ) != -1;
+	}
+	
+	string@[] args;
+	string@[]@ resultargs;
+	string Default;
+}
+
+enum CMD
+{
+		EXIT                     = 1,
+		MYINFO                   = 2,
+		GAMEINFO                 = 3,
+		CRITID                   = 4,
+		MOVECRIT                 = 5,
+		KILLCRIT                 = 6,
+		DISCONCRIT               = 7,
+		TOGLOBAL                 = 8,
+		RESPAWN                  = 9,
+		PARAM                    = 10,
+		GETACCESS                = 11,
+		ADDITEM                  = 12,
+		RESERVE                  = 13,
+		ADDITEM_SELF             = 14,
+		ADDNPC                   = 15,
+		ADDLOCATION              = 16,
+		RELOADSCRIPTS            = 17,
+		LOADSCRIPT               = 18,
+		RELOAD_CLIENT_SCRIPTS    = 19,
+		RUNSCRIPT                = 20,
+		RELOADLOCATIONS          = 21,
+		LOADLOCATION             = 22,
+		RELOADMAPS               = 23,
+		LOADMAP                  = 24,
+		REGENMAP                 = 25,
+		RELOADDIALOGS            = 26,
+		LOADDIALOG               = 27,
+		RELOADTEXTS              = 28,
+		RELOADAI                 = 29,
+		CHECKVAR                 = 30,
+		SETVAR                   = 31,
+		SETTIME                  = 32,
+		BAN                      = 33,
+		DELETE_ACCOUNT           = 34,
+		CHANGE_PASSWORD          = 35,
+		DROP_UID                 = 36,
+		LOG                      = 37,
+}
+
+const string[][] Commands = {
+	{ },
+	{ "1", "exit" },
+	{ "2", "myinfo" },
+	{ "3", "gameinfo" },
+	{ "4", "id" },
+	{ "5", "move" },
+	{ "6", "kill" },
+	{ "7", "disconnect" },
+	{ "8", "toglobal" },
+	{ "9", "respawn" },
+	{ "10", "param" },
+	{ "11", "getaccess" },
+	{ "12", "additem" },
+	{ },
+	{ "14", "ais", "additemself" },
+	{ "15", "addnpc" },
+	{ "16", "addloc" },
+	{ "17", "reloadscripts" },
+	{ "18", "load", "loadscript" },
+	{ "19", "rcs", "reloadclientscripts" },
+	{ "20", "run", "runscript" },
+	{ "21", "reloadlocations" },
+	{ "22", "loadlocation" },
+	{ "23", "reloadmaps" },
+	{ "24", "loadmap" },
+	{ "25", "regenmap" },
+	{ "26", "reloaddialogs" },
+	{ "27", "loaddialog" },
+	{ "28", "reloadtexts" },
+	{ "29", "reloadai" },
+	{ "30", "checkvar", "cvar" },
+	{ "31", "setvar", "svar" },
+	{ "32", "settime" },
+	{ "33", "ban" },
+	{ "34", "deleteself" },
+	{ "35", "changepassword", "changepass" },
+	{ "36", "dropuid", "drop" },
+	{ "37", "log" },
+};
+
+void OutMessageParser( string& message, int& sayType )
+{
+	if( message[0] == '~' )
+	{
+		Parser parser( message );
+		
+		if( parser.Is( ADDITEM_SELF ) )
+		{
+			if( libraryItems.exists( parser.args[1] ) )
+			{
+				int memm = 0;
+				libraryItems.get( parser.args[1], memm );
+				parser.args[1] = "" + memm;
+				if( parser.args.length() == 2 )
+					parser.args.insertLast( "1" );
+			}
+		}
+		else if( parser.Is( RUNSCRIPT ) )
+		{
+			if( parser.resultargs.length() == 3 ) parser.resultargs.insertLast( "0" );
+			if( parser.resultargs.length() == 4 ) parser.resultargs.insertLast( "0" );
+			if( parser.resultargs.length() == 5 ) parser.resultargs.insertLast( "0" );
+		}
+		else if( parser.Is( ADDNPC ) )
+		{
+			if( parser.resultargs.length() == 2 )
+			{
+				uint16 hexX = 0, hexY = 0;
+				if( GetMonitorHex( ::__MouseX, ::__MouseY, hexX, hexY ) )
+				{
+					string@[] result = {"addnpc", "" + hexX, "" + hexY, "" + ::Random( 0, 5 ), "" + parser.resultargs[1] };
+					@parser.resultargs = result;
+				}
+			}
+		}
+		else if( parser.Is( KILLCRIT ) || parser.Is( RESPAWN ) )
+		{
+			if( parser.resultargs.length() == 1 )
+			{
+				CritterCl@ critter = GetMonitorCritter( ::__MouseX, ::__MouseY );
+				if( critter is null )
+					@critter = GetChosen();
+				if( critter !is null )
+					parser.resultargs.insertLast( "" + critter.Id );			
+			}
+		}
+		
+		message = parser.End();
+	}
+}
+
+#endif
+#ifdef __SERVER
+
+
+
+#endif

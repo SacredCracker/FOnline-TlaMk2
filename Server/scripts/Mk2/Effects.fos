@@ -1,0 +1,140 @@
+// FOS Server Client Sort 0
+// Author: cvet
+
+#ifdef __SERVER
+
+enum Default
+{
+	QuakeNoise = 8,
+	QuakeTime = 800
+}
+
+void FlushScreen( ::Critter& cr, bool fadeOut, uint timeMs ) // Export
+{
+    if( cr.IsPlayer() )
+        cr.RunClientScript( "Mk2@Effects::_FlushScreen", fadeOut ? 0xFF000000 : 0, fadeOut ? 0 : 0xFF000000, int(timeMs), null, null );
+}
+
+void FlushScreen( ::Critter& cr, uint fromColor, uint toColor, uint timeMs ) // Export
+{
+    if( cr.IsPlayer() )
+        cr.RunClientScript( "Mk2@Effects::_FlushScreen", int(fromColor), int(toColor), int(timeMs), null, null );
+}
+
+void FlushScreen( ::Map& map, bool fadeOut, uint timeMs ) // Export
+{
+    ::Critter@[] critters;
+    for( uint i = 0, iMax = map.GetCritters( 0, FIND_ALL | FIND_ONLY_PLAYERS, critters ); i < iMax; i++ )
+        critters[ i ].RunClientScript( "Mk2@Effects::_FlushScreen", fadeOut ? 0xFF000000 : 0, fadeOut ? 0 : 0xFF000000, int(timeMs), null, null );
+}
+
+void FlushScreen( ::Map& map, uint fromColor, uint toColor, uint timeMs ) // Export
+{
+    ::Critter@[] critters;
+    for( uint i = 0, iMax = map.GetCritters( 0, FIND_ALL | FIND_ONLY_PLAYERS, critters ); i < iMax; i++ )
+        critters[ i ].RunClientScript( "Mk2@Effects::_FlushScreen", int(fromColor), int(toColor), int(timeMs), null, null );
+}
+
+void QuakeScreen( ::Critter& cr ) // Export
+{
+    if( cr.IsPlayer() )
+        cr.RunClientScript( "Mk2@Effects::_QuakeScreen", Effects::Default::QuakeNoise, Effects::Default::QuakeTime, 0, null, null );
+}
+
+void QuakeScreen( ::Critter& cr, uint noise, uint timeMs ) // Export
+{
+    if( cr.IsPlayer() )
+        cr.RunClientScript( "Mk2@Effects::_QuakeScreen", int(noise), int(timeMs), 0, null, null );
+}
+
+void QuakeScreen( ::Map& map ) // Export
+{
+    ::Critter@[] critters;
+    for( uint i = 0, iMax = map.GetCritters( 0, FIND_ALL | FIND_ONLY_PLAYERS, critters ); i < iMax; i++ )
+        critters[ i ].RunClientScript( "Mk2@Effects::_QuakeScreen", Effects::Default::QuakeNoise, Effects::Default::QuakeTime, 0, null, null );
+}
+
+void QuakeScreen( ::Map& map, uint noise, uint timeMs ) // Export
+{
+    ::Critter@[] critters;
+    for( uint i = 0, iMax =  map.GetCritters( 0, FIND_ALL | FIND_ONLY_PLAYERS, critters ); i < iMax; i++ )
+        critters[ i ].RunClientScript( "Mk2@Effects::_QuakeScreen", int(noise), int(timeMs), 0, null, null );
+}
+#endif
+#ifdef __CLIENT
+// //////////////////////////////////////////////////////////////////////////////////////////////////
+// Effects, see effects.fos
+
+void _FlushScreen( int fromColor, int toColor, int timeMs, ::string@, int[] @ )
+{
+    ::FlushScreen( fromColor, toColor, timeMs );
+}
+
+void _QuakeScreen( int noise, int timeMs, int, ::string@, int[] @ )
+{
+    ::QuakeScreen( ( noise / 4 ), timeMs * ( 1.4 ) );
+}
+
+//#Effects::set Ice
+
+void Set( int type, ::string@ effect )
+{
+	::SetEffect( type, 0, effect );
+}
+
+void SetCritter( uint id, ::string@ effect )
+{
+	::SetEffect( EFFECT_2D_CRITTER, id, effect );
+}
+
+void SetChosen( ::string@ effect )
+{
+	::CritterCl@ chos = ::GetChosen();
+	if( @chos !is null )
+		Set( @chos, @effect );
+}
+
+void Set( ::CritterCl@ cr, ::string@ effect )
+{
+	SetCritter( cr.Id, @effect );
+}
+
+::string set_MsgCommand( ::string eff )
+{
+	::string@[]@ words = ::splitEx( eff, " " );
+	::string@ chosenScript = null;
+	if( words.length() == 3 )
+		@chosenScript = words[1];
+	Set( EFFECT_2D_GENERIC | EFFECT_2D_TILE | EFFECT_2D_ROOF | EFFECT_2D_CRITTER, @words.last() );
+	SetChosen( @chosenScript );
+	return "";
+}
+
+::string all_MsgCommand( ::string eff )
+{
+	::SetEffect( EFFECT_2D_GENERIC | EFFECT_2D_TILE | EFFECT_2D_ROOF | EFFECT_2D_CRITTER, 0, ::splitEx( eff, " " ).last() );
+	return "";
+}
+
+::string chosen_MsgCommand( ::string eff )
+{
+	int index = ::findFirst ( eff, "define:");
+	::string effect = ::splitEx( eff, " " ).last();
+	::string@ def = null;
+	if( index != -1 )
+	{
+		index += 7;
+		@def = ::substring ( eff, index, eff.length() - index - effect.length() - 1 );
+		::Message( def );
+	}
+	::SetEffect( EFFECT_2D_CRITTER, ::GetChosen().Id, effect, @def );
+	return "";
+}
+
+::string text_MsgCommand( ::string eff )
+{
+	::SetEffect( EFFECT_FONT, -1, ::splitEx( eff, " " ).last() );
+	return "";
+}
+
+#endif

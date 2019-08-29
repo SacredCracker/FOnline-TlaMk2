@@ -1,0 +1,2444 @@
+// Author: cvet
+// Mapper main script
+// Compile using fo_mapper.dll
+
+#include "_mapper_defines.fos"
+#include "_defines.fos"
+#include "_itempid.fos"
+
+#define MAPPER_KAWAII_GUI
+#ifdef MAPPER_KAWAII_GUI
+import void GUI_mouse_move( int x, int y ) from "mapper_gui";
+import bool GUI_mouse( int click, bool downClick ) from "mapper_gui";
+import void GUI_render( uint layer ) from "mapper_gui";
+import void GUI_Init() from "mapper_gui";
+import bool GUI_key_down( uint8 key ) from "mapper_gui";
+import bool GUI_key_up( uint8 key ) from "mapper_gui";
+import void GUI_render_map() from "mapper_gui";
+import bool GUI_console_message( string& message ) from "mapper_gui";
+import uint GUILoop() from "mapper_gui";
+#endif
+
+import void InitializeGame() from "Mk2";
+
+// //////////////////////////////////////////////////////////////////////////////////////////////////
+// Call on new mapper instance creating.
+// Return true to handle event and close new instance or
+// return false to allow creating of new mapper instance.
+
+
+#define TILESETS_COUNT          ( 10 )
+#define ZONE_HOUSE_COUNT        ( 4 )
+
+#define HEX_ZONE_HOUSE_BEGIN    ( 7001 )
+#define HEX_ZONE_HOUSE_END      ( 7004 )
+#define ZONE_HOUSE_HEX          # (pid)  ( ( pid ) >= HEX_ZONE_HOUSE_BEGIN && ( pid ) <= HEX_ZONE_HOUSE_END )
+
+bool CanDraw = false;
+bool BrushEnabled = false;
+
+
+int CurrentTileset = 0;
+uint[][]    tilesets;
+string[]   tilesets_names;
+
+
+uint[]      tileset_cmt;
+uint[]      tileset_tepflr;
+uint[]      tileset_ruf;
+uint[]      tileset_rst;
+uint[]      tileset_grass;
+uint[]      tileset_edg;
+uint[]      tileset_edg6;
+uint[]      tileset_cavr;
+uint[]      tileset_cav;
+uint[]      tileset_cav2;
+uint[]      tileset_bflr;
+
+
+bool new_instance( string commandLine )
+{
+    return false;
+}
+
+int CurrentZoneHouse = 0;
+uint16[] ZoneHousePid;
+string[] NameZoneHouse;
+
+void zone_house_init()
+{
+    ZoneHousePid.resize( ZONE_HOUSE_COUNT );
+    NameZoneHouse.resize( ZONE_HOUSE_COUNT );
+    NameZoneHouse[ 0 ] = "Магазин.";
+    NameZoneHouse[ 1 ] = "Бар.";
+    NameZoneHouse[ 2 ] = "Банк.";
+    NameZoneHouse[ 3 ] = "Жилой дом.";
+    ZoneHousePid[ 0 ] = 7001;
+    ZoneHousePid[ 1 ] = 7002;
+    ZoneHousePid[ 2 ] = 7003;
+    ZoneHousePid[ 3 ] = 7004;
+}
+
+// //////////////////////////////////////////////////////////////////////////////////////////////////
+// Call on mapper loaded.
+void start()
+{
+    InitializeGame();
+    InitializeTabs();
+    zone_house_init();
+    map_tile_init();
+    GetItemPidsFile( "container" );
+    SetDefaultCritterParam( 6, 140 );
+    SetDefaultCritterParam( 7, 141 );
+    SetDefaultCritterParam( 8, 142 );
+    SetDefaultCritterParam( 9, 963 );
+    SetDefaultCritterParam( 10, 960 );
+    SetDefaultCritterParam( 11, 961 );
+    SetDefaultCritterParam( 12, 112 );
+
+    #ifdef MAPPER_KAWAII_GUI
+    GUI_Init();
+    TestGUIInit();
+    #endif
+
+}
+
+uint NumberPatrol = 0;
+uint PatrolPoint = 0;
+uint MaxPoint = 0;
+
+void InitializeTabs()
+{
+    // FAST TAB
+    TabDelete( TAB_FAST_ITEMS );
+    uint16[] pids;
+
+    // Special hexes
+    pids.resize( 0 );
+    pids.insertLast( 2049 );   // Exit hex
+    pids.insertLast( 2067 );   // Secret Blocking Hex
+    pids.insertLast( 2141 );   // Light source
+    pids.insertLast( 15670 );  // Light block
+    pids.insertLast( 14112 );  // sai
+    pids.insertLast( 2344 );   // Block Hex Auto Inviso
+    pids.insertLast( 3852 );   // Trigger
+    pids.insertLast( 3853 );   // Entire
+    pids.insertLast( 4012 );   // Scroll block
+    pids.insertLast( 4592 );   // Light stopper
+    pids.insertLast( 5621 );   // Wall blocker with light
+    pids.insertLast( 5622 );   // Wall blocker without light
+    pids.insertLast( 3854 );
+    pids.insertLast( 3855 );
+    for( uint i = 6800; i <= 6805; i++ )
+        pids.insertLast( i );
+    for( uint i = 4016; i <= 4023; i++ )
+        pids.insertLast( i );
+    for( uint i = 4031; i <= 4046; i++ )
+        pids.insertLast( i );
+    TabSetItemPids( TAB_FAST_ITEMS, "001 - special", pids );
+    pids.resize( 0 );
+    pids.insertLast( 2612 );
+    pids.insertLast( 2827 );
+    pids.insertLast( 2828 );
+    pids.insertLast( 2907 );
+    pids.insertLast( 2908 );
+    pids.insertLast( 2935 );
+    pids.insertLast( 2936 );
+    for( uint i = 3373; i <= 3376; i++ )
+        pids.insertLast( i );
+    TabSetItemPids( TAB_FAST_ITEMS, "002 - light", pids );
+
+    // ARMOR TAB
+    TabDelete( TAB_CUSTOM0 );
+    pids.resize( 0 );
+    pids.insertLast( PID_LEATHER_ARMOR );
+    pids.insertLast( PID_METAL_ARMOR );
+    pids.insertLast( PID_POWERED_ARMOR );
+    pids.insertLast( PID_COMBAT_ARMOR );
+    pids.insertLast( PID_LEATHER_JACKET );
+    pids.insertLast( PID_PURPLE_ROBE );
+    pids.insertLast( PID_HARDENED_POWER_ARMOR );
+    pids.insertLast( PID_BROTHERHOOD_COMBAT_ARMOR );
+    pids.insertLast( PID_TESLA_ARMOR );
+    pids.insertLast( PID_CURED_LEATHER_ARMOR );
+    pids.insertLast( PID_ADVANCED_POWER_ARMOR );
+    pids.insertLast( PID_ADVANCED_POWER_ARMOR_MK2 );
+    pids.insertLast( PID_LEATHER_ARMOR_MK_II );
+    pids.insertLast( PID_METAL_ARMOR_MK_II );
+    pids.insertLast( PID_COMBAT_ARMOR_MK_II );
+    pids.insertLast( PID_KEEPBRIGE_ROBE );
+    TabSetItemPids( TAB_CUSTOM0, "001 - Fallout 2 armor", pids );
+    pids.resize( 0 );
+    pids.insertLast( PID_BLACK_COMBAT_ARMOR );
+    pids.insertLast( PID_JUMPSUIT );
+    pids.insertLast( PID_FAKE_JUMPSUIT );
+    pids.insertLast( PID_BLACK_ROBE );
+    pids.insertLast( PID_CHITIN_ARMOR );
+    pids.insertLast( PID_CHITIN_ARMOR_MK_II );
+    // pids.insertLast(1100);
+    TabSetItemPids( TAB_CUSTOM0, "002 - FOnline armor", pids );
+    TabSetName( TAB_CUSTOM0, "Arm" );
+
+    // DRUGS TAB
+    TabDelete( TAB_CUSTOM1 );
+    pids.resize( 0 );
+    pids.insertLast( PID_STIMPAK );
+    pids.insertLast( PID_RADAWAY );
+    pids.insertLast( PID_ANTIDOTE );
+    pids.insertLast( PID_MENTATS );
+    pids.insertLast( PID_MUTATED_FRUIT );
+    pids.insertLast( PID_IGUANA_ON_A_STICK );
+    pids.insertLast( PID_BUFFOUT );
+    pids.insertLast( PID_MEAT_ON_A_STICK );
+    pids.insertLast( PID_NUKA_COLA );
+    pids.insertLast( PID_RAD_X );
+    pids.insertLast( PID_PSYCHO );
+    pids.insertLast( PID_BEER );
+    pids.insertLast( PID_BOOZE );
+    pids.insertLast( PID_SUPER_STIMPAK );
+    pids.insertLast( PID_JET );
+    pids.insertLast( PID_JET_ANTIDOTE );
+    pids.insertLast( PID_HEALING_POWDER );
+    pids.insertLast( PID_GAMMA_GULP_BEER );
+    pids.insertLast( PID_ROENTGEN_RUM );
+    pids.insertLast( PID_HYPO_POISON );
+    pids.insertLast( PID_COOKIE );
+    pids.insertLast( PID_MONUMENT_CHUNCK );
+    pids.insertLast( PID_ROT_GUT );
+    pids.insertLast( PID_MUTATED_TOE );
+    pids.insertLast( PID_HYPO );
+    pids.insertLast( PID_BOX_OF_DOUGHNUTS );
+    TabSetItemPids( TAB_CUSTOM1, "001 - Drugs", pids );
+    TabSetName( TAB_CUSTOM1, "Drg" );
+
+    // WEAPON TAB
+    TabDelete( TAB_CUSTOM2 );
+
+    pids.resize( 0 );
+    pids.insertLast( PID_10MM_PISTOL );
+    pids.insertLast( PID_10MM_SMG );
+    pids.insertLast( PID_DESERT_EAGLE );
+    pids.insertLast( PID_DESERT_EAGLE_EXT_MAG );
+    pids.insertLast( PID_14MM_PISTOL );
+    pids.insertLast( PID_9MM_MAUSER );
+    pids.insertLast( PID_MAUSER_SMG );
+    pids.insertLast( PID_223_PISTOL );
+    pids.insertLast( PID_HK_P90C );
+    pids.insertLast( PID_TOMMY_GUN );
+    pids.insertLast( PID_ZIP_GUN );
+    pids.insertLast( PID_44_MAGNUM_REVOLVER );
+    pids.insertLast( PID_44_MAGNUM_SPEEDLOADER );
+    pids.insertLast( PID_GREASE_GUN );
+    pids.insertLast( PID_HK_G11 );
+    pids.insertLast( PID_HK_G11E );
+    pids.insertLast( PID_NEEDLER_PISTOL );
+    pids.insertLast( PID_PK12_GAUSS_PISTOL );
+    TabSetItemPids( TAB_CUSTOM2, "001 - Pistols&SMGs", pids );
+
+    pids.resize( 0 );
+    pids.insertLast( PID_HUNTING_RIFLE );
+    pids.insertLast( PID_SCOPED_HUNTING_RIFLE );
+    pids.insertLast( PID_ASSAULT_RIFLE );
+    pids.insertLast( PID_ASSAULT_RIFLE_EXT_MAG );
+    pids.insertLast( PID_FN_FAL );
+    pids.insertLast( PID_FN_FAL_NIGHT_SCOPE );
+    pids.insertLast( PID_FN_FAL_HPFA );
+    pids.insertLast( PID_SHOTGUN );
+    pids.insertLast( PID_COMBAT_SHOTGUN );
+    pids.insertLast( PID_HK_CAWS );
+    pids.insertLast( PID_PANCOR_JACKHAMMER );
+    pids.insertLast( PID_SNIPER_RIFLE );
+    pids.insertLast( PID_RED_RYDER_BB_GUN );
+    pids.insertLast( PID_RED_RYDER_LE_BB_GUN );
+    pids.insertLast( PID_JONNY_BB_GUN );
+    pids.insertLast( PID_SPRINGER_RIFLE );
+    pids.insertLast( PID_INDEPENDENT );
+    pids.insertLast( PID_SAWED_OFF_SHOTGUN );
+    pids.insertLast( PID_ELEPHANT_GUN );
+    pids.insertLast( PID_M72_GAUSS_RIFLE );
+    TabSetItemPids( TAB_CUSTOM2, "002 - Rifles&Shotguns", pids );
+
+    pids.resize( 0 );
+    pids.insertLast( PID_FLAMER );
+    pids.insertLast( PID_IMPROVED_FLAMETHROWER );
+    pids.insertLast( PID_ROCKET_LAUNCHER );
+    pids.insertLast( PID_M60 );
+    pids.insertLast( PID_LIGHT_SUPPORT_WEAPON );
+    pids.insertLast( PID_BOZAR );
+    pids.insertLast( PID_MINIGUN );
+    pids.insertLast( PID_AVENGER_MINIGUN );
+    pids.insertLast( PID_VINDICATOR_MINIGUN );
+    TabSetItemPids( TAB_CUSTOM2, "003 - Big guns", pids );
+
+    pids.resize( 0 );
+    pids.insertLast( PID_LASER_PISTOL );
+    pids.insertLast( PID_MAGNETO_LASER_PISTOL );
+    pids.insertLast( PID_LASER_RIFLE );
+    pids.insertLast( PID_LASER_RIFLE_EXT_CAP );
+    pids.insertLast( PID_PLASMA_PISTOL );
+    pids.insertLast( PID_PLASMA_PISTOL_EXT_CART );
+    pids.insertLast( PID_PLASMA_RIFLE );
+    pids.insertLast( PID_TURBO_PLASMA_RIFLE );
+    pids.insertLast( PID_GATLING_LASER );
+    pids.insertLast( PID_YK32_PULSE_PISTOL );
+    pids.insertLast( PID_YK42B_PULSE_RIFLE );
+    pids.insertLast( PID_ALIEN_LASER_PISTOL );
+    pids.insertLast( PID_SOLAR_SCORCHER );
+    pids.insertLast( PID_PHAZER );
+    TabSetItemPids( TAB_CUSTOM2, "004 - Energy weapons", pids );
+
+    pids.resize( 0 );
+    pids.insertLast( PID_KNIFE );
+    pids.insertLast( PID_COMBAT_KNIFE );
+    pids.insertLast( PID_LIL_JESUS_WEAPON );
+    pids.insertLast( PID_WAKIZASHI_BLADE );
+    pids.insertLast( PID_CLUB );
+    pids.insertLast( PID_SLEDGEHAMMER );
+    pids.insertLast( PID_SPEAR );
+    pids.insertLast( PID_SHARP_SPEAR );
+    pids.insertLast( PID_CROWBAR );
+    pids.insertLast( PID_SUPER_SLEDGE );
+    pids.insertLast( PID_RIPPER );
+    pids.insertLast( PID_CATTLE_PROD );
+    pids.insertLast( PID_SUPER_CATTLE_PROD );
+    pids.insertLast( PID_SWITCHBLADE );
+    pids.insertLast( PID_SHARPENED_POLE );
+    pids.insertLast( PID_SHIV );
+    pids.insertLast( PID_WRENCH );
+    pids.insertLast( PID_LOUISVILLE_SLUGGER );
+    TabSetItemPids( TAB_CUSTOM2, "005 - Melee weapons", pids );
+
+    pids.resize( 0 );
+    pids.insertLast( PID_BRASS_KNUCKLES );
+    pids.insertLast( PID_SPIKED_KNUCKLES );
+    pids.insertLast( PID_POWER_FIST );
+    pids.insertLast( PID_MEGA_POWER_FIST );
+    pids.insertLast( PID_BOXING_GLOVES );
+    pids.insertLast( PID_PLATED_BOXING_GLOVES );
+    TabSetItemPids( TAB_CUSTOM2, "006 - Unarmed", pids );
+
+    pids.resize( 0 );
+    pids.insertLast( PID_RAT_GRENADE_TNT );
+    pids.insertLast( PID_FRAG_GRENADE );
+    pids.insertLast( PID_PLASMA_GRENADE );
+    pids.insertLast( PID_PULSE_GRENADE );
+    pids.insertLast( PID_MOLOTOV_COCKTAIL );
+    pids.insertLast( PID_FLARE );
+    pids.insertLast( PID_ACTIVE_FLARE );
+    pids.insertLast( PID_THROWING_KNIFE );
+    pids.insertLast( PID_PLANT_SPIKE );
+    pids.insertLast( PID_SHARPENED_POLE );
+    pids.insertLast( PID_ROCK );
+    pids.insertLast( PID_GOLD_NUGGET );
+    pids.insertLast( PID_URANIUM_ORE );
+    pids.insertLast( PID_REFINED_ORE );
+    pids.insertLast( PID_HOLY_HAND_GRENADE );
+    TabSetItemPids( TAB_CUSTOM2, "007 - Throwing", pids );
+
+    pids.resize( 0 );
+    pids.insertLast( PID_ROBO_ROCKET_LAUNCHER );
+    pids.insertLast( PID_EYEBALL_FIST_1 );
+    pids.insertLast( PID_EYEBALL_FIST_2 );
+    pids.insertLast( PID_PLANT_SPIKE );
+    pids.insertLast( PID_DEATHCLAW_CLAW_1 );
+    pids.insertLast( PID_DEATHCLAW_CLAW_2 );
+    pids.insertLast( PID_FIRE_GECKO_FLAME_WEAPON );
+    pids.insertLast( PID_SPECIAL_BOXER_WEAPON );
+    pids.insertLast( PID_RING_BOXING_GLOVES );
+    pids.insertLast( PID_RING_PLATED_BOXING_GLOVES );
+    pids.insertLast( PID_END_BOSS_KIFE );
+    pids.insertLast( PID_END_BOSS_PLASMA_GUN );
+    pids.insertLast( PID_DUAL_MINIGUN );
+    pids.insertLast( PID_HEAVY_DUAL_MINIGUN );
+    pids.insertLast( PID_HEAVY_DUAL_MINIGUN_LONG_RANGE );
+    pids.insertLast( PID_GUN_TURRET_WEAPON );
+    TabSetItemPids( TAB_CUSTOM2, "008 - Mob weapons", pids );
+
+    TabSetName( TAB_CUSTOM2, "Wpn" );
+
+    // AMMO TAB
+    TabDelete( TAB_CUSTOM3 );
+    pids.resize( 0 );
+    pids.insertLast( PID_10MM_JHP );
+    pids.insertLast( PID_10MM_AP );
+    pids.insertLast( PID_44_MAGNUM_JHP );
+    pids.insertLast( PID_FLAMETHROWER_FUEL );
+    pids.insertLast( PID_EXPLOSIVE_ROCKET );
+    pids.insertLast( PID_14MM_AP );
+    pids.insertLast( PID_223_FMJ );
+    pids.insertLast( PID_5MM_JHP );
+    pids.insertLast( PID_5MM_AP );
+    pids.insertLast( PID_ROCKET_AP );
+    pids.insertLast( PID_SMALL_ENERGY_CELL );
+    pids.insertLast( PID_MICRO_FUSION_CELL );
+    pids.insertLast( PID_SHOTGUN_SHELLS );
+    pids.insertLast( PID_44_FMJ_MAGNUM );
+    pids.insertLast( PID_9MM_BALL );
+    pids.insertLast( PID_BBS );
+    pids.insertLast( PID_ROBO_ROCKET_AMMO );
+    pids.insertLast( PID_45_CALIBER_AMMO );
+    pids.insertLast( PID_2MM_EC_AMMO );
+    pids.insertLast( PID_4_7MM_CASELESS );
+    pids.insertLast( PID_9MM_AMMO );
+    pids.insertLast( PID_HN_NEEDLER_CARTRIDGE );
+    pids.insertLast( PID_HN_AP_NEEDLER_CARTRIDGE );
+    pids.insertLast( PID_7_62MM_AMMO );
+    pids.insertLast( PID_FLAMETHROWER_FUEL_MK_II );
+    pids.insertLast( PID_700_NITRO_EXPRESS );
+    TabSetItemPids( TAB_CUSTOM3, "001 - Ammo", pids );
+    TabSetName( TAB_CUSTOM3, "Amm" );
+
+    // MSC TAB
+    TabDelete( TAB_CUSTOM4 );
+
+    pids.resize( 0 );
+    pids.insertLast( PID_BOTTLE_CAPS );
+    pids.insertLast( PID_REAL_BOTTLE_CAPS );
+    pids.insertLast( PID_MORNING_STAR_MINE );
+    pids.insertLast( PID_KOKOWEEF_MINE_SCRIP );
+    TabSetItemPids( TAB_CUSTOM4, "000 - Money", pids );
+
+    pids.resize( 0 );
+    pids.insertLast( PID_GUNS_AND_BULLETS );
+    pids.insertLast( PID_SCOUT_HANDBOOK );
+    pids.insertLast( PID_FIRST_AID_BOOK );
+    pids.insertLast( PID_CATS_PAW );
+    pids.insertLast( PID_BIG_BOOK_OF_SCIENCE );
+    pids.insertLast( PID_TECHNICAL_MANUAL );
+    pids.insertLast( PID_CHEMISTRY_MANUAL );
+    pids.insertLast( PID_CATS_PAW_ISSUE_5 );
+    pids.insertLast( PID_FALLOUT_2_HINTBOOK );
+    pids.insertLast( PID_DEANS_ELECTRONICS );
+    pids.insertLast( PID_BECKY_BOOK );
+    TabSetItemPids( TAB_CUSTOM4, "001 - Books", pids );
+
+    pids.resize( 0 );
+    pids.insertLast( PID_FIRST_AID_KIT );
+    pids.insertLast( PID_DOCTORS_BAG );
+    pids.insertLast( PID_HYPODERMIC_NEEDLE );
+    pids.insertLast( PID_MUTAGENIC_SYRUM );
+    pids.insertLast( PID_HEART_PILLS );
+    pids.insertLast( PID_FIELD_MEDIC_KIT );
+    pids.insertLast( PID_PARAMEDICS_BAG );
+    pids.insertLast( PID_SPECTACLES );
+    pids.insertLast( PID_EMPTY_JET );
+    pids.insertLast( PID_OXYGEN_TANK );
+    pids.insertLast( PID_MEDICAL_SUPPLIES );
+    pids.insertLast( PID_BIO_GEL );
+    TabSetItemPids( TAB_CUSTOM4, "002 - Medical", pids );
+
+    pids.resize( 0 );
+    pids.insertLast( PID_DOG_TAGS );
+    pids.insertLast( PID_ELECTRONIC_BUG );
+    pids.insertLast( PID_WATER_CHIP );
+    pids.insertLast( PID_BRIEFCASE );
+    pids.insertLast( PID_GOLD_LOCKET );
+    pids.insertLast( PID_TAPE_RECORDER );
+    pids.insertLast( PID_URN );
+    pids.insertLast( PID_TANGLERS_HAND );
+    pids.insertLast( PID_NECKLACE );
+    pids.insertLast( PID_PSYCHIC_NULLIFIER );
+    pids.insertLast( PID_WATER_FLASK );
+    pids.insertLast( PID_SMALL_STATUETTE );
+    pids.insertLast( PID_BONES );
+    pids.insertLast( PID_ANNA_GOLD_LOCKET );
+    pids.insertLast( PID_DAY_PASS );
+    pids.insertLast( PID_FAKE_CITIZENSHIP );
+    pids.insertLast( PID_CORNELIUS_GOLD_WATCH );
+    pids.insertLast( PID_HY_MAG_PART );
+    pids.insertLast( PID_SLAG_MESSAGE );
+    pids.insertLast( PID_VIC_RADIO );
+    pids.insertLast( PID_VIC_WATER_FLASK );
+    pids.insertLast( PID_TROPHY_OF_RECOGNITION );
+    pids.insertLast( PID_NEURAL_INTERFACE );
+    pids.insertLast( PID_TALISMAN );
+    pids.insertLast( PID_MUTAGENIC_SYRUM );
+    pids.insertLast( PID_MOORE_BAD_BRIEFCASE );
+    pids.insertLast( PID_MOORE_GOOD_BRIEFCASE );
+    pids.insertLast( PID_DR_HENRY_PAPERS );
+    pids.insertLast( PID_RANGER_MAP );
+    pids.insertLast( PID_GECK );
+    pids.insertLast( PID_OXYGEN_TANK );
+    pids.insertLast( PID_POISON_TANK );
+    pids.insertLast( PID_GOLD_TOOTH );
+    pids.insertLast( PID_HOWITZER_SHELL );
+    pids.insertLast( PID_RAMIREZ_BOX_CLOSED );
+    pids.insertLast( PID_RAMIREZ_BOX_OPEN );
+    pids.insertLast( PID_BLONDIE_DOG_TAG );
+    pids.insertLast( PID_ANGEL_EYES_DOG_TAG );
+    pids.insertLast( PID_TUCO_DOG_TAG );
+    pids.insertLast( PID_RAIDERS_MAP );
+    pids.insertLast( PID_SHERIFF_BADGE );
+    pids.insertLast( PID_VERTIBIRD_PLANS );
+    pids.insertLast( PID_ACCOUNT_BOOK );
+    pids.insertLast( PID_BRAHMIN_SKIN );
+    pids.insertLast( PID_TORN_PAPER_1 );
+    pids.insertLast( PID_TORN_PAPER_2 );
+    pids.insertLast( PID_TORN_PAPER_3 );
+    pids.insertLast( PID_PASSWORD_PAPER );
+    pids.insertLast( PID_PASSWORD_HOLODISK );  // Not a holodisk actually
+    pids.insertLast( PID_ELRON_FIELD_REP );
+    pids.insertLast( PID_EXPLOSIVE_SWITCH );   // Not active in FOnline, use PID 222 (PID_TOGGLE_SWITCH)
+    pids.insertLast( PID_SMITTY_MEAL );
+    pids.insertLast( PID_K9_MOTIVATOR );
+    pids.insertLast( PID_ENLIGHTENED_ONE_LETTER );
+    pids.insertLast( PID_MR_NIXON_DOLL );
+    TabSetItemPids( TAB_CUSTOM4, "003 - Fallout 1/2 Quest", pids );
+
+    pids.resize( 0 );
+    pids.insertLast( PID_BOTTLE_CAPS );
+    pids.insertLast( PID_REAL_BOTTLE_CAPS );
+    pids.insertLast( PID_FUZZY_PAINTING );
+    pids.insertLast( PID_GOLD_LOCKET );
+    pids.insertLast( PID_LIGHTER );
+    pids.insertLast( PID_NECKLACE );
+    pids.insertLast( PID_COSMETIC_CASE );
+    pids.insertLast( PID_DICE );
+    pids.insertLast( PID_LOADED_DICE );
+    pids.insertLast( PID_MIRROR_SHADES );
+    TabSetItemPids( TAB_CUSTOM4, "004 - Wealth", pids );
+
+    pids.resize( 0 );
+    pids.insertLast( PID_DECK_OF_TRAGIC_CARDS );
+    pids.insertLast( PID_DICE );
+    pids.insertLast( PID_LOADED_DICE );
+    pids.insertLast( PID_DECK_OF_CARDS );
+    pids.insertLast( PID_MARKED_DECK_OF_CARDS );
+    TabSetItemPids( TAB_CUSTOM4, "005 - Gamble", pids );
+
+    pids.resize( 0 );
+    pids.insertLast( PID_CATS_PAW );
+    pids.insertLast( PID_BLUE_CONDOM );
+    pids.insertLast( PID_GREEN_CONDOM );
+    pids.insertLast( PID_RED_CONDOM );
+    pids.insertLast( PID_BALL_GAG );
+    pids.insertLast( PID_BLOW_UP_DOLL );
+    pids.insertLast( PID_POPPED_BLOW_UP_DOLL );
+    TabSetItemPids( TAB_CUSTOM4, "006 - Sex", pids );
+
+    pids.resize( 0 );
+    pids.insertLast( PID_BOX_OF_NOODLES );
+    pids.insertLast( PID_FROZEN_DINNER );
+    pids.insertLast( PID_MEAT_JERKY );
+    pids.insertLast( PID_CHEEZY_POOFS );
+    pids.insertLast( PID_SMITTY_MEAL );
+    pids.insertLast( PID_MEAT );
+    pids.insertLast( PID_CIGARETTES );
+    TabSetItemPids( TAB_CUSTOM4, "007 - Food&Drink", pids );
+
+    pids.resize( 0 );
+    pids.insertLast( PID_TAPE_RECORDER );
+    pids.insertLast( PID_BLACK_COC_BADGE );
+    pids.insertLast( PID_KOTW_GRAIL );
+    pids.insertLast( PID_KOTW_STATUETTE );
+    pids.insertLast( PID_ARROYO_SYRINGE );
+    pids.insertLast( PID_FAKE_GECK );
+    pids.insertLast( PID_USED_GECK );
+    pids.insertLast( PID_DANTON_POISON );
+    pids.insertLast( PID_VACCINE );
+    pids.insertLast( PID_POSTMAN_LETTER );
+    pids.insertLast( PID_CHOSEN_HOLO );
+    pids.insertLast( PID_CHOSEN_HOLO_DECODED );
+    pids.insertLast( PID_LETTER_TO_LIN );
+    pids.insertLast( PID_LETTER_TO_TODD );
+    pids.insertLast( PID_EDWARD_REPORT );
+    pids.insertLast( PID_LETTER_TO_SINDY );
+    pids.insertLast( PID_LETTER_TO_CASSIDY );
+    TabSetItemPids( TAB_CUSTOM4, "008 - FOnline:TLA quest", pids );
+
+    pids.resize( 0 );
+    pids.insertLast( PID_PUMP_PARTS );
+    pids.insertLast( PID_METAL_TRASH );
+    pids.insertLast( PID_STEEL );
+    pids.insertLast( PID_TECHNICAL_MANUAL );
+    pids.insertLast( PID_MULTI_TOOL );
+    pids.insertLast( PID_MOTOR );
+    pids.insertLast( PID_LIGHTER );
+    pids.insertLast( PID_ROPE );
+    pids.insertLast( PID_CAR_FUEL_CELL_CONTROLLER );
+    pids.insertLast( PID_CAR_FUEL_INJECTION );
+    pids.insertLast( PID_ROBOT_PARTS );
+    pids.insertLast( PID_FLINT );
+    pids.insertLast( PID_FIREWOOD );
+    pids.insertLast( PID_PLANK );
+    pids.insertLast( PID_PLASMA_TRANSFORMER );
+    pids.insertLast( PID_SUPER_TOOL_KIT );
+    pids.insertLast( PID_V15_COMPUTER_PART );
+    pids.insertLast( PID_OIL_CAN );
+    pids.insertLast( PID_POCKET_LINT );
+    pids.insertLast( PID_BIO_GEL );
+    pids.insertLast( PID_BOTTLE_EMPTY );
+    pids.insertLast( PID_BOTTLE_FULL );
+    pids.insertLast( PID_PART_OF_ROPE );
+    pids.insertLast( PID_GUNPOWDER );
+    pids.insertLast( PID_METAL_ORE );
+    pids.insertLast( PID_MINERAL );
+    pids.insertLast( PID_TUBE );
+    pids.insertLast( PID_BOTTLE_GLASS );
+    pids.insertLast( PID_AXE );
+    pids.insertLast( PID_NITROGLYCERIN );
+    pids.insertLast( PID_TNT );
+    pids.insertLast( PID_HEXOGEN );
+    pids.insertLast( PID_PLASTIC_EXPLOSIVES_DULL );
+    pids.insertLast( PID_WELDING );
+    pids.insertLast( PID_WELDING_USED );
+    pids.insertLast( PID_RAGS );
+    pids.insertLast( PID_CHEMICALS );
+    pids.insertLast( PID_SANDBAG_EMPTY );
+    TabSetItemPids( TAB_CUSTOM4, "009 - Craft", pids );
+
+    pids.resize( 0 );
+    pids.insertLast( PID_DISK_FEV );
+    pids.insertLast( PID_DISK_SECURITY );
+    pids.insertLast( PID_DISK_ALPHA_EXPERIMENT );
+    pids.insertLast( PID_DISK_DELTA_EXPERIMENT );
+    pids.insertLast( PID_DISK_VREES_EXPERIMENT );
+    pids.insertLast( PID_DISK_MUTANT_TRANSMISSIONS );
+    pids.insertLast( PID_DISK_BROTHERHOOD_HISTORY );
+    pids.insertLast( PID_DISK_MAXSON_HISTORY );
+    pids.insertLast( PID_DISK_MAXSON_JOURNAL );
+    pids.insertLast( PID_DISK_VAULT_RECORDS );
+    pids.insertLast( PID_DISK_MILITARY_BASE_SEC_CODE );
+    pids.insertLast( PID_DISK_REGULATOR_TRANSMISSIONS );
+    pids.insertLast( PID_HOLODISK_FAKE_V13 );
+    pids.insertLast( PID_GECKO_DATA_DISK );
+    pids.insertLast( PID_REACTOR_DATA_DISK );
+    pids.insertLast( PID_LYNETTE_HOLO );
+    pids.insertLast( PID_WESTIN_HOLO );
+    pids.insertLast( PID_SPY_HOLO );
+    pids.insertLast( PID_BISHOPS_HOLODISK );
+    pids.insertLast( PID_ENCLAVE_HOLODISK_5 );
+    pids.insertLast( PID_ENCLAVE_HOLODISK_1 );
+    pids.insertLast( PID_ENCLAVE_HOLODISK_2 );
+    pids.insertLast( PID_ENCLAVE_HOLODISK_3 );
+    pids.insertLast( PID_ENCLAVE_HOLODISK_4 );
+    pids.insertLast( PID_EVACUATION_HOLODISK );
+    pids.insertLast( PID_EXPERIMENT_HOLODISK );
+    pids.insertLast( PID_MEDICAL_HOLODISK );
+    pids.insertLast( PID_ELRON_MEMBER_HOLO );
+    pids.insertLast( PID_BROADCAST_HOLODISK );
+    pids.insertLast( PID_SIERRA_MISSION_HOLODISK );
+    pids.insertLast( PID_NCR_HISTORY_HOLODISK );
+    pids.insertLast( PID_ELRON_TEACH_HOLO );
+    pids.insertLast( PID_DEATH_STAR_PLANS );
+    pids.insertLast( PID_FALLOUT_3_HOLO );
+    TabSetItemPids( TAB_CUSTOM4, "010 - Holo", pids );
+
+    pids.resize( 0 );
+    pids.insertLast( PID_STEALTH_BOY );
+    pids.insertLast( PID_WATER_CHIP );
+    pids.insertLast( PID_ELECTRONIC_BUG );
+    pids.insertLast( PID_MOTION_SENSOR );
+    pids.insertLast( PID_ELECTRONIC_LOCKPICKS );
+    pids.insertLast( PID_MOTOR );
+    pids.insertLast( PID_TAPE_RECORDER );
+    pids.insertLast( PID_PSYCHIC_NULLIFIER );
+    pids.insertLast( PID_ACTIVE_GEIGER_COUNTER );
+    pids.insertLast( PID_ACTIVE_MOTION_SENSOR );
+    pids.insertLast( PID_ACTIVE_STEALTH_BOY );
+    pids.insertLast( PID_MOTIVATOR );
+    pids.insertLast( PID_CAR_FUEL_CELL_CONTROLLER );
+    pids.insertLast( PID_CAR_FUEL_INJECTION );
+    pids.insertLast( PID_HY_MAG_PART );
+    pids.insertLast( PID_ROBOT_PARTS );
+    pids.insertLast( PID_NEURAL_INTERFACE );
+    pids.insertLast( PID_CAR_FUEL_CELL );
+    pids.insertLast( PID_PLASMA_TRANSFORMER );
+    pids.insertLast( PID_COMPUTER_VOICE_MODULE );
+    pids.insertLast( PID_ROBOT_MOTIVATOR );
+    pids.insertLast( PID_V15_COMPUTER_PART );
+    pids.insertLast( PID_ELEC_LOCKPICK_MKII );
+    pids.insertLast( PID_MINE_PART );
+    pids.insertLast( PID_EXCAVATOR_CHIP );
+    pids.insertLast( PID_NAVCOM_PARTS );
+    pids.insertLast( PID_TANKER_FOB );
+    pids.insertLast( PID_MEM_CHIP_BLUE );
+    pids.insertLast( PID_MEM_CHIP_GREEN );
+    pids.insertLast( PID_MEM_CHIP_RED );
+    pids.insertLast( PID_MEM_CHIP_YELLOW );
+    pids.insertLast( PID_PIP_BOY_MEDICAL_ENHANCER );
+    pids.insertLast( PID_DERMAL_PIP_BOY_DISK );
+    TabSetItemPids( TAB_CUSTOM4, "011 - Electronics", pids );
+
+    pids.resize( 0 );
+    pids.insertLast( PID_SCORPION_TAIL );
+    pids.insertLast( PID_GECKO_PELT );
+    pids.insertLast( PID_GOLDEN_GECKO_PELT );
+    pids.insertLast( PID_FIRE_GECKO_PELT );
+    pids.insertLast( PID_BRAHMIN_SKIN );
+    pids.insertLast( PID_RADSCORPION_PARTS );
+    pids.insertLast( PID_MOUSE_SKIN );
+    TabSetItemPids( TAB_CUSTOM4, "012 - Animal-derived", pids );
+
+    pids.resize( 0 );
+    pids.insertLast( PID_BAG );
+    pids.insertLast( PID_MULTI_TOOL );
+    pids.insertLast( PID_LOCKPICKS );
+    pids.insertLast( PID_EXP_LOCKPICK_SET );
+    pids.insertLast( PID_ELECTRONIC_LOCKPICKS );
+    pids.insertLast( PID_ELEC_LOCKPICK_MKII );
+    pids.insertLast( PID_LIGHTER );
+    pids.insertLast( PID_WATER_FLASK );
+    pids.insertLast( PID_ROPE );
+    pids.insertLast( PID_RUBBER_BOOTS );
+    pids.insertLast( PID_FLINT );
+    pids.insertLast( PID_FIREWOOD );
+    pids.insertLast( PID_SHOVEL );
+    pids.insertLast( PID_OIL_CAN );
+    pids.insertLast( PID_BOTTLE_FULL );
+    pids.insertLast( PID_CIGARETTES );
+    pids.insertLast( PID_AXE );
+    pids.insertLast( PID_SANDBAG_EMPTY );
+    TabSetItemPids( TAB_CUSTOM4, "013 - Tools and survival", pids );
+
+    pids.resize( 0 );
+    pids.insertLast( PID_DYNAMITE );
+    pids.insertLast( PID_PLASTIC_EXPLOSIVES );
+    pids.insertLast( PID_HOWITZER_SHELL );
+    pids.insertLast( PID_MINE );   // To plant a mine on a map, use PID_ACTIVE_MINE (Misc2)
+    pids.insertLast( PID_NITROGLYCERIN );
+    pids.insertLast( PID_TNT );
+    pids.insertLast( PID_HEXOGEN );
+    pids.insertLast( PID_PLASTIC_EXPLOSIVES_DULL );
+    TabSetItemPids( TAB_CUSTOM4, "014 - Explosives", pids );
+
+    pids.resize( 0 );
+    pids.insertLast( PID_FUZZY_PAINTING );
+    pids.insertLast( PID_BARTER_TANDI );
+    pids.insertLast( PID_DAY_PASS );
+    pids.insertLast( PID_CAR_FUEL_CELL );
+    pids.insertLast( PID_FAKE_CITIZENSHIP );
+    pids.insertLast( PID_CLIPBOARD );
+    pids.insertLast( PID_PART_REQUISITION_FORM );
+    pids.insertLast( PID_EASTER_EGG );
+    pids.insertLast( PID_MAGIC_8_BALL );
+    pids.insertLast( PID_PRESIDENTIAL_PASS );
+    pids.insertLast( PID_RANGER_PIN );
+    pids.insertLast( PID_GECK );
+    pids.insertLast( PID_SPECTACLES );
+    pids.insertLast( PID_HOWITZER_SHELL );
+    TabSetItemPids( TAB_CUSTOM4, "015 - Misc", pids );
+
+    pids.resize( 0 );
+    pids.insertLast( PID_FLOWER );
+    pids.insertLast( PID_BROC_FLOWER );
+    pids.insertLast( PID_XANDER_ROOT );
+    pids.insertLast( PID_DAISIES );
+    TabSetItemPids( TAB_CUSTOM4, "016 - Plants", pids );
+
+    pids.resize( 0 );
+    pids.insertLast( PID_ACCESS_CARD );
+    pids.insertLast( PID_BLACK_COC_BADGE );
+    pids.insertLast( PID_RED_COC_BADGE );
+    pids.insertLast( PID_SECURITY_CARD );
+    pids.insertLast( PID_DAY_PASS );
+    pids.insertLast( PID_FAKE_CITIZENSHIP );
+    pids.insertLast( PID_TRAPPER_TOWN_KEY );
+    pids.insertLast( PID_YELLOW_REACTOR_KEYCARD );
+    pids.insertLast( PID_RED_REACTOR_KEYCARD );
+    pids.insertLast( PID_PRESIDENTIAL_PASS );
+    pids.insertLast( PID_RANGER_PIN );
+    pids.insertLast( PID_V15_KEYCARD );
+    pids.insertLast( PID_STABLES_ID_BADGE );
+    pids.insertLast( PID_VAULT_13_SHACK_KEY );
+    pids.insertLast( PID_SHERIFF_BADGE );
+    pids.insertLast( PID_PRES_ACCESS_KEY );
+    TabSetItemPids( TAB_CUSTOM4, "017 - Keys/Cards/Passes", pids );
+
+    pids.resize( 0 );
+    pids.insertLast( PID_DIXON_EYE );
+    pids.insertLast( PID_CLIFTON_EYE );
+    pids.insertLast( PID_CYBERNETIC_BRAIN );
+    pids.insertLast( PID_HUMAN_BRAIN );
+    pids.insertLast( PID_CHIMP_BRAIN );
+    pids.insertLast( PID_ABNORMAL_BRAIN );
+    pids.insertLast( PID_PLAYERS_EAR );
+    pids.insertLast( PID_MASTICATORS_EAR );
+    pids.insertLast( PID_DECOMPOSING_BODY );
+    TabSetItemPids( TAB_CUSTOM4, "018 - Body parts", pids );
+
+    TabSetName( TAB_CUSTOM4, "Msc" );
+
+    // MSC2 TAB
+    TabDelete( TAB_CUSTOM5 );
+    // Key
+    pids.resize( 0 );
+    pids.insertLast( PID_KEY );
+    pids.insertLast( PID_KEYS );
+    pids.insertLast( PID_RED_PASS_KEY );
+    pids.insertLast( PID_BLUE_PASS_KEY );
+    pids.insertLast( PID_NUKE_KEY );
+    pids.insertLast( PID_YELLOW_PASS_KEY );
+    pids.insertLast( PID_TEMPLE_KEY );
+    pids.insertLast( PID_JAIL_KEY );
+    TabSetItemPids( TAB_CUSTOM5, "001 - keys", pids );
+
+    // Msc2 items
+    pids.resize( 0 );
+    pids.insertLast( PID_GEIGER_COUNTER );
+    pids.insertLast( PID_HOLODISK );
+    pids.insertLast( PID_RADIO );
+    pids.insertLast( PID_ACTIVE_DYNAMITE );
+    pids.insertLast( PID_ACTIVE_PLASTIC_EXPLOSIVE );
+    pids.insertLast( PID_TOGGLE_SWITCH );
+    pids.insertLast( PID_MEMO );
+    pids.insertLast( PID_MAP );
+    pids.insertLast( PID_ACTIVE_MINE );
+    pids.insertLast( PID_POSTMAN_LETTER );
+    pids.insertLast( PID_CHOSEN_HOLO );
+    pids.insertLast( PID_CHOSEN_HOLO_DECODED );
+    pids.insertLast( PID_LETTER_TO_LIN );
+    pids.insertLast( PID_LETTER_TO_TODD );
+    pids.insertLast( PID_EDWARD_REPORT );
+    pids.insertLast( PID_LETTER_TO_SINDY );
+    pids.insertLast( PID_LETTER_TO_CASSIDY );
+    pids.insertLast( PID_HUBOLOGIST_BOOK );
+    pids.insertLast( PID_REBEL_TAG );
+    pids.insertLast( PID_SANDBAG_1 );
+    pids.insertLast( PID_SANDBAG_2 );
+    pids.insertLast( PID_SANDBAG_3 );
+    pids.insertLast( PID_SANDBAG_4 );
+    pids.insertLast( PID_SANDBAG_5 );
+    pids.insertLast( PID_KOTW_BEER );
+    pids.insertLast( PID_CHITIN_ARMOR_RECIPE );
+    pids.insertLast( PID_FAKE_LETTER );
+    TabSetItemPids( TAB_CUSTOM5, "002 - Msc2", pids );
+
+    // Cars
+    pids.resize( 0 );
+    pids.insertLast( PID_BUGGY );
+    pids.insertLast( PID_BUGGY_BAG );
+    pids.insertLast( PID_SCOUT );
+    pids.insertLast( PID_SCOUT_BAG );
+    pids.insertLast( PID_HUMMER );
+    pids.insertLast( PID_HUMMER_BAG );
+    pids.insertLast( PID_HIGHWAYMAN );
+    pids.insertLast( PID_HIGHWAYMAN_BAG );
+    pids.insertLast( PID_VERTIBIRD );
+    pids.insertLast( PID_VERTIBIRD_BAG );
+    pids.insertLast( PID_BOAT );
+    pids.insertLast( PID_BOAT_BAG );
+    pids.insertLast( 4113 );
+    TabSetItemPids( TAB_CUSTOM5, "003 - cars", pids );
+
+    // Etc.
+    pids.resize( 0 );
+    pids.insertLast( 3228 );
+    TabSetItemPids( TAB_CUSTOM5, "004 - etc.", pids );
+    TabSetName( TAB_CUSTOM5, "Msc2" );
+
+    // CONTAINERS AND DOORS TAB
+    TabDelete( TAB_CUSTOM6 );
+
+    // Containers
+    pids.resize( 0 );
+    for( uint i = 4142; i <= 4151; i++ )
+        pids.insertLast( i );
+    for( uint i = 4450; i <= 4494; i++ )
+        pids.insertLast( i );
+    for( uint i = 4541; i <= 4555; i++ )
+        pids.insertLast( i );
+    for( uint i = 4599; i <= 4664; i++ )
+        pids.insertLast( i );
+    for( uint i = 18200; i <= 18256; i++ )
+        pids.insertLast( i );
+    TabSetItemPids( TAB_CUSTOM6, "001 - Containers", pids );
+
+    // Door
+    pids.resize( 0 );
+    for( uint i = 9000; i <= 9142; i++ )
+        pids.insertLast( i );
+    TabSetItemPids( TAB_CUSTOM6, "Doors", pids );
+    pids.resize( 0 );
+    for( uint i = 9130; i <= 9142; i++ )
+        pids.insertLast( i );
+    TabSetItemPids( TAB_CUSTOM6, "Nevada Doors", pids );
+
+    pids.resize( 0 );
+    pids.insertLast( PID_EB_LONG_HOR );
+    pids.insertLast( PID_EB_LONG_VERT );
+    pids.insertLast( PID_EB_BLOCKER );
+    pids.insertLast( PID_ENERGY_BARIER_ACCESS_CARD );
+    pids.insertLast( PID_EB_TRIGGER );
+    pids.insertLast( PID_EB_SHORT_HOR1 );
+    pids.insertLast( PID_EB_SHORT_VERT1 );
+    pids.insertLast( PID_EB_SHORT_HOR1_RED );
+    pids.insertLast( PID_EB_SHORT_VERT1_RED );
+    pids.insertLast( PID_EB_SHORT_HOR2 );
+    pids.insertLast( PID_EB_SHORT_VERT2 );
+    pids.insertLast( PID_EB_SHORT_HOR2_RED );
+    pids.insertLast( PID_EB_SHORT_VERT2_RED );
+    pids.insertLast( PID_EB_SHORT_HOR3 );
+    pids.insertLast( PID_EB_SHORT_VERT3 );
+    pids.insertLast( PID_EB_SHORT_HOR3_RED );
+    pids.insertLast( PID_EB_SHORT_VERT3_RED );
+    pids.insertLast( PID_EB_EMITTER_HOR1 );
+    pids.insertLast( PID_EB_EMITTER_VERT1 );
+    pids.insertLast( PID_EB_EMITTER_HOR2 );
+    pids.insertLast( PID_EB_EMITTER_VERT2 );
+    pids.insertLast( PID_EB_EMITTER_HOR3 );
+    pids.insertLast( PID_EB_EMITTER_VERT3 );
+    TabSetItemPids( TAB_CUSTOM6, "003 - E. barriers", pids );
+
+    TabSetName( TAB_CUSTOM6, "C/D" );
+
+    // GRIDS TAB
+    TabDelete( TAB_CUSTOM7 );
+
+    // Scenery
+    pids.resize( 0 );
+    pids.insertLast( 2049 );
+    pids.insertLast( 2068 );
+    pids.insertLast( 2139 );
+    pids.insertLast( 2140 );
+    pids.insertLast( 2197 );
+    for( uint i = 2348; i <= 2356; i++ )
+        pids.insertLast( i );
+    pids.insertLast( 2583 );
+    pids.insertLast( 2584 );
+    pids.insertLast( 2977 );
+    pids.insertLast( 3293 );
+    pids.insertLast( 3297 );
+    pids.insertLast( 3298 );
+    pids.insertLast( 3645 );
+    pids.insertLast( 3647 );
+    pids.insertLast( 3648 );
+    pids.insertLast( 3655 );
+    pids.insertLast( 3660 );
+    pids.insertLast( 3685 );
+    pids.insertLast( 3835 );
+    pids.insertLast( 3853 );
+    TabSetItemPids( TAB_CUSTOM7, "001 - ladders", pids );
+
+    // Grids
+    pids.resize( 0 );
+    for( uint i = 4016; i <= 4023; i++ )
+        pids.insertLast( i );
+    for( uint i = 4031; i <= 4046; i++ )
+        pids.insertLast( i );
+    TabSetItemPids( TAB_CUSTOM7, "002 - exit grids", pids );
+    TabSetName( TAB_CUSTOM7, "Grd" );
+
+    // GENERIC SCENERY TAB
+    TabDelete( TAB_CUSTOM8 );
+    pids.resize( 0 );
+    for( uint i = 15916; i <= 16113; i++ )
+        pids.insertLast( i );
+    for( uint i = 16626; i <= 16685; i++ )
+        pids.insertLast( i );
+    for( uint i = 16686; i <= 16697; i++ )
+        pids.insertLast( i );
+    for( uint i = 17800; i <= 17924; i++ )
+        pids.insertLast( i );
+    TabSetItemPids( TAB_CUSTOM8, "NEW1", pids );
+    pids.resize( 0 );
+    for( uint i = 16200; i <= 16624; i++ )
+        pids.insertLast( i );
+    TabSetItemPids( TAB_CUSTOM8, "Nevada", pids );
+    pids.resize( 0 );
+    for( uint i = 17700; i <= 17799; i++ )
+        pids.insertLast( i );
+    for( uint i = 17925; i <= 18113; i++ )
+        pids.insertLast( i );
+    TabSetItemPids( TAB_CUSTOM8, "NEW2", pids );
+    pids.resize( 0 );
+    for( uint i = 13800; i <= 15915; i++ )
+        pids.insertLast( i );
+    TabSetItemPids( TAB_CUSTOM8, "Scenery", pids );
+    TabSetName( TAB_CUSTOM8, "Scen" );
+
+    // WALLS TAB
+    TabDelete( TAB_CUSTOM9 );
+    pids.resize( 0 );
+    for( uint i = 13300; i <= 13584; i++ )
+        pids.insertLast( i );
+    TabSetItemPids( TAB_CUSTOM9, "Nevada", pids );
+    pids.resize( 0 );
+    for( uint i = 11500; i <= 13265; i++ )
+        pids.insertLast( i );
+    TabSetItemPids( TAB_CUSTOM9, "Wall", pids );
+    TabSetName( TAB_CUSTOM9, "Wall" );
+}
+
+// //////////////////////////////////////////////////////////////////////////////////////////////////
+// Main loop function. Returned time of next call in milliseconds.
+uint loop()
+{
+    #ifdef MAPPER_KAWAII_GUI
+    return GUILoop();
+    #endif
+    #ifndef MAPPER_KAWAII_GUI
+    return 0;
+    #endif
+}
+
+// //////////////////////////////////////////////////////////////////////////////////////////////////
+// Call on console message. Return true to disable engine processing.
+
+bool NotConsole = true;
+
+bool console_message( string& message )
+{
+    // Command prefixes
+    // ~ load map
+    // ^ save map
+    // @ critter animation
+    // # run script
+    // * other
+    NotConsole = !NotConsole;
+    #ifdef MAPPER_KAWAII_GUI
+    return GUI_console_message( message );
+    #endif
+    #ifndef MAPPER_KAWAII_GUI
+    return false;
+    #endif
+}
+
+
+// //////////////////////////////////////////////////////////////////////////////////////////////////
+// Render interface function. You can use Draw* functions only there.
+// Layer specification:
+//    0
+// Game map
+//    1
+// Mapper interface
+//    2
+// Console, Messbox
+//    3
+// Mapper object interface
+//    4
+// Cursor
+//    5
+
+bool DetermineTypeHouse = false;
+bool PavingPatrol = false;
+bool ScriptExecuted = true;
+// string ExecutionResult=" privet";
+
+
+void MyMoveHexByDir( uint16& hx, uint16& hy, uint8 dir )
+{
+    switch( dir )
+    {
+    case 0:
+    {
+        hx -= 1;
+        if( hx % 2 == 0 )
+            hy -= 1;
+    } break;
+
+    case 1:
+    {
+        hx -= 1;
+        if( hx % 2 == 1 )
+            hy += 1;
+    } break;
+
+    case 2:
+    {
+        hy += 1;
+    } break;
+
+    case 3:
+    {
+        hx += 1;
+        if( hx % 2 == 1 )
+            hy += 1;
+    } break;
+
+    case 4:
+    {
+        hx += 1;
+        if( hx % 2 == 0 )
+            hy -= 1;
+    } break;
+
+    case 5:
+    {
+        hy -= 1;
+    } break;
+
+    default:
+        break;
+    }
+}
+
+void render_iface( uint layer )
+{
+    if( layer == 1 )
+    {
+        MapperMap@ map = GetActiveMap();
+        if( not (map is null) )
+        {
+            MapperObject@ obj = GetMonitorObject( __MouseX, __MouseY, true );
+            if( not (obj is null) )
+            {
+                uint16 fromHx = obj.MapX;
+                uint16 fromHy = obj.MapY;
+                uint8  dir = 0, dist = 0;
+                int    x = 0, y = 0;
+                GetHexPos( fromHx,  fromHy, x, y );
+                DrawText( "b", x, y, 20, 20, 0, FONT_FALLOUT, 0 );
+            }
+        }
+    }
+
+    if( layer == 4 )
+    {
+        if( BrushEnabled )
+        {
+            DrawText( "[B]rush mode.", 8, 10, 200, 150, 0, FONT_FALLOUT, 0 );
+            string dtext_tilesetname = "Current tileset:" + tilesets_names[ CurrentTileset ];
+            DrawText( dtext_tilesetname, 8, 25, 200, 150, 0, FONT_FALLOUT, 0 );
+            if( CanDraw )
+            {
+                DrawText( "..Drawing..", 105, 10, 200, 150, 0, FONT_FALLOUT, 0 );
+            }
+
+        }
+
+        if( DetermineTypeHouse )
+        {
+            DrawText( "Включен режим обозначения домов", 105, 10, 200, 150, 0, FONT_FALLOUT, 0 );
+            DrawText( NameZoneHouse[ CurrentZoneHouse ], 105, 30, 200, 150, 0, FONT_FALLOUT, 0 );
+        }
+
+        if( PavingPatrol )
+        {
+            DrawText( "Осталось точек: " + ( MaxPoint - PatrolPoint ), 105, 10, 200, 150, 0, FONT_FALLOUT, 0 );
+        }
+
+        /* if(ScriptExecuted)
+           {
+                DrawText("Результат: \n"+ ExecutionResult,305,10,200,250,0,FONT_FALLOUT ,0);
+           } */
+
+    }
+
+    #ifdef MAPPER_KAWAII_GUI
+    if( layer != 5 )
+        GUI_render( layer );
+    #endif
+}
+
+// //////////////////////////////////////////////////////////////////////////////////////////////////
+// Render map function. You can use DrawMap* functions only there. This drawing before 1 iface layer.
+dictionary ImageDict;
+
+uint GetSprIdByItemPickHash( uint hash )
+{
+    if( hash != 0 )
+    {
+        uint index = 0;
+        if( ImageDict.exists( "Item_" + hash ) && ImageDict.get( "Item_" + hash, index ) && index != 0 )
+        {
+            return index;
+        }
+        else
+        {
+            index = LoadSprite( hash, 0 );
+            ImageDict.set( "Item_" + hash, index );
+            return index;
+        }
+    }
+    return 0;
+}
+
+void render_map()
+{
+    MapperMap@ map = GetActiveMap();
+    if( not (map is null) )
+    {
+        for( uint i = 0, iEnd = map.GetContObjects( 3856 ); i < iEnd; i++ )
+        {
+            uint16 hx = 0, hy = 0;
+            int    p0 = 0;
+            map.GetObjectIndex( i, 3856, hx, hy, p0 );
+            if( p0 != 0 )
+            {
+                Message( "obj.Scenery_Param0 " + p0 );
+                const ProtoItem@ proto = GetProtoItem( p0 );
+                if( not (proto is null) )
+                    DrawMapSprite( hx, hy, p0, GetSprIdByItemPickHash( proto.PicMap ), -1, 0, 0 );
+            }
+            /*if( params[ i * 3 + 2 ] != 0)
+               {
+                    const ProtoItem@ proto = GetProtoItem(params[ i * 3 + 2 ]);
+                    DrawMapSprite( params[ i * 3 + 0 ], params[ i * 3 + 1 ], params[ i * 3 + 2 ], GetSprIdByItemPickHash(proto.PicMap), -1, 0,0);
+               }*/
+        }
+    }
+    #ifdef MAPPER_KAWAII_GUI
+    GUI_render_map();
+    #endif
+}
+
+// //////////////////////////////////////////////////////////////////////////////////////////////////
+// Mouse behaviours. Click states look in _client_defines.fos, Mouse click states.
+// Return true to disable engine events.
+
+bool mouse_down( int click )
+{
+    if( click == MOUSE_CLICK_RIGHT )
+    {
+        CanDraw = true;
+        return true;
+    }
+    if( DetermineTypeHouse && CanDraw )
+    {
+        DrawZoneTypeHouse( ZoneHousePid[ CurrentZoneHouse ], __MouseX, __MouseY );
+    }
+    if( click == MOUSE_CLICK_RIGHT && PavingPatrol )
+    {
+        DrawPatrol();
+    }
+
+    #ifdef MAPPER_KAWAII_GUI
+    return GUI_mouse( click, true );
+    #endif
+    #ifndef MAPPER_KAWAII_GUI
+    return false;
+    #endif
+}
+
+void DrawPatrol()
+{
+    MapperMap@    map;
+    @map = GetActiveMap();
+    uint16        x = 0;
+    uint16        y = 0;
+    GetMonitorHex( __MouseX, __MouseY, x, y );
+    MapperObject@ object = map.AddObject( x, y, MAP_OBJECT_SCENERY, 3853 );
+    object.Scenery_ToEntire = NumberPatrol + PatrolPoint;
+    SelectObject( object, false );
+    object.PicMap = "art\\entiry\\en5.frm";
+    object.PicInv = "art\\inven\\reserved.frm";
+    object.Update();
+    PatrolPoint += 1;
+    if( ( MaxPoint - PatrolPoint + 1 ) == 0 )
+    {
+        PatrolPoint = 0;
+        NumberPatrol = 0;
+        PavingPatrol = false;
+    }
+    ShowMap( map );
+}
+
+bool mouse_up( int click )
+{
+    if( DetermineTypeHouse && CanDraw )
+    {
+        uint16 hx = 0;
+        uint16 hy = 0;
+        GetMonitorHex( __MouseX, __MouseY, hx, hy );
+        MoveScreen( hx, hy, 0 );
+    }
+    if( click == MOUSE_CLICK_RIGHT )
+        CanDraw = false;
+
+    #ifdef MAPPER_KAWAII_GUI
+    return GUI_mouse( click, false );
+    #endif
+    #ifndef MAPPER_KAWAII_GUI
+    return false;
+    #endif
+}
+
+void mouse_move( int x, int y )
+{
+
+    if( DetermineTypeHouse && CanDraw )
+    {
+        DrawZoneTypeHouse( ZoneHousePid[ CurrentZoneHouse ], x, y );
+    }
+
+    if( CanDraw && BrushEnabled == true )
+    {
+        map_paint_tile();
+    }
+
+    #ifdef MAPPER_KAWAII_GUI
+    GUI_mouse_move( x, y );
+    #endif
+}
+
+void DrawZoneTypeHouse( uint16 pid, int x, int y )
+{
+    MapperMap@ map;
+    @map = GetActiveMap();
+    uint16     hx = 0;
+    uint16     hy = 0;
+    GetMonitorHex( __MouseX, __MouseY, hx, hy );
+    MapperObject@[] objects;
+    for( uint Pidi = 7001; Pidi < 7004; Pidi++ )
+    {
+        if( map.GetObjects( hx, hy, 0, MAP_OBJECT_SCENERY, Pidi, objects ) > 0 )
+        {
+            DeleteObjects( objects );
+        }
+    }
+    MapperObject@ object = map.AddObject( hx, hy, MAP_OBJECT_SCENERY, pid );
+    SelectObject( object, false );
+    GetSelectedObjects( objects );
+    ShowMap( map );
+}
+
+// //////////////////////////////////////////////////////////////////////////////////////////////////
+// Keyboard behaviours. Key codes look in _mapper_defines.fos DirectInput keyboard scan codes.
+// Return true to disable engine events.
+
+bool Alt = false;
+
+bool key_down( uint8 key )
+{
+    if( key == DIK_LMENU  || key == DIK_RMENU )
+        Alt = true;
+    if( !NotConsole && key == DIK_DELETE && !( GetSelectedObject() == null ) )
+    {
+        return true;
+    }
+
+    #ifdef MAPPER_KAWAII_GUI
+    return GUI_key_down( key );
+    #endif
+    #ifndef MAPPER_KAWAII_GUI
+    return false;
+    #endif
+}
+
+bool key_up( uint8 key )
+{
+
+    if( key == DIK_RETURN || key == DIK_NUMPADENTER )
+        NotConsole = !NotConsole;
+
+    if( key == DIK_LMENU  || key == DIK_RMENU )
+        Alt = false;
+
+    if( Alt && key == DIK_P && NotConsole )
+    {
+        BrushEnabled = !BrushEnabled;
+    }
+
+    if( Alt && key == DIK_L && NotConsole )
+    {
+        DetermineTypeHouse = !DetermineTypeHouse;
+    }
+
+    if( Alt && key == DIK_V && NotConsole )
+    {
+        if( BrushEnabled )
+        {
+            if( CurrentTileset > 0 )
+            {
+                CurrentTileset -= 1;
+            }
+        }
+        if( DetermineTypeHouse )
+        {
+            if( CurrentZoneHouse > 0 )
+            {
+                CurrentZoneHouse -= 1;
+            }
+        }
+    }
+
+    if( Alt && key == DIK_N && NotConsole )
+    {
+        if( BrushEnabled )
+        {
+            if( CurrentTileset < TILESETS_COUNT - 1 )
+            {
+                CurrentTileset += 1;
+            }
+        }
+        if( DetermineTypeHouse )
+        {
+            if( CurrentZoneHouse < ZONE_HOUSE_COUNT - 1 )
+            {
+                CurrentZoneHouse += 1;
+            }
+        }
+    }
+
+
+    #ifdef MAPPER_KAWAII_GUI
+    return GUI_key_up( key );
+    #endif
+    #ifndef MAPPER_KAWAII_GUI
+    return false;
+    #endif
+}
+
+// //////////////////////////////////////////////////////////////////////////////////////////////////
+// Called on mouse/keyboard input lost (alt-tab, minimize, lost focus).
+void input_lost()
+{}
+
+
+// //////////////////////////////////////////////////////////////////////////////////////////////////
+// Some useful functions.
+// #ConvertMaps
+// #ClearTiles
+// #MapTime         value
+// #MapNoLogOut     value
+// #MapScriptModule moduleName
+// #MapScriptFunc   funcName
+
+MapperMap@ GetActiveMap()
+{
+    MapperMap@[] maps;
+    int cur = GetLoadedMaps( maps );
+    if( cur == -1 )
+        return null;
+    return maps[ cur ];
+}
+
+// Maps convertation to text format
+string ConvertMaps( string str )
+{
+    string@[] mapNames;
+    GetMapFileNames( null, mapNames );
+    uint success = 0;
+    uint fail = 0;
+    for( uint i = 0, iMax = mapNames.length(); i < iMax; i++ )
+    {
+        MapperMap@ map = LoadMap( mapNames[ i ], PT_SERVER_MAPS );
+        if( not (map is null) )
+        {
+            if( SaveMap( map, mapNames[ i ], PT_SERVER_MAPS ) )
+            {
+                success++;
+            }
+            else
+            {
+                Message( "Fail to save " + mapNames[ i ] );
+                fail++;
+            }
+
+            UnloadMap( map );
+        }
+        else
+        {
+            Message( "Fail to load " + mapNames[ i ] );
+            fail++;
+        }
+    }
+
+    return "Done, maps converted " + ( success + fail ) + ", success " + success + ", fail " + fail + ".";
+}
+
+// Keep only one tile per hex
+string ClearTiles( string str )
+{
+    MapperMap@ map = GetActiveMap();
+    if( map is null )
+        return "Map not loaded.";
+
+    uint deleted = 0;
+    for( uint hx = 0; hx < map.Width; hx++ )
+    {
+        for( uint hy = 0; hy < map.Height; hy++ )
+        {
+            for( ; map.GetTilesCount( hx, hy, false ) > 1; deleted++ )
+                map.DeleteTile( hx, hy, false, 0 );
+            for( ; map.GetTilesCount( hx, hy, true )  > 1; deleted++ )
+                map.DeleteTile( hx, hy, true, 0 );
+        }
+    }
+
+    return "Done. Deleted " + deleted + " tiles.";
+}
+
+// Map parameters
+string MapTime( string str )
+{
+    MapperMap@ map = GetActiveMap();
+    if( map is null )
+        return "Map not loaded.";
+    int value = 0;
+    if( not StrToInt( str, value ) )
+        return "Wrong value.";
+
+    map.Time = value;
+    return "Done. Time setted to " + map.Time + ".";
+}
+
+string MapNoLogOut( string str )
+{
+    MapperMap@ map = GetActiveMap();
+    if( map is null )
+        return "Map not loaded.";
+    int value = 0;
+    if( not StrToInt( str, value ) )
+        return "Wrong value.";
+
+    map.NoLogOut = value != 0 ? true : false;
+    return "Done. NoLogOut setted to " + map.NoLogOut + ".";
+}
+
+string MapScriptModule( string str )
+{
+    MapperMap@ map = GetActiveMap();
+    if( map is null )
+        return "Map not loaded.";
+
+    map.ScriptModule = str;
+    return "Done. ScriptModule setted to " + map.ScriptModule + ".";
+}
+
+string MapScriptFunc( string str )
+{
+    MapperMap@ map = GetActiveMap();
+    if( map is null )
+        return "Map not loaded.";
+
+    map.ScriptFunc = str;
+    return "Done. ScriptFunc setted to " + map.ScriptFunc + ".";
+}
+
+string PatrolPath( string str )
+{
+    if( GetActiveMap() is null )
+        return "Карта не загружена.";
+    string str2;
+    string str3;
+    uint   j = 0;
+    for( uint i = 0, iMax = str.length(); i < iMax; i++ )
+    {
+        if( str[ i ] == ' ' )
+            j = i;
+        else
+            str2 = substring( str, j, str.length() - j );
+    }
+    str3 = substring( str, 0, str.length() - str2.length() );
+    int numberPatrol = 0;
+    int maxPoint = 0;
+    StrToInt( str3, numberPatrol );
+    StrToInt( str2, maxPoint );
+    // Message(str2+" "+maxPoint+" "+str3+" "+numberPatrol);
+    NumberPatrol = numberPatrol;
+    MaxPoint = maxPoint;
+    MaxPoint += 1;
+    PavingPatrol = true;
+    DetermineTypeHouse = false;
+    CanDraw = false;
+    BrushEnabled = false;
+    MapperObject@[] objects;
+    GetSelectedObjects( objects );
+    if( objects.length() == 0 )
+        return "Криттеры не выделены";
+    for( uint i = 0, iMax = objects.length(); i < iMax; i++ )
+    {
+        uint type = 0;
+        if( objects[ i ].MapObjType == type )
+        {
+            if( objects[ 0 ].Critter_ParamIndex6 != 140 )
+                Message( "Карта не конвертирована, конвертируем в мк2 \n" + ConvertMK2( "" ) );
+            objects[ i ].Critter_ParamValue7 = NumberPatrol;
+            objects[ i ].Critter_ParamValue8 = MaxPoint;
+            objects[ i ].Update();
+        }
+    }
+    return "Путь начинается с номера " + NumberPatrol + " и имеет " + MaxPoint + " точек";
+}
+
+string ReservedTest( string )
+{
+	MapperObject@[] objects;
+    GetSelectedObjects( objects );
+    for( uint i = 0, iMax = objects.length(); i < iMax; i++ )
+       objects[i].Reserved = 10;
+	
+	return "Okay";
+}
+
+string UserDataTest( string )
+{
+	MapperObject@[] objects;
+    GetSelectedObjects( objects );
+    for( uint i = 0, iMax = objects.length(); i < iMax; i++ )
+       objects[i].UserData = 10;
+	
+	return "Okay";
+}
+
+
+/*#GroupPatrolPath str3 str4 str2
+        str3 - GroupNumber
+        str4 - numberPatrol
+        str2 - maxPoint
+ */
+string GroupPatrolPath( string str )
+{
+    if( GetActiveMap() is null )
+        return "Карта не загружена.";
+    string str2;
+    string str3;
+    string str4;
+    uint   j = 0;
+    for( uint i = 0, iMax = str.length(); i < iMax; i++ )
+    {
+        if( str[ i ] == ' ' )
+            j = i;
+        else
+            str2 = substring( str, j, str.length() - j );
+    }
+    str3 = substring( str, 0, str.length() - str2.length() );
+    for( uint i = 0, iMax = str3.length(); i < iMax; i++ )
+    {
+        if( str3[ i ] == ' ' )
+            j = i;
+        else
+            str4 = substring( str3, j, str3.length() - j );
+    }
+    str3 = substring( str3, 0, str3.length() - str4.length() );
+    int GroupNumber = 0;
+    int numberPatrol = 0;
+    int maxPoint = 0;
+    StrToInt( str4, GroupNumber );
+    StrToInt( str3, numberPatrol );
+    StrToInt( str2, maxPoint );
+    NumberPatrol = numberPatrol;
+    MaxPoint = maxPoint;
+    MaxPoint += 1;
+    PavingPatrol = true;
+    DetermineTypeHouse = false;
+    CanDraw = false;
+    BrushEnabled = false;
+    MapperObject@[] objects;
+    GetSelectedObjects( objects );
+    if( objects.length() == 0 )
+        return "Криттеры не выделены";
+    for( uint i = 0, iMax = objects.length(); i < iMax; i++ )
+    {
+        uint type = 0;
+        if( objects[ i ].MapObjType == type )
+        {
+            if( objects[ i ].Critter_ParamIndex9 != 963 )
+                Message( "Карта не конвертирована, конвертируем в мк2 \n" + ConvertMK2( "" ) );
+            objects[ i ].Critter_ParamValue9 = GroupNumber;
+            objects[ i ].Critter_ParamValue11 = NumberPatrol;
+            objects[ i ].Critter_ParamValue10 = MaxPoint;
+            objects[ i ].Update();
+        }
+    }
+    return "Путь начинается с номера " + NumberPatrol + " и имеет " + MaxPoint + " точек";
+}
+
+string ConvertMK2( string str )
+{
+
+    MapperMap@ map = GetActiveMap();
+    if( map is null )
+        return "Карта не загружена.";
+
+    for( uint hx = 0; hx < map.Width; hx++ )
+    {
+        for( uint hy = 0; hy < map.Height; hy++ )
+        {
+            // for(uint pid=1
+            MapperObject@[] objects;
+            map.GetObjects( hx, hy, 1, 0, 0, objects );
+            if( objects.length() > 0 )
+            {
+                if( objects[ 0 ].Critter_ParamIndex6 != ST_ROLE_CITY )
+                {
+                    objects[ 0 ].Critter_ParamIndex6 = ST_ROLE_CITY;
+                    objects[ 0 ].Critter_ParamValue6 = 0;
+                }
+                if( objects[ 0 ].Critter_ParamIndex6 != ST_NPC_PATROL_ID )
+                {
+                    objects[ 0 ].Critter_ParamIndex7 = ST_NPC_PATROL_ID;
+                    objects[ 0 ].Critter_ParamValue7 = 0;
+                }
+                if( objects[ 0 ].Critter_ParamIndex6 != ST_NPC_PATROL_NUMBER )
+                {
+                    objects[ 0 ].Critter_ParamIndex8 = ST_NPC_PATROL_NUMBER;
+                    objects[ 0 ].Critter_ParamValue8 = 0;
+                }
+                if( objects[ 0 ].Critter_ParamIndex9 != PL_GRUP_NUMBER )
+                {
+                    objects[ 0 ].Critter_ParamIndex9 = PL_GRUP_NUMBER;
+                    objects[ 0 ].Critter_ParamValue9 = 0;
+                }
+                if( objects[ 0 ].Critter_ParamIndex10 != PL_COUNT_POINT )
+                {
+                    objects[ 0 ].Critter_ParamIndex10 = PL_COUNT_POINT;
+                    objects[ 0 ].Critter_ParamValue10 = 0;
+                }
+                if( objects[ 0 ].Critter_ParamIndex11 != PL_START_POINT )
+                {
+                    objects[ 0 ].Critter_ParamIndex11 = PL_START_POINT;
+                    objects[ 0 ].Critter_ParamValue11 = 0;
+                }
+                objects[ 0 ].Update();
+            }
+        }
+    }
+    for( uint hx = 0; hx < map.Width; hx++ )
+    {
+        for( uint hy = 0; hy < map.Height; hy++ )
+        {
+            // for(uint pid=1
+            MapperObject@[] objects;
+            map.GetObjects( hx, hy, 0, 2, 7000, objects );
+            if( objects.length() > 0 )
+            {
+                MapperObject@ object = map.AddObject( hx, hy, MAP_OBJECT_SCENERY, 3853 );
+                object.PicMap = "art\\entiry\\en5.frm";
+                object.PicInv = "art\\inven\\reserved.frm";
+                object.Scenery_ToEntire = objects[ 0 ].Scenery_ToEntire;
+                DeleteObject( objects[ 0 ] );
+                objects[ 0 ].Update();
+                object.Update();
+            }
+        }
+    }
+
+    return "Всем криттерам добавлены параметры: \n ST_ROLE_CITY; \n ST_NPC_PATROL_ID; \n ST_NPC_PATROL_NUMBER; \n Все эти параметры были приравнены к нулю.\n PL_GRUP_NUMBER; \n PL_START_POINT; \n PL_COUNT_POINT; \n Конвертирование прошло успешно.";
+
+}
+
+string Test00( string str )
+{
+    string str2;
+    string str3;
+    uint   j = 0;
+    for( uint i = 0, iMax = str.length(); i < iMax; i++ )
+    {
+        if( str[ i ] == ' ' )
+            j = i;
+        else
+            str2 = substring( str, j, str.length() - j );
+    }
+    str3 = substring( str, 0, str.length() - str2.length() );
+    int lo = 0;
+    int lo2 = 0;
+    StrToInt( str3, lo );
+    StrToInt( str2, lo2 );
+    SetDefaultCritterParam( lo, lo2 );
+    return "Тест";
+}
+
+string KlamathConv( string )
+{
+    MapperMap@ map = GetActiveMap();
+    if( map is null )
+        return "Карта не загружена.";
+
+    for( uint hx = 0; hx < map.Width; hx++ )
+    {
+        for( uint hy = 0; hy < map.Height; hy++ )
+        {
+            // for(uint pid=1
+            MapperObject@[] objects;
+            map.GetObjects( hx, hy, 1, 0, 0, objects );
+            if( objects.length() > 0 )
+            {
+                if( objects[ 0 ].Critter_ParamIndex6 != 140 )
+                {
+                    objects[ 0 ].Critter_ParamIndex6 = 140;
+                    objects[ 0 ].Critter_ParamValue6 = 15;
+                }
+                if( objects[ 0 ].Critter_ParamIndex7 != 141 )
+                {
+                    objects[ 0 ].Critter_ParamIndex7 = 141;
+                    objects[ 0 ].Critter_ParamValue7 = 0;
+                }
+                if( objects[ 0 ].Critter_ParamIndex8 != 142 )
+                {
+                    objects[ 0 ].Critter_ParamIndex8 = 142;
+                    objects[ 0 ].Critter_ParamValue8 = 0;
+                }
+                objects[ 0 ].Update();
+            }
+        }
+    }
+    return "Конвертаци Кламата закончена";
+}
+
+string ClearAllCritters( string )
+{
+    MapperMap@ map = GetActiveMap();
+    if( map is null )
+        return "Карта не загружена.";
+
+    for( uint hx = 0; hx < map.Width; hx++ )
+    {
+        for( uint hy = 0; hy < map.Height; hy++ )
+        {
+            MapperObject@[] objects;
+            map.GetObjects( hx, hy, 1, MAP_OBJECT_CRITTER, 0, objects );
+            if( objects.length() > 0 )
+            {
+                DeleteObject( objects[ 0 ] );
+            }
+        }
+    }
+    return "Все криттеры удалены";
+}
+
+// ~inst_slavers
+// #ConvertContainer2Entire
+string ConvertContainer2Entire( string )
+{
+    MapperMap@ map = GetActiveMap();
+    if( map is null )
+        return "Карта не загружена.";
+
+    file   f;
+    string name = "memItems_" + Random( 0, 99999999 );
+    if( f.open( name, "w" ) != -1 )
+    {
+        uint[] pids;
+        for( uint hx = 0; hx < map.Width; hx++ )
+        {
+            for( uint hy = 0; hy < map.Height; hy++ )
+            {
+                MapperObject@[] objects;
+                map.GetObjects( hx, hy, 1, MAP_OBJECT_ITEM, 0, objects );
+                for( uint i = 0, iEnd = objects.length(); i < iEnd; i++ )
+                {
+                    MapProtoItem@ p = getMapProtoItem( objects[ i ].ProtoId );
+                    if( not (p is null) && p.Type == ITEM_TYPE_CONTAINER )
+                    {
+                        MapperObject@ object = map.AddObject( objects[ i ].MapX, objects[ i ].MapY, MAP_OBJECT_SCENERY, 3853 );
+                        object.Scenery_ToEntire = p.ProtoId;
+                        SelectObject( object, false );
+                        object.Update();
+                        f.writeString( "ProtoId = " + p.ProtoId + "\n" );
+
+                        DeleteObject( objects[ i ] );
+                    }
+                }
+            }
+        }
+        f.close();
+    }
+    return name;
+}
+
+string antioverlay( string str )
+{
+    string     result = "";
+    int        overlaycnt = 0;
+    MapperMap@ map = GetActiveMap();
+
+    if( map is null )
+        return "Карта не загружена.";
+
+    for( uint16 hx = 0; hx < map.Width; hx++ )
+    {
+        for( uint16 hy = 0; hy < map.Height; hy++ )
+        {
+
+            uint cnt = 0;
+            cnt = map.GetTilesCount( hx, hy, false );
+
+            if( cnt > 0 )
+            {
+                // result +="tile x:" + hx + "  y:" + hy + "\n";
+                for( int misx = -1; misx < 2; misx++ )
+                {
+                    for( int misy = -1; misy < 2; misy++ )
+                    {
+
+                        if( hx + misx >= 0 && hx + misx < map.Width && hy + misy >= 0 && hy + misy < map.Width )
+                        {
+                            if( misx == 0 && misy == 0 )
+                            {}
+                            else
+                            {
+                                if( map.GetTilesCount( hx + misx, hy + misy, false ) > 0 )
+                                {
+                                    overlaycnt++;
+                                    map.DeleteTile( hx + misx, hy + misy, false, 0 );
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if( cnt > 1 )
+            {
+                overlaycnt++;
+                map.DeleteTile( hx, hy, false, 0 );
+            }
+        }
+    }
+
+    result += "Количество точек где были удалены тайлы: " + overlaycnt;
+    // ExecutionResult=result;
+
+    // return "Result: " + result;
+    return result;
+}
+
+#define FLAG         # ( x, flag )( ( ( x ) & ( flag ) ) != 0 )
+#define SETFLAG      # ( x, flag )( x = ( x ) | ( flag ) )
+#define UNSETFLAG    # ( x, flag )( x = ( ( x ) & ( ~( flag ) ) ) )
+
+
+uint LastFlag = 0;
+
+string CheckFile( string str )
+{
+    bool isFile = false;
+    file File;
+    if( File.open( str, "r" ) == 0 )
+    {
+        File.close();
+        isFile = true;
+    }
+    return "File " + isFile;
+}
+
+string CheckFlag( string str )
+{
+    uint flag = 0;
+    {
+        int iflag = -1;
+        if( not StrToInt( str, iflag ) || iflag < 0 )
+            return "Неверное значение.";
+        flag = iflag;
+    }
+    str = "Флаги: ";
+    LastFlag = flag;
+    if( FLAG( flag, ITEM_HIDDEN ) )
+        str += "ITEM_HIDDEN ";
+    if( FLAG( flag, ITEM_FLAT ) )
+        str += "ITEM_FLAT ";
+    if( FLAG( flag, ITEM_NO_BLOCK ) )
+        str += "ITEM_NO_BLOCK ";
+    if( FLAG( flag, ITEM_SHOOT_THRU ) )
+        str += "ITEM_SHOOT_THRU ";
+    if( FLAG( flag, ITEM_LIGHT_THRU ) )
+        str += "ITEM_LIGHT_THRU ";
+    if( FLAG( flag, ITEM_MULTI_HEX ) )
+        str += "ITEM_MULTI_HEX ";
+    if( FLAG( flag, ITEM_WALL_TRANS_END ) )
+        str += "ITEM_WALL_TRANS_END ";
+    if( FLAG( flag, ITEM_TWO_HANDS ) )
+        str += "ITEM_TWO_HANDS ";
+    if( FLAG( flag, ITEM_BIG_GUN ) )
+        str += "ITEM_BIG_GUN ";
+    if( FLAG( flag, ITEM_ALWAYS_VIEW ) )
+        str += "ITEM_ALWAYS_VIEW ";
+    if( FLAG( flag, ITEM_HAS_TIMER ) )
+        str += "ITEM_HAS_TIMER ";
+    if( FLAG( flag, ITEM_BAD_ITEM ) )
+        str += "ITEM_BAD_ITEM ";
+    if( FLAG( flag, ITEM_NO_HIGHLIGHT ) )
+        str += "ITEM_NO_HIGHLIGHT ";
+    if( FLAG( flag, ITEM_SHOW_ANIM ) )
+        str += "ITEM_SHOW_ANIM ";
+    if( FLAG( flag, ITEM_SHOW_ANIM_EXT ) )
+        str += "ITEM_SHOW_ANIM_EXT ";
+    if( FLAG( flag, ITEM_LIGHT ) )
+        str += "ITEM_LIGHT ";
+    if( FLAG( flag, ITEM_GECK ) )
+        str += "ITEM_GECK ";
+    if( FLAG( flag, ITEM_TRAP ) )
+        str += "ITEM_TRAP ";
+    if( FLAG( flag, ITEM_NO_LIGHT_INFLUENCE ) )
+        str += "ITEM_NO_LIGHT_INFLUENCE ";
+    if( FLAG( flag, ITEM_NO_LOOT ) )
+        str += "ITEM_NO_LOOT ";
+    if( FLAG( flag, ITEM_NO_STEAL ) )
+        str += "ITEM_NO_STEAL ";
+    if( FLAG( flag, ITEM_GAG ) )
+        str += "ITEM_GAG ";
+    if( FLAG( flag, ITEM_COLORIZE ) )
+        str += "ITEM_COLORIZE ";
+    if( FLAG( flag, ITEM_COLORIZE_INV ) )
+        str += "ITEM_COLORIZE_INV ";
+    if( FLAG( flag, ITEM_CAN_USE_ON_SMTH ) )
+        str += "ITEM_CAN_USE_ON_SMTH ";
+    if( FLAG( flag, ITEM_CAN_LOOK ) )
+        str += "ITEM_CAN_LOOK ";
+    if( FLAG( flag, ITEM_CAN_TALK ) )
+        str += "ITEM_CAN_TALK ";
+    if( FLAG( flag, ITEM_CAN_PICKUP ) )
+        str += "ITEM_CAN_PICKUP ";
+    if( FLAG( flag, ITEM_CAN_USE ) )
+        str += "ITEM_CAN_USE ";
+    if( FLAG( flag, ITEM_HOLODISK ) )
+        str += "ITEM_HOLODISK ";
+    if( FLAG( flag, ITEM_RADIO ) )
+        str += "ITEM_RADIO ";
+    if( FLAG( flag, ITEM_CACHED ) )
+        str += "ITEM_CACHED ";
+
+    return str + ".";
+}
+
+string SetLastFlag( string str )
+{
+    uint flag = 0;
+    {
+        int iflag = -1;
+        if( not StrToInt( str, iflag ) || iflag < 0 )
+            return "Неверное значение.";
+        flag = iflag;
+    }
+
+    if( FLAG( LastFlag, flag ) )
+        UNSETFLAG( LastFlag, flag );
+    else
+        SETFLAG( LastFlag, flag );
+
+    return "" + LastFlag + "\n" + CheckFlag( "" + LastFlag );
+}
+
+uint BrokenFlag = 0;
+
+string CheckBrokenFlag( string str )
+{
+    uint flag = 0;
+    {
+        int iflag = -1;
+        if( not StrToInt( str, iflag ) || iflag < 0 )
+            return "Неверное значение.";
+        flag = iflag;
+    }
+    str = "Флаги: ";
+    BrokenFlag = flag;
+
+    if( FLAG( flag, BI_LOWBROKEN ) )
+        str += "BI_LOWBROKEN ";
+    if( FLAG( flag, BI_HIGHBROKEN ) )
+        str += "BI_HIGHBROKEN ";
+    if( FLAG( flag, BI_NOTRESC ) )
+        str += "BI_NOTRESC ";
+    if( FLAG( flag, BI_BROKEN ) )
+        str += "BI_BROKEN ";
+    if( FLAG( flag, BI_SERVICE ) )
+        str += "BI_SERVICE ";
+    if( FLAG( flag, BI_SERVICE_EXT ) )
+        str += "BI_SERVICE_EXT ";
+    if( FLAG( flag, BI_ETERNAL ) )
+        str += "BI_ETERNAL ";
+
+    return str + ".";
+}
+
+string SetBrokenFlag( string str )
+{
+    uint flag = 0;
+    {
+        int iflag = -1;
+        if( not StrToInt( str, iflag ) || iflag < 0 )
+            return "Неверное значение.";
+        flag = iflag;
+    }
+
+    if( FLAG( BrokenFlag, flag ) )
+        UNSETFLAG( BrokenFlag, flag );
+    else
+        SETFLAG( BrokenFlag, flag );
+
+    return "" + BrokenFlag + "\n" + CheckFlag( "" + BrokenFlag );
+}
+
+uint LockFlag = 0;
+string CheckLockFlag( string str )
+{
+    uint flag = 0;
+    {
+        int iflag = -1;
+        if( not StrToInt( str, iflag ) || iflag < 0 )
+        {
+            Message( "" + LockFlag );
+            flag = LockFlag;
+        }
+        else
+            flag = iflag;
+    }
+    str = "Флаги: ";
+
+    if( FLAG( flag, LOCKER_ISOPEN ) )
+        str += "LOCKER_ISOPEN ";
+    if( FLAG( flag, LOCKER_LOCKED ) )
+        str += "LOCKER_LOCKED ";
+    if( FLAG( flag, LOCKER_JAMMED ) )
+        str += "LOCKER_JAMMED ";
+    if( FLAG( flag, LOCKER_BROKEN ) )
+        str += "LOCKER_BROKEN ";
+    if( FLAG( flag, LOCKER_NOOPEN ) )
+        str += "LOCKER_NOOPEN ";
+    if( FLAG( flag, LOCKER_ELECTRO ) )
+        str += "LOCKER_ELECTRO ";
+    if( FLAG( flag, LOCKER_FARM ) )
+        str += "LOCKER_FARM ";
+    if( FLAG( flag, LOCKER_FACTION ) )
+        str += "LOCKER_FACTION ";
+    if( FLAG( flag, LOCKER_NOUSE ) )
+        str += "LOCKER_NOUSE ";
+    if( FLAG( flag, LOCKER_TAGGED ) )
+        str += "LOCKER_TAGGED ";
+    if( FLAG( flag, LOCKER_GUARD_OPEN ) )
+        str += "LOCKER_GUARD_OPEN ";
+    if( FLAG( flag, LOCKER_TIMER_LOCK ) )
+        str += "LOCKER_TIMER_LOCK ";
+    return str + ".";
+}
+
+string SetLockFlag( string str )
+{
+    uint flag = 0;
+    {
+        int iflag = -1;
+        if( not StrToInt( str, iflag ) || iflag < 0 )
+            return "Неверное значение.";
+        flag = iflag;
+    }
+
+    if( FLAG( LockFlag, flag ) )
+        UNSETFLAG( LockFlag, flag );
+    else
+        SETFLAG( LockFlag, flag );
+
+    return "" + LockFlag;
+}
+
+class MapProtoItem
+{
+    MapProtoItem( uint16 proto, int t )
+    {
+        ProtoId = proto;
+        Type = t;
+    }
+    uint16 ProtoId;
+    int    Type;
+}
+
+MapProtoItem[] AllProtoItems;
+
+void GetItemPidsFile( string@ fileName )
+{
+    file f,
+         memFile;
+
+    // uint16[] pids;
+
+    string@[] memmoryLine,
+    memmoryBlock;
+    string@ strPid = "";
+    string@ str = "",
+            str1 = "";
+
+    if( f.open( __ServerPath + "proto/items/" + fileName + ".fopro", "r" ) >= 0 )
+    {
+        if( memFile.open( "memmory/" + "ItemsPids_" + fileName + ".mem", "r" ) >= 0 )
+        {
+            if( memFile.readUint32() == uint( f.getSize() ) )
+            {
+                f.close();
+                while( !memFile.isEndOfFile() )
+                {
+                    // pids.insertLast(memFile.readUint16());
+                    AllProtoItems.insertLast( MapProtoItem( memFile.readUint16(), int( memFile.readUint32() ) ) );
+                }
+                memFile.close();
+            }
+            memFile.close();
+        }
+        if( memFile.open( "memmory/" + "ItemsPids_" + fileName + ".mem", "w" ) >= 0 )
+        {
+            memFile.writeUint32( uint( f.getSize() ) );
+            @ str = "";
+            f.readString( f.getSize(), str );
+            memmoryBlock = splitEx( str, "[Proto]" );
+            for( uint i = 0, iEnd = memmoryBlock.length(); i < iEnd; i++ )
+            {
+                uint16 pid = 0;
+                int    type = -1, mem = 0;
+                memmoryLine = splitEx( memmoryBlock[ i ], "\n" );
+                for( uint i = 0, iEnd = memmoryLine.length(); i < iEnd; i++ )
+                {
+                    @str1 = memmoryLine[ i ];
+                    if( str1.length() > 3 && substring( str1, 0, 3 ) == "Pid" )
+                    {
+                        @strPid = substring( str1, 4, str1.length() - 4 );
+                        if( StrToInt( strPid, mem ) )
+                        {
+                            pid = mem;
+                            // pids.insertLast(uint16(pid));
+                            // memFile.writeUint16(uint16(pid));
+                        }
+                    }
+                    else if( str1.length() > 4 && substring( str1, 0, 4 ) == "Type" )
+                    {
+                        @strPid = substring( str1, 5, str1.length() - 5 );
+                        if( StrToInt( strPid, type ) )
+                        {
+                            // pids.insertLast(uint16(type));
+                            // memFile.writeUint32(uint16(type));
+                        }
+                    }
+                }
+                memFile.writeUint16( uint16( pid ) );
+                memFile.writeUint32( uint( type ) );
+                AllProtoItems.insertLast( MapProtoItem( pid, type ) );
+            }
+            memFile.close();
+        }
+        f.close();
+    }
+}
+
+MapProtoItem@ getMapProtoItem( uint16 protoId )
+{
+    for( uint i = 0, iEnd = AllProtoItems.length(); i < iEnd; i++ )
+    {
+        if( AllProtoItems[ i ].ProtoId == protoId )
+        {
+            return AllProtoItems[ i ];
+        }
+    }
+    return null;
+}
+
+// ~inst_slavers
+// #ConvertContainer2Entire
+
+string DumpAllProtoItems( string )
+{
+    Message( "Длина " + AllProtoItems.length() );
+    for( uint i = 0, iEnd = AllProtoItems.length(); i < iEnd; i++ )
+    {
+        Message( "#" + i + " ProtoId " + AllProtoItems[ i ].ProtoId + " Type " + AllProtoItems[ i ].Type );
+    }
+    return "";
+}
+
+string Rand( string )
+{
+    uint r = 0;
+    for( uint i = 0; i < 10000000; i++ )
+        for( uint i = 0; i < 20; i++ )
+            if( Random( 0, 99 ) <= 33 && Random( 0, 99 ) <= 25 )
+            {
+                r++;
+                break;
+            }
+    return "" + r;
+}
+
+#ifdef MAPPER_KAWAII_GUI
+
+# include "mapper_gui_h.fos"
+
+
+void map_tile_init()
+{
+    tilesets.resize( TILESETS_COUNT );
+    tilesets_names.resize( TILESETS_COUNT );
+
+    tilesets_names[ 0 ] = "CMT";
+    tileset_cmt.resize( 4 );
+    tileset_cmt[ 0 ] = GetStrHash( "art\\tiles\\CMT1000.frm" );
+    tileset_cmt[ 1 ] = GetStrHash( "art\\tiles\\CMT2000.frm" );
+    tileset_cmt[ 2 ] = GetStrHash( "art\\tiles\\CMT3000.frm" );
+    tileset_cmt[ 3 ] = GetStrHash( "art\\tiles\\CMT4000.frm" );
+    tilesets[ 0 ] = tileset_cmt;
+
+    tilesets_names[ 1 ] = "TEPFLR";
+    tileset_tepflr.resize( 16 );
+    tileset_tepflr[ 0 ] = GetStrHash( "art\\tiles\\tepflr01.frm" );
+    tileset_tepflr[ 1 ] = GetStrHash( "art\\tiles\\tepflr02.frm" );
+    tileset_tepflr[ 2 ] = GetStrHash( "art\\tiles\\tepflr03.frm" );
+    tileset_tepflr[ 3 ] = GetStrHash( "art\\tiles\\tepflr04.frm" );
+    tileset_tepflr[ 4 ] = GetStrHash( "art\\tiles\\tepflr06.frm" );
+    tileset_tepflr[ 5 ] = GetStrHash( "art\\tiles\\tepflr07.frm" );
+    tileset_tepflr[ 6 ] = GetStrHash( "art\\tiles\\tepflr08.frm" );
+    tileset_tepflr[ 7 ] = GetStrHash( "art\\tiles\\tepflr09.frm" );
+    tileset_tepflr[ 8 ] = GetStrHash( "art\\tiles\\tepflr10.frm" );
+    tileset_tepflr[ 9 ] = GetStrHash( "art\\tiles\\tepflr11.frm" );
+    tileset_tepflr[ 10 ] = GetStrHash( "art\\tiles\\tepflr12.frm" );
+    tileset_tepflr[ 11 ] = GetStrHash( "art\\tiles\\tepflr13.frm" );
+    tileset_tepflr[ 12 ] = GetStrHash( "art\\tiles\\tepflr14.frm" );
+    tileset_tepflr[ 13 ] = GetStrHash( "art\\tiles\\tepflr15.frm" );
+    tileset_tepflr[ 14 ] = GetStrHash( "art\\tiles\\tepflr16.frm" );
+    tileset_tepflr[ 15 ] = GetStrHash( "art\\tiles\\tepflr17.frm" );
+    tilesets[ 1 ] = tileset_tepflr;
+
+    tilesets_names[ 2 ] = "RUF";
+    tileset_ruf.resize( 11 );
+    tileset_ruf[ 0 ] = GetStrHash( "art\\tiles\\ruf1000.frm" );
+    tileset_ruf[ 1 ] = GetStrHash( "art\\tiles\\ruf1001.frm" );
+    tileset_ruf[ 2 ] = GetStrHash( "art\\tiles\\ruf2000.frm" );
+    tileset_ruf[ 3 ] = GetStrHash( "art\\tiles\\ruf2001.frm" );
+    tileset_ruf[ 4 ] = GetStrHash( "art\\tiles\\ruf2002.frm" );
+    tileset_ruf[ 5 ] = GetStrHash( "art\\tiles\\ruf2003.frm" );
+    tileset_ruf[ 6 ] = GetStrHash( "art\\tiles\\ruf2004.frm" );
+    tileset_ruf[ 7 ] = GetStrHash( "art\\tiles\\ruf2005.frm" );
+    tileset_ruf[ 8 ] = GetStrHash( "art\\tiles\\ruf2006.frm" );
+    tileset_ruf[ 9 ] = GetStrHash( "art\\tiles\\ruf2007.frm" );
+    tileset_ruf[ 10 ] = GetStrHash( "art\\tiles\\ruf2008.frm" );
+    tilesets[ 2 ] = tileset_ruf;
+
+    tilesets_names[ 3 ] = "RST";
+    tileset_rst.resize( 4 );
+    tileset_rst[ 0 ] = GetStrHash( "art\\tiles\\rst1000.frm" );
+    tileset_rst[ 1 ] = GetStrHash( "art\\tiles\\rst1001.frm" );
+    tileset_rst[ 2 ] = GetStrHash( "art\\tiles\\rst1002.frm" );
+    tileset_rst[ 3 ] = GetStrHash( "art\\tiles\\rst1003.frm" );
+    tilesets[ 3 ] = tileset_rst;
+
+    tilesets_names[ 4 ] = "GRASS";
+    tileset_grass.resize( 2 );
+    tileset_grass[ 0 ] = GetStrHash( "art\\tiles\\grass01.frm" );
+    tileset_grass[ 1 ] = GetStrHash( "art\\tiles\\grass02.frm" );
+    tilesets[ 4 ] = tileset_grass;
+
+    tilesets_names[ 5 ] = "EDG";
+    tileset_edg.resize( 8 );
+    tileset_edg[ 0 ] = GetStrHash( "art\\tiles\\edg4000.frm" );
+    tileset_edg[ 1 ] = GetStrHash( "art\\tiles\\edg4001.frm" );
+    tileset_edg[ 2 ] = GetStrHash( "art\\tiles\\edg4002.frm" );
+    tileset_edg[ 3 ] = GetStrHash( "art\\tiles\\edg4003.frm" );
+    tileset_edg[ 4 ] = GetStrHash( "art\\tiles\\edg4005.frm" );
+    tileset_edg[ 5 ] = GetStrHash( "art\\tiles\\edg4006.frm" );
+    tileset_edg[ 6 ] = GetStrHash( "art\\tiles\\edg4007.frm" );
+    tileset_edg[ 7 ] = GetStrHash( "art\\tiles\\edg4008.frm" );
+    tilesets[ 5 ] = tileset_edg;
+
+    tilesets_names[ 6 ] = "EDG6";
+    tileset_edg6.resize( 11 );
+    tileset_edg6[ 0 ] = GetStrHash( "art\\tiles\\edg6000.frm" );
+    tileset_edg6[ 1 ] = GetStrHash( "art\\tiles\\edg6001.frm" );
+    tileset_edg6[ 2 ] = GetStrHash( "art\\tiles\\edg6002.frm" );
+    tileset_edg6[ 3 ] = GetStrHash( "art\\tiles\\edg6003.frm" );
+    tileset_edg6[ 4 ] = GetStrHash( "art\\tiles\\edg6005.frm" );
+    tileset_edg6[ 5 ] = GetStrHash( "art\\tiles\\edg6006.frm" );
+    tileset_edg6[ 6 ] = GetStrHash( "art\\tiles\\edg6007.frm" );
+    tileset_edg6[ 7 ] = GetStrHash( "art\\tiles\\edg6008.frm" );
+    tileset_edg6[ 8 ] = GetStrHash( "art\\tiles\\edg6009.frm" );
+    tileset_edg6[ 9 ] = GetStrHash( "art\\tiles\\edg6010.frm" );
+    tileset_edg6[ 10 ] = GetStrHash( "art\\tiles\\edg6011.frm" );
+    tilesets[ 6 ] = tileset_edg6;
+
+    tilesets_names[ 7 ] = "CAVR";
+    tileset_cavr.resize( 4 );
+    tileset_cavr[ 0 ] = GetStrHash( "art\\tiles\\cav4008.frm" );
+    tileset_cavr[ 1 ] = GetStrHash( "art\\tiles\\cav4009.frm" );
+    tileset_cavr[ 2 ] = GetStrHash( "art\\tiles\\cav4010.frm" );
+    tileset_cavr[ 3 ] = GetStrHash( "art\\tiles\\cav4011.frm" );
+    tilesets[ 7 ] = tileset_cavr;
+
+    tilesets_names[ 8 ] = "CAV";
+    tileset_cav.resize( 14 );
+    tileset_cav[ 0 ] = GetStrHash( "art\\tiles\\cav1000.frm" );
+    tileset_cav[ 1 ] = GetStrHash( "art\\tiles\\cav1001.frm" );
+    tileset_cav[ 2 ] = GetStrHash( "art\\tiles\\cav1002.frm" );
+    tileset_cav[ 3 ] = GetStrHash( "art\\tiles\\cav1003.frm" );
+    tileset_cav[ 4 ] = GetStrHash( "art\\tiles\\cav1004.frm" );
+    tileset_cav[ 5 ] = GetStrHash( "art\\tiles\\cav1005.frm" );
+    tileset_cav[ 6 ] = GetStrHash( "art\\tiles\\cav1006.frm" );
+    tileset_cav[ 7 ] = GetStrHash( "art\\tiles\\cav1007.frm" );
+    tileset_cav[ 8 ] = GetStrHash( "art\\tiles\\cav1008.frm" );
+    tileset_cav[ 9 ] = GetStrHash( "art\\tiles\\cav1009.frm" );
+    tileset_cav[ 10 ] = GetStrHash( "art\\tiles\\cav2000.frm" );
+    tileset_cav[ 11 ] = GetStrHash( "art\\tiles\\cav2001.frm" );
+    tileset_cav[ 12 ] = GetStrHash( "art\\tiles\\cav2002.frm" );
+    tileset_cav[ 13 ] = GetStrHash( "art\\tiles\\cav2003.frm" );
+    tilesets[ 8 ] = tileset_cav;
+
+    tilesets_names[ 9 ] = "CAV2";
+    tileset_cav2.resize( 4 );
+    tileset_cav2[ 0 ] = GetStrHash( "art\\tiles\\cav2000.frm" );
+    tileset_cav2[ 1 ] = GetStrHash( "art\\tiles\\cav2001.frm" );
+    tileset_cav2[ 2 ] = GetStrHash( "art\\tiles\\cav2002.frm" );
+    tileset_cav2[ 3 ] = GetStrHash( "art\\tiles\\cav2003.frm" );
+    tilesets[ 9 ] = tileset_cav2;
+
+}
+
+void map_paint_tile()
+{
+    if( BrushEnabled )
+    {
+        MapperMap@ map;
+        @map = GetActiveMap();
+        if( @map != null )
+        {
+            uint16 hexx = 0;
+            uint16 hexy = 0;
+            GetMonitorHex( __MouseX, __MouseY, hexx, hexy );
+            if( hexx % 2 == 0 )
+            {
+                hexx += 1;
+            }
+            if( hexy % 2 == 0 )
+            {
+                hexy += 1;
+            }
+
+            map.DeleteTile( hexx, hexy, false, 1 );
+            int maxtiles = tilesets[ CurrentTileset ].length();
+            map.AddTile( hexx, hexy, 0, 0, 1, false, tilesets[ CurrentTileset ][ Random( 0, maxtiles - 1 ) ] );
+        }
+    }
+}
+
+class TileSet
+{
+
+
+    string        Name;
+    array< uint > TileHash;
+}
+
+void TestGUIInit()
+{
+    // GUI_CreateScreen( "", MAPPER_IFACE_TEST ).SetDynamic( GUITestScreen( ) );
+    // GUI_ShowScreen( MAPPER_IFACE_TEST );
+    // AddLoopEvent( 0, MyLoop( 50 ) );
+    AddDrawEvent( UIDDraw() );
+
+}
+
+class UIDDraw : IEventDraw
+{
+    void IDraw( uint layer )
+    {
+        {
+            MapperObject@[] objects;
+            const uint len = GetSelectedObjects( objects );
+            if( len == 1 )
+            {
+                DrawText( "UID = " + objects[ 0 ].UID, 400, 10, 200, 150, 0, FONT_FALLOUT, 0 );
+            }
+        }
+    }
+}
+
+class MyLoop : ICallbackLoop
+{
+    MyLoop( const uint &in c )
+    {
+        Count = c;
+    }
+
+    uint Loop()
+    {
+        Message( "" + Count );
+        return --Count;
+    }
+
+    uint Count;
+}
+
+class GUITestScreen : ICallbackIsActive
+{
+    bool IsActive()
+    {
+        MapperMap@ map = GetActiveMap();
+        return ( !(map is null) );
+    }
+}
+// */
+#endif

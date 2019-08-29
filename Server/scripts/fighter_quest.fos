@@ -1,0 +1,276 @@
+// Author rifleman17
+// Специальный класс для реализации квестов на рукопашный или другой бой с НПЦ
+// только с одним игроком. Cмерть нпц засчитывается победой игрока
+
+#include "_macros.fos"
+#include "_msgstr.fos"
+#include "_teams.fos"
+
+import bool AddAttackPlane( Critter& npc, uint priority, Critter& target ) from "npc_planes";
+import bool AddAttackPlane( Critter& npc, uint priority, Critter& target, int minHp ) from "npc_planes";
+import uint EraseAttackPlane( Critter& npc, uint critId ) from "npc_planes";
+
+
+#define STR_FIGHT_BEGIN    ( 5910 )   // Начат поединок c @lex npcname@. Удачи!
+#define STR_FIGHT_WIN      ( 5911 )   // Вы победили в поединке с @lex npcname@. Поздравляем. Прекратите атаку, иначе вас не поймут окружающие.
+#define STR_FIGHT_LOOSE    ( 5912 )   // Удача была не на вашей стороне. Вы проиграли поединок с @lex npcname@.
+#define STR_FIGHT_DEAD     ( 5913 )   // В результате поединка ваш противник был убит.
+#define STR_USE_WEAPON     ( 5914 )   // Жулик! Договаривались без оружия!
+#define STATUS_LOOSE       ( 1 )      // Статус исхода поединка. Игрок проиграл
+#define STATUS_WIN         ( 2 )      // Статус исхода поединка. Игрок победил, нпц жив
+#define STATUS_DEAD        ( 3 )      // Статус исхода поединка. Игрок победил, нпц мертв
+
+// #define DL#(s) (Log(""+s))
+#define DL                 # ( s )
+class FighterQuest
+{
+    FighterQuest()
+    {}
+
+    FighterQuest( Critter & npc, int newTeam, int minHp, bool handCombat, int playerId, int priority, int varNum )
+    {
+        DL( "fq constructor called" );
+        this.MinHp = minHp;
+        this.OnlyHandCombat = ( handCombat ? 1 : 0 );
+        this.TeamIdOld = npc.Stat[ ST_TEAM_ID ];
+        this.TeamIdFight = ( newTeam == 0 ? TEAM_Mob9 : newTeam );
+        this.NpcId = npc.Id;
+        this.PlayerId = uint( playerId );
+        this.FightPriority = priority;
+        this.VarNum = varNum;
+
+        this.ToCritter();
+    }
+
+    int   MinHp;                 // Минимальное число хп, при котором бой останавливается
+    uint8 OnlyHandCombat;        // Признак - только рукопашный бой
+    int   TeamIdOld;             // Номер команды НПЦ до боя
+    int   TeamIdFight;           // Номер команды НПЦ во время боя
+    uint  NpcId;                 // Id нпц
+    uint  PlayerId;              // Id игрока
+    int   FightPriority;         // Приоритет плана атаки
+    int   VarNum;                // Номер переменной, которая отвечает за завершение боя. Шаблон: локальная, максимум 3, стартовое значение 0. 1 - игрок проиграл. 2 - игрок победил. 3 - игрок победил, нпц мертв
+
+    void ToCritter()
+    {
+        DL( "fq to critter called" );
+        Critter@ cr = GetCritter( this.NpcId );
+        if( !valid( cr ) )
+            return;
+        // Параметры боя сохраняем в статы нпц
+        cr.StatBase[ ST_VAR1 ] = this.MinHp;
+        cr.StatBase[ ST_VAR2 ] = int(this.OnlyHandCombat);
+        cr.StatBase[ ST_VAR3 ] = this.TeamIdOld;
+        cr.StatBase[ ST_VAR4 ] = this.TeamIdFight;
+        cr.StatBase[ ST_VAR5 ] = int(this.PlayerId);
+        cr.StatBase[ ST_VAR6 ] = this.FightPriority;
+        cr.StatBase[ ST_VAR7 ] = this.VarNum;
+        cr.SetEvent( CRITTER_EVENT_ATTACKED, "_FighterAttacked" );
+        cr.SetEvent( CRITTER_EVENT_ATTACK, "_FighterAttack" );
+        cr.SetEvent( CRITTER_EVENT_DEAD, "_FighterDead" );
+        DL( "fq to critter success" );
+    }
+
+    FighterQuest@ FromCritter( Critter& cr )
+    {
+        this.MinHp = cr.StatBase[ ST_VAR1 ];
+        this.OnlyHandCombat = uint8( cr.StatBase[ ST_VAR2 ] );
+        this.TeamIdOld = cr.StatBase[ ST_VAR3 ];
+        this.TeamIdFight = cr.StatBase[ ST_VAR4 ];
+        this.NpcId = cr.Id;
+        this.PlayerId = uint( cr.StatBase[ ST_VAR5 ] );
+        this.FightPriority = cr.StatBase[ ST_VAR6 ];
+        this.VarNum = cr.StatBase[ ST_VAR7 ];
+        return this;
+    }
+
+    void CancelFigther()
+    {
+        DL( "fq cancel called" );
+        Critter@ cr = GetCritter( this.NpcId );
+        if( !valid( cr ) )
+            return;
+        cr.StatBase[ ST_TEAM_ID ] = this.TeamIdOld;
+        for( uint i = ST_VAR1; i <= ST_VAR7; i++ )
+            cr.StatBase[ i ] = 0;
+        EraseAttackPlane( cr, this.PlayerId );
+        cr.SetEvent( CRITTER_EVENT_ATTACKED, "" );
+        cr.SetEvent( CRITTER_EVENT_ATTACK, "" );
+        cr.SetEvent( CRITTER_EVENT_DEAD, "" );
+        for( uint i = DAMAGE_BEGIN; i <= DAMAGE_END; i++ )
+            cr.DamageBase[ i ] = 0;
+        cr.StatBase[ ST_CURRENT_HP ] = cr.Stat[ ST_MAX_LIFE ];
+        cr.StatBase[ ST_CURRENT_AP ] = cr.Stat[ ST_ACTION_POINTS ];
+    }
+
+    void StartFight()
+    {
+        Critter@ npc = GetCritter( this.NpcId );
+        Critter@ player = GetCritter( this.PlayerId );
+        if( !valid( npc ) || !valid( player ) )
+            return;
+        npc.StatBase[ ST_TEAM_ID ] = this.TeamIdFight;
+        AddAttackPlane( npc, this.FightPriority, player, this.MinHp );
+        string lex = "$npcname@msg DLG " + STR_NPC_NAME( npc.Stat[ ST_DIALOG_ID ], npc.GetProtoId() ) + "@";
+        player.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_FIGHT_BEGIN, lex );
+    }
+
+    void SetFighterDead()
+    {
+        if( this.PlayerId > 0 )
+        {
+            GameVar@ status = GetLocalVar( this.VarNum, this.PlayerId );
+            if( valid( status ) )
+                status = STATUS_DEAD;
+            Critter@ cr = GetCritter( this.PlayerId );
+            if( valid( cr ) )
+                cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_FIGHT_DEAD );
+        }
+        this.CancelFigther();
+    }
+
+    void SetPlayerWin()
+    {
+        if( this.PlayerId > 0 )
+        {
+            GameVar@ status = GetLocalVar( this.VarNum, this.PlayerId );
+            if( valid( status ) )
+                status = STATUS_WIN;
+            string   lex = "$npcname ";
+            Critter@ npc = GetCritter( this.NpcId );
+            if( valid( npc ) && npc.Stat[ ST_DIALOG_ID ] > 0 )
+                lex = "$npcname@msg DLG " + STR_NPC_NAME( npc.Stat[ ST_DIALOG_ID ], npc.GetProtoId() ) + "@";
+            Critter@ cr = GetCritter( this.PlayerId );
+            if( valid( cr ) )
+            {
+                cr.Wait( 0 );
+                cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_FIGHT_WIN, lex );
+                cr.ShowScreen( SCREEN_DIALOGBOX, 0, "answer_None" );
+                cr.SayMsg( SAY_DIALOGBOX_TEXT, TEXTMSG_TEXT, STR_FIGHT_WIN, lex );
+            }
+        }
+
+        this.CancelFigther();
+    }
+
+    void SetPlayerLoose()
+    {
+        DL( "player loose called" );
+        if( this.PlayerId > 0 )
+        {
+            GameVar@ status = GetLocalVar( this.VarNum, this.PlayerId );
+            if( valid( status ) )
+                status = STATUS_LOOSE;
+            DL( "var passed" );
+            string   lex = "$npcname a";
+            Critter@ npc = GetCritter( this.NpcId );
+            if( valid( npc ) && npc.Stat[ ST_DIALOG_ID ] > 0 )
+                lex = "$npcname@msg DLG " + STR_NPC_NAME( npc.Stat[ ST_DIALOG_ID ], npc.GetProtoId() ) + "@";
+            DL( lex );
+            Critter@ cr = GetCritter( this.PlayerId );
+            if( valid( cr ) )
+                cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_FIGHT_LOOSE, lex );
+        }
+        this.CancelFigther();
+    }
+
+    bool IsFairAttacker()    // Проверяет, что игрок безоружен, если требуется такая проверка
+    {
+        if( this.OnlyHandCombat != 0 )
+        {
+            Critter@ player = GetCritter( this.PlayerId );
+            if( valid( player ) )
+            {
+                Item@ weapon = _CritGetItemHand( player );
+                if( valid( weapon ) && !weapon.Proto.Weapon_IsUnarmed )
+                    return false;
+            }
+        }
+        return true;
+    }
+}
+
+bool _FighterAttack( Critter& cr, Critter& target )
+{
+    CreateTimeEvent( __FullSecond, "e_CheckHealth", cr.Id, false );
+    return false;
+}
+
+bool _FighterAttacked( Critter& cr, Critter& attacker )
+{
+    FighterQuest fq = FighterQuest();
+    fq.FromCritter( cr );
+    if( valid( fq ) )
+    {
+        if( !fq.IsFairAttacker() )
+        {
+            cr.SayMsg( SAY_SHOUT, TEXTMSG_TEXT, STR_USE_WEAPON );
+            fq.SetPlayerLoose();
+            AddAttackPlane( cr, 0, attacker );
+            return true;
+        }
+    }
+    CreateTimeEvent( __FullSecond, "e_CheckHealth", cr.Id, false );
+    return false;
+}
+
+uint e_CheckHealth( uint[] @ values )
+{
+    DL( "check health" );
+    Critter@ cr = GetCritter( values[ 0 ] );
+    if( !valid( cr ) )
+        return 0;
+    FighterQuest fq = FighterQuest();
+    fq.FromCritter( cr );
+    if( valid( fq ) )
+    {
+        DL( "min hp" + fq.MinHp );
+        Critter@ player = GetCritter( fq.PlayerId );
+        if( valid( player ) && player.Stat[ ST_CURRENT_HP ] < fq.MinHp )
+        {
+            fq.SetPlayerLoose();
+        }
+        else
+        {
+            if( cr.Stat[ ST_CURRENT_HP ] < fq.MinHp )
+            {
+                player.Wait( 0 );
+                fq.SetPlayerWin();
+            }
+        }
+    }
+    return 0;
+}
+
+void _FighterDead( Critter& cr, Critter@ killer )
+{
+    FighterQuest fq = FighterQuest();
+    fq.FromCritter( cr );
+    if( valid( killer ) && killer.Id == fq.PlayerId )
+    {
+        if( cr.CheckEnemyInStack( killer.Id ) )
+            cr.ClearEnemyStack();
+        fq.SetFighterDead();
+    }
+    else
+    {
+        fq.SetPlayerLoose();
+    }
+}
+
+void r_BeginFight( Critter& player, Critter@npc, int newTeam, int hpPercent, int handCombat, int priority, int varNum )
+{
+    if( !valid( npc ) )
+        return;
+    int           hp = player.Stat[ ST_CURRENT_HP ] * ( CLAMP( hpPercent, -100, 100 ) / 100 );
+    hp = CLAMP( ( hp < -20 ? -20 : hp ), -50, 30 );
+    bool          handCmbt = ( handCombat > 0 ? true : false );
+    FighterQuest@ fq = FighterQuest( npc, newTeam, hp, handCmbt, player.Id, priority, varNum );
+    fq.StartFight();
+}
+
+
+void answer_None( Critter& player, uint answerI, string& answerS )
+{
+    // заглушка для диалогового окна
+}

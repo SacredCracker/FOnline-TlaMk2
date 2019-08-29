@@ -1,0 +1,35 @@
+// FOS Common
+
+bool item_check_stackable( ItemMutual& item, ItemMutual@ other, uint pid )
+{
+	if( @other is null  ) return item.GetProtoId() == pid;
+#define CHECK_ITEM_STACK_DATA #( data ) ( item.data==other.data )
+	return CHECK_ITEM_STACK_DATA( AmmoCount ) && CHECK_ITEM_STACK_DATA( HolodiskNumber ) && CHECK_ITEM_STACK_DATA( RadioFlags )
+	  && CHECK_ITEM_STACK_DATA( RadioBroadcastSend ) && CHECK_ITEM_STACK_DATA( RadioBroadcastRecv ) && CHECK_ITEM_STACK_DATA( RadioChannel )
+	  && CHECK_ITEM_STACK_DATA( Charge ) && CHECK_ITEM_STACK_DATA( LockerComplexity ) && CHECK_ITEM_STACK_DATA( LockerCondition )
+	  && CHECK_ITEM_STACK_DATA( LockerId ) && CHECK_ITEM_STACK_DATA( AmmoPid ) && CHECK_ITEM_STACK_DATA( Deterioration )
+	  && CHECK_ITEM_STACK_DATA( Indicator ) && CHECK_ITEM_STACK_DATA( BrokenFlags ) && CHECK_ITEM_STACK_DATA( BrokenCount )
+	  && CHECK_ITEM_STACK_DATA( LightColor ) && CHECK_ITEM_STACK_DATA( LightFlags ) && CHECK_ITEM_STACK_DATA( LightDistance )
+	  && CHECK_ITEM_STACK_DATA( LightIntensity ) && CHECK_ITEM_STACK_DATA( TrapValue ) && CHECK_ITEM_STACK_DATA( Flags )
+	  && CHECK_ITEM_STACK_DATA( Val0 ) && CHECK_ITEM_STACK_DATA( Val1 ) && CHECK_ITEM_STACK_DATA( Val2 ) && CHECK_ITEM_STACK_DATA( Val3 )
+	  && CHECK_ITEM_STACK_DATA( Val4 ) && CHECK_ITEM_STACK_DATA( Val5 ) && CHECK_ITEM_STACK_DATA( Val6 )
+	  && CHECK_ITEM_STACK_DATA( Val7 ) && CHECK_ITEM_STACK_DATA( Val8 ) && CHECK_ITEM_STACK_DATA( Val9 )
+	  && CHECK_ITEM_STACK_DATA( Info ) && CHECK_ITEM_STACK_DATA( PicMap ) && CHECK_ITEM_STACK_DATA( PicInv )
+	  && CHECK_ITEM_STACK_DATA( CrafterId ) 
+	  // weapon random
+	  && CHECK_ITEM_STACK_DATA( WeaponBonus_MinDamage ) && CHECK_ITEM_STACK_DATA( WeaponBonus_MaxDamage )
+	  && CHECK_ITEM_STACK_DATA( WeaponBonus_Critroll ) && CHECK_ITEM_STACK_DATA( WeaponBonus_ToHit ) && CHECK_ITEM_STACK_DATA( WeaponBonus_CritChance )
+	  && CHECK_ITEM_STACK_DATA( WeaponBonus_AP ) 
+	  // armor random
+	  && CHECK_ITEM_STACK_DATA( ArmorBonus_DRNormal ) && CHECK_ITEM_STACK_DATA( ArmorBonus_DRLaser ) && CHECK_ITEM_STACK_DATA( ArmorBonus_DRFire )
+	  && CHECK_ITEM_STACK_DATA( ArmorBonus_DRPlasma ) && CHECK_ITEM_STACK_DATA( ArmorBonus_DRElectr ) && CHECK_ITEM_STACK_DATA( ArmorBonus_DRExplode )
+	  && CHECK_ITEM_STACK_DATA( ArmorBonus_DTNormal ) && CHECK_ITEM_STACK_DATA( ArmorBonus_DTLaser ) && CHECK_ITEM_STACK_DATA( ArmorBonus_DTFire )
+	  && CHECK_ITEM_STACK_DATA( ArmorBonus_DTPlasma ) && CHECK_ITEM_STACK_DATA( ArmorBonus_DTElectr ) && CHECK_ITEM_STACK_DATA( ArmorBonus_AC )
+	  && CHECK_ITEM_STACK_DATA( ArmorBonus_DTExplode ) && CHECK_ITEM_STACK_DATA( ArmorBonus_DRRad ) && CHECK_ITEM_STACK_DATA( ArmorBonus_CarryWeight )
+	  && CHECK_ITEM_STACK_DATA( ArmorBonus_FasterHealing ) && CHECK_ITEM_STACK_DATA( ArmorBonus_Harisma ) && CHECK_ITEM_STACK_DATA( ArmorBonus_Perception )
+	  && CHECK_ITEM_STACK_DATA( ArmorBonus_Strength ) && CHECK_ITEM_STACK_DATA( ArmorBonus_CriticalResist ) && CHECK_ITEM_STACK_DATA( ArmorBonus_Luck )
+	  && CHECK_ITEM_STACK_DATA( ArmorBonus_AP ) && CHECK_ITEM_STACK_DATA( ArmorBonus_DeteriorateResist )
+	  
+	  ;	
+#undef CHECK_ITEM_STACK_DATA
+}

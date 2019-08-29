@@ -1,0 +1,410 @@
+// FOS Common Sort -2 
+#ifndef _COMBAT_H_
+#define _COMBAT_H_
+
+// Critical hit/miss flags
+#define HF_KNOCKOUT                     (0x00000001)
+#define HF_KNOCKDOWN                    (0x00000002)
+#define HF_CRIPPLED_LEFT_LEG            (0x00000004)
+#define HF_CRIPPLED_RIGHT_LEG           (0x00000008)
+#define HF_CRIPPLED_LEFT_ARM            (0x00000010)
+#define HF_CRIPPLED_RIGHT_ARM           (0x00000020)
+#define HF_BLINDED                      (0x00000040)
+#define HF_DEATH                        (0x00000080)
+#define HF_ON_FIRE                      (0x00000400)
+#define HF_BYPASS_ARMOR                 (0x00000800)
+#define HF_DROPPED_WEAPON               (0x00004000)
+#define HF_LOST_NEXT_TURN               (0x00008000)
+#define HF_RANDOM                       (0x00200000)
+
+#define MF_KNOCKED_DOWN                 (0x00000002)
+#define MF_ON_FIRE                      (0x00000400)
+#define MF_WEAPON_EXPLODED              (0x00001000)
+#define MF_WEAPON_DESTROYED             (0x00002000)
+#define MF_WEAPON_DROPPED               (0x00004000)
+#define MF_LOST_NEXT_TURN               (0x00008000)
+#define MF_HIT_SELF                     (0x00010000)
+#define MF_LOST_REST_OF_AMMO            (0x00020000)
+#define MF_FIRED_DUD_SHOT               (0x00040000)
+#define MF_HURT_SELF                    (0x00080000)
+#define MF_HIT_RANDOMLY                 (0x00100000)
+#define MF_CRIPPLED_RANDOM_LIMB         (0x00200000)
+#define MF_WAS_KILLED                   (0x10000000)
+
+#ifdef __SERVER
+
+#define PTR_NULL                    ( -1 )
+
+// message specs
+// note: CMSG_AIMED_HIT must be CMSG_HIT+1, CMSG_CRIT_AIMED_HIT must be CMSG_CRIT_HIT+1
+#define CMSG_MISS                   ( 1 )  // length 2: 1   WHO_ID
+#define CMSG_CRIT_MISS              ( 2 )  // length 3: 2   WHO_ID  EFF
+#define CMSG_CRIT_MISS_DAMAGE       ( 3 )  // length 4: 3   WHO_ID  EFF     DAMAGE
+#define CMSG_HIT                    ( 4 )  // length 3: 4   WHO_ID  DAMAGE
+#define CMSG_AIMED_HIT              ( 5 )  // length 4: 5   WHO_ID  LOC     DAMAGE
+#define CMSG_CRIT_HIT               ( 6 )  // length 5: 6   WHO_ID  DAMAGE  EFF     MESSAGE
+#define CMSG_CRIT_AIMED_HIT         ( 7 )  // length 6: 7   WHO_ID  LOC     DAMAGE  EFF      MESSAGE
+#define CMSG_HIT_DEAD               ( 8 )  // length 3: 8   WHO_ID  DAMAGE
+#define CMSG_AIMED_HIT_DEAD         ( 9 )  // length 4: 9   WHO_ID  LOC     DAMAGE
+#define CMSG_CRIT_HIT_DEAD          ( 10 ) // length 4: 10  WHO_ID  DAMAGE  MESSAGE
+#define CMSG_CRIT_AIMED_HIT_DEAD    ( 11 ) // length 5: 11  WHO_ID  LOC     DAMAGE  MESSAGE
+#define CMSG_OOPS                   ( 12 ) // length 3: 12  WH1_ID  WH2_ID
+#define CMSG_HIT_RANDOMLY           ( 13 ) // length 2: 13  WHO_ID
+#define CMSG_MISS_LEON              ( 14 ) // length 2: 14  WHO_ID
+#define CMSG_MISS_AC                ( 15 ) // length 2: 15  WHO_ID
+#define CMSG_COMBUST                ( 16 ) // length 2: 16  WHO_ID
+#define FlushResults                # (tree)  runTree( tree, 0 )
+
+shared class CombatRes
+{
+    uint[] Res;
+    Critter@ Crit;
+    int      Left;
+    int      Right;
+
+    CombatRes()
+    {
+        Res.resize( 1 );
+        Res[ 0 ] = 1; // This will hold length of the message for client (so it can verify the length)
+        Left = PTR_NULL;
+        Right = PTR_NULL;
+    }
+};
+
+shared void AddEff( Critter@ crit, uint[] eff, CombatRes[]& combatResults )
+{
+    int ptr = 0;
+
+    // find or create the node:
+    if( combatResults.length() == 0 )
+    {
+        combatResults.resize( 1 );
+        @combatResults[ 0 ].Crit = crit;
+    }
+
+    while( combatResults[ ptr ].Crit.Id != crit.Id )
+    {
+        if( crit.Id < combatResults[ ptr ].Crit.Id )
+        {
+            if( combatResults[ ptr ].Left != PTR_NULL )
+                ptr = combatResults[ ptr ].Left;
+            else
+            {
+                uint last = combatResults.length();
+                combatResults.resize( last + 1 );
+                combatResults[ ptr ].Left = last;
+                ptr = last;
+                @combatResults[ last ].Crit = crit;
+            }
+        }
+        else
+        {
+            if( combatResults[ ptr ].Right != PTR_NULL )
+                ptr = combatResults[ ptr ].Right;
+            else
+            {
+                uint last = combatResults.length();
+                combatResults.resize( last + 1 );
+                combatResults[ ptr ].Right = last;
+                ptr = last;
+                @combatResults[ last ].Crit = crit;
+            }
+        }
+    }
+
+    // add the effect:
+    uint len = eff.length();
+    combatResults[ ptr ].Res.resize( combatResults[ ptr ].Res[ 0 ] + len );
+    for( uint i = 0; i < len; i++ )
+        combatResults[ ptr ].Res[ i + combatResults[ ptr ].Res[ 0 ] ] = eff[ i ];
+
+    combatResults[ ptr ].Res[ 0 ] += len;
+}
+
+shared void runTree( CombatRes[]& combatResults, int ptr )
+{
+    if( ptr == 0 )
+        if( combatResults.length() == 0 )
+            return;
+    /*if (@combatResults[ptr].Crit==null)
+       {
+       Log("tree fail, ptr="+ptr+" in "+where);
+       return false;
+       }*/
+    combatResults[ ptr ].Crit.SendCombatResult( combatResults[ ptr ].Res );
+
+    /*if(combatResults[ptr].Left  !=PTR_NULL)
+       if (!runTree(combatResults, combatResults[ptr].Left, where)) return false;
+       if(combatResults[ptr].Right !=PTR_NULL)
+       if (!runTree(combatResults, combatResults[ptr].Right, where)) return false;*/
+    if( combatResults[ ptr ].Left  != PTR_NULL )
+        runTree( combatResults, combatResults[ ptr ].Left );
+    if( combatResults[ ptr ].Right != PTR_NULL )
+        runTree( combatResults, combatResults[ ptr ].Right );
+}
+
+shared class CombatProccess : Mk2::CombatProccessPacket
+{
+    CombatProccess()
+	{
+		AllDamage.resize( DAMAGE_TYPE_COUNT );
+		for( uint i = 0, iend = DAMAGE_TYPE_COUNT; i < iend; i++ )
+			AllDamage[i] = 0;
+			
+		TypeDamage = -1;
+		TargetDT = 0;
+		TargetDR = 0;
+
+		IsCritical = false;
+		@ArmorTarget = null;
+		@RealWeapon = null;
+		@Attacker = null;
+		Result = 0;
+
+		Hx = 0;
+		Hy = 0;
+		Aim = HIT_LOCATION_UNCALLED;
+		IsBurst = false;
+		BloodyMess = false;
+		CombatMessage = false;
+		ScoreUnarmed = false;
+		FirstWeaponPerk = -1;
+		SecondWeaponPerk = -1;
+		AmmoPerk = -1;
+		WeaponSubtype = 0;
+		DmgMin = 0;
+		DmgMax = 0;
+		BonusDmg = 0;
+		DmgMul = 2;
+		DRMod = 0;
+		TDMod = 1;
+		DMMod = 1;
+		DDMod = 1;
+		AmmoPid = 0;
+		ProtoItemId = 0;
+
+		TypeAttack = 0;
+		TargetId = 0;
+		TargetHit = false;
+		ForceFlags = 0;
+		ShowHitAnimForce = false;
+		WeaponMode = 0;
+		WeaponUse = 0;
+		
+		Skill = 0;
+		MaxAttackDistance = 0;
+	}
+    
+	bool IsWeaponPerk( int number )
+	{
+		return ( FirstWeaponPerk == number || SecondWeaponPerk == number || AmmoPerk == number );
+	}
+	
+    int  get_TotalDamage()
+	{
+		int allDamage = 0;
+		for( uint i = 0; i < DAMAGE_TYPE_COUNT; i++ )
+			allDamage += AllDamage[ i ];
+		return allDamage;
+	}
+	
+	void DropDamage()
+	{
+		for( uint i = 0; i < DAMAGE_TYPE_COUNT; i++ )
+			AllDamage[i] = 0;
+	}
+	
+    int  get_Damage()
+	{
+		if( TypeDamage >= DAMAGE_TYPE_COUNT || TypeDamage < 0 )
+			return get_TotalDamage();
+		return AllDamage[ TypeDamage ];
+	}
+	
+    void set_Damage( int value )
+	{
+		if( TypeDamage >= DAMAGE_TYPE_COUNT || TypeDamage < 0 )
+		{
+			Log( "Error! Damage Unknown. " + TypeDamage );
+			return;
+		}
+
+		AllDamage[ TypeDamage ] = value;
+	}
+	
+    int  get_Damage( uint idx )
+	{
+		if( idx >= DAMAGE_TYPE_COUNT )
+			return get_TotalDamage();
+		return AllDamage[ idx ];
+	}
+	
+    void set_Damage( uint idx, int value )
+	{
+		if( idx >= DAMAGE_TYPE_COUNT )
+        {
+			Log( "Error! Damage Unknown. " + idx );
+			return;
+		}
+		AllDamage[ idx ] = value;
+	}
+	
+	
+	void startLeon( Critter& target, CombatRes[]& results )
+	{
+		target.Wait( 50 );
+		target.Action( ACTION_DODGE, 0, null );
+
+		if( target.Perk[ PE_REGROUPING ] > 0 && Random( 1, 100 ) <= 25 )
+		{
+			target.StatBase[ ST_CURRENT_AP ] = target.Stat[ ST_ACTION_POINTS ] * 100;
+		}
+
+		NotifyMissLeon( target, results );
+	}
+
+	bool IsLeon( Critter& target, const uint& in dist )
+	{
+		if( target.IsKnockout() )
+			return false;
+		if( target.Perk[ PE_DODGER ] * 8 > Random( 1, 100 ) )
+			return true;
+		if( target.Perk[ PE_CHIP_EVADE ] * 4 > Random( 1, 100 ) )
+			return true;
+		int bonus = 0;
+		if( target.Perk[ PE_HTH_EVADE ] > 0 )
+		{
+			bool armed = false;
+			Item@[] hands;
+			target.GetItems( SLOT_HAND1, hands );
+			target.GetItems( SLOT_HAND2, hands );
+			for( uint n = 0; n < hands.length(); n++ )
+			{
+				Item@ hand = hands[ n ];
+				if( validEngineObject( hand ) && _WeaponSkill( hand.Proto, _WeaponModeUse( hand.Mode ) ) != SK_UNARMED )
+				{
+					armed = true;
+					break;
+				}
+			}
+			if( !armed )
+				bonus += target.Perk[ PE_HTH_EVADE ] * target.Param[ ST_CURRENT_AP ];
+		}
+		int lionSkill = bonus + ( target.Skill[ SK_LIONHEART ] - 100 ) * 0.16;
+		if( dist < 3 )
+			lionSkill /= 3;
+
+		return ( target.Skill[ SK_LIONHEART ] > 105 && Random( 1, 100 ) < lionSkill );
+	}
+	
+	bool UnarmedProccess()
+	{
+		return false;
+	}
+
+    uint16   ProtoItemId;
+    uint16   Hx;
+    uint16   Hy;
+
+    uint8    Aim;
+    uint8    WeaponSubtype;
+    uint8    Result;
+	
+    uint8    WeaponMode;
+    uint8    WeaponUse;
+	
+	int	  Skill;
+
+    bool     IsBurst;
+    bool     BloodyMess;
+    bool     CombatMessage;
+    bool     ScoreUnarmed;
+    bool     TargetHit;
+    bool     ShowHitAnimForce;
+    bool     IsCritical;
+
+    int      FirstWeaponPerk;
+    int      SecondWeaponPerk;
+    int      AmmoPerk;
+    int      DmgMin;
+    int      DmgMax;
+    int      DmgType;
+    int      BonusDmg;
+    int      DmgMul;
+    int      DRMod;
+    int      DMMod;
+    int      DDMod;
+    int      TDMod;
+    int      TypeAttack;
+    int[]      AllDamage;
+    int      TypeDamage;
+    int      TargetDT;
+    int      TargetDR;
+
+    uint     TargetId;
+    uint     ForceFlags;
+    uint     AmmoPid;
+	uint	  MaxAttackDistance;
+	
+    Item@ ArmorTarget;
+    Item@ RealWeapon;
+
+    Critter@ Attacker;
+}
+
+shared void NotifyOops( Critter& cr, Critter& t1, Critter@ t2, CombatRes[]& results )
+{
+    if( !validEngineObject( t2 ) )
+    {
+        uint[] allEff = { CMSG_HIT_RANDOMLY, cr.Id };
+        Critter@[] him = { @cr },
+        crits;
+        for( int i = 0, iMax = cr.GetMap().GetCrittersSeeing( him, true, FIND_ALL | FIND_ONLY_PLAYERS, crits ); i < iMax; i++ )
+            AddEff( crits[ i ], allEff, results );
+    }
+    else
+    {
+        uint[] allEff = { CMSG_OOPS, t1.Id, t2.Id };
+        Critter@[] them = { @t1, @t2 },
+        crits;
+        for( int i = 0, iMax = t1.GetMap().GetCrittersSeeing( them, true, FIND_ALL | FIND_ONLY_PLAYERS, crits ); i < iMax; i++ )
+            AddEff( crits[ i ], allEff, results );
+    }
+}
+
+shared void NotifyMiss( Critter& cr, CombatRes[]& results )
+{
+    uint[] allEff = { CMSG_MISS, cr.Id };
+    Critter@[] crits;
+    cr.GetCritters( true, FIND_ALL | FIND_ONLY_PLAYERS, crits );
+    if( cr.IsPlayer() )
+        crits.insertLast( @cr );
+    for( int i = 0, iMax = crits.length(); i < iMax; i++ )
+        AddEff( crits[ i ], allEff, results );
+}
+
+shared void NotifyMissLeon( Critter& cr, CombatRes[]& results )
+{
+    uint[] allEff = { CMSG_MISS_LEON, cr.Id };
+    Critter@[] crits;
+    cr.GetCritters( true, FIND_ALL | FIND_ONLY_PLAYERS, crits );
+    if( cr.IsPlayer() )
+        crits.insertLast( @cr );
+    for( int i = 0, iMax = crits.length(); i < iMax; i++ )
+        AddEff( crits[ i ], allEff, results );
+}
+
+shared void NotifyMissAc( Critter& cr, CombatRes[]& results )
+{
+    uint[] allEff = { CMSG_MISS_AC, cr.Id };
+    Critter@[] crits;
+    cr.GetCritters( true, FIND_ALL | FIND_ONLY_PLAYERS, crits );
+    if( cr.IsPlayer() )
+        crits.insertLast( @cr );
+    for( int i = 0, iMax = crits.length(); i < iMax; i++ )
+        AddEff( crits[ i ], allEff, results );
+}
+
+#endif
+
+#endif // _COMBAT_H_

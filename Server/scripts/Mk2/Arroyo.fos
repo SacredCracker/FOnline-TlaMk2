@@ -1,0 +1,180 @@
+// FOS Server
+// Author: Dagnir
+// "Скрипт" с параметрами для нпц.
+// Просто для того, чтобы с ними драться прикольней было.
+// Обычно после этих строчек включают макросы:
+// arroyo_npc -> Arroyo::
+
+//Жители мирные.
+void Villager( ::Critter& npc, bool firstTime)
+{
+	if(firstTime)
+	{
+		npc.StatBase[ST_CRITICAL_CHANCE]=10;
+		npc.StatBase[ST_MELEE_DAMAGE] +=4;
+		npc.SkillBase[SK_UNARMED]=60;
+		npc.SkillBase[SK_THROWING]=80;
+		npc.ModeBase[MODE_NO_ENEMY_STACK]=1;
+	}
+}
+
+//Крестьяне, которые бомжи в палатках.
+void Peasant( ::Critter& npc, bool firstTime)
+{
+	if(firstTime)
+	{
+		npc.StatBase[ST_MELEE_DAMAGE] +=3;
+		npc.SkillBase[SK_SMALL_GUNS]=100;
+		npc.SkillBase[SK_UNARMED]=50;
+		npc.ModeBase[MODE_NO_ENEMY_STACK]=1;
+	}
+}
+
+void Child( ::Critter& npc, bool firstTime)
+{
+	if(firstTime)
+	{
+		npc.StatBase[ST_CRITICAL_CHANCE]=20;
+		npc.SkillBase[SK_THROWING]=80;
+		npc.ModeBase[MODE_NO_ENEMY_STACK]=1;
+	}
+}
+
+//Воины, охотники.
+void Warrior( ::Critter& npc, bool firstTime)
+{
+	if(firstTime)
+	{
+		npc.StatBase[ST_STRENGTH]=8;
+		npc.StatBase[ST_ENDURANCE]=8;
+		npc.StatBase[ST_LUCK]=6;
+		npc.StatBase[ST_ACTION_POINTS]=10;
+		npc.StatBase[ST_CRITICAL_CHANCE]=20;
+		npc.StatBase[ST_MELEE_DAMAGE]=6;
+		npc.SkillBase[SK_UNARMED]=100;
+		npc.SkillBase[SK_THROWING]=80;
+		npc.ModeBase[MODE_NO_ENEMY_STACK]=1;
+		npc.StatBase[ST_KILL_EXPERIENCE]=80;
+		npc.StatBase[ST_BONUS_LOOK]=10;
+	}
+	npc.CityRole_IsGuard = true;
+}
+
+//Крутые охотники.
+void CoolWarrior( ::Critter& npc, bool firstTime)
+{
+	if(firstTime)
+	{
+		npc.StatBase[ST_STRENGTH]=8;
+		npc.StatBase[ST_ENDURANCE]=10;
+		npc.StatBase[ST_LUCK]=8;
+		npc.StatBase[ST_ACTION_POINTS]=12;
+		npc.StatBase[ST_CRITICAL_CHANCE]=90;
+		npc.StatBase[ST_MELEE_DAMAGE]=8;
+		npc.SkillBase[SK_UNARMED]=150;
+		npc.SkillBase[SK_THROWING]=120;
+		npc.PerkBase[PE_BETTER_CRITICALS]=1;
+		npc.ModeBase[MODE_NO_ENEMY_STACK]=1;
+		npc.StatBase[ST_KILL_EXPERIENCE]=100;
+		npc.StatBase[ST_BONUS_LOOK]=20;
+	}
+}
+
+//Выходцы, живущие снаружи.
+void Dweller( ::Critter& npc, bool firstTime)
+{
+	if(firstTime)
+	{
+		npc.StatBase[ST_MAX_LIFE]=80;
+		npc.SkillBase[SK_SMALL_GUNS]=150;
+		npc.SkillBase[SK_ENERGY_WEAPONS]=130;
+		npc.SkillBase[SK_UNARMED]=80;
+		npc.ModeBase[MODE_NO_ENEMY_STACK]=1;
+		npc.StatBase[ST_KILL_EXPERIENCE]=80;
+	}
+}
+
+//Выходцы, живущие внутри, слабаки.
+void TempleDweller( ::Critter& npc, bool firstTime)
+{
+	if(firstTime)
+	{
+		npc.SkillBase[SK_ENERGY_WEAPONS]=50;
+		npc.ModeBase[MODE_NO_ENEMY_STACK]=1;
+		npc.StatBase[ST_KILL_EXPERIENCE]=30;
+	}
+}
+
+//Охрана
+void Guard( ::Critter& npc, bool firstTime)
+{
+	if(firstTime)
+	{
+		npc.StatBase[ST_ENDURANCE]=8;
+		npc.StatBase[ST_AGILITY]=8;
+		npc.StatBase[ST_LUCK]=6;
+		npc.StatBase[ST_MAX_LIFE] +=20;
+		npc.StatBase[ST_MELEE_DAMAGE] +=5;
+		npc.SkillBase[SK_SMALL_GUNS]=100;
+		npc.SkillBase[SK_BIG_GUNS]=80;
+		npc.SkillBase[SK_UNARMED]=80;
+		npc.ModeBase[MODE_NO_ENEMY_STACK]=1;
+		npc.StatBase[ST_BONUS_LOOK]=15;
+	}
+	npc.CityRole_IsGuard = true;
+}
+
+//Охрана покруче.
+void CoolGuard( ::Critter& npc, bool firstTime)
+{
+	if(firstTime)
+	{
+		npc.StatBase[ST_ENDURANCE]=8;
+		npc.StatBase[ST_AGILITY]=8;
+		npc.StatBase[ST_LUCK]=8;
+		npc.StatBase[ST_MAX_LIFE]=150;
+		npc.StatBase[ST_ACTION_POINTS] +=4;
+		npc.StatBase[ST_CRITICAL_CHANCE]=30;
+		npc.StatBase[ST_MELEE_DAMAGE] +=5;
+		npc.SkillBase[SK_SMALL_GUNS]=130;
+		npc.SkillBase[SK_BIG_GUNS]=120;
+		npc.SkillBase[SK_ENERGY_WEAPONS]=100;
+		npc.SkillBase[SK_UNARMED]=80;
+		npc.PerkBase[PE_QUICK_RECOVERY]=1;
+		npc.PerkBase[PE_STONEWALL]=1;
+		npc.PerkBase[PE_BETTER_CRITICALS]=1;
+		npc.PerkBase[PE_QUICK_RECOVERY]=1;
+		npc.ModeBase[MODE_NO_ENEMY_STACK]=1;
+		npc.StatBase[ST_BONUS_LOOK]=25;
+	}
+	npc.CityRole_IsGuard = true;
+}
+
+//Минок.
+void Mynoc( ::Critter& npc, bool firstTime)
+{
+	if(firstTime)
+	{
+		npc.StatBase[ST_STRENGTH]=9;
+		npc.StatBase[ST_PERCEPTION]=8;
+		npc.StatBase[ST_ENDURANCE]=10;
+		npc.StatBase[ST_AGILITY]=8;
+		npc.StatBase[ST_LUCK]=8;
+		npc.StatBase[ST_MAX_LIFE]=200;
+		npc.StatBase[ST_ACTION_POINTS]=16;
+		npc.StatBase[ST_CRITICAL_CHANCE]=50;
+		npc.StatBase[ST_MELEE_DAMAGE] +=8;
+		npc.SkillBase[SK_BIG_GUNS]=120;
+		npc.SkillBase[SK_ENERGY_WEAPONS]=150;
+		npc.SkillBase[SK_UNARMED]=150;
+		npc.StatBase[ST_CRITICAL_RESISTANCE]=85;
+		npc.PerkBase[PE_QUICK_RECOVERY]=1;
+		npc.PerkBase[PE_SHARPSHOOTER]=1;
+		npc.PerkBase[PE_STONEWALL]=1;
+		npc.PerkBase[PE_BETTER_CRITICALS]=1;
+		npc.ModeBase[MODE_NO_ENEMY_STACK]=1;
+		npc.StatBase[ST_BONUS_LOOK]=40;
+	}
+	npc.CityRole_IsGuard = true;
+}
+

@@ -1,0 +1,477 @@
+// FOS Server
+// Author: rifleman17
+// Квест-специальный энкаунтер. Две последовательные локации
+// На первой игрок находит труп нпц с рацией, если он возьмет рацию, может услышать сообщение о том, что где-то в Пустоши найден военный склад. На самом деле это - ловушка, в которой его поджидает сумасшедший ученый.
+// При заходе на вторую локацию персонаж попадает на хирургический стол, где его оперируют и персонаж превращается в андроида.
+
+enum Defines
+{
+	StrRadioMessage = 70070,
+	EntireDoorGround = 17,
+	EntireContainer = 25,
+	PidContainer = 135,
+	EntireKnockout = 26,
+	CteCheckKnockout = 128,
+	PidGroundDoor = 2421,
+	StrLiftBroken = 70072,
+	KeyDoorId = 16643,
+	
+	StrEmpty = 70092,
+	StrOpenPot = 70096,
+	StrFound = 70093,
+	StrUnLuck = 70094,
+	EntireExplode = 30,
+	StrOut = 70095,
+
+	EntireDocPos = 27,
+	EntirePlayerPos = 28,
+	EntireDocHome = 29,
+	StrAwake = 70091,
+	StrMapIn = 70071,
+	RoleDoctor = 17
+}
+
+void _DeadInit(::Critter& cr, bool firstTime)
+{
+	if(cr.IsLife())
+		cr.ToDead(ANIM2_DEAD_BACK , null);
+	cr.StatBase[ST_REPLICATION_TIME]=-1;
+	if(cr.CountItem(Content::Item::RADIO)==0)
+	{
+		::Item@ item=cr.AddItem(Content::Item::RADIO, 1);
+		if(validEngineObject(item))
+			item.SetScript("SEAndroid::RadioInit");
+		@item=cr.AddItem(Content::Item::INDEPENDENT, 1);
+		if(validEngineObject(item))
+		{
+			item.AmmoCount=0;
+			item.Update();
+		}
+	}
+}
+
+void RadioInit(::Item& item, bool firstTime)
+{
+	DL("RadioInit");
+	if(firstTime)
+	{
+		item.RadioChannel=::Random(1000, 9999);
+		DL("Channel: " + item.RadioChannel);
+		item.Update();
+	}
+	item.SetEvent(ITEM_EVENT_SKILL, "SEAndroid::RadioSkill");
+}
+
+bool RadioSkill(::Item& item, ::Critter& cr, int skill)
+{
+	DL("Radio skill " + skill);
+	if(skill<0)
+	{
+		::GameVar @alreadyRun=::GetLocalVar(LIVAR_se_android_radio_listened, item.Id);
+		if(valid(alreadyRun) && alreadyRun.GetValue()==0)
+		{
+			::array<uint> values={ item.Id, 0, cr.Id, item.RadioChannel };
+			::CreateTimeEvent(::__FullSecond + ::__TimeMultiplier, "SEAndroid::e_AndroidRadio", values, false);
+			alreadyRun=1;
+		}
+	}
+	return false;
+}
+
+uint e_AndroidRadio(::array<uint>@ values)
+{
+	DL("e_AndroidRadio. ItemId:" + values[0] + "; MsgCount:" + values[1] + "; " + "radioChannel: " + values[2]);
+	::Item@ item=::GetItem(values[0]);
+	if(valid(item))
+	{
+		::GameVar@ radioListened=::GetLocalVar(LIVAR_se_android_radio_listened, item.Id);
+		if(valid(radioListened))
+		{
+			::RadioMessageMsg(values[3], TEXTMSG_TEXT, SEAndroid::Defines::StrRadioMessage);
+			values[1]++;
+			DL("count radio messages:" + values[1]);
+			::GameVar@ seAndroid=::GetLocalVar(LVAR_special_android, item.CritId);
+			if(valid(seAndroid) && seAndroid.GetValue()<2 && item.RadioChannel==values[3]) // Про локацию пока не известно, радио на нужной волне
+				seAndroid=2;
+			DL("seAndroidValue: " + seAndroid.GetValue());
+			if(values[1]<5) // Максимум 5 повторов раз в 20 секунд на нужной радиоволне
+				return ::__TimeMultiplier * 20;
+		}
+	}
+	return 0;
+}
+
+// Скрипт двери. Пока не вошел ни один игрок она и открывается и закрывается.
+void Door(::Item& item, bool firstTime)
+{
+	item.SetEvent(ITEM_EVENT_SKILL,"SEAndroid::UseDoor");
+	SETFLAG(item.Flags,ITEM_ALWAYS_VIEW);
+}
+
+void OutDoor(::Item& item, bool firstTime)
+{
+	SETFLAG(item.Flags,ITEM_ALWAYS_VIEW);
+}
+
+bool UseDoor(::Item& door, ::Critter& cr, int skill)
+{
+	::Map@ map=cr.GetMap();
+	::Location@ loc=map.GetLocation();
+	::GameVar@ playerIn=::GetLocalVar( LLVAR_se_android_player_in, loc.Id);
+	return (valid(playerIn) && playerIn.GetValue()==1);
+}
+
+void t_Transit(::Critter& player, ::Scenery& trigger, bool entered, uint8 dir)
+{
+	::Map@ map=player.GetMap();
+	::Location@ loc=map.GetLocation();
+	::GameVar@ playerIn=::GetLocalVar(LLVAR_se_android_player_in, loc.Id);
+	if(valid(playerIn) && playerIn==0)
+	{
+		// Переносим игрока в подвал, кладем в нокаут
+		::Map@ basement=loc.GetMapByIndex(1);
+		::GameVar@ playerId=::GetLocalVar(LLVAR_se_android_player_id, loc.Id);
+		uint16 x=0;
+		uint16 y=0;
+		uint8 dir=0;
+		if(validEngineObject(basement) && valid(playerId))
+		{
+			basement.GetEntireCoords(SEAndroid::Defines::EntireKnockout, 0, x, y);
+			Effects::FlushScreen(player, COLOR_BLACK, COLOR_BLACK, 5000);
+			player.TransitToMap(basement.Id, x, y, 3);
+			Effects::FlushScreen(player, COLOR_BLACK, COLOR_BLACK, 1000);
+			playerId= player.Id ;
+			player.AddTimeEvent("SEAndroid::cte_CheckPlayerKnockOut", ::__TimeMultiplier*60*30, 0); // Подстраховка
+			player.ToKnockout(KNOCKOUT_ANIM2_DEFAULT(true), 100000, player.HexX, player.HexY);
+			// Все вещи игрока перекладываем в разные ящики
+			::array<::Item@> items = {};
+			if(player.GetItems(-1, items) > 0)
+			{
+				if(basement.GetEntireCoords(SEAndroid::Defines::EntireContainer, 0, x, y))
+				{
+					::Item@ cont=basement.GetItem(x, y, SEAndroid::Defines::PidContainer);
+					if(validEngineObject(cont))
+					{
+						::MoveItems(items, cont, 0);
+						items.resize(0);
+						if(cont.GetItems(0, items)>0)
+						{
+							for(uint i=0, l=items.length(); i<l; i++)
+							{
+								uint pid=items[i].GetProtoId();
+								if( -1 != pids.find( pid ) || pid==uint( Content::Item::POT ))
+									::DeleteItem(items[i]);
+							}
+						}
+						::Item@ item=cont.AddItem( uint( Content::Item::POT ), 1, 0);
+						item.SetLexems("$text" + ::GetPlayerName(player.Id));
+					}
+				
+				}
+			}
+			RunDoctorMonologue(basement);
+		}
+		// Игрок внутри, больше никто туда не попадет
+		playerIn=1;
+		// Закрываем дверь
+		map.GetEntireCoords(SEAndroid::Defines::EntireDoorGround, 0, x, y, dir);
+		::Item@ door=map.GetItem(x, y, SEAndroid::Defines::PidGroundDoor);
+		if(validEngineObject(door))
+			door.LockerClose();
+		return;
+	}
+	else if(valid(playerIn) && playerIn.GetValue()==1)
+	{
+		player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, SEAndroid::Defines::StrLiftBroken);
+	}
+}
+
+uint cte_CheckPlayerKnockOut(::Critter& cr, int identifier, int& rate, int&)
+{
+	DL("CheckKnockout");
+	
+	if(cr.IsKnockout())
+	{
+		::Map@ map=cr.GetMap();
+		if(validEngineObject(map))
+		{
+			if(map.GetLocation().GetProtoId()==LOCATION_SpecialAndroid)
+			{
+				Log("Warning: player character can't stand up knockout.");
+				cr.ToLife();
+			}
+		}
+	}
+	return 0;
+}
+
+// Внешний уровень
+void GroundMap(::Map& map, bool firstTime)
+{
+	DL("Groun map Init");
+	map.SetEvent(MAP_EVENT_IN_CRITTER, "SEAndroid::GroundInCritter");
+}
+
+void GroundInCritter(::Map& map, ::Critter& cr)
+{
+	cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, SEAndroid::Defines::StrMapIn);
+}
+
+// Монолог хирурга
+
+void Doctor(::Critter& cr, bool firstTime)
+{
+	DL("Doctor init");
+	cr.SetEvent(CRITTER_EVENT_IDLE, "SEAndroid::DoctorIdle");
+	if(firstTime)
+	{
+		::Item@ key=cr.AddItem(Content::Item::NUKE_KEY,1);
+		if(validEngineObject(key))
+			key.LockerId=SEAndroid::Defines::KeyDoorId;
+	}
+}
+
+void DoctorIdle(::Critter& cr)
+{
+	if(cr.Stat[ST_VAR1] !=0)
+	{
+		if (!Monologue::Running(cr))
+		{
+			DL("Second stage begin");
+			cr.StatBase[ST_VAR1]=0;
+			::Map@ map=cr.GetMap();
+			::Location@ loc=map.GetLocation();
+			::GameVar@ playerId=::GetLocalVar(LLVAR_se_android_player_id, loc.Id);
+			if(valid(playerId) && playerId.GetValue() !=0)
+			{
+				::Critter@ player=::GetCritter(playerId.GetValue());
+				if(validEngineObject(player))
+					TransformPlayer(map, player, cr);
+			}
+		}
+	}
+}
+
+void RunDoctorMonologue(::Map& map)
+{
+	::Critter@ cr=map.GetNpc(SEAndroid::Defines::RoleDoctor, FIND_LIFE|FIND_ONLY_NPC, 0);
+	if (!valid(cr)) 
+		return;
+	Monologue::Set(cr, 70073, 70090, ::__TimeMultiplier*10, 0, SAY_NORM); // 70090
+	cr.StatBase[ST_VAR1]=1;	
+}
+
+// Перенос в камеру
+void TransformPlayer(::Map& map, ::Critter& player, ::Critter& doctor)
+{
+	DL("TRANSFORM");
+	Effects::FlushScreen(player, COLOR_BLACK, COLOR_BLACK, 5000);
+	if(player.Stat[ST_NEXT_CRTYPE]==0)
+		player.StatBase[ST_NEXT_CRTYPE]=player.CrType;
+	player.ChangeCrType(CRTYPE_TACTICS_RHUMANOID);
+	player.StatBase[ST_BASE_CRTYPE]=CRTYPE_TACTICS_RHUMANOID;
+	uint16 hX=0, hY=0;
+	uint8 dir=0;
+	if (!map.GetEntireCoords(SEAndroid::Defines::EntireDocPos, 0, hX, hY))
+		return;
+	doctor.TransitToMap(map.Id, hX, hY, 0);
+	doctor.SetHomePos(hX, hY, 0);
+	if(map.GetEntireCoords(SEAndroid::Defines::EntirePlayerPos, 0, hX, hY))
+	{
+		player.TransitToMap(map.Id, hX, hY, 3);
+	}
+	::array<uint> values={ player.Id, doctor.Id, map.Id };
+	::CreateTimeEvent(::__FullSecond + ::__TimeMultiplier*6, "SEAndroid::e_AwakePlayer", values, true);
+}
+
+uint e_AwakePlayer( ::array<uint>@ values)
+{
+	::Critter@ player=::GetCritter(values[0]);
+	::Critter@ doctor=::GetCritter(values[1]);
+	if(validEngineObject(player) && validEngineObject(doctor))
+	{
+		player.StatBase[ST_EXPERIENCE] +=4000;
+		player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, SEAndroid::Defines::StrAwake);
+		player.ToDead(ANIM2_DEAD_BACK, null); // TODO: убрать
+		player.StatBase[ST_CURRENT_AP]=0;
+		player.ToLife();
+		::Mk2RunDialog(player, doctor, true);
+	}
+	return 0;
+}
+
+void r_SendDoctorHome(::Critter& player, ::Critter@ npc)
+{
+	DL("Sending home");
+	if (!validEngineObject(npc))
+		return;
+	uint16 hX=0, hY=0;
+	::Map@ map=npc.GetMap();
+	if(validEngineObject(map) && map.GetEntireCoords(SEAndroid::Defines::EntireDocHome, 0, hX, hY))
+	{
+		DL("New home");
+		npc.SetHomePos(hX, hY, 3);
+	}
+}
+
+// Взрывы на выходе из лаборатории
+void t_Warn(::Critter& player, ::Scenery& trigger, bool entered, uint8 dir)
+{
+	::Map@ map=player.GetMap();
+	::Location@ loc=map.GetLocation();
+	::GameVar@ triggered=::GetLocalVar(LLVAR_se_android_mines_triggered, loc.Id);
+	if(valid(triggered) && triggered.GetValue()==0)
+	{
+		player.Wait(0);
+		player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, SEAndroid::Defines::StrOut);
+		triggered=1;
+		::CreateTimeEvent(::__FullSecond + ::__TimeMultiplier, "SEAndroid::e_Explode", map.Id, true);
+		::CreateTimeEvent(::__FullSecond + ::__TimeMultiplier*20, "SEAndroid::e_DeleteMap", map.Id, true);
+	}
+}
+
+uint e_Explode(::array<uint>@ values)
+{
+	::Map@ map=::GetMap(values[0]);
+	if (!validEngineObject(map))
+		return 0;
+	DL("e_Explode called");
+	::array<Entires::Entire> entires;
+	Entires::Entire@ entire;
+	if(Entires::ParseEntires(map, entires, SEAndroid::Defines::EntireExplode)>0)
+	{
+		for(uint i=0; i<3; i++)
+		{
+			@entire=entires[::Random(0, entires.length()-1)];
+			if(valid(entire))
+			{
+				::ExplodeEx(map, entire.HexX, entire.HexY, Content::Item::EXPLODE_ROCKET, 3, 666, DAMAGE_EXPLODE, 3, 0);
+			}
+			
+		}
+	}
+	return REAL_SECOND(1);
+	
+}
+
+uint e_DeleteMap(::array<uint>@ values)
+{
+	::Map@ map=::GetMap(values[0]);
+	if(validEngineObject(map))
+	{
+		::DeleteLocation(map.GetLocation().Id);
+	}
+	return 0;
+}
+// Части тела в банках с биогелем
+void PotInit(::Item& item, bool firstTime)
+{
+	::GameVar@ num=::GetLocalVar(LIVAR_se_android_item_num, item.Id);
+	if(valid(num))
+	{
+		int n=num.GetValue();
+		::string lexems="$text";
+		switch (n)
+		{
+			case LLVAR_se_android_t_founded:
+				lexems +="Tab10id";
+				break;
+			case LLVAR_se_android_c_founded:
+				lexems +="cvet";
+				break;
+			case LLVAR_se_android_p_founded:
+				lexems +="Ponchik";
+				break;
+			case LLVAR_se_android_r_founded:
+				lexems +="rifleman17";
+				break;
+			case LLVAR_se_android_d_founded:
+				lexems +="Dagnir";
+				break;
+			case LLVAR_se_android_l_founded:
+				lexems +="LoadRunner";
+				break;
+			default:
+				lexems +=" ";				
+				break;
+		}
+		item.SetLexems(lexems);
+	}
+	SETFLAG(item.Flags,ITEM_CAN_USE);
+	item.Update();
+	::CreateTimeEvent(::__FullSecond + REAL_HOUR(2), "SEAndroid::e_DeleteItem", item.Id, true);
+	item.SetEvent(ITEM_EVENT_USE, "SEAndroid::PotUse");
+}
+
+uint e_DeleteItem(::array<uint>@ values)
+{
+	::Item@ item=::GetItem(values[0]);
+	if(validEngineObject(item))
+		::DeleteItem(item);
+	return 0;
+}
+
+bool PotUse(::Item& item, ::Critter& cr, ::Critter@ onCritter, ::Item@ onItem, ::Scenery@ onScenery)
+{
+	if(validEngineObject(onCritter) || validEngineObject(onItem) || valid(onScenery))
+		return false;
+	::DeleteItem(item);
+	::Item@ newItem=cr.AddItem(pids[::Random(0, pids.length()-1)],1);
+	if(validEngineObject(newItem))
+	{
+		newItem.Info=2;
+		newItem.Update();
+	}
+	cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, SEAndroid::Defines::StrOpenPot);
+	return true;
+}
+
+const ::array<uint> pids={ Content::Item::HUMAN_BRAIN, Content::Item::GOLD_TOOTH, Content::Item::PLAYERS_EAR, Content::Item::DIXON_EYE, Content::Item::MEAT};
+
+bool s_Boxes(::Critter& player, ::Scenery& scenery, int skill, ::Item@ itemUse, int chance)
+{
+	if(skill !=SKILL_PICK_ON_GROUND)
+		return false;
+	::Map@ map=player.GetMap();
+	::Location@ loc=map.GetLocation();
+	// Проверяем, что в этом контейнере еще не нашли ничего.
+	// Заодно запоминаем последнюю незаполненную переменную
+	int id=scenery.HexX * scenery.HexY;
+	int varNum=-1;
+	for(int i=LLVAR_se_android_t_founded; i<=LLVAR_se_android_l_founded; i++)
+	{
+		::GameVar@ found=::GetLocalVar(i, loc.Id);
+		if(valid(found))
+		{
+			if(found.GetValue()==0 && varNum<0)
+				varNum=i;
+			if(found.GetValue()==id || varNum==LLVAR_se_android_l_founded) // Эти ящики уже обыскивали, либо найдены все предметы
+			{
+				player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, SEAndroid::Defines::StrEmpty);
+				return true;
+			}
+		}
+	}
+	player.Wait(1000);
+	chance=chance - (varNum - LLVAR_se_android_t_founded)*10; // Каждый последующий предмет найти сложнее
+	if(::Random(5,95) > chance || ::Random(1,2)==1)
+	{
+		player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, SEAndroid::Defines::StrUnLuck);
+		return true;
+	}
+	DL("VarNum=" + varNum);
+	::GameVar @ save=::GetLocalVar(varNum, loc.Id);
+	save=id;
+	::Item@ item=player.AddItem( Content::Item::POT , 1);
+	if(validEngineObject(item))
+	{
+		::GameVar @ itemNum=::GetLocalVar(LIVAR_se_android_item_num, item.Id);
+		if(valid(itemNum))
+		{
+			itemNum=varNum;
+		}
+		item.SetScript("SEAndroid::PotInit");
+		player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, SEAndroid::Defines::StrFound);
+	}	
+	return true;	
+}

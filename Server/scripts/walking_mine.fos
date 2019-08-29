@@ -1,0 +1,147 @@
+// Автор: TabaK
+// Пришлось использовать стэк противников для хранения недоступных целей, чтоб постоянно их не дрочить
+
+#include "_defines.fos"
+#include "_macros.fos"
+#include "_npc_pids.fos"
+
+#define MasterId        MercBase[ MERC_MASTER_ID ]
+#define CurrentState    ModeBase[ MODE_NO_WALK ]
+
+import bool CityGuard_ProcessOfCrime( Critter& cr, int penalty, int info, Critter@ infoCr, Item@ infoIt, bool noPenalty ) from "Mk2";
+import bool AddAttackPlane( Critter& npc, uint priority, Critter& target ) from "npc_planes";
+import void ExplodeEx( Map& map, uint16 hexX, uint16 hexY, uint16 effectPid, uint effectRadius, uint damage, uint damageType, uint damageRadius, uint ownerId, Critter@ crit ) from "explode";
+
+void _WalkingMineInit( Critter& mine, bool firstTime )
+{
+    if( !firstTime && mine.MasterId != 0 )
+    {
+        DeleteNpc( mine );
+        return;
+    }
+    mine.SetAnims( COND_LIFE, 0, ANIM2_IDLE_PRONE_FRONT );
+    mine.CurrentState = 1;
+    mine.SetEvent( CRITTER_EVENT_SHOW_CRITTER, "_AssignTarget" );
+    mine.SetEvent( CRITTER_EVENT_IDLE, "_StayCalm" );
+    mine.SetEvent( CRITTER_EVENT_ATTACK, "_Attack" );
+    mine.SetEvent( CRITTER_EVENT_DEAD, "_Dead" );
+    mine.SetEvent( CRITTER_EVENT_PLANE_BEGIN, "_PlaneBegin" );
+    mine.SetEvent( CRITTER_EVENT_PLANE_END, "_PlaneEnd" );
+    mine.SetEvent( CRITTER_EVENT_USE_SKILL, "_ExplodeDoor" );
+    FindTargets( mine );
+}
+
+void FindTargets( Critter& mine )
+{
+    Critter@[] crits;
+    mine.GetCritters( false, FIND_LIFE_AND_KO, crits );
+    for( uint n = 0, nMax = crits.length(); n < nMax; n++ )
+    {
+        _AssignTarget( mine, crits[ n ] );
+    }
+}
+
+void _AssignTarget( Critter& mine, Critter& showCr )
+{
+    if( showCr.IsDead() || ( showCr.IsNpc() && showCr.GetProtoId() == NPC_WALKING_MINE ) ||
+        uint( mine.MasterId ) == showCr.Id || ( mine.Stat[ ST_FACTION ] != 0 && mine.Stat[ ST_FACTION ] == showCr.Stat[ ST_FACTION ] ) )
+        return;
+
+    Critter@ master = GetCritter( uint( mine.MasterId ) );
+    if( valid( master ) )
+    {
+        Critter@ leader = master.Stat[ ST_FOLLOW_CRIT ] == 0 ? master : GetCritter( master.Stat[ ST_FOLLOW_CRIT ] );
+        if( @leader == null )
+            @leader = master;
+        Critter@[] group;
+        leader.GetFollowGroup( FIND_ONLY_PLAYERS | FIND_LIFE_AND_KO, group );
+        for( uint n = 0; n < group.length(); n++ )
+        {
+            if( group[ n ].Id == showCr.Id )
+                return;
+        }
+    }
+
+    Map@   map = mine.GetMap();
+    uint16 hexX = showCr.HexX,
+           hexY = showCr.HexY;
+    map.GetHexCoord( mine.HexX, mine.HexY, hexX, hexY, 0, 0 );
+    bool trace = ( hexX == showCr.HexX && hexY == showCr.HexY );
+    if( mine.CheckEnemyInStack( showCr.Id ) && !trace )
+        return;
+    uint priority = 80 - GetDistantion( mine.HexX, mine.HexY, showCr.HexX, showCr.HexY );
+    AddAttackPlane( mine, priority, showCr );
+}
+
+void _StayCalm( Critter& mine )
+{
+    if( mine.IsNoPlanes() )
+        FindTargets( mine );
+}
+
+bool _Attack( Critter& mine, Critter& target )
+{
+    _Dead( mine, null );
+    return true;
+}
+
+void _Dead( Critter& mine, Critter@ killer )
+{
+    Critter@ master = GetCritter( uint( mine.MasterId ) );
+    if( valid( master ) )
+        CityGuard_ProcessOfCrime( master, City::PenaltyListing::Explode, 0, null, null, false );
+    mine.Animate( 0, ANIM2_STANDUP_BACK, null, true, true );
+    ExplodeEx( mine.GetMap(), mine.HexX, mine.HexY, PID_EXPLODE_ROCKET, 1, Random( 80, mine.Skill[ SK_TRAPS ] / 2 + 100 ), DAMAGE_EXPLODE, 2, uint( mine.MasterId ), mine );
+    DeleteNpc( mine );
+}
+
+void Fold( Critter& mine, bool fold )
+{
+    if( ( fold ? 1 : 0 ) == uint( mine.CurrentState ) )
+        return;
+    mine.CurrentState = ( fold ? 1 : 0 );
+    mine.ModeBase[ MODE_HIDE ] = mine.CurrentState;
+    mine.PlaySound( "WOZ1XXX1.ACM", false );
+    mine.Animate( 0, ( fold ? ANIM2_KNOCK_BACK : ANIM2_STANDUP_BACK ), null, true, true );
+    mine.SetAnims( COND_LIFE, 0, ( fold ? ANIM2_IDLE_PRONE_FRONT : 0 ) );
+}
+
+int _PlaneBegin( Critter& mine, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem )
+{
+    if( reason == REASON_FOUND_IN_ENEMY_STACK || plane.Type != AI_PLANE_ATTACK || plane.Attack_TargId == uint( mine.MasterId ) )
+        return PLANE_DISCARD;
+    Fold( mine, false );
+    return PLANE_RUN_GLOBAL;
+}
+
+
+int _PlaneEnd( Critter& mine, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem )
+{
+    if( mine.IsNoPlanes() )
+        Fold( mine, true );
+    switch( reason )
+    {
+    case REASON_GAG_CRITTER:
+        return PLANE_KEEP;
+    case REASON_TARGET_DISAPPEARED:
+        return PLANE_DISCARD;
+    case REASON_SUCCESS:
+    {
+        Critter@ target = GetCritter( plane.Attack_TargId );
+        if( !valid( target ) || target.IsDead() )
+            return PLANE_RUN_GLOBAL;
+        break;
+    }
+    default:
+        break;
+    }
+    mine.AddEnemyInStack( plane.Attack_TargId );
+    return PLANE_RUN_GLOBAL;
+}
+
+bool _ExplodeDoor( Critter& mine, int skill, Critter@ onCritter, Item@ onItem, Scenery@ onScenery )
+{
+    if( skill == SKILL_PICK_ON_GROUND && valid( onItem ) && onItem.GetType() == ITEM_TYPE_DOOR )
+        _Dead( mine, null );
+    return true;
+}

@@ -1,0 +1,112 @@
+// Вспомогательные классы для gui скриптов
+
+#ifndef __CLIENT_Rectangle__
+#define __CLIENT_Rectangle__
+
+#define DIR_BACK       ( -1 )
+#define DIR_NONE       ( 0 )
+#define DIR_FORWARD    ( 1 )
+
+class Point
+{
+    int X;
+    int Y;
+
+    Point() {}
+    Point( int x, int y )
+    {
+        X = x;
+        Y = y;
+    }
+
+    Point@ Copy()
+    {
+        return Point( this.X, this.Y );
+    }
+
+    Point@ Add( Size@ size )
+    {
+        if( valid( size ) )
+        {
+            this.X += size.Width;
+            this.Y += size.Height;
+        }
+        return this;
+    }
+}
+
+class Size
+{
+    int Width;
+    int Height;
+
+    Size() {}
+    Size( int width, int height )
+    {
+        this.Width = width;
+        this.Height = height;
+    }
+
+    Size@ Copy()
+    {
+        return Size( this.Width, this.Height );
+    }
+}
+
+class Rectangle
+{
+    Point@ Location;
+    Size@  Region;
+
+    Rectangle()
+    {
+        @this.Location = Point();
+        @this.Region = Size();
+    }
+
+    Rectangle( int x, int y, int width, int height )
+    {
+        @this.Location = Point( x, y );
+        @this.Region = Size( width, height );
+    }
+
+    Rectangle( Point & location, Size & region )
+    {
+        @this.Location = location;
+        @this.Region = region;
+    }
+
+    Rectangle@ Copy()
+    {
+        return Rectangle( this.Location.Copy(), this.Region.Copy() );
+    }
+
+    Rectangle@ Move( int x, int y )
+    {
+        this.Location.Add( Size( x, y ) );
+        return this;
+    }
+
+    string ToString()
+    {
+        return ( "X = " + X + "; Y = " + Y + "; W = " + Width + "; H = " + Height );
+    }
+
+    // Properties
+    // Rectangle.X
+    void set_X( uint value ) { Location.X = value; }
+    uint get_X() const       { return Location.X; }
+    // Rectangle.Y
+    void set_Y( uint value ) { Location.Y = value; }
+    uint get_Y() const       { return Location.Y; }
+    // Rectangle.Width
+    void set_Width( uint value ) { Region.Width = value; }
+    uint get_Width() const       { return Region.Width; }
+    // Rectangle.Height
+    void set_Height( uint value ) { Region.Height = value; }
+    uint get_Height() const       { return Region.Height; }
+
+
+}
+
+#endif // __CLIENT_Rectangle__

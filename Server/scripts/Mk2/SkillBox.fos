@@ -1,0 +1,148 @@
+// FOS Client
+
+/*
+#
+# Окно панели навыков
+#
+
+SboxMainPic       = SKLDXBOX.FRM    # Изображение окна
+SboxMain          = 0   0   185 368 # Размер активной области окна (выравнивание по правому краю окна)
+SboxMainText      = 53  10  132 35  # Координаты текста заголовка
+SboxCancelPicDn   = LILREDDN.FRM    # Изображение нажатой кнопки закрытия окна
+SboxCancel        = 47  339 63  353 # Координаты кнопки
+SboxCancelText    = 65  335 142 355 # Координаты текста названия кнопки
+SboxSneakPicDn    = SKLDXON.FRM     # Изображение нажатой кнопки навыка скрытности
+SboxSneak         = 15  44  99  74  # Координаты кнопки
+SboxSneakText     = 111 48  157 76  # Координаты величины умения
+SboxLockpickPicDn = SKLDXON.FRM     # Изображение нажатой кнопки навыка взлома
+SboxLockpick      = 15  80  99  110 # Координаты кнопки
+SboxLockpickText  = 111 84  157 112 # Координаты величины умения
+SboxStealPicDn    = SKLDXON.FRM     # Изображение нажатой кнопки навыка воровства
+SboxSteal         = 15  116 99  146 # Координаты кнопки
+SboxStealText     = 111 120 157 148 # Координаты величины умения
+SboxTrapPicDn     = SKLDXON.FRM     # Изображение нажатой кнопки навыка ловушек
+SboxTrap          = 15  153 99  183 # Координаты кнопки
+SboxTrapText      = 111 156 157 184 # Координаты величины умения
+SboxFirstAidPicDn = SKLDXON.FRM     # Изображение нажатой кнопки навыка первой помощи
+SboxFirstAid      = 15  188 99  218 # Координаты кнопки
+SboxFirstAidText  = 111 192 157 220 # Координаты величины умения
+SboxDoctorPicDn   = SKLDXON.FRM     # Изображение нажатой кнопки навыка доктора
+SboxDoctor        = 15  224 99  254 # Координаты кнопки
+SboxDoctorText    = 111 228 157 256 # Координаты величины умения
+SboxSciencePicDn  = SKLDXON.FRM     # Изображение нажатой кнопки навыка науки
+SboxScience       = 15  260 99  290 # Координаты кнопки
+SboxScienceText   = 111 264 157 292 # Координаты величины умения
+SboxRepairPicDn   = SKLDXON.FRM     # Изображение нажатой кнопки навыка ремонта
+SboxRepair        = 15  296 99  326 # Координаты кнопки
+SboxRepairText    = 111 300 157 328 # Координаты величины умения
+*/
+
+
+SBoxMainScreen SBoxMaster;
+
+void ModuleInit( )
+{
+	GuiKit::Add( CLIENT_SCREEN_SKILLBOX_MK2, @SBoxMaster );
+}
+
+void Show( uint itemId )
+{
+	::ShowScreen( CLIENT_SCREEN_SKILLBOX_MK2, itemId, 0, 0 );
+}
+
+void CancelButton( int click )
+{
+	if( click == MOUSE_CLICK_LEFT )
+		::HideScreen( CLIENT_SCREEN_SKILLBOX_MK2, 0, 0, 0 );
+}
+
+class SBoxMainScreen : GuiKit::GUIScreenPattern, IGUI::ScreenCallbackShow
+{
+	::string@ get_Name( )
+	{
+		return "Sbox";
+	}
+	
+	void OnShow( int p0, int p1, int p2 )
+	{
+		ItemId = p0;
+	}
+
+	void Build( int screenIndex, ::IGUIScreenOpt@ opt )
+	{
+		@Option = opt;
+		
+		Option.CallbackShow( this );
+		ThisModule::SkillButton( SK_SNEAK ).Init( "Sneak" );
+		ThisModule::SkillButton( SK_LOCKPICK ).Init( "Lockpick" );
+		ThisModule::SkillButton( SK_STEAL ).Init( "Steal" );
+		ThisModule::SkillButton( SK_TRAPS ).Init( "Trap" );
+		ThisModule::SkillButton( SK_FIRST_AID ).Init( "FirstAid" );
+		ThisModule::SkillButton( SK_DOCTOR ).Init( "Doctor" );
+		ThisModule::SkillButton( SK_SCIENCE ).Init( "Science" );
+		ThisModule::SkillButton( SK_REPAIR ).Init( "Repair" );
+		
+		GuiKit::Button( @CancelButton, "Cancel" );
+		GuiKit::Text( "CancelText", STR_SKILLDEX_CANCEL );
+		// STR_SKILLDEX_CANCEL
+	}
+	
+	uint ItemId;
+	::IGUIScreenOpt@ Option;
+}
+
+class DynamicText : GuiKit::DynamicText
+{
+	DynamicText( int index, string name )
+	{
+		super( name );
+		Index = index;
+	}
+
+	string DynamicText_GetText()
+	{
+		CritterCl@ chosen = GetChosen();
+		if( chosen is null )
+			return "";
+
+		int param = chosen.Param[Index];
+		string result = "";
+		if( param < 10 )
+			return "00" + param;
+		else if( param < 100 )
+			return "0" + param;
+		return "" + param;
+	}
+	
+	int Index;
+}
+
+class SkillButton : GuiKit::ButtonCallback
+{
+	SkillButton( int skill )
+	{
+		Skill = skill;
+	}
+
+	void ButtonClick( int click )
+	{
+		uint[] actions = { CHOSEN_USE_SKL_ON_ITEM, 1, Skill, SBoxMaster.ItemId, 0, 0, 0 };
+        SetChosenActions( actions );
+		::HideScreen( CLIENT_SCREEN_SKILLBOX_MK2, 0, 0, 0 );
+	}
+	
+	ThisModule::SkillButton@ Init( string name )
+	{
+		_Name = name;
+		GuiKit::Button button( this, 	_Name );
+		GuiKit::Text( _Name, STR_PARAM_NAME( Skill ) )
+			.SetDefPosition( button.RealPos );
+		ThisModule::DynamicText( Skill, name + "Text" )
+			.SetOption( FONT_BIG_NUM, FT_CENTERXY )
+			.SetColor( COLOR_IFACE );
+		return this;
+	}
+	
+	string _Name;
+	int Skill;
+}

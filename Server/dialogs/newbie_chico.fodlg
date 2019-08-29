@@ -1,0 +1,387 @@
+[comment]
+
+
+[data]
+lang=russ engl ukra
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 D _param p ST_STRENGTH < 4 D _var p q_newbie_hilario_chico = 0 #
+3 1020 D _var p q_newbie_chico_rate = 0 D _param p ST_STRENGTH > 3 D _param p ST_STRENGTH < 10 D _var p q_newbie_hilario_chico = 0 #
+2 1030 D _var p q_newbie_chico_rate = 5 D _var p q_newbie_hilario_chico = 0 #
+13 1040 D _param p ST_STRENGTH > 9 D _var p q_newbie_hilario_chico = 0 #
+13 1050 D _var p q_newbie_chico_rate > 0 D _var p q_newbie_chico_rate < 5 D _param p ST_STRENGTH < 10 D _var p q_newbie_hilario_chico = 0 #
+20 1060 D _var p q_newbie_hilario_chico = 1 D _param p ST_INTELLECT > 3 #
+2 1070 D _param p ST_STRENGTH < 4 D _var p q_newbie_hilario_chico > 1 #
+3 1080 D _var p q_newbie_hilario_chico > 1 D _param p ST_STRENGTH > 3 D _param p ST_STRENGTH < 10 D _var p q_newbie_chico_rate = 0 #
+2 1090 D _var p q_newbie_hilario_chico > 1 D _var p q_newbie_chico_rate = 0 #
+13 1100 D _var p q_newbie_hilario_chico > 1 D _param p ST_STRENGTH > 9 #
+13 1110 D _var p q_newbie_hilario_chico > 1 D _var p q_newbie_chico_rate > 0 D _var p q_newbie_chico_rate < 5 D _param p ST_STRENGTH < 10 @
+2 2000 None 0 @
+3 3000 None 0 #
+4 3010 D _param p ST_INTELLECT > 3 #
+4 3020 D _param p ST_INTELLECT < 4 @
+4 4000 None 0 #
+0 4010 D _param p ST_INTELLECT > 3 #
+7 4020 D _param p ST_INTELLECT > 3 #
+6 4030 D _param p ST_INTELLECT > 3 #
+0 4040 D _param p ST_INTELLECT < 4 #
+7 4050 D _param p ST_INTELLECT < 4 #
+6 4060 D _param p ST_INTELLECT < 4 @
+6 5000 None 0 #
+4 5010 D _param p ST_INTELLECT > 3 #
+7 5020 D _param p ST_INTELLECT > 3 #
+7 5030 D _param p ST_INTELLECT < 4 #
+4 5040 D _param p ST_INTELLECT < 4 @
+7 6000 None 0 #
+9 6010 D _item p PID_BOTTLE_CAPS > 0 R _var p q_newbie_chico_rate = 0 #
+9 6020 D _item p PID_BOTTLE_CAPS > 19 R _var p q_newbie_chico_rate = 1 R _item p PID_BOTTLE_CAPS - 20 #
+9 6030 D _item p PID_BOTTLE_CAPS > 49 R _var p q_newbie_chico_rate = 2 R _item p PID_BOTTLE_CAPS - 50 #
+9 6040 D _item p PID_BOTTLE_CAPS > 99 R _var p q_newbie_chico_rate = 3 R _item p PID_BOTTLE_CAPS - 100 #
+9 6050 D _item p PID_BOTTLE_CAPS > 499 R _var p q_newbie_chico_rate = 4 R _item p PID_BOTTLE_CAPS - 500 #
+0 6060 D _item p PID_BOTTLE_CAPS < 1 D _param p ST_INTELLECT > 3 #
+2 6070 D _param p ST_INTELLECT < 4 D _item p PID_BOTTLE_CAPS < 1 @
+9 7000 None 0 #
+9 7010 D _param p ST_STRENGTH > 3 D _param p ST_STRENGTH < 6 D _var p q_newbie_chico_strength > 0 D _var p q_newbie_chico_counter < 2 R _var p q_newbie_chico_strength - 1 R _var p q_newbie_chico_counter + 1 #
+9 7020 D _param p ST_STRENGTH > 5 D _param p ST_STRENGTH < 8 D _var p q_newbie_chico_strength > 0 D _var p q_newbie_chico_counter < 3 R _var p q_newbie_chico_strength - 1 R _var p q_newbie_chico_counter + 1 #
+9 7030 D _param p ST_STRENGTH > 7 D _param p ST_STRENGTH < 10 D _var p q_newbie_chico_strength > 0 D _var p q_newbie_chico_counter < 4 R _var p q_newbie_chico_strength - 1 R _var p q_newbie_chico_counter + 1 #
+10 7040 D _var p q_newbie_chico_strength > 0 R _param p DAMAGE_RIGHT_ARM = 1 R _script dialog@r_InfoMessage 1 1 R _param p ST_EXPERIENCE + 150 #
+14 7050 D _param p ST_STRENGTH > 7 D _param p SK_UNARMED > 129 D _var p q_newbie_chico_counter = 0 #
+14 7060 D _var p q_newbie_chico_strength = 0 @
+10 8000 None 0 #
+11 8010 D _param p ST_INTELLECT > 3 D _var p q_newbie_chico_rate > 0 R _param p ST_CURRENT_HP / 3 R _script dialog@r_InfoMessage 1 2 R _param p ST_CURRENT_AP - 10 R _var p q_newbie_chico_rate = 5 #
+0 8020 D _param p ST_INTELLECT > 3 R _var p q_newbie_chico_rate = 5 #
+65507 8030 D _param p ST_INTELLECT > 3 R _var p q_newbie_chico_rate = 5 #
+11 8040 D _param p ST_INTELLECT < 4 D _var p q_newbie_chico_rate > 0 R _param p ST_CURRENT_HP / 3 R _script dialog@r_InfoMessage 1 2 R _param p ST_CURRENT_AP - 10 R _var p q_newbie_chico_rate = 5 #
+0 8050 D _param p ST_INTELLECT < 4 R _var p q_newbie_chico_rate = 5 #
+65507 8060 D _param p ST_INTELLECT < 4 R _var p q_newbie_chico_rate = 5 #
+12 8070 D _var p q_newbie_chico_rate = 0 D _param p ST_INTELLECT > 3 R _var p q_newbie_chico_rate = 4 #
+12 8080 D _var p q_newbie_chico_rate = 0 D _param p ST_INTELLECT < 4 R _var p q_newbie_chico_rate = 4 @
+11 9000 None 0 @
+12 10000 None 0 #
+11 10010 R _script dialog@r_InfoMessage 1 2 R _param p ST_CURRENT_HP / 3 R _param p ST_CURRENT_AP - 10 R _item p PID_BOTTLE_CAPS - 100 #
+11 10020 R _item p PID_BOTTLE_CAPS - 100 R _script dialog@r_InfoMessage 1 3 @
+13 11000 None 0 @
+14 12000 None 0 #
+0 12010 D _var p q_newbie_chico_rate = 0 D _param p ST_INTELLECT > 3 R _param p ST_EXPERIENCE + 300 R _var p q_newbie_chico_rate = 4 #
+15 12020 D _var p q_newbie_chico_rate = 1 D _param p ST_INTELLECT > 3 R _param p ST_EXPERIENCE + 300 R _item p PID_BOTTLE_CAPS + 40 #
+15 12030 D _var p q_newbie_chico_rate = 2 D _param p ST_INTELLECT > 3 R _param p ST_EXPERIENCE + 300 R _item p PID_BOTTLE_CAPS + 100 #
+15 12040 D _var p q_newbie_chico_rate = 3 D _param p ST_INTELLECT > 3 R _param p ST_EXPERIENCE + 300 R _item p PID_BOTTLE_CAPS + 200 #
+16 12050 D _var p q_newbie_chico_rate = 4 D _param p ST_INTELLECT > 3 R _param p ST_EXPERIENCE + 300 #
+0 12060 D _var p q_newbie_chico_rate = 0 D _param p ST_INTELLECT < 4 R _param p ST_EXPERIENCE + 300 R _var p q_newbie_chico_rate = 4 #
+15 12070 D _var p q_newbie_chico_rate = 1 D _param p ST_INTELLECT < 4 R _param p ST_EXPERIENCE + 300 R _item p PID_BOTTLE_CAPS + 40 #
+15 12080 D _var p q_newbie_chico_rate = 2 D _param p ST_INTELLECT < 4 R _param p ST_EXPERIENCE + 300 R _item p PID_BOTTLE_CAPS + 100 #
+15 12090 D _var p q_newbie_chico_rate = 3 D _param p ST_INTELLECT < 4 R _param p ST_EXPERIENCE + 300 R _item p PID_BOTTLE_CAPS + 200 #
+16 12100 D _var p q_newbie_chico_rate = 4 D _param p ST_INTELLECT < 4 R _param p ST_EXPERIENCE + 300 @
+15 13000 None 0 @
+16 14000 None 0 #
+0 14010 D _param p ST_INTELLECT > 3 R _item p PID_POWER_FIST + 1 R _item p PID_BOTTLE_CAPS + 500 #
+0 14020 D _param p ST_INTELLECT < 4 R _item p PID_POWER_FIST + 1 R _item p PID_BOTTLE_CAPS + 500 @
+20 15000 None 0 #
+21 15010 D _param p ST_STRENGTH < 8 R _var p q_newbie_hilario_chico = 7 #
+22 15020 D _param p ST_STRENGTH > 7 R _var p q_newbie_hilario_chico = 2 #
+21 15030 D _var p q_newbie_hilario_chico = 7 D _param p SK_SPEECH < 40 #
+23 15040 D _param p SK_SPEECH > 39 R _var p q_newbie_hilario_chico = 4 R _item p PID_BOTTLE_CAPS + 200 R _param p ST_EXPERIENCE + 200 @
+21 16000 None 0 #
+65507 16010 #
+0 16020 @
+22 17000 None 0 #
+0 17010 @
+23 18000 None 0 #
+0 18010 &
+
+[russ]
+{100}{}{Чико}
+{200}{}{Вы видите Чико.}
+{210}{}{Вы видите парня средних лет, крепкого телосложения. Его зовут Чико.}
+{220}{}{Вы видите Чико. Он в отключке.}
+{230}{}{Вы видите парня средних лет, крепкого телосложения. Его зовут Чико. Он в отключке.}
+{240}{}{Вы видите труп Чико.}
+{250}{}{Вы видите труп парня средних лет, крепкого телосложения.}
+{260}{}{Вы видите останки Чико.}
+{270}{}{Вы видите останки парня средних лет, крепкого телосложения. Кто-то жестоко убил его.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{Сила < 4}
+{1020}{}{Сила > 3 но < 10, ещё не боролись}
+{1030}{}{Уже боролись, игрок проиграл}
+{1040}{}{Сила > 9}
+{1050}{}{Уже боролись, игрок выиграл}
+{1060}{}{Взят квест бармена на возврат долга, перс с интеллектом >3}
+{1070}{}{Сила < 4}
+{1080}{}{Сила > 3 но < 10, ещё не боролись}
+{1090}{}{Уже боролись, игрок проиграл}
+{1100}{}{Сила > 9}
+{1110}{}{Уже боролись, игрок выиграл}
+{2000}{}{Здоров, @sex@|хлюпик||хилая|!@@Чё хотел, @sex@|слабак||слабачка|?@@Ну, что, дохл@sex@|ый||ая|?}
+{3000}{}{Здоров!@@Привет!@@Здорово@sex@|, мужик|||!}
+{3010}{}{Привет!@@И тебе привет.@@Здравствуй.}
+{3020}{}{Моя приветсвовать!@@[Машете рукой]}
+{4000}{}{Ну что, готов свою силушку проверить?@@Ну что, думаешь справишься со мной?@@Ну как, готов победить старину Чико?@@Как на счёт армрестлинга?}
+{4010}{}{Ну уж нет...@@Я что, похож@sex@|||а| на идиот@sex@|а||ку|?@@Не, я пош@sex@|ёл||ла|...}
+{4020}{}{А почему нет? Давай!@@Уж я-то знаю толк в армрестлинге, поверь!}
+{4030}{}{Ты о чём вообще?}
+{4040}{}{Неа! Моя нехатеть...@@У-у-у!..}
+{4050}{}{Моя сильный воин!..@@Моя сейчас побеждать!..}
+{4060}{}{А-а?.. [Открываете рот пошире]@@А-а?.. [Округляете глаза]@@Чё?..}
+{5000}{}{О чём? Об армрестлинге, @sex@|болван||идиотка|!}
+{5010}{}{А-а... Понятно...}
+{5020}{}{Пфи... Да я тебя как грелку порву!}
+{5030}{}{Ага!... Моя бороть тебя!}
+{5040}{}{Ага... И чо?}
+{6000}{}{На что спор?}
+{6010}{}{Ни на что.}
+{6020}{}{Ставлю 20 монет.}
+{6030}{}{Полтинник.}
+{6040}{}{Давай на сотку!}
+{6050}{}{Пятихат! Я в себе уверен!}
+{6060}{}{Да у меня денег нет, зайду позже...}
+{6070}{}{Нету деньгов...}
+{7000}{}{[Ставите руки на стол. Один из фермеров объявляет о начале поединка. Вы начинаете борьбу]}
+{7010}{}{[Боретесь]@@[Боретесь из последних сил]@@[Пот катится градом, но вы не сдаётесь]@@[Боретесь изо всех сил]@@[Вены на ваших висках вздуваются. Боретесь]}
+{7020}{}{[Боретесь]@@[Боретесь из последних сил]@@[Пот катится градом, но вы не сдаётесь]@@[Боретесь изо всех сил]@@[Вены на ваших висках вздуваются. Боретесь]}
+{7030}{}{[Боретесь]@@[Боретесь из последних сил]@@[Пот катится градом, но вы не сдаётесь]@@[Боретесь изо всех сил]@@[Вены на ваших висках вздуваются. Боретесь]}
+{7040}{}{[Сдаться. Вы боролись как могли, но Чико оказался явно сильнее]@@[Сдаться. Противник явно более силён чем вы]}
+{7050}{}{[Умело проведённым прямым движением вы опускаете руку Чико на стол]}
+{7060}{}{[Вы хорошо боролись. Вы опускаете руку противника на стол и побеждаете]}
+{8000}{}{Я забираю денежки, а ты пош@sex@|ёл||ла| вон от сюда, @sex@|доходяга||хилая|!}
+{8010}{}{Верни мои деньги, гад!@@Да пошёл ты! Отдай деньги!}
+{8020}{}{Ладно, твоя взяла...}
+{8030}{}{Ах ты сволочь... [Атаковать]}
+{8040}{}{Твоя плохой! Отдавай моё!}
+{8050}{}{Мф-ф-ф!}
+{8060}{}{Агр-р-р! [Атаковать]}
+{8070}{}{Какие деньги, мы же "ни на что" боролись?!}
+{8080}{}{Агрх! Мои деньги?! "Ни на чо" боролися! Ни давать деньги!}
+{9000}{}{Пош@sex@|ёл||ла| вон, кусок браминьей лепёшки!}
+{10000}{}{А для меня сотня это ничто! Гони деньги!}
+{10010}{}{Нет!}
+{10020}{}{[Отдаёте 100 монет]}
+{11000}{}{Здорово!@@Привет!@@Сил@sex@|ён||на| ты!@@Здоров!}
+{12000}{}{Чёрт! Ну и сил@sex@|ён||на| ты! Немногим удавалось победить старину Чико!}
+{12010}{}{Да, Чико! Ну, счастливо оставаться...}
+{12020}{}{Давай-ка мои денежки, Чико!}
+{12030}{}{Давай-ка мои денежки, Чико!}
+{12040}{}{Давай-ка мои денежки, Чико!}
+{12050}{}{Давай-ка мои денежки, Чико!}
+{12060}{}{Ага! Моя силный!!!}
+{12070}{}{Моя силный! Чико платить!}
+{12080}{}{Моя силный! Чико платить!}
+{12090}{}{Моя силный! Чико платить!}
+{12100}{}{Моя силный! Чико платить!}
+{13000}{}{Вот держи свои деньги, чемпион@sex@|||ка|!}
+{14000}{}{Ты знаешь, у меня нет такой суммы... Но у меня есть одна вещица. Последнее что я унёс с базы. Он стоит гораздо дороже. Думаю тебе пригодится. [Протягивает вам силовой кастет]}
+{14010}{}{До встречи, Чико. [Забираете силовой кастет]}
+{14020}{}{Агум-м-м. [Забираете силовой кастет]}
+{15000}{}{Здорово! Возьмешь мне выпить?@@Привет! Купи-ка мне выпить!}
+{15010}{}{Выпить не куплю, а морду начищу! Ты не забыл, что должен Хиларио две сотни?}
+{15020}{}{Выпить не куплю, а морду начищу! Ты не забыл, что должен Хиларио две сотни?}
+{15030}{}{Обязательно. Только давай-ка ты денежки вернёшь, которые Хиларио задолжал.}
+{15040}{}{Обязательно. Только давай-ка ты денежки вернёшь, которые Хиларио задолжал. Иначе он больше не сможет выпивкой торговать. Ты ж не хочешь, чтоб твой любимый бар закрылся?}
+{16000}{}{А не пош@sex@|ёл||ла| бы ты в браминью задницу?! Вместе со своим Хиларио!!!}
+{16010}{}{Отдавай деньги, скотина! [Атака]}
+{16020}{}{Ну ладно, я пош@sex@|ёл||ла| [Выход]}
+{17000}{}{Да ладно, так бы сразу и сказал, верну я ему деньги! Вечером принесу.}
+{17010}{}{Вот так бы сразу. Вечером зайду, проверю.}
+{18000}{}{Да ладно, я как раз собирался сегодня отдать долг. Вот держи. Ровно две сотни.}
+{18010}{}{Хорошо, пойду отдам деньги Хиларио. До встречи.}
+{100000001}{}{Кажется, Чико повредил вам руку во время борьбы. Ну, что ж, отрицательный опыт - тоже опыт.}
+{100000002}{}{Вы получаете сокрушительный удар между глаз. Зато теперь вы ближе к пониманию сути пустоши.}
+{100000003}{}{Вы потеряли несколько монет. Зато теперь вы ближе к пониманию сути пустоши.}
+
+[engl]
+{100}{}{Chico}
+{200}{}{You see Chico.}
+{210}{}{You see a heavy-set middle aged guy. His name's Chico.}
+{220}{}{You see Chico.}
+{230}{}{You see a heavy-set middle aged guy. His name's Chico.}
+{240}{}{You see Chico's oorpse.}
+{250}{}{You see a dead heavy-set middle aged guy.}
+{260}{}{You see Chico's corpse.}
+{270}{}{You see a dead heavy-set middle aged guy.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{Сила < 4}
+{1020}{}{Сила > 3 но < 10, ещё не боролись}
+{1030}{}{Уже боролись, игрок проиграл}
+{1040}{}{Сила > 9}
+{1050}{}{Уже боролись, игрок выиграл}
+{1060}{}{Взят квест бармена на возврат долга, перс с интеллектом >3}
+{1070}{}{Сила < 4}
+{1080}{}{Сила > 3 но < 10, ещё не боролись}
+{1090}{}{Уже боролись, игрок проиграл}
+{1100}{}{Сила > 9}
+{1110}{}{Уже боролись, игрок выиграл}
+{2000}{}{Hey, milksop!@@Whatcha need, wimp?@@So what, weakling?}
+{3000}{}{Hello!@@Hi!@@Hi, @sex@|man||babe|!}
+{3010}{}{Hi!@@How are you.@@Hello.}
+{3020}{}{Me helloh!@@[Wave your hand]}
+{4000}{}{So, are you ready to see who is stronger?@@So, do you think you can beat me?@@So, are you ready to try to beat Chico?@@What about arm wrestling?}
+{4010}{}{Not a good idea...@@Do I look like an idiot?@@No, I'd better leave...}
+{4020}{}{Why not, let's do it!@@Be sure, I'm an arm wrestling expert!}
+{4030}{}{What are you talking about?}
+{4040}{}{No! Me not wann...@@U-u-uh!..}
+{4050}{}{Me a strong worriuh!@@Me now win!}
+{4060}{}{A-ah?.. [Open your mouth wider]@@A-ah?.. [Round your eyes]@@Wha?..}
+{5000}{}{About what? About arm wrestling, dumb!}
+{5010}{}{A-ah... I see...}
+{5020}{}{Pah! I'm gonna tear you into pieces!}
+{5030}{}{Uh-huh!... Me beat you!}
+{5040}{}{Uhu... Wha?}
+{6000}{}{What's the stake?}
+{6010}{}{Your dignity.}
+{6020}{}{I bet $20.}
+{6030}{}{$50.}
+{6040}{}{I want $100!}
+{6050}{}{$500! I'm very self confident!}
+{6060}{}{Oh, I have no money, I'll visit you later...}
+{6070}{}{No money...}
+{7000}{}{[You put your arms on the table. Bartender announces the start. You start wrestling]}
+{7010}{}{[Wrestle]@@[Do everything in your power]@@[The sweat is dripping, but you don't surrender]@@[Wrestle with all your might]@@[The veins on your temples are pilsating as you wrestle]}
+{7020}{}{[Wrestle]@@[Do everything in your power]@@[The sweat is dripping, but you don't surrender]@@[Wrestle with all your might]@@[The veins on your temples are pilsating as you wrestle]}
+{7030}{}{[Wrestle]@@[Do everything in your power]@@[The sweat is dripping, but you don't surrender]@@[Wrestle with all your might]@@[The veins on your temples are pilsating as you wrestle]}
+{7040}{}{[Surrender. You did your best, but Chico is obviously stronger]@@[Surrender. The opponent is obviously stronger than you]}
+{7050}{}{[You slam Chico's arm against the table with a skillful smooth move]}
+{7060}{}{[You did your best in this match. You slam Chico's arm against the table with a skillful smooth move ans win]}
+{8000}{}{I'm taking money, and you get out of here, wimp!}
+{8010}{}{Return my money, bastard!@@Give me my money back!}
+{8020}{}{Okay, you won...}
+{8030}{}{Ah, you scum... [Attack]}
+{8040}{}{You bad! Give back my!!!}
+{8050}{}{Uf-f-f!}
+{8060}{}{Aghrh-h-h!!! [Attack]}
+{8070}{}{What money? We weren't betting!}
+{8080}{}{Argh!!! Me money?! Me no wrestle for money! No give money!}
+{9000}{}{Get out of here, piece of brahmin shit!}
+{10000}{}{Hundred is nothing! Pay up!}
+{10010}{}{No!!!}
+{10020}{}{[Give $100]}
+{11000}{}{Hi there!@@Hi!@@You're a strong @sex@|guy||gal|!@@Hello!}
+{12000}{}{Holy shit! You're fucking strong! Only few could beat Chico!}
+{12010}{}{Yep, Chico! Good luck...}
+{12020}{}{Just give me my money, Chico!}
+{12030}{}{Just give me my money, Chico!}
+{12040}{}{Just give me my money, Chico!}
+{12050}{}{Just give me my money, Chico!}
+{12060}{}{Uh-huh! Me str-ron'!!!}
+{12070}{}{Me str-ron'! Chico pay!}
+{12080}{}{Me str-ron'! Chico pay!}
+{12090}{}{Me str-ron'! Chico pay!}
+{12100}{}{Me str-ron'! Chico pay!}
+{13000}{}{Here's your money, champion!}
+{14000}{}{You see, I don't have this much... But I've got one thing. The last one that I took from the base. It costs much more. I think it will prove useful to you. [Gives you a power fist]}
+{14010}{}{See you later, Chico. [Take power fist]}
+{14020}{}{Uh-hum-m. [Take power fist]}
+{15000}{}{Hello! Gonna buy me a drink?@@Hi! Buy me a drink!}
+{15010}{}{How about I give you a whooping instead?! Did you forget, that you owe $200 to Hilario?}
+{15020}{}{How about I give you a whooping instead?! Did you forget, that you owe $200 to Hilario?}
+{15030}{}{Sure. But first you give me the money that you owe to Hilario.}
+{15040}{}{Sure. But first you give me the money that you owe to Hilario. Or he won't be able to keep the business up. Do you want your favourite bar to be closed?}
+{16000}{}{Go to hell! And take Hilario with you!}
+{16010}{}{Imma whomp your ass! [Attack]}
+{16020}{}{Okay, then I leave.}
+{17000}{}{That's not a problem, man, I'll pay the debt!}
+{17010}{}{Good news.}
+{18000}{}{All right, I was just going to return the debt today. Here, take this $200.}
+{18010}{}{Okay, I'll give it to Hilario. Bye.}
+{100000001}{}{Looks like Chico broke your arm during the wrestling match. Well, negative experience is experience too.}
+{100000002}{}{You suffered a crushing blow. Now you're much closer to understanding the wasteland's essence.}
+{100000003}{}{You've lost a few bucks. Now you're much closer to understanding the wasteland's essence.}
+
+[ukra]
+{100}{}{Чико}
+{200}{}{Вы видите Чико.}
+{210}{}{Вы видите парня средних лет, крепкого телосложения. Его зовут Чико.}
+{220}{}{Вы видите Чико. Он в отключке.}
+{230}{}{Вы видите парня средних лет, крепкого телосложения. Его зовут Чико. Он в отключке.}
+{240}{}{Вы видите труп Чико.}
+{250}{}{Вы видите труп парня средних лет, крепкого телосложения.}
+{260}{}{Вы видите останки Чико.}
+{270}{}{Вы видите останки парня средних лет, крепкого телосложения. Кто-то жестоко убил его.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{Сила < 4}
+{1020}{}{Сила > 3 но < 10, ещё не боролись}
+{1030}{}{Уже боролись, игрок проиграл}
+{1040}{}{Сила > 9}
+{1050}{}{Уже боролись, игрок выиграл}
+{1060}{}{Взят квест бармена на возврат долга, перс с интеллектом >3}
+{1070}{}{Сила < 4}
+{1080}{}{Сила > 3 но < 10, ещё не боролись}
+{1090}{}{Уже боролись, игрок проиграл}
+{1100}{}{Сила > 9}
+{1110}{}{Уже боролись, игрок выиграл}
+{2000}{}{Здоров, @sex@|хлюпик||хилая|!@@Чё хотел, @sex@|слабак||слабачка|?@@Ну, что, дохл@sex@|ый||ая|?}
+{3000}{}{Здоров!@@Привет!@@Здорово@sex@|, мужик|||!}
+{3010}{}{Привет!@@И тебе привет.@@Здравствуй.}
+{3020}{}{Моя приветсвовать!@@[Машете рукой]}
+{4000}{}{Ну что, готов свою силушку проверить?@@Ну что, думаешь справишься со мной?@@Ну как, готов победить старину Чико?@@Как на счёт армрестлинга?}
+{4010}{}{Ну уж нет...@@Я что, похож@sex@|||а| на идиот@sex@|а||ку|?@@Не, я пош@sex@|ёл||ла|...}
+{4020}{}{А почему нет? Давай!@@Уж я-то знаю толк в армрестлинге, поверь!}
+{4030}{}{Ты о чём вообще?}
+{4040}{}{Неа! Моя нехатеть...@@У-у-у!..}
+{4050}{}{Моя сильный воин!..@@Моя сейчас побеждать!..}
+{4060}{}{А-а?.. [Открываете рот пошире]@@А-а?.. [Округляете глаза]@@Чё?..}
+{5000}{}{О чём? Об армрестлинге, @sex@|болван||идиотка|!}
+{5010}{}{А-а... Понятно...}
+{5020}{}{Пфи... Да я тебя как грелку порву!}
+{5030}{}{Ага!... Моя бороть тебя!}
+{5040}{}{Ага... И чо?}
+{6000}{}{На что спор?}
+{6010}{}{Ни на что.}
+{6020}{}{Ставлю 20 монет.}
+{6030}{}{Полтинник.}
+{6040}{}{Давай на сотку!}
+{6050}{}{Пятихат! Я в себе уверен!}
+{6060}{}{Да у меня денег нет, зайду позже...}
+{6070}{}{Нету деньгов...}
+{7000}{}{[Ставите руки на стол. Один из фермеров объявляет о начале поединка. Вы начинаете борьбу]}
+{7010}{}{[Боретесь]@@[Боретесь из последних сил]@@[Пот катится градом, но вы не сдаётесь]@@[Боретесь изо всех сил]@@[Вены на ваших висках вздуваются. Боретесь]}
+{7020}{}{[Боретесь]@@[Боретесь из последних сил]@@[Пот катится градом, но вы не сдаётесь]@@[Боретесь изо всех сил]@@[Вены на ваших висках вздуваются. Боретесь]}
+{7030}{}{[Боретесь]@@[Боретесь из последних сил]@@[Пот катится градом, но вы не сдаётесь]@@[Боретесь изо всех сил]@@[Вены на ваших висках вздуваются. Боретесь]}
+{7040}{}{[Сдаться. Вы боролись как могли, но Чико оказался явно сильнее]@@[Сдаться. Противник явно более силён чем вы]}
+{7050}{}{[Умело проведённым прямым движением вы опускаете руку Чико на стол]}
+{7060}{}{[Вы хорошо боролись. Вы опускаете руку противника на стол и побеждаете]}
+{8000}{}{Я забираю денежки, а ты пош@sex@|ёл||ла| вон от сюда, @sex@|доходяга||хилая|!}
+{8010}{}{Верни мои деньги, гад!@@Да пошёл ты! Отдай деньги!}
+{8020}{}{Ладно, твоя взяла...}
+{8030}{}{Ах ты сволочь... [Атаковать]}
+{8040}{}{Твоя плохой! Отдавай моё!}
+{8050}{}{Мф-ф-ф!}
+{8060}{}{Агр-р-р! [Атаковать]}
+{8070}{}{Какие деньги, мы же "ни на что" боролись?!}
+{8080}{}{Агрх! Мои деньги?! "Ни на чо" боролися! Ни давать деньги!}
+{9000}{}{Пош@sex@|ёл||ла| вон, кусок браминьей лепёшки!}
+{10000}{}{А для меня сотня это ничто! Гони деньги!}
+{10010}{}{Нет!}
+{10020}{}{[Отдаёте 100 монет]}
+{11000}{}{Здорово!@@Привет!@@Сил@sex@|ён||на| ты!@@Здоров!}
+{12000}{}{Чёрт! Ну и сил@sex@|ён||на| ты! Немногим удавалось победить старину Чико!}
+{12010}{}{Да, Чико! Ну, счастливо оставаться...}
+{12020}{}{Давай-ка мои денежки, Чико!}
+{12030}{}{Давай-ка мои денежки, Чико!}
+{12040}{}{Давай-ка мои денежки, Чико!}
+{12050}{}{Давай-ка мои денежки, Чико!}
+{12060}{}{Ага! Моя силный!!!}
+{12070}{}{Моя силный! Чико платить!}
+{12080}{}{Моя силный! Чико платить!}
+{12090}{}{Моя силный! Чико платить!}
+{12100}{}{Моя силный! Чико платить!}
+{13000}{}{Вот держи свои деньги, чемпион@sex@|||ка|!}
+{14000}{}{Ты знаешь, у меня нет такой суммы... Но у меня есть одна вещица. Последнее что я унёс с базы. Он стоит гораздо дороже. Думаю тебе пригодится. [Протягивает вам силовой кастет]}
+{14010}{}{До встречи, Чико. [Забираете силовой кастет]}
+{14020}{}{Агум-м-м. [Забираете силовой кастет]}
+{15000}{}{Здорово! Возьмешь мне выпить?@@Привет! Купи-ка мне выпить!}
+{15010}{}{Выпить не куплю, а морду начищу! Ты не забыл, что должен Хиларио две сотни?}
+{15020}{}{Выпить не куплю, а морду начищу! Ты не забыл, что должен Хиларио две сотни?}
+{15030}{}{Обязательно. Только давай-ка ты денежки вернёшь, которые Хиларио задолжал.}
+{15040}{}{Обязательно. Только давай-ка ты денежки вернёшь, которые Хиларио задолжал. Иначе он больше не сможет выпивкой торговать. Ты ж не хочешь, чтоб твой любимый бар закрылся?}
+{16000}{}{А не пош@sex@|ёл||ла| бы ты в браминью задницу?! Вместе со своим Хиларио!!!}
+{16010}{}{Отдавай деньги, скотина! [Атака]}
+{16020}{}{Ну ладно, я пош@sex@|ёл||ла| [Выход]}
+{17000}{}{Да ладно, так бы сразу и сказал, верну я ему деньги! Вечером принесу.}
+{17010}{}{Вот так бы сразу. Вечером зайду, проверю.}
+{18000}{}{Да ладно, я как раз собирался сегодня отдать долг. Вот держи. Ровно две сотни.}
+{18010}{}{Хорошо, пойду отдам деньги Хиларио. До встречи.}
+{100000001}{}{Кажется, Чико повредил вам руку во время борьбы. Ну, что ж, отрицательный опыт - тоже опыт.}
+{100000002}{}{Вы получаете сокрушительный удар между глаз. Зато теперь вы ближе к пониманию сути пустоши.}
+{100000003}{}{Вы потеряли несколько монет. Зато теперь вы ближе к пониманию сути пустоши.}
+

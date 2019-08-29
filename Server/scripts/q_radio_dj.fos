@@ -1,0 +1,746 @@
+// rifleman17
+// Радиоквест "ДиДжей"
+// Регулярно на радиоканале передаются заявки различных нпц на получение некоторых предметов.
+// Заявка действует одни игровые сутки или до тех пор, пока первый игрок ее не выполнит
+// варианты заданий расписаны в таблице. Указывается количество и название предметов, которые нужно принести, а также минимальный уровень персонажа, при котором квест выполним. Награда возможна в параметрах(опыт, скил) и монетах.
+
+
+#include "_macros.fos"
+#include "serializator.fos"
+#include "_msgstr.fos"
+#include "_colors.fos"
+
+/* формат таблицы
+   MinLvl - минимальный уровень, при котором квест доступен
+   ItemPid - код требуемого итема
+   ItemQty - требуемое количество итемов
+   AwardMoney - награда в деньгах
+   AwardParam - номер параметра, который увеличивается у нпц
+   AwardValue - величина, на которую увеличивается параметр
+   ParamVar - переменная, которая используется при проверке, можно ли повышать параметр игроку
+
+   для добавления новых целей квестов добавляйте новые строки в таблицу
+ */
+const int[] quest_table =
+{
+// MinLvl,  ItemPid,                      ItemQty, AwardMoney, AwardParam,          AwardValue, ParamVar
+    1,           PID_PURPLE_ROBE, 3,       900,       ST_EXPERIENCE,       2000,                                                 0,
+    1,           PID_KEEPBRIGE_ROBE, 1,       16666,       ST_MAX_LIFE,       14,                                                LVAR_q_radio_MaxLifeTaken,
+    1,           PID_LEATHER_JACKET, 2,       1200,       ST_EXPERIENCE,       2400,                                             0,
+    1,           PID_LEATHER_ARMOR, 2,       1800,       ST_EXPERIENCE,       2800,                                              0,
+    1,           PID_LEATHER_ARMOR_MK_II, 1,       1000,       ST_EXPERIENCE,       600,                                 0,
+    1,           PID_CURED_LEATHER_ARMOR, 1,       1500,       ST_EXPERIENCE,       600,                                 0,
+    1,           PID_METAL_ARMOR, 2,       3200,       ST_EXPERIENCE,       4400,                                                0,
+    1,           PID_METAL_ARMOR_MK_II, 1,       4000,       ST_EXPERIENCE,       5000,                                  0,
+    1,           PID_TESLA_ARMOR, 1,       11111,       ST_ELECTRO_RESIST,       2,                                              LVAR_q_radio_ResistTaken,
+    1,           PID_MANTIS_ARMOR, 1,       6000,       ST_EXPERIENCE,       7000,                                               0,
+    1,           PID_COMBAT_ARMOR, 1,       16000,       ST_EXPLODE_RESIST,       2,                                             LVAR_q_radio_ResistTaken,
+    1,           PID_COMBAT_ARMOR_MK_II, 1,       25000,       ST_NORMAL_RESIST,       2,                                LVAR_q_radio_ResistTaken,
+    1,           PID_MANTIS_ARMOR_MK2, 1,       12000,       ST_FIRE_RESIST,       2,                                    LVAR_q_radio_ResistTaken,
+    1,           PID_KEVLAR_ROBE, 1,       18000,       ST_UNSPENT_SKILL_POINTS,       6,                                LVAR_q_radio_SkillpointsTaken,
+    1,           PID_ZIP_GUN, 3,       1000,       ST_EXPERIENCE,       1500,                                                    0,
+    1,           PID_6_SHOT_PISTOL, 3,       1600,       ST_EXPERIENCE,       2400,                                              0,
+    1,           PID_DOUBLE_10MM, 2,       2500,       ST_EXPERIENCE,       3000,                                                0,
+    1,           PID_10MM_PISTOL, 3,       2000,       ST_EXPERIENCE,       2400,                                                0,
+    1,           PID_NAILGUN, 2,       2500,       ST_EXPERIENCE,       3200,                                                    0,
+    1,           PID_9MM_MAUSER, 3,       3200,       ST_EXPERIENCE,       3600,                                                 0,
+    1,           PID_MAUSER_SILENCE, 1,       4000,       ST_EXPERIENCE,       4400,                                             0,
+    1,           PID_14MM_PISTOL, 3,       4200,       ST_EXPERIENCE,       4550,                                                0,
+    1,           PID_DESERT_EAGLE, 3,       3800,       ST_EXPERIENCE,       4400,                                               0,
+    1,           PID_DESERT_EAGLE_EXT_MAG, 2,       4400,       ST_EXPERIENCE,       5000,                               0,
+    1,           PID_44_MAGNUM_REVOLVER, 3,       5000,       ST_EXPERIENCE,       6000,                                 0,
+    1,           PID_44_MAGNUM_SPEEDLOADER, 1,       3600,       ST_EXPERIENCE,       4800,                              0,
+    1,           PID_NEEDLER_PISTOL, 2,       4200,       SK_DOCTOR,       6,                                                    LVAR_q_radio_HealSkillsTaken,
+    1,           PID_223_PISTOL, 1,       8000,       ST_EXPERIENCE,       9000,                                                 0,
+    1,           PID_PK12_GAUSS_PISTOL, 1,       22000,       SK_SMALL_GUNS,       4,                                    0,
+    1,           PID_ANACONDA, 1,       16000,       ST_MAX_LIFE,       4,                                                               LVAR_q_radio_MaxLifeTaken,
+    1,           PID_SPRINGER_RIFLE, 3,       1500,       ST_EXPERIENCE,       2500,                                             0,
+    1,           PID_HUNTING_RIFLE, 3,       4000,       ST_EXPERIENCE,       5000,                                              0,
+    1,           PID_SCOPED_HUNTING_RIFLE, 1,       4400,       ST_EXPERIENCE,       5000,                               0,
+    1,           PID_ASSAULT_RIFLE, 3,       3600,       ST_EXPERIENCE,       4000,                                              0,
+    1,           PID_ASSAULT_RIFLE_EXT_MAG, 2,       4200,       ST_EXPERIENCE,       5500,                              0,
+    1,           PID_SNIPER_RIFLE, 1,       10000,       ST_EXPERIENCE,       13666,                                             0,
+    1,           PID_FN_FAL, 3,       4800,       ST_EXPERIENCE,       6000,                                                             0,
+    1,           PID_FN_FAL_HPFA, 2,       5000,       ST_EXPERIENCE,       6600,                                                0,
+    1,           PID_RED_RYDER_BB_GUN, 2,       1800,       ST_EXPERIENCE,       2000,                                   0,
+    1,           PID_INDEPENDENT, 1,       14000,       ST_MAX_LIFE,       6,                                                    LVAR_q_radio_MaxLifeTaken,
+    1,           PID_HK_G36, 1,       18000,       ST_MAX_LIFE,       6,                                                                 LVAR_q_radio_MaxLifeTaken,
+    1,           PID_M72_GAUSS_RIFLE, 1,       28000,       ST_CRITICAL_CHANCE,       1,                                 LVAR_q_radio_CritChanceTaken,
+    1,           PID_ELEPHANT_GUN, 1,       32000,       ST_CRITICAL_CHANCE,       1,                                    LVAR_q_radio_CritChanceTaken,
+    1,           PID_NEEDLER_GUN, 1,       15555,       SK_DOCTOR,       4,                                                              LVAR_q_radio_HealSkillsTaken,
+    1,           PID_HEAVY_ASSAULT_RIFLE, 1,       16000,       ST_MAX_LIFE,       6,                                    LVAR_q_radio_MaxLifeTaken,
+    1,           PID_SHOTGUN, 3,       2000,       ST_EXPERIENCE,       2700,                                                    0,
+    1,           PID_SAWED_OFF_SHOTGUN, 3,       1800,       ST_EXPERIENCE,       2400,                                  0,
+    1,           PID_COMBAT_SHOTGUN, 2,       4000,       ST_EXPERIENCE,       4800,                                             0,
+    1,           PID_HK_CAWS, 1,       4400,       ST_EXPERIENCE,       5700,                                                    0,
+    1,           PID_PANCOR_JACKHAMMER, 1,       9800,       SK_SMALL_GUNS,       3,                                             LVAR_q_radio_SkillsTaken,
+    1,           PID_10MM_SMG, 3,       1900,       ST_EXPERIENCE,       2800,                                                   0,
+    1,           PID_MAUSER_SMG, 2,       2000,       ST_EXPERIENCE,       3200,                                                 0,
+    1,           PID_14MM_SMG, 2,       4500,       ST_EXPERIENCE,       5500,                                                   0,
+    1,           PID_TBK_SMG, 2,       4200,       ST_EXPERIENCE,       5000,                                                    0,
+    1,           PID_9MM_SMG, 2,       4800,       ST_EXPERIENCE,       5900,                                                    0,
+    1,           PID_TOMMY_GUN, 3,       4600,       ST_EXPERIENCE,       6000,                                                  0,
+    1,           PID_GREASE_GUN, 2,       5000,       ST_EXPERIENCE,       6400,                                                 0,
+    1,           PID_HK_P90C, 1,       5200,       ST_EXPERIENCE,       7000,                                                    0,
+    1,           PID_HK_G11, 1,       5000,       ST_EXPERIENCE,       6600,                                                             0,
+    1,           PID_HK_G11E, 1,       8200,       ST_EXPERIENCE,       9000,                                                    0,
+    1,           PID_MULTI_BARREL_GUN, 1,       7400,       ST_EXPERIENCE,       8000,                                   0,
+    1,           PID_FLAMER, 3,       2800,       ST_EXPERIENCE,       4000,                                                             0,
+    1,           PID_IMPROVED_FLAMETHROWER, 2,       4500,       ST_EXPERIENCE,       6000,                              0,
+    1,           PID_FLAMER_MK3, 1,       9000,       ST_EXPERIENCE,       10000,                                                0,
+    1,           PID_ROCKET_LAUNCHER, 2,       8000,       ST_EXPERIENCE,       10000,                                   0,
+    1,           PID_MINIGUN, 3,       5000,       ST_EXPERIENCE,       7000,                                                    0,
+    1,           PID_AVENGER_MINIGUN, 1,       7777,       ST_EXPERIENCE,       9000,                                    0,
+    1,           PID_VINDICATOR_MINIGUN, 1,       22000,       SK_BIG_GUNS,       5,                                             LVAR_q_radio_SkillsTaken,
+    1,           PID_M60, 3,       4800,       ST_EXPERIENCE,       6900,                                                                0,
+    1,           PID_14MM_MACHINEGUN, 1,       6200,       ST_EXPERIENCE,       8000,                                    0,
+    1,           PID_LIGHT_SUPPORT_WEAPON, 1,       6700,       ST_EXPERIENCE,       8000,                               0,
+    1,           PID_BOZAR, 1,       18800,       ST_CRITICAL_CHANCE,       1,                                                   LVAR_q_radio_CritChanceTaken,
+    1,           PID_METAL_STORM, 1,       15000,       SK_BIG_GUNS,       4,                                                    LVAR_q_radio_SkillsTaken,
+    1,           PID_MORTAR, 1,       7000,       ST_CARRY_WEIGHT,       3000,                                                   LVAR_q_radio_WeightTaken,
+    1,           PID_GRANADE_PISTOL, 2,       2400,       ST_EXPERIENCE,       3600,                                             0,
+    1,           PID_GRANADE_REVOLV_I, 2,       4400,       ST_EXPERIENCE,       5500,                                   0,
+    1,           PID_REVOLV_GRENADE, 1,       5600,       ST_EXPERIENCE,       8000,                                             0,
+    1,           PID_10MM_MACHINEGUN, 1,       11000,       ST_EXPERIENCE,       15000,                                  0,
+    1,           PID_LASER_PISTOL, 2,       2500,       ST_EXPERIENCE,       4000,                                               0,
+    1,           PID_MAGNETO_LASER_PISTOL, 1,       2500,       ST_EXPERIENCE,       4000,                               0,
+    1,           PID_SOLAR_SCORCHER, 1,       15000,       SK_ENERGY_WEAPONS,       6,                                   LVAR_q_radio_SkillsTaken,
+    1,           PID_LASER_RIFLE, 2,       5000,       ST_EXPERIENCE,       7000,                                                0,
+    1,           PID_LASER_RIFLE_EXT_CAP, 1,       5000,       ST_EXPERIENCE,       7000,                                0,
+    1,           PID_GATLING_LASER, 1,       26000,       ST_MAX_LIFE,       12,                                                 LVAR_q_radio_MaxLifeTaken,
+    1,           PID_PLASMA_PISTOL, 2,       4200,       ST_EXPERIENCE,       5500,                                              0,
+    1,           PID_PLASMA_PISTOL_EXT_CART, 1,       4200,       ST_EXPERIENCE,       5500,                             0,
+    1,           PID_PLASMA_RIFLE, 1,       8000,       ST_EXPERIENCE,       10000,                                              0,
+    1,           PID_TURBO_PLASMA_RIFLE, 1,       12000,       ST_EXPERIENCE,       15000,                               0,
+    1,           PID_YK32_PULSE_PISTOL, 1,       10000,       ST_EXPERIENCE,       11000,                                0,
+    1,           PID_YK42B_PULSE_RIFLE, 1,       19000,       ST_CRITICAL_CHANCE,       1,                               LVAR_q_radio_CritChanceTaken,
+    1,           PID_ROCK, 24,       3000,       ST_CARRY_WEIGHT,       2000,                                                    LVAR_q_radio_WeightTaken,
+    1,           PID_MOLOTOV_COCKTAIL, 9,       00,       SK_THROWING,       3,                                                  LVAR_q_radio_SkillsTaken,
+    1,           PID_FRAG_GRENADE, 12,       00,       SK_THROWING,       4,                                                             LVAR_q_radio_SkillsTaken,
+    1,           PID_PLASMA_GRENADE, 12,       00,       SK_THROWING,       6,                                                  LVAR_q_radio_SkillsTaken,
+    1,           PID_KNIFE, 6,       1500,       ST_EXPERIENCE,       3000,                                                              0,
+    1,           PID_COMBAT_KNIFE, 3,       1500,       ST_EXPERIENCE,       3000,                                               0,
+    1,           PID_SHIV, 3,       1500,       ST_EXPERIENCE,       3000,                                                               0,
+    1,           PID_SWITCHBLADE, 3,       1500,       ST_EXPERIENCE,       3000,                                                0,
+    1,           PID_WAKIZASHI_BLADE, 1,       3000,       SK_UNARMED,       6,                                                  LVAR_q_radio_SkillsTaken,
+    1,           PID_SPEAR, 3,       1500,       ST_EXPERIENCE,       3000,                                                              0,
+    1,           PID_SHARP_SPEAR, 2,       1500,       ST_EXPERIENCE,       3000,                                                0,
+    1,           PID_SHARPENED_POLE, 6,       1500,       ST_EXPERIENCE,       3000,                                             0,
+    1,           PID_THROWING_KNIFE, 6,       3000,       SK_THROWING,       6,                                                  LVAR_q_radio_SkillsTaken,
+    1,           PID_PLANT_SPIKE, 15,       00,       SK_THROWING,       6,                                                              LVAR_q_radio_SkillsTaken,
+    1,           PID_CLUB, 3,       1500,       ST_EXPERIENCE,       3000,                                                               0,
+    1,           PID_CROWBAR, 2,       1500,       ST_EXPERIENCE,       3000,                                                    0,
+    1,           PID_WRENCH, 1,       1500,       ST_EXPERIENCE,       3000,                                                             0,
+    1,           PID_SLEDGEHAMMER, 3,       1500,       ST_EXPERIENCE,       3000,                                               0,
+    1,           PID_SUPER_SLEDGE, 1,       15000,       ST_MELEE_DAMAGE,       2,                                               LVAR_q_radio_ResistTaken,
+    1,           PID_CATTLE_PROD, 2,       4000,       ST_EXPERIENCE,       7000,                                                0,
+    1,           PID_SUPER_CATTLE_PROD, 1,       13000,       ST_MELEE_DAMAGE,       2,                                  LVAR_q_radio_ResistTaken,
+    1,           PID_RIPPER, 1,       3000,       ST_EXPERIENCE,       5000,                                                             0,
+    1,           PID_BOXING_GLOVES, 1,       2000,       SK_UNARMED,       6,                                                    LVAR_q_radio_SkillsTaken,
+    1,           PID_PLATED_BOXING_GLOVES, 1,       2000,       SK_UNARMED,       6,                                             LVAR_q_radio_SkillsTaken,
+    1,           PID_POWER_FIST, 2,       4000,       ST_MELEE_DAMAGE,       2,                                                  LVAR_q_radio_ResistTaken,
+    1,           PID_BRASS_KNUCKLES, 5,       2500,       ST_EXPERIENCE,       4000,                                             0,
+    1,           PID_SPIKED_KNUCKLES, 2,       2500,       ST_EXPERIENCE,       4000,                                    0,
+    1,           PID_MEGA_POWER_FIST, 1,       18000,      ST_MELEE_DAMAGE,       2,                                             LVAR_q_radio_ResistTaken,
+    1,           PID_CHAIN, 1,       2000,       SK_UNARMED,       6,                                                                    LVAR_q_radio_SkillsTaken,
+    1,           PID_10MM_JHP, 120,       2500,       ST_EXPERIENCE,       3600,                                                 0,
+    1,           PID_10MM_AP, 120,       2500,       ST_EXPERIENCE,       3600,                                                  0,
+    1,           PID_NAILS, 240,       2500,       ST_EXPERIENCE,       3600,                                                    0,
+    1,           PID_9MM_AMMO, 96,       2500,       ST_EXPERIENCE,       3600,                                                  0,
+    1,           PID_9MM_BALL, 96,       2500,       ST_EXPERIENCE,       3600,                                                  0,
+    1,           PID_14MM_AP, 80,       2500,       ST_EXPERIENCE,       3600,                                                   0,
+    1,           PID_44_MAGNUM_JHP, 96,       2500,       ST_EXPERIENCE,       3600,                                             0,
+    1,           PID_44_FMJ_MAGNUM, 96,       2500,       ST_EXPERIENCE,       3600,                                             0,
+    1,           PID_5MM_JHP, 240,       2500,       ST_EXPERIENCE,       3600,                                                  0,
+    1,           PID_5MM_AP, 240,       2500,       ST_EXPERIENCE,       3600,                                                   0,
+    1,           PID_SHOTGUN_SHELLS, 60,       2500,       ST_EXPERIENCE,       3600,                                    0,
+    1,           PID_7_62MM_AMMO, 100,       2500,       ST_EXPERIENCE,       3600,                                              0,
+    1,           PID_45_CALIBER_AMMO, 150,       2500,       ST_EXPERIENCE,       3600,                                  0,
+    1,           PID_223_FMJ, 100,       2500,       ST_EXPERIENCE,       3600,                                                  0,
+    1,           PID_4_7MM_CASELESS, 100,       4500,       ST_EXPERIENCE,       5000,                                   0,
+    1,           PID_2MM_EC_AMMO, 24,       6500,       SK_SMALL_GUNS,       6,                                                  LVAR_q_radio_SkillsTaken,
+    1,           PID_EXPLOSIVE_ROCKET, 8,       6500,       ST_EXPERIENCE,       8600,                                   0,
+    1,           PID_ROCKET_AP, 6,       6500,       ST_EXPERIENCE,       8600,                                                  0,
+    1,           PID_FLAMETHROWER_FUEL, 30,       4000,       ST_EXPERIENCE,       5000,                                 0,
+    1,           PID_FLAMETHROWER_FUEL_MK_II, 15,       4000,       ST_EXPERIENCE,       5000,                   0,
+    1,           PID_SMALL_ENERGY_CELL, 90,       4000,       ST_EXPERIENCE,       5000,                                 0,
+    1,           PID_MICRO_FUSION_CELL, 60,       7000,       SK_ENERGY_WEAPONS,       6,                                LVAR_q_radio_SkillsTaken,
+    1,           PID_BBS, 100,       4500,       ST_EXPERIENCE,       5000,                                                              0,
+    1,           PID_HN_NEEDLER_CARTRIDGE, 30,       4500,       ST_EXPERIENCE,       5000,                              0,
+    1,           PID_HN_AP_NEEDLER_CARTRIDGE, 20,       4500,       ST_EXPERIENCE,       5000,                   0,
+    1,           PID_40MM_GRANADE, 8,       4500,       ST_EXPERIENCE,       5000,                                               0,
+    1,           PID_CANNON_BALLS, 6,       5500,       ST_CARRY_WEIGHT,       4000,                                             LVAR_q_radio_WeightTaken,
+    1,           PID_SLUG_SHELLS, 20,       4500,       ST_EXPERIENCE,       5000,                                               0,
+    1,           PID_FRAG_SHELLS, 10,       7500,       ST_EXPLODE_ABSORB,       1,                                              LVAR_q_radio_ResistTaken,
+    1,           PID_700_NITRO_EXPRESS, 10,       8500,       ST_CRITICAL_RESISTANCE,       1,                   LVAR_q_radio_CritResistTaken,
+    1,           PID_HEALING_POWDER, 6,       2000,       ST_EXPERIENCE,       4000,                                             0,
+    1,           PID_HEALING_POWDER_MK2, 3,       2500,       ST_EXPERIENCE,       4000,                                 0,
+    1,           PID_STIMPAK, 5,       3000,       ST_EXPERIENCE,       4500,                                                    0,
+    1,           PID_SUPER_STIMPAK, 3,       4500,       ST_EXPERIENCE,       6600,                                              0,
+    1,           PID_ANTIDOTE, 3,       2500,       ST_POISON_RESISTANCE,       2,                                               0,
+    1,           PID_RAD_X, 2,       3000,       ST_RADIATION_RESISTANCE,       2,                                               0,
+    1,           PID_RAD_X, 2,       3000,       ST_RADIATION_RESISTANCE,       2,                                               0,
+    1,           PID_RADAWAY, 2,       3000,       ST_RADIATION_RESISTANCE,       2,                                             0,
+    1,           PID_JET_ANTIDOTE, 1,       10000,       ST_HEALING_RATE,       2,                                               LVAR_q_radio_HealRateTaken,
+    1,           PID_NUKA_COLA, 3,       2000,       ST_EXPERIENCE,       4000,                                                  0,
+    1,           PID_BEER, 3,       2000,       ST_EXPERIENCE,       4000,                                                              0,
+    1,           PID_BOOZE, 3,       2000,       ST_EXPERIENCE,       4000,                                                              0,
+    1,           PID_GAMMA_GULP_BEER, 2,       2000,       ST_EXPERIENCE,       4000,                                    0,
+    1,           PID_ROENTGEN_RUM, 2,       2000,       ST_EXPERIENCE,       4000,                                               0,
+    1,           PID_ROT_GUT, 3,       2000,       ST_EXPERIENCE,       4000,                                                    0,
+    1,           PID_MENTATS, 2,       4000,       ST_EXPERIENCE,       5000,                                                    0,
+    1,           PID_BUFFOUT, 2,       4000,       ST_EXPERIENCE,       5000,                                                    0,
+    1,           PID_PSYCHO, 1,       5000,       ST_EXPERIENCE,       8000,                                                             0,
+    1,           PID_JET, 3,       3000,       ST_EXPERIENCE,       4500,                                                                0,
+    1,           PID_MUTATED_FRUIT, 3,       2000,       ST_EXPERIENCE,       4000,                                              0,
+    1,           PID_IGUANA_ON_A_STICK, 3,       2000,       ST_EXPERIENCE,       4000,                                  0,
+    1,           PID_MEAT_ON_A_STICK, 3,       2000,       ST_EXPERIENCE,       4000,                                    0,
+    1,           PID_INTESTINES, 1,       2000,       ST_EXPERIENCE,       4000,                                                 0,
+    1,           PID_DYNAMITE, 1,       2000,       SK_TRAPS,       6,                                                                   LVAR_q_radio_SkillsTaken,
+    1,           PID_PLASTIC_EXPLOSIVES, 1,       4000,       SK_TRAPS,       6,                                                 LVAR_q_radio_SkillsTaken,
+    1,           PID_MINE, 1,       3000,       SK_TRAPS,       6,                                                                               LVAR_q_radio_SkillsTaken,
+    1,           PID_TRAP_PLANT_SPIKE, 1,       2000,       SK_TRAPS,       6,                                                   LVAR_q_radio_SkillsTaken,
+    1,           PID_RADIO, 1,       2000,       ST_EXPERIENCE,       4000,                                                              0,
+    1,           PID_MULTI_TOOL, 1,       2000,       SK_REPAIR,       6,                                                                0,
+    1,           PID_SUPER_TOOL_KIT, 1,       10000,       SK_REPAIR,       6,                                                   0,
+    1,           PID_LOCKPICKS, 1,       2000,       SK_LOCKPICK,       6,                                                               0,
+    1,           PID_EXP_LOCKPICK_SET, 1,       5000,       SK_LOCKPICK,       6,                                                0,
+    1,           PID_SEWING_KIT, 1,       2000,       SK_REPAIR,       6,                                                                0,
+    1,           PID_LIGHTER, 1,       2000,       SK_OUTDOORSMAN,       6,                                                              0,
+    1,           PID_FIRST_AID_KIT, 1,       2000,       SK_FIRST_AID,       6,                                                  LVAR_q_radio_HealSkillsTaken,
+    1,           PID_FIELD_MEDIC_KIT, 1,       5000,       SK_FIRST_AID,       6,                                                LVAR_q_radio_HealSkillsTaken,
+    1,           PID_DOCTORS_BAG, 1,       2000,       SK_DOCTOR,       6,                                                               LVAR_q_radio_HealSkillsTaken,
+    1,           PID_PARAMEDICS_BAG, 1,       5000,       SK_DOCTOR,       6,                                                    LVAR_q_radio_HealSkillsTaken,
+    1,           PID_SHOVEL, 1,       2000,       SK_OUTDOORSMAN,       6,                                                               0,
+    1,           PID_AXE, 1,       2000,       SK_OUTDOORSMAN,       6,                                                                  0,
+    1,           PID_WELDING, 2,        2000,       SK_REPAIR,       6,                                                                  0
+};
+
+// Локации, на которых ищем НПЦ
+uint16[] loactions_table = { LOCATION_Arroyo, LOCATION_Klamath, LOCATION_Den, LOCATION_BrokenHills, LOCATION_Redding, LOCATION_Modoc, LOCATION_NewReno, LOCATION_Gecko, LOCATION_SanFrancisco, LOCATION_NCR, LOCATION_VaultCity };
+
+#define _RndLocationPid             ( uint( loactions_table[ Random( 0, loactions_table.length() - 1 ) ] ) )
+#define TABLE_COLUMNS               ( 7 )
+#define TABLE_ROWS                  ( quest_table.length() / TABLE_COLUMNS )
+#define key                         ( "RadioQuest" )
+#define RADIO_REPEAT                ( REAL_MINUTE( 5 ) )                                    // Частота повторений сообщения о квесте
+#define LOC_NAME                    # (mapId)               ( ( mapId + 100 ) * 1000 )      // поиск названия локации в файле FOGM.msg
+#define NPC_NAME                    # (dialogId)            ( STR_NPC_NAME( dialogId, 1 ) ) // поиск имени НПЦ в файле FODLG.msg
+#define ITEM_NAME                   # (pid)            ( pid * 100 )
+#define CTE_LIGHT                   ( 17 )
+#define CTE_TALK                    ( 18 )
+
+#define STR_CANCEL_QUEST            ( 7300 )
+#define STR_BEGIN_QUEST             ( 7301 )
+#define STR_CONTINUE_QUEST          ( 7302 )
+#define STR_QUEST_ITEM              ( 7303 )
+#define STR_ADDITIONAL_REWARD       ( 7304 )
+#define STR_LEVEL_REQ               ( 7305 )
+#define STR_END_MESSAGE             ( 7306 )
+#define STR_PARAM_CHANGED           ( 7307 )
+#define STR_QUEST_COMPLETE          ( 7308 )
+#define STR_NPC_TALK                ( 7309 )
+#define STR_REWARD_MONEY            ( 7310 )
+#define DEFAULT_MAX_REPAIR_COUNT    ( 300 )
+
+RadioQuest@ GetQuest()
+{
+    RadioQuest q = RadioQuest();
+    if( q.Load() )
+        return q;
+    return null;
+}
+
+class RadioQuest
+{
+    uint   QuestIndex;             // Номер строки с описанием квеста в таблице quest_table
+    uint   QuestDialog;            // Номер квестового диалога
+    uint   QuestNextTime;          // Время до следующего квеста
+    uint   QuestRadioChannel;      // Номер радиоканала, на котором вещает диджей
+    uint   NpcId;                  // Id NPC, которому нужно принести
+    uint   OldFavoriteItem;        // Предмет, который держал в руках нпц перед получением квеста
+    uint   LighterId;              // Когд предмета-подсветки
+    uint   TimeCreated;            // Дата-время создания квеста
+    bool   Executed;               // Признак: квест выполнен
+    uint   TimeEventIdNextQuest;   // Код временного эвента генерации нового квеста
+    uint   TimeEventIdRadio;       // Код временного эвента повтора сообщений по радио
+    uint   MinLvl;                 // Минимальный уровень персонажа, которому будет доступен квест
+    uint16 ItemPid;                // Код квестового предмета
+    uint   ItemQty;                // Количество предметов
+    uint   AwardMoney;             // Награда в монетах
+    uint   AwardParam;             // Параметр, который увеличит НПЦ при сдаче квеста (например, ST_EXPERIENCE)
+    int    AwardValue;             // Значение, на которое будет увеличен параметр
+    int    ParamVar;               // Номер переменной, которая проверяется перед тем как присвоить параметр
+
+    bool Load()
+    {
+        Serializator load;
+        if( !IsAnyData( key ) || !load.Load( key ) )
+            return false;
+        load.Get( this.QuestIndex );
+        load.Get( this.QuestDialog );
+        load.Get( this.QuestNextTime );
+        load.Get( this.QuestRadioChannel );
+        load.Get( this.NpcId );
+        load.Get( this.OldFavoriteItem );
+        load.Get( this.LighterId );
+        load.Get( this.TimeCreated );
+        load.Get( this.Executed );
+        load.Get( this.TimeEventIdNextQuest );
+        load.Get( this.TimeEventIdRadio );
+        load.Get( this.MinLvl );
+        load.Get( this.ItemPid );
+        load.Get( this.ItemQty );
+        load.Get( this.AwardMoney );
+        load.Get( this.AwardParam );
+        load.Get( this.AwardValue );
+        load.Get( this.ParamVar );
+        return true;
+    }
+
+    void Save()
+    {
+        // this.ParamVar = 0; TabaK. Закоментил. WTF?
+        Serializator save;
+        save.Set( this.QuestIndex );
+        save.Set( this.QuestDialog );
+        save.Set( this.QuestNextTime );
+        save.Set( this.QuestRadioChannel );
+        save.Set( this.NpcId );
+        save.Set( this.OldFavoriteItem );
+        save.Set( this.LighterId );
+        save.Set( this.TimeCreated );
+        save.Set( this.Executed );
+        save.Set( this.TimeEventIdNextQuest );
+        save.Set( this.TimeEventIdRadio );
+        save.Set( this.MinLvl );
+        save.Set( this.ItemPid );
+        save.Set( this.ItemQty );
+        save.Set( this.AwardMoney );
+        save.Set( this.AwardParam );
+        save.Set( this.AwardValue );
+        save.Set( this.ParamVar );
+        save.Save( key );
+    }
+
+    bool GenerateQuest()
+    {
+        return this.GenerateQuest( this.QuestDialog, this.QuestNextTime, this.QuestRadioChannel );
+    }
+
+    // Генерация нового квеста и запуск событий
+    bool GenerateQuest( uint qDialog, uint nextQuest, uint channel )
+    {
+        this.QuestDialog = qDialog;
+        this.QuestNextTime = nextQuest;
+        this.QuestRadioChannel = channel;
+        // Попытка найти свободного НПЦ
+        int       tries = 10;
+        Critter@  cr;
+        Location@ loc;
+        Map@[] maps;
+        Critter@[] critters;
+        uint crCount;
+        while( ( !valid( cr ) || cr.Stat[ ST_DIALOG_ID ] == 0 ) && tries > 0 )
+        {
+            @loc = GetLocationByPid( _RndLocationPid, 0 );
+            tries--;
+            if( valid( loc ) )
+            {
+                maps.resize( 0 );
+                critters.resize( 0 );
+                loc.GetMaps( maps );
+                for( uint i = 0, l = maps.length(); i < l; i++ )
+                    maps[ i ].GetCritters( 0, FIND_LIFE | FIND_ONLY_NPC, critters );
+                crCount = critters.length();
+                if( crCount > 0 )
+                    @cr = critters[ Random( 0, crCount - 1 ) ];
+                switch( cr.Stat[ ST_BODY_TYPE ] )
+                {
+                case BT_MEN:
+                case BT_WOMEN:
+                case BT_CHILDREN:
+                case BT_SUPER_MUTANT:
+                case BT_GHOUL:
+                    break;
+                default:
+                    @cr = null;
+                }
+            }
+        }
+        if( !valid( cr ) )
+        {
+            this.Save();
+            return false;
+        }
+        this.QuestIndex  = Random( 0, TABLE_ROWS - 1 );
+        this.MinLvl      = uint( quest_table[ 0 + this.QuestIndex * TABLE_COLUMNS ] );
+        this.ItemPid     = uint16( quest_table[ 1 + this.QuestIndex * TABLE_COLUMNS ] );
+        this.ItemQty     = uint( quest_table[ 2 + this.QuestIndex * TABLE_COLUMNS ] );
+        this.AwardMoney  = uint( quest_table[ 3 + this.QuestIndex * TABLE_COLUMNS ] );
+        this.AwardParam  = uint( quest_table[ 4 + this.QuestIndex * TABLE_COLUMNS ] );
+        this.AwardValue  = uint( quest_table[ 5 + this.QuestIndex * TABLE_COLUMNS ] );
+        this.ParamVar    = uint( quest_table[ 6 + this.QuestIndex * TABLE_COLUMNS ] );
+        this.TimeCreated = __FullSecond;
+        this.Executed    = false;
+        this.NpcId       = cr.Id;
+        if( this.TimeEventIdNextQuest > 0 )
+            EraseTimeEvent( this.TimeEventIdNextQuest );
+        this.TimeEventIdNextQuest = CreateTimeEvent( __FullSecond + this.QuestNextTime, "e_NextQuest", true );
+        if( this.TimeEventIdRadio > 0 )
+            EraseTimeEvent( this.TimeEventIdRadio );
+        this.TimeEventIdRadio = CreateTimeEvent( __FullSecond + RADIO_REPEAT, "e_NextRadio", true );
+        this.OldFavoriteItem = cr.GetFavoriteItem( SLOT_HAND2 );
+        this.Save();
+        cr.StatBase[ ST_HASH_EMBLEM ] = GetStrHash( "art\\intrface\\quest\\1.png" );
+        cr.AddTimeEvent( "cte_Light", 0, CTE_LIGHT );
+        cr.AddTimeEvent( "cte_Talk", 0, CTE_TALK );
+        RadioAnnounce( this, true );
+        return true;
+    }
+
+    void FinishQuest()
+    {
+        this.Executed = true;
+        if( this.NpcId > 0 )
+        {
+            Critter@ cr = GetCritter( this.NpcId );
+            if( valid( cr ) )
+            {
+                cr.SetEvent( CRITTER_EVENT_TALK, "" );
+                cr.StatBase[ ST_HASH_EMBLEM ] = 0;
+                cr.EraseTimeEvents( CTE_LIGHT );
+            }
+            this.NpcId = 0;
+        }
+        if( this.LighterId > 0 )
+        {
+            Item@ item = GetItem( this.LighterId );
+            if( valid( item ) )
+                DeleteItem( item );
+            this.LighterId  = 0;
+        }
+        this.Save();
+        RadioMessageMsg( this.QuestRadioChannel, TEXTMSG_TEXT, STR_QUEST_COMPLETE );
+    }
+}
+
+// Реплики квестгивера, чтобы выделить его из толпы
+uint cte_Talk( Critter& cr, int identifier, int& rate, int& )
+{
+    RadioQuest q = GetQuest();
+    if( !valid( q ) || q.NpcId != cr.Id )
+    {
+        cr.StatBase[ ST_HASH_EMBLEM ] = 0;
+        return 0;
+    }
+    cr.SayMsg( SAY_NORM, TEXTMSG_TEXT, STR_NPC_TALK );
+    return REAL_SECOND( 30 );
+}
+
+uint cte_Light( Critter& cr, int identifier, int& rate, int& )
+{
+    /*
+       вместо подсветки теперь иконка
+       RadioQuest q = GetQuest();
+       Item@ lighter;
+       if(rate > 0)
+       {
+            @lighter = GetItem(rate);
+       }
+       if(!valid(q) || q.NpcId != cr.Id)
+       {
+            if(valid(lighter))
+                    DeleteItem(lighter);
+            return 0;
+       }
+       if(!valid(lighter))
+       {
+            @lighter = AddLighter(cr);
+            rate = lighter.Id;
+       }else{
+            q.LighterId = lighter.Id;
+            q.Save();
+       }
+     */
+    cr.SetEvent( CRITTER_EVENT_TALK, "_CTalk" );
+    return REAL_MINUTE( 10 );
+}
+
+Item@ AddLighter( Critter& cr )
+{
+	#ifndef __NO_FAVORIT_ITEMS
+    Item@ item = cr.AddItem( PID_BOTTLE_CAPS, 1 );
+    if( valid( item ) )
+    {
+        cr.SetFavoriteItem( SLOT_HAND2, PID_BOTTLE_CAPS );
+        item.SetScript( "_ItemInit" );
+    }
+    return item;
+	#endif
+	return null;
+}
+
+void _ItemInit( Item& item, bool firstTime )
+{
+    item.SetEvent( ITEM_EVENT_SKILL, "_ItemOnSkill" );
+    item.LightIntensity = 50;
+    item.LightColor = COLOR_GREEN;
+    item.LightDistance = 5;
+    SETFLAG( item.Flags, ITEM_LIGHT );
+    item.Update();
+    CreateTimeEvent( __FullSecond + REAL_MINUTE( 9 ), "e_DeleteLighter", item.Id, true );
+}
+
+bool _CTalk( Critter& cr, Critter& talkCr, bool attach, uint talkCount )
+{
+    RadioQuest q = GetQuest();
+    if( !valid( q ) || q.NpcId != cr.Id )
+    {
+        cr.SetEvent( CRITTER_EVENT_TALK, "" );
+        cr.StatBase[ ST_HASH_EMBLEM ] = 0;
+        return true;
+    }
+    GameVar@ status = GetUnicumVar( UVAR_npc_story, cr.Id, talkCr.Id );
+    if( status == 0 && attach )
+    {
+        status = 1;
+        Mk2RunDialog( talkCr, cr, q.QuestDialog, false );
+        return false;
+    }
+    if( status == 1 && !attach )
+    {
+        status = 0;
+    }
+    return true;
+}
+
+uint e_DeleteLighter( uint[] @ values )
+{
+    if( values.length() > 0 && values[ 0 ] > 0 )
+    {
+        Item@ item = GetItem( values[ 0 ] );
+        if( valid( item ) )
+            DeleteItem( item );
+    }
+    return 0;
+}
+
+bool _ItemOnSkill( Item& item, Critter& cr, int skill )
+{
+    return true;
+}
+
+uint e_NextQuest( uint[] @ values )
+{
+    RadioQuest q = GetQuest();
+    if( valid( q ) )
+    {
+        if( !q.Executed )
+            RadioMessageMsg( q.QuestRadioChannel, TEXTMSG_TEXT, STR_CANCEL_QUEST );
+        else
+            RadioMessageMsg( q.QuestRadioChannel, TEXTMSG_TEXT, STR_QUEST_COMPLETE );
+        if( q.NpcId > 0 )
+        {
+            Critter@ npc = GetCritter( q.NpcId );
+            if( valid( npc ) )
+                npc.StatBase[ ST_HASH_EMBLEM ] = 0;
+        }
+        if( !q.GenerateQuest() )
+            return REAL_HOUR( 1 );
+        Critter@ cr = GetCritter( q.NpcId );
+        if( !valid( cr ) )
+            return REAL_HOUR( 1 );
+        // RadioAnnounce(q, true);
+    }
+    return 0;
+}
+
+uint e_NextRadio( uint[] @ values )
+{
+    RadioQuest q = GetQuest();
+    if( !valid( q ) )
+        return 0;
+    RadioAnnounce( q, false );
+    return RADIO_REPEAT;
+}
+
+void RadioAnnounce( RadioQuest@ q, bool first )
+{
+    if( valid( q ) )
+    {
+        Critter@ cr = GetCritter( q.NpcId );
+        if( validEngineObject( cr ) && valid( cr.GetMap() ) )
+        {
+            if( first )
+            {
+                //
+                // IRCSay( "#tlamk2", "7 Вас приветствует шоу 'Мокрые ванаминго' и его постоянный ведущий Мрачный Крепыш! К нам в студию поступила заявка, подписанная ???" );
+                RadioMessageMsg( q.QuestRadioChannel, TEXTMSG_TEXT, STR_BEGIN_QUEST, "$who@msg DLG " + NPC_NAME( cr.Stat[ ST_DIALOG_ID ] ) + "@$where@msg GM " + LOC_NAME( cr.GetMap().GetLocation().GetProtoId() ) + "@" );
+            }
+            else
+            {
+                // IRCSay( "#tlamk2", "7 Привет тем, кто только что к нам присоединился. С вами шоу 'Голый ванаминго' и я, Мрачный Крепыш! К нам поступил запрос на доставку от @lex who@(@lex where@)." );
+                RadioMessageMsg( q.QuestRadioChannel, TEXTMSG_TEXT, STR_CONTINUE_QUEST, "$who@msg DLG " + NPC_NAME( cr.Stat[ ST_DIALOG_ID ] ) + "@$where@msg GM " + LOC_NAME( cr.GetMap().GetLocation().GetProtoId() ) + "@" );
+            }
+            RadioMessageMsg( q.QuestRadioChannel, TEXTMSG_TEXT, STR_QUEST_ITEM, "$item@msg ITEM " + ITEM_NAME( q.ItemPid ) + "@$qty" + q.ItemQty + "$pay" + q.AwardMoney );
+            if( q.AwardParam != ST_EXPERIENCE )
+            {
+                RadioMessageMsg( q.QuestRadioChannel, TEXTMSG_TEXT, STR_ADDITIONAL_REWARD );
+            }
+            if( q.MinLvl > 1 )
+            {
+                RadioMessageMsg( q.QuestRadioChannel, TEXTMSG_TEXT, STR_LEVEL_REQ, "$lvl" + q.MinLvl );
+            }
+            RadioMessageMsg( q.QuestRadioChannel, TEXTMSG_TEXT, STR_END_MESSAGE );
+        }
+    }
+}
+// Диалоги
+bool dHasQuestItem( Critter& cr, Critter@ npc )
+{
+    RadioQuest q = GetQuest();
+    if( valid( q ) && valid( npc ) && q.NpcId == npc.Id && q.ItemPid > 0 )
+    {
+        if( _CritCountItem( cr, q.ItemPid ) >= q.ItemQty )
+            return true;
+    }
+    return false;
+}
+
+bool d_ItemNeedRepair( Critter& cr, Critter@ npc )
+{
+    RadioQuest q = GetQuest();
+    if( valid( q ) && q.ItemPid > 0 )
+    {
+        Item@[] items;
+        if( cr.GetItems( -1, items ) > 0 )
+        {
+            for( uint i = 0, l = items.length(); i < l; i++ )
+            {
+                Item@ item = items[ i ];
+                if( valid( item ) && item.GetProtoId() == q.ItemPid )
+                {
+                    if( !item.IsDeteriorable() )
+                        return false;
+                    if( FLAG( item.BrokenFlags, BI_ETERNAL ) || FLAG( item.BrokenFlags, BI_NOTRESC ) )
+                        return true;
+                    int maxRepairCount = ( item.Proto.MaxRepairCount > 0 ) ? ( ( item.Proto.MaxRepairCount + 10 ) * 10 ) : DEFAULT_MAX_REPAIR_COUNT;
+                    if( item.RadioChannel >= int(maxRepairCount / 2) )
+                        return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+bool d_ItemNotNeedRepair( Critter& cr, Critter@ npc )
+{
+    return !d_ItemNeedRepair( cr, npc );
+}
+
+bool d_LevelIsOk( Critter& cr, Critter@ npc )
+{
+    RadioQuest q = GetQuest();
+    if( valid( q ) && valid( npc ) && q.NpcId == npc.Id && q.MinLvl > 0 )
+    {
+        return cr.Stat[ ST_LEVEL ] >= int(q.MinLvl);
+    }
+    return true;
+}
+
+bool d_LevelIsNotOk( Critter& cr, Critter@ npc )
+{
+    return !d_LevelIsOk( cr, npc );
+}
+
+void dlg_QuestItem( Critter& cr, Critter@ npc, string@ lexems )
+{
+    if( !IS_DIALOG_GENERATED( lexems ) )
+        return;
+    RadioQuest q = GetQuest();
+    if( valid( q ) && valid( npc ) )
+    {
+        lexems =  "$item@msg ITEM " + ITEM_NAME( q.ItemPid ) + "@$count" + q.ItemQty + "$money" + q.AwardMoney;
+    }
+}
+
+void r_Reward( Critter& cr, Critter@ npc )
+{
+    RadioQuest q = GetQuest();
+    if( valid( q ) && valid( npc ) )
+    {
+        cr.DeleteItem( q.ItemPid, q.ItemQty );
+        bool noParam = false;
+        int  award = 0;
+        if( q.ParamVar != 0 && q.AwardParam != ST_EXPERIENCE )
+        {
+            Log( "var!" + q.ParamVar );
+            GameVar@ allowed = GetLocalVar( q.ParamVar, cr.Id );
+            if( valid( allowed ) )
+            {
+                if( allowed.GetValue() >= allowed.GetMax() )
+                    noParam = true;
+                else if( allowed.GetValue() + q.AwardValue > allowed.GetMax() )
+                {
+                    award = allowed.GetMax() - allowed.GetValue();
+                    allowed = allowed.GetMax();
+                }
+                else
+                {
+                    allowed += q.AwardValue;
+                    award = q.AwardValue;
+                }
+            }
+            else
+                noParam = true;
+        }
+        else
+            award = q.AwardValue;
+        if( !noParam )
+        {
+            cr.ParamBase[ q.AwardParam ] += award;
+            if( q.AwardParam != ST_EXPERIENCE )
+                cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_PARAM_CHANGED, "$param@msg game " + STR_PARAM_NAME( q.AwardParam ) + "@$value" + award );
+        }
+        if( q.AwardMoney > 0 )
+        {
+            cr.AddItem( PID_BOTTLE_CAPS, q.AwardMoney );
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_REWARD_MONEY, "$money" + q.AwardMoney );
+        }
+        q.FinishQuest();
+    }
+}
+// ~getaccess admin 1111
+// ~ais 3005 1 ~ais 1557 1
+// ~run debug ctd 5001020 0 0
+// консольная команда на запуск радиоквеста
+// ~run q_radio_dj NewQuest 21150 360000 0
+// ~run q_radio_dj NewQuest НомерДиалогаКвестГивера, ВремяМеждуКвестами ( в игровых секундах), НомерРадиоканала
+void NewQuest( Critter& player, int dialog, int time2Next, int channel )
+{
+    RadioQuest@ q = GetQuest();
+    if( !valid( q ) )
+    {
+        @q = RadioQuest();
+        player.Say( SAY_NETMSG, "Не найден ранее сохраненный радио-квест. Создан новый." );
+    }
+    q.GenerateQuest( uint( dialog ), uint( time2Next ), uint( channel ) );
+    player.Say( SAY_NETMSG, "RadioQuest set up. NpcId:" + q.NpcId + "; QuestIndex: " + q.QuestIndex +
+                "QuestItemPid: " + q.ItemPid );
+    player.Say( SAY_NORM, "За какую-то хрень, под названием @msg DLG 100@" );
+
+    q.Save();
+}
+
+void SetupRadioDJQuest()
+{
+    RadioQuest@ q = GetQuest();
+    if( !valid( q ) )
+    {
+        @q = RadioQuest();
+    }
+    q.GenerateQuest( 21150, REAL_MINUTE( 20 ), 0 ); // Все происходит на нулевом канале рации
+    q.Save();
+}

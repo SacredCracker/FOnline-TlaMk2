@@ -1,0 +1,587 @@
+// Смещение всплывающего при наведении текста на кнопках главного меню, относительно основного.
+int[] LogTextOffset;
+// Шрифт текста кнопок главного меню.
+int LogTextFont;
+
+// Координаты текста кнопок главного меню.
+int[] LogPlayTextCoords;
+int[] LogRegTextCoords;
+int[] LogOptionsTextCoords;
+int[] LogCreditsTextCoords;
+int[] LogExitTextCoords;
+
+// Цвета текста кнопок главного меню.
+uint LogPlayTextColor;
+uint LogRegTextColor;
+uint LogOptionsTextColor;
+uint LogCreditsTextColor;
+uint LogExitTextColor;
+
+// Цвета текста кнопок главного меню, при наведении мышей.
+uint LogPlayTextColorActive;
+uint LogRegTextColorActive;
+uint LogOptionsTextColorActive;
+uint LogCreditsTextColorActive;
+uint LogExitTextColorActive;
+
+// IsShow::Option::ToDoConvert
+namespace Timeouts
+{
+	namespace Option
+	{
+		namespace ToDoConvert
+		{
+			bool IsShow = true;
+		}
+	}
+}
+
+// Health::Option::ToDoConvert::BarImage
+// Health::Option::ToDoConvert::BarPixel
+// Health::Option::Bars::ColorGood
+// Health::Option::Bars::ColorNotGood
+// Health::Option::Bars::ColorBad
+namespace Health
+{
+	namespace Option
+	{
+		namespace ToDoConvert
+		{
+			bool IsShow = true;
+
+		}
+		
+		namespace Bars
+		{
+			::Sprite Image;
+			::Sprite Pixel;
+			uint ColorGood = COLOR_DDGREEN;
+			uint ColorNotGood = COLOR_ORANGE;
+			uint ColorBad = COLOR_DRED;
+			
+		}
+	}
+}
+
+namespace Names
+{
+	namespace Option
+	{
+		namespace ToDoConvert
+		{
+			bool IsShow = ::__ShowPlayerNames;
+			
+			bool SetOptionIsShow( bool& option, ::string& arg, ::string& )
+			{
+				::__ShowPlayerNames = option;
+				//::Log( "ChangeNames " + ::__ShowPlayerNames + " " + option + " " + arg );
+				return true;
+			}
+		}
+	}
+}
+
+namespace ScrollMap
+{
+	namespace Option
+	{
+		namespace Mouse
+		{
+			bool IsBlock = !::__MouseScroll;
+			
+			bool SetOptionIsBlock( bool& option, ::string& arg, ::string& )
+			{
+				::__MouseScroll = !option;
+				return true;
+			}
+		}
+	}
+}
+
+// AttackZone::Option::ToDoConvert::IsShow
+// AttackZone::Option::ToDoConvert::Color
+// AttackZone::Option::ToDoConvert::CheckTimeout
+// AttackZone::LastTick
+// AttackZone::MainWeapon
+namespace AttackZone
+{
+	namespace Option
+	{
+		namespace ToDoConvert
+		{
+			bool IsShow = false;
+			uint	ColorMainWeapon = COLOR_RED;
+			uint	ColorSecondWeapon = COLOR_SAND;
+			uint	ColorBonusWeapon = COLOR_BLUE;
+			
+			uint CheckTimeout = 50;
+		}
+	}
+	
+	int[]	MainWeapon = {};
+	uint	LastTick = 0;
+}
+
+// VisibleZone::Option::ToDoConvert::IsShow
+// VisibleZone::Option::ToDoConvert::Color
+namespace VisibleZone
+{
+	namespace Option
+	{
+		namespace ToDoConvert
+		{
+			bool IsShow = false;
+			uint Color = COLOR_GREEN;
+		}
+	}
+}
+
+namespace DescriptionItem
+{	
+	namespace Option
+	{		
+		namespace Inventory
+		{
+			bool IsInformer = true;
+			uint TextColor = COLOR_DGREEN;
+		}
+	}
+	
+	uint GetTextColor( )
+	{
+		return DescriptionItem::Option::Inventory::TextColor;
+	}
+	
+    ::dictionary ItemDescrLexems;
+    uint LastItemId = 0;
+    uint LastLookType = 0;
+}
+
+// Informer::Option::GUI::Width
+namespace Informer
+{	
+	namespace Option
+	{
+		namespace GUI
+		{
+			::Sprite Image;
+			uint Width = 250;
+			uint BorderColor = COLOR_SAND;
+		}
+	}
+	
+	funcdef uint GetTxtColorFuncdef( );
+	Informer::GetTxtColorFuncdef@ GetTxtColor = @DescriptionItem::GetTextColor;
+	
+	uint get_TextColor( )
+	{
+		if( @GetTxtColor != null )
+			return GetTxtColor();
+		return 0;			
+	}
+	
+	
+	int RealDelay = -1;
+	int Delay
+	{
+		get
+		{
+			if( RealDelay != -1 )
+				if( ::GetTick() - Tick > uint( RealDelay ) )
+					RealDelay = 0;
+			return RealDelay;
+		}
+		
+		set
+		{
+			if( value != -1 )
+				Tick = ::GetTick();
+			RealDelay = value;
+		}
+	};
+	
+	::IGUIDescriptor@ get_Descriptor( )
+	{
+		return @RealDescriptor;
+	}
+		
+	::IGUIDescriptor@ set_Descriptor( ::IGUIDescriptor@ value )
+	{
+		if( @RealDescriptor !is @value )
+		{
+			if( @RealDescriptor !is null )
+				RealDescriptor.Hide( );
+				
+			@RealDescriptor = @value;
+			
+			if( @value !is null )
+				value.Show();
+		}
+		return @RealDescriptor;
+	}
+	
+	::IGUIDescriptor@ RealDescriptor = null;
+	
+	uint Tick;
+	
+    int MousePosX = 0, MousePosY = 0;
+    ::string Txt = "";
+}
+
+// Radar::Option::ToDoConvert::Image
+namespace Radar
+{
+	namespace Option
+	{
+		namespace ToDoConvert
+		{
+			::Sprite Image;
+			uint BorderColor = COLOR_RED;
+			uint NameColor = COLOR_RED;
+		}
+	}
+	
+	
+	int8      	Track = 0;
+	int[]@		Coords = null;
+	::string@[] Names;
+}
+
+// Selection::Option::GUI::Image
+// Selection::Critters
+// Рамка выбора
+namespace Selection
+{
+	namespace Option
+	{
+		namespace GUI
+		{
+			::Sprite Image;
+			::Sprite Cursor;
+			uint BorderColor = COLOR_GREEN;
+		}
+	}
+
+	int  FrameX = -1, FrameY = -1;
+	int[] Critters;
+}
+
+// Assist::All
+// CritterMarker::Option::Assist::Image
+// CritterMarker::Option::Assist::ToHitColor
+// CritterMarker::Option::Assist::ToHitOffset
+// HexMarker::Option::Assist::Image
+// HexMarker::Option::Assist::ToHitColor
+// HexMarker::Option::Assist::ToHitOffset
+
+namespace HexMarker
+{
+	namespace Option
+	{
+		namespace Assist 
+		{
+			::Sprite Image;
+			bool ShowName;
+			::Point ToHitOffset( 0, 0 );
+			uint ToHitColor = COLOR_DRED;
+			int Width = 50;
+			int Height = 50;
+			
+			bool SetOption( ::Point& option, ::string& arg, ::string& decl )
+			{
+				::string@[] values = ::splitEx( arg, " " );
+				if( values.length() >= 2 )
+				{
+					int buffer = -1;
+					if( !::StrToInt( values[ 0 ], buffer ) )
+					{
+						::Log("Error x point parse.");
+						return false;
+					}
+					option.X = buffer;
+						
+					if( !::StrToInt( values[ 1 ], buffer ) )
+					{
+						::Log("Error y point parse.");
+						return false;
+					}
+					option.Y = buffer;
+				}
+				return false;
+			}
+			
+			bool GetOption( ::Point& option, ::string& arg, ::string& decl )
+			{
+				arg = " " + option.X + " " + option.Y;
+				return false;
+			}
+		}
+	}
+}
+
+namespace CritterMarker
+{
+	namespace Option
+	{
+		namespace Assist 
+		{
+			::Sprite Image;
+			bool ShowName;
+			::Point ToHitOffset( 0, 0 );
+			uint ToHitColor = COLOR_DRED;
+			int Width = 50;
+			int Height = 50;
+			
+			bool SetOption( ::Point& option, ::string& arg, ::string& decl )
+			{
+				::string@[] values = ::splitEx( arg, " " );
+				if( values.length() >= 2 )
+				{
+					int buffer = -1;
+					if( !::StrToInt( values[ 0 ], buffer ) )
+					{
+						::Log("Error x point parse.");
+						return false;
+					}
+					option.X = buffer;
+						
+					if( !::StrToInt( values[ 1 ], buffer ) )
+					{
+						::Log("Error y point parse.");
+						return false;
+					}
+					option.Y = buffer;
+				}
+				return false;
+			}
+			
+			bool GetOption( ::Point& option, ::string& arg, ::string& decl )
+			{
+				arg = " " + option.X + " " + option.Y;
+				return false;
+			}
+		}
+	}
+}
+
+namespace Assist
+{
+	namespace Option
+	{	
+		namespace GUI
+		{
+			::Sprite Image;
+			int Width = 0;
+			int Height = 0;
+			
+			::Point ToHitOffset( 0, 0 );
+			uint ToHitColor = COLOR_DRED;
+			
+			bool SetOption( ::Point& option, ::string& arg, ::string& decl )
+			{
+				::string@[] values = ::splitEx( arg, " " );
+				if( values.length() >= 2 )
+				{
+					int buffer = -1;
+					if( !::StrToInt( values[ 0 ], buffer ) )
+					{
+						::Log("Error x point parse.");
+						return false;
+					}
+					option.X = buffer;
+						
+					if( !::StrToInt( values[ 1 ], buffer ) )
+					{
+						::Log("Error y point parse.");
+						return false;
+					}
+					option.Y = buffer;
+				}
+				return false;
+			}
+			
+			bool GetOption( ::Point& option, ::string& arg, ::string& decl )
+			{
+				arg = " " + option.X + " " + option.Y;
+				return false;
+			}
+		}
+		
+		namespace ToDoConvert
+		{
+			uint HexColor = COLOR_WHITE;
+		}
+	}
+	
+	uint   Id = 0;
+}
+
+namespace MouseTarget
+{
+	namespace Option
+	{
+		namespace Combat
+		{
+			uint DelayInfo = 1000;
+			uint ColorInfo = COLOR_GREEN;
+		}
+	}
+	
+	uint LastId = 0;
+	uint LastTick = 0;
+	::Point LastCoordinate( 0, 0 );
+}
+
+// Login::Option::GUI::Button
+namespace Login
+{
+	namespace Option
+	{
+		namespace GUI
+		{
+			::Sprite Button;
+		}
+	}
+}
+
+uint       EffectBackground = EFFECT_2D_GENERIC | EFFECT_2D_TILE | EFFECT_2D_ROOF;
+uint       EffectAll = EFFECT_2D_GENERIC | EFFECT_2D_TILE | EFFECT_2D_ROOF | EFFECT_2D_CRITTER;
+string     EffExt = "";
+
+dictionary OrgNames;
+bool       KeyIsBinded = false;
+uint       FormerMode = 0;
+// bool showOnline=false;
+uint       MainSpriteId = 0;
+
+bool       altDown = false;
+uint8      ShowHealthMode = 0;
+bool       fractionDataAccepted = false;
+bool       shiftDown = false;
+int8       curLoginButton = -1;
+bool       loginButtonSound = false;
+string[] drugEffect = { "2D_BlackWhite_ext", "2D_Contrast" };
+
+uint8[] HotKeys;
+uint16[] HotKeyItems;
+uint   LastMode = 0;
+uint16 LastWeaponPid = 0;
+uint   LastTargetId = 0;
+uint[] CrittersId;
+uint[] FractionColors;
+bool   ShowHotkeys = true;
+bool   TDown = false;
+
+uint[] IndexEmblems;
+dictionary ImageDict;
+dictionary ItemImageDict;
+
+MapCritterCl@[] MapCritters;
+
+string@[] FarmNames = {};
+#include "client_collection_items.fos"
+
+const string[] KeyNames =
+{
+    "", "Escape", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-", "=", "Backspace", "TAB", "Q", "W", "E", "R", "T", "Y",
+    "U", "I", "O", "P", "{", "}", "Enter", "LControl", "A", "S", "D", "F", "G", "H", "J", "K", "L", ":", "'", "|", "LShift",
+    "Backslash", "Z", "X", "C", "V", "B", "N", "M", ",", ".", "/", "RShift", "*", "LAlt", "Space", "CapsLock", "F1",
+    "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "NumLock", "ScrollLock", "Num7", "Num8", "Num9", "Num-", "Num4",
+    "Num5", "Num6", "Num+", "Num1", "Num2", "Num3", "Num0", "Num.", "84", "85", "OEM_102", "F11", "F12", "89", "90", "91", "92", "93", "94", "95", "96", "97", "98", "99",
+    "F13", "F14", "F15", "103", "104", "105", "106", "107", "108", "109", "110", "111", "KANA", "113", "114",
+    "ABNT_C1", "116", "117", "118", "119", "120",
+    "Convert", "122", "NoConvert", "124", "Yen", "ABNT_C2", "127", "128", "129", "130", "131", "132", "133", "134", "135", "136", "137", "138", "139", "140",
+    "Num=", "142", "143", "PrevTrack", "At", "Colon", "UnderLine", "Kanji",
+    "Stop", "Ax", "Unlabeled", "152", "NextTrack", "154", "155", "NumEnter", "RControl", "158", "159", "Mute", "Calculator", "PlayPause", "163", "MediaStop",
+    "165", "166", "167", "168", "169", "170", "171", "172", "173",
+    "VolumeDown", "175", "VolumeUp", "177", "WebHome", "NumComma", "180", "/", "182", "SysRq", "RAlt", "185", "186", "187", "188", "189", "190",
+    "191", "192", "193", "194", "195", "196", "Pause", "198", "Home", "Up", "Prior", "202", "Left", "204",
+    "Right", "206", "End", "Down", "Next", "Insert", "Delete", "212", "213", "214", "215", "216", "217", "218",
+    "LWin", "RWin", "Apps", "Power", "Sleep", "Wake", "WebSearch",
+    "WebFavorites", "WebRefresh", "WebStop", "MyComputer", "Mail", "MediaSelect"
+};
+
+
+// Абсолютные координаты осн. слота:
+int[] IntItemCoords;
+
+// Подрыв мин
+IGUIElementOpt@ BtnExplode;
+
+// TabaK. Интерфейс доп. слота.
+Extra_Slot ExtraSlot;
+
+// TabaK. Интерфейс Теслы
+IGUIElementOpt@ TeslaButton;
+IGUIElementOpt@ TeslaPanel;
+IGUIElementOpt@ TeslaDisplay;
+int             	TeslaCharge = 0;
+
+// Aim::Option::GUI::RLegButtonActiveImage
+namespace Aim
+{
+	namespace Option
+	{
+		namespace GUI
+		{
+			::Sprite TorsoButtonImage;
+			::Sprite TorsoButtonActiveImage;
+			::Sprite GroinButtonImage;
+			::Sprite GroinButtonActiveImage;
+			::Sprite HeadButtonImage;
+			::Sprite HeadButtonActiveImage;
+			::Sprite EyesButtonImage;
+			::Sprite EyesButtonActiveImage;
+			::Sprite RHandButtonImage;
+			::Sprite RHandButtonActiveImage;
+			::Sprite LHandButtonImage;
+			::Sprite LHandButtonActiveImage;
+			::Sprite RLegButtonImage;
+			::Sprite RLegButtonActiveImage;
+			::Sprite LLegButtonImage;
+			::Sprite LLegButtonActiveImage;
+		}
+	}
+}
+
+// TabaK. Интерфейс автовыстрела
+bool            AutoAimRestore = false;
+uint8           LastAutoAimLocation = 0;
+uint8           AutoAimLocation;
+
+IGUIElementOpt@ ButtonAimTorso;
+IGUIElementOpt@ ButtonAimHead;
+IGUIElementOpt@ ButtonAimEyes;
+IGUIElementOpt@ ButtonAimRHand;
+IGUIElementOpt@ ButtonAimLHand;
+IGUIElementOpt@ ButtonAimRLeg;
+IGUIElementOpt@ ButtonAimLLeg;
+IGUIElementOpt@ ButtonAimGroin;
+IGUIElementOpt@ AimInd;
+
+ClientGameTime GameTime;
+ClassRender Render;
+
+LocationData@[] GlobalMapCity;
+
+uint[][] StalkActions = { { 0, 0, 0 }, { CHOSEN_MOVE, 0, 0, 1, 1, 0, 0 } };
+StalkFuncDef@ StalkFunction = null;
+
+funcdef void StalkFuncDef();
+
+bool isHideCursoreResourse = false;
+// Fire::Option::Customization::CritterImage
+namespace Fire
+{
+	namespace Option
+	{
+		namespace Customization
+		{
+			::Sprite CritterImage;
+		}
+	}
+}
+
+array< _Timeout@ > _Timeouts;
+
+array< Mk2::ItemBlockLines@ > AllBlockLines;

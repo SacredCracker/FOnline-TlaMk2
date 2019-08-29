@@ -1,0 +1,518 @@
+// FOS Server
+// Author: cvet
+// Doors and keys stuff.
+
+import bool ItemIsFarmGenerated( ::Item& it, uint& out locId ) from "farm_location";
+
+bool UseItemOnLocker( ::Critter& cr, ::Item@ locker, ::Item& item ) // Export
+{
+    if( @locker == null || ( locker.GetType() != ITEM_TYPE_CONTAINER && locker.GetType() != ITEM_TYPE_DOOR ) )
+        return false;
+    uint pid = item.GetProtoId();
+    if( pid == uint( Content::Item::ELECTRONIC_LOCKPICKS ) || pid == uint( Content::Item::ELEC_LOCKPICK_MKII ) || pid == uint( Content::Item::LOCKPICKS ) || pid == uint( Content::Item::EXP_LOCKPICK_SET ) )
+    {
+        if( item.CritSlot != SLOT_HAND1 )
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, 10103 );
+        else
+            return UseSkillOnLocker( cr, locker, SK_LOCKPICK, pid );
+        return true;
+    }
+    return false;
+}
+
+bool UseSkillOnLocker( ::Critter& cr, ::Item& locker, int skill ) // Export
+{
+    return UseSkillOnLocker( cr, locker, skill, 0 );
+}
+
+bool UseSkillOnLocker( ::Critter& cr, ::Item& locker, int skill, uint16 activePid )
+{
+    ::Map@ map = cr.GetMap();
+
+    if( ! valid( map ) || FLAG( locker.LockerCondition, LOCKER_NOUSE ) )
+    {
+        cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_USE_NOTHING );
+        return true;
+    }
+
+    if( skill == SKILL_PICK_ON_GROUND )
+    {
+        if( FLAG( locker.LockerCondition, LOCKER_ELECTRO ) && locker.LockerId != 0 && !FLAG( locker.LockerCondition, LOCKER_ISOPEN ) )
+        {
+            if( cr.IsPlayer() )
+                cr.RunClientScript( "e_locker@__ShowElockerScreen", locker.Id, 0, 0, null, null );
+            return true;
+        }
+
+        if( FLAG( locker.LockerCondition, LOCKER_TIMER_LOCK ) && !FLAG( locker.LockerCondition, LOCKER_ISOPEN ) )
+        {
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_USE_NOTHING );
+            return true;
+        }
+
+        if( locker.GetType() == ITEM_TYPE_DOOR )
+        {
+            // ::Critter on hex
+            if( FLAG( locker.LockerCondition, LOCKER_ISOPEN ) && valid( map.GetCritter( locker.HexX, locker.HexY ) ) )
+            {
+                cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_USE_NOTHING );
+                return true;
+            }
+
+            if( FLAG( locker.LockerCondition, LOCKER_FACTION ) )
+            {
+                if( FLAG( locker.LockerCondition, LOCKER_ISOPEN ) )
+                    locker.LockerClose();
+                else if( uint( cr.Stat[ ST_FACTION ] ) == locker.LockerId )
+                    locker.LockerOpen();
+                else
+                    cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_ITEM_LOCKER_NEED_KEY );
+                return true;
+            }
+            if( !cr.CityRole_IsGuard )
+            {
+                // Check key
+                if( !FLAG( locker.LockerCondition, LOCKER_ISOPEN ) && locker.LockerId != 0 &&
+                    !FLAG( locker.LockerCondition, LOCKER_BROKEN ) && !IsKeyAviable( cr, locker.LockerId, locker ) )
+                {
+                    ::string sound = "SLDOORS0.ACM";
+                    sound[ 7 ] = locker.Proto.SoundId;
+                    if( sound[ 7 ] != '0' )
+                        cr.PlaySound( sound, true );
+                    cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_ITEM_LOCKER_NEED_KEY );
+                    return true;
+                }
+                // NoOpen
+                if( FLAG( locker.LockerCondition, LOCKER_NOOPEN ) && !FLAG( locker.LockerCondition, LOCKER_ISOPEN ) )
+                {
+                    ::string sound = "SNDOORS0.ACM";
+                    sound[ 7 ] = locker.Proto.SoundId;
+                    if( sound[ 7 ] != '0' )
+                        cr.PlaySound( sound, true );
+                    cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_USE_NOTHING );
+                    return true;
+                }
+
+                if( FLAG( locker.LockerCondition, LOCKER_GUARD_OPEN ) && cr.IsPlayer() )
+                {
+                    ::Critter@[] crs;
+                    for( uint i = 0, iEnd = map.GetCrittersHex( locker.HexX, locker.HexY, 2, FIND_LIFE, crs ); i < iEnd; i++ )
+                        if( crs[ i ].CityRole_IsGuard )
+                        {
+                            ::string sound = "SLDOORS0.ACM";
+                            sound[ 7 ] = locker.Proto.SoundId;
+                            if( sound[ 7 ] != '0' )
+                                cr.PlaySound( sound, true );
+                            cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_USE_NOTHING );
+                            return true;
+                        }
+
+                    UNSETFLAG( locker.LockerCondition, LOCKER_GUARD_OPEN );
+                }
+            }
+            else
+            {
+                SETFLAG( locker.LockerCondition, LOCKER_GUARD_OPEN );
+            }
+
+            // Change state
+            if( FLAG( locker.LockerCondition, LOCKER_ISOPEN ) )
+                locker.LockerClose();
+            else
+                locker.LockerOpen();
+        }
+        else if( locker.GetType() == ITEM_TYPE_CONTAINER )
+        {
+            if( FLAG( locker.LockerCondition, LOCKER_FACTION ) && !FLAG( locker.LockerCondition, LOCKER_ISOPEN ) && uint( cr.Stat[ ST_FACTION ] ) != locker.LockerId )
+            {
+                cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_ITEM_LOCKER_NEED_KEY );
+                return true;
+            }
+            // Check key
+            else if( !FLAG( locker.LockerCondition, LOCKER_ISOPEN ) && locker.LockerId != 0 &&
+                     !FLAG( locker.LockerCondition, LOCKER_BROKEN ) && !IsKeyAviable( cr, locker.LockerId, locker ) )
+            {
+                ::string sound = "ILCNTNR0.ACM";
+                sound[ 7 ] = locker.Proto.SoundId;
+                if( sound[ 7 ] != '0' )
+                    cr.PlaySound( sound, true );
+                cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_ITEM_LOCKER_NEED_KEY );
+                return true;
+            }
+
+            // NoOpen
+            else if( FLAG( locker.LockerCondition, LOCKER_NOOPEN ) && !FLAG( locker.LockerCondition, LOCKER_ISOPEN ) )
+            {
+                ::string sound = "INCNTNR0.ACM";
+                sound[ 7 ] = locker.Proto.SoundId;
+                if( sound[ 7 ] != '0' )
+                    cr.PlaySound( sound, true );
+                cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_USE_NOTHING );
+                return true;
+            }
+
+            // Is changeble
+            if( locker.Proto.Container_Changeble )
+            {
+                // Change state
+                if( FLAG( locker.LockerCondition, LOCKER_ISOPEN ) )
+                    locker.LockerClose();
+                else
+                {
+                    locker.LockerOpen();
+                    cr.ShowContainer( null, locker, locker.Proto.GroundLevel ? TRANSFER_HEX_CONT_DOWN : TRANSFER_HEX_CONT_UP );
+                }
+            }
+            // No changeble
+            else
+            {
+                cr.ShowContainer( null, locker, locker.Proto.GroundLevel ? TRANSFER_HEX_CONT_DOWN : TRANSFER_HEX_CONT_UP );
+            }
+        }
+    }
+    else if( skill == SK_STEAL && locker.GetType() == ITEM_TYPE_CONTAINER )
+    {
+        if( ( locker.Proto.Container_Changeble && FLAG( locker.LockerCondition, LOCKER_ISOPEN ) ) ||
+            ( !locker.Proto.Container_Changeble && IsKeyAviable( cr, locker.LockerId, locker ) ) )
+        {
+            cr.ShowContainer( null, locker, locker.Proto.GroundLevel ? TRANSFER_HEX_CONT_DOWN : TRANSFER_HEX_CONT_UP );
+        }
+        else
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_USE_NOTHING );
+    }
+    else if( skill == SK_LOCKPICK )
+    {
+
+        if( FLAG( locker.LockerCondition, LOCKER_TIMER_LOCK ) && !FLAG( locker.LockerCondition, LOCKER_ISOPEN ) )
+        {
+            if( cr.Timeout[ TO_SK_LOCKPICK ] > 0 || cr.Timeout[ TO_BATTLE ] > 0 )
+            {
+                cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_SKILL_WEARINESS );
+                return true;
+            }
+
+            uint timeout = ( locker.LockerComplexity - cr.Skill[ SK_LOCKPICK ] ) / 20;
+            cr.AddTimeEvent( "Lockers::cte_TimeLock", REAL_SECOND( timeout ), CTE_CAR_LOCKPICK, locker.Id );
+            if( cr.IsPlayer() )
+                cr.RunClientScript( "Mk2@Car::_RunCarLockpick", timeout, 0, 0, null, null );
+            return true;
+        }
+
+        // NoOpen
+        if( FLAG( locker.LockerCondition, LOCKER_NOOPEN ) )
+        {
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_USE_NOTHING );
+            return true;
+        }
+
+        if( cr.Timeout[ TO_SK_LOCKPICK ] > 0 )
+        {
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_SKILL_WEARINESS );
+            return true;
+        }
+
+        if( locker.LockerId == 0 || FLAG( locker.LockerCondition, LOCKER_ISOPEN ) )
+        {
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_USE_NOTHING );
+            return true;
+        }
+
+        uint8            mode = 0;
+        const ::ProtoItem@ bonus = cr.GetSlotProto( SLOT_BONUS, mode );
+        uint16           bonusPid = valid( bonus ) ? bonus.ProtoId : 0;
+        if( activePid == 0 )
+            activePid = cr.GetSlotProto( SLOT_HAND1, mode ).ProtoId;
+
+        // TabaK. Electronic lock
+        if( FLAG( locker.LockerCondition, LOCKER_ELECTRO ) )
+        {
+            int base = cr.Skill[ SK_LOCKPICK ] - locker.LockerComplexity;
+            if( activePid == Content::Item::ELEC_LOCKPICK_MKII || bonusPid == Content::Item::ELEC_LOCKPICK_MKII )
+            {
+                base += 25;
+            }
+            else if( activePid != Content::Item::ELECTRONIC_LOCKPICKS && bonusPid != Content::Item::ELECTRONIC_LOCKPICKS )
+            {
+                cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, 63 );
+                cr.TimeoutBase[ TO_SK_LOCKPICK ] = LOCKPICK_TIMEOUT( cr );
+                return true;
+            }
+            base += cr.Stat[ ST_LUCK ];
+            if( base > 240 )
+                base = 240;
+            ::string code = "";
+            code += locker.LockerId;
+            ::string outCode = "";
+            for( uint n = 0; n < code.length(); n++ )
+            {
+                if( base > ::Random( 30, 250 ) )
+                    outCode += ::substring( code, n, 1 );
+                else
+                    outCode += "*";
+            }
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, 64, "$code" + outCode );
+            cr.TimeoutBase[ TO_SK_LOCKPICK ] = LOCKPICK_TIMEOUT( cr );
+            return true;
+        }
+
+        int base = cr.Skill[ SK_LOCKPICK ] - locker.LockerComplexity;
+        if( activePid == Content::Item::EXP_LOCKPICK_SET || bonusPid == Content::Item::EXP_LOCKPICK_SET )
+        {
+            base += 50;
+            if( ::Random( 0, 30 ) == 0 )
+                cr.DeleteItem( Content::Item::EXP_LOCKPICK_SET, 1 );
+        }
+        else if( activePid == Content::Item::LOCKPICKS || bonusPid == Content::Item::LOCKPICKS )
+        {
+            base += 25;
+            if( ::Random( 0, 30 ) == 0 )
+                cr.DeleteItem( Content::Item::LOCKPICKS, 1 );
+        }
+
+        base = CLAMP( base, 0, 95 );
+        if( base >= ::Random( 1, 100 ) )
+        {
+            if( !( locker.GetType() == ITEM_TYPE_CONTAINER && !locker.Proto.Container_Changeble ) )
+                locker.LockerOpen();
+            if( locker.GetType() == ITEM_TYPE_CONTAINER )
+                cr.ShowContainer( null, locker, locker.Proto.GroundLevel ? TRANSFER_HEX_CONT_DOWN : TRANSFER_HEX_CONT_UP );
+            cr.StatBase[ ST_EXPERIENCE ] += 50;
+            ScoreMk2::ChangePlayerScore( cr, SCORE_CRACKER, 1 );
+        }
+        else
+        {
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_SKILL_LOCKPICK_FAIL );
+        }
+
+        cr.TimeoutBase[ TO_SK_LOCKPICK ] = LOCKPICK_TIMEOUT( cr );
+    }
+    else if( skill == SKILL_TAKE_ALL_CONT )
+    {
+        return false;
+    }
+    else
+    {
+        cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_USE_NOTHING );
+    }
+    return true;
+}
+
+uint cte_TimeLock( ::Critter& cr, int identifier, int& rate, int& )
+{
+    if( cr.IsPlayer() )
+        cr.RunClientScript( "Mk2@Car::_CancelCarLockpick", 0, 0, 0, null, null );
+    if( cr.Timeout[ TO_BATTLE ] > 0 )
+    {
+        cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_SKILL_WEARINESS );
+        return 0;
+    }
+    ::Item@ lock = ::GetItem( rate );
+    if( !valid( lock ) )
+        return 0;
+    if( ::GetDistantion( cr.HexX, cr.HexY, lock.HexX, lock.HexY ) > 1 )
+    {
+        return 0;
+    }
+    int    base = cr.Skill[ SK_LOCKPICK ] / 3;
+    uint8  mode = 0;
+    uint16 activePid = cr.GetSlotProto( SLOT_HAND1, mode ).ProtoId;
+    if( activePid == Content::Item::LOCKPICKS )
+    {
+        base += 25;
+        if( ::Random( 0, 30 ) == 0 )
+            cr.DeleteItem( Content::Item::LOCKPICKS, 1 );
+    }
+    else if( activePid == Content::Item::EXP_LOCKPICK_SET )
+    {
+        base += 50;
+        if( ::Random( 0, 30 ) == 0 )
+            cr.DeleteItem( Content::Item::EXP_LOCKPICK_SET, 1 );
+    }
+
+    int minChance = cr.Stat[ ST_LUCK ] / 2;
+    base = CLAMP( base, minChance, 95 );
+    if( base >= ::Random( 1, 100 ) && lock.LockerId != 1 )
+    {
+        lock.LockerOpen();
+        lock.EventSkill( cr, SKILL_UNLOCK );
+        cr.StatBase[ ST_EXPERIENCE ] += 200;
+        ScoreMk2::ChangePlayerScore( cr, SCORE_CRACKER, 1 );
+        cr.ShowContainer( null, lock, lock.Proto.GroundLevel ? TRANSFER_HEX_CONT_DOWN : TRANSFER_HEX_CONT_UP );
+    }
+    else
+        cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_SKILL_LOCKPICK_FAIL );
+    cr.TimeoutBase[ TO_SK_LOCKPICK ] = LOCKPICK_TIMEOUT( cr );
+
+    return 0;
+}
+
+bool IsKeyAviable( ::Critter& cr, uint lockerId, ::Item& locker ) // Export
+{
+    if( lockerId == 0 )
+        return ! FLAG( locker.LockerCondition, LOCKER_FACTION );
+    if( _CritFingersDoorId( cr.Id ) == lockerId || _CritEyesDoorId( cr.Id ) == lockerId )
+        return true;
+    if( FLAG( locker.LockerCondition, LOCKER_FACTION ) )
+    {
+        return ( lockerId == uint( cr.Stat[ ST_FACTION ] ) );
+    }
+    ::Item@[] keys;
+    uint farmLocId = 0, itFarmId = 0;
+    if( FLAG( locker.LockerCondition, LOCKER_FARM ) )
+        ItemIsFarmGenerated( locker, farmLocId );
+    for( uint i = 0, iMax = cr.GetItemsByType( ITEM_TYPE_KEY, keys ); i < iMax; i++ )
+    {
+        if( keys[ i ].LockerId == lockerId )
+        {
+            if( farmLocId != 0 )
+                if( ! ( ItemIsFarmGenerated( keys[ i ], itFarmId ) && itFarmId == farmLocId ) )
+                    continue;
+            return true;
+        }
+    }
+    return false;
+}
+
+uint GetKeyId( ::Critter& cr, uint lockerId ) // Export
+{
+    // if( cr.CityRole_IsGuard )
+    //	return lockerId;
+    if( lockerId == 0 || _CritFingersDoorId( cr.Id ) == lockerId || _CritEyesDoorId( cr.Id ) == lockerId )
+        return 0;
+    ::Item@[] keys;
+    for( uint i = 0, iMax = cr.GetItemsByType( ITEM_TYPE_KEY, keys ); i < iMax; i++ )
+        if( keys[ i ].LockerId == lockerId )
+            return keys[ i ].Id;
+    return 0;
+}
+
+void SwitchState( ::Item& locker ) // Export
+{
+    // Todo: show messages
+
+    if( locker.GetType() == ITEM_TYPE_DOOR || locker.GetType() == ITEM_TYPE_CONTAINER )
+    {
+        // Check open aviability
+        if( ! FLAG( locker.LockerCondition, LOCKER_NOOPEN ) )
+        {
+            // Change state
+            if( FLAG( locker.LockerCondition, LOCKER_ISOPEN ) )
+                locker.LockerClose();
+            else
+                locker.LockerOpen();
+        }
+    }
+}
+
+// Мультигексовая дверь
+void _MultiHexDoor( ::Item& door, bool firstTime )
+{
+    if( firstTime && !FLAG( door.LockerCondition, LOCKER_ISOPEN ) )
+    {
+        ::Map@ map = ::GetMap( door.MapId );
+        for( uint n = 0, nMax = map.CountEntire( 175 ); n <= nMax; n++ )
+        {
+            uint16[] coords = { 0, 0 };
+            map.GetEntireCoords( 175, n, coords[ 0 ], coords[ 1 ] );
+            if( ::GetDistantion( coords[ 0 ], coords[ 1 ], door.HexX, door.HexY ) < 6 )
+            {
+                map.AddItem( coords[ 0 ], coords[ 1 ], Content::Item::ITEM_BLOCKER, 1 );
+            }
+        }
+    }
+    door.SetEvent( ITEM_EVENT_SKILL, "Lockers::_OpenMutihexDoor" );
+}
+
+bool _OpenMutihexDoor( ::Item& locker, ::Critter& cr, int skill )
+{
+    if( skill == SKILL_PICK_ON_GROUND )
+    {
+        if( FLAG( locker.LockerCondition, LOCKER_NOUSE ) )
+        {
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_USE_NOTHING );
+            return true;
+        }
+        // Электрозамок.
+        // if(FLAG(locker.LockerCondition, LOCKER_ELECTRO) && locker.LockerId!=0 && !FLAG(locker.LockerCondition,LOCKER_ISOPEN))
+        // {
+        // if(cr.IsPlayer())cr.RunClientScript("e_locker@__ShowElockerScreen", locker.Id,0,0,null,null);
+        // return true;
+        // }
+        // Check key
+        if( !FLAG( locker.LockerCondition, LOCKER_ISOPEN ) && locker.LockerId != 0 &&
+            !FLAG( locker.LockerCondition, LOCKER_BROKEN ) && !IsKeyAviable( cr, locker.LockerId, locker ) )
+        {
+            ::string sound = "SLDOORS0.ACM";
+            sound[ 7 ] = locker.Proto.SoundId;
+            if( sound[ 7 ] != '0' )
+                cr.PlaySound( sound, true );
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_ITEM_LOCKER_NEED_KEY );
+            return true;
+        }
+        // NoOpen
+        if( FLAG( locker.LockerCondition, LOCKER_NOOPEN ) && !FLAG( locker.LockerCondition, LOCKER_ISOPEN ) )
+        {
+            ::string sound = "SNDOORS0.ACM";
+            sound[ 7 ] = locker.Proto.SoundId;
+            if( sound[ 7 ] != '0' )
+                cr.PlaySound( sound, true );
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_USE_NOTHING );
+            return true;
+        }
+        if( !FLAG( locker.LockerCondition, LOCKER_ISOPEN ) )
+            SwitchMultiHexDoor( locker, true, cr );
+        else
+            SwitchMultiHexDoor( locker, false, cr );
+    }
+    return true;
+}
+
+void SwitchMultiHexDoor( ::Item& door, bool open )
+{
+    SwitchMultiHexDoor( door, open, null );
+}
+
+void SwitchMultiHexDoor( ::Item& door, bool open, ::Critter@ cr )
+{
+    ::Map@ map = ::GetMap( door.MapId );
+    if( !open )
+    {
+        ::Critter@ hexCr = map.GetCritter( door.HexX, door.HexY );
+        if( valid( hexCr ) )
+        {
+            hexCr.ToDead( ANIM2_DEAD_EXPLODE, cr );
+            if( valid( cr ) )
+            {
+                hexCr.EventAttacked( cr );
+                hexCr.EventDead( cr );
+                cr.EventAttack( hexCr );
+            }
+        }
+        for( uint n = 0, nMax = map.CountEntire( 175 ); n < nMax; n++ )
+        {
+            uint16[] coords = { 0, 0 };
+            map.GetEntireCoords( 175, n, coords[ 0 ], coords[ 1 ] );
+            if( ::GetDistantion( coords[ 0 ], coords[ 1 ], door.HexX, door.HexY ) < 6 )
+            {
+                map.AddItem( coords[ 0 ], coords[ 1 ], Content::Item::ITEM_BLOCKER, 1 );
+                @hexCr = map.GetCritter( coords[ 0 ], coords[ 1 ] );
+                if( valid( hexCr ) )
+                    hexCr.ToDead( ANIM2_DEAD_EXPLODE, null );
+            }
+        }
+        door.LockerClose();
+    }
+    else
+    {
+        ::Item@[] items;
+        map.GetItems( Content::Item::ITEM_BLOCKER, items );
+        for( uint n = 0, nMax = items.length(); n < nMax; n++ )
+        {
+            if( ::GetDistantion( items[ n ].HexX, items[ n ].HexY, door.HexX, door.HexY ) < 6 )
+            {
+                ::DeleteItem( items[ n ] );
+            }
+        }
+        door.LockerOpen();
+    }
+}

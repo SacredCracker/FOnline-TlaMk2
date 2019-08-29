@@ -1,0 +1,198 @@
+[comment]
+
+
+[data]
+lang=russ engl ukra
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 @
+2 2000 None 0 #
+3 2010 #
+8 2020 #
+13 2030 D _var p q_nr_laststand_arena = 3 R _var p q_nr_laststand_arena = 4 R _param p ST_UNSPENT_SKILL_POINTS + 2 R _param p ST_ARENA_POINTS + 10 R _param p ST_EXPERIENCE + 3000 R _script dialog@r_InfoMessage 1 1 @
+3 3000 dialog@dlg_ArenaPoints 0 #
+2 3010 #
+4 3020 @
+4 4000 None 0 #
+2 4010 #
+5 4020 @
+5 5000 dialog@dlg_ArenaPoints 1 #
+6 5010 D _param p ST_ARENA_POINTS < 30 #
+5 5020 D _param p ST_ARENA_POINTS } 30 R _param p ST_ARENA_POINTS - 30 R _script dialog@r_AddRPItem 1 12 #
+5 5030 D _param p ST_ARENA_POINTS } 600 D _var p arena_gizg_sold = 0 R _param p ST_ARENA_POINTS - 600 R _var p arena_gizg_sold = 1 R _script map_geck_city@r_GiveGeck 0  #
+0 5040 D _param p ST_ARENA_POINTS } 400 D _var p arena_bertibird_sold = 0 R _script game_event_laststand_arena@r_SellVertibird 1 400 #
+0 5050 D _param p ST_ARENA_POINTS } 100 D _var p arena_moped_sold = 0 R _script game_event_laststand_arena@r_SellBike 2 100 0 #
+0 5060 D _param p ST_ARENA_POINTS } 200 D _var p arena_super_moped_sold = 0 R _script game_event_laststand_arena@r_SellBike 2 200 1 #
+6 5070 D _param p ST_ARENA_POINTS < 600 D _var p arena_gizg_sold = 0 #
+6 5080 D _param p ST_ARENA_POINTS < 400 D _var p arena_bertibird_sold = 0 #
+6 5090 D _param p ST_ARENA_POINTS < 100 D _var p arena_moped_sold = 0 #
+6 5100 D _param p ST_ARENA_POINTS < 200 D _var p arena_super_moped_sold = 0 #
+0 5110 @
+6 6000 None 0 #
+5 6010 @
+8 7000 None 0 #
+9 7010 #
+10 7020 @
+9 8000 None 0 #
+12 8010 D _var p q_nr_laststand_arena = 1 D _var p laststand_arena_active = 1 R _var p q_nr_laststand_arena = 2 R _script game_event_laststand_arena@r_Order 0  #
+12 8020 D _var p q_nr_laststand_arena ! 1 D _var p laststand_arena_active = 1 R _script game_event_laststand_arena@r_Order 0  #
+0 8030 @
+10 9000 None 0 #
+11 9010 @
+11 10000 None 0 #
+0 10010 #
+12 10020 D _var p q_nr_laststand_arena = 1 D _var p laststand_arena_active = 1 R _var p q_nr_laststand_arena = 2 R _script game_event_laststand_arena@r_Order 0  #
+12 10030 D _var p q_nr_laststand_arena ! 1 D _var p laststand_arena_active = 1 R _script game_event_laststand_arena@r_Order 0  @
+12 11000 None 0 #
+0 11010 @
+13 12000 None 0 #
+0 12010 &
+
+[russ]
+{100}{}{Распорядитель}
+{200}{}{Перед вами распорядитель арены Бишопов.}
+{210}{}{Вы видите гангстера в смокинге. Этот человек занимается организацией боев на арене "Остаться в живых".}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{Текст ответа}
+{2000}{}{Чем могу быть полезен?}
+{2010}{}{Я хотел бы узнать, сколько кредитов на моем счету?}
+{2020}{}{Чем вы здесь занимаетесь?}
+{2030}{}{Я @sex@|остался||осталась| в живых на вашей арене.}
+{3000}{}{На вашем счету @lex dohrena@ кредитов.}
+{3010}{}{У меня еще есть вопросы.}
+{3020}{}{Что на эти кредиты можно купить?}
+{4000}{}{Вы можете потратить кредиты на оружие, броню, редкие ресурсы.}
+{4010}{}{У меня еще есть вопросы.}
+{4020}{}{Покажите, что вы предлагаете?}
+{5000}{}{ Кредитов на счете @lex dohrena@ В настоящее время действительны следующие предложения:}
+{5010}{}{Боевая броня (30 кредитов).}
+{5020}{}{Боевая броня (30 кредитов).}
+{5030}{}{G.E.C.K. (600 кредитов)}
+{5040}{}{Вертиберд (400 кредитов)}
+{5050}{}{Мотоцикл (100 кредитов)}
+{5060}{}{Неугоняемый мотоцикл(200 кредитов)}
+{5070}{}{G.E.C.K. (600 кредитов)}
+{5080}{}{Вертиберд (400 кредитов)}
+{5090}{}{Мотоцикл (100 кредитов)}
+{5100}{}{Неугоняемый мотоцикл(200 кредитов)}
+{5110}{}{Выход}
+{6000}{}{Не получится. Кредитов не хватает. Выберите что-то попроще.}
+{6010}{}{Повторите, что у вас есть?}
+{7000}{}{Мы проводим квалификационные бои на арене между всеми желающими. Тот, кто проявит себя, может рассчитывать на благосклонное отношение со стороны мистера Бишопа. Если в семью начнется набор, чемпионы арены будут иметь преимущество перед остальными кандидатами.}
+{7010}{}{Где записываться?}
+{7020}{}{Расскажите о вашей арене?}
+{8000}{}{Здесь. Можете подать заявку.}
+{8010}{}{Я хочу принять участие в сражении на арене.}
+{8020}{}{Я хочу принять участие в сражении на арене.}
+{8030}{}{Мне нужно время, чтобы подумать.}
+{9000}{}{Хорошо. Запомните, семья Бишопов не компенсирует потери на репликационном счете для тех, кто погиб в сражении на арене.  Вы идете туда на свой страх и риск. Вещи, которые были у вас перед началом боя, будут переданы в банк Нью-Рено. Вам придется искать оружие и броню на территории арены. Вместе с вами на арене будет несколько человек. Вы должны убить их всех, а сами остаться в живых. Кооперация не допускается. Каждый на арене - ваш враг. На счет победителя будут начислено 10 кредитов. Все очень просто.}
+{9010}{}{Могу я отказаться от участия, если уже подал@sex@|||а| заявку?}
+{10000}{}{Нет. Мы сотрудничаем с Хабом. Для нас открыт доступ к технологии форсированной репликации. В этот раз вы не почувствуете, что были реплицированы. У вас просто на мгновение потемнеет в глазах, и вы очнетесь на территории арены. Отказаться нельзя, система сканирует списки участников и запускает процесс автоматически. Очень удобно. Никаких дополнительных расходов. Вещи, которые будут при вас, мы сохраним в надежном банке Нью-Рено.}
+{10010}{}{Мне нужно время, чтобы подумать.}
+{10020}{}{Я хочу принять участие в сражении на арене.}
+{10030}{}{Я хочу принять участие в сражении на арене.}
+{11000}{}{Принято. Ждите вашей очереди.}
+{11010}{}{[Уйти]}
+{12000}{}{Да, мы наблюдали за вашей победой. Хороший старт и отличный финал. Мистер Бишоп не забывает таких людей. }
+{12010}{}{Спасибо...}
+{100000001}{}{Получено 10 Кредитов. Получено единиц нераспределенных навыков: 2.}
+{100000002}{}{Со счета списано 30 кредитов.}
+
+[engl]
+{100}{}{Arena Manager}
+{200}{}{In front of you is the Bishop Family Arena master.}
+{210}{}{You see a gangster wearing a formal suit. He is in charge of the "Last Man Standing" tournament.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{Текст ответа}
+{2000}{}{How may I help you?}
+{2010}{}{I would like to know my credit account balance.}
+{2020}{}{What do you do here?}
+{2030}{}{I have survived the arena combat.}
+{3000}{}{You have @lex dohrena@ credits on your account.}
+{3010}{}{I have another question.}
+{3020}{}{What can I spend my credits on?}
+{4000}{}{We exchange credits for guns, armor, and rare resources.}
+{4010}{}{I have another question.}
+{4020}{}{Can I look at this stuff?}
+{5000}{}{You have @lex dohrena@ credits. Currently we have the following offers active:}
+{5010}{}{[Combat Armor] (20 credits)}
+{5020}{}{[Combat Armor] (20 credits)}
+{5030}{}{G.E.C.K. (600 кредитов)}
+{5040}{}{Вертиберд (400 кредитов)}
+{5050}{}{Мотоцикл (100 кредитов)}
+{5060}{}{Неугоняемый мотоцикл(100 кредитов)}
+{5070}{}{G.E.C.K. (600 кредитов)}
+{5080}{}{G.E.C.K. (600 кредитов)}
+{5090}{}{G.E.C.K. (600 кредитов)}
+{5100}{}{G.E.C.K. (600 кредитов)}
+{5110}{}{[Exit]}
+{6000}{}{Your balance is too low for that. Find something cheaper.}
+{6010}{}{Ok, let's take a look.}
+{7000}{}{We organize Arena battles between qualifying contestants. The ones that prove themselves in combat will gain Mr. Bishop's respect. If the Bishop Family will be looking to add new members, tournament winners can expect preferential treatment.}
+{7010}{}{Is this the place where I can sign up for the "Last Man Standing" tournament?}
+{7020}{}{Can you tell me more about the arena?}
+{8000}{}{Yes, that's right.}
+{8010}{}{ I want to apply to the arena combat}
+{8020}{}{ I want to apply to the arena combat}
+{8030}{}{I need more time to think it over.}
+{9000}{}{ Sure, here are the rules. The Bishop Family will not pay for your replication if you die in the arena. You are responsible for replication fees. All personal belongings will be safely stored at New Reno bank. You will find weapons and armor inside the arena. There will be multiple contestants in every round. Your goal is to eliminate the competition and be the last man standing. Cooperation between contestants is not allowed, it's a free for all. The winner will receive 10 credits. That about covers it.}
+{9010}{}{Can I withdraw my application before the combat begins?}
+{10000}{}{No. You must participate if you applied. We have ways to forcefully replicate you inside the arena. It may not feel like regular replication. In a blink of an eye you will be replicated to the arena. The system automatically scans the list of participants and replicates them to the arena. We have no means to modify the list after we upload it to the system. But don't worry, all your gear will be safely stored inside the New Reno bank.}
+{10010}{}{I need more time to think it over.}
+{10020}{}{I want to apply to the arena combat.}
+{10030}{}{I want to apply to the arena combat.}
+{11000}{}{Ok, please wait for your round to begin.}
+{11010}{}{[Exit]}
+{12000}{}{Yes, we where following your fight. Good start and a great ending. Mr. Bishop is very impressed. }
+{12010}{}{Thanks, bye.}
+{100000001}{}{10 credits recieved.}
+{100000002}{}{- 30 Credits.}
+
+[ukra]
+{100}{}{none}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{Текст ответа}
+{2000}{}{Чем могу быть полезен?}
+{2010}{}{Я хотел бы узнать, сколько кредитов на моем счету?}
+{2020}{}{Чем вы здесь занимаетесь?}
+{2030}{}{Я @sex@|остался||осталась| в живых на вашей арене.}
+{3000}{}{На вашем счету @lex dohrena@ кредитов.}
+{3010}{}{У меня еще есть вопросы.}
+{3020}{}{Что на эти кредиты можно купить?}
+{4000}{}{Вы можете потратить кредиты на оружие, броню, редкие ресурсы.}
+{4010}{}{У меня еще есть вопросы.}
+{4020}{}{Покажите, что есть у вас в продаже?}
+{5000}{}{ Кредитов на счете @lex dohrena@ В настоящее время действительны следующие предложения:}
+{5010}{}{Боевая броня (20 кредитов).}
+{5020}{}{Боевая броня (20 кредитов).}
+{5030}{}{G.E.C.K. (600 кредитов)}
+{5040}{}{Вертиберд (400 кредитов)}
+{5050}{}{Мотоцикл (100 кредитов)}
+{5060}{}{Неугоняемый мотоцикл(100 кредитов)}
+{5070}{}{G.E.C.K. (600 кредитов)}
+{5080}{}{G.E.C.K. (600 кредитов)}
+{5090}{}{G.E.C.K. (600 кредитов)}
+{5100}{}{G.E.C.K. (600 кредитов)}
+{5110}{}{Выход}
+{6000}{}{Не получится. Кредитов не хватает. Выберите что-то попроще.}
+{6010}{}{Давайте посмотрим.}
+{7000}{}{Мы проводим квалификационные бои на арене между всеми желающими. Тот, кто проявит себя, может рассчитывать на благосклонное отношение со стороны мистера Бишопа. Если в семью начнется набор, чемпионы арены будут иметь преимущество перед остальными кандидатами.}
+{7010}{}{Это здесь можно записаться на арену "Остаться в живых"?}
+{7020}{}{Расскажите о вашей арене?}
+{8000}{}{Здесь. Можете подать заявку.}
+{8010}{}{Я хочу принять участие в сражении на арене.}
+{8020}{}{Я хочу принять участие в сражении на арене.}
+{8030}{}{Мне нужно время, чтобы подумать.}
+{9000}{}{Хорошо. Запомните, семья Бишопов не компенсирует потери на репликационном счете для тех, кто погиб в сражении на арене.  Вы идете туда на свой страх и риск. Вещи, которые были у вас перед началом боя, будут переданы в банк Нью-Рено. Вам придется искать оружие и броню на территории арены. Вместе с вами на арене будет несколько человек. Вы должны убить их всех, а сами остаться в живых. Кооперация не допускается. Каждый на арене - ваш враг. На счет победителя будут начислено 10 кредитов. Все очень просто.}
+{9010}{}{Могу я отказаться от участия, если уже подал@sex@|||а| заявку?}
+{10000}{}{Нет. Мы сотрудничаем с Хабом. Для нас открыт доступ к технологии форсированной репликации. В этот раз вы не почувствуете, что были реплицированы. У вас просто на мгновение потемнеет в глазах, и вы очнетесь на территории арены. Отказаться нельзя, система сканирует списки участников и запускает процесс автоматически. Очень удобно. Никаких дополнительных расходов. Вещи, которые будут при вас, мы сохраним в надежном банке Нью-Рено.}
+{10010}{}{Мне нужно время, чтобы подумать.}
+{10020}{}{Я хочу принять участие в сражении на арене.}
+{10030}{}{Я хочу принять участие в сражении на арене.}
+{11000}{}{Хорошо. Ждите вашей очереди.}
+{11010}{}{[Уйти]}
+{12000}{}{Да, мы наблюдали за вашей победой. Хороший старт и отличный финал. Мистер Бишоп не забывает таких людей. }
+{12010}{}{Спасибо...}
+

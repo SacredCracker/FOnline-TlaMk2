@@ -1,0 +1,41 @@
+// FOS Server Client
+// Author: cvet
+#ifdef __SERVER
+void PlayMusic( ::Critter& cr, ::string& musicName, uint pos, uint repeat ) // Export
+{
+    if( cr.IsPlayer() )
+        cr.RunClientScript( "Mk2@Media::_PlayMusic", int(pos), int(repeat), 0, musicName, null );
+}
+
+void PlayMusic( ::Map& map, ::string& musicName, uint pos, uint repeat ) // Export
+{
+    ::array<::Critter@> critters;
+    for( uint i = 0, iMax = map.GetCritters( 0, FIND_ALL | FIND_ONLY_PLAYERS, critters ); i < iMax; i++ )
+        critters[ i ].RunClientScript( "Mk2@Media::_PlayMusic", int(pos), int(repeat), 0, musicName, null );
+}
+
+void PlayVideo( ::Critter& cr, ::string& videoName, bool canStop ) // Export
+{
+    if( cr.IsPlayer() )
+        cr.RunClientScript( "Mk2@Media::_PlayVideo", canStop ? 1 : 0, 0, 0, videoName, null );
+}
+
+void PlayVideo( ::Map& map, ::string& videoName, bool canStop ) // Export
+{
+    ::array<::Critter@> critters;
+    for( uint i = 0, iMax = map.GetCritters( 0, FIND_ALL | FIND_ONLY_PLAYERS, critters ); i < iMax; i++ )
+        critters[ i ].RunClientScript( "Mk2@Media::_PlayVideo", canStop ? 1 : 0, 0, 0, videoName, null );
+}
+#endif
+#ifdef __CLIENT
+
+void _PlayMusic( int pos, int repeat, int, ::string@ musicName, ::array<int> @ )
+{
+    ::PlayMusic( musicName, uint( pos ), uint( repeat ) );
+}
+
+void _PlayVideo( int canStop, int, int, ::string@ videoName, ::array<int> @ )
+{
+    ::PlayVideo( videoName, canStop != 0 );
+}
+#endif

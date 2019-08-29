@@ -1,0 +1,103 @@
+#include "_client_defines.fos"
+#include "client_gui_h.fos"
+#include "_macros.fos"
+#include "_colors.fos"
+#include "client_picbox_h.fos"
+
+#ifndef __CLIENT_PicboxList__
+# define __CLIENT_PicboxList__
+
+class ItemPictureBoxList : IPictureBoxScroll
+{
+    uint16[]          ItemPids;
+    Rectangle@ Bounds;
+    int        ItemHeight;
+    int        Scroll;            // Смещение по списку прототипов
+    int        MaxItems;
+    ItemPictureBox@[] Items;
+    uint16     LastSelectedPid;
+
+    void Reset()
+    {
+        Scroll = 0;
+        LastSelectedPid = 0;
+    }
+
+    ItemPictureBoxList( Rectangle & bounds, int itemHeight )
+    {
+        Scroll = 0;
+        LastSelectedPid = 0;
+        @Bounds = bounds.Copy();
+        ItemHeight = itemHeight;
+        MaxItems = int(bounds.Height / ItemHeight);
+        bounds.Height = ItemHeight;
+        for( int i = 0; i < MaxItems; i++ )
+        {
+            Items.insertLast( @ItemPictureBox( 0, 0, COLOR_RED, true, bounds.Copy() ) );
+            bounds.Location.Y += ItemHeight;
+        }
+    }
+
+    void Init( int screenIndex )
+    {
+        GUI_AddScreenElement( screenIndex, null, Bounds.X, Bounds.Y )
+        .Position( Bounds.X, Bounds.Y, Bounds.Width, Bounds.Height );
+        for( uint i = 0, l = Items.length(); i < l; i++ )
+        {
+            Items[ i ].Init( screenIndex );
+            Items[ i ].PicBoxScrollCallback( this );
+        }
+        RefreshItems();
+    }
+
+    void SetItemPids( uint16[] pids )  // Override
+    {
+        this.ItemPids.resize( pids.length() );
+        for( uint i = 0, l = pids.length(); i < l; i++ )
+        {
+            this.ItemPids[ i ] = pids[ i ];
+        }
+    }
+
+    int GetLastItem()     // Override
+    {
+        return int( ItemPids.length() );
+    }
+
+    void SetPicListScroll( int dir, int steps )   // IPictureBoxScroll
+    {
+        if( dir == DIR_BACK && Scroll - steps >= 0 )
+        {
+            Scroll -= steps;
+        }
+        else if( dir == DIR_FORWARD && Scroll + MaxItems + steps <= GetLastItem() )
+        {
+            Scroll += steps;
+        }
+        else
+        {
+            return;
+        }
+        RefreshItems();
+    }
+
+    void OnPicBoxSelected( ItemPictureBox@ selectedPicBox )   // IPictureBoxScroll override
+    {
+        LastSelectedPid = selectedPicBox.ProtoId;
+        RefreshItems();
+    }
+
+    void RefreshItems()     // Override
+    {
+        for( int i = 0, l = Items.length(); i < l; i++ )
+        {
+            if( ( i + Scroll ) < int( ItemPids.length() ) )
+            {
+                Items[ i ].ChangePid( ItemPids[ i + Scroll ] );
+                Items[ i ].ChangeSelected( ItemPids[ i + Scroll ] == LastSelectedPid );
+            }
+        }
+    }
+}
+
+#endif // __CLIENT_PicboxList__

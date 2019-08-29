@@ -1,0 +1,25 @@
+// Настройки fighter pattern и guard lib для турелей Ада.
+
+#include "fighter_pattern.fos"
+#include "guard_lib.fos"
+#include "guard_lib_events.fos"
+
+CGuardsManager Guard( DIALOG_hell_turret );
+
+void _TurretInit( Critter& cr, bool firstTime )
+{
+    FighterPattern@ fp = FighterPattern();
+    fp.ForceArmourLvl = 5;
+    fp.MustHealLvl = 60;
+    fp.ForceCritterArmour( cr );
+    fp._SetOnAttackedEvents( cr );
+	
+    cr.SetEvent( CRITTER_EVENT_SHOW_CRITTER, "_GuardOnAddCritter" );
+    cr.SetEvent( CRITTER_EVENT_HIDE_CRITTER, "_GuardOnRemoveCritter" );
+	
+    cr.SetEvent( CRITTER_EVENT_SMTH_MOVE_ITEM, "_GuardOnMoveItem" );
+    cr.SetEvent( CRITTER_EVENT_SMTH_ATTACK, "_GuardOnSmthAttack" );
+
+    if( !firstTime && cr.GetTimeEvents( CTE_OBSERVING ) == 0 )
+        cr.AddTimeEvent( "cte_Observing", OBSERV_PERIOD, CTE_OBSERVING );
+}

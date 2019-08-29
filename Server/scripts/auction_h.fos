@@ -1,0 +1,398 @@
+// Расчет комиссии на открытие лота. Зависит от цены прототипа, времени, на которое выставляется и размера пачки
+#define COMISSION_PERCENT_BASE       ( 1 )
+#define COMISSION_PERCENT_DAY        ( 3 )
+#define COMISSION_PERCENT_WEEK       ( 15 )
+#define COMISSION                    # ( hours, cost, qty )CLAMP( ( cost * qty * ( ( hours > 24 ) ? COMISSION_PERCENT_WEEK : ( ( hours > 8 ) ? COMISSION_PERCENT_DAY : COMISSION_PERCENT_BASE ) ) / 100 ), 0, 500 )
+#define CANCEL_TIME                  # (hours) ( __FullSecond + ( hours > 24 ? REAL_DAY( 7 ) : ( hours > 8 ? REAL_DAY( 1 ) : REAL_HOUR( 8 ) ) ) )
+
+#define AUCTION_BUY_PAGESIZE         ( 10 )                              // Число лотов на странице
+
+#define ILVAR_NEXT_LOT_ID            ( 15200 )                           // Номер локальной переменной для предмета, в которой хранится номер последнего лота на местном аукционе
+#define LMVAR_AUCTION_CONT_ID        ( 15201 )                           // Номер локальной переменной для карты, в которой хранится код контейнера аукциона
+// Переменные для итема. Используются, если данные сохраняются на сервере, а не во вшнешней бд
+#define ILVAR_LOT_COST               ( 15202 )                           // Стоимость лота
+#define ILVAR_TIME_CANCEL            ( 15203 )                           // Время отмены лота
+#define ILVAR_COMISSION_OPEN         ( 15204 )                           // Комиссия за открытие лота
+#define ILVAR_SELLER_ID              ( 15205 )                           // Id игрока, продающего лот
+#define ILVAR_TIME_OPEN              ( 15206 )                           // Время открытия лота
+#define ILVAR_LOT_ID                 ( 15207 )                           // Код лота
+#define ILVAR_HAS_LEXEMS             ( 15208 )                           // Признак: у предмета сохранены лексемы
+
+#define  STR_NOTFOUND_ITEM           ( 150000 )                          // Не найден предмет лота.
+#define  STR_WRONG_LOT_SIZE          ( 150001 )                          // Неправильно указан размер лота.
+#define  STR_NOT_ENOUGH_MONEY        ( 150002 )                          // Недостаточно средств на репликационном счете для снятия комиссии.
+#define  STR_WRONG_MAP               ( 150003 )                          // Не найдена локация с аукционом.
+#define  STR_CANT_FIND_AUC_CONT      ( 150004 )                          // Не найдено хранилище аукциона. Ошибка 1.
+#define  STR_CANT_FIND_AUC_CONT2     ( 150005 )                          // Не найдено хранилище аукциона. Ошибка 2.
+#define  STR_LOT_OPEN_SUCCESS        ( 150006 )                          // Лот успешно объявлен. С репликационного счета снята комиссия в сумме @lex comission@.
+#define  STR_LOT_NOT_SELECTED        ( 150007 )                          // Невозможно объявить лот. Не выбран предмет на продажу.
+#define  STR_LOTS_NOT_FOUND          ( 150008 )                          // Не найдено активных лотов на аукционе. ------------
+#define  STR_BUY_LOT_NOT_FOUND       ( 150009 )                          // Покупка невозможна. Не найден предмет лота.
+#define  STR_BUY_SAME_PLAYER         ( 150010 )                          // Покупка невозможна. Нельзя покупать предметы, выставленную на продажу тем же персонажем.
+#define  STR_BUY_NOT_ENOUGH_MONEY    ( 150011 )                          // Недостаточно денег на репликационном счете для покупки предмета.
+#define  STR_CANNOT_FOUND_BANK       ( 150012 )                          // Невозможно найти банк хабологов для перемещения купленного предмета. Если вы видите это сообщение, бегите прочь! (Пока не поздно)
+#define  STR_BUY_ITEM_SUCCESS        ( 150013 )                          // Куплен предмет @lex itemName@. Продавец @lex sellerName@. Со счета снято монет: @lex cost@.
+#define  STR_ITEM_SOLD               ( 150014 )                          // Аукцион: Продан предмет @lex itemName@. Покупатель @lex buyerName@. В репликационный банк передано монет: @lex cost@.
+#define  STR_COMMON_ERROR            ( 150015 )                          // Неизвестная ошибка. Дополнительный код: @lex code@.
+#define  STR_LOT_NOT_SELECTED        ( 150016 )                          // Не выбран лот для покупки.
+#define  STR_CANCEL_RESTRICTED       ( 150017 )                          // Отменить можно только свои лоты.
+#define  STR_LOT_CANCELED            ( 150018 )                          // Аукцион: Отменен лот @lex itemName@. Предмет можно забрать в ближайшем к аукциону банке хабологов.
+#define  STR_LOT_BUY_ERROR           ( 150019 )                          // Неизвестная ошибка при покупке лота.
+#define  STR_CANCEL_LOT_ERROR        ( 150020 )                          // Неизвестная ошибка при отмене лота.
+#define  STR_CANCEL_LOT_NOTFOUND     ( 150021 )                          // Не найден лот для отмены. Возможно, уже был отменен ранее.
+#define  STR_ZERO_RESTRICTED         ( 150022 )                          // Минимальный размер лота - 1 единица.
+#define  STR_ITEM_BROKEN             ( 150023 )                          // Невозможно продать предмет. Изношенные предметы к продаже не принимаются.
+#define  STR_ITEM_WRONG              ( 150024 )                          // Невозможно продать предмет. Предметы данного типа продаже на аукционе не подлежат.
+
+#define _AnyDataKey                  # (lotId) ( "AI_Lex_" + ( lotId ) ) // Потенциальный источник проблем, при расчете ид лота, если аукционов много, могут перебивать лексемы друг друга
+
+#define SPLIT_ROW                    ( "/zz17" )
+#define SPLIT_LEXEMS                 ( "/zz18" )
+
+// Buy type filter flags
+#define ATF_WEAPON                   ( 0x0001 )
+#define ATF_ARMOUR                   ( 0x0002 )
+#define ATF_AMMO                     ( 0x0004 )
+#define ATF_DRUGS                    ( 0x0008 )
+#define ATF_MISC                     ( 0x0010 )
+
+// Сортировка
+#define SORT_NAME                    ( 1 )
+#define SORT_SELLER                  ( 2 )
+#define SORT_LOT                     ( 3 )
+#define SORT_PRICE                   ( 4 )
+#define SORT_TIME                    ( 5 )
+
+#define SORTED_ASC                   ( 1 )
+#define UNSORTED                     ( 0 )
+#define SORTED_DESC                  ( -1 )
+
+bool ProtoFiltered( int itemType, int flags )
+{
+    switch( itemType )
+    {
+    case ITEM_TYPE_WEAPON:
+        return FLAG( ATF_WEAPON, flags );
+    case ITEM_TYPE_ARMOR:
+        return FLAG( ATF_ARMOUR, flags );
+    case ITEM_TYPE_DRUG:
+        return FLAG( ATF_DRUGS, flags );
+    case ITEM_TYPE_AMMO:
+        return FLAG( ATF_AMMO, flags );
+    case ITEM_TYPE_MISC:
+        return FLAG( ATF_MISC, flags );
+    }
+    return false;
+}
+
+void DL( string s )
+{
+
+    #ifdef __Client
+    Message( "" + s );
+    #endif
+
+    #ifdef __Server
+    Log( "" + s );
+    #endif
+}
+// #define DL #(s)
+
+void ConvertLotInfoFromArray( int[] lotData, string lexems, int lotsCount, LotInfo[]& lots )
+{
+    if( lotsCount > 0 && lotData.length() > 0 )
+    {
+        string@[] @ lexemArray = splitEx( lexems, SPLIT_ROW );
+        if( valid( lexemArray ) )
+        {
+            lots.resize( 0 );
+            uint j = 0;
+            for( int i = 0; i < lotsCount; i += 9 )
+            {
+                lots.grow( 1 );
+                lots.last().ItemId = lotData[ i ];
+                lots.last().ItemPid = lotData[ i + 1 ];
+                lots.last().PlayerId = lotData[ i + 2 ];
+                lots.last().LotSize = lotData[ i + 3 ];
+                lots.last().Cost = lotData[ i + 4 ];
+                if( int( lotData.length() ) > i + 5 && lotData[ i + 5 ] > 0 )
+                {
+                    string      lex = lexemArray[ j ];
+                    string@[] @ lexArr = splitEx( lex, SPLIT_LEXEMS );
+                    lots.last().PlayerName = lexArr[ 0 ];
+                    if( lexArr.length() > 1 )
+                        lots.last().Lexems = lexArr[ 1 ];
+                }
+                else
+                {
+                    lots.last().PlayerName = lexemArray[ j ];
+                }
+                j++;
+                lots.last().Info = lotData[ i + 6 ];
+                lots.last().TimeToCancel = lotData[ i + 7 ];
+                lots.last().LotId = lotData[ i + 8 ];
+            }
+        }
+    }
+}
+
+#ifdef __SERVER
+
+import string GetItemBonusesAuction( int itemId ) from "Mk2";
+
+void ConvertLotInfoToArray( int firstPage, int pageSize, LotInfo[] lots, int[]& lotData, string& lexems )
+{
+    lotData.resize( 0 );
+    lexems = "";
+    uint j = 0;
+    for( uint i = firstPage * pageSize, l = firstPage * pageSize + pageSize, lotCount = lots.length(); i < l && i < lotCount; i++ )
+    {
+        if( lexems.length() > 0 )
+            lexems += SPLIT_ROW;
+        lotData.grow( 9 );
+        lotData[ j ]    = lots[ i ].ItemId;
+        lotData[ j + 1 ]  = lots[ i ].ItemPid;
+        lotData[ j + 2 ]  = lots[ i ].PlayerId;
+        lotData[ j + 3 ]  = lots[ i ].LotSize;
+        lotData[ j + 4 ]  = lots[ i ].Cost;
+        lotData[ j + 5 ]  = lots[ i ].LexemsCount();
+        // Log("PlayerId" + lots[i].PlayerId);
+        if( lots[ i ].PlayerId > 0 )
+        {
+            string@ pname = GetPlayerName( lots[ i ].PlayerId );
+            if( !valid( pname ) )
+                lexems += "Dead one";
+            else
+                lexems += pname;
+        }
+        else
+            lexems += "Chosen One";
+        string bonuses = GetItemBonusesAuction( lots[ i ].ItemId );
+        if( lots[ i ].LexemsCount() > 0 )
+        {
+            lexems += SPLIT_LEXEMS;
+            lexems += lots[ i ].Lexems;
+        }
+
+        if( bonuses.length() > 0 )
+        {
+            lotData[ j + 5 ]++;
+            bonuses += "\n";
+            lexems += "@lex bz@$bz" + bonuses;
+        }
+
+        lotData[ j + 6 ]  = lots[ i ].Info;
+        lotData[ j + 7 ]  = lots[ i ].TimeToCancel;
+        lotData[ j + 8 ]  = lots[ i ].LotId;
+        j += 9;
+    }
+}
+
+#endif // __SERVER
+
+// Описание лота
+class LotInfo
+{
+    uint   ItemId;
+    uint   ItemPid;
+    uint   LotId;                 // Уникальный номер лота *
+    uint   PlayerId;              // Продавец *
+    uint   LotOpenComission;      // Комиссия за открытие лота
+    uint   LotSize;               // Количество
+    uint   Cost;                  // Стоимость *
+    uint   ContainerId;           // Код контейнера, в котором предмет находится во время аукциона
+    uint   TimeCreate;            // Время открытия лота *
+    string Lexems;                // Лексемы лота
+    string PlayerName;            // Имя игрока
+    uint8  Info;                  // Смещение в описании предмета *
+    uint   TimeToCancel;          // Расчетное время, в которое предмет уже можно снимать с продажи *
+    int    SortingFlags;
+
+    int LexemsCount()
+    {
+        return ( ( @Lexems != null && Lexems.length() > 0 && Lexems != " " ) ? 1 : 0 );
+    }
+
+    // На будущее
+    /*
+       uint PlayerIdBuyer;
+       uint SellComission;
+       uint Timesold;
+       uint TimeCancelled;
+       uint Price;
+       // возможно потребуется container
+     */
+
+    bool NeedCancel()
+    {
+        return TimeToCancel < __FullSecond;
+    }
+
+    LotInfo()
+    {}
+
+    #ifdef __SERVER
+    LotInfo( Item & item, Item & container, int sortingFlags ) // Конструктор для варианта с AuctionAnyDataLotManager
+    {
+        ItemId                    = item.Id;
+        ItemPid                   = item.GetProtoId();
+        GameVar@ lotIdVar         = GetLocalVar( ILVAR_LOT_ID, ItemId );
+        if( valid( lotIdVar ) )
+            LotId                     = lotIdVar.GetValue();
+        GameVar@ lotSellerId      = GetLocalVar( ILVAR_SELLER_ID, ItemId );
+        if( valid( lotSellerId ) )
+            PlayerId                  = lotSellerId.GetValue();
+        GameVar@ lotCommisionOpen = GetLocalVar( ILVAR_COMISSION_OPEN, ItemId );
+        if( valid( lotCommisionOpen ) )
+            LotOpenComission          = lotCommisionOpen.GetValue();
+        LotSize                   = item.GetCount();
+        GameVar@ lotCost          = GetLocalVar( ILVAR_LOT_COST, ItemId );
+        if( valid( lotCost ) )
+            Cost                      = lotCost.GetValue();
+        ContainerId               = container.Id;
+        GameVar@ lotTimeOpen      = GetLocalVar( ILVAR_TIME_OPEN, ItemId );
+        if( valid( lotTimeOpen ) )
+            TimeCreate                = lotTimeOpen.GetValue();
+        GameVar@ lotHasLexems     = GetLocalVar( ILVAR_HAS_LEXEMS, ItemId );
+        if( valid( lotHasLexems ) && lotHasLexems > 0 )
+        {
+            Lexems = GetSerializedString( _AnyDataKey( LotId ) );
+        }
+        Info                      = item.Info;
+        GameVar@ lotCancel        = GetLocalVar( ILVAR_TIME_CANCEL, ItemId );
+        if( valid( lotCancel ) )
+            TimeToCancel              = lotCancel.GetValue();
+    }
+
+    void ClearVars()
+    {
+        GameVar@ lotIdVar         = GetLocalVar( ILVAR_LOT_ID, ItemId );
+        if( valid( lotIdVar ) )
+            lotIdVar = 0;
+        GameVar@ lotSellerId      = GetLocalVar( ILVAR_SELLER_ID, ItemId );
+        if( valid( lotSellerId ) )
+            lotSellerId = 0;
+        GameVar@ lotCommisionOpen = GetLocalVar( ILVAR_COMISSION_OPEN, ItemId );
+        if( valid( lotCommisionOpen ) )
+            lotCommisionOpen = 0;
+        GameVar@ lotCost          = GetLocalVar( ILVAR_LOT_COST, ItemId );
+        if( valid( lotCost ) )
+            lotCost = 0;
+        GameVar@ lotTimeOpen      = GetLocalVar( ILVAR_TIME_OPEN, ItemId );
+        if( valid( lotTimeOpen ) )
+            lotTimeOpen = 0;
+        GameVar@ lotHasLexems     = GetLocalVar( ILVAR_HAS_LEXEMS, ItemId );
+        if( valid( lotHasLexems ) )
+            lotHasLexems = 0;
+        GameVar@ lotCancel        = GetLocalVar( ILVAR_TIME_CANCEL, ItemId );
+        if( valid( lotCancel ) )
+            lotCancel = 0;
+        if( IsAnyData( _AnyDataKey( LotId ) ) )
+            EraseAnyData( _AnyDataKey( LotId ) );
+    }
+    #endif // Серверный конструкор
+
+    #ifdef __CLIENT
+    string GetItemName()
+    {
+        string info =  GetMsgStr( TEXTMSG_ITEM, ItemPid * 100 + Info );
+        if( valid( Lexems ) && Lexems != "" )
+        {
+            for( uint i = 0; i < 12; i++ )   // Как подсчитать число совпадений? хз
+                Lexems = ReplaceText( Lexems, "@?", "@msg game " );
+            info = FormatTags( info, Lexems );
+        }
+        return info;
+    }
+
+    string GetItemDescription()
+    {
+        string info = "";
+        info += GetMsgStr( TEXTMSG_ITEM, ItemPid * 100 + Info ) + "\n";
+        info += "-------------------\n";
+        info += GetMsgStr( TEXTMSG_ITEM, ItemPid * 100 + Info + 1 ) + "\n";
+        const ProtoItem@ proto = GetProtoItem( ItemPid );
+        if( valid( proto ) )
+        {
+            info += "\n" + ReplaceText( GetMsgStr( TEXTMSG_GAME, 435 ), "VALUE", proto.Weight * LotSize );
+        }
+        if( valid( Lexems ) && Lexems != "" )
+        {
+            for( uint i = 0; i < 12; i++ )   // Как подсчитать число совпадений? хз
+                Lexems = ReplaceText( Lexems, "@?", "@msg game " );
+            info = FormatTags( info, Lexems );
+        }
+
+        info += "\n-------------------\n";
+        info += "\nСтоимость: " + Cost + "\n";
+        info += "\nЕдиниц: " + LotSize + "\n";
+        info += "\nПродавец: " + PlayerName + "\n";
+
+        return info;
+    }
+    #endif // __CLIENT
+
+
+}
+
+
+
+#ifndef __AUCTION__
+
+# ifdef __CLIENT
+import void AuctionOpenLot( int itemId, int lotSize, int price, int hours ) from "auction";
+import void AuctionRefreshData( string searchValue, int filterFlags, int page, int sort ) from "auction";
+# endif // __CLIENT
+# ifdef __SERVER
+import string@ GetSerializedString( string keyAnyData ) from "serializator";
+# endif // __SERVER
+
+#endif  // __AUCTION__
+
+#ifdef __SERVER
+
+
+// Работа с базой данных, сохранение лотов, чтение информации, поиск
+interface IdbLotManager
+{
+    // Сохраняет информацию об объявленном лоте
+    int OpenLot( int lotId, uint crId, uint itemId, uint lotSize, uint cost, uint timeCancel, string@ lexems, uint containerId, uint comissionOpen );
+    // Достает список лотов, доступных на аукционе
+    int LoadLots( uint containerId, int sortFlags, int page, int pageSize, string@ sVal, int& totalLots, int[]& lots, string& lexems, int sort );
+    // Получает новый код для лота
+    int GetNextLotId( uint containerId );
+    // Покупка предмета
+    bool BuyLot( uint crId, uint itemId, uint lotId );
+    // Отмена лота
+    bool CancelLot( uint contId, uint itemId, uint crId, int lotId );
+
+    void GetLotsForCancel( uint containerId, int timeCancel, int[]& lots );
+
+    LotInfo@ GetLotInfo( int itemId, int contId, int lotId );
+    int      GetAuctionItems( uint containerId, int maxPages, string[]& lotData, int& columns, int& rows );
+
+    bool CheckItemValidForSale( uint pid );
+}
+
+// Функционал сервера: Перемещение предметов, снятие комиссии, оплата и покупка
+interface IFonlineLotManager
+{
+    // Выполняет операции, необходимые для открытия лота: снимает комиссию со счета продавца
+    // перемещает предмет в контейнер, отправляет данные в бд
+    void OpenLotServer( Critter& cr, uint itemId, uint lotSize, uint lotCost, uint sellHours, string@ lexems );
+    // Находит контейнер аукциона для игрока
+    Item@ GetAuctionContainer( Critter& cr );
+    // По положению игрока определяет доступный аукцион и передает страницу заданного размера для отображения в клиенте
+    void GetAuctionAvailableLots( Critter& cr, int page, int pageSize, int sortFlags, string searchValue, int& totalLots, int[]& lots, string& lexems, int sort );
+    // Покупка предмета, проверка достаточной суммы на счете, снятие стоимости предмета со свчета, перемещение предмета в банк, перемещение суммы оплаты в банк
+    void BuyItemServer( Critter& cr, int itemId, int lotId );
+    // Поиск контейнера банка хабологов, требуется для перемещения отмененных лотов, купленных предметов и денег за продажу
+    Item@ GetHubBunkContainer( Critter& cr );
+    // Отмена аукциона, проверяется, что отменяющий и выставлял аукцион,
+    void CancelLotServer( Critter& cr, int itemId, int lotId );
+    // Отмена лота автоматическая, по истечению срока действия лота
+    void CancelLotAuto( int lotId );
+}
+
+
+#endif

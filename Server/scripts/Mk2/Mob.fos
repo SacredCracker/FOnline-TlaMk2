@@ -1,0 +1,349 @@
+// FOS Server
+// Author: heX, cvet
+
+/*
+	Generic mob ai
+	Только для мобов животных.
+	Var6..Var9 заняты.
+	рекомендуеться выставлять TeamId в диапазоне: 24..33
+	33 - не групируется, это значит что мобы не будут помогать друг другу.
+	также учтите что группа 0 тоже не группируется.
+
+	TODO:
+	сделать чтобы VarFear както уменьшался
+	включать обработчик idle только если рядом есть игрок.
+	таблица типа поведения монстров.
+	трусость мобов - сначало нужно отбегать от атакующего, затем старатся приблизится к дому на расстоянии от атакующего.
+	{
+		атака тех кто атакует (нужно для блокировки чита 'бегун')
+		при условии что злость(Fury) меньше X (нужно для блокировки 'pin-pong' чита)
+		и текущий враг не на расстоянии поражения
+		и новый враг на не слишком большой дистанции
+	}
+	отступление если игрок атакует из недостижимой точки (чит 'безопастной атаки').
+	? блокировка возвращения домой если мы уже стоим впритык к противнику и успешно атакуем его.
+	? отступать домой только если вся группа так решила.
+
+	тест:
+	DONE запрет атаковать всех из своей группы (ситуация вознимает если они блокируют проход)
+	DONE трусость мобов - если то он не должен идти в атаку при атаке
+
+	ok:
+	DONE трусость мобов - отступление если мало жизней
+	DONE скан при возвращении домой (Watch)
+	DONE сброс VarX при респавне
+	DONE трусость мобов - добавить отступление при больших потерях
+	DONE блокировка GoHo если они уже дома
+	DONE остановка преследования при большой дистанции - отладить (несрабатывает)
+*/
+
+enum Options
+{
+	DistanceAttack        	= 10, // расстояние начала атаки
+	DistanceGroupRadius  	= 20, // расстояние на котором группа видит друг друга  = и помогает атаковать противника,
+	DistanceGoHome       	= 30, // расстояние от дома при котором моб идет домой
+	MaxFury               	= 3,  // сколько раз нужно разозлить НПС чтобы он стал игнорить границы обитания
+	DistanceHelp         	= 15, // расстояние помощи
+	TimeTestGoHome      	= 10, // переодичность тестирования на возврат домой и отмену атаки
+
+	// номера сообщений
+	MsgGroupAttack       	= 16001,
+	MsgGroupFury         	= 16002
+}
+
+void _MobsMapInit( ::Map& map, bool firstTime)
+{
+	ActivateMobScript(map);
+}
+
+class MobDef : Npc::NpcDescriptor
+{
+	MobDef( )
+	{
+		MaxFear = 0;
+		Fear = 0;
+		Fury = 0;
+		AttackedId = 0;
+		SeeCountPlayers = 0;
+		PriorityDescriptor = 100;
+		
+	}
+	
+	~MobDef( )
+	{
+	
+	}
+	
+	bool CritterInit(::Critter& crInit, bool firstTime) override
+	{
+		::Map@ map = crInit.GetMap();
+		if(not validEngineObject(map)) 
+		{			
+			::DeleteNpc(crInit);
+			return false;
+		}
+		
+		CritterDescriptor::CritterInit( crInit, firstTime );
+		
+		crInit.ModeBase[MODE_NO_HOME]=1;
+		crInit.StatBase[ST_ROLE_CITY]=TEMPLATE_MOB;
+		crInit.ModeBase[MODE_NO_ENEMY_STACK]=0;
+		
+		uint16 locPid=map.GetLocation().GetProtoId();
+		if (!LOCATION_IS_CITY(locPid) && locPid !=LOCATION_ReplicationHell && locPid !=LOCATION_ReplicationHellmk2 && locPid !=LOCATION_Sierra)
+			crInit.StatBase[ST_REPLICATION_TIME]=-1; // Newer
+
+		this.ResetVars(crInit);
+		crInit.Wait(::Random(0,200)); // Чтобы тики не были синхронны
+		return true;
+	}
+	
+	bool CritterDead(::Critter@ cr, ::Critter@ killer) override
+	{
+		cr.ClearEnemyStack(); // моб забывает своих обидчиков
+		return CritterDescriptor::CritterDead( @cr, @killer );
+	}
+	
+	bool CritterShowMe( ::Critter& npc, ::Critter& player ) override // Будем ходить когда
+	{
+		if( player.IsPlayer() )
+			++SeeCountPlayers;
+
+		return CritterDescriptor::CritterShowMe( npc, player );
+	}
+	
+	bool CritterShow( ::Critter& npc, ::Critter& player ) override
+	{
+		if ( player.IsPlayer() )
+			NpcPlanes::AddAttackPlane(npc, 0, player);
+
+		return CritterDescriptor::CritterShow( npc, player );
+	}
+	
+	bool CritterHideMe( ::Critter& npc, ::Critter& player) override
+	{
+		if( player.IsPlayer() && SeeCountPlayers > 0 )
+			--SeeCountPlayers;
+	
+		return CritterDescriptor::CritterHideMe( npc, player );
+	}
+	
+	bool CritterHide( ::Critter& npc, ::Critter& player) override
+	{
+		if ( player.IsPlayer() && Fury < Mob::Options::MaxFury)
+		{
+			npc.EraseEnemyFromStack(player.Id);
+			NpcPlanes::EraseAttackPlane(npc, player);
+		}
+			
+		return CritterDescriptor::CritterHide( npc, player );
+	}
+	
+	bool CritterIdle( ::Critter& npc ) override
+	{
+		if( npc.IsLife() )
+		{
+			::Critter@[] critters;
+			uint count = npc.GetCritters ( false, FIND_LIFE_AND_KO | FIND_ONLY_PLAYERS, critters );
+			if( count != 0 )
+			{
+				::Critter@ player = critters[ ::Random( 0, count - 1 ) ];
+				NpcPlanes::AddAttackPlane(npc, 0, player);
+				return false;
+			}
+			
+			if( SeeCountPlayers > 0 )
+			{		
+				int rnd = ::Random(1,10);
+				if(rnd<=4) npc.MoveRandom(); // 20%
+				else if(rnd<=6) this.TryGoHome(npc); // 20%
+			}
+		}
+		return NpcDescriptor::CritterIdle( npc );
+	}
+	
+	void ResetVars( ::Critter& npc)
+	{
+		AttackedId=0;
+		Fury=0;
+		Fear=0;
+		SeeCountPlayers = 0;
+		if(!(npc.Stat[ST_TEAM_ID]==0 || npc.Stat[ST_TEAM_ID]==33))
+			MaxFear=GetMyTeamCount(npc) * 80 * 0.01;
+		else MaxFear=10;
+	}
+	
+	void TryGoHome( ::Critter& npc)
+	{
+		if(Fury<Mob::Options::MaxFury && npc.IsLife() )
+		{
+			uint mapId=0;
+			uint16 homeX=0, homeY=0;
+			uint8 dir=0;
+			npc.GetHomePos(mapId, homeX, homeY, dir);
+			if(npc.GetMapId()==mapId && npc.GetMap().GetPathLength(homeX, homeY, npc.HexX, npc.HexY,0) > uint( Mob::Options::DistanceGoHome ) )
+			{
+				//npc.DropPlanes();
+				NpcPlanes::AddWalkPlane(npc, 0, homeX, homeY, dir, false, 0);
+			}
+		}
+	}
+	
+	uint GetMyTeamCount( ::Critter& npc)
+	{
+		return GetCrittersByTeam(npc.GetMap(), npc.HexX, npc.HexY, Mob::Options::DistanceGroupRadius, npc.Stat[ST_TEAM_ID]);
+	}
+	
+	uint GetCrittersByTeam( ::Map& map, uint x, uint y, uint radius, int team)
+	{
+		uint count=0;
+		::array<::Critter@> critters;
+		for(uint i=0, iMax=map.GetCrittersHex(x, y, radius, FIND_LIFE|FIND_ONLY_NPC, critters); i<iMax; i++)
+			if(critters[i].Stat[ST_TEAM_ID]==team) count++;
+		return count;
+	}
+	
+	bool Message( ::Critter& npc, Mk2::MessagePacket@ interMessage ) override
+	{
+		Messager::Messager@ message = cast<Messager::Messager>(@interMessage);
+		if(!valid(message))
+			return CritterDescriptor::Message( npc, interMessage );
+		if( npc.IsPlayer() || !npc.IsLife()) return CritterDescriptor::Message( npc, interMessage );
+		
+		if( npc.Stat[ST_TEAM_ID]==0 || npc.Stat[ST_TEAM_ID]==33) return CritterDescriptor::Message( npc, interMessage ); // группа не групируеться
+		::Critter@ fromCrit = message.Sender;
+		if( ! valid( fromCrit ) )
+			return CritterDescriptor::Message( npc, interMessage );
+		if( npc.Stat[ST_TEAM_ID] != fromCrit.Stat[ST_TEAM_ID] ) return CritterDescriptor::Message( npc, interMessage ); // ктото не из нашей группы
+
+		if( message.Message == Mob::Options::MsgGroupAttack )
+		{	
+			::Critter@ target=::GetCritter(message.Value);
+			if (!validEngineObject(target)) return false;
+			if (::GetCrittersDistantion(npc, fromCrit) > uint( Mob::Options::DistanceGroupRadius ) ) return CritterDescriptor::Message( npc, interMessage );
+			NpcPlanes::AddAttackPlane(npc, 0, target);
+		}
+		else if(message.Message==Mob::Options::MsgGroupFury) Fury++;
+		else return CritterDescriptor::Message( npc, interMessage );
+		return true;
+	}
+	
+	bool NpcPlaneBegin( ::Critter& npc, ::NpcPlane& plane, int reason, ::Critter@ someCr, ::Item@ someItem) override
+	{
+		if(plane.Type==AI_PLANE_ATTACK)
+		{
+			::Critter@ target=::GetCritter( plane.Attack_TargId );
+			if ( not validEngineObject( target ) ) 
+				return NpcDescriptor::NpcPlaneBegin( npc,plane,reason,someCr,someItem );
+
+			if( target.Stat[ST_TEAM_ID] == npc.Stat[ST_TEAM_ID] ) return false; // не атакуем всех из своей команды
+
+			if( reason == REASON_FOUND_IN_ENEMY_STACK )
+			{
+				uint distantion=::GetCrittersDistantion( npc, target );
+				if( distantion <= uint( Mob::Options::DistanceAttack ) )
+				{
+					// если противник подошел достаточно близко, то разрешаем атаку
+					// анализ на дальность
+					uint pathLength=npc.GetMap().GetPathLength(npc, target.HexX, target.HexY, 1);
+					// если пройти нельзя, то не идем
+					if( pathLength == 0 && distantion != 1 ) return false;
+					// если слишком далеко, то не идем
+					if( pathLength > distantion * 3 ) return false;
+					// зовем друзей
+					Messager::CritterSend( npc,Mob::Options::MsgGroupAttack, target.Id, MESSAGE_TO_WHO_SEES_ME);
+					return true;
+				}
+				else
+				{
+					// иначе запрещаем атаку
+					return false;
+				}
+			}
+		}
+		return NpcDescriptor::NpcPlaneBegin( npc,plane,reason,someCr,someItem );
+	}
+	
+	bool CritterRespawn( ::Critter& npc) override
+	{
+		this.ResetVars(npc);
+		return CritterDescriptor::CritterRespawn( npc );
+	}
+	
+	bool CritterAttacked( ::Critter& npc, ::Critter& attacker) override
+	{
+		AttackedId=attacker.Id;
+		Fury++; // злимся
+		// друзья тоже зляться!
+		Messager::CritterSend( npc, Mob::Options::MsgGroupFury, attacker.Id, MESSAGE_TO_WHO_SEES_ME);
+		// зовем друзей
+		Messager::CritterSend( npc,Mob::Options::MsgGroupAttack, attacker.Id, MESSAGE_TO_WHO_SEES_ME);
+
+		NpcPlanes::AddAttackPlane(npc, 0, attacker);
+		return CritterDescriptor::CritterAttacked( npc, attacker ); // Handle attacked processing
+	}
+	
+	int MaxFear;
+	int Fear;
+	int Fury;
+	int AttackedId;
+	int SeeCountPlayers;
+}
+
+class MobItem : MobDef
+{
+	MobItem()
+	{
+		PriorityDescriptor = 110;
+	}
+	
+	bool CritterRespawn( ::Critter& npc) override
+	{
+		::DeleteNpc( npc );
+		return false;
+	}
+}
+
+void mobInit( ::Critter& npc, bool firstTime  )
+{	
+	if( npc.Stat[ST_ROLE_CITY] == CITY_ANIMAL_ITEM )
+	{
+		Mob::MobItem expan();
+		if( Critter::NewDescriptor( npc, expan ) )
+		{
+			expan.CritterInit( npc, firstTime );
+		}
+	}
+	else	
+	{
+		Mob::MobDef expan();
+		if( Critter::NewDescriptor( npc, expan ) )
+		{
+			expan.CritterInit( npc, firstTime );
+		}
+	}
+}
+
+// Временно генерируемый моб, без обработчика смерти
+void _TempMobInit( ::Critter& npc, bool firstTime)
+{
+	mobInit(npc, firstTime);
+}
+
+void _MobInit( ::Critter& npc, bool firstTime)
+{
+	mobInit(npc, firstTime );	
+}
+
+void ActivateMobScript( ::Map& map) // Export
+{	
+	::array<::Critter@> critters = {};
+	for(uint i=0, iMax=::Pids_BestialMobs.length(); i<iMax; i++)
+		map.GetCritters(::Pids_BestialMobs[i], FIND_ALL|FIND_ONLY_NPC, critters);
+
+	for(uint i=0, iMax=critters.length(); i<iMax; i++)
+	{
+		if(critters[i].GetScriptId()==0 && (critters[i].Stat[ST_TEAM_ID]==0 || (critters[i].Stat[ST_TEAM_ID] >=24 && critters[i].Stat[ST_TEAM_ID]<=33) || critters[i].Stat[ST_TEAM_ID] == TEAM_FarmMobs ))
+			critters[i].SetScript( "Mk2@Mob::_MobInit" ); //_MobInit(critters[i],true);
+	}
+}

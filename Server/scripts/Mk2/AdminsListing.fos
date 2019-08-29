@@ -1,0 +1,265 @@
+// FOS Server
+
+void ModuleInit()
+{
+	__EventPlayerGetAccess.Subscribe( @PlayerGetAccess );
+	__EventPlayerAllowCommand.Subscribe( @PlayerIsAccess );
+}
+
+bool PlayerGetAccess( ::Critter@ player, int access, ::string@ password)
+{
+	Log("Warning! Access changed for player " + ::GetPlayerName ( player.Id ) + " ,from " + player.GetAccess() + " to " + access + ".");
+	
+	if( access == ACCESS_ADMIN && player.GetAccess() != ACCESS_ADMIN )
+		AddAdmin( player );
+		
+	if( access != ACCESS_ADMIN && player.GetAccess() == ACCESS_ADMIN )
+		DeleteAdmin( player );
+		
+	return true;
+}
+
+bool PlayerIsAccess( ::Critter@ player, ::string@ adminPanel, uint8 command )
+{
+	if(valid(adminPanel))
+		return false;
+	if(!validEngineObject(player))
+		return false;
+		
+	switch(command)
+	{
+	// ACCESS_CLIENT
+	case COMMAND_CHANGE_PASSWORD:
+	case COMMAND_DELETE_ACCOUNT:
+	case COMMAND_EXIT:
+	case COMMAND_GETACCESS:
+	case COMMAND_MYINFO:
+		return true;
+	// ACCESS_TESTER
+	case COMMAND_DROP_UID:
+	case COMMAND_PARAM:
+	case COMMAND_TOGLOBAL:
+		if(player.GetAccess()>=ACCESS_TESTER)
+			return true;
+		break;
+	// ACCESS_MODER
+	case COMMAND_ADDITEM:
+	case COMMAND_ADDITEM_SELF:
+	case COMMAND_ADDLOCATION:
+	case COMMAND_ADDNPC:
+	case COMMAND_BAN:
+	case COMMAND_CHECKVAR:
+	case COMMAND_CRITID:
+	case COMMAND_DISCONCRIT:
+	case COMMAND_GAMEINFO:
+	case COMMAND_KILLCRIT:
+	case COMMAND_MOVECRIT:
+	case COMMAND_RESPAWN:
+	case COMMAND_SETVAR:
+		if(player.GetAccess()>=ACCESS_MODER)
+			return true;
+		break;
+	// ACCESS_ADMIN
+	case COMMAND_LOADDIALOG:
+	case COMMAND_LOADLOCATION:
+	case COMMAND_LOADMAP:
+	case COMMAND_LOADSCRIPT:
+	case COMMAND_LOG:
+	case COMMAND_RELOAD_CLIENT_SCRIPTS:
+	case COMMAND_RELOADAI:
+	case COMMAND_RELOADDIALOGS:
+	case COMMAND_RELOADLOCATIONS:
+	case COMMAND_RELOADMAPS:
+	case COMMAND_RELOADSCRIPTS:
+	case COMMAND_RELOADTEXTS:
+	case COMMAND_REGENMAP:
+	case COMMAND_RUNSCRIPT:
+	case COMMAND_SETTIME:
+		if(player.GetAccess()==ACCESS_ADMIN)
+			return true;
+		break;
+	// Unknown command
+	default:
+		player.Say(SAY_NETMSG,"Unknown command.");
+		return false;
+	}
+
+	player.Say(SAY_NETMSG,"Access denied.");
+	return false;
+}
+
+AdminsListing::Administrations MenegAdmins;
+
+class Administrations
+{
+	Administrations(){Load();}
+	~Administrations(){Backup();}
+	
+	void AddAdmin(::Critter &cr)
+	{
+		Admins.insertLast(AdminsListing::CritterAdmin(cr));
+		//cr.Say(SAY_NETMSG,"Реквестов на создание фракций: "+RequestOrgs.length());
+	}
+	
+	void DeleteAdmin(::Critter &cr)
+	{
+		for(uint i = 0, iEnd = Admins.length(); i < iEnd; i++)
+			if(cr.Id == Admins[i].Id()) 
+			{
+				Admins.removeAt(i);
+				break;
+			}
+	}
+
+	void MessageAdmins(::string@ mess)
+	{
+		if(valid(mess))
+		{
+			for(uint i = 0, iEnd = Admins.length(); i < iEnd; i++)
+				Admins[i].Say(SAY_NETMSG,mess);
+		}
+	}
+	
+	bool IsAdmin(::Critter &cr)
+	{
+		for(uint i = 0, iEnd = Admins.length(); i < iEnd; i++)
+			if(cr.Id == Admins[i].Id()) 
+				return true;
+		return false;
+	}
+	
+	::string@ CheckOrgRequest()
+	{
+		if(RequestOrgs.length() > 0)
+			return RequestOrgs[0];
+		return "";
+	}
+	
+	void Load()
+	{		
+		file f;
+		if(f.open("BackupRequest","r") != -1)
+		{
+			::string str="";
+			f.readString(uint(f.getSize()),str);
+			f.close();
+			::array<::string@> sData=::splitEx(str,"[NEXT]");
+			for(uint i = 0, iEnd = sData.length(); i < iEnd; i++)
+			{
+				if(valid(sData[i]) && sData[i].length() != 0)
+				{
+					RequestOrgs.insertLast(sData[i]);
+					
+				}
+			}
+		}
+	}
+	
+	void Backup()
+	{
+		Log("Backup");
+		file f;
+		if(f.open("BackupRequest","w") != -1)
+		{
+			for(uint i = 0, iEnd = RequestOrgs.length(); i < iEnd; i++)
+			{
+				f.writeString(RequestOrgs[i]+"[NEXT]");
+			}
+			f.close();
+		}
+	}
+	
+	void RunOrgRequest(::Critter& cr)
+	{
+		if(IsAdmin(cr))
+		{
+			Fractions::_CreateFraction(cr,0,0,0,CheckOrgRequest(),null); 
+			RequestOrgs.removeAt(0);
+		}
+	}
+	
+	void RefuseOrgRequest(::Critter& cr)
+	{
+		if(IsAdmin(cr) && RequestOrgs.length() > 0) 
+			RequestOrgs.removeAt(0);
+	}
+	
+	void AddOrgRequest(::string& data)
+	{
+		RequestOrgs.insertLast(data);
+		
+		for(uint i = 0, iEnd = Admins.length(); i < iEnd; i++)
+			Admins[i].Say(SAY_NETMSG,"Поступил реквест на создание фракции.");
+	}
+	
+	::array<::string> RequestOrgs;
+	::array<AdminsListing::CritterAdmin> Admins;
+}
+
+class CritterAdmin
+{
+	CritterAdmin(::Critter& a)
+	{
+		@Admin=a;
+	}
+	
+	uint Id()
+	{
+		if(validEngineObject(Admin))
+			return Admin.Id;
+		return 0;
+	}
+	
+	void Say(uint8 howSay,::string& text)
+	{
+		if(validEngineObject(Admin))
+			Admin.Say(howSay,text);
+	}
+	
+	::Critter@ Admin;
+}
+
+void AddAdmin(::Critter &cr)
+{
+	MenegAdmins.AddAdmin(cr);
+}
+
+void DeleteAdmin(::Critter &cr)
+{
+	MenegAdmins.DeleteAdmin(cr);
+}
+
+void NewOrgRequest(::string& data)
+{
+	MenegAdmins.AddOrgRequest(data);
+}
+
+void CheckOrgRequest(::Critter& cr,int,int,int)
+{
+	CheckOrgRequest(cr);
+}
+
+void RunOrgRequest(::Critter& cr,int,int,int)
+{
+	RunOrgRequest(cr);
+}
+
+void RunOrgRequest(::Critter& cr)
+{
+	MenegAdmins.RunOrgRequest(cr);
+}
+
+void RefuseOrgRequest(::Critter& cr,int,int,int)
+{
+	RefuseOrgRequest(cr);
+}
+
+void RefuseOrgRequest(::Critter& cr)
+{
+	MenegAdmins.RefuseOrgRequest(cr);
+}
+
+void CheckOrgRequest(::Critter& cr)
+{
+	cr.Say(SAY_NETMSG,MenegAdmins.CheckOrgRequest());
+}

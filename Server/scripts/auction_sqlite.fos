@@ -1,0 +1,181 @@
+// Интеграция скриптов с бд на sqlite через AutionMK2.DLL
+class AuctionSqliteLotManager : IdbLotManager
+{
+    int TempLotId;     // Эта переменная необходима для временного назначаения SpecialId для предметов, которые разбиваются в стеке
+
+    AuctionSqliteLotManager()
+    {
+        TempLotId = 1;
+    }
+
+    int GetNextLotId( uint containerId )
+    {
+        TempLotId++;
+        return TempLotId;
+    }
+
+    // Сохраняет информацию об объявленном лоте
+    int OpenLot( int lotId, uint crId, uint itemId, uint lotSize, uint cost, uint timeCancel, string@ lexems, uint containerId, uint comissionOpen )
+    {
+        Item@ item = GetItem( itemId );
+        if( !validEngineObject( item ) )
+            return 0;
+        return OpenLotC( int( item.GetProtoId() ), crId, ( crId == 0 ? "|1210013Auction" : GetPlayerName( crId ) ), itemId, lotSize, cost, item.Info, __FullSecond, timeCancel, ( valid( lexems ) ? lexems : null ), containerId, comissionOpen );
+    }
+
+    // Достает список лотов, доступных на аукционе
+    int LoadLots( uint containerId, int sortFlags, int page, int pageSize, string@ sVal, int& totalLots, int[]& lots, string& lexems, int sort )
+    {
+        // Log("page:" + page);
+        page = page + 1;
+        if( valid( sVal ) && sVal == "" )
+            @sVal = null;
+        string@ additionalSort;
+        if( sort > 0 )
+        {
+            bool desc = sort >= 10;
+            if( desc )
+                sort = sort / 10;
+            switch( sort )
+            {
+            case SORT_NAME:
+                @additionalSort = " tItemProto.FOProtoName ";
+                break;
+            case SORT_SELLER:
+                @additionalSort = " tPlayer.FOPlayerName ";
+                break;
+            case SORT_LOT:
+                @additionalSort = " tLots.LotSize ";
+                break;
+            case SORT_PRICE:
+                @additionalSort = " tLots.LotSM ";
+                break;
+            case SORT_TIME:
+                @additionalSort = " tLots.TimeToCancel ";
+                break;
+            }
+            if( valid( additionalSort ) && desc )
+                additionalSort = additionalSort + " desc ";
+        }
+
+        string[] data;
+        int rows = 0,
+            columns = 0,
+            lotsCount = CountOpenLots( true, sVal, null, sortFlags );
+        if( lotsCount > 0 )
+        {
+            GetOpenLots( page, pageSize, true, sVal, additionalSort, null, false, sortFlags, rows, columns, data );
+            LotInfo[] lotData = StringArrayToLots( columns, rows, data );
+            totalLots = lotData.length();
+            ConvertLotInfoToArray( 0, pageSize, lotData, lots, lexems );
+        }
+        return lotsCount;
+    }
+
+    int GetAuctionItems( uint containerId, int maxPages, string[]& data, int& columns, int& rows )
+    {
+        GetOpenLots( 0, AUCTION_BUY_PAGESIZE * maxPages, true, null, null, null, false, 0, rows, columns, data );
+        return data.length();
+    }
+
+    // Покупка предмета
+    bool BuyLot( uint crId, uint itemId, uint lotId )
+    {
+        return CloseLot( lotId, crId, __FullSecond );
+    }
+    // Отмена лота
+    bool CancelLot( uint contId, uint itemId, uint crId, int lotId )
+    {
+        int rows = 0,
+            columns = 0;
+        string[] data;
+        GetOpenLots( 0, 0, true, null, null, "LotId = " + lotId, false, 0, rows, columns, data );
+        if( rows == 0 )
+        {
+            Critter@ cr = null;
+            if( crId > 0 )
+                @cr = GetCritter( crId );
+            if( validEngineObject( cr ) )
+                cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_CANCEL_LOT_NOTFOUND );
+            return false;
+        }
+        LotInfo[] lotData = StringArrayToLots( columns, rows, data );
+        if( crId > 0 && lotData[ 0 ].PlayerId != crId )     // CrId = 0, значит отмена автоматическая, по истечению срока
+        {
+            Critter@ cr = GetCritter( crId );
+            if( validEngineObject( cr ) )
+                cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_CANCEL_RESTRICTED );
+            return false;
+        }
+        return CCancelLot( lotId, __FullSecond );
+    }
+    // Получение списка лотов на отмену
+    void GetLotsForCancel( uint containerId, int timeCancel, int[]& lots )
+    {
+        int rows = 0,
+            columns = 0;
+        string[] data;
+        GetOpenLots( 0, 0, true, null, null, "TimeCanceled is null and IsActual = 1 and TimeToCancel < " + timeCancel, false, 0, rows, columns, data );
+        if( rows > 0 )
+        {
+            LotInfo[] lotData = StringArrayToLots( columns, rows, data );
+            for( uint i = 0, l = lotData.length(); i < l; i++ )
+                lots.insertLast( lotData[ i ].LotId );
+
+        }
+    }
+
+    LotInfo@ GetLotInfo( int itemId, int contId, int lotId )
+    {
+        int rows = 0,
+            columns = 0;
+        string[] data;
+        GetOpenLots( 0, 0, true, null, null, "LotId = " + lotId, false, 0, rows, columns, data );
+        if( rows == 0 )
+        {
+            return null;
+        }
+        LotInfo[] lotData = StringArrayToLots( columns, rows, data );
+        return lotData[ 0 ];
+    }
+
+    bool CheckItemValidForSale( uint pid )
+    {
+        return CheckSaleAllowed( pid );
+    }
+}
+
+
+// Преобразование массива строк в массив описаний лотов
+// При изменении числа выбираемых колонок, нужно менять и функцию
+// tLots.FOItemId, tItemProto.FOProtoId, tLots.LotId, tLots.PlayerIdSeller, tLots.LotComission, tLots.LotSize, tLots.LotSM, tLots.FOItemId_AContainer, \
+// //							tLots.TimeOpened, tLots.FOItemLexems, tLots.FOItemInfo, // tLots.TimeToCancel \
+//
+#define StrToUInt    # ( s, i, b )SafeStrToInt( s, b ); i = uint( b );
+
+LotInfo[] StringArrayToLots( int columns, int rows, string[] data )
+{
+    LotInfo[] lots;
+    // Log("rows" + rows + ";" + columns + "; arrl " + data.length());
+    for( int i = 0; i < rows; i++ )
+    {
+        LotInfo@ lot = LotInfo();
+        int      t = 0;
+        StrToUInt( data[ i * columns +  0 ], lot.ItemId, t );
+        StrToUInt( data[ i * columns +  1 ], lot.ItemPid, t );
+        StrToUInt( data[ i * columns +  2 ], lot.LotId, t );
+        StrToUInt( data[ i * columns +  3 ], lot.PlayerId, t );
+        StrToUInt( data[ i * columns +  4 ], lot.LotOpenComission, t );
+        StrToUInt( data[ i * columns +  5 ], lot.LotSize, t );
+        StrToUInt( data[ i * columns +  6 ], lot.Cost, t );
+        StrToUInt( data[ i * columns +  7 ], lot.ContainerId, t );
+        StrToUInt( data[ i * columns +  8 ], lot.TimeCreate, t );
+        lot.Lexems = ( data[ i * columns + 9 ] );
+        StrToUInt( data[ i * columns + 10 ], lot.Info, t );
+        StrToUInt( data[ i * columns + 11 ], lot.TimeToCancel, t );
+
+        lots.insertLast( lot );
+        // Log("i " + (i*columns) + "Pid " + lot.PlayerId + "data " + data[i*columns +  3]);
+    }
+    return lots;
+}

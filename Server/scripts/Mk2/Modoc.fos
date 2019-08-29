@@ -1,0 +1,112 @@
+// FOS Server
+// Authors: cvet, rifleman17
+
+enum Defines
+{
+	EntranceSouth = 0,
+	EntranceNorth = 1,
+
+	EntireSpawn = 17,
+
+	MessageKill = 17,
+
+	PositionFarmX = 940,
+	PositionFarmY = 213
+}
+
+bool Entrance( ::Location& modoc, ::Critter@[]& critters, uint8 entrance )
+{
+    if( entrance == ThisModule::Defines::EntranceNorth ) return critters[ 0 ].Skill[ SK_OUTDOORSMAN ] >= 50;
+    return true;
+}
+
+// Квест "Вредители на ферме"
+// Мэр Модока просит игрока убить одну гигантскую осу, поселившуюся на одной из ферм Модока
+void FarmInit( ::Map& map, bool firstTime )
+{
+    if( firstTime )
+    {
+        uint16 hx = 0, hy = 0;
+        if( Entires::GetEntireFreeHex( map, ThisModule::Defines::EntireSpawn, hx, hy ) )
+            map.AddNpc( NPC_PID_Wasp, hx, hy, ::Random( 0, 5 ), null, null, "Modoc::Wasp" );
+    }
+    map.SetEvent( MAP_EVENT_IN_CRITTER, "Modoc::FarmInCritter" );
+}
+
+void FarmInCritter( ::Map& map, ::Critter& cr )
+{
+    cr.SendMessage( ThisModule::Defines::MessageKill, cr.Id, MESSAGE_TO_ALL_ON_MAP );
+}
+
+void Wasp( ::Critter& wasp, bool firstTime )
+{
+    wasp.SetEvent( CRITTER_EVENT_DEAD, "Modoc::WaspDead" );
+    wasp.SetEvent( CRITTER_EVENT_MESSAGE, "Modoc::WaspMessage" );
+    wasp.StatBase[ ST_REPLICATION_TIME ] = -1;
+}
+
+void WaspDead( ::Critter& cr, ::Critter@ killer )
+{
+    ::Map@ map = cr.GetMap();
+    if( @map !is null ) return;
+	
+    ::Critter@[] players;
+    for( uint i = 0, iMax = map.GetCritters( 0, FIND_ALL | FIND_ONLY_PLAYERS, players ); i < iMax; i++ )
+    {
+        ::GameVar@ qVar = ::GetLocalVar( LVAR_q_mod_joe_giant_wasp, players[ i ].Id );
+        if( @qVar !is null && qVar.GetValue() == 1 ) qVar = 2;
+    }
+	map.GetLocation().AutoGarbage = true;
+}
+
+void WaspMessage( ::Critter& cr, ::Critter& fromCr, int message, int value )
+{
+    if( message == ThisModule::Defines::MessageKill ) 
+		cr.AddEnemyInStack( fromCr.Id );
+}
+
+void r_ShowMap( ::Critter& player, ::Critter@ npc )
+{
+    uint locId = ::CreateLocation( LOCATION_Quest_ModocWaspFarm, ThisModule::Defines::PositionFarmX, ThisModule::Defines::PositionFarmY, null );
+    if( locId == 0 ) return;
+	
+    ::Location @ loc = ::GetLocation( locId );
+    if( @loc !is null )
+    {
+        loc.Visible = false;
+        loc.AutoGarbage = false;
+    }
+    player.SetKnownLoc( true, loc.Id );
+    int[] values = { loc.Id, player.Id };
+    ::CreateTimeEvent( ::__FullSecond + REAL_DAY( 2 ), "Modoc::e_ResetWaspLoc", values, true );
+}
+
+uint e_ResetWaspLoc( uint[]@ values )
+{
+    ::Location @ loc = ::GetLocation( values[ 0 ] );
+    if( @loc !is null )
+        loc.AutoGarbage = true;
+
+    ::GameVar@ qVar = ::GetLocalVar( LVAR_q_mod_joe_giant_wasp, values[ 1 ] );
+    if( @qVar !is null && qVar.GetValue() == 1 )
+		qVar = 0;
+		
+    return 0;
+}
+
+// Квест "Морозко"
+void dlg_CountBottles( ::Critter& player, ::Critter@ npc, ::string@ lexems )
+{
+    if( IS_DIALOG_END( lexems ) || IS_DIALOG_SAY_MODE( lexems ) )
+        return;
+		
+    lexems = "$count" + _CritCountItem( player, Content::Item::BOTTLE_AMMIAK );
+}
+
+void r_AllBottles( ::Critter& player, ::Critter@ npc )
+{
+    uint bottles = _CritCountItem( player, Content::Item::BOTTLE_AMMIAK );
+    _CritDeleteItem( player, Content::Item::BOTTLE_AMMIAK, bottles );
+    player.StatBase[ ST_EXPERIENCE ] += bottles * 400;
+    _CritAddItem( player, Content::Item::BOTTLE_CAPS, bottles * 400 );
+}

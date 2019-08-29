@@ -1,0 +1,71 @@
+// FOS Server
+// Author: cvet
+// Radiation generic map
+
+//map_radiation -> MapRadiation
+
+uint RadiationLoop 
+{
+    get
+	{
+		return (::Random(10000,20000)); // Radiation damage time, in milliseconds
+	}
+}
+
+enum Defines
+{
+	RadiationDoseMin = 1,
+	RadiationDoseMax = 5
+}
+
+void Low(::Map& map, bool firstTime)
+{
+	map.SetLoopTime(0,RadiationLoop);
+	map.SetData(0,MapRadiation::Defines::RadiationDoseMin/2);
+	map.SetData(1,MapRadiation::Defines::RadiationDoseMax/2);
+	map.SetEvent(MAP_EVENT_LOOP_0,"MapRadiation::_MapLoop0");
+}
+
+void Medium(::Map& map, bool firstTime)
+{
+	map.SetLoopTime(0,RadiationLoop);
+	map.SetData(0,MapRadiation::Defines::RadiationDoseMin);
+	map.SetData(1,MapRadiation::Defines::RadiationDoseMax);
+	map.SetEvent(MAP_EVENT_LOOP_0,"MapRadiation::_MapLoop0");
+}
+
+void High(::Map& map, bool firstTime)
+{
+	map.SetLoopTime(0,RadiationLoop);
+	map.SetData(0,MapRadiation::Defines::RadiationDoseMin*2);
+	map.SetData(1,MapRadiation::Defines::RadiationDoseMax*2);
+	map.SetEvent(MAP_EVENT_LOOP_0,"MapRadiation::_MapLoop0");
+}
+
+void Deadly(::Map& map, bool firstTime)
+{
+	map.SetLoopTime(0,RadiationLoop);
+	map.SetData(0,MapRadiation::Defines::RadiationDoseMin*10);
+	map.SetData(1,MapRadiation::Defines::RadiationDoseMax*5);
+	map.SetEvent(MAP_EVENT_LOOP_0,"MapRadiation::_MapLoop0");
+}
+
+void _MapLoop0(::Map& map)
+{
+	AffectToAllCritters(map,0);
+	//map.SetLoopTime(0,RadiationLoop);
+}
+
+void AffectToAllCritters(::Map& map, int value)
+{
+	if(value==0) value=::Random(map.GetData(0),map.GetData(1));
+
+	::array<::Critter@> critters = {};
+	for(uint i=0, iMax=map.GetCritters(0,FIND_LIFE_AND_KO,critters); i<iMax; i++) 
+		Radiation::Affect(critters[i],value);
+}
+
+
+
+
+

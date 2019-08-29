@@ -1,0 +1,125 @@
+[comment]
+
+
+[data]
+lang=russ engl ukra
+
+[dialog]
+&
+1 1000 None 1 #
+3 1010 D _param p ST_INTELLECT < 4 #
+7 1020 D _param p ST_INTELLECT > 3 D _var p q_vc_barmen_delivery = 1 D _var p click_counter < 5 #
+10 1030 D _param p ST_INTELLECT > 3 D _var p click_counter > 4 #
+2 1040 D _param p ST_INTELLECT > 3 D _var p q_vc_barmen_delivery ! 1 D _var p click_counter < 5 @
+2 2000 None 0 #
+4 2010 D _script ncr_ratch@d_RatchTimeOutCheck 1 8806 D _var p click_counter < 5 #
+0 2020 @
+3 3000 None 0 @
+4 4000 None 0 #
+5 4010 #
+0 4020 @
+5 5000 None 0 #
+6 5010 @
+6 6000 None 0 #
+0 6010 D _script ncr_ratch@d_RatchTimeOutCheck 1 8806 R _var p q_vc_barmen_delivery = 1 R _script ncr_ratch@r_RatchTimeOutSet 2 8806 2880 #
+0 6020 @
+7 7000 None 0 #
+8 7010 D _item p PID_MEAT_ON_A_STICK > 4 D _item p PID_IGUANA_ON_A_STICK > 4 D _item p PID_MEAT_JERKY > 4 D _var p click_counter < 5 #
+0 7020 #
+9 7030 D _item p PID_MEAT_ON_A_STICK > 4 D _item p PID_IGUANA_ON_A_STICK > 4 D _item p PID_MEAT_JERKY > 4 D _var p click_counter > 4 @
+8 8000 None 0 #
+0 8010 D _item p PID_MEAT_ON_A_STICK > 4 D _item p PID_IGUANA_ON_A_STICK > 4 D _item p PID_MEAT_JERKY > 4 D _var p q_vc_barmen_delivery = 1 R _param p ST_EXPERIENCE + 1500 R _param p REPUTATION_VAULT_CITY + 1 R _item p PID_BOTTLE_CAPS + 450 R _item p PID_IGUANA_ON_A_STICK - 5 R _item p PID_MEAT_JERKY - 5 R _item p PID_MEAT_ON_A_STICK - 5 R _var p click_counter + 1 R _var p q_vc_barmen_delivery = 2 @
+9 9000 None 0 #
+0 9010 D _item p PID_MEAT_ON_A_STICK > 4 D _item p PID_IGUANA_ON_A_STICK > 4 D _item p PID_MEAT_JERKY > 4 D _var p q_vc_barmen_delivery = 1 R _item p PID_MEAT_ON_A_STICK - 5 R _item p PID_MEAT_JERKY - 5 R _item p PID_IGUANA_ON_A_STICK - 5 R _param p REPUTATION_VAULT_CITY + 1 R _item p PID_BOTTLE_CAPS + 450 R _param p ST_EXPERIENCE + 1500 R _var p click_counter + 1 R _var p q_vc_barmen_delivery = 2 @
+10 10000 None 0 &
+
+[russ]
+{100}{}{Бармен}
+{210}{}{Вы видите высокого человека в элегантном костюме. Он смотрит прямо перед собой и, кажется, не обращает внимания на посетителей.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{тупица }
+{1020}{}{взялись за доставку}
+{1030}{}{квест сдан}
+{1040}{}{обычный интеллект. Квест не взят}
+{2000}{}{Что-то хотели?}
+{2010}{}{Может, тебе какая-нибудь помощь нужна?}
+{2020}{}{Нет. Не сегодня.}
+{3000}{}{Удались, тупоголовый@ Господи, кого только пускают в город@Лично для вас ничего нет}
+{4000}{}{Нужна конечно. Если ты не против поработать.}
+{4010}{}{Не против. Излагай.}
+{4020}{}{Что-то часто работать приходится. Я пойду лучше.}
+{5000}{}{Видишь ли, многим гражданам уже опротивела синтезированная пища. Они готовы отдать неплохие деньги за натуральные продукты. Если бы ты @sex@|взялся||взялась| за поставки, я был бы очень благодарен.}
+{5010}{}{Что именно нужно?}
+{6000}{}{Ну скажем так: пять шашлыков, пять игуан на палочке и пять порций вяленого мяса. Плачу четыре с половиной  сотни. И моя благодарность.}
+{6010}{}{Договорились[выход]}
+{6020}{}{Что-то не хочется.[выход]}
+{7000}{}{Как мой заказ? @sex@|Принес||Принесла|?}
+{7010}{}{Ага. Забирай.}
+{7020}{}{Ещё нет[выход]}
+{7030}{}{Ага. Забирай.}
+{8000}{}{Зашибись. Так, это тебе. Кстати, приноси ещё  то же самое через пару дней. Я возьму. }
+{8010}{}{Хорошо[выход]}
+{9000}{}{Так, это тебе. Спасибо, но пока больше ничего приносить не нужно. }
+{9010}{}{Как скажешь.[выход]}
+{10000}{}{Как успехи?@@Привет @pname@!@@Кого я вижу!@@Рад видеть тебя!}
+
+[engl]
+{100}{}{Bartender}
+{210}{}{You see a tall man in an elegant suit. He is staring straight ahead and paying no attention to the patrons around him.}
+{1000}{}{Преддиалоговые установки orig: Vccoubar.msg}
+{1010}{}{тупица }
+{1020}{}{взялись за доставку}
+{1030}{}{квест сдан}
+{1040}{}{обычный интеллект. Квест не взят}
+{2000}{}{Yes? Can I help you?}
+{2010}{}{Maybe you need some help?}
+{2020}{}{No, not today.}
+{3000}{}{Shamble off.@@They'd let anyone into the city these days.@@For you - nothing.}
+{4000}{}{If you don't mind some work, I do.}
+{4010}{}{I don't, spit it out.}
+{4020}{}{Working just ain't my thing. I'd better go.}
+{5000}{}{You see, the citizens are already sick of synthetic food. They are ready to pay double, even triple for natural stuff. If you could supply it to me, I'd be grateful.}
+{5010}{}{What exactly do you need?}
+{6000}{}{Say, five helpings of iguana bits, five iguanas-on-a-stick and five portions of meat jerky. You get $450 and my gratitude.}
+{6010}{}{Deal[Leave]}
+{6020}{}{No, I don't like the idea.[Leave]}
+{7000}{}{What about those food supplies? Got it?}
+{7010}{}{Yes, here.}
+{7020}{}{Not yet. [Leave]}
+{7030}{}{Yes, here.}
+{8000}{}{Great! This is for you. I'd take more of the same stuff in a couple of days, by the way.}
+{8010}{}{Good [Leave]}
+{9000}{}{This is for you. Thank you, but I won't be buying any more supplies.}
+{9010}{}{Whatever you say. [Leave]}
+{10000}{}{How you've been?@@Hi, @pname@!@@Long time no see!@@It's been a while!}
+
+[ukra]
+{100}{}{200}
+{210}{}{Вы видите высокого человека в элегантном костюме. Он смотрит прямо перед собой и, кажется, не обращает внимания на посетителей.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{тупица }
+{1020}{}{взялись за доставку}
+{1030}{}{квест сдан}
+{1040}{}{обычный интеллект. Квест не взят}
+{2000}{}{Что-то хотели?}
+{2010}{}{Может, тебе какая-нибудь помощь нужна?}
+{2020}{}{Нет. Не сегодня.}
+{3000}{}{Удались, тупоголовый@ Господи, кого только пускают в город@Лично для вас ничего нет}
+{4000}{}{Нужна конечно. Если ты не против поработать.}
+{4010}{}{Не против. Излагай.}
+{4020}{}{Что-то часто работать приходится. Я пойду лучше.}
+{5000}{}{Видишь ли, многим гражданам уже опротивела синтезированная пища. Они готовы отдать неплохие деньги за натуральные продукты. Если бы ты @sex@|взялся||взялась| за поставки, я был бы очень благодарен.}
+{5010}{}{Что именно нужно?}
+{6000}{}{Ну скажем так: пять шашлыков, пять игуан на палочке и пять порций вяленого мяса. Плачу четыре с половиной  сотни. И моя благодарность.}
+{6010}{}{Договорились[выход]}
+{6020}{}{Что-то не хочется.[выход]}
+{7000}{}{Как мой заказ? @sex@|Принес||Принесла|?}
+{7010}{}{Ага. Забирай.}
+{7020}{}{Ещё нет[выход]}
+{7030}{}{Ага. Забирай.}
+{8000}{}{Зашибись. Так, это тебе. Кстати, приноси ещё  то же самое через пару дней. Я возьму. }
+{8010}{}{Хорошо[выход]}
+{9000}{}{Так, это тебе. Спасибо, но пока больше ничего приносить не нужно. }
+{9010}{}{Как скажешь.[выход]}
+{10000}{}{Как успехи?@@Привет @pname@!@@Кого я вижу!@@Рад видеть тебя!}
+

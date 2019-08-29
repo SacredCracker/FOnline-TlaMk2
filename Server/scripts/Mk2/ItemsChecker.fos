@@ -1,0 +1,83 @@
+// FOS Server
+
+void ModuleInit()
+{
+	::__EventStart.Subscribe( @StartServer );
+}
+
+bool StartServer( )
+{
+	if(::CreateTimeEvent(::__FullSecond + 60,"ItemsChecker::e_SearchLocMoreLoot",false)==0)
+	{
+		Log("Event \"e_SearchLocMoreLoot\" no working.");
+		return false;
+	}
+	return true;
+}
+
+
+// Очищение карт от итемов, глобальный эвент.
+uint64 CurrentMapIndex=0;
+
+uint e_SearchLocMoreLoot(::array<uint>@ values)
+{
+	Log("Продолжаем с "+CurrentMapIndex);
+	::array<::Map@> maps;
+	uint64 len=::GetAllMaps(0,maps);
+	uint startTick=::GetTick(); // Не больше 500 миллисекунд.
+	for(;CurrentMapIndex<len;CurrentMapIndex++)
+	{
+		if( validEngineObject( maps[CurrentMapIndex] ) && maps[CurrentMapIndex].GetProtoId()!=MAP_junk_yard_items)
+		{
+			::array<Item@> items;
+			::array<Critter@> crs;
+			maps[CurrentMapIndex].GetCritters(0, FIND_ALL|FIND_ONLY_NPC ,crs);
+			maps[CurrentMapIndex].GetItems(0, items);
+			if( items.length() >= 2000 )
+			{
+				Log("Внимание!! На карте с айди "+maps[CurrentMapIndex].Id+" "+items.length()+" итемов, запущена функция очистки карты.");
+				uint16 locPid=maps[CurrentMapIndex].GetLocation().GetProtoId();
+				if(locPid>=LOCATION_hiding_pleace_1 && locPid<=LOCATION_hiding_pleace22)
+				{
+					for(uint n=0, nMax=items.length(); n<nMax; n++)
+					{
+						//if(!items[n].Proto.Stackable) continue;
+						bool update=false;
+						for(uint m=(n+1); m<nMax;)
+						{
+							if(items[n].GetProtoId()==items[m].GetProtoId())
+							{
+								update=true;
+								items[n].SetCount(items[n].GetCount()+items[m].GetCount());
+								::DeleteItem(items[m]);
+								items.removeAt(m);
+								nMax--;
+								continue;
+							}
+							m++;
+						}
+						if(update) items[n].Update();
+					}
+				}
+				else 
+				{
+					::array<::Item@> deleteItems;
+					::SearchDeleteItem(items,deleteItems, 4000);
+					::DeleteItems(deleteItems);
+				}
+			}
+			if(crs.length()>=200)
+			{
+				Log("Внимание!! На карте с айди "+maps[CurrentMapIndex].Id+" "+crs.length()+" нпц.");
+			}
+			if(::GetTick()-startTick>=500)
+			{
+				Log("Закончили на карте "+CurrentMapIndex+" продолжим через минуту.");
+				return 60;
+			}
+		}
+	}
+	Log("Цикл пойска переполненных итемами карт закончен, продолжим через сутки.");
+	CurrentMapIndex=0;
+	return ::__TimeMultiplier * 86400;
+}

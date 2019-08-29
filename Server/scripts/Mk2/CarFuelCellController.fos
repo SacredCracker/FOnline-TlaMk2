@@ -1,0 +1,45 @@
+// FOS Common
+
+class FuelCellController : Item::ItemDescriptor
+{
+	FuelCellController( ::ItemMutual@ item )
+	{
+		super( @item );
+	}
+	
+	Mk2::Descriptor@ Copy( ::ItemMutual@ item ) override
+	{
+		return @ThisModule::FuelCellController( @item );
+	}
+
+	::string@ get_Name( ) override
+	{
+		return "FuelCellController_" + ( @RealIt !is null ?"" + RealIt.Id : "Null");
+	}
+	
+#ifdef __SERVER
+	bool GetData( UpgradeItem::Data& data, int trigger ) override
+	{
+		if( trigger == UpgradeItem::Triggered::LineDamage )
+		{
+			UpgradeItem::LineDamageData@ lineData = cast< UpgradeItem::LineDamageData@ >( @data );
+			if( @lineData !is null )
+			{
+				lineData.Effect = Content::Item::FIRE_LASER_EXPLOSION;
+				lineData.IsFire = true;
+				lineData.DamageMod *= RealIt.Proto.Upgrade_EffectValue1;
+			}
+			else Log( "Error upgrade data" );
+			return true;
+		}
+		return ItemDescriptor::GetData( data, trigger );
+	}
+#endif
+
+}
+
+void ModuleInit()
+{
+	Item::Defaults.set( "" + Content::Item::CAR_FUEL_CELL_CONTROLLER, @ThisModule::FuelCellController( null ) );
+}
+

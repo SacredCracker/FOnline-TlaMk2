@@ -1,0 +1,351 @@
+[comment]
+20/ караван НКР-Реддинг
+
+[data]
+lang=russ engl ukra
+
+[dialog]
+&
+1 1000 None 0 #
+8 1010 D _param p ST_INTELLECT < 4 #
+2 1020 D _var n name_mem_npc_player = 1 D _param p ST_INTELLECT > 3 #
+2 1030 D _var n name_mem_npc_player = 0 D _param p ST_INTELLECT > 3 R _var n name_mem_npc_player = 1 @
+2 2000 None 0 #
+3 2010 #
+6 2020 #
+7 2030 #
+0 2040 #
+9 2050 D _param p SK_SPEECH > 79 D _var p q_chosen = 2 #
+10 2060 D _var p q_chosen = 2 #
+20 2070 D _var p q_ncr_redding_caravan_escort = 8 R _var p q_ncr_redding_caravan_escort = 0 R _item p PID_BOTTLE_CAPS + 2000 R _param p ST_EXPERIENCE + 9000 #
+25 2080 @
+3 3000 None 0 #
+4 3010 #
+0 3020 #
+33 3030 @
+4 4000 None 0 #
+5 4010 #
+0 4020 @
+5 5000 None 0 #
+2 5010 #
+0 5020 @
+6 6000 None 0 #
+2 6010 #
+0 6020 @
+7 7000 None 0 #
+2 7010 #
+0 7020 @
+8 8000 None 0 @
+9 9000 None 0 #
+0 9010 R _var p q_chosen = 3 @
+10 10000 None 0 #
+0 10010 #
+11 10020 D _param p SK_BARTER < 50 D _item p PID_BOTTLE_CAPS > 999 R _item p PID_BOTTLE_CAPS - 1000 R _item n PID_BOTTLE_CAPS + 1000 #
+11 10030 D _item p PID_BOTTLE_CAPS > 799 D _param p SK_BARTER > 49 D _param p SK_BARTER < 100 R _item n PID_BOTTLE_CAPS + 800 R _item p PID_BOTTLE_CAPS - 800 #
+11 10040 D _item p PID_BOTTLE_CAPS > 499 D _param p SK_BARTER > 99 R _item p PID_BOTTLE_CAPS - 500 R _item n PID_BOTTLE_CAPS + 500 @
+11 11000 None 0 #
+0 11010 R _var p q_chosen = 3 @
+20 12000 None 0 #
+0 12010 #
+21 12020 D _param p SK_SPEECH > 100 D _var p npc_story = 0 @
+21 13000 None 0 #
+0 13010 R _item p PID_DEANS_ELECTRONICS + 1 R _var p npc_story = 1 #
+0 13020 R _item p PID_FIRST_AID_BOOK + 1 R _var p npc_story = 1 #
+0 13030 R _item p PID_SCOUT_HANDBOOK + 1 R _var p npc_story = 1 #
+0 13040 R _item p PID_GUNS_AND_BULLETS + 1 R _var p npc_story = 1 #
+0 13050 R _param p ST_EXPERIENCE + 4500 R _var p npc_story = 1 @
+25 14000 None 1 #
+27 14010 #
+28 14020 #
+26 14030 @
+26 15000 None 0 #
+0 15010 #
+29 15020 D _script caravan@d_NeedResetCaravanStatus 1 3 D _script caravan@d_CanResetCaravanStatus 1 3 R _script caravan@r_SetSelectedCaravan 1 3 #
+30 15030 D _script caravan@d_NeedResetCaravanStatus 1 3 D _script caravan@d_CanNotResetCaravanStatus 1 3 @
+27 16000 None 0 #
+0 16010 #
+31 16020 D _script caravan@d_NeedResetCaravanStatus 1 1 D _script caravan@d_CanResetCaravanStatus 1 1 R _script caravan@r_SetSelectedCaravan 1 1 #
+30 16030 D _script caravan@d_NeedResetCaravanStatus 1 1 D _script caravan@d_CanNotResetCaravanStatus 1 1 @
+28 17000 None 0 #
+0 17010 #
+32 17020 D _script caravan@d_NeedResetCaravanStatus 1 2 D _script caravan@d_CanResetCaravanStatus 1 2 R _script caravan@r_SetSelectedCaravan 1 2 #
+30 17030 D _script caravan@d_NeedResetCaravanStatus 1 2 D _script caravan@d_CanNotResetCaravanStatus 1 2 @
+29 18000 caravan@dlg_GenResetCaravanText 0 #
+0 18010 #
+0 18020 D _script caravan@d_CheckHasEnoughMoney 1 3 R _script caravan@r_ResetCaravanStatus 1 3 @
+30 19000 None 0 #
+0 19010 @
+31 20000 caravan@dlg_GenResetCaravanText 0 #
+0 20010 #
+0 20020 D _script caravan@d_CheckHasEnoughMoney 1 1 R _script caravan@r_ResetCaravanStatus 1 1 @
+32 21000 caravan@dlg_GenResetCaravanText 0 #
+0 21010 #
+0 21020 D _script caravan@d_CheckHasEnoughMoney 1 2 R _script caravan@r_ResetCaravanStatus 1 2 @
+33 22000 None 0 #
+34 22010 R _script caravan@r_SaveCaravanId 1 2 #
+34 22020 R _script caravan@r_SaveCaravanId 1 3 #
+34 22030 R _script caravan@r_SaveCaravanId 1 1 @
+34 23000 caravan@dlg_WhereIsCaravaner 0 #
+0 23010 &
+
+[russ]
+{100}{}{Джеймс}
+{200}{}{Вы видите большого, толстого мужчину с короткими, буйными волосами.}
+{210}{}{Вы видите Джеймса Xоффи, хозяина каравана.}
+{210}{}{Вы видите рубцеватого, выглядящего сильным мужчину с оценивающим взглядом.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{дурак}
+{1020}{}{знаком}
+{1030}{}{не знаком}
+{2000}{}{Привет, я Джеймс Хоффи. Но обычно меня зовут Джимми. Я заведую караванами, которые уходят из реддинга.}
+{2010}{}{Сейчас какие-нибудь караваны готовятся к отходу?}
+{2020}{}{Куда обычно уходят караваны из Реддинга?}
+{2030}{}{Что нового в городе?}
+{2040}{}{Просто осматриваюсь, Джимми. Спасибо, до свидания.}
+{2050}{}{Тут такое дело, мой друг [Описываете человека, про которого рассказал гробовщик] отправился несколько недель назад с одним из ваших караванов, мне бы хотелось догнать его, чтобы повидаться.}
+{2060}{}{Мне нужна информация об одном из караванов. Несколько недель назад с ним ушел незапланированный попутчик, помните такого?}
+{2070}{}{Джеймс. Я один из охранников каравана Даппо.}
+{2080}{}{Джимми, есть разговор, на тему охраны караванов...}
+{3000}{}{Этого я не знаю. Поспрашивай караванщиков. Обычно караваны уходят от сюда 1-го, 11-го и 21-го числа каждого месяца. Все налажено, как часы. Видишь ли, вот как оно устроено: когда в городе находится караван, которому нужны люди, начальник каравана ставит палатку здесь, прямо к югу от моей крепости. Все налажено, как часы.}
+{3010}{}{Твоя крепость? Что ты имеешь в виду?}
+{3020}{}{Понятно. Тогда, наверное, я поговорю с ними. Спасибо, до свидания.}
+{3030}{}{А где мне найти караванщика? Где они сейчас? Здесь, в Реддинге?}
+{4000}{}{Как же, мой дом - как там говорят? Пхе, тебя что, в палатке воспитывали?}
+{4010}{}{Вообще-то да.}
+{4020}{}{Все, я тебя наслушался, узколобый. До свидания.}
+{5000}{}{Ах, да. Тогда это многое объясняет. Хе-хе.}
+{5010}{}{Теперь, когда мы это выяснили, позволь задать тебе еще несколько вопросов.}
+{5020}{}{Ну да, а ты как думал. До свидания.}
+{6000}{}{Мы водим караваны по всей этой богом забытой пустыне. Вот что я тебе скажу: Мы отправляем золотую руду в Город Убежище, еще часть руды идет в Нью Рено (о-ля-ля, если ты понимаешь о чем я говорю), и даже эти ханжи из нкр у нас ее покупают.}
+{6010}{}{Позволь мне спросить у тебя еще кое-что.}
+{6020}{}{Все ясно. Пока.}
+{7000}{}{Последнее время новостей мало, по-моему. Обычное дело - шахты, караваны и все такое.}
+{7010}{}{Можно я еще спрошу.}
+{7020}{}{Ага. Ладно, я пойду.}
+{8000}{}{У тебя крыша не на месте, а?@@Добро пожаловать в большой город.@@Мне попадались лопаты поумнее тебя.@@Для работы на шахте у тебя ума не хватит.@@У тебя мозгов, как у червяка на крючке.}
+{9000}{}{Да, точно. Помню его по этой странной одежде с номером. Отчего же не помочь? Караван ушел в Сан-Франциско.}
+{9010}{}{Огромное спасибо! [Уйти]}
+{10000}{}{Ха. Любая информация стоит денег, а о маршрутах караванов тем более, может, ты бандит какой-то, откуда мне знать? 1500 монет и я укажу направление.}
+{10010}{}{Ладно, сам найду! [Уйти]}
+{10020}{}{Вот 1000 монет. Выкладывай маршрут.}
+{10030}{}{Вот 800 монет! Выкладывай маршрут.}
+{10040}{}{Вот 500 монет. Выкладывай маршрут.}
+{11000}{}{[Нагло улыбается] Так и быть. Чего только не сделаешь для хорошего человека?!  Караван двинулся в Сан-Франциско.}
+{11010}{}{Я не забуду твою "щедрость". [Уйти]}
+{12000}{}{Да, я знаю. Благодарю за службу. Вот твои деньги.}
+{12010}{}{ Спасибо. [Уйти]}
+{12020}{}{Джеймс, а может, накинешь немного?}
+{13000}{}{Нет, денег не дам, могу книжку дать, интересует?}
+{13010}{}{Я возьму "Электронику Дина".}
+{13020}{}{Я возьму книгу по первой помощи.}
+{13030}{}{Настольная книга скаута мне пригодится.}
+{13040}{}{Возьму "Оружие и боеприпасы".}
+{13050}{}{Нет, книги мне не нужны, оставь себе. [Уйти]}
+{14000}{}{Да, в чем дело? Какой караван?}
+{14010}{}{Караван Бена Вейда.}
+{14020}{}{Караван Савинелли.}
+{14030}{}{Караван Стенвелла.}
+{15000}{}{В чем заключается проблема с караваном Стенвелла?}
+{15010}{}{Думаю, я загляну в следующий раз.}
+{15020}{}{Во время каравана, который мне довелось охранять, произошло одно неприятное событие. Я хотел@sex@|||а| бы решить этот конфликт. Можно это как-то уладить?}
+{15030}{}{Во время каравана, который мне довелось охранять, произошло одно неприятное событие. Я хотел@sex@|||а| бы решить этот конфликт. Можно это как-то уладить?}
+{16000}{}{Что там случилось со стариной Беном?}
+{16010}{}{Думаю, я загляну в следующий раз.}
+{16020}{}{Во время каравана, который мне довелось охранять, произошло одно неприятное событие. Я хотел@sex@|||а| бы решить этот конфликт. Можно это как-то уладить?}
+{16030}{}{Во время каравана, который мне довелось охранять, произошло одно неприятное событие. Я хотел@sex@|||а| бы решить этот конфликт. Можно это как-то уладить?}
+{17000}{}{Какие проблемы с Энрико?}
+{17010}{}{Думаю, я загляну в следующий раз.}
+{17020}{}{Во время каравана, который мне довелось охранять, произошло одно неприятное событие. Я хотел@sex@|||а| бы решить этот конфликт. Можно это как-то уладить?}
+{17030}{}{Во время каравана, который мне довелось охранять, произошло одно неприятное событие. Я хотел@sex@|||а| бы решить этот конфликт. Можно это как-то уладить?}
+{18000}{}{Ах, да. @lex leader@ рассказал мне об этой проблеме. Тебе придется заплатить, чтобы мы забыли об этом досадном недоразумении. Плата составит @lex money@ монет.}
+{18010}{}{Я обдумаю условия и вернусь.}
+{18020}{}{Годится. [Отдать деньги]}
+{19000}{}{Прости, @pname@, но это невозможно. Ты слишком часто нас подводишь. Это не может продолжаться бесконечно.}
+{19010}{}{Очень жаль.}
+{20000}{}{Ах, да. @lex leader@ рассказал мне об этой проблеме. Тебе придется заплатить, чтобы мы забыли об этом досадном недоразумении. Плата составит @lex money@ монет.}
+{20010}{}{Я обдумаю условия и вернусь.}
+{20020}{}{Годится. [Отдать деньги]}
+{21000}{}{Ах, да. @lex leader@ рассказал мне об этой проблеме. Тебе придется заплатить, чтобы мы забыли об этом досадном недоразумении. Плата составит @lex money@ монет.}
+{21010}{}{Я обдумаю условия и вернусь.}
+{21020}{}{Годится. [Отдать деньги]}
+{22000}{}{Ты о каком караване говоришь?}
+{22010}{}{Савинелли.}
+{22020}{}{Стенвелл.}
+{22030}{}{Вейд.}
+{23000}{}{@lex name@... Я могу и ошибиться, но по-моему, тебе нужно в @lex where@}
+{23010}{}{Благодарю.}
+
+[engl]
+{100}{}{James Hoffy}
+{200}{}{You see a burly, thick-set man with short, bushy hair.}
+{210}{}{You see James Hoffy, the caravan master.}
+{210}{}{You see a scarred, tough-looking man with a calculating stare.}
+{1000}{}{Initial preferences}
+{1010}{}{stupid}
+{1020}{}{know}
+{1030}{}{not know}
+{2000}{}{Hello there, I'm James Hoffy. But usually people call me Jimmy. I organize the caravans around here.}
+{2010}{}{Are there any caravans ready to go out now?}
+{2020}{}{Where do the caravans from Redding usually go?}
+{2030}{}{Hear any news around town lately?}
+{2040}{}{I was just looking around, Jimmy. Thanks. Goodbye.}
+{2050}{}{You see, friend [you describe the man the undertaker told you about] set out with one of your caravans few weeks ago, I'd like to catch up with him.}
+{2060}{}{I need some information about one of your caravans. An unexpected companion set out with it several weeks ago, do you remember?}
+{2070}{}{James, I'm one of Duppo's caravans guard.}
+{2080}{}{Jimmy, I got to talk to you about caravan guard...}
+{3000}{}{That I don't know. You'd have to ask the caravan drivers. You can usually find a caravan here every day. Real neat and tidy that way. You see here, this is the way it works: When a caravan's in town and looking for help, the caravan master has his tent set up here just south of my castle. Real neat and tidy that way.}
+{3010}{}{Your castle? What do you mean?}
+{3020}{}{I see. I guess I'll talk to them, then. Thanks. Goodbye.}
+{3030}{}{Where can I find the caravan driver? Are they here, in Redding?}
+{4000}{}{What else is a man's home? Sheesh, were you brought up in a tent or something?}
+{4010}{}{Actually... I was.}
+{4020}{}{I've heard enough from you, damn bigot. Goodbye.}
+{5000}{}{Oh, yeah. Well, I guess that explains things, then. A lot of things. Heh, heh.}
+{5010}{}{Now that we've straightened that out, let me ask you something else.}
+{5020}{}{Yeah, I bet it has. Goodbye.}
+{6000}{}{We run caravans all over the fricking place. Let me tell you: We've got gold ore going out to Vault City, we've got some going out to New Reno (ooo-la-la, if ya know what I mean), and we've even got some going to those prissy bastards in the NCR.}
+{6010}{}{Now that we've straightened that out, let me ask you something else.}
+{6020}{}{That's all I need to know for now. Goodbye.}
+{7000}{}{Not a whole lot going on lately, I guess. Just the usual digging, and caravans and stuff.}
+{7010}{}{Let me ask you something.}
+{7020}{}{I just thought I'd check. Thanks and goodbye for now.}
+{8000}{}{You're too dumb for mine-work.@@Welcome to the big city.@@Your skylight leaks a little, don't it?@@I've used shovels with more brains 'an you.@@You're 'bout as smart as bait.}
+{9000}{}{Yeah, I remember his weird clothing with a number on It. Sure I'll help you. The caravan left for San Francisco.}
+{9010}{}{Thank you so much! [Leave]}
+{10000}{}{Heh. Any information has a price, especially caravan routes. What if you're some kind of a bandit, how should I know? $1500 and I'll tell you.}
+{10010}{}{I'll find him myself! [Leave]}
+{10020}{}{Here's $1000. Now tell me.}
+{10030}{}{Here's $800. Now tell me.}
+{10040}{}{Here's $500. Now tell me.}
+{11000}{}{[Smiles insolently] All right. Why not help a decent man after all?!  The caravan headed for San Francisco.}
+{11010}{}{I won't forget your "generosity". [Leave]}
+{12000}{}{Yeah, I know. Thank you for your service. Here's the money.}
+{12010}{}{Thank you. [Leave]}
+{12020}{}{Maybe you could mark up the price, James?}
+{13000}{}{I can't give you any money, but you can have a free book.}
+{13010}{}{I'll take "Dean's Electronics".}
+{13020}{}{I'll take a book on first aid.}
+{13030}{}{Scout Handbook will come in handy.}
+{13040}{}{I'll take "Guns and Bullets".}
+{13050}{}{I don't need no books. [Leave]}
+{14000}{}{Yeah, what's the matter? Which caravan?}
+{14010}{}{Ben Wade's caravan.}
+{14020}{}{Savinelli's caravan.}
+{14030}{}{Stanwell's caravan.}
+{15000}{}{What's the problem with Stanwell's caravan?}
+{15010}{}{I'll come by some other time.}
+{15020}{}{I had some trouble with some of your caravans. I want to resolve this issue. Can we settle this affair somehow?}
+{15030}{}{I had some trouble with some of your caravans. I want to resolve this issue. Can we settle this affair somehow?}
+{16000}{}{So what happened to good old Ben?}
+{16010}{}{I think I'll come by some other time.}
+{16020}{}{I had some trouble with some of your caravans. I want to resolve this issue. Can we settle this affair somehow?}
+{16030}{}{I had some trouble with some of your caravans. I want to resolve this issue. Can we settle this affair somehow?}
+{17000}{}{What's the problem with Enrico?}
+{17010}{}{I think I'll come by some other time.}
+{17020}{}{I had some trouble with some of your caravans. I want to resolve this issue. Can we settle this affair somehow?}
+{17030}{}{  I had some trouble with some of your caravans. I want to resolve this issue. Can we settle this affair somehow?}
+{18000}{}{Oh yes. @lex leader@ told me about it. You'll have to make it up to us, and we forget about it. It will be $@lex money@.}
+{18010}{}{I'll think it over.}
+{18020}{}{It's a deal. [Give him the money]}
+{19000}{}{I'm sorry, @pname@, but it's not possible. You let us down too often. It can't go on forever.}
+{19010}{}{It's a pity.}
+{20000}{}{Oh yes. @lex leader@ told me about it. You'll have to make it up to us, and we forget about it. It will be $@lex money@.}
+{20010}{}{I'll think it over.}
+{20020}{}{It's a deal. [Give the money]}
+{21000}{}{Oh yes. @lex leader@ told me about it. You'll have to make it up to us, and we forget about it. It will be $@lex money@.}
+{21010}{}{I'll think it over.}
+{21020}{}{It's a deal. [Give the money]}
+{22000}{}{What caravan are you talking about?}
+{22010}{}{Savinelli.}
+{22020}{}{Stanwell.}
+{22030}{}{Wade.}
+{23000}{}{@lex name@... I might be wrong, but I think you shold go to @lex where@}
+{23010}{}{Thanks.}
+
+[ukra]
+{100}{}{Джеймс}
+{200}{}{Вы видите большого, толстого мужчину с короткими, буйными волосами.}
+{210}{}{Вы видите Джеймса Xоффи, хозяина каравана.}
+{210}{}{Вы видите рубцеватого, выглядящего сильным мужчину с оценивающим взглядом.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{дурак}
+{1020}{}{знаком}
+{1030}{}{не знаком}
+{2000}{}{Привет, я Джеймс Хоффи. Но обычно меня зовут Джимми. Я заведую караванами, которые уходят из реддинга.}
+{2010}{}{Сейчас какие-нибудь караваны готовятся к отходу?}
+{2020}{}{Куда обычно уходят караваны из Реддинга?}
+{2030}{}{Что нового в городе?}
+{2040}{}{Просто осматриваюсь, Джимми. Спасибо, до свидания.}
+{2050}{}{Тут такое дело, мой друг [Описываете человека, про которого рассказал гробовщик] отправился несколько недель назад с одним из ваших караванов, мне бы хотелось догнать его, чтобы повидаться.}
+{2060}{}{Мне нужна информация об одном из караванов. Несколько недель назад с ним ушел незапланированный попутчик, помните такого?}
+{2070}{}{Джеймс. Я один из охранников каравана Даппо.}
+{2080}{}{Джимми, есть разговор, на тему охраны караванов...}
+{3000}{}{Этого я не знаю. Поспрашивай караванщиков. Обычно караваны уходят от сюда 1-го, 11-го и 21-го числа каждого месяца. Все налажено, как часы. Видишь ли, вот как оно устроено: когда в городе находится караван, которому нужны люди, начальник каравана ставит палатку здесь, прямо к югу от моей крепости. Все налажено, как часы.}
+{3010}{}{Твоя крепость? Что ты имеешь в виду?}
+{3020}{}{Понятно. Тогда, наверное, я поговорю с ними. Спасибо, до свидания.}
+{3030}{}{А где мне найти караванщика? Где они сейчас? Здесь, в Реддинге?}
+{4000}{}{Как же, мой дом - как там говорят? Пхе, тебя что, в палатке воспитывали?}
+{4010}{}{Вообще-то да.}
+{4020}{}{Все, я тебя наслушался, узколобый. До свидания.}
+{5000}{}{Ах, да. Тогда это многое объясняет. Хе-хе.}
+{5010}{}{Теперь, когда мы это выяснили, позволь задать тебе еще несколько вопросов.}
+{5020}{}{Ну да, а ты как думал. До свидания.}
+{6000}{}{Мы водим караваны по всей этой богом забытой пустыне. Вот что я тебе скажу: Мы отправляем золотую руду в Город Убежище, еще часть руды идет в Нью Рено (о-ля-ля, если ты понимаешь о чем я говорю), и даже эти ханжи из нкр у нас ее покупают.}
+{6010}{}{Позволь мне спросить у тебя еще кое-что.}
+{6020}{}{Все ясно. Пока.}
+{7000}{}{Последнее время новостей мало, по-моему. Обычное дело - шахты, караваны и все такое.}
+{7010}{}{Можно я еще спрошу.}
+{7020}{}{Ага. Ладно, я пойду.}
+{8000}{}{У тебя крыша не на месте, а?@@Добро пожаловать в большой город.@@Мне попадались лопаты поумнее тебя.@@Для работы на шахте у тебя ума не хватит.@@У тебя мозгов, как у червяка на крючке.}
+{9000}{}{Да, точно. Помню его по этой странной одежде с номером. Отчего же не помочь? Караван ушел в Сан-Франциско.}
+{9010}{}{Огромное спасибо! [Уйти]}
+{10000}{}{Ха. Любая информация стоит денег, а о маршрутах караванов тем более, может, ты бандит какой-то, откуда мне знать? 1500 монет и я укажу направление.}
+{10010}{}{Ладно, сам найду! [Уйти]}
+{10020}{}{Вот 1000 монет. Выкладывай маршрут.}
+{10030}{}{Вот 800 монет! Выкладывай маршрут.}
+{10040}{}{Вот 500 монет. Выкладывай маршрут.}
+{11000}{}{[Нагло улыбается] Так и быть. Чего только не сделаешь для хорошего человека?!  Караван двинулся в Сан-Франциско.}
+{11010}{}{Я не забуду твою "щедрость". [Уйти]}
+{12000}{}{Да, я знаю. Благодарю за службу. Вот твои деньги.}
+{12010}{}{ Спасибо. [Уйти]}
+{12020}{}{Джеймс, а может, накинешь немного?}
+{13000}{}{Нет, денег не дам, могу книжку дать, интересует?}
+{13010}{}{Я возьму "Электронику Дина".}
+{13020}{}{Я возьму книгу по первой помощи.}
+{13030}{}{Настольная книга скаута мне пригодится.}
+{13040}{}{Возьму "Оружие и боеприпасы".}
+{13050}{}{Нет, книги мне не нужны, оставь себе. [Уйти]}
+{14000}{}{Да, в чем дело? Какой караван?}
+{14010}{}{Караван Бена Вейда.}
+{14020}{}{Караван Савинелли.}
+{14030}{}{Караван Стенвелла.}
+{15000}{}{В чем заключается проблема с караваном Стенвелла?}
+{15010}{}{Думаю, я загляну в следующий раз.}
+{15020}{}{Во время каравана, который мне довелось охранять, произошло одно неприятное событие. Я хотел@sex@|||а| бы решить этот конфликт. Можно это как-то уладить?}
+{15030}{}{Во время каравана, который мне довелось охранять, произошло одно неприятное событие. Я хотел@sex@|||а| бы решить этот конфликт. Можно это как-то уладить?}
+{16000}{}{Что там случилось со стариной Беном?}
+{16010}{}{Думаю, я загляну в следующий раз.}
+{16020}{}{Во время каравана, который мне довелось охранять, произошло одно неприятное событие. Я хотел@sex@|||а| бы решить этот конфликт. Можно это как-то уладить?}
+{16030}{}{Во время каравана, который мне довелось охранять, произошло одно неприятное событие. Я хотел@sex@|||а| бы решить этот конфликт. Можно это как-то уладить?}
+{17000}{}{Какие проблемы с Энрико?}
+{17010}{}{Думаю, я загляну в следующий раз.}
+{17020}{}{Во время каравана, который мне довелось охранять, произошло одно неприятное событие. Я хотел@sex@|||а| бы решить этот конфликт. Можно это как-то уладить?}
+{17030}{}{Во время каравана, который мне довелось охранять, произошло одно неприятное событие. Я хотел@sex@|||а| бы решить этот конфликт. Можно это как-то уладить?}
+{18000}{}{Ах, да. @lex leader@ рассказал мне об этой проблеме. Тебе придется заплатить, чтобы мы забыли об этом досадном недоразумении. Плата составит @lex money@ монет.}
+{18010}{}{Я обдумаю условия и вернусь.}
+{18020}{}{Годится. [Отдать деньги]}
+{19000}{}{Прости, @pname@, но это невозможно. Ты слишком часто нас подводишь. Это не может продолжаться бесконечно.}
+{19010}{}{Очень жаль.}
+{20000}{}{Ах, да. @lex leader@ рассказал мне об этой проблеме. Тебе придется заплатить, чтобы мы забыли об этом досадном недоразумении. Плата составит @lex money@ монет.}
+{20010}{}{Я обдумаю условия и вернусь.}
+{20020}{}{Годится. [Отдать деньги]}
+{21000}{}{Ах, да. @lex leader@ рассказал мне об этой проблеме. Тебе придется заплатить, чтобы мы забыли об этом досадном недоразумении. Плата составит @lex money@ монет.}
+{21010}{}{Я обдумаю условия и вернусь.}
+{21020}{}{Годится. [Отдать деньги]}
+{22000}{}{Ты о каком караване говоришь?}
+{22010}{}{Савинелли.}
+{22020}{}{Стенвелл.}
+{22030}{}{Вейд.}
+{23000}{}{@lex name@... Я могу и ошибиться, но по-моему, тебе нужно в @lex where@}
+{23010}{}{Благодарю.}
+

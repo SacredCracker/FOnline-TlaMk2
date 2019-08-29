@@ -1,0 +1,255 @@
+// / Decraft
+// / Author: Kamex, Ra
+
+#define DC_EXPPERITEM     ( 10 )
+// #define DC_MINSKILL  (40) // Минимальный процент навыка, при котором уже доступен декрафт данного предмета
+#define CRAFT_OFFSET      ( 6000 )
+#define DEFAULT_RADIUS    ( 4 )                 // Радиус поиска станка в гексах, по умолчанию.
+
+// Возвращает индекс предмета по пиду
+uint16 GetIndexByPid( uint16 pid )
+{
+    for( uint16 i = 0, iMax = CraftList.length(); i < iMax; i++ )       // находим в таблице по пиду.
+        if( pid == CraftList[ i ].ResultItem )
+            return i;
+
+    return uint16( -1 );        // Нет в таблице
+}
+
+#ifndef __CLIENT
+// Вызов декрафта предмета с фикс-боя
+void unsafe_DecraftItem( Critter& player, int itemId, int, int, string@, int[] @ ) // Export
+{
+    player.Wait( 1000 );                                                           // r17 - попытка борьбы со спам-декрафтом
+    if( player.Timeout[ TO_SK_REPAIR ] > 0 )
+        return;
+
+    player.TimeoutBase[ TO_SK_REPAIR ] = __FullSecond + REAL_SECOND( 1 );
+    Item@ item = player.GetItemById( itemId );
+    if( not validEngineObject( item ) )
+    {
+        Log( "Невалидный итем! Id=" + itemId );
+        return;
+    }
+    decraftItem( player, item );
+}
+
+bool decraftItem( Critter& player, Item@ item )
+{
+    // В боевом таймауте декрафтить нельзя
+    if( player.Timeout[ TO_BATTLE ] > 0 )
+    {
+        player.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_TIMEOUT_BATTLE_WAIT );
+        return false;
+    }
+
+    // Мертвым декрафтить нельзя
+    if( player.IsDead() )
+    {
+        // Log("You're dead, fucker!");
+        player.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_USE_NOTHING );
+        return false;
+    }
+
+    // Если таймаут на науку больше 30 минут, то декрафтить нельзя
+    if( player.Timeout[ TO_SK_SCIENCE ] > int( REAL_MINUTE( 30 ) ) )
+    {
+        player.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_SKILL_WEARINESS );
+        return false;
+    }
+
+    if( item.Accessory != ACCESSORY_CRITTER )
+    {
+        Log( "Wrong item accessory" );
+        return false;         // проверка на нахождение в инвентаре
+    }
+
+    if( !decraftProces( player, item ) )
+    {
+        // Log("Декрафт вернул хуйню");
+        player.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_USE_NOTHING );
+        return false;
+    }
+
+    // Начисление опыта без привязки к количеству!
+    player.StatBase[ ST_EXPERIENCE ] += DC_EXPPERITEM;
+    player.TimeoutBase[ TO_SK_SCIENCE ] = player.Timeout[ TO_SK_SCIENCE ] + __FullSecond + REAL_SECOND( 40 );
+    player.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_DECRAFTED );
+    return true;
+}
+
+// Рекурсивная функция для внутренего декрафта
+bool decraftProces( Critter& player, Item@ item )
+{
+    return decraftProces( player, item, 0 );
+}
+
+bool decraftProces( Critter& player, Item@ item, uint16 percentForDeterioration )
+{
+    if( item.Proto.CraftInfo == IN_SEC_DECRAFT_NO_POSYBLE || item.Proto.CraftInfo == IN_DECRAFT_NO_POSYBLE )
+    {
+        player.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_USE_NOTHING );
+        // Log("1");
+        return false;
+    }
+
+    bool isNullItemCount = false;
+
+    int  index = -1;
+    for( uint i = 0, iMax = CraftList.length(); i < iMax; i++ )         // находим в таблице по пиду.
+        if( item.GetProtoId() == CraftList[ i ].ResultItem )
+            index = i;
+
+    if( index == -1 || index > int( CraftList.length() ) )
+    {
+        player.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_USE_NOTHING );
+        Log( "Wrong index: " + index + ". Item pid=" + item.GetProtoId() );
+        return false;
+    }
+
+    craftInfo ci = CraftList[ index ];
+
+    if( ci.Count > item.GetCount() )
+    {
+        // Log("ci.Count="+ci.Count);
+        // Log("item.GetCount()="+item.GetCount());
+        player.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_USE_NOTHING );
+        return false;
+    }
+
+    if( ci.Components.length() == 1 )
+    {
+        Log( "Error decraft " + item.GetProtoId() );
+        player.Say( SAY_NETMSG, " --Debug-- Error, decraft. " + item.GetProtoId() );
+        return false;
+    }
+
+    // Расчет процента
+    uint16           percentComponent = ( player.Skill[ SK_SCIENCE ] > 125 ? 125 : player.Skill[ SK_SCIENCE ] ) / 3 + player.Industrial[ IN_REPROCESS_MASTER ] * 2;
+
+    uint8            mode = 0;
+    const ProtoItem@ protoTools = player.GetSlotProto( SLOT_HAND1, mode );
+    if( !valid( protoTools ) )
+        return false;
+    if( protoTools.ProtoId == PID_MULTI_TOOL )
+        percentComponent += 10;
+    else if( protoTools.ProtoId == PID_SUPER_TOOL_KIT )
+        percentComponent += 20;
+    else
+    {
+        @protoTools = player.GetSlotProto( SLOT_HAND2, mode );
+        if( valid( protoTools ) )
+        {
+            if( protoTools.ProtoId == PID_MULTI_TOOL )
+            {
+                percentComponent += 10;
+                @protoTools = null;
+            }
+            else if( protoTools.ProtoId == PID_SUPER_TOOL_KIT )
+            {
+                percentComponent += 20;
+                @protoTools = null;
+            }
+            else
+                @protoTools = player.GetSlotProto( SLOT_BONUS, mode );
+        }
+        if( valid( protoTools ) )
+        {
+
+            if( protoTools.ProtoId == PID_MULTI_TOOL )
+            {
+                percentComponent += 10;
+                @protoTools = null;
+            }
+            else if( protoTools.ProtoId == PID_SUPER_TOOL_KIT )
+            {
+                percentComponent += 20;
+                @protoTools = null;
+            }
+        }
+    }
+    if( CheckWorkbenchNearPlayer( player, 15571, DEFAULT_RADIUS ) )
+        percentComponent += 15;
+
+    if( percentForDeterioration == 0 )
+    {
+        int maxRepairCount = ( item.Proto.MaxRepairCount > 0 ) ? ( ( item.Proto.MaxRepairCount + 10 ) * 10 ) : DEFAULT_MAX_REPAIR_COUNT;
+        percentForDeterioration = ( item.Deterioration / 100 + item.RadioChannel ) * 100 / maxRepairCount;
+        percentForDeterioration = CLAMP( percentForDeterioration, 0, 85 );
+    }
+
+    percentComponent -= ( percentComponent * percentForDeterioration ) / 100;
+
+    for( uint i = 0; i < ci.Components[ 0 ].length(); i++ )
+        for( uint j = 0, jMax = ci.Components[ 0 ][ i ].length(); j < jMax; j++ )
+        {
+            uint16 cPid = 0;
+            uint16 cCount = 0;
+            if( ci.Components[ 0 ][ i ][ j ] > CRAFT_OFFSET )
+            {
+                cPid = CraftList[ ci.Components[ 0 ][ i ][ j ] - CRAFT_OFFSET ].ResultItem;
+            }
+            else
+                cPid = ci.Components[ 0 ][ i ][ j ];
+            if( ci.Components[ 1 ].length() <= i || ci.Components[ 1 ][ i ].length() <= j )
+            {
+                Log( "Не указано количество компонентов для итема с PID: " + item.GetProtoId() );
+                return false;
+            }
+            cCount = ci.Components[ 1 ][ i ][ j ];
+
+            if( GetProtoItem( cPid ).CraftInfo == IN_DECRAFT_NO_POSYBLE )
+                continue;
+
+            cCount = ( cCount * percentComponent ) / 100;
+
+            bool isCraftPosyble = false;
+            if( GetProtoItem( cPid ).CraftInfo != IN_SEC_DECRAFT_NO_POSYBLE )
+                for( uint16 k = 0, kMax = CraftList.length(); k < kMax; k++ )                   // находим в таблице по пиду.
+                {
+                    if( cPid != CraftList[ k ].ResultItem )
+                        continue;
+
+                    isCraftPosyble = true;
+                }
+
+            if( isCraftPosyble )
+            {
+                // Log("isCraftPosyble");
+                if( cCount < 1 )
+                    cCount = 1;
+                for( uint16 k = 0, kMax = cCount; k < kMax; k++ )
+                {
+                    if( decraftProces( player, player.AddItem( cPid, 1 ), percentForDeterioration ) )
+                        isNullItemCount = true;
+                }
+                continue;
+            }
+
+            if( cCount == 0 )
+            {
+                if( percentComponent < Random( 0, 99 ) )
+                    continue;
+
+                player.AddItem( cPid, 1 );
+                isNullItemCount = true;
+                continue;
+            }
+
+            // Log("2");
+            // Log("cCount_2="+cCount);
+            // Log("=========================");
+            player.AddItem( cPid, cCount );
+            isNullItemCount = true;
+        }
+
+    uint16 realCount = item.GetCount();
+    if( ci.Count < realCount )
+        item.SetCount( realCount - ci.Count );
+    else if( ci.Count == realCount )
+        DeleteItem( item );
+    else
+        Log( "Ошибка декрафта для Pid=" + item.GetProtoId() + ". Количество предметов при декрафте, меньше чем количество предметов при крафте." );
+    return isNullItemCount;
+}
+#endif // !__CLIENT

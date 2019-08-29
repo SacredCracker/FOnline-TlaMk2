@@ -1,0 +1,804 @@
+// Author: rifleman17
+
+#ifndef __AUCTION__
+#define __AUCTION__
+
+#include "_macros.fos"
+#include "auction_h.fos"
+
+#ifdef __CLIENT
+void AuctionRefreshData( string searchValue, int filterFlags, int page, int sort )
+{
+    RunServerScriptUnsafe( "auction@unsafe_RefreshLots", page, filterFlags, sort, searchValue, null );
+}
+
+void AuctionOpenLot( int itemId, int lotSize, int price, int hours )
+{
+    CritterCl@ cr = GetChosen();
+    if( valid( cr ) )
+    {
+        ItemCl@[] items;
+        ItemCl@ item = null;
+        for( uint i = 0, l = cr.GetItems( -1, items ); i < l; i++ )
+        {
+            if( valid( items[ i ] ) && items[ i ].Id == uint( itemId ) )
+            {
+                @item = items[ i ];
+                break;
+            }
+        }
+
+        if( valid( item ) && item.Accessory == ACCESSORY_CRITTER && item.CritId == cr.Id )
+        {
+            if( lotSize > int( item.GetCount() ) )
+            {
+                Message( GetMsgStr( TEXTMSG_TEXT, STR_WRONG_LOT_SIZE ) );
+                return;
+            }
+            // Комиссия снимается с репл счета
+            int comission = COMISSION( hours, item.Proto.Cost, lotSize );
+            if( comission > cr.Stat[ ST_REPLICATION_MONEY ] )
+            {
+                Message( GetMsgStr( TEXTMSG_TEXT, STR_NOT_ENOUGH_MONEY ) );
+            }
+            int[] lotData = { itemId, lotSize, price, hours };
+            string lexems;
+            if( item.Lexems.length() > 0 )
+                lexems = item.Lexems;
+
+            RunServerScriptUnsafe( "auction@unsafe_AuctionOpenLot", 0, 0, 0, lexems, lotData );
+            return;
+        }
+    }
+    Message( FormatTags( GetMsgStr( TEXTMSG_TEXT, STR_COMMON_ERROR ), "$code" + 171717 ) );
+}
+
+
+
+
+#endif
+
+#ifdef __SERVER
+
+// Отмена лотов, у которых истек срок действия
+// Запуск эвента на отмену
+
+void SetAuctionLotCheckEvent()
+{
+    CreateTimeEvent( __FullSecond, "e_AuctionLotCheck", 0, false );
+}
+
+uint e_AuctionLotCheck( uint[] @ values )
+{
+    // Log("Checking lots for cancel.");
+    AuctionManager@ manager = GetManager();
+    if( valid( manager ) )
+    {
+        if( valid( manager.DBDataManager ) )
+        {
+            int[] lots;
+            manager.DBDataManager.GetLotsForCancel( 0, __FullSecond, lots );
+            // Log("Lots to cancel: " + lots.length());
+            for( uint i = 0, l = lots.length(); i < l; i++ )
+            {
+                // Log("Canceling lot" + lots[i]);
+                manager.CancelLotAuto( lots[ i ] );            // .CancelLot(0, 0, 0, lots[i]);
+            }
+        }
+    }
+    return REAL_HOUR( 1 );
+}
+
+// DIALOGS
+
+bool d_AuctionValid( Critter& cr, Critter@ npc )
+{
+    return valid( GetManager().GetAuctionContainer( cr ) );
+}
+
+void r_AuctionBuy( Critter& cr, Critter@ npc )
+{
+    CreateTimeEvent( __FullSecond, "auction@e_AuctionBuy", cr.Id, false );
+}
+
+uint e_AuctionBuy( uint[] @ values )
+{
+    if( valid( values ) && values.length() == 1 )
+    {
+        Critter@ cr = GetCritter( values[ 0 ] );
+        if( valid( cr ) && !cr.IsNotValid )
+            ShowAuctionBuyScreenForCritter( cr );
+    }
+    return 0;
+}
+
+void unsafe_ShowAuctionBuyScreen( Critter& player, int, int, int, string@, int[] @ )
+{
+    ShowAuctionBuyScreenForCritter( player );
+}
+
+
+void ShowAuctionBuyScreenForCritter( Critter& cr )
+{
+    int[] data;
+    string lexems;
+    int    pageSize = AUCTION_BUY_PAGESIZE,
+           TypeFilterFlags = 0,
+           page = 0;
+
+    SETFLAG( TypeFilterFlags, ATF_WEAPON );
+    SETFLAG( TypeFilterFlags, ATF_ARMOUR );
+    SETFLAG( TypeFilterFlags, ATF_AMMO );
+    SETFLAG( TypeFilterFlags, ATF_DRUGS );
+    SETFLAG( TypeFilterFlags, ATF_MISC );
+
+    AuctionManager@ manager = GetManager();
+    if( valid( manager ) )
+    {
+        int totalLots = 0;
+        manager.GetAuctionAvailableLots( cr, page, pageSize, TypeFilterFlags, "", totalLots, data, lexems, 0 );
+        if( data.length() > 0 )
+        {
+            int maxPages = totalLots / ( pageSize );
+            if( maxPages * ( pageSize ) < totalLots )
+                maxPages++;
+            cr.RunClientScript( "client_auction_buy_screen@ShowBuyScreen", data.length(), page, maxPages, lexems, data );
+        }
+        else
+        {
+            cr.RunClientScript( "client_auction_buy_screen@ShowBuyScreen", data.length(), page, int( data.length() ) / pageSize, null, null );
+        }
+    }
+}
+
+void r_AuctionSell( Critter& cr, Critter@ npc )
+{
+    CreateTimeEvent( __FullSecond, "e_AuctionSell", cr.Id, false );
+}
+
+uint e_AuctionSell( uint[] @ values )
+{
+    if( valid( values ) && values.length() == 1 )
+    {
+        Critter@ cr = GetCritter( values[ 0 ] );
+        if( valid( cr ) && !cr.IsNotValid )
+            ShowAuctionSellScreenForCritter( cr );
+    }
+    return 0;
+}
+
+void unsafe_ShowAuctionSellScreen( Critter& player, int, int, int, string@, int[] @ )
+{
+    ShowAuctionSellScreenForCritter( player );
+}
+
+void ShowAuctionSellScreenForCritter( Critter& cr )
+{
+    int[] itemIds;
+    Item@[] items;
+    for( uint i = 0, l = cr.GetItems( -1, items ); i < l; i++ )
+    {
+        if( valid( items[ i ] ) && !items[ i ].IsNotValid && items[ i ].GetProtoId() != PID_BOTTLE_CAPS )
+        {
+            itemIds.insertLast( items[ i ].Id );
+            itemIds.insertLast( items[ i ].GetProtoId() );
+            itemIds.insertLast( items[ i ].GetCount() );
+        }
+    }
+    if( itemIds.length() > 0 )
+        cr.RunClientScript( "client_auction_sell_screen@ShowSellScreen", 0, 0, 0, null, itemIds );
+    else
+        cr.RunClientScript( "client_auction_sell_screen@ShowSellScreen", 0, 0, 0, null, null );
+}
+
+import Item@ GetBankContainer( Map@ map ) from "Mk2";
+
+// UNSAFW FUNCTIONS
+
+# define DL    # ( s ) // (Log("" + s))
+
+void unsafe_CancelLot( Critter& player, int itemId, int lotId, int, string@, int[] @ )
+{
+    // Log("unsafe_CancelLot called");
+    AuctionManager@ manager = GetManager();
+    if( valid( manager ) )
+    {
+        manager.CancelLotServer( player, itemId, lotId );
+    }
+}
+
+void unsafe_BuyLot( Critter& player, int itemId, int lotId, int, string@, int[] @ )
+{
+    // Log("unsafe_BuyLot called. ItemId " + itemId);
+    AuctionManager@ manager = GetManager();
+    if( valid( manager ) )
+    {
+        manager.BuyItemServer( player, itemId, lotId );
+    }
+}
+
+void unsafe_RefreshLots( Critter& player, int page, int flags, int param, string@ searchValue, int[] @ )
+{
+    AuctionManager@ manager = GetManager();
+    if( valid( manager ) )
+    {
+        int[] data;
+        string lexems;
+        int    pageSize = AUCTION_BUY_PAGESIZE,
+               totalLots = 0;
+
+        manager.GetAuctionAvailableLots( player, page, pageSize, flags, ( valid( searchValue ) ? searchValue : "" ), totalLots, data, lexems, param );
+        if( data.length() > 0 )
+        {
+            int maxPages = totalLots / ( pageSize );
+            if( maxPages * ( pageSize ) < totalLots )
+                maxPages++;
+            player.RunClientScript( "client_auction_buy_screen@RefreshBuyScreen", data.length(), page, maxPages, lexems, data );
+            // Log("running client script. lotsCount: " + data.length() + "; Page: " + page + "; MAXIM " + maxPages);
+        }
+        else
+        {
+            player.RunClientScript( "client_auction_buy_screen@RefreshBuyScreen", 0, page, 0, null, null );
+            // Log("running EMPTY script!!");
+        }
+    }
+}
+
+
+
+# include "serializator.fos"
+void unsafe_AuctionOpenLot( Critter& player, int param0, int param1, int param2, string@ lexems, int[] @ lotData )
+{
+    AuctionManager@ manager = GetManager();
+    if( valid( manager ) && valid( lotData ) &&  lotData.length() == 4 )
+    {
+        manager.OpenLotServer( player, lotData[ 0 ], lotData[ 1 ], lotData[ 2 ], lotData[ 3 ], lexems );
+    }
+}
+
+# include "auction_sqlite.fos"
+
+AuctionManager@ GetManager()
+{
+    return AuctionManager();
+}
+
+class AuctionManager : IFonlineLotManager
+{
+    IdbLotManager@ DBDataManager;
+    AuctionManager()
+    {
+        @DBDataManager = AuctionSqliteLotManager();         // Для варианта бех sqlite разкомментировать нижнюю строку и закомментировать эту
+        // @DBDataManager = AuctionAnyDataLotManager();
+    }
+
+    void OpenLotServer( Item& item, Map& auctionMap, uint lotCost, uint sellHours, string@ lexems )
+    {
+        Item@ container = GetAuctionContainer( auctionMap );
+        if( valid( container ) && !container.IsNotValid && valid( DBDataManager ) )
+        {
+            int lotId = DBDataManager.GetNextLotId( container.Id );
+            if( lotId > 0 )
+            {
+                int newId = DBDataManager.OpenLot( lotId, 0, item.Id, item.GetCount(), lotCost, CANCEL_TIME( sellHours ), lexems, container.Id, 0 );
+                MoveItem( item, item.GetCount(), container, newId );
+            }
+        }
+    }
+
+    void OpenLotServer( Critter& cr, uint itemId, uint lotSize, uint lotCost, uint sellHours, string@ lexems )
+    {
+        Item@ itemFound = GetItem( itemId );
+        // Предмет должен быть у персонажа в инвентаре
+        if( valid( itemFound ) && !itemFound.IsNotValid )
+        {
+            Item@ item = null;
+            Item@[] critterItems;
+            for( uint i = 0, l = cr.GetItems( -1, critterItems ); i < l; i++ )
+            {
+                @item = critterItems[ i ];
+                if( valid( item ) && !item.IsNotValid && item.Id == itemFound.Id )
+                    break;
+                @item = null;
+            }
+            if( valid( item ) && !item.IsNotValid )
+            {
+                if( item.IsDeteriorable() )
+                {
+                    int maxRepairCount = ( item.Proto.MaxRepairCount > 0 ) ? ( ( item.Proto.MaxRepairCount + 10 ) * 10 ) : DEFAULT_MAX_REPAIR_COUNT;
+                    if( FLAG( item.BrokenFlags, BI_ETERNAL ) || FLAG( item.BrokenFlags, BI_NOTRESC ) ||
+                        FLAG( item.BrokenFlags, BI_BROKEN ) || FLAG( item.BrokenFlags, BI_HIGHBROKEN ) ||
+                        FLAG( item.BrokenFlags, BI_NORMBROKEN ) || FLAG( item.BrokenFlags, BI_LOWBROKEN ) ||
+                        item.RadioChannel > int(maxRepairCount * 0.1) )
+                    {
+                        cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_WRONG_LOT_SIZE );
+                        return;
+                    }
+                }
+                if( !DBDataManager.CheckItemValidForSale( item.GetProtoId() ) )
+                {
+                    cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_ITEM_WRONG );
+                    return;
+                }
+                if( item.GetCount() < lotSize )
+                {
+                    cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_WRONG_LOT_SIZE );
+                    return;
+                }
+                int comission = COMISSION( sellHours, item.Proto.Cost, lotSize );
+                if( cr.Stat[ ST_REPLICATION_MONEY ] < comission )
+                {
+                    cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_NOT_ENOUGH_MONEY );
+                    return;
+                }
+                Item@ container = GetAuctionContainer( cr );
+                if( valid( container ) && !container.IsNotValid && valid( DBDataManager ) )
+                {
+                    int lotId = DBDataManager.GetNextLotId( container.Id );
+                    if( lotId > 0 )
+                    {
+                        cr.StatBase[ ST_REPLICATION_MONEY ] -= comission;
+                        MoveItem( item, lotSize, container, lotId );
+                        @item = container.GetItem( item.GetProtoId(), lotId );
+
+                        if( valid( item ) && !item.IsNotValid )
+                        {
+                            int newId = DBDataManager.OpenLot( lotId, cr.Id, item.Id, lotSize, lotCost, CANCEL_TIME( sellHours ), lexems, container.Id, comission );
+                            cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_LOT_OPEN_SUCCESS, "$comission" + comission );
+                            MoveItem( item, lotSize, container, newId );
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_NOTFOUND_ITEM );
+        }
+    }
+
+    Item@ GetAuctionContainer( int mapPid, int skip )
+    {
+        Map@ map = GetMapByPid( mapPid, skip );
+        if( valid( map ) && !map.IsNotValid )
+            return GetAuctionContainer( map );
+        return null;
+    }
+
+    Item@ GetAuctionContainer( Map& map )
+    {
+        GameVar@ contId  = GetLocalVar( LMVAR_AUCTION_CONT_ID, map.Id );
+        if( !valid( contId ) || contId == 0 )
+        {
+            return null;
+        }
+        return GetItem( contId.GetValue() );
+    }
+
+    Item@ GetAuctionContainer( Critter& cr )
+    {
+        Map@ map = cr.GetMap();
+        if( !valid( map ) || map.IsNotValid )
+        {
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_WRONG_MAP );
+            return null;
+        }
+        GameVar@ contId  = GetLocalVar( LMVAR_AUCTION_CONT_ID, map.Id );
+        if( !valid( contId ) || contId == 0 )
+        {
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_CANT_FIND_AUC_CONT );
+            return null;
+        }
+        Item@ container = GetItem( contId.GetValue() );
+        if( !valid( container ) || container.IsNotValid )
+        {
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_CANT_FIND_AUC_CONT2 );
+            return null;
+        }
+        return container;
+    }
+
+    void GetAuctionAvailableLots( Critter& cr, int page, int pageSize, int sortFlags, string searchValue, int& totalLots, int[]& lots, string& lexems, int sort )
+    {
+        // Log("searchVal " + searchValue);
+        Item@ cont = GetAuctionContainer( cr );
+        if( valid( cont ) && !cont.IsNotValid && valid( DBDataManager ) )
+        {
+            int lotSize = 0;
+            totalLots = DBDataManager.LoadLots( cont.Id, sortFlags, page, pageSize, searchValue, lotSize, lots, lexems, sort );
+            if( totalLots == 0 )
+            {
+                cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_LOTS_NOT_FOUND );
+            }
+            // Log("GET totalLots " + totalLots);
+        }
+    }
+
+
+    void BuyItemServer( Critter& cr, int itemId, int lotId )
+    {
+        Item@ item = GetItem( itemId );
+        if( !valid( item ) || item.IsNotValid )
+        {
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_BUY_LOT_NOT_FOUND );
+            if( valid( DBDataManager ) )
+                DBDataManager.CancelLot( 0, 0, 0, lotId );
+            return;
+        }
+        Item@ cont = GetAuctionContainer( cr );
+        if( !valid( cont ) || cont.IsNotValid )
+        {
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_CANT_FIND_AUC_CONT );
+            return;
+        }
+        LotInfo@ lot = DBDataManager.GetLotInfo( itemId, cont.Id, lotId );
+        if( !valid( lot ) )
+        {
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_BUY_LOT_NOT_FOUND );
+            return;
+        }
+        int sellerId = lot.PlayerId,
+            cost = lot.Cost;
+
+        if( lot.PlayerId == cr.Id )
+        {
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_BUY_SAME_PLAYER );
+            return;
+        }
+        if( cr.Stat[ ST_REPLICATION_MONEY ] < cost )
+        {
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_BUY_NOT_ENOUGH_MONEY );
+            return;
+        }
+        Item@ hubCont = GetHubBunkContainer( cr );
+        if( !valid( hubCont ) || hubCont.IsNotValid )
+        {
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_CANNOT_FOUND_BANK );
+            return;
+        }
+        if( valid( DBDataManager ) )
+        {
+            if( !DBDataManager.BuyLot( cr.Id, itemId, lotId ) )
+            {
+                // Log("LotId +" + lotId);
+                cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_LOT_BUY_ERROR );
+                return;
+            }
+        }
+        if( valid( cont ) && !cont.IsNotValid && cont.Accessory == ACCESSORY_HEX )
+        {
+            uint16 x = 0;
+            uint16 y = 0;
+            Map@   map = cont.GetMapPosition( x, y );
+            if( valid( map ) && !map.IsNotValid )
+            {
+                Item@ bankCont = GetBankContainer( map );
+                Item@ itemToCont = GetItem( itemId );
+                if( valid( bankCont ) && !bankCont.IsNotValid && valid( itemToCont ) && !itemToCont.IsNotValid )
+                {
+                    // Log("Itemcount: " + item.GetCount());
+                    MoveItem( itemToCont, itemToCont.GetCount(), bankCont, cr.Id );
+                }
+            }
+        }
+
+        lot.ClearVars();
+        // MoveItem(item, item.GetCount(), hubCont, cr.Id);
+        // Log("Itemcount: " + item.GetCount());
+        if( valid( item ) && !item.IsNotValid && valid( hubCont ) && !hubCont.IsNotValid )
+        {
+            cr.StatBase[ ST_REPLICATION_MONEY ] -= cost;
+            string lexems = "$itemName@msg ITEM " + ( item.GetProtoId() * 100 ) + "@$sellerName" + ( sellerId > 0 ? GetPlayerName( sellerId ) : "Неизвестно" ) + "$cost" + cost;
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_BUY_ITEM_SUCCESS, lexems );
+            if( sellerId > 0 )
+            {
+                hubCont.AddItem( PID_BOTTLE_CAPS, cost, sellerId );
+                Critter@ seller = GetCritter( sellerId );
+                if( valid( seller ) && !seller.IsNotValid && seller.IsPlayer() )
+                {
+                    seller.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_ITEM_SOLD, "$itemName@msg ITEM " + ( item.GetProtoId() * 100 ) + "@$buyerName" + GetPlayerName( cr.Id ) + "$cost" + cost );
+                }
+            }
+        }
+    }
+
+
+    Item@ GetHubBunkContainer( Critter& cr )
+    {
+        Map@ map = cr.GetMap();
+        if( valid( map ) && !map.IsNotValid )
+            return GetBankContainer( map );
+        return null;
+    }
+
+    void CancelLotAuto( int lotId )
+    {
+        LotInfo@ lot = DBDataManager.GetLotInfo( 0, 0, lotId );
+        if( valid( lot ) )
+        {
+            if( valid( DBDataManager ) && DBDataManager.CancelLot( lot.ContainerId, lot.ItemId, lot.PlayerId, lotId ) )
+            {
+                Item@ cont = GetItem( lot.ContainerId );
+                if( valid( cont ) && !cont.IsNotValid && cont.Accessory == ACCESSORY_HEX )
+                {
+                    uint16 x = 0;
+                    uint16 y = 0;
+                    Map@   map = cont.GetMapPosition( x, y );
+                    if( valid( map ) && !map.IsNotValid )
+                    {
+                        Item@ bankCont = GetBankContainer( map );
+                        Item@ item = GetItem( lot.ItemId );
+                        if( valid( bankCont ) && valid( item ) && !bankCont.IsNotValid && !item.IsNotValid )
+                        {
+                            if( lot.PlayerId > 0 )
+                                MoveItem( item, item.GetCount(), bankCont, lot.PlayerId );
+                            else
+                            {
+                                DeleteItem( item );
+                                @item = null;
+                            }
+                        }
+                        if( lot.PlayerId > 0 )
+                        {
+                            Critter@ cr = GetCritter( lot.PlayerId );
+                            if( valid( cr ) && !cr.IsNotValid )
+                                cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_LOT_CANCELED, "$itemName@msg ITEM " + ( lot.ItemPid * 100 + lot.Info ) + "@" + lot.Lexems );
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+    // Отмена аукциона игроком
+    void CancelLotServer( Critter& cr, int itemId, int lotId )
+    {
+        Item@ item = GetItem( itemId );
+        if( !valid( item ) || item.IsNotValid )
+        {
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_BUY_LOT_NOT_FOUND );
+            return;
+        }
+        Item@ cont = GetAuctionContainer( cr );
+        if( !valid( cont ) || cont.IsNotValid )
+        {
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_CANT_FIND_AUC_CONT );
+            return;
+        }
+        LotInfo@ lot = DBDataManager.GetLotInfo( itemId, cont.Id, lotId );
+        if( !valid( lot ) )
+        {
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_CANCEL_LOT_ERROR );
+            return;
+        }
+        if( valid( DBDataManager ) && DBDataManager.CancelLot( cont.Id, itemId, cr.Id, lotId ) )
+        {
+            Item@ cont = GetItem( lot.ContainerId );
+            if( valid( cont ) && !cont.IsNotValid && cont.Accessory == ACCESSORY_HEX )
+            {
+                uint16 x = 0;
+                uint16 y = 0;
+                Map@   map = cont.GetMapPosition( x, y );
+                if( valid( map ) && !map.IsNotValid )
+                {
+                    Item@ bankCont = GetBankContainer( map );
+                    // Log("testCont");
+                    if( valid( bankCont ) && !bankCont.IsNotValid )
+                    {
+                        // Log("moving");
+                        MoveItem( item, item.GetCount(), bankCont, cr.Id );
+                    }
+                    cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_LOT_CANCELED, "$itemName@msg ITEM " + ( item.GetProtoId() * 100 + item.Info ) + "@" + lot.Lexems );
+                    return;
+                }
+            }
+        }
+        cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_CANCEL_LOT_ERROR );
+    }
+}
+
+
+// Для контейнера аукциона в маппере нужно присвоить этот скрипт
+// Чтобы разные контейнеры не пересекались в AnyData - нужно установить контейнеру item.val0 большее нуля, чтобы занять какой-то другой диапазон, например 100000
+// Val1..Val5 - коды прототипов карт, для которых этот контейнер действует в качестве аукционного
+// если все они равны 0, то берется текущая карта, на которой стоит контейнер
+
+void _AuctionContainerInit( Item& item, bool firstTime )
+{
+    if( item.Accessory == ACCESSORY_HEX && item.MapId > 0 )
+    {
+        Map@ map;
+        int[] mapPids;
+        if( item.Val1 > 0 )
+            mapPids.insertLast( item.Val1 );
+        if( item.Val2 > 0 )
+            mapPids.insertLast( item.Val2 );
+        if( item.Val3 > 0 )
+            mapPids.insertLast( item.Val3 );
+        if( item.Val4 > 0 )
+            mapPids.insertLast( item.Val4 );
+        if( item.Val5 > 0 )
+            mapPids.insertLast( item.Val5 );
+        if( mapPids.length() == 0 )
+        {
+            Map@ map = GetMap( item.MapId );           // Не указано ни одной карты, запоминаем текущую
+            if( valid( map ) && !map.IsNotValid )
+            {
+                GameVar@ containerId = GetLocalVar( LMVAR_AUCTION_CONT_ID, map.Id );
+                if( valid( containerId ) )
+                {
+                    containerId = item.Id;
+                }
+            }
+        }
+        else
+        {
+            for( uint i = 0, l = mapPids.length(); i < l; i++ )
+            {
+                @map = GetMapByPid( mapPids[ i ], 0 );
+                if( valid( map ) && !map.IsNotValid )
+                {
+                    GameVar@ containerId = GetLocalVar( LMVAR_AUCTION_CONT_ID, map.Id );
+                    if( valid( containerId ) )
+                    {
+                        containerId = item.Id;
+                    }
+                }
+            }
+        }
+        if( item.Val0 > 0 )
+        {
+            GameVar@ firstLotId = GetLocalVar( ILVAR_NEXT_LOT_ID, item.Id );
+            if( valid( firstLotId ) && firstLotId < item.Val0 )
+                firstLotId = item.Val0;
+        }
+
+    }
+}
+
+// Открытие лота без хозяина, от имени пользователя Auction
+// По завершению срока продажи предмет удаляется
+// item - продаваемый предмет, продается весь стак
+// auctionMap - карта, на которой работает аукцион
+// lotCost - стоимость всего лота
+// sellHours - количество часов реального времени, на которые открывается лот
+// lexems - лексемы продаваемого предмета
+void OpenCustomLot( Item& item, Map& auctionMap, uint lotCost, uint sellHours, string@ lexems )
+{
+    AuctionManager@ manager = GetManager();
+    if( valid( manager ) )
+    {
+        manager.OpenLotServer( item, auctionMap, lotCost, sellHours, lexems );
+    }
+}
+
+
+# define __DEBUG__
+# ifdef __DEBUG__
+
+void RestoreLots( Critter& cr, int pages, int, int )
+{
+    AuctionManager@ manager = GetManager();
+    if( valid( manager ) )
+    {
+        Item@ c = manager.GetAuctionContainer( 6, 0 );
+        Log( "manager valid" );
+        if( valid( c ) && !c.IsNotValid )
+        {
+            LotInfo[] lotData;
+            string[] lotz;
+
+            int rows = 0,
+                columns = 0,
+                counter = 0,
+                counter2 = 0;
+
+            manager.DBDataManager.GetAuctionItems( c.Id, pages, lotz, columns, rows );
+            lotData = StringArrayToLots( columns, rows, lotz );
+            Item@[] containeritems;
+            c.GetItems( uint( -1 ), containeritems );
+
+            for( uint i = 0, l = lotData.length(); i < l; i++ )
+            {
+                Item@ item = GetItem( lotData[ i ].ItemId );
+                if( valid( item ) && !item.IsNotValid )
+                {
+                    bool f = false;
+                    for( uint j = 0, k = containeritems.length(); j < k; j++ )
+                        if( valid( containeritems[ j ] ) && !containeritems[ j ].IsNotValid && containeritems[ j ].Id == item.Id )
+                        {
+                            f = true;
+                            break;
+                        }
+                    if( f )
+                        continue;
+
+                    cr.Say( SAY_NETMSG, "item found. Id = " + item.Id + "; pid: " + item.GetProtoId() );
+                    MoveItem( item, lotData[ i ].LotSize, c, lotData[ i ].LotId );
+                    cr.Say( SAY_NETMSG, "item Id = " + item.Id + "moved" );
+                    counter++;
+                }
+                else
+                {
+                    cr.Say( SAY_NETMSG, "item not found." );
+                    counter2++;
+                }
+            }
+            cr.Say( SAY_NETMSG, "total found: " + counter + "; not found " + counter2 );
+        }
+        else
+            Log( "map notfound" );
+    }
+}
+
+// ~run auction OpenCustomLot 5 100 20
+void OpenCustomLot( Critter& cr, int pid, int count, int hours )
+{
+    AuctionManager@ manager = GetManager();
+    if( valid( manager ) )
+    {
+        for( int i = 0; i < count; i++ )
+        {
+            Item@ item = cr.AddItem( pid, 1 );
+            if( valid( item ) && !item.IsNotValid )
+                manager.OpenLotServer( item, cr.GetMap(), 0, hours, null );
+        }
+    }
+}
+
+void ACont( Critter& cr, int, int, int )
+{
+    Map@ map = cr.GetMap();
+    if( valid( map ) && !map.IsNotValid )
+    {
+        Item@ item = map.AddItem( cr.HexX, cr.HexY, PID_FRIDGE, 1 );
+        if( valid( item ) && !item.IsNotValid )
+            item.SetScript( "_AuctionContainerInit" );
+    }
+}
+
+void ABuy( Critter& cr, int page, int pageSize, int TypeFilterFlags )
+{
+    int[] data;
+    pageSize = AUCTION_BUY_PAGESIZE;
+    string          lexems;
+    AuctionManager@ manager = GetManager();
+    SETFLAG( TypeFilterFlags, ATF_WEAPON );
+    SETFLAG( TypeFilterFlags, ATF_ARMOUR );
+    SETFLAG( TypeFilterFlags, ATF_AMMO );
+    SETFLAG( TypeFilterFlags, ATF_DRUGS );
+    SETFLAG( TypeFilterFlags, ATF_MISC );
+    if( valid( manager ) )
+    {
+        int totalLots = 0;
+        manager.GetAuctionAvailableLots( cr, page, pageSize, TypeFilterFlags, "", totalLots, data, lexems, 0 );
+        if( data.length() > 0 )
+        {
+            int maxPages = totalLots / ( pageSize );
+            if( maxPages * ( pageSize ) < totalLots )
+                maxPages++;
+            cr.RunClientScript( "client_auction_buy_screen@ShowBuyScreen", data.length(), page, maxPages, lexems, data );
+        }
+        else
+        {
+            cr.RunClientScript( "client_auction_buy_screen@ShowBuyScreen", data.length(), page, int( data.length() ) / pageSize, null, null );
+        }
+    }
+}
+
+void BackupBD( Critter& cr, int, int, int )
+{
+    BackupDatabase();
+}
+
+void RestoreBD( Critter& cr, int, int, int )
+{
+    RestoreDatabase();
+}
+
+# endif // __DEBUG__
+
+
+#endif
+#endif // __AUCTION__

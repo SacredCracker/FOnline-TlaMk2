@@ -1,0 +1,27 @@
+// FOS Server
+
+void Check(::Critter& cr, int current, int curStage, int param2, ::string@ param3, ::array<int>@ param4)
+{
+	for(uint8 n=0, nMax=Drugs::WithEffect.length(); n<nMax; n++)
+	{
+		int[] rates;
+		if(cr.GetTimeEvents(Drugs::WithEffect[n], null, null, rates) >0 && (Drugs::RateToStage[rates[0]]) <2)
+		{
+			cr.RunClientScript("client_main@__SetDrug", n,0,0,null,null);
+			return;
+		}
+	}
+	if(current>0 && curStage<2)
+	{
+		cr.RunClientScript("client_main@__SetDrug", current,0,0,null,null);
+		return;
+	}
+	cr.RunClientScript("client_main@__SetDrug", 0,0,1,null,null);
+}
+
+void CheckTimers(::Critter& cr, int , int , int , ::string@ , ::array<int>@ )
+{
+	Drugs::Data data( cr );
+	for( uint i = 0; i < data.AllCount; i++ )
+		cr.RunClientScript("client_main@__AddTimer", data.Durations[i],TIMER_DRUGS,data.Pids[i],null,null);
+}

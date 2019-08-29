@@ -1,0 +1,167 @@
+// Author: rifleman17
+// Квест "Рискованное дельце"
+
+#include "_macros.fos"
+#include "_colors.fos"
+
+import void   QuakeScreen( Map& map, uint noise, uint timeMs ) from "effects";
+import bool   AddAttackPlane( Critter& npc, uint priority, Critter& target ) from "npc_planes";
+import void   _DeletableMapInit( Map& map, bool firstTime ) from "location";
+import void   FlushScreen( Critter& cr, uint fromColor, uint toColor, uint timeMs ) from "effects";
+import string DateTimeToString( uint gameTime ) from "time";
+
+#define ROLE    ( 12 )
+
+
+void r_Attack( Critter& player, Critter@ npc )
+{
+    Map@ map = player.GetMap();
+    uint num = map.GetNpcCount( ROLE, FIND_LIFE | FIND_ONLY_NPC );
+    for( uint i = 0; i < num; i++ )
+    {
+        Critter@ cr = map.GetNpc( ROLE, FIND_LIFE | FIND_ONLY_NPC, i );
+        AddAttackPlane( cr, 0, player );
+    }
+}
+
+void _HoloInit( Item& item, bool firstTime )
+{
+    item.HolodiskNumber = 109;
+    // подписываемся на использование голодиска клешней
+    item.SetEvent( ITEM_EVENT_USE, "_HoloUse" );
+    item.Update();
+}
+
+bool _HoloUse( Item& item, Critter& cr, Critter@ onCritter, Item@ onItem, Scenery@ onScenery )
+{
+    GameVar@ qVar = GetLocalVar( LVAR_q_bh_rocket_base, cr.Id );
+    if( valid( qVar ) && qVar > 1 && qVar < 4 )
+    {
+        qVar = 4;
+        DeleteItem( item );
+        cr.StatBase[ ST_EXPERIENCE ] += 5000;
+        // 829/720
+        uint locId = CreateLocation( LOCATION_Quest_Silo,
+                                     829 + Random( -1 * __GlobalMapZoneLength, __GlobalMapZoneLength ),
+                                     720 + Random( -1 * __GlobalMapZoneLength, __GlobalMapZoneLength ),
+                                     null );
+        if( locId > 0 )
+            cr.SetKnownLoc( true, locId );
+    }
+    return true;
+}
+
+void _AmbushInit( Map& map, bool firstTime )
+{
+    _DeletableMapInit( map, firstTime );
+    map.SetEvent( MAP_EVENT_CRITTER_DEAD, "_AmbushDead" );
+    map.SetEvent( MAP_EVENT_IN_CRITTER, "_AmbushInCritter" );
+}
+void _AmbushInCritter( Map& map, Critter& cr )
+{
+    if( cr.IsPlayer() )
+    {
+        map.GetLocation().AutoGarbage = true;
+    }
+}
+
+void _AmbushDead( Map& map, Critter& cr, Critter@ killer )
+{
+    if( map.GetNpcCount( ROLE, FIND_LIFE | FIND_ONLY_NPC ) == 0 )
+        map.GetLocation().AutoGarbage = true;
+}
+
+void BlockedDoorInit( Item& item, bool firstTime )
+{
+    item.SetEvent( ITEM_EVENT_SKILL, "_DoorSkill" );
+}
+
+void _BlockedDoorInit( Item& item, bool firstTime )
+{
+    item.SetEvent( ITEM_EVENT_SKILL, "_DoorSkill" );
+}
+
+bool _DoorSkill( Item& item, Critter& cr, int skill )
+{
+    cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, 7110 );
+    return true;
+}
+
+void t_Transit( Critter& player, Scenery& trigger, bool entered, uint8 dir, int entire )
+{
+    Location@ loc = player.GetMap().GetLocation();
+    if( valid( loc ) )
+    {
+        GameVar@ status = GetLocalVar( LLVAR_silo_missile_launched, loc.Id );
+        uint     idx = 2;
+        if( valid( status ) && status == 2 )
+            idx = 3;
+        Map@ map = loc.GetMapByIndex( idx );
+        if( valid( map ) )
+        {
+            player.TransitToMap( map.Id, entire );
+        }
+    }
+}
+
+void r_Launch( Critter& player, Critter@ npc )
+{
+    Map@      map = player.GetMap();
+    Location@ loc = map.GetLocation();
+    Map@      mapFrom = loc.GetMapByIndex( 2 );
+    Map@      mapTo = loc.GetMapByIndex( 3 );
+    map.PlaySound( "AIRSIREN.OGG" );
+    mapFrom.PlaySound( "AIRSIREN.OGG" );
+    Critter@[] critters;
+    mapFrom.GetCritters( 0, FIND_ALL | FIND_ALL, critters );
+    QuakeScreen( mapFrom, 50, 1000 );
+    for( uint i = 0, l = critters.length(); i < l; i++ )
+    {
+        Critter@ cr = critters[ i ];
+        if( valid( cr ) )
+        {
+            FlushScreen( cr, COLOR_BLACK, COLOR_BLACK, 5000 );
+            cr.TransitToMap( mapTo.Id, cr.HexX, cr.HexY, cr.Dir );
+        }
+    }
+    QuakeScreen( mapTo, 50, 2000 );
+    QuakeScreen( map, 50, 3000 );
+
+}
+
+void dlg_Stat( Critter& player, Critter@ npc, string@ lexems )
+{
+    if( IS_DIALOG_END( lexems ) or IS_DIALOG_SAY_MODE( lexems ) )
+        return;
+    lexems = "$when" + DateTimeToString( __FullSecond );
+    GameVar@ counter;
+    @counter = GetGlobalVar( GVAR_missiles_canada );
+    lexems += "$canada" + counter.GetValue();
+    @counter = GetGlobalVar( GVAR_missiles_kishinev );
+    lexems += "$kishinev" + counter.GetValue();
+    @counter = GetGlobalVar( GVAR_missiles_baku );
+    lexems += "$baku" + counter.GetValue();
+    @counter = GetGlobalVar( GVAR_missiles_tokio );
+    lexems += "$tokio" + counter.GetValue();
+    @counter = GetGlobalVar( GVAR_missiles_eburg );
+    lexems += "$eburg" + counter.GetValue();
+    @counter = GetGlobalVar( GVAR_missiles_vladik );
+    lexems += "$vladik" + counter.GetValue();
+    @counter = GetGlobalVar( GVAR_missiles_ray );
+    lexems += "$ray" + counter.GetValue();
+    @counter = GetGlobalVar( GVAR_missiles_fukusima );
+    lexems += "$fukusima" + counter.GetValue();
+}
+
+/*
+   @lex when@ Последние зафиксированные пуски МБР.
+   Канада: @lex canada@.
+   Кишинев: @lex kishinev@.
+   Баку: @lex baku@.
+   Токио: @lex tokio@.
+   Екатеринбург: @lex eburg@.
+   Челябинск: 0.
+   Владивосток: @lex vladik@.
+   Райчихинск: @lex ray@.
+   Фукусима: @lex fukusima@.
+ */

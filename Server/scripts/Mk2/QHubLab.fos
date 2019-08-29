@@ -1,0 +1,470 @@
+// FOS Server
+// Author: rifleman17
+// Скрипты для квестовой локации "лаборатория хабологов".
+// QHubLab::Defines::
+
+enum Defines
+{
+	EntireHonomer = 43,
+	NpcPidHonomer = 279,
+	EntireLabEnter = 1,
+	CteClearFollower = 121,
+	LabWorldX = 532,
+	LabWorldY = 1435,
+	DialogGuard = 2,
+	RoleGuard = 18,
+	EntireDoorNear = 19,
+	EntireRepair = 20,
+	EntireDoor = 21,
+	MsgDialogEnd = 4023,
+	RoleStartDialog = 22,
+	PidDoor = 2019,
+	StrAlarm = 8030,
+	StrOpen = 8031,
+	MsgOpen = 4024,
+	EntireHell = 242
+}
+
+// Квест "Секретная лаборатория хабологов".
+bool d_IsHonomerNear(::Critter& player, ::Critter@ npc)
+{
+	::Map@ map=player.GetMap();
+	::array<::Critter@> critters = {};
+	for(uint i=0, iMax=map.GetCritters(QHubLab::Defines::NpcPidHonomer, FIND_LIFE|FIND_ONLY_NPC, critters); i<iMax; i++)
+	{
+		if(critters[i].Stat[ST_DIALOG_ID]==DIALOG_sf_honomer)
+			return true;
+	}
+	return false;
+}
+
+bool d_NoHonomerNear(::Critter& player, ::Critter@ npc)
+{
+	return !d_IsHonomerNear(player, npc);
+}
+// Добавление проводника на карту sf_hubb.
+void AddNewHonomer()
+{	
+	::Map@ map=::GetMapByPid(MAP_sf_hubb, 0);
+	uint16 hx=0;
+	uint16 hy=0;
+	if(validEngineObject(map) && Entires::GetNearEntire(map, QHubLab::Defines::EntireHonomer, hx, hy))
+	{
+		::array<::Critter@> critters = {};
+		for(uint i=0, iMax=map.GetCritters(QHubLab::Defines::NpcPidHonomer, FIND_ALL|FIND_ONLY_NPC, critters); i<iMax; i++)
+		{
+			if(critters[i].Stat[ST_DIALOG_ID]==DIALOG_sf_honomer)
+				return;
+		}
+		::array<int> params={ST_DIALOG_ID, DIALOG_sf_honomer };
+		map.AddNpc(QHubLab::Defines::NpcPidHonomer, hx, hy, ::Random(0,5), params, null, "QHubLab::HonomerInit");
+	}
+}
+
+void HonomerInit(::Critter& cr, bool firstTime)
+{
+	cr.SetEvent(CRITTER_EVENT_GLOBAL_PROCESS, "QHubLab::_HonomerGlobalProcess");
+	cr.SetEvent(CRITTER_EVENT_FINISH, "QHubLab::_HonomerFinish");
+	cr.SetEvent(CRITTER_EVENT_DEAD, "QHubLab::_HonomerDead");
+	cr.SetEvent(CRITTER_EVENT_IDLE, "QHubLab::_HonomerIdle");
+	cr.SetEvent(CRITTER_EVENT_MESSAGE, "QHubLab::_HonomerMessage");
+	cr.SetEvent(CRITTER_EVENT_PLANE_END, "QHubLab::_HonomerPlaneEnd");
+}
+
+void _HonomerMessage(::Critter& cr, ::Critter& fromCr, int message, int value)
+{
+	if(value==2|| value==4)
+	{
+		NpcDialog::_NpcMessage(cr, fromCr, message, value);
+	}
+}
+
+int _HonomerPlaneEnd(::Critter& cr, ::NpcPlane& plane, int reason, ::Critter@ someCr, ::Item@ someItem)
+{
+	if(cr.IsNoPlanes() && d_HonomerInLab(cr, cr))
+	{
+		uint16 hx=0, hy=0;
+		::Map@ map=cr.GetMap();
+		if(validEngineObject(map) && map.GetEntireCoords(QHubLab::Defines::EntireDoorNear, 0, hx, hy))
+		{
+			if(hx==cr.HexX && hy==cr.HexY)
+			{
+				// Хономер стоит перед дверью
+				// Открываем дверь и даем план на продвижение к компу
+				map.GetEntireCoords(QHubLab::Defines::EntireDoor, 0, hx, hy);
+				::Item@ door=map.GetItem(hx, hy, QHubLab::Defines::PidDoor);
+				if(validEngineObject(door))
+				{
+					door.LockerOpen();
+					::CreateTimeEvent(::__FullSecond + ::__TimeMultiplier*10, "Mk2@::Item::e_AutoCloseDoor", door.Id, true);
+				}
+				if(map.GetEntireCoords(QHubLab::Defines::EntireRepair, 0, hx, hy))
+				{
+					cr.SetHomePos(hx, hy, 0);
+				}
+				return PLANE_RUN_GLOBAL;
+			}
+		}
+		if(validEngineObject(map) && map.GetEntireCoords(QHubLab::Defines::EntireRepair, 0, hx, hy))
+		{
+			if(plane.Type !=AI_PLANE_MISC)
+			{
+				if(hx==cr.HexX && hy==cr.HexY)
+				{
+					NpcDialog::BeginDialog(cr, 4);
+				}
+			}
+			else
+			{
+				if(::Random(1,3)==1)
+					_CritAnimateUse(cr);
+			}
+		}
+	}
+	return PLANE_RUN_GLOBAL;
+}
+
+void _HonomerDead(::Critter& cr, ::Critter@ killer)
+{
+	_HonomerIdle(cr);
+}
+
+bool _HonomerGlobalProcess(::Critter& cr, int type, ::Item@ car, float& x, float& y, float& toX, float& toY, float& speed, uint& encounterDescriptor, bool& waitForAnswer)
+{	
+	if(type !=GLOBAL_PROCESS_START_FAST && type !=GLOBAL_PROCESS_START)
+	{
+		bool ok=false;
+		::array<::Critter@>@ group=cr.GetGlobalGroup();
+		::GameVar@ playerId=::GetLocalVar(LVAR_sf_honomer_playerid, cr.Id);
+
+		if(valid(playerId)) // Проверка что игрок в группе с нпц
+		{
+			::Critter@ player=::GetCritter(playerId.GetValue());
+			if(validEngineObject(player) && valid(group))
+			{
+				for(uint i=0, iMax=group.length(); i<iMax; i++)
+				{
+					if(group[i].Id==player.Id)
+					{
+						ok=true;
+						break;
+					}
+				}
+			}
+		}
+		if (!ok)
+		{		
+			// Нет игрока в группе
+			::DeleteNpc(cr);
+			return true;
+		}
+	}
+	
+	if(type !=GLOBAL_PROCESS_MOVE)
+	{
+		::GameVar@ locId=::GetLocalVar(LVAR_q_sf_escort_location, cr.Id);
+		if(valid(locId))
+		{
+			::Location@ loc=::GetLocation(locId.GetValue());
+			if(validEngineObject(loc))
+			{
+				if(loc.WorldX==x && loc.WorldY==y)
+				{
+					::Map@ map=loc.GetMapByIndex(1);
+					cr.TransitToMap(map.Id, QHubLab::Defines::EntireLabEnter, true);
+					loc.AutoGarbage=true;
+					cr.SetEvent(CRITTER_EVENT_IDLE, "QHubLab::_HonomerIdle");
+					::GameVar@ pId=::GetLocalVar(LVAR_sf_honomer_playerid, cr.Id);
+					if(valid(pId) && pId.GetValue() > 0)
+					{
+						::GameVar@ qVar=::GetLocalVar(LVAR_q_sf_ahs7_escort, pId.GetValue());
+						if(valid(qVar) && qVar.GetValue()==2)
+						{
+							qVar=3;
+							::Critter@ player=::GetCritter(pId.GetValue());
+							if(validEngineObject(player))
+								player.StatBase[ST_EXPERIENCE] +=3000;
+						}
+					}
+					NpcDialog::BeginDialog(cr, QHubLab::Defines::DialogGuard);
+				}
+				else
+				{
+					speed=GLOBAL_MAP_BASE_SPEED;
+					toX=loc.WorldX;
+					toY=loc.WorldY;
+				}
+				return true;
+			}	
+		}
+		// не найдена локация или переменная
+		// такого произойти не может, но на всякий случай...
+		::DeleteNpc(cr);
+		return true;
+	}
+	return false;
+}
+
+void _HonomerIdle(::Critter& cr)
+{
+	uint16 x=0;
+	uint16 y=0;
+	uint mapId=0;
+	uint8 dir=0;
+	cr.GetHomePos(mapId, x, y, dir);
+	::Map@ map = cr.GetMap();
+	if(validEngineObject(map) && map.Id !=mapId)
+	{
+		cr.SetHomePos(cr.HexX, cr.HexY, 0);
+	}
+	cr.SetEvent(CRITTER_EVENT_IDLE, "");
+}
+
+void _HonomerFinish(::Critter& cr, bool deleted)
+{
+	if(deleted)
+	{
+		AddNewHonomer();
+	}
+}
+
+bool d_HonomerInLab(::Critter& player, ::Critter@ npc)
+{
+	if( !validEngineObject(npc) )
+		return false;
+	::Map@ map=npc.GetMap();
+	return (validEngineObject(map) && (map.GetLocation().GetProtoId()==LOCATION_Quest_Hub_Lab));		
+}
+
+bool d_NotHonomerInLab(::Critter& player, ::Critter@ npc)
+{
+	return !d_HonomerInLab(player, npc);
+}
+
+bool d_IsMyFollower(::Critter& player, ::Critter@ npc)
+{
+	if( !validEngineObject(npc) )
+		return false;
+	::GameVar@ playerId=::GetLocalVar(LVAR_sf_honomer_playerid, npc.Id);
+	return (valid(playerId) && playerId.GetValue()==int(player.Id));
+}
+
+bool d_NotMyFollower(::Critter& player, ::Critter@ npc)
+{
+	return !d_IsMyFollower(player, npc);
+}
+
+void r_SetFollower(::Critter& player, ::Critter@ npc)
+{
+	if( !validEngineObject(npc) )
+		return;
+	::GameVar@ playerId=::GetLocalVar(LVAR_sf_honomer_playerid, npc.Id);
+	if(valid(playerId))
+	{
+		playerId=player.Id;
+		// Через игровой день сбрасываем Id
+		if(npc.GetTimeEvents(QHubLab::Defines::CteClearFollower, null, null, null) > 0)
+			npc.EraseTimeEvents(QHubLab::Defines::CteClearFollower);
+		npc.AddTimeEvent("QHubLab::cte_ClearFollower", 60*60*24, QHubLab::Defines::CteClearFollower, 0);
+	}
+}
+
+uint cte_ClearFollower(::Critter& cr, int identifier, int& rate, int&)
+{
+	::GameVar@ playerId=::GetLocalVar(LVAR_sf_honomer_playerid,  cr.Id);
+	if(valid(playerId))
+		playerId=0;
+	return 0;
+}
+
+void r_Travel(::Critter& player, ::Critter@ npc)
+{
+	::GameVar@ locNpc=::GetLocalVar(LVAR_q_sf_escort_location, npc.Id);
+	::GameVar@ locPlayer=::GetLocalVar(LVAR_q_sf_escort_location, player.Id);
+	if (!valid(locNpc) || !valid(locPlayer))
+		return;
+	::Location@ loc;
+	if(locPlayer > 0)
+		@loc=::GetLocation(locPlayer.GetValue());
+	if (!validEngineObject(loc))
+	{
+		uint locId=::CreateLocation(LOCATION_Quest_Hub_Lab, QHubLab::Defines::LabWorldX, QHubLab::Defines::LabWorldY, null);
+		if(locId==0)
+			return;
+		@loc=::GetLocation(locId);
+		loc.Visible=false;
+		loc.AutoGarbage=false;
+	}
+	locNpc=loc.Id;
+	locPlayer=loc.Id;
+	::array<::Critter@> grp = { @npc, @player };
+	npc.TransitToGlobal(grp);		
+}
+
+void AttackPlayer(::Critter& target)
+{
+	::Map@ map=target.GetMap();
+	if (!validEngineObject(map))
+		return;
+	::Location@ loc=map.GetLocation();
+	uint maps=loc.GetMapCount();
+	::array<::Critter@> critters;
+	for(uint i=0; i<maps; i++)
+	{
+		@map=loc.GetMapByIndex(i);
+		@critters;
+		map.GetCritters(0, FIND_ALL|FIND_ONLY_NPC, critters);
+		for(uint i=0, iMax=critters.length(); i<iMax; i++)
+		{
+			::Critter@ cr=critters[i];
+			if(validEngineObject(cr) && NpcRevenge::IsLocalNpc(cr, map) && !cr.CheckEnemyInStack(target.Id))
+			{
+				cr.AddEnemyInStack(target.Id);
+				NpcPlanes::AddAttackPlane(cr, 0, target);
+			}
+		}
+	}
+}
+
+// Охранник лабы
+void DoorGuard(::Critter& cr, bool firstTime)
+{	
+	cr.SetEvent(CRITTER_EVENT_MESSAGE, "QHubLab::_DoorGuardMessage");
+	cr.SetEvent(CRITTER_EVENT_ATTACKED, "QHubLab::_HubAttacked");
+	cr.StatBase[ST_NPC_ROLE]=QHubLab::Defines::RoleGuard;
+}
+bool _HubAttacked(::Critter& cr, ::Critter& attacker)
+{
+	AttackPlayer(cr);
+	return false;
+}
+void _DoorGuardMessage(::Critter& cr, ::Critter& fromCr, int message, int value)
+{
+	if(value==2)
+		NpcDialog::_NpcMessage(cr, fromCr, message, value);
+	if(message==QHubLab::Defines::MsgDialogEnd && value==2)
+	{
+		uint16 hx=0, hy=0, x=0, y=0;		
+		uint8 d=0;
+		uint mapId=0;
+		fromCr.GetHomePos(mapId, x, y, d);
+		if(cr.GetMap().GetEntireCoords(QHubLab::Defines::EntireDoorNear, 0, hx, hy) && hx !=x && hy !=y && hx > 0 && hy > 0)
+				fromCr.SetHomePos(hx, hy, 0);
+	}
+}
+
+// Дверь
+void _DoorInit(::Item& item, bool firstTime)
+{
+	item.SetEvent(ITEM_EVENT_SKILL, "QHubLab::_DoorSkill");
+}
+
+bool _DoorSkill(::Item& item, ::Critter& cr, int skill)
+{
+	if(cr.IsPlayer() && cr.Mode[MODE_HIDE]==0)
+		return Item::_GuardedItemSkill(item, cr, skill);
+	return false;
+}
+
+// Лаборанты 
+void _HubInit(::Critter& cr, bool firstTime)
+{
+	if(cr.Stat[ST_NPC_ROLE]==QHubLab::Defines::RoleStartDialog)
+		cr.SetEvent(CRITTER_EVENT_MESSAGE, "QHubLab::_HubMessage");
+	cr.SetEvent(CRITTER_EVENT_ATTACKED, "QHubLab::_HubAttacked");
+}
+
+void _HubMessage(::Critter& cr, ::Critter& fromCr, int message, int value)
+{
+	if(value==3)
+		NpcDialog::_NpcMessage(cr, fromCr, message, value);
+}
+
+// Начало диалога между хабологами, когда игрок наступит на триггер
+void t_NpcDialog(::Critter& player, ::Scenery& trigger, bool entered, uint8 dir)
+{
+	::Map@ map=player.GetMap();
+	::Critter@ cr=player.GetMap().GetNpc(QHubLab::Defines::RoleStartDialog, FIND_LIFE|FIND_ONLY_NPC,0);
+	if(validEngineObject(cr) && cr.Stat[ST_VAR7]==0 && cr.IsNoPlanes())
+	{
+		cr.StatBase[ST_VAR7]=1;
+		NpcDialog::BeginDialog(cr, 3);		
+	}
+}
+
+// Автоматическое закрытие двери, если Хономер вышел
+void t_CloseDoor(::Critter& cr, ::Scenery& trigger, bool entered, uint8 dir)
+{
+	if(cr.IsNpc() && cr.Stat[ST_DIALOG_ID]==DIALOG_sf_honomer)
+	{
+		::Map@ map=cr.GetMap();
+		::GameVar@ inside=::GetLocalVar(LMVAR_sf_lab_honomer_inside, map.Id);
+		if(valid(inside) && inside.GetValue()==0)
+		{
+			inside=1;
+			uint16 hx=0, hy=0;
+			if(map.GetEntireCoords(QHubLab::Defines::EntireDoor, 0, hx, hy))
+			{
+				::Item@ door=map.GetItem(hx, hy, QHubLab::Defines::PidDoor);
+				if(validEngineObject(door))
+				{
+					door.LockerClose();
+				}
+			}
+		}
+	}
+	// TODO: сделать открытие двери, если игрок наступил на триггер, дверь закрыта, и игрок в робе
+}
+
+// Если игрок не в робе наступил на триггер, будет атакован
+void t_Attack(::Critter& cr, ::Scenery& trigger, bool entered, uint8 dir)
+{
+	if(cr.Mode[MODE_HIDE] > 0)
+		return;
+	uint pid=0;
+	::Item@ item=_CritGetItemArmor(cr);
+	if(validEngineObject(item))
+		pid=item.GetProtoId();
+	if(cr.IsPlayer() && pid != uint(Content::Item::PURPLE_ROBE ) 
+					 && pid != uint(Content::Item::KEEPBRIGE_ROBE )
+					 && pid != uint(Content::Item::BLACK_ROBE ))
+	{
+		::Map@ map=cr.GetMap();
+		::GameVar@ failed=::GetLocalVar(LVAR_sf_lab_failed, cr.Id);
+		if(validEngineObject(map) && valid(failed) && failed.GetValue()==0)
+		{
+			AttackPlayer(cr);
+			::array<::Critter@> critters;
+			if(map.GetCrittersHex(trigger.HexX, trigger.HexY, map.GetWidth(), FIND_ONLY_NPC|FIND_LIFE, critters) > 0)
+			{
+				critters[0].SayMsg(SAY_SHOUT, TEXTMSG_TEXT, QHubLab::Defines::StrAlarm);
+			}
+		}
+	}
+}
+
+bool d_InRobe(::Critter& cr, ::Critter@ npc)
+{
+	uint pid=0;
+	::Item@ item=_CritGetItemArmor(cr);
+	if(validEngineObject(item))
+		pid=item.GetProtoId();
+	return (pid==uint(Content::Item::PURPLE_ROBE) || pid==uint(Content::Item::KEEPBRIGE_ROBE) || pid==uint(Content::Item::BLACK_ROBE));
+}
+
+bool d_NotRobe(::Critter& player, ::Critter@ npc)
+{
+	return !d_InRobe(player, npc);
+}
+
+void r_ShowHell(::Critter& player, ::Critter@ npc)
+{
+	::Map@ map=::GetMapByPid(MAP_replication_hell, 0);
+	if(validEngineObject(map))
+	{
+		uint16 hx=0, hy=0;
+		if(map.GetEntireCoords(QHubLab::Defines::EntireHell, 0, hx, hy))
+			player.ViewMap(map, 50, hx, hy, 5);
+
+	}
+}

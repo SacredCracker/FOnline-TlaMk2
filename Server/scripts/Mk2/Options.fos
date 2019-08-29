@@ -1,0 +1,511 @@
+// FOS Client Sort -1 
+
+::dictionary __ListingVarOptions;
+const string[] OptionModules = { "Mk2", "client_main", "combat" };
+
+class Color
+{
+	Color( uint8 r, uint8 g, uint8 b, uint8 a = 0 )
+	{
+		R = r;
+		G = g;
+		B = b;
+		A = a;
+	}
+	
+	Color( uint rgba )
+	{
+		B=(rgba&0x000000FF); 
+		G=(rgba&0x0000FF00)>>8; 
+		R=(rgba&0x00FF0000)>>16; 
+		A=(rgba&0xFF000000)>>24; 
+	}
+	
+	uint Get()
+	{
+		if( A != 0 && A != 255 )
+			return COLOR_CHANGE_ALPHA( COLOR_RGB( R, G, B ), A );
+		else return COLOR_RGB( R, G, B );
+	}	
+	
+	uint8 R = 0;
+	uint8 G = 0;
+	uint8 B = 0;
+	uint8 A = 0;
+	
+	bool IsErrorInit;
+}
+
+bool SetOption( ThisModule::Color& option, ::string& arg, ::string& declaration )
+{	
+	int buffer = 0;
+	option.IsErrorInit = true;
+    ::string@[] colorsStr = ::splitEx( arg, " " );
+	if( colorsStr.length() >= 3 )
+	{
+		if( !::StrToInt( colorsStr[ 0 ], buffer ) )
+		{
+			Log("Error red color parse.");
+			return false;
+		}
+		option.R = buffer;
+			
+		if( !::StrToInt( colorsStr[ 1 ], buffer ) )
+		{
+			Log("Error green color parse.");
+			return false;
+		}
+		option.G = buffer;
+		
+		if( !::StrToInt( colorsStr[ 2 ], buffer ) )
+		{
+			Log("Error blue color parse.");
+			return false;
+		}
+		option.B = buffer;
+		
+		if( colorsStr.length() >= 4 && ::StrToInt( colorsStr[ 3 ], buffer ) )
+			option.A = buffer;
+		option.IsErrorInit = false;
+	}	
+	return false;
+}
+
+bool GetOption( uint& option, ::string& arg, ::string& declaration )
+{	
+	if( ::findFirst  ( ::strlwr( declaration ), "color" ) != -1 )
+	{
+		ThisModule::Color color( option );
+		arg = " " + color.R + " " + color.G +" " + color.B;
+		if( color.A != 0 && color.A != 255 )
+			arg += " " + color.A; 
+	}
+	else
+		arg = " " + option;
+	return false;
+}
+
+bool SetOption( uint& option, ::string& arg, ::string& declaration )
+{	
+	if( ::findFirst  ( ::strlwr( declaration ), "color" ) != -1 )
+	{
+		ThisModule::Color color( 0,0,0,0 );
+		SetOption( color, arg, declaration );
+		if( !color.IsErrorInit )
+		{
+			option = color.Get();
+			return false;
+		}
+	}
+	
+	int mem = -1;
+	if( ::StrToInt( arg, mem ) )
+		option = uint( mem );
+	return false;
+}
+
+bool GetOption( int& option, ::string& arg, ::string& declaration )
+{	
+	arg = " " + option;
+	return false;
+}
+
+bool SetOption( int& option, ::string& arg, ::string& declaration )
+{	
+	::StrToInt( arg, option );
+	return false;
+}
+
+bool GetOption( ::string& option, ::string& arg, ::string& declaration )
+{	
+	arg = " " + option;
+	return false;
+}
+
+bool SetOption( ::string& option, ::string& arg, ::string& declaration )
+{
+	option = arg;
+	return false;
+}
+
+bool GetOption( bool& option, ::string& arg, ::string& declaration )
+{	
+	arg = " " + option;
+	return false;
+}
+
+bool SetOption( bool& option, ::string& arg, ::string& declaration )
+{	
+	int mem = -1;
+	::StrToInt( arg, mem );
+	if( mem == 0 || ::findFirst( ::strlwr( arg ), "false" ) != -1 )
+		option = false;
+	else if( mem == 1 || ::findFirst( ::strlwr( arg ), "true" ) != -1 )
+		option = true;
+		
+	return false;
+}
+
+bool GetOption( ThisModule::Color& option, ::string& arg, ::string& declaration )
+{	
+	arg = " " + option.R + " " + option.G + " " + option.B + " " + option.A;
+	return false;
+}
+
+::string@ ReadFile( ::string@ name  )
+{
+	::file f;
+	if( f.open( name, "r" ) != -1 )
+	{
+		::string txt = "";
+		f.readString( uint( f.getSize() ), txt );
+        f.close();
+		
+		return @txt;
+	}
+	return null;
+}
+
+void LoadOptions( ::string@ name )
+{
+	::string@ txt = ReadFile( name ); 
+	if( @txt !is null )
+	{
+		::string@[] lines = ::splitEx( txt, "\n" ),
+						temp, temp0;
+		
+		::string@ section = null;
+		::string@ module = null;
+		::string@ lastLine = null;
+		for( FileReader::length i = 0, iEnd = lines.length(); i < iEnd; i++ )
+		{
+			// ListingOptions
+			temp = ::splitEx( lines[i], "#" );
+			if( ::findFirst( temp[0], "=" ) != -1 )
+				temp = ::splitEx( temp[0], "=" );
+			else 
+			{
+				temp0 = ::splitEx( temp[0], " " );
+				if( temp0.length() > 2 )
+				{
+					temp.resize(2);
+					@temp[0] = temp0[0];
+					temp0.removeAt( 0 );
+					@temp[1] = ::join( temp0, " " );
+				}
+				else temp = temp0;
+			}
+			
+			if( temp.length() == 2 )
+			{
+				::string s = temp[0];
+				
+				if( s == "load")
+				{
+					LoadOptions( "options/" + temp[1] + ".option" );
+					continue;
+				}
+				
+				if( @module != null )
+					s = module + "_" + s;
+				
+				if( @section != null )
+					s = section + "::" + s;
+				
+				__ListingVarOptions.set( s, temp[1] );
+			}
+			else if ( temp.length() == 1 && temp[0] != "" )
+			{
+				if( ( iEnd - 1 != i && lines[i + 1] != "" && lines[i + 1][0] == '{' ) )
+				{
+					if( @section != null )
+						@ module = lines[i++];
+					else @ section = lines[i++];
+					continue;
+				}
+				else if( temp[0][0] == '}' )
+				{
+					if( @module == null )
+						@section = null;
+					else @ module = null;
+				}
+			}
+		}
+	}
+}
+
+void SaveOptions( string@ name )
+{
+	::file f;
+	if( f.open( name, "w" ) != -1 )
+	{	
+		::string temp;	
+		::string varName;	
+		::string@[] keys;
+		
+		::string@[] temps;// = ::splitEx( txt, "\n" ),
+		::string@ section = null;// = ::splitEx( txt, "\n" ),
+		::string@ module = null;// = ::splitEx( txt, "\n" ),
+		for( uint i = 0, iEnd = __ListingVarOptions.keys( keys ); i < iEnd; i++ )
+		{
+			//if( ThisModule::Option::WriteFormat::Namespace )
+			{
+				temps = ::splitEx( keys[i], "::" );
+				if( @section != null )
+				{
+					if( temps[0] != section )
+					{
+						if( @ module != null )
+						{
+							@ module = null;
+							f.writeString( "  }\r\n\r\n");
+						}
+						@section = temps[0];
+						f.writeString( "}\r\n\r\n" + section + "\r\n{\r\n");
+					}
+				}
+				else
+				{
+					@section = temps[0];
+					f.writeString( section + "\r\n{\r\n");
+				}
+				
+				temps.removeAt(0);
+				temp = ::join( temps, "::" );
+				temps = ::splitEx( temp, "_" );
+				
+				if( @module != null )
+				{
+					if( temps[0] != module )
+					{
+						@module = temps[0];
+						f.writeString( "  }\r\n\r\n  " + module + "\r\n  {\r\n");
+					}
+				}
+				else
+				{
+					@module = temps[0];
+					f.writeString( "  " + module + "\r\n  {\r\n");
+				}
+				
+				temps.removeAt(0);
+				varName = ::join( temps, "_" );
+			}
+			if( __ListingVarOptions.get( keys[i], temp ) )
+			{
+				uint hash = GetStrHash( keys[i] );
+				if( IsMsgStr ( TEXTMSG_TEXT, hash ) )
+					f.writeString( "    " + varName + " =" + temp + "\t# " + GetMsgStr ( TEXTMSG_TEXT, hash ) + "\r\n" );
+				else f.writeString( "    " + varName + " =" + temp + "\r\n" );
+			}
+		}
+		if(@section!=null)
+		{
+			if( @ module != null )
+			{
+				@ module = null;
+				f.writeString( "  }\r\n\r\n");
+			}
+			@ section = null;
+			f.writeString( "}" );
+		}
+		f.close();
+	}
+}
+
+void SearchOptions( )
+{
+	for( uint i = 0, iEnd = OptionModules.length(); i < iEnd; i++ )
+		SearchOption( OptionModules[i] );
+}
+
+void SearchOption( const string&in module )
+{
+	string NameGlobalVar = "";
+	string temp;
+	for( uint i = 0, iEnd = ScriptInfo::CountGlobalVars( module ); i < iEnd; i++ )
+	{
+		if( ScriptInfo::GetDeclarationGlobalVar( NameGlobalVar, i, module ) )
+		{
+			ThisModule::Param@ option = ParseParamLine( NameGlobalVar );
+			if( @option !is null )
+			{
+				string@ fullName = option.FullName;
+				if( @fullName !is null )
+				{
+					if( __ListingVarOptions.exists( fullName ) && __ListingVarOptions.get( fullName, temp ) )
+					{
+					
+						if( temp.length() > 1 && temp[0] == ' ')
+							temp = substring( temp, 1, temp.length() - 1 );
+
+						while( __ListingVarOptions.exists( temp ) )
+							__ListingVarOptions.get( temp, temp );
+							
+						ScriptInfo::RunOptionFunction( i, temp, module, "SetOption" );
+					}
+					else
+					{
+						ScriptInfo::RunOptionFunction( i, temp, module, "GetOption" );
+						__ListingVarOptions.set( fullName, temp );
+					}
+				}
+			}
+		}
+	}
+}
+
+void ModuleInit()
+{	
+	__EventInCritter.Subscribe( @ChosenIn );
+}
+
+void ReloadOptions( string@ name )
+{
+	__ListingVarOptions.deleteAll( );
+
+	SearchOptions();
+	SaveOptions( "options/default.option" );
+	LoadOptions( "options/custom.option" );
+	if( name !is null )
+		LoadOptions( "options/" + name + ".option" );
+	SearchOptions();
+}
+
+bool ChosenIn( ::CritterCl@ chosen )
+{
+	if( __IsFirst && chosen.IsChosen() )
+		ReloadOptions( chosen.Name );
+	return true;
+}
+
+ThisModule::Param@ FindParam( ::string@ name, ThisModule::Section@[]& sections )
+{
+	ThisModule::Param@ param = null;
+	for( uint i = 0, iEnd = sections.length(); i < iEnd; i++ )
+	{
+		@ param = sections[i].Find( @name );
+		if(@param !is null)
+			break;
+	}
+	return @param;
+}
+
+ThisModule::Param@ FindParam( ThisModule::Param@ opt, ThisModule::Section@[]& sections )
+{
+	ThisModule::Param@ param = null;
+	for( uint i = 0, iEnd = sections.length(); i < iEnd; i++ )
+	{
+		if( opt.SectionName == sections[i].Name )
+		{
+			@ param = sections[i].Find( @opt.Name );
+			if(@param !is null)
+				break;
+		}
+	}
+	return @param;
+}
+
+class Section
+{
+	::string@ Name;
+	ThisModule::Param@[] Property;
+	ThisModule::Section@ Parent;
+	
+	ThisModule::Param@ Find( ::string@ name )
+	{
+		for( uint i = 0, iEnd = Property.length(); i < iEnd; i++ )
+			if( Property[i].Name == name )
+				return @Property[i];
+		if( @Parent !is null )
+			return @Parent.Find( @name );
+		return null;
+	}
+}
+
+class Param
+{
+	::string@ Type = null;
+	::string@[] Sections;
+	::string@[] OptionSection;
+	
+	::string@ get_FullName( )
+	{
+		if( OptionSection.length() == 0 )
+			return null;
+			
+		::string name = OptionSection[0];
+		for( uint i = 1, iEnd = OptionSection.length() - 1; i < iEnd; i++ )
+			name = name + "::" + OptionSection[i];
+			
+		if( Sections.length() >= 1 )
+		{
+			if( OptionSection.length() == 1  )
+				return "::" + Sections[0] + "_" + name;
+			return name + "::" + Sections[0] + "_" + Name;
+		}
+		if( OptionSection.length() > 1 )
+			return name + "::" + Name;
+		return name;
+	}
+	
+	::string@ get_SectionName( )
+	{
+		if( Sections.length() == 0 )
+			return "";
+		return @Sections[0];
+	}
+	
+	::string@ get_Name( )
+	{
+		return @OptionSection[ OptionSection.length()-1 ];
+	}
+}
+
+ThisModule::Param@ ParseParamLine( ::string& txt )
+{
+	{
+		::string@[] words = {};
+		words = ::splitEx( txt, " " );
+		ThisModule::Param param;
+		bool isOpt = false;
+		@param.Type = @words[0];
+		{
+			words = ::splitEx( words[1], "::" );
+			if( words[0] == "" )	// отсекаем глобальную зону, вне неймспейсов.
+				return null;
+				
+			for( uint i = 0, iEnd = words.length(); i < iEnd; i++ )
+			{
+				if( isOpt )
+					param.OptionSection.insertLast( @words[i] );
+				else
+				{
+					if( words[i] == "Option" )
+						isOpt = true;
+					else
+						param.Sections.insertLast( @words[i] );
+				}
+			}
+		}
+		if( isOpt )
+			return @param;
+	}
+	return null;
+}
+
+
+string reload_MsgCommand( string str )
+{
+	string@[] args = split( str, " " );
+	if( args.length() == 2 )
+		ReloadOptions( args[1] );
+	else
+	{
+		CritterCl@ chosen = GetChosen();
+		if( chosen !is null )
+			ReloadOptions( chosen.Name );
+		else ReloadOptions( null );
+	}
+	return "";
+}

@@ -1,0 +1,422 @@
+[comment]
+20+ Квест "Найти шпиона для Сантьяго"
+
+[data]
+lang=russ engl ukra
+
+[dialog]
+&
+1 1000 None 1 #
+3 1010 D _param p ST_INTELLECT < 4 #
+2 1020 D _param p ST_INTELLECT > 3 @
+2 2000 None 0 #
+0 2010 #
+4 2020 D _var p q_ncr_santiago_spy_mission = 0 D _var p q_ncr_shaiman_protest = 6 D _param p KILL_MEN > 100 #
+10 2030 D _var p q_ncr_santiago_spy_mission = 20 D _item p PID_ELECTRONIC_BUG > 0 D _item p PID_TAPE_RECORDER > 0 #
+20 2040 D _var p ncr_smit_position < 4 #
+20 2050 D _var p ncr_smit_position > 4 #
+21 2060 D _var p ncr_smit_position = 4 D _var p q_ncr_santiaga_find_spy_status = 0 D _param p REPUTATION_NCR > 5 D _param p ST_LEVEL > 10 #
+27 2070 D _var p q_ncr_santiaga_find_spy_status = 2 #
+32 2080 D _var p q_ncr_santiaga_find_spy_status > 16 D _var p q_ncr_santiaga_find_spy_status < 20 #
+38 2090 D _var p q_ncr_santiaga_find_spy_status = 20 @
+3 3000 None 0 @
+4 4000 None 0 #
+5 4010 @
+5 5000 None 0 #
+6 5010 @
+6 6000 None 0 #
+7 6010 @
+7 7000 None 0 #
+8 7010 #
+9 7020 R _var p q_ncr_santiago_spy_mission = 1 R _item p PID_ELECTRONIC_BUG + 1 R _item p PID_TAPE_RECORDER + 1 @
+8 8000 None 0 #
+0 8010 @
+9 9000 None 0 #
+0 9010 @
+10 10000 None 1 #
+0 10010 D _param p ST_LEVEL < 10 D _var p q_ncr_santiago_spy_mission = 20 D _item p PID_ELECTRONIC_BUG > 0 D _item p PID_TAPE_RECORDER > 0 R _var p q_ncr_santiago_spy_mission = 21 R _param p ST_EXPERIENCE + 4000 R _item p PID_ASSAULT_RIFLE_EXT_MAG + 1 R _item p PID_7_62MM_AMMO + 100 R _item p PID_ELECTRONIC_BUG - 1 R _item p PID_TAPE_RECORDER - 1 #
+0 10020 D _param p ST_LEVEL < 10 D _var p q_ncr_santiago_spy_mission = 20 D _var p chance_one_from_three = 1 D _item p PID_ELECTRONIC_BUG > 0 D _item p PID_TAPE_RECORDER > 0 R _var p q_ncr_santiago_spy_mission = 21 R _param p ST_EXPERIENCE + 4000 R _item p PID_SUPER_TOOL_KIT + 1 R _item p PID_ELECTRONIC_BUG - 1 R _item p PID_TAPE_RECORDER - 1 #
+0 10030 D _param p ST_LEVEL < 10 D _var p q_ncr_santiago_spy_mission = 20 D _item p PID_ELECTRONIC_BUG > 0 D _item p PID_TAPE_RECORDER > 0 R _var p q_ncr_santiago_spy_mission = 21 R _param p ST_EXPERIENCE + 4000 R _item p PID_FRAG_GRENADE + 10 R _item p PID_ELECTRONIC_BUG - 1 R _item p PID_TAPE_RECORDER - 1 #
+0 10040 D _param p ST_LEVEL < 10 D _var p q_ncr_santiago_spy_mission = 20 D _var p chance_one_from_two = 1 D _item p PID_ELECTRONIC_BUG > 0 D _item p PID_TAPE_RECORDER > 0 R _var p q_ncr_santiago_spy_mission = 21 R _param p ST_EXPERIENCE + 4000 R _item p PID_METAL_ARMOR_MK_II + 1 R _item p PID_ELECTRONIC_BUG - 1 R _item p PID_TAPE_RECORDER - 1 #
+0 10050 D _param p ST_LEVEL < 10 D _var p q_ncr_santiago_spy_mission = 20 D _item p PID_ELECTRONIC_BUG > 0 D _item p PID_TAPE_RECORDER > 0 R _var p q_ncr_santiago_spy_mission = 21 R _param p ST_EXPERIENCE + 4000 R _item p PID_PLASTIC_EXPLOSIVES + 1 R _item p PID_ELECTRONIC_BUG - 1 R _item p PID_TAPE_RECORDER - 1 #
+0 10060 D _param p ST_LEVEL > 9 D _param p ST_LEVEL < 20 D _var p q_ncr_santiago_spy_mission = 20 D _item p PID_ELECTRONIC_BUG > 0 D _item p PID_TAPE_RECORDER > 0 R _var p q_ncr_santiago_spy_mission = 21 R _param p ST_EXPERIENCE + 8997 R _item p PID_MINIGUN + 1 R _item p PID_ELECTRONIC_BUG - 1 R _item p PID_TAPE_RECORDER - 1 #
+0 10070 D _param p ST_LEVEL > 9 D _param p ST_LEVEL < 20 D _var p q_ncr_santiago_spy_mission = 20 D _var p chance_one_from_three = 1 D _item p PID_ELECTRONIC_BUG > 0 D _item p PID_TAPE_RECORDER > 0 R _var p q_ncr_santiago_spy_mission = 21 R _param p ST_EXPERIENCE + 8997 R _item p PID_ELEC_LOCKPICK_MKII + 1 R _item p PID_ELECTRONIC_BUG - 1 R _item p PID_TAPE_RECORDER - 1 #
+0 10080 D _param p ST_LEVEL > 9 D _param p ST_LEVEL < 20 D _var p q_ncr_santiago_spy_mission = 20 D _item p PID_ELECTRONIC_BUG > 0 D _item p PID_TAPE_RECORDER > 0 R _var p q_ncr_santiago_spy_mission = 21 R _param p ST_EXPERIENCE + 8997 R _item p PID_PLASMA_GRENADE + 5 R _item p PID_ELECTRONIC_BUG - 1 R _item p PID_TAPE_RECORDER - 1 #
+0 10090 D _param p ST_LEVEL > 9 D _param p ST_LEVEL < 20 D _var p q_ncr_santiago_spy_mission = 20 D _var p chance_one_from_five = 1 D _item p PID_ELECTRONIC_BUG > 0 D _item p PID_TAPE_RECORDER > 0 R _var p q_ncr_santiago_spy_mission = 21 R _param p ST_EXPERIENCE + 8997 R _item p PID_ELECTRONIC_BUG - 1 R _item p PID_TAPE_RECORDER - 1 R _item p PID_TESLA_ARMOR + 1 #
+0 10100 D _param p ST_LEVEL > 9 D _param p ST_LEVEL < 20 D _var p q_ncr_santiago_spy_mission = 20 D _item p PID_ELECTRONIC_BUG > 0 D _item p PID_TAPE_RECORDER > 0 R _var p q_ncr_santiago_spy_mission = 21 R _param p ST_EXPERIENCE + 8997 R _item p PID_SUPER_SLEDGE + 1 R _item p PID_ELECTRONIC_BUG - 1 R _item p PID_TAPE_RECORDER - 1 #
+0 10110 D _param p ST_LEVEL > 19 D _var p q_ncr_santiago_spy_mission = 20 D _item p PID_ELECTRONIC_BUG > 0 D _item p PID_TAPE_RECORDER > 0 R _var p q_ncr_santiago_spy_mission = 21 R _param p ST_EXPERIENCE + 14000 R _item p PID_PLASMA_RIFLE + 1 R _item p PID_ELECTRONIC_BUG - 1 R _item p PID_TAPE_RECORDER - 1 #
+0 10120 D _param p ST_LEVEL > 19 D _var p q_ncr_santiago_spy_mission = 20 D _var p chance_one_from_five = 1 D _item p PID_ELECTRONIC_BUG > 0 D _item p PID_TAPE_RECORDER > 0 R _var p q_ncr_santiago_spy_mission = 21 R _param p ST_EXPERIENCE + 14000 R _item p PID_MOTOR + 1 R _item p PID_ELECTRONIC_BUG - 1 R _item p PID_TAPE_RECORDER - 1 #
+0 10130 D _param p ST_LEVEL > 19 D _var p q_ncr_santiago_spy_mission = 20 D _item p PID_ELECTRONIC_BUG > 0 D _item p PID_TAPE_RECORDER > 0 R _var p q_ncr_santiago_spy_mission = 21 R _param p ST_EXPERIENCE + 14000 R _item p PID_PLASMA_GRENADE + 20 R _item p PID_ELECTRONIC_BUG - 1 R _item p PID_TAPE_RECORDER - 1 #
+0 10140 D _param p ST_LEVEL > 19 D _var p q_ncr_santiago_spy_mission = 20 D _item p PID_ELECTRONIC_BUG > 0 D _item p PID_TAPE_RECORDER > 0 D _param p REPUTATION_NCR > 20 R _var p q_ncr_santiago_spy_mission = 21 R _param p ST_EXPERIENCE + 10000 R _item p PID_ELECTRONIC_BUG - 1 R _item p PID_TAPE_RECORDER - 1 R _item p PID_COMBAT_ARMOR_MK_II + 1 #
+0 10150 D _param p ST_LEVEL > 19 D _var p q_ncr_santiago_spy_mission = 20 D _item p PID_ELECTRONIC_BUG > 0 D _item p PID_TAPE_RECORDER > 0 R _var p q_ncr_santiago_spy_mission = 21 R _param p ST_EXPERIENCE + 14000 R _item p PID_RIPPER + 1 R _item p PID_SMALL_ENERGY_CELL + 100 R _item p PID_ELECTRONIC_BUG - 1 R _item p PID_TAPE_RECORDER - 1 #
+0 10160 D _var p q_ncr_santiago_spy_mission = 20 D _item p PID_ELECTRONIC_BUG > 0 D _item p PID_TAPE_RECORDER > 0 R _param p REPUTATION_NCR + 2 R _param p ST_EXPERIENCE + 5000 R _var p q_ncr_santiago_spy_mission = 21 R _item p PID_ELECTRONIC_BUG - 1 R _item p PID_TAPE_RECORDER - 1 R _param p ST_KARMA + 15 @
+20 11000 None 0 #
+0 11010 @
+21 12000 None 0 #
+22 12010 #
+0 12020 @
+22 13000 None 0 #
+23 13010 #
+0 13020 #
+24 13030 @
+23 14000 Attack 0 @
+24 15000 None 0 #
+25 15010 @
+25 16000 None 0 #
+26 16010 @
+26 17000 None 0 #
+0 17010 #
+0 17020 R _var p q_ncr_santiaga_find_spy_status = 1 @
+27 18000 None 0 #
+28 18010 #
+29 18020 @
+28 19000 None 0 @
+29 20000 None 0 #
+30 20010 @
+30 21000 None 0 #
+31 21010 @
+31 22000 None 0 #
+0 22010 R _var p q_ncr_santiaga_find_spy_status = 3 R _param p ST_EXPERIENCE + 300 @
+32 23000 None 0 #
+33 23010 @
+33 24000 None 0 #
+34 24010 @
+34 25000 None 0 #
+35 25010 @
+35 26000 None 0 #
+36 26010 R _param p ST_EXPERIENCE + 1000 R _var p q_ncr_santiaga_find_spy_status = 21 @
+36 27000 None 0 #
+0 27010 #
+37 27020 @
+37 28000 None 0 @
+38 29000 None 0 #
+39 29010 @
+39 30000 None 0 #
+42 30010 #
+40 30020 #
+41 30030 @
+40 31000 None 0 @
+41 32000 None 0 #
+0 32010 @
+42 33000 None 0 #
+43 33010 @
+43 34000 None 0 #
+44 34010 R _var p q_ncr_santiaga_find_spy_status = 21 R _param p ST_EXPERIENCE + 2000 R _item p PID_BOTTLE_CAPS + 1000 R _param p REPUTATION_NCR + 1 @
+44 35000 None 0 #
+0 35010 &
+
+[russ]
+{100}{}{Сантьяго}
+{200}{}{Вы видите шефа АКР.}
+{200}{}{Это Сантьяго, начальник агентства контрразведки НКР.}
+{210}{}{Сантьяго - один из приближенных Шеймана. Они вместе прибыли в НКР из Хаба в 2246 году.}
+{210}{}{Это Сантьяго. Он отвечает за внутреннюю безопасность города и внешнюю разведку.}
+{1000}{}{Predialogue installations}
+{1010}{}{низкий инт}
+{1020}{}{норм инт}
+{2000}{}{[Сантьяго удивлен вашему визиту] Если вы здесь, значит это действительно необходимо. Что случилось?}
+{2010}{}{Не стану отнимать у вас много времени. [Уйти]}
+{2020}{}{Приветствую! Насколько мне известно, вы ищете надежного человека?}
+{2030}{}{Сантьяго, я выполнил@sex@|||а| ваше задание. [Передать магнитофон]}
+{2040}{}{Я хотел@sex@|||а| бы предложить свои услуги вашему ведомству.}
+{2050}{}{Я хотел@sex@|||а| бы предложить свои услуги вашему ведомству.}
+{2060}{}{Я хотел@sex@|||а| бы предложить свои услуги вашему ведомству.}
+{2070}{}{Я опросил@sex@|||а| граждан НКР.}
+{2080}{}{Сантьяга, я выяснил@sex@|||а|, кто мутил воду.}
+{2090}{}{Мистер Сантьяга, я знаю, кого прислал в НКР Бишоп.}
+{3000}{}{Немедленно покиньте помещение.}
+{4000}{}{Я наслышан о вас. То, что вас рекомендует сам Шейман, о многом говорит. Да, у меня есть ответственное задание, чтобы его выполнить, потребуется применить все ваши незаурядные способности.}
+{4010}{}{Что мне необходимо сделать?}
+{5000}{}{Это специальная операция. Республике необходимо быть в курсе всех настроений Пустоши. В данном случае, нас интересует положение дел в Городе-Убежища.}
+{5010}{}{Как я могу в этом помочь?}
+{6000}{}{Вам будет выдано специальное оборудование. Вы должны проникнуть в Город-Убежище и записать на пленку ежедневный доклад одного из советников Линетт.}
+{6010}{}{Когда производится доклад?}
+{7000}{}{Каждые сутки, ровно в 18 часов. Также, вас не должны заметить. Если Линетт раскроет вашу миссию, операцию можно будет считать проваленной. Еще вопросы?}
+{7010}{}{Мне нужно время, чтобы принять решение.}
+{7020}{}{Все предельно ясно. Я готов@sex@|||а| приступить к выполнению задания.}
+{8000}{}{Не тяните слишком долго. Операция должна быть выполнена в ближайшие сроки. }
+{8010}{}{До встречи. [Уйти]}
+{9000}{}{Замечательно. Получите оборудование. Кассету с записью доклада принесете лично мне. До встречи.}
+{9010}{}{До встречи. [Уйти]}
+{10000}{}{Хорошо. Я доложу генералу Шейману о вашей роли в данной миссии. Вы очень помогли Республике. Можете выбрать награду по своему желанию.}
+{10010}{}{[Штурмовая винтовка и патроны (100 шт)]}
+{10020}{}{[Набор суперинструментов]}
+{10030}{}{[Осколочные гранаты. 10 шт]}
+{10040}{}{[Металлическая броня МК2]}
+{10050}{}{[Пластиковая взрывчатка]}
+{10060}{}{[Миниган "Виндикатор"]}
+{10070}{}{[Электронные отмычки]}
+{10080}{}{[Плазменные гранаты. 5 шт]}
+{10090}{}{[Броня Тесла]}
+{10100}{}{[Суперкувалда]}
+{10110}{}{[Плазменное ружье]}
+{10120}{}{[Мотор]}
+{10130}{}{[Плазменные гранаты. 20 шт]}
+{10140}{}{[Чёрная боевая броня]}
+{10150}{}{[Потрошитель и малые батареи (100 шт)]}
+{10160}{}{Мне не нужна награда. Да здравствует Республика! [Уйти]}
+{11000}{}{Не думаю. Мы справляемся.}
+{11010}{}{Ясно. [Уйти]}
+{12000}{}{А вы обладаете какими-то особенными навыками, которые могли бы нам пригодиться?}
+{12010}{}{Конечно. Я быстр@sex@|||а| как @sex@|волк||волчица|, мудр@sex@|||а| как черепаха, опас@sex@|ен||на| как дъявол.}
+{12020}{}{Нет, ничего особенного... [Уйти]}
+{13000}{}{Хм... Быстр@sex@|||а|, как черепаха, говорите... В принципе, НКР не испытывает недостатка в опытных людях. Тем не менее, я готов предоставить вам шанс доказать свою преданность нашим идеалам.}
+{13010}{}{Ваши идеалы - фальш и обман. В гробу я их видел@sex@|||а|.}
+{13020}{}{Я вернусь очень скоро, а сейчас, увы, долж@sex@|ен||на| идти. [Уйти]}
+{13030}{}{Что мне нужно сделать?}
+{14000}{}{Я не потерплю оскорбления законов Республики. Охрана!}
+{15000}{}{Поступила информация, что в НКР в настоящее время находятся одно или несколько лиц, связанных с преступными кланами Нью-Рено. Мы пока не знаем, какие интересы они преследуют, но сам факт возникновения слухов вызывает беспокойство.}
+{15010}{}{Понятно. Я долж@sex@|ен||на| вырезать всех подозрительных типов в НКР?! }
+{16000}{}{[Морщится] Это не наши методы. Найдите этих людей и соберите доказательства о их причастности к сговору, если он действительно существует.}
+{16010}{}{Могу ли я применять силу для нейтрализации этих людей?}
+{17000}{}{Постарайтесь обойтись без применения силы. Как только появится информация, любого рода, сообщите лично мне.}
+{17010}{}{Это слишком ответственное задание для меня. Я не готов@sex@|||а|, простите. [Уйти]}
+{17020}{}{Хорошо. Я обязательно выясню, в чем дело, и кто эти люди. [Уйти]}
+{18000}{}{И?}
+{18010}{}{В заговоре участвуют почти все! Идейный лидер бунтовщиков - мутант Ленни. Они собираются взорвать госпиталь и выпить всю касторку!}
+{18020}{}{Никакой конкретики. Только Дороти рассказала интересную байку.}
+{19000}{}{Это плохая шутка. Я разочарован.}
+{20000}{}{Что за байка?}
+{20010}{}{По ее словам, каждую ночь неизвестные лица организовывают канал связи. Общение ведется с помощью шифра и смысл переговоров непонятен.}
+{21000}{}{Интересно. Еще что-нибудь?}
+{21010}{}{Остальные из опрошенных не замечали ничего подозрительного.}
+{22000}{}{Попробуем проработать версию с радио переговорами. Попробуйте найти того, кто выходит на связь из НКР.}
+{22010}{}{Ясно. Постараюсь найти этого радиолюбителя. [Уйти]}
+{23000}{}{Кто эти люди?}
+{23010}{}{Это один человек. Вернее, был один человек... Некто Смит.}
+{24000}{}{Что значит, "был"? Он мертв?}
+{24010}{}{Увы. Он заметил меня, когда говорил по рации с Бишопом из Нью-Рено. Завязался драка, мне пришлось его убить, чтобы выжить.}
+{25000}{}{Печально. Теперь мы не сможем узнать, какие планы преследует Бишоп в НКР.}
+{25010}{}{Из того, что я успел услышать, можно судить, что Бишоп планировал убийство советника Вейстина.}
+{26000}{}{Это только ваши слова. Вы могли ошибиться, или неправильно что-то истолковать... Тем не менее я прикажу усилить охрану мистера Вейстина.}
+{26010}{}{Я не ошибся. Если бы Смит был жив, вы бы в этом убедились.}
+{27000}{}{Смит мертв, в этом дело. Как бы то ни было, благодарю вас за помощь от имени Республики. Всего доброго.}
+{27010}{}{Пока, Сантьяга. [Уйти]}
+{27020}{}{И это все? Я рисковал@sex@|||а| своей шкурой. Пули летели над головой! И вместо награды получаю только благодарность?!}
+{28000}{}{Республика оценила вашу помощь. На сегодня это все.}
+{29000}{}{Бишоп? Глава одного из кланов Нью-Рено?}
+{29010}{}{Да. Это Смит - один из новеньких в городе. Я подслушал, как он выходил на связь с Бишопом.}
+{30000}{}{О чем шел разговор?}
+{30010}{}{Смит планирует убийство Вейстина!}
+{30020}{}{Смит собирается устроить крутую вечеринку!}
+{30030}{}{Смит поздравил Бишопа с днем рыбака!}
+{31000}{}{Что за бред! Убирайтесь!}
+{32000}{}{Вы издеваетесь надо мной? Я не потерплю подобного поведения.}
+{32010}{}{Простите, Сантьяго, я просто пошутил@sex@|||а|...}
+{33000}{}{У Бишопа с Вейстином старая вражда. Похоже на правду. Хорошо, мы примем меры и пресечем убийство.}
+{33010}{}{ Может быть, проще грохнуть Смита не дожидаясь, пока он перейдет к активным действиям?}
+{34000}{}{Нет. Слишком рано. Необходимо выяснить, есть ли у Смита сообщники в НКР.}
+{34010}{}{Соглас@sex@|ен||на|. Я могу в этом помочь?}
+{35000}{}{Мы справимся сами. Вот ваша награда, благодарю за помощь.}
+{35010}{}{Не стоит благодарности, удачи со Смитом. [Уйти]}
+
+[engl]
+{100}{}{Santiago}
+{200}{}{You see the CIA chief.}
+{200}{}{It's Santiago, Chief of the NCR Counter Intelligence Agency.}
+{210}{}{Santiago, one of Shaiman's foremen. They both arrived to NCR from the Hub in 2246.}
+{210}{}{It's Santiago. He's responsible for internal security and field intelligence of the capital.}
+{1000}{}{Predialogue installations}
+{1010}{}{низкий инт}
+{1020}{}{норм инт}
+{2000}{}{[Santiago is surprised to see you] If you're here, it must be necessary. What happened?}
+{2010}{}{I won't waste your time. [Leave]}
+{2020}{}{Greetings. I heard you're looking for a reliable man, is it true?}
+{2030}{}{Santiago, I finished your assignment. [Hand him the recorder]}
+{2040}{}{I'd like to offer my services to your department.}
+{2050}{}{I'd like to offer my services to your department.}
+{2060}{}{I'd like to offer my services to your department.}
+{2070}{}{I asked around NCR citizens.}
+{2080}{}{Santiago, I found out who was causing a stir.}
+{2090}{}{Mr. Santiago, I know who's Bishop's man in NCR.}
+{3000}{}{Leave this building at once.}
+{4000}{}{I've heard a lot about you. Hell, Shaiman himself speaks in your favor. Yes, I have a responsible assignment, for which we could use your outstanding talents.}
+{4010}{}{What do I got to do?}
+{5000}{}{Say, It's a covert op. The Republic needs to be aware of what's cooking in the wasteland. In this case, in Vault City.}
+{5010}{}{How can I be of service?}
+{6000}{}{You will be issued special equipment. Then you'll infiltrate Vault City and record the annual report of one of the Councilmen to Lynette.}
+{6010}{}{When is the report due to take place?}
+{7000}{}{Every day at 1800. Needless to say you must not be spotted. If you are discovered, the operation is considered failed. Questions?}
+{7010}{}{I need time to make decision.}
+{7020}{}{No questions, sir. I'm ready to begin.}
+{8000}{}{Don't be too long, the operation is urgent.}
+{8010}{}{Goodbye.}
+{9000}{}{Excellent. Here's your recording equipment. You bring the recording to me personally. Good luck.}
+{9010}{}{Goodbye.}
+{10000}{}{Great. I'll tell General Shaiman about your valor. You've done a great service to the Republic. You can choose any reward you think fit.}
+{10010}{}{[Assault rifle and 100 cartridges.]}
+{10020}{}{[Super tool kit]}
+{10030}{}{[10 frag grenades]}
+{10040}{}{[Metal armor MKII]}
+{10050}{}{[Plastic explosives]}
+{10060}{}{[Vindicator minigun]}
+{10070}{}{[Electronic lockpick]}
+{10080}{}{[5 plasma grenades]}
+{10090}{}{[Tesla armor]}
+{10100}{}{[Super sledge]}
+{10110}{}{[Plasma rifle]}
+{10120}{}{[Motor]}
+{10130}{}{[20 plasma grenades]}
+{10140}{}{[Black combat armor]}
+{10150}{}{[Reaper and 100 small energy cells]}
+{10160}{}{I don't want any reward. Long live the Republic! [Leave]}
+{11000}{}{I don't think so, we're doing all right.}
+{11010}{}{I see. [Leave]}
+{12000}{}{Do you have some specific set of skills we could use?}
+{12010}{}{Of course! I'm fast as a hare, wise as a turtle and dangerous as the devil.}
+{12020}{}{No, nothing special about me... [Leave]}
+{13000}{}{Hmm... Fast as a turtle, you say... NCR has no shortage of capable men. However I'm wiling to give you a chance to prove your loyalty to our ideals.}
+{13010}{}{Your ideals are lies and bullshit.}
+{13020}{}{Look, I have to go now, but I'll be back soon. [Leave]}
+{13030}{}{What do I have to do?}
+{14000}{}{I won't stand this desecration of the republic. Guards!}
+{15000}{}{We received information that at least one agent of New Reno criminal syndicate has infiltrated NCR. We don't yet know what he is after, but these rumors cause great concern with us.}
+{15010}{}{I see. So I have to eliminate all suspicious looking NCR residents.}
+{16000}{}{[Winces] It's not our preferred method. Discover who these people are and find supporting evidence to their plot if there is any.}
+{16010}{}{Am I allowed to use lethal force to neutralize these people?}
+{17000}{}{Try to avoid it. As soon as you gather any intel, report to me.}
+{17010}{}{It's too responsible a task for me. I'm not ready for it. [Leave]}
+{17020}{}{I'll discover these people and their plot. [Leave]}
+{18000}{}{So?}
+{18010}{}{Most NCR residents are part of this plot! Mutant Lenny is behind all this! They are going to blow up the hospital and drink all ethanol!}
+{18020}{}{Nothing specific. Only Dorothy told a story that might be relevant.}
+{19000}{}{it's not a good joke. You disappoint me.}
+{20000}{}{What story?}
+{20010}{}{According to her, someone establishes radio contact every night. The messages are encoded.}
+{21000}{}{Interesting. Anything else?}
+{21010}{}{Nobody else saw anything suspicious.}
+{22000}{}{We'll try to work in that direction. Try to locate their radio transmitter.}
+{22010}{}{Yes, sir. I'll try to find that radio enthusiast. [Leave]}
+{23000}{}{Who are these people?}
+{23010}{}{It is... it was one man. A certain Smith.}
+{24000}{}{What do you mean by "was"? Is he dead?}
+{24010}{}{I'm afraid so. He noticed me when he was contacting Bishop from New Reno on the radio. We had a fight and I had to kill him. It was his life or mine.}
+{25000}{}{That's very bad. Now we won't find out what is Bishop's interest in NCR.}
+{25010}{}{From what I've heard, Bishop was plotting Councillor Westin's assassination.}
+{26000}{}{It's only your word. You could have misheard or misinterpreted something... Nevertheless I will of course reinforce Mr. Westin's guard.}
+{26010}{}{I couldn't have been wrong. If only Smith was alive...}
+{27000}{}{But he isn't, is he. Anyway, on behalf of the Republic I thank you for your work.}
+{27010}{}{Goodbye, Santiago. [Leave]}
+{27020}{}{That's it? I risked my life. Bullets whistled over my head! And all I get is a "thank you"?!}
+{28000}{}{The republic values your input. So far that is all.}
+{29000}{}{Bishop? Head of one of New Reno families?}
+{29010}{}{Yes. This Smith is new in town. I eavesdropped on him contacting Bishop on the radio.}
+{30000}{}{What was the subject of that conversation?}
+{30010}{}{Smith is planning Westin's assassination!}
+{30020}{}{Smith is arranging an epic party!}
+{30030}{}{Smith wished Bishop a happy passover!}
+{31000}{}{What the hell? Get out!}
+{32000}{}{Are you trying to mock me? I won't tolerate this kind of behavior.}
+{32010}{}{I'm sorry, sir, it was just a joke...}
+{33000}{}{Bishop and Westin are old time enemies. It's probably true. All right, we'll take measures to prevent the assassination.}
+{33010}{}{Maybe we should just get rid of this Smith instead of waiting for him to try to kill Westin?}
+{34000}{}{No. Not yet. We must find out if he has any accomplices.}
+{34010}{}{You're right. Can I help?}
+{35000}{}{That won't be necessary. Here's your reward, thank you.}
+{35010}{}{Don't thank me, good luck on the case. [Leave]}
+
+[ukra]
+{100}{}{Сантьяго}
+{200}{}{Вы видите шефа АКР.}
+{200}{}{Это Сантьяго, начальник агентства контрразведки НКР.}
+{210}{}{Сантьяго - один из приближенных Шеймана. Они вместе прибыли в НКР из Хаба в 2246 году.}
+{210}{}{Это Сантьяго. Он отвечает за внутреннюю безопасность города и внешнюю разведку.}
+{1000}{}{Predialogue installations}
+{1010}{}{низкий инт}
+{1020}{}{норм инт}
+{2000}{}{[Сантьяго удивлен вашему визиту] Если вы здесь, значит это действительно необходимо. Что случилось?}
+{2010}{}{Не стану отнимать у вас много времени. [Уйти]}
+{2020}{}{Приветствую! Насколько мне известно, вы ищете надежного человека?}
+{2030}{}{Сантьяго, я выполнил@sex@|||а| ваше задание. [Передать магнитофон]}
+{2040}{}{Я хотел@sex@|||а| бы предложить свои услуги вашему ведомству.}
+{2050}{}{Я хотел@sex@|||а| бы предложить свои услуги вашему ведомству.}
+{2060}{}{Я хотел@sex@|||а| бы предложить свои услуги вашему ведомству.}
+{2070}{}{Я опросил@sex@|||а| граждан НКР.}
+{2080}{}{Сантьяга, я выяснил@sex@|||а|, кто мутил воду.}
+{2090}{}{Мистер Сантьяга, я знаю, кого прислал в НКР Бишоп.}
+{3000}{}{Немедленно покиньте помещение.}
+{4000}{}{Я наслышан о вас. То, что вас рекомендует сам Шейман, о многом говорит. Да, у меня есть ответственное задание, чтобы его выполнить, потребуется применить все ваши незаурядные способности.}
+{4010}{}{Что мне необходимо сделать?}
+{5000}{}{Это специальная операция. Республике необходимо быть в курсе всех настроений Пустоши. В данном случае, нас интересует положение дел в Городе-Убежища.}
+{5010}{}{Как я могу в этом помочь?}
+{6000}{}{Вам будет выдано специальное оборудование. Вы должны проникнуть в Город-Убежище и записать на пленку ежедневный доклад одного из советников Линетт.}
+{6010}{}{Когда производится доклад?}
+{7000}{}{Каждые сутки, ровно в 18 часов. Также, вас не должны заметить. Если Линетт раскроет вашу миссию, операцию можно будет считать проваленной. Еще вопросы?}
+{7010}{}{Мне нужно время, чтобы принять решение.}
+{7020}{}{Все предельно ясно. Я готов@sex@|||а| приступить к выполнению задания.}
+{8000}{}{Не тяните слишком долго. Операция должна быть выполнена в ближайшие сроки. }
+{8010}{}{До встречи. [Уйти]}
+{9000}{}{Замечательно. Получите оборудование. Кассету с записью доклада принесете лично мне. До встречи.}
+{9010}{}{До встречи. [Уйти]}
+{10000}{}{Хорошо. Я доложу генералу Шейману о вашей роли в данной миссии. Вы очень помогли Республике. Можете выбрать награду по своему желанию.}
+{10010}{}{[Штурмовая винтовка и патроны (100 шт)]}
+{10020}{}{[Набор суперинструментов]}
+{10030}{}{[Осколочные гранаты. 10 шт]}
+{10040}{}{[Металлическая броня МК2]}
+{10050}{}{[Пластиковая взрывчатка]}
+{10060}{}{[Миниган "Виндикатор"]}
+{10070}{}{[Электронные отмычки]}
+{10080}{}{[Плазменные гранаты. 5 шт]}
+{10090}{}{[Боевая броня]}
+{10100}{}{[Суперкувалда]}
+{10110}{}{[Плазменное ружье]}
+{10120}{}{[Мотор]}
+{10130}{}{[Плазменные гранаты. 20 шт]}
+{10140}{}{[Моторизированная броня]}
+{10150}{}{[Потрошитель и малые батареи (100 шт)]}
+{10160}{}{Мне не нужна награда. Да здравствует Республика! [Уйти]}
+{11000}{}{Не думаю. Мы справляемся.}
+{11010}{}{Ясно. [Уйти]}
+{12000}{}{А вы обладаете какими-то особенными навыками, которые могли бы нам пригодиться?}
+{12010}{}{Конечно. Я быстр@sex@|||а| как @sex@|волк||волчица|, мудр@sex@|||а| как черепаха, опас@sex@|ен||на| как дъявол.}
+{12020}{}{Нет, ничего особенного... [Уйти]}
+{13000}{}{Хм... Быстр@sex@|||а|, как черепаха, говорите... В принципе, НКР не испытывает недостатка в опытных людях. Тем не менее, я готов предоставить вам шанс доказать свою преданность нашим идеалам.}
+{13010}{}{Ваши идеалы - фальш и обман. В гробу я их видел@sex@|||а|.}
+{13020}{}{Я вернусь очень скоро, а сейчас, увы, долж@sex@|ен||на| идти. [Уйти]}
+{13030}{}{Что мне нужно сделать?}
+{14000}{}{Я не потерплю оскорбления законов Республики. Охрана!}
+{15000}{}{Поступила информация, что в НКР в настоящее время находятся одно или несколько лиц, связанных с преступными кланами Нью-Рено. Мы пока не знаем, какие интересы они преследуют, но сам факт возникновения слухов вызывает беспокойство.}
+{15010}{}{Понятно. Я долж@sex@|ен||на| вырезать всех подозрительных типов в НКР?! }
+{16000}{}{[Морщится] Это не наши методы. Найдите этих людей и соберите доказательства о их причастности к сговору, если он действительно существует.}
+{16010}{}{Могу ли я применять силу для нейтрализации этих людей?}
+{17000}{}{Постарайтесь обойтись без применения силы. Как только появится информация, любого рода, сообщите лично мне.}
+{17010}{}{Это слишком ответственное задание для меня. Я не готов@sex@|||а|, простите. [Уйти]}
+{17020}{}{Хорошо. Я обязательно выясню, в чем дело, и кто эти люди. [Уйти]}
+{18000}{}{И?}
+{18010}{}{В заговоре участвуют почти все! Идейный лидер бунтовщиков - мутант Ленни. Они собираются взорвать госпиталь и выпить всю касторку!}
+{18020}{}{Никакой конкретики. Только Дороти рассказала интересную байку.}
+{19000}{}{Это плохая шутка. Я разочарован.}
+{20000}{}{Что за байка?}
+{20010}{}{По ее словам, каждую ночь неизвестные лица организовывают канал связи. Общение ведется с помощью шифра и смысл переговоров непонятен.}
+{21000}{}{Интересно. Еще что-нибудь?}
+{21010}{}{Остальные из опрошенных не замечали ничего подозрительного.}
+{22000}{}{Попробуем проработать версию с радио переговорами. Попробуйте найти того, кто выходит на связь из НКР.}
+{22010}{}{Ясно. Постараюсь найти этого радиолюбителя. [Уйти]}
+{23000}{}{Кто эти люди?}
+{23010}{}{Это один человек. Вернее, был один человек... Некто Смит.}
+{24000}{}{Что значит, "был"? Он мертв?}
+{24010}{}{Увы. Он заметил меня, когда говорил по рации с Бишопом из Нью-Рено. Завязался драка, мне пришлось его убить, чтобы выжить.}
+{25000}{}{Печально. Теперь мы не сможем узнать, какие планы преследует Бишоп в НКР.}
+{25010}{}{Из того, что я успел услышать, можно судить, что Бишоп планировал убийство советника Вейстина.}
+{26000}{}{Это только ваши слова. Вы могли ошибиться, или неправильно что-то истолковать... Тем не менее я прикажу усилить охрану мистера Вейстина.}
+{26010}{}{Я не ошибся. Если бы Смит был жив, вы бы в этом убедились.}
+{27000}{}{Смит мертв, в этом дело. Как бы то ни было, благодарю вас за помощь от имени Республики. Всего доброго.}
+{27010}{}{Пока, Сантьяга. [Уйти]}
+{27020}{}{И это все? Я рисковал@sex@|||а| своей шкурой. Пули летели над головой! И вместо награды получаю только благодарность?!}
+{28000}{}{Республика оценила вашу помощь. На сегодня это все.}
+{29000}{}{Бишоп? Глава одного из кланов Нью-Рено?}
+{29010}{}{Да. Это Смит - один из новеньких в городе. Я подслушал, как он выходил на связь с Бишопом.}
+{30000}{}{О чем шел разговор?}
+{30010}{}{Смит планирует убийство Вейстина!}
+{30020}{}{Смит собирается устроить крутую вечеринку!}
+{30030}{}{Смит поздравил Бишопа с днем рыбака!}
+{31000}{}{Что за бред! Убирайтесь!}
+{32000}{}{Вы издеваетесь надо мной? Я не потерплю подобного поведения.}
+{32010}{}{Простите, Сантьяго, я просто пошутил@sex@|||а|...}
+{33000}{}{У Бишопа с Вейстином старая вражда. Похоже на правду. Хорошо, мы примем меры и пресечем убийство.}
+{33010}{}{ Может быть, проще грохнуть Смита не дожидаясь, пока он перейдет к активным действиям?}
+{34000}{}{Нет. Слишком рано. Необходимо выяснить, есть ли у Смита сообщники в НКР.}
+{34010}{}{Соглас@sex@|ен||на|. Я могу в этом помочь?}
+{35000}{}{Мы справимся сами. Вот ваша награда, благодарю за помощь.}
+{35010}{}{Не стоит благодарности, удачи со Смитом. [Уйти]}
+

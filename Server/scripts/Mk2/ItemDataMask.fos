@@ -1,0 +1,158 @@
+// FOS Server Client 
+
+class _mask
+{
+	void set( const string&in name )
+	{
+		set( name, int8( -1 ) );
+	}
+	
+	void unset( const string&in name )
+	{
+		set( name, 0 );
+	}
+	
+	void set( const string&in name, const int8&in mask )
+	{
+		for( uint i = 0; i < ITEM_MAX_TYPES; i++ )
+			SetItemDataMask( type, i, name, mask );
+			
+	}
+	
+	int type;
+}
+
+void SetChosen( ThisModule::_mask& mask, int type )
+{
+	mask.type = type;
+	mask.set("SortValue");
+	mask.set("Mode");
+	mask.set("Info");
+	mask.set("PicMap");
+	mask.set("PicInv");
+	mask.set("AnimWaitBase");
+	mask.set("AnimStayBegin");
+	mask.set("AnimStayEnd");
+	mask.set("AnimShowBegin");
+	mask.set("AnimShowEnd");
+	mask.set("AnimHideBegin");
+	mask.set("AnimHideEnd");
+	mask.set("Cost");
+	mask.set("Val0");
+	mask.set("Val1");
+	mask.set("Val2");
+	mask.set("Val3");
+	mask.set("Val4");
+	mask.set("Val5");
+	mask.set("Val6");
+	mask.set("Val7");
+	mask.set("Val8");
+	mask.set("Val9");
+	mask.set("LightIntensity");
+	mask.set("LightDistance");
+	mask.set("LightFlags");
+	mask.set("LightColor");
+	mask.set("Indicator");
+	mask.set("BrokenFlags");
+	mask.set("BrokenCount");
+	mask.set("Deterioration");
+	mask.set("AmmoPid");
+	mask.set("AmmoCount");
+	mask.set("LockerId");
+	mask.set("LockerCondition");
+	mask.set("LockerComplexity");
+	mask.set("Charge");
+	mask.set("RadioChannel");
+	mask.set("RadioFlags");
+	mask.set("RadioBroadcastSend");
+	mask.set("RadioBroadcastRecv");
+	mask.set("HolodiskNumber");
+	mask.set("OffsetX");
+	mask.set("OffsetY");
+	mask.set("Dir");
+	mask.set("CurrentHp");
+	mask.set("CraftFlags");
+	mask.set("CrafterId");
+	mask.set("UpgradeSlot2");
+	mask.set("UpgradeSlot1");
+	mask.set("UpgradeSlot0");
+	mask.set("WeaponBonus_MinDamage");
+	mask.set("WeaponBonus_MaxDamage");
+	mask.set("WeaponBonus_Critroll");
+	mask.set("WeaponBonus_ToHit");
+	mask.set("WeaponBonus_CritChance");
+	mask.set("WeaponBonus_AP");
+	mask.set("ArmorBonus_DRNormal");
+	mask.set("ArmorBonus_DRLaser");
+	mask.set("ArmorBonus_DRFire");
+	mask.set("ArmorBonus_DRPlasma");
+	mask.set("ArmorBonus_DRElectr");
+	mask.set("ArmorBonus_DRExplode"); 
+	mask.set("ArmorBonus_DTNormal");
+	mask.set("ArmorBonus_DTLaser");
+	mask.set("ArmorBonus_DTFire");
+	mask.set("ArmorBonus_DTPlasma");
+	mask.set("ArmorBonus_DTElectr");
+	mask.set("ArmorBonus_AC");
+	mask.set("ArmorBonus_DTExplode");
+	mask.set("ArmorBonus_DRRad");
+	mask.set("ArmorBonus_CarryWeight");
+	mask.set("ArmorBonus_FasterHealing");
+	mask.set("ArmorBonus_Harisma");
+	mask.set("ArmorBonus_Perception");
+	mask.set("ArmorBonus_Strength");
+	mask.set("ArmorBonus_CriticalResist");
+	mask.set("ArmorBonus_Luck");
+	mask.set("ArmorBonus_AP");
+	mask.set("ArmorBonus_DeteriorateResist");	
+	mask.set("Count");
+	mask.set("Flags");
+}
+
+void SetMap( ThisModule::_mask& mask, int type )
+{
+	mask.type = type;
+	mask.set("SortValue");
+	mask.set("Info");
+	mask.set("PicMap");
+	mask.set("PicInv");
+	mask.set("AnimWaitBase");
+	mask.set("AnimStayBegin");
+	mask.set("AnimStayEnd");
+	mask.set("AnimShowBegin");
+	mask.set("AnimShowEnd");
+	mask.set("AnimHideBegin");
+	mask.set("AnimHideEnd");
+	mask.set("LightIntensity");
+	mask.set("LightDistance");
+	mask.set("LightFlags");
+	mask.set("LightColor");
+	mask.set("BrokenFlags");
+	mask.set("BrokenCount");
+	mask.set("Deterioration");
+	mask.set("LockerId");
+	mask.set("LockerCondition");
+	mask.set("LockerComplexity");
+	mask.set("Charge");
+	mask.set("RadioChannel");
+	mask.set("RadioFlags");
+	mask.set("RadioBroadcastSend");
+	mask.set("RadioBroadcastRecv");
+	mask.set("OffsetX");
+	mask.set("OffsetY");
+	mask.set("Dir");
+	mask.set("CurrentHp");
+	mask.set("Count");
+	mask.set("Flags");
+}
+
+void ModuleInit( )
+{
+	_mask mask;
+	SetChosen( mask, ITEM_DATA_MASK_CHOSEN );
+	SetChosen( mask, ITEM_DATA_MASK_CRITTER );
+	SetChosen( mask,ITEM_DATA_MASK_CRITTER_EXT );
+	SetChosen( mask, ITEM_DATA_MASK_CONTAINER );
+	SetChosen( mask, ITEM_DATA_MASK_MAP );
+	//SetMap( mask, ITEM_DATA_MASK_MAP );
+}

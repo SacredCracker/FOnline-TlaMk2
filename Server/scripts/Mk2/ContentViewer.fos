@@ -1,0 +1,31 @@
+// FOS Client
+
+// ContentViewer.png
+
+void ModuleInit(  )
+{	
+	GuiKit::Add( CLIENT_SCREEN_CONTENT_VIEWER, @Instance() );
+}
+
+class Instance : GuiKit::GUIScreenPattern
+{
+	::string@ get_Name( )
+	{
+		return "ContentViewer";
+	}
+	
+	void Build( int screenIndex, ::IGUIScreenOpt@ opt )
+	{
+		@Option = opt;
+		Option.SetPicture( "ContentViewer.png" )
+			.PositionCenter( );
+	}
+	
+	IGUIScreenOpt@ Option;
+}
+
+::string Show_MsgCommand( ::string str )
+{
+	::ShowScreen( CLIENT_SCREEN_CONTENT_VIEWER, 0, 0, 0 );
+	return "";
+}

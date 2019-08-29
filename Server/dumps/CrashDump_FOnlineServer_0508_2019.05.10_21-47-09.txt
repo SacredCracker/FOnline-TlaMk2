@@ -1,0 +1,178 @@
+Application
+	Name        FOnlineServer
+	Version     0508
+	OS          6.2.9200 ()
+	Timestamp   2019.05.10 21:47:09
+
+Exception
+	Code      EXCEPTION_ACCESS_VIOLATION
+	Address   0x0042EBEE
+	Flags     0x0
+
+Thread 'Logic' (24648, current)
+	FOnlineServer, public: unsigned int __thiscall Critter::CountItemPid(unsigned short) + 46
+	FOnlineServer, public: static unsigned int __cdecl FOServer::SScriptFunc::Crit_CountItem(class Critter *,unsigned short) + 66
+	FOnlineServer, unsigned __int64 __cdecl CallCDeclFunctionObjFirst(void const *,unsigned long const *,int,void (__cdecl*)(void)) + 38
+	FOnlineServer, unsigned __int64 __cdecl CallSystemFunctionNative(class asCContext *,class asCScriptFunction *,void *,unsigned long *,void *,unsigned __int64 &) + 858
+	FOnlineServer, int __cdecl CallSystemFunction(int,class asCContext *,void *) + 294
+	FOnlineServer, public: void __thiscall asCContext::ExecuteNext(void) + 2325
+	FOnlineServer, public: virtual int __thiscall asCContext::Execute(void) + 521
+	FOnlineServer, bool __cdecl Script::RunPreparedUnsafe(void) + 217
+	FOnlineServer, public: bool __thiscall Npc::RunPlane(int,unsigned int &,unsigned int &,unsigned int &) + 148
+	FOnlineServer, public: static void __cdecl FOServer::ProcessAI(class Npc *) + 4013
+	FOnlineServer, public: static void __cdecl FOServer::ProcessCritter(class Critter *) + 865
+	FOnlineServer, public: static void __cdecl FOServer::Logic_Work(void *) + 350
+	FOnlineServer, void * __cdecl ThreadBeginExecution(void *) + 44
+	FOnlineServer, _ptw32_threadStart@4 + 97
+	FOnlineServer, __endthreadex + 58
+	FOnlineServer, __endthreadex + 196
+	KERNEL32, BaseThreadInitThunk + 36
+	ntdll, RtlAreBitsSet + 136
+	ntdll, RtlAreBitsSet + 88
+
+Thread 'GUI' (7900)
+	win32u, NtUserMsgWaitForMultipleObjectsEx + 12
+	USER32, MsgWaitForMultipleObjects + 99
+	FOnlineServer, int __cdecl fl_wait(double) + 665
+	FOnlineServer, public: static double __cdecl Fl::wait(double) + 23
+	FOnlineServer, public: static int __cdecl Fl::wait(void) + 33
+	FOnlineServer, _main + 866
+	FOnlineServer, _WinMain@16 + 402
+	FOnlineServer, __tan_default + 552
+	KERNEL32, BaseThreadInitThunk + 36
+	ntdll, RtlAreBitsSet + 136
+	ntdll, RtlAreBitsSet + 88
+
+Thread 'GUIUpdate' (30488)
+	ntdll, NtDelayExecution + 12
+	KERNELBASE, Sleep + 15
+	FOnlineServer, void __cdecl GUIUpdate(void *) + 33
+	FOnlineServer, void * __cdecl ThreadBeginExecution(void *) + 44
+	FOnlineServer, _ptw32_threadStart@4 + 97
+	FOnlineServer, __endthreadex + 58
+	FOnlineServer, __endthreadex + 196
+	KERNEL32, BaseThreadInitThunk + 36
+	ntdll, RtlAreBitsSet + 136
+	ntdll, RtlAreBitsSet + 88
+
+Thread 'Main' (12916)
+	ntdll, NtDelayExecution + 12
+	KERNELBASE, Sleep + 15
+	FOnlineServer, public: static void __cdecl FOServer::MainLoop(void) + 680
+	FOnlineServer, void __cdecl GameLoopThread(void *) + 180
+	FOnlineServer, void * __cdecl ThreadBeginExecution(void *) + 44
+	FOnlineServer, _ptw32_threadStart@4 + 97
+	FOnlineServer, __endthreadex + 58
+	FOnlineServer, __endthreadex + 196
+	KERNEL32, BaseThreadInitThunk + 36
+	ntdll, RtlAreBitsSet + 136
+	ntdll, RtlAreBitsSet + 88
+
+Thread 'ScriptTimeout' (34568)
+	ntdll, NtDelayExecution + 12
+	KERNELBASE, Sleep + 15
+	FOnlineServer, void __cdecl RunTimeout(void *) + 964
+	FOnlineServer, void * __cdecl ThreadBeginExecution(void *) + 44
+	FOnlineServer, _ptw32_threadStart@4 + 97
+	FOnlineServer, __endthreadex + 58
+	FOnlineServer, __endthreadex + 196
+	KERNEL32, BaseThreadInitThunk + 36
+	ntdll, RtlAreBitsSet + 136
+	ntdll, RtlAreBitsSet + 88
+
+Thread 'NetListen' (26948)
+	ntdll, ZwWaitForSingleObject + 12
+	mswsock, sethostname + 15612
+	WS2_32, WSAAccept + 179
+	FOnlineServer, public: static void __cdecl FOServer::Net_Listen(void *) + 80
+	FOnlineServer, void * __cdecl ThreadBeginExecution(void *) + 44
+	FOnlineServer, _ptw32_threadStart@4 + 97
+	FOnlineServer, __endthreadex + 58
+	FOnlineServer, __endthreadex + 196
+	KERNEL32, BaseThreadInitThunk + 36
+	ntdll, RtlAreBitsSet + 136
+	ntdll, RtlAreBitsSet + 88
+
+Thread 'NetWork' (21292)
+	ntdll, ZwRemoveIoCompletion + 12
+	FOnlineServer, public: static void __cdecl FOServer::NetIO_Work(void *) + 332
+	FOnlineServer, void * __cdecl ThreadBeginExecution(void *) + 44
+	FOnlineServer, _ptw32_threadStart@4 + 97
+	FOnlineServer, __endthreadex + 58
+	FOnlineServer, __endthreadex + 196
+	KERNEL32, BaseThreadInitThunk + 36
+	ntdll, RtlAreBitsSet + 136
+	ntdll, RtlAreBitsSet + 88
+
+Thread 'WorldSaveManager' (15776)
+	ntdll, ZwWaitForSingleObject + 12
+	KERNELBASE, WaitForSingleObject + 18
+	FOnlineServer, public: static void __cdecl FOServer::Dump_Work(void *) + 46
+	FOnlineServer, void * __cdecl ThreadBeginExecution(void *) + 44
+	FOnlineServer, _ptw32_threadStart@4 + 97
+	FOnlineServer, __endthreadex + 58
+	FOnlineServer, __endthreadex + 196
+	KERNEL32, BaseThreadInitThunk + 36
+	ntdll, RtlAreBitsSet + 136
+	ntdll, RtlAreBitsSet + 88
+
+Loaded modules
+	F:\TLAMk2\Server\FOnlineServer.exe (00400000)
+	C:\WINDOWS\SYSTEM32\ntdll.dll (77570000)
+	C:\WINDOWS\System32\KERNEL32.DLL (744B0000)
+	C:\WINDOWS\System32\KERNELBASE.dll (74590000)
+	C:\WINDOWS\System32\USER32.dll (75E10000)
+	C:\WINDOWS\System32\win32u.dll (75530000)
+	C:\WINDOWS\System32\GDI32.dll (74420000)
+	C:\WINDOWS\System32\gdi32full.dll (75930000)
+	C:\WINDOWS\System32\msvcp_win.dll (75770000)
+	C:\WINDOWS\System32\ucrtbase.dll (74300000)
+	C:\WINDOWS\System32\ADVAPI32.dll (75550000)
+	C:\WINDOWS\System32\msvcrt.dll (755E0000)
+	C:\WINDOWS\System32\sechost.dll (754E0000)
+	C:\WINDOWS\System32\RPCRT4.dll (75D50000)
+	C:\WINDOWS\System32\SspiCli.dll (73E30000)
+	C:\WINDOWS\System32\CRYPTBASE.dll (73E20000)
+	C:\WINDOWS\System32\bcryptPrimitives.dll (74780000)
+	C:\WINDOWS\System32\WS2_32.dll (760C0000)
+	C:\WINDOWS\System32\PSAPI.DLL (756A0000)
+	C:\WINDOWS\System32\COMDLG32.dll (757F0000)
+	C:\WINDOWS\System32\combase.dll (74050000)
+	C:\WINDOWS\SYSTEM32\WINMM.dll (723D0000)
+	C:\WINDOWS\SYSTEM32\dbghelp.dll (71F30000)
+	C:\WINDOWS\System32\shcore.dll (749B0000)
+	C:\WINDOWS\WinSxS\x86_microsoft.windows.common-controls_6595b64144ccf1df_5.82.17134.706_none_40fb64164515a358\COMCTL32.dll (726B0000)
+	C:\WINDOWS\System32\SHLWAPI.dll (742B0000)
+	C:\WINDOWS\System32\SHELL32.dll (76130000)
+	C:\WINDOWS\System32\cfgmgr32.dll (747E0000)
+	C:\WINDOWS\System32\windows.storage.dll (74A40000)
+	C:\WINDOWS\SYSTEM32\WINMMBASE.dll (72340000)
+	C:\WINDOWS\System32\kernel.appcore.dll (755D0000)
+	C:\WINDOWS\System32\profapi.dll (74820000)
+	C:\WINDOWS\System32\powrprof.dll (75FA0000)
+	C:\WINDOWS\System32\FLTLIB.DLL (756B0000)
+	C:\WINDOWS\System32\ole32.dll (75AF0000)
+	C:\WINDOWS\SYSTEM32\dbgcore.DLL (719F0000)
+	C:\WINDOWS\System32\IMM32.DLL (76090000)
+	C:\WINDOWS\system32\uxtheme.dll (72630000)
+	C:\WINDOWS\System32\MSCTF.dll (75BF0000)
+	C:\WINDOWS\System32\OLEAUT32.dll (756C0000)
+	C:\WINDOWS\system32\dwmapi.dll (6FF10000)
+	C:\WINDOWS\System32\TextInputFramework.dll (502E0000)
+	C:\WINDOWS\System32\CoreUIComponents.dll (0F290000)
+	C:\WINDOWS\System32\CoreMessaging.dll (50250000)
+	C:\WINDOWS\SYSTEM32\wintypes.dll (50B70000)
+	C:\WINDOWS\SYSTEM32\ntmarta.dll (71930000)
+	C:\WINDOWS\System32\clbcatq.dll (75FF0000)
+	C:\WINDOWS\system32\dataexchange.dll (60620000)
+	C:\WINDOWS\system32\d3d11.dll (71A20000)
+	C:\WINDOWS\system32\dcomp.dll (58D60000)
+	C:\WINDOWS\system32\dxgi.dll (71C80000)
+	C:\WINDOWS\system32\twinapi.appcore.dll (58BF0000)
+	C:\WINDOWS\system32\RMCLIENT.dll (605E0000)
+	C:\WINDOWS\system32\msimtf.dll (0F180000)
+	F:\TLAMk2\Server\scripts\fonline_tla.dll (0FE20000)
+	C:\WINDOWS\SYSTEM32\Cryptdll.dll (44A00000)
+	F:\TLAMk2\Server\scripts\fonline_offplayer.dll (0F7D0000)
+	F:\TLAMk2\Server\scripts\auctionmk2.dll (0FAC0000)
+	C:\WINDOWS\system32\mswsock.dll (70E10000)

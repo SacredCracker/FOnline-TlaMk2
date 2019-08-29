@@ -1,0 +1,451 @@
+// FOS Server Автор TabaK
+// robo_cleaner -> RoboCleaner::
+// ST_VAR0 - маска недоступных контейнеров
+// ST_VAR1 - режим сортировкb
+// ST_VAR2 - текущий контейнер
+// ST_VAR3 - флаги настройки уборки
+
+enum Define
+{
+//Текущий режим сортировки лута(хранится в ST_VAR1):
+	ModeAccurate = 1,
+	ModeAny = 2,
+	
+//Флаги настройки уборки
+	GatherArmor = 0x00000001,
+	GatherDrug = 0x00000002,
+	GatherWeapon = 0x00000004,
+	GatherAmmo = 0x00000008,
+	GatherMisc = 0x00000010,
+	GatherExplosive = 0x00000020,
+	GatherItems = 0x00000040
+}
+
+void _roboInit( ::Critter& cr, bool)
+{
+	cr.SetEvent(CRITTER_EVENT_PLANE_BEGIN, "RoboCleaner::_DiscardAll");
+	cr.ClearEnemyStack();
+}
+
+void r_GatherItems( ::Critter& master, ::Critter@ cr)
+{
+	::Map@ map = cr.GetMap();
+	if( validEngineObject( map ) ) 
+	{
+		::array<::Item@> items = {};
+		if(!FLAG(cr.Stat[ST_VAR3], RoboCleaner::Define::GatherArmor)) map.GetItemsByType(ITEM_TYPE_ARMOR, items);
+		if(!FLAG(cr.Stat[ST_VAR3], RoboCleaner::Define::GatherDrug)) map.GetItemsByType(ITEM_TYPE_DRUG, items);
+		if(!FLAG(cr.Stat[ST_VAR3], RoboCleaner::Define::GatherWeapon)) map.GetItemsByType(ITEM_TYPE_WEAPON, items);
+		if(!FLAG(cr.Stat[ST_VAR3], RoboCleaner::Define::GatherAmmo)) map.GetItemsByType(ITEM_TYPE_AMMO, items);
+		if(!FLAG(cr.Stat[ST_VAR3], RoboCleaner::Define::GatherMisc)) map.GetItemsByType(ITEM_TYPE_MISC, items);
+		if( items.length() == 0 )
+		{
+			cr.GetItems(SLOT_INV, items);
+			if( items.length( ) == 0 )
+				Finish(cr);
+			else
+			{
+				cr.SetEvent(CRITTER_EVENT_PLANE_END, "RoboCleaner::_FindContainers");
+				::NpcPlane@ plane = ::CreatePlane( );
+				if( valid( plane ) )
+				{
+					cr.AddPlane( plane );
+					cr.DropPlanes();
+				}
+			}
+			return;
+		}
+		uint totalWeight = 0;
+		for(uint n=0; n<items.length(); n++)
+		{
+			if(!SortMisc(items[n],cr) || !FLAG(items[n].Flags, ITEM_CAN_PICKUP) || FLAG(items[n].Flags, ITEM_NO_LOOT)) continue;
+			totalWeight+=items[n].Proto.Weight;
+			if( totalWeight >= uint( cr.Stat[ST_CARRY_WEIGHT] ) ) break;
+			NpcPlanes::AddPickPlane(cr, 0xFFFFF-::GetDistantion(cr.HexX, cr.HexY, items[n].HexX, items[n].HexY), items[n], 0, false);
+		}
+		if(cr.IsNoPlanes())
+		{
+			Finish( cr );
+			return;
+		}
+		cr.SetEvent(CRITTER_EVENT_PLANE_END, "RoboCleaner::_FindContainers");
+	}
+}
+
+int _FindContainers( ::Critter& cr, ::NpcPlane& plane, int reason, ::Critter@ someCr, ::Item@ someItem)
+{
+	if(reason==REASON_GAG_ITEM && !cr.IsNoPlanes() && valid(someItem) && someItem.GetType()==ITEM_TYPE_DOOR)
+	{
+		if(someItem.LockerId==0)
+		{
+			NpcPlanes::AddPickPlane(cr, plane.Priority+1, someItem, 0, true);
+			return PLANE_KEEP;
+		}
+		return PLANE_DISCARD;
+	}
+	else if(reason==REASON_SUCCESS)
+	{
+		::array<::Item@> items = {};
+		cr.GetMap().GetItems(plane.Pick_HexX, plane.Pick_HexY, items);
+		TryPickItems(items, cr);
+	}
+	if(!cr.IsNoPlanes()) return PLANE_DISCARD;
+	::Map@ map=cr.GetMap();
+	bool foundEmpty=false;
+	int suitableContainer=-1;
+	::array<::Item@> items = {};
+	cr.GetItems(SLOT_INV, items);
+	if(items.length()==0)
+	{
+		if(reason==REASON_SUCCESS) r_GatherItems(cr,cr);
+		else Finish(cr);
+		return PLANE_DISCARD;
+	}
+	if(!FLAG(cr.Stat[ST_VAR3], RoboCleaner::Define::GatherItems)) TryRepairItems(items);
+	
+	::array<::Item@> conts = {};
+	map.GetItemsByType(ITEM_TYPE_CONTAINER, conts);
+	::Item@ sortItem=items[0];
+	for(uint n=0; n<conts.length(); n++)
+	{
+		if(((cr.Stat[ST_VAR0]>>n)&0x1)==1 || conts[n].LockerId>0) continue;
+		if(conts[n].GetProtoId()==Content::Item::BAG || conts[n].GetProtoId()==Content::Item::BACKPACK) continue;
+		::array<::Item@> curItems = {};
+		conts[n].GetItems(0, curItems);
+		
+		if(curItems.length()==0 && !foundEmpty)
+		{
+			foundEmpty=true;
+			suitableContainer=n;
+		}
+		else if(curItems.length()>0 && curItems[0].GetType()==sortItem.GetType())
+		{
+			if((sortItem.GetType()==ITEM_TYPE_WEAPON && sortItem.Proto.Weapon_Skill_0!=curItems[0].Proto.Weapon_Skill_0)
+				|| (sortItem.GetType()==ITEM_TYPE_MISC && IsExplosive(sortItem)!=IsExplosive(curItems[0])))
+			{
+				if(!foundEmpty) suitableContainer=n;
+				continue;
+			}
+			cr.StatBase[ST_VAR1]=RoboCleaner::Define::ModeAccurate;
+			cr.StatBase[ST_VAR2]=n;
+			NpcPlanes::AddPickPlane(cr, 0, conts[n], 0, true);
+			cr.SetEvent(CRITTER_EVENT_PLANE_END, "RoboCleaner::_PutItems");
+			return PLANE_DISCARD;
+		}
+		//else if(suitableContainer==-1) suitableContainer=n;
+	}
+	if(suitableContainer>=0)
+	{
+		cr.StatBase[ST_VAR1]=foundEmpty?RoboCleaner::Define::ModeAccurate: RoboCleaner::Define::ModeAny;
+		cr.StatBase[ST_VAR2]=suitableContainer;
+		NpcPlanes::AddPickPlane(cr, 0, conts[suitableContainer], 0, true);
+		cr.SetEvent(CRITTER_EVENT_PLANE_END, "RoboCleaner::_PutItems");
+	}
+	else Finish(cr);
+	return PLANE_DISCARD;
+}
+
+bool SortMisc(::Item@ item, ::Critter& cr)
+{
+	if(item.GetType()!=ITEM_TYPE_MISC) return true;
+	return !((FLAG(cr.Stat[ST_VAR3], RoboCleaner::Define::GatherExplosive) && IsExplosive(item)) || (FLAG(cr.Stat[ST_VAR3], RoboCleaner::Define::GatherMisc) && !IsExplosive(item)));
+}
+
+void TryPickItems(::array<::Item@> items, ::Critter& cr)
+{
+	uint totalWeight=0;
+	{
+		::array<::Item@>  curItems = {};
+		cr.GetItems(SLOT_INV, curItems);
+		for(uint n=0, nMax=curItems.length();n<nMax;n++) totalWeight+=curItems[n].Proto.Weight;
+	}
+	for(uint n=0, nMax=items.length();n<nMax;n++)
+	{
+		if(items[n].Proto.Weight+totalWeight>uint( cr.Stat[ST_CARRY_WEIGHT] ) ) return;
+		totalWeight+=items[n].Proto.Weight;
+		switch(items[n].GetType())
+		{
+			case ITEM_TYPE_ARMOR:
+				if(!FLAG(cr.Stat[ST_VAR3], RoboCleaner::Define::GatherArmor)) ::MoveItem(items[n], 1, cr);
+				break;
+			case ITEM_TYPE_DRUG:
+				if(!FLAG(cr.Stat[ST_VAR3], RoboCleaner::Define::GatherDrug)) ::MoveItem(items[n], items[n].GetCount(), cr);
+				break;
+			case ITEM_TYPE_WEAPON:
+				if(!FLAG(cr.Stat[ST_VAR3], RoboCleaner::Define::GatherWeapon)) ::MoveItem(items[n], 1, cr);
+				break;
+			case ITEM_TYPE_AMMO:
+				if(!FLAG(cr.Stat[ST_VAR3], RoboCleaner::Define::GatherAmmo)) ::MoveItem(items[n], items[n].GetCount(), cr);
+				break;
+			case ITEM_TYPE_MISC:
+				if(!SortMisc(items[n], cr)) ::MoveItem(items[n], items[n].GetCount(), cr);
+				break;
+			default:break;
+		}
+	}
+}
+
+void TryRepairItems(::array<::Item@> items)
+{
+	for(uint n=0, nMax=items.length();n<nMax;n++)
+	{
+		if(!items[n].IsDeteriorable() || FLAG(items[n].BrokenFlags,BI_ETERNAL) || FLAG(items[n].BrokenFlags,BI_NOTRESC)) continue;
+		int maxRepairCount = (items[n].Proto.MaxRepairCount>0)?((items[n].Proto.MaxRepairCount+10)*10):DEFAULT_MAX_REPAIR_COUNT;
+		if(items[n].RadioChannel>=maxRepairCount) continue;
+		SETFLAG(items[n].BrokenFlags,BI_SERVICE);
+		UNSETFLAG(items[n].BrokenFlags,BI_BROKEN);
+		if(uint(items[n].Deterioration*0.01)>uint(maxRepairCount-items[n].RadioChannel))
+		{
+			items[n].Deterioration=items[n].Deterioration-100*(maxRepairCount-items[n].RadioChannel);
+			items[n].RadioChannel=maxRepairCount;
+		}
+		else
+		{
+			items[n].RadioChannel+=items[n].Deterioration*0.01;
+			items[n].Deterioration=0;
+		}
+		items[n].Update();
+	}
+}
+
+int _DiscardAll(::Critter& cr, ::NpcPlane& plane, int reason, ::Critter@ someCr, ::Item@ someItem)
+{
+	cr.ClearEnemyStack();
+	if(plane.Type!=AI_PLANE_PICK && reason!=REASON_GO_HOME) return PLANE_DISCARD;
+	return PLANE_KEEP;
+}
+
+int _PutItems(::Critter& cr, ::NpcPlane& plane, int reason, ::Critter@ someCr, ::Item@ someItem)
+{
+	if(reason>=REASON_HEX_BUSY  && reason<=REASON_FIND_PATH_ERROR)
+	{
+		cr.StatBase[ST_VAR0]|=(1<<cr.Stat[ST_VAR2]);
+		return _FindContainers(cr, plane, REASON_FROM_SCRIPT, null, null);
+	}
+	else if(reason!=REASON_SUCCESS)
+	{
+		switch(reason)
+		{
+			case REASON_GAG_ITEM:
+				if(valid(someItem) && someItem.GetType()==ITEM_TYPE_DOOR)
+				{
+					if(someItem.LockerId==0)
+					{
+						NpcPlanes::AddPickPlane(cr, plane.Priority+1, someItem, 0, true);
+						return PLANE_KEEP;
+					}
+					cr.StatBase[ST_VAR0]|=(1<<cr.Stat[ST_VAR2]);
+					return _FindContainers(cr, plane, REASON_FROM_SCRIPT, null, null);
+				}
+				break;
+			case REASON_GAG_CRITTER:
+				if(plane.Priority>0) plane.Priority--;
+				return PLANE_KEEP;
+			default:return PLANE_DISCARD;
+		}
+	}
+	::Item@ cont=cr.GetMap().GetItem(plane.Pick_HexX,	plane.Pick_HexY,plane.Pick_Pid);
+	if(@cont==null || cont.GetType()!=ITEM_TYPE_CONTAINER) return PLANE_DISCARD;
+	else if(cont.Proto.Container_Changeble && !FLAG(cont.LockerCondition, LOCKER_ISOPEN))
+	{
+		NpcPlanes::AddPickPlane(cr, 0, cont, 0, true);
+		return PLANE_DISCARD;
+	}
+	::array<::Item@> items = {};
+	cr.GetItems(SLOT_INV, items);
+	if(items.length()==0)
+	{
+		r_GatherItems(cr, cr);
+		return PLANE_DISCARD;
+	}
+	::Item@ sortItem=items[0];
+	items.resize(0);
+	cr.GetItemsByType(sortItem.GetType(), items);
+	::array<::Item@>  moveItems = {};
+	
+	int secParam=0;
+	switch(sortItem.GetType())
+	{
+		case ITEM_TYPE_WEAPON:
+			secParam=sortItem.Proto.Weapon_Skill_0;
+			if(secParam>SK_THROWING) secParam=SK_SMALL_GUNS;
+			for(uint i=0;i<items.length();i++)
+			{
+				if((items[i].Proto.Weapon_Skill_0==secParam) ||
+					(items[i].Proto.Weapon_Skill_0>SK_THROWING && secParam==SK_SMALL_GUNS))
+				moveItems.insertLast(@items[i]);
+			}
+			::MoveItems(moveItems, cont, 0);	
+			break;
+		case ITEM_TYPE_MISC:
+			for(uint i=0;i<items.length();i++)
+				if(IsExplosive(items[i])==IsExplosive(sortItem)) moveItems.insertLast(@items[i]);
+			::MoveItems(moveItems, cont, 0);	
+			break;
+		default:
+			::MoveItems(items, cont, 0);
+			break;
+	}
+	return _FindContainers(cr, plane, REASON_FROM_SCRIPT, null, null);
+}
+
+void Finish(::Critter& cr)
+{
+	cr.SetEvent(CRITTER_EVENT_PLANE_END, "");
+	::array<::Item@>  items = {};
+	cr.GetMap().GetItemsByType(ITEM_TYPE_CONTAINER, items);
+	
+	for(uint n=0; n<items.length(); n++)
+	{
+		if(items[n].Proto.Container_Changeble && FLAG(items[n].LockerCondition, LOCKER_ISOPEN))
+		{
+			NpcPlanes::AddPickPlane(cr, 0xFFFFF-::GetDistantion(cr.HexX, cr.HexY, items[n].HexX, items[n].HexY), items[n], 0, true);
+		}
+	}
+	
+	if(!cr.IsNoPlanes()) cr.SetEvent(CRITTER_EVENT_PLANE_END, "RoboCleaner::_FindContainers");
+}
+
+void dlg_GetCleanSet( ::Critter& master, ::Critter@ npc, ::string@ lexems)
+{
+	if(!IS_DIALOG_GENERATED(lexems)) return;
+	lexems="$itemlist";
+	if(npc.Stat[ST_VAR3]==127 || npc.Stat[ST_VAR3]==63)
+	{
+		lexems+="@msg text 2656@";
+		return;
+	}
+	bool empty=true;
+	
+	if(!FLAG(npc.Stat[ST_VAR3], RoboCleaner::Define::GatherArmor))
+	{
+		lexems+="@msg text 2650@";
+		empty=false;
+	}
+	
+	if(!FLAG(npc.Stat[ST_VAR3], RoboCleaner::Define::GatherDrug))
+	{
+		if(!empty) lexems+=", ";
+		lexems+="@msg text 2651@";
+		empty=false;
+	}
+	
+	if(!FLAG(npc.Stat[ST_VAR3], RoboCleaner::Define::GatherWeapon))
+	{
+		if(!empty) lexems+=", ";
+		lexems+="@msg text 2652@";
+		empty=false;
+	}
+	if(!FLAG(npc.Stat[ST_VAR3], RoboCleaner::Define::GatherAmmo))
+	{
+		if(!empty) lexems+=", ";
+		lexems+="@msg text 2653@";
+		empty=false;
+	}
+	if(!FLAG(npc.Stat[ST_VAR3], RoboCleaner::Define::GatherMisc))
+	{
+		if(!empty) lexems+=", ";
+		lexems+="@msg text 2654@";
+		empty=false;
+	}
+	if(!FLAG(npc.Stat[ST_VAR3], RoboCleaner::Define::GatherExplosive))
+	{
+		if(!empty) lexems+=", ";
+		lexems+="@msg text 2655@";
+		empty=false;
+	}
+	if(!FLAG(npc.Stat[ST_VAR3], RoboCleaner::Define::GatherItems))
+	{
+		if(!empty) lexems+=", ";
+		lexems+="@msg text 2657@";
+		empty=false;
+	}
+	
+	lexems+=".";	
+}
+
+bool d_CleanArmor( ::Critter& master, ::Critter@ npc) { return FLAG(npc.Stat[ST_VAR3], RoboCleaner::Define::GatherArmor); }
+bool d_DontCleanArmor(::Critter& master, ::Critter@ npc) { return !FLAG(npc.Stat[ST_VAR3], RoboCleaner::Define::GatherArmor); }
+bool d_CleanDrugs(::Critter& master, ::Critter@ npc) { return FLAG(npc.Stat[ST_VAR3], RoboCleaner::Define::GatherDrug); }
+bool d_DontCleanDrugs(::Critter& master, ::Critter@ npc) { return !FLAG(npc.Stat[ST_VAR3], RoboCleaner::Define::GatherDrug); }
+bool d_CleanWeapon(::Critter& master, ::Critter@ npc) { return FLAG(npc.Stat[ST_VAR3], RoboCleaner::Define::GatherWeapon); }
+bool d_DontCleanWeapon(::Critter& master, ::Critter@ npc) { return !FLAG(npc.Stat[ST_VAR3], RoboCleaner::Define::GatherWeapon); }
+bool d_CleanAmmo(::Critter& master, ::Critter@ npc) { return FLAG(npc.Stat[ST_VAR3], RoboCleaner::Define::GatherAmmo); }
+bool d_DontCleanAmmo(::Critter& master, ::Critter@ npc) { return !FLAG(npc.Stat[ST_VAR3], RoboCleaner::Define::GatherAmmo); }
+bool d_CleanMisc(::Critter& master, ::Critter@ npc) { return FLAG(npc.Stat[ST_VAR3], RoboCleaner::Define::GatherMisc); }
+bool d_DontCleanMisc(::Critter& master, ::Critter@ npc) { return !FLAG(npc.Stat[ST_VAR3], RoboCleaner::Define::GatherMisc); }
+bool d_CleanExplosive(::Critter& master, ::Critter@ npc) { return FLAG(npc.Stat[ST_VAR3], RoboCleaner::Define::GatherExplosive); }
+bool d_DontCleanExplosive(::Critter& master, ::Critter@ npc) { return !FLAG(npc.Stat[ST_VAR3], RoboCleaner::Define::GatherExplosive); }
+bool d_RepairItems(::Critter& master, ::Critter@ npc) { return FLAG(npc.Stat[ST_VAR3], RoboCleaner::Define::GatherItems); }
+bool d_DontRepairItems(::Critter& master, ::Critter@ npc) { return !FLAG(npc.Stat[ST_VAR3], RoboCleaner::Define::GatherItems); }
+
+void r_CleanArmor(::Critter& master, ::Critter@ npc) { UNSETFLAG(npc.StatBase[ST_VAR3], RoboCleaner::Define::GatherArmor); }
+void r_DontCleanArmor(::Critter& master, ::Critter@ npc) { SETFLAG(npc.StatBase[ST_VAR3], RoboCleaner::Define::GatherArmor); }
+void r_CleanDrugs(::Critter& master, ::Critter@ npc) { UNSETFLAG(npc.StatBase[ST_VAR3], RoboCleaner::Define::GatherDrug); }
+void r_DontCleanDrugs(::Critter& master, ::Critter@ npc) { SETFLAG(npc.StatBase[ST_VAR3], RoboCleaner::Define::GatherDrug); }
+void r_CleanWeapon(::Critter& master, ::Critter@ npc) { UNSETFLAG(npc.StatBase[ST_VAR3], RoboCleaner::Define::GatherWeapon); }
+void r_DontCleanWeapon(::Critter& master, ::Critter@ npc) { SETFLAG(npc.StatBase[ST_VAR3], RoboCleaner::Define::GatherWeapon); }
+void r_CleanAmmo(::Critter& master, ::Critter@ npc) { UNSETFLAG(npc.StatBase[ST_VAR3], RoboCleaner::Define::GatherAmmo); }
+void r_DontCleanAmmo(::Critter& master, ::Critter@ npc) { SETFLAG(npc.StatBase[ST_VAR3], RoboCleaner::Define::GatherAmmo); }
+void r_CleanMisc(::Critter& master, ::Critter@ npc) { UNSETFLAG(npc.StatBase[ST_VAR3], RoboCleaner::Define::GatherMisc); }
+void r_DontCleanMisc(::Critter& master, ::Critter@ npc) { SETFLAG(npc.StatBase[ST_VAR3], RoboCleaner::Define::GatherMisc); }
+void r_CleanExplosive(::Critter& master, ::Critter@ npc) { UNSETFLAG(npc.StatBase[ST_VAR3], RoboCleaner::Define::GatherExplosive); }
+void r_DontCleanExplosive(::Critter& master, ::Critter@ npc) { SETFLAG(npc.StatBase[ST_VAR3], RoboCleaner::Define::GatherExplosive); }
+void r_RepairItems(::Critter& master, ::Critter@ npc) { UNSETFLAG(npc.StatBase[ST_VAR3], RoboCleaner::Define::GatherItems); }
+void r_DontRepairItems(::Critter& master, ::Critter@ npc) { SETFLAG(npc.StatBase[ST_VAR3], RoboCleaner::Define::GatherItems); }
+
+uint r_AskRepair(::Critter& master, ::Critter@ npc)
+{
+	::array<::Item@>  slotItems = {};
+	master.GetItems(SLOT_HAND1, slotItems);
+	master.GetItems(SLOT_HAND2, slotItems);
+	master.GetItems(SLOT_ARMOR, slotItems);
+	if(slotItems.length()==0) return 4;
+	for(uint n=0; n<slotItems.length();n++)
+	{
+		if(slotItems[n].IsDeteriorable()) return 5;
+	}
+	return 4;
+}
+
+void dlg_Repair(::Critter& master, ::Critter@ npc, ::string@ lexems)
+{
+	if(!IS_DIALOG_GENERATED(lexems)) return;
+	lexems="$fixdetails";
+	::array<::Item@>  slotItems = {};
+	master.GetItems(SLOT_HAND1, slotItems);
+	master.GetItems(SLOT_HAND2, slotItems);
+	master.GetItems(SLOT_ARMOR, slotItems);
+	for(uint n=0; n<slotItems.length(); n++)
+	{
+		if(!slotItems[n].IsDeteriorable()) continue;
+		lexems+="@msg item "+(slotItems[n].GetProtoId()*100)+"@ - ";
+		int maxRepairCount = (slotItems[n].Proto.MaxRepairCount>0)?((slotItems[n].Proto.MaxRepairCount+10)*10):DEFAULT_MAX_REPAIR_COUNT;
+		if(FLAG(slotItems[n].BrokenFlags,BI_ETERNAL) || FLAG(slotItems[n].BrokenFlags,BI_NOTRESC) || slotItems[n].RadioChannel>=maxRepairCount) 		lexems+="@msg text 2659@\n";
+		else if(slotItems[n].Deterioration<=50) lexems+="@msg text 2660@\n";
+		else lexems+="@msg text 2658@\n";
+	}
+}
+
+bool d_NeedRepair(::Critter& master, ::Critter@ npc)
+{
+	::array<::Item@>  slotItems = {};
+	master.GetItems(SLOT_HAND1, slotItems);
+	master.GetItems(SLOT_HAND2, slotItems);
+	master.GetItems(SLOT_ARMOR, slotItems);
+	for(uint n=0; n<slotItems.length(); n++)
+	{
+		if(slotItems[n].IsDeteriorable() && slotItems[n].Deterioration>50) return true;
+	}
+	return false;
+}
+
+void r_PerformRepair(::Critter& master, ::Critter@ npc)
+{
+	::array<::Item@>  slotItems = {};
+	master.GetItems(SLOT_HAND1, slotItems);
+	master.GetItems(SLOT_HAND2, slotItems);
+	master.GetItems(SLOT_ARMOR, slotItems);
+	TryRepairItems(slotItems);
+	_CritAnimateUse(npc);
+}

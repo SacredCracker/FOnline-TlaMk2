@@ -1,0 +1,338 @@
+// FOS Server
+#define IsGrup #(cr)	(cr.Patrol[PL_GRUP_NUMBER]!=0)
+#define DeclIdleLife	#( name ) void name ( ::Critter& cr, uint mapId )
+
+class ProtoRoleCity
+{
+	ProtoRoleCity( )
+	{
+		Log( "WTF?");
+	}
+	
+	ProtoRoleCity( const uint&in n )
+	{
+		Number = n;
+		
+		IsGuard = false;
+		IsPatrol = false;
+		PlayerRole = false;
+		IsProtected = false;
+		IsNotHelper = false;
+		LocationId = 0;
+	}
+	
+	void CritterSetRoleCity( ::Critter& cr )
+	{
+		if( cr.IsPlayer() && not PlayerRole )
+			Log( "Внимание! Городская роль нпц назначается игроку! " + Number );
+		if( cr.IsNpc() && PlayerRole )
+			Log( "Внимание! Городская роль игрока назначается нпц! " + Number );
+		
+		// cr.CityRoleBase[CITY_ROLE_LOCATION_PID] = LocationId; // ToDo: Расставить в городах охрану своего города.
+		cr.CityRole_IsGuard = IsGuard;
+		cr.CityRole_IsPatrol = IsPatrol;
+		cr.CityRole_IsProtected = IsProtected;
+		cr.CityRole_IsNotHelper = IsNotHelper;
+	}
+	
+	uint Number;
+	
+	bool IsGuard;
+	bool IsPatrol;
+	bool IsProtected;
+	bool PlayerRole;
+	bool IsNotHelper;
+	uint LocationId;
+	
+}
+
+DeclIdleLife( IdleToHome )
+{
+	const bool isNight = ::__Hour>=21 || ::__Hour<5;
+	if( mapId == 0 )
+	{
+		if( not isNight )
+		{
+			uint mapid = 0;
+			uint16 var = 0;
+			uint8 var0 = 0;
+			cr.GetHomePos( mapid, var, var, var0 ); 			
+			cr.TransitToMap ( mapid, 0 );
+		}
+	}
+	else
+	{
+		::Map@ map = cr.GetMap();
+		if( isNight )
+		{
+			if( validEngineObject( map ) )
+			{
+				uint16 x = 0, y = 0; 
+				
+				cr.CityRoleBase[ CITY_ROLE_IM_HOME ] = 1;
+				map.GetExitGlobalGrid( cr, x,  y );
+				NpcPlanes::AddGoToGlobalPlane( cr, x, y, 0, true);
+			}
+		}
+	}
+}
+
+void changedParam_RoleCity( ::Critter& cr, uint index, int oldValue)
+{
+	const int rc = cr.Stat[ index ];
+	
+	ProtoRoleCity prc( rc );
+	
+	switch( rc )
+	{
+		case CITY_ROLE_DEAD_PLAYER: break;
+		case CITY_BASE_ATACKER: break;
+		case CITY_klamath_auto_role:
+		{
+			prc.IsProtected = true;
+			prc.LocationId = LOCATION_Klamath;
+			
+			switch( cr.Stat[ ST_BODY_TYPE ] )
+			{
+				case BT_CHILDREN:
+				{
+					cr.StatBase[ index ] = CITY_klamath_child;					
+				} break;
+			}
+			
+		} break;
+		case CITY_klamath_child:
+		{
+			prc.IsProtected = true;
+			prc.LocationId = LOCATION_Klamath;			
+		} break;
+		case CITY_klamath_patrol:
+		{
+			prc.IsGuard = true;
+			prc.IsPatrol = true;
+			prc.IsProtected = true;
+			prc.LocationId = LOCATION_Klamath;
+		} break;
+		
+		case CITY_ANIMALS_PROTECTED:
+		{
+			prc.IsNotHelper = true;
+			prc.IsProtected = true;
+		} break;
+		
+		case TEMPLATE_MOB:
+		{
+			
+		} break;
+		
+		case CITY_den_dog_guard:
+		{
+			prc.IsGuard = true;
+			prc.IsProtected = true;
+		} break;
+		
+		case CITY_den_patrol:
+		{
+			prc.IsGuard = true;
+			prc.IsPatrol = true;
+			prc.IsProtected = true;
+			prc.LocationId = LOCATION_Den;
+		}
+		
+		case CITY_ROLE_NONE:
+		{
+			if( cr.IsNpc( ) )
+			{
+				::Map@ m = cr.GetMap( );
+				if( valid( m ) )
+				{
+					if( CityGuard::IsValidManager( m ) )
+					{
+						switch( cr.Stat[ST_BODY_TYPE] )
+						{
+							case BT_RADSCORPION:
+							case BT_RAT:
+							case BT_DOG:
+							case BT_PLANT:
+							case BT_GECKO:
+							case BT_GIANT_ANT:
+							case BT_DEADCLAW: break;
+							default: cr.CityRole_IsProtected = true; break;
+						}
+						return;
+					}
+				}
+			}
+			else prc.PlayerRole = true;
+		}	break;
+		
+		case TEMPLATE_GRUP_PATROL:
+		{
+			prc.IsGuard = true;
+			prc.IsPatrol = true;
+			prc.IsProtected = true;
+		} break;
+		
+		case CITY_DEN_GUARD:
+		{
+			prc.IsGuard = true;
+			prc.IsPatrol = true;
+			prc.LocationId = LOCATION_Den;
+			prc.IsProtected = true;
+		} break;
+		
+		case TEMPLATE_ANIMAL:
+		{
+			prc.IsNotHelper = true;
+			prc.IsProtected = true;
+		} break;
+		
+		case CITY_NONE_PROTECT:
+		{
+			prc.IsNotHelper = true;
+		} break;
+		
+		case CITY_ANIMAL_ITEM:
+		{
+			prc.IsNotHelper = true;
+		} break;
+		
+		case CITY_WTF_GUARD:
+		{
+			prc.IsGuard = true;
+			prc.IsProtected = true;
+		} break;
+		
+		default: { Log( "Внимание! Городской роли №"+ rc + " не существует! (" +cr.Name+") " + cr.GetMap( ).GetProtoId( ) ); return; }
+	}
+	
+	prc.CritterSetRoleCity( cr );
+}
+
+uint MooStr = 102000;	// Moo...
+
+//Обработчик ролей, вешает скрипты по городским ролям.
+void processing_role_city( ::Critter& cr, bool ft)
+{
+	if( ft && cr.CityRole[CITY_ROLE_DEFAULT_ROLE] == 0 )
+	{
+		cr.CityRoleBase[CITY_ROLE_DEFAULT_ROLE] = cr.Stat[ST_ROLE_CITY];			
+	}
+	
+	changedParam_RoleCity( cr, ST_ROLE_CITY, cr.Stat[ST_ROLE_CITY] );
+	
+	switch (cr.Stat[ST_ROLE_CITY])
+	{	
+		//case CITY_klamath_butcher: _ButcherInit(cr, ft); break;
+		//case CITY_klamath_trappers_guard: _GuardInit(cr, ft); break;
+		case TEMPLATE_GUARD_BAR: _TemplateGuardBarInit(cr, ft); break;
+		case TEMPLATE_MOB: Mob::_MobInit(cr, ft); break;
+		case TEMPLATE_ANIMAL: _TemplateAnimalInit(cr, ft); break;
+		case CITY_den_patrol: DenBOS::_PatrolDenInit(cr,ft); break;
+		case CITY_klamath_patrol: KlamathPatrol::Init(cr,ft); break;
+		case CITY_den_dog_guard: DenBOS::_GuardDogInit(cr, ft); break;
+		case TEMPLATE_GRUP_PATROL: KlamathPatrol::Init(cr,ft); break;
+		default: break;
+	}
+	
+	if(cr.Patrol[PL_GRUP_NUMBER]!=0)
+	{
+		GrupPatrol::AddPatrolerToGrup(cr);
+	}
+	else if(cr.CityRole_IsPatrol && cr.Stat[ST_NPC_PATROL_ID]!=0)
+	{
+		Move::_PatrolInit(cr, ft);
+	}
+}
+
+// Шаблоны поведения
+
+// Шаблон Охраника бара.
+/* Охраник бара должен защишать людей только на територии охраняемого им бара. Чтобы определить охраняется бар им или нет используется типовые гексы пометки здания.
+Если охраник и атакуемая цель стоят на одной типовой зоне бара, то нужно защитить атакуемого. */
+
+void _TemplateGuardBarInit( ::Critter& gb, bool firstTime)
+{
+	gb.SetEvent(CRITTER_EVENT_SMTH_ATTACK, "ProcessingRoleCity::_ProtectionBar");
+}
+
+void _ProtectionBar( ::Critter& cr, ::Critter& fromCr, ::Critter& target)
+{
+	uint8 typeZone=0;
+	if(City::CritterInHouse(target, typeZone) && typeZone==HEX_ZONE_HOUSE_BAR)
+	{
+		::array<::NpcPlane@> planes = {};
+		uint count=cr.GetPlanes(planes);
+		for(uint i=0; i<count; i++)
+		{
+			::NpcPlane@ plane=planes[i];
+			if (!valid(plane) || plane.Attack_TargId==target.Id || plane.Attack_TargId==fromCr.Id) return;
+		}
+		if(City::CritterInProtectZone(cr, target))
+		{
+			if(fromCr.StatBase[ST_ROLE_CITY]==TEMPLATE_GUARD_BAR || fromCr.CityRole_IsGuard) return;
+			NpcPlanes::AddAttackPlane(cr, 1, fromCr);
+		}
+		else return;
+	}
+}
+
+// Шаблон Мирное животное.
+/* Мирное животное в бои не вмешивается, постоянно гуляет*/
+
+void _TemplateAnimalInit(::Critter& an, bool firstTime)
+{
+	Move::_CritInit(an, firstTime);
+	an.SetEvent(CRITTER_EVENT_ATTACKED, "ProcessingRoleCity::_AnimalAttacked");
+	an.SetEvent(CRITTER_EVENT_DEAD, "ProcessingRoleCity::_AnimalDead");
+}
+
+void _AnimalDead( ::Critter& cr, ::Critter@ killer)
+{
+	if(valid(killer))
+		if(killer.PerkBase[PE_BUTCHER]!=0)
+			_CritAddItem(cr,Content::Item::MEAT,1);
+}
+
+bool _AnimalAttacked( ::Critter& cr, ::Critter& target)
+{
+	if(cr.StatBase[ST_BODY_TYPE]==BT_BRAHMIN) BrahminAnimalAttack(cr, target);
+	return true;
+}
+
+bool BrahminAnimalAttack( ::Critter& npc, ::Critter& target)
+{
+	::NpcPlane@ plane = ::CreatePlane();
+	if(target.StatBase[ST_LEVEL]<=3 && target.IsPlayer())
+	{
+		if(::Random(0,5)==0) npc.SayMsg(SAY_NORM_ON_HEAD,TEXTMSG_TEXT,MooStr);
+		plane.Type=AI_PLANE_ATTACK;
+		plane.Priority=AI_PLANE_ATTACK_PRIORITY;
+		plane.Attack_TargId=target.Id;
+		plane.Attack_MinHp= ::__DeadHitPoints;
+		plane.Attack_IsGag=false;
+		plane.Attack_GagHexX=0;
+		plane.Attack_GagHexY=0;
+		plane.Attack_LastHexX=target.HexX;
+		plane.Attack_LastHexY=target.HexY;
+		plane.Run=false;
+	}
+	else if(target.PerkBase[PE_BUTCHER]!=0)
+	{
+		npc.ToKnockout(KNOCKOUT_ANIM2_DEFAULT(true),6,npc.HexX,npc.HexY);
+		
+		return false;
+	}
+	else
+	{
+		npc.SayMsg(SAY_SHOUT_ON_HEAD,TEXTMSG_TEXT,MooStr);
+		plane.Type=AI_PLANE_WALK;
+		plane.Priority=AI_PLANE_WALK_PRIORITY;
+		plane.Walk_HexX= ::Random((target.HexX+(5*(-1))), (target.HexX+5));
+		plane.Walk_HexY= ::Random((target.HexY+(5*(-1))), (target.HexY+5));
+		plane.Walk_Dir= ::GetDirection(plane.Walk_HexX, plane.Walk_HexY, target.HexX, target.HexY);
+		plane.Run=true;
+		plane.Walk_Cut=0;
+	}
+	return npc.AddPlane(plane);
+}

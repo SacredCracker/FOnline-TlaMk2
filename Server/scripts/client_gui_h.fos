@@ -1,0 +1,276 @@
+// Author: cvet
+// Client GUI header
+
+#ifndef __CLIENT_GUI__
+#define __CLIENT_GUI__
+//
+// API
+//
+#ifndef CLIENT_GUI
+// Create new screen
+import IGUIScreenOpt@ GUI_CreateScreen( int screenIndex, string@ sprName ) from "client_gui";
+// Delete old screen, hardcoded screens included
+import void GUI_DeleteScreen( int screenIndex ) from "client_gui";
+// Add element on screen
+import IGUIElementOpt@ GUI_AddScreenElement( int screenIndex, string@ sprName, int x, int y ) from "client_gui";
+import IGUIElementOpt@ GUI_AddScreenElement( int screenIndex, string@ sprName, int[]& position ) from "client_gui";
+import IGUIElementOpt@ GUI_AddScreenElement( int screenIndex, string@ sprName ) from "client_gui";
+// Get screen options
+import IGUIScreenOpt@ GUI_GetScreenOptions( int screenIndex ) from "client_gui";
+// Get options for last created screen, valid only on IGUIScreenCallbackShow::OnShow callback
+import IGUIScreenOpt@ GUI_GetScreenOptions() from "client_gui";
+// Get options for last created element, valid only on IGUIElementCallbackInit::OnInit callback
+import IGUIElementOpt@ GUI_GetElementOptions() from "client_gui";
+
+import IGUIScreenOpt@ GUI_GetActiveScreenOptions( int screenIndex, int ignore ) from "client_gui";
+
+import int GUI_GetMouseScreenIndex( ) from "client_gui";
+import int GUI_GetMonitorScreenIndex( int x, int y ) from "client_gui";
+
+import const bool get_CtrlPressed(  ) from "client_gui";
+import const bool get_ShiftPressed(  ) from "client_gui";
+import const bool get_KeyPressed( uint index ) from "client_gui";
+import const bool get_KeyJamming( uint index ) from "client_gui";
+
+import bool get_MouseDown( uint index ) from "client_gui";
+import void set_MouseDown( uint index, bool value ) from "client_gui";
+
+import void GUI_SetDragAndDrop( IGUIDragAndDropElement@ dad ) from "client_gui";
+import IGUIDragAndDropElement@ GUI_GetDragAndDrop( ) from "client_gui";
+
+import IGUIInformerOpt@ GUI_CreateInformer( ::string@ Name ) from "client_gui";
+import IGUIListingElement@ GUI_GetFocusListingElement( ) from "client_gui";
+
+#ifndef __MK2_MODULE__
+#ifdef _SPRITE_
+import void SwitchPicture( IGUIElementOpt@ elementOpt, Sprite@ newSpr ) from "client_gui";
+import IGUIElementOpt@ GUI_AddScreenElementBySprite( int screenIndex, Sprite@ spr, int x, int y ) from "client_gui";
+#endif
+#endif
+#endif
+
+//
+// Screen
+//
+namespace IGUI
+{
+shared interface ScreenCallbackShow {
+    void OnShow( int p0, int p1, int p2 );
+}
+shared interface ScreenCallbackHide {
+    void OnHide( int p0, int p1, int p2 );
+}
+shared interface ScreenCallbackMove {
+    void OnMove( int posX, int posY );
+}
+
+shared interface ElementCallbackInit       {
+    void OnInit();
+}
+shared interface ElementCallbackDraw       {
+    void OnDraw();
+}
+shared interface ElementCallbackDrawPos    {
+    void OnDraw( int ScreenX, int ScreenY, int ElementX, int ElementY );
+}
+shared interface ElementCallbackMouseClick {
+    void OnMouseClick( int click );
+}
+shared interface ElementCallbackMouseDown  {
+    void OnMouseDown( int click );
+}
+shared interface ElementCallbackMouseDrop  {
+    void OnMouseDrop( int click );
+}
+shared interface ElementCallbackCallbackListActive  {
+    void OnListActive( uint index, ::string@ text, int click );
+}
+shared interface ElementCallbackMouseMove  {
+    void OnMouseMove( bool clicked );
+}
+shared interface ElementCallbackKeyPress   {
+    void OnKeyPress( uint8 key, uint8 letter, bool& result );
+}
+shared interface ElementCallbackListing   {
+    void OnListing( uint index, ::string@ text );
+}
+shared interface ElementHideChecker       {
+    bool IsElementHide( IGUIElementOpt@ element );
+}
+
+shared interface InformerCallbackText {
+    string@ get_Text();
+}
+
+shared interface ListingElementOpt{
+	int get_Height( IGUIListingElement@ );
+	int get_Width( IGUIListingElement@ );
+	void Shift( uint shift );
+	bool get_Hide( IGUIListingElement@ );
+}
+
+}
+
+// Listing
+shared interface IGUIListingElement{
+	void Draw( int x, int y, int w, int h, uint color );
+	void ClickUp( int click );
+	void ClickDown( int click );
+	void Focus( );
+	void LoseFocus( );
+	void MouseMove( int x, int y );
+}
+
+shared interface IGUIDragAndDropElement{
+	void Draw( int x, int y );
+	bool Drag( );
+	void Drop( );
+}
+
+shared interface IGUIDragAndDropOpt{
+	IGUIDragAndDropElement@ Drag( IGUIDragAndDropElement@ );
+	IGUIDragAndDropElement@ Drop( IGUIDragAndDropElement@ );
+}
+
+shared interface IGUIHiddenCursorInfo {}
+shared interface IGUIDescriptor {
+	void Show( );
+	void Hide( );
+	bool Refresh( int lookType, ::IGUIDescriptor@ new );
+}
+
+shared interface IGUIInformerOpt 
+{
+    IGUIInformerOpt@ AddDescriptor( IGUIDescriptor@ descriptor );
+    IGUIInformerOpt@ SetDealy( uint tick );
+    IGUIInformerOpt@ SetPosition( int x, int y );
+    IGUIInformerOpt@ SetMouse( );
+	
+    ::string@ get_Name( );
+}
+
+shared interface IGUIScreenOpt
+{
+    IGUIScreenOpt@ CallbackShow( IGUI::ScreenCallbackShow@ callback );         // delault null
+    IGUIScreenOpt@ CallbackHide( IGUI::ScreenCallbackHide@ callback );         // delault null
+    IGUIScreenOpt@ CallbackMove( IGUI::ScreenCallbackMove@ callback );         // delault null
+    IGUIScreenOpt@ Position( int x, int y );                                 // delault center of screen
+    IGUIScreenOpt@ PositionCenter( );                                 // delault center of screen
+    IGUIScreenOpt@ CanMove( bool enabled );                                  // delault true
+    IGUIScreenOpt@ Modal( bool enabled );                                    // delault true
+    IGUIScreenOpt@ Multiinstance( bool enabled );                            // delault false
+    IGUIScreenOpt@ IgnoreBorders( bool enabled );                            // default false
+    IGUIScreenOpt@ CloseOnMiss( bool enabled );                              // default false
+    IGUIScreenOpt@ AutoCursor( bool enabled, int cursorType );               // default false
+    IGUIScreenOpt@ ToHide( bool enabled );             						  // default false
+	IGUIScreenOpt@ SetNoCollision( bool coll );
+	IGUIScreenOpt@ SetPicture( string@ sprName, int path );
+	IGUIScreenOpt@ SetPicture( string@ sprName );
+	
+    void AllGroupElementChangePos( uint index, int x, int y );
+	
+	IGUIElementOpt@ get_ElementOpt( const string name );
+
+    // Info
+    int GetPosX();
+    int GetPosY();
+    /* IGUIElementOpt@[]@ GetElements(); */
+}
+
+//
+// Element
+//
+shared interface IGUIElementOpt
+{
+    IGUIElementOpt@ CallbackInit( IGUI::ElementCallbackInit@ callback );                                  // default null
+    IGUIElementOpt@ CallbackDraw( IGUI::ElementCallbackDraw@ callback );                                  // default null
+    IGUIElementOpt@ CallbackDrawPos( IGUI::ElementCallbackDrawPos@ callback );                            // default null
+    IGUIElementOpt@ CallbackMouseClick( IGUI::ElementCallbackMouseClick@ callback );                      // default null
+    IGUIElementOpt@ CallbackMouseDown( IGUI::ElementCallbackMouseDown@ callback );                        // default null
+    IGUIElementOpt@ CallbackMouseDrop( IGUI::ElementCallbackMouseDrop@ callback );
+	IGUIElementOpt@ CallbackListActive( IGUI::ElementCallbackCallbackListActive@ callback );
+
+    IGUIElementOpt@ CallbackMouseMove( IGUI::ElementCallbackMouseMove@ callback );                        // default null
+    IGUIElementOpt@ CallbackKeyPress( IGUI::ElementCallbackKeyPress@ callback );                          // default null
+    IGUIElementOpt@ CallbackHideChecker( IGUI::ElementHideChecker@ callback );                          // default null
+    IGUIElementOpt@ Position( int x, int y );                                                           // default zeros
+    IGUIElementOpt@ Position( int x, int y, int w, int h );                                             // default zeros
+    IGUIElementOpt@ Position( int[]& pos );
+	IGUIElementOpt@ Position( ::string& iniKey );                                                         // get borders from ini
+    IGUIElementOpt@ DownPic( ::string@ sprName );                                                         // default picture off
+    IGUIElementOpt@ Text( ::string@ t, int f, uint color, uint downColor, int flags );                    // default text disabled
+    IGUIElementOpt@ Text( ::string@ t, int f, uint color, uint[] multicolor, uint downColor, int flags ); // default text disabled
+    IGUIElementOpt@ TextInput( bool enabled, uint maxLen, uint colorFocused );                          // deafult false        
+    IGUIElementOpt@ BlockInput( ::string@ blockLetters, uint[]@ blockKeys );
+	IGUIElementOpt@ SetJamming( bool enabled );
+    IGUIElementOpt@ Switch( bool enabled );                                                             // default false
+    IGUIElementOpt@ ToHide( bool hide );                                                                // default false
+    IGUIElementOpt@ ScrollableText( bool scrollable );                                                  // default false
+    IGUIElementOpt@ SetScroll( bool add, int val );                                                     // default false
+    IGUIElementOpt@ SetGroupIndex( uint index );                                                        // default zero
+    IGUIElementOpt@ SetNoFocusedKeyPress( bool isF );
+	IGUIElementOpt@ SetNoCollision( bool coll );
+	
+    IGUIElementOpt@ SBSetValue( uint val );
+    IGUIElementOpt@ SBScrollPic( ::string@ sprName );
+    IGUIElementOpt@ SBSetRange( uint range );
+    IGUIElementOpt@ IsScrollBar( bool scroll );
+    IGUIElementOpt@ IsListBox( bool listbox, uint highlight, uint down );
+    IGUIElementOpt@ ListBoxFocused( bool focused );
+    IGUIElementOpt@ List( ::string@[]@ list );
+    IGUIElementOpt@ TextFrame( int8 x, int8 y );
+    IGUIElementOpt@ Font( int font, uint color );
+    IGUIElementOpt@ MultiPicture( uint[] hashs, uint8 dir, uint16 height, uint16 width, uint16 dX, uint16 dY, uint8 countOfLine, uint color );
+    IGUIElementOpt@ MultiPictureFrame( int16 x, int16 y );
+    IGUIElementOpt@ MultiText( ::string[] texts, int16 startDx, int16 startDy, uint16 dX, uint16 dY, uint8 countOfLine, int font, uint color, int flags );
+    IGUIElementOpt@ Picture( ::string sprName );
+    IGUIElementOpt@ Picture( ::string sprName, int path );
+    IGUIElementOpt@ Picture( uint hash, uint8 dir );
+    IGUIElementOpt@ PictureSize( uint16 width, uint16 hieght );
+    IGUIElementOpt@ ForceCallbackMouseClick( int click );
+    IGUIElementOpt@ AutoCursor( int cursor );
+    IGUIElementOpt@ SetFocus( bool set );
+    IGUIElementOpt@ OnlyDigits( bool set );
+    IGUIElementOpt@ InputTrigger();
+    IGUIElementOpt@ Flags( int flags );
+    IGUIElementOpt@ Push( bool push );
+    IGUIElementOpt@ SBReversed( bool set );
+    IGUIElementOpt@ ClickSound( ::string@ sound );
+    IGUIElementOpt@ Clickable( bool click );
+    IGUIElementOpt@ Scale( bool toScale );
+	IGUIElementOpt@ SetName( const ::string& name  );
+    void            KeepCursor( int cursor );
+
+	// Listing:
+	// Создание:
+    IGUIElementOpt@ Listing( IGUIListingElement@[]@ list );
+    // Параметры:
+    IGUIElementOpt@ ListingDad( IGUIDragAndDropOpt@ DadOpt );
+	IGUIElementOpt@ ListingColor( uint color, uint focus, uint down );
+	IGUIElementOpt@ ListingOption( IGUI::ListingElementOpt@ );
+	IGUIElementOpt@ SetListingShift( int shift );
+	IGUIElementOpt@ SetListingShift( bool absolute, int shift );
+	IGUIElementOpt@ ListingStep( uint step );
+	IGUIElementOpt@ ListingOffset( int offset );
+	IGUIElementOpt@ ListingMouseChecked( bool checked );
+	
+	uint get_ListingShift( );
+	
+	// Info
+	::string@ GetName();
+    int     GetPosX();
+    int     GetPosY();
+    int     GetTextScroll();
+    int     GetTextOffset();
+    bool    IsHidden();
+    uint    GetSBScrollValue();
+    ::string@ GetText();
+    int     GetListElement();
+    ::string  GetListElementStr();
+    uint    GetElementsNumber();
+    uint    GetSpriteId( bool down );
+    bool    IsAutoCursor();
+}
+
+
+#endif // __CLIENT_GUI__

@@ -1,0 +1,1259 @@
+//
+#include "_npc_pids.fos"
+
+#define IS_ARENA_MAP    # (pid) ( pid == MAP_LS1 || pid == MAP_LS2 || pid == MAP_LS4 )
+void merc_setmode( uint mode )
+{
+
+    __MercClickMode = mode;
+
+    switch( __MercClickMode )
+    {
+    case MODE_ATTACK:
+    {
+        ChangeCursor( CURSOR_USE_WEAPON );
+        if( @MercScreen == null )
+        {
+            Message( "MercScreen is NULL!" );
+            return;
+        }
+        MercScreen.KeepCursor( CURSOR_USE_WEAPON );
+    } break;
+    case MODE_MOVE:
+    {
+        ChangeCursor( CURSOR_MOVE );
+        if( @MercScreen == null )
+        {
+            Message( "MercScreen is NULL!" );
+            return;
+        }
+        MercScreen.KeepCursor( CURSOR_MOVE );
+    } break;
+
+    default:
+        __MercClickMode = MODE_DEFAULT;
+        break;
+    }
+
+}
+
+bool merc_process_mode()
+{
+    uint16 hx = 0, hy = 0;
+
+    if( __MercClickMode < MODE_ATTACK )
+        return false;
+
+    if( __MercClickMode == MODE_ATTACK )
+    {
+        CritterCl@ cr = GetMonitorCritter( __MouseX, __MouseY );
+        if( valid( cr ) )
+            RunServerScriptUnsafe( "merc@unsafe_MercCmd", cr.HexX, cr.HexY, 0, null, Selection::Critters );
+    }
+    else if( __MercClickMode == MODE_MOVE )
+    {
+
+        if( GetMonitorHex( __MouseX, __MouseY, hx, hy ) )
+            RunServerScriptUnsafe( "merc@unsafe_MercCmd", hx, hy, 1, null, Selection::Critters );
+    }
+
+    __MercClickMode = MODE_DEFAULT;
+    ChangeCursor( CURSOR_DEFAULT );
+    return true;
+
+}
+
+// Кнопка подрыва мин
+
+class ExplodeButton : IGUI::ElementCallbackInit, IGUI::ElementCallbackMouseClick
+{
+    void OnInit()
+    {
+        @BtnExplode = GUI_GetElementOptions().AutoCursor( CURSOR_DEFAULT ).ToHide( __IfaceHidden || @GetChosen() == null );
+    }
+
+    void OnMouseClick( int click )
+    {
+        if( click == MOUSE_CLICK_LEFT )
+        {
+            if( ChosenHasJackal() )
+            {
+                RunServerScriptUnsafe( "explode@unsafe_ActivateJackal", 0, 0, 0, null, null );
+                PlaySound( "BUTIN1.ACM" );
+            }
+        }
+    }
+}
+
+bool ChosenHasJackal()
+{
+    if( !valid( GetChosen() ) )
+        return false;
+    uint8            mode = 0;
+    const ProtoItem@ weapon = GetChosen().GetSlotProto( SLOT_HAND1, mode );
+    if( !valid( weapon ) )
+        return false;
+    return weapon.ProtoId == PID_JACKAL;
+}
+
+namespace Marker
+{
+	class Pattern
+	{
+		void Render( const ::ProtoItem@ handWeaponChosen, uint8 handWeaponMode ){ };
+		
+		::Sprite@ Image = null;
+		::string Name; // Для команд имя коммандира
+	}
+	
+	class Critter : Marker::Pattern
+	{
+		void Render( const ::ProtoItem@ handWeaponChosen, uint8 handWeaponMode ) override
+		{
+			@ Image = CritterMarker::Option::Assist::Image;
+		}
+		
+		uint CritterId;
+	}
+
+	class Hex : Marker::Pattern
+	{
+		Hex( uint16 x, uint16 y )
+		{
+			@ Image = HexMarker::Option::Assist::Image;
+			X = x;
+			Y = y;
+		}
+
+		void Render( const ::ProtoItem@ handWeaponChosen, uint8 handWeaponMode ) override
+		{
+			int w = HexMarker::Option::Assist::Width == 0 ? this.Image.Width : HexMarker::Option::Assist::Width,
+				  h = HexMarker::Option::Assist::Height == 0 ? this.Image.Height : HexMarker::Option::Assist::Height;
+			int x = 0, y = 0 ;
+			::GetHexPos( X, Y, x, y );
+			::DrawSprite( this.Image.Id, 0, x - w / ::__SpritesZoom / 2, y - h / ::__SpritesZoom / 2, w / ::__SpritesZoom, h / ::__SpritesZoom, true, false, this.Image.Color );
+									
+			if( valid( handWeaponChosen ) )
+			{
+				const int hit = ::to_hit_hex( handWeaponChosen, handWeaponMode, null, X, Y );
+				if( hit >= 5 )
+					::DrawText( "" + hit + "%", ( x + w / ::__SpritesZoom / 2 ) + HexMarker::Option::Assist::ToHitOffset.X, ( y + h / ::__SpritesZoom / 2 ) + HexMarker::Option::Assist::ToHitOffset.Y, 100, 100, HexMarker::Option::Assist::ToHitColor, FONT_FALLOUT, FT_BORDERED );
+			}
+		}
+		
+		uint16 X;
+		uint16 Y;
+	}
+	
+	Marker::Pattern@[] All;
+}
+
+// TabaK. Интерфейс доп. слота.
+class Extra_Slot : IGUI::ElementCallbackInit, IGUI::ElementCallbackMouseClick, IGUI::ElementCallbackMouseDown, IGUI::ElementCallbackMouseDrop
+{
+    Extra_Slot()
+    {
+        offX = 0;
+        offY = 0;
+    }
+
+    IGUIElementOpt@ ItemPic;
+    IGUIElementOpt@ ButtonPic;
+    IGUIElementOpt@ CountText;
+    int             offX,
+                    offY;
+
+    void OnInit()
+    {
+        @ItemPic = GUI_GetElementOptions();
+        string@ str = GetIfaceIniStr( "IntItemOffsX" );
+        if( valid( str ) )
+            StrToInt( str, offX );
+        @str = GetIfaceIniStr( "IntItemOffsY" );
+        if( valid( str ) )
+            StrToInt( str, offY );
+        ItemPic.ToHide( __IfaceHidden || @ ( GetChosen() ) == null );
+    }
+
+    void OnMouseDown( int click )
+    {
+        if( click != MOUSE_CLICK_LEFT )
+            return;
+        ItemPic.Position( ItemPic.GetPosX() + offX, ItemPic.GetPosY() + offY );
+        CountText.Position( CountText.GetPosX() + offX, CountText.GetPosY() + offY );
+    }
+
+    void OnMouseClick( int click )
+    {
+        if( click != MOUSE_CLICK_LEFT || !valid( GetChosen() ) )
+            return;
+        ItemPic.Position( ItemPic.GetPosX() - offX, ItemPic.GetPosY() - offY );
+        CountText.Position( CountText.GetPosX() - offX, CountText.GetPosY() - offY );
+        ItemCl@ item = GetChosen().GetItem( 0, SLOT_BONUS );
+        if( @item == null )
+            return;
+        int cursor = GetCurrentCursor();
+        if( item.GetType() == ITEM_TYPE_WEAPON )
+        {
+            ChangeCursor( CURSOR_USE_WEAPON );
+            __GrenadeMode = true;
+        }
+        else if( FLAG( item.Flags, ITEM_CAN_USE ) || FLAG( item.Flags, ITEM_CAN_USE_ON_SMTH ) )
+        {
+            uint[] actions = { CHOSEN_USE_ITEM, item.Id, 0, TARGET_SELF, 0, 4, 0 };
+            SetChosenActions( actions );
+        }
+    }
+
+    void OnMouseDrop( int click )
+    {
+        if( click != MOUSE_CLICK_LEFT )
+            return;
+        ItemPic.Position( ItemPic.GetPosX() - offX, ItemPic.GetPosY() - offY );
+        CountText.Position( CountText.GetPosX() - offX, CountText.GetPosY() - offY );
+    }
+
+    void Picture( uint id, uint8 dir )
+    {
+        if( valid( ItemPic ) )
+            ItemPic.Picture( id, dir );
+    }
+
+    void SetCount( uint count )
+    {
+        if( valid( CountText ) )
+            CountText.Text( ( count > 1 ? count + "" : "" ), FONT_FALLOUT, COLOR_SAND, 0, 0 );
+    }
+
+    void Hide( bool hide )
+    {
+        if( valid( ItemPic ) )
+            ItemPic.ToHide( hide );
+        if( valid( ButtonPic ) )
+            ButtonPic.ToHide( hide );
+        if( valid( CountText ) )
+            CountText.ToHide( hide );
+    }
+}
+
+class ExtraSlotButton : IGUI::ElementCallbackInit
+{
+    void OnInit()
+    {
+        @ ( ExtraSlot.ButtonPic ) = GUI_GetElementOptions();
+        ExtraSlot.ButtonPic.ToHide( __IfaceHidden || @ ( GetChosen() ) == null );
+    }
+}
+
+class ExtraSlotText : IGUI::ElementCallbackInit
+{
+    void OnInit()
+    {
+        @ ( ExtraSlot.CountText ) = GUI_GetElementOptions();
+        ExtraSlot.CountText.ToHide( __IfaceHidden || @ ( GetChosen() ) == null );
+    }
+}
+
+bool IsTeslaPanelDraw()
+{
+    return ( valid( TeslaPanel ) && not TeslaPanel.IsHidden() );
+}
+
+// TabaK. Интерфейс Теслы
+class Tesla_Panel : IGUI::ElementCallbackInit, IGUI::ElementCallbackMouseClick
+{
+    void OnInit()
+    {
+        @TeslaPanel = GUI_GetElementOptions();
+        TeslaPanel.ToHide( __IfaceHidden || @ ( GetChosen() ) == null );
+    }
+    void OnMouseClick( int click ) {}
+}
+
+class Tesla_Display : IGUI::ElementCallbackInit, IGUI::ElementCallbackMouseClick
+{
+    void OnInit()
+    {
+        @TeslaDisplay = GUI_GetElementOptions();
+        TeslaDisplay.ToHide( __IfaceHidden || @ ( GetChosen() ) == null );
+    }
+    void OnMouseClick( int click ) {}
+}
+
+class Tesla_Discharge_Button : IGUI::ElementCallbackInit, IGUI::ElementCallbackMouseClick
+{
+    void OnInit()
+    {
+        @TeslaButton = GUI_GetElementOptions();
+        TeslaButton.ToHide( __IfaceHidden || @ ( GetChosen() ) == null );
+    }
+    void OnMouseClick( int click )
+    {
+        if( click != MOUSE_CLICK_LEFT || !valid( GetChosen() ) )
+            return;
+        int armPerk = GetChosen().Param[ ST_CURRENT_ARMOR_PERK ];
+        if( armPerk == ARMOR_PERK_TESLA )
+            RunServerScriptUnsafe( "lightning_weapon@unsafe_Tesla_Discharge", 0, 0, 0, null, null );
+        else if( armPerk == ARMOR_PERK_ADVANCED_II || armPerk == ARMOR_PERK_ADVANCED_I )
+            RunServerScriptUnsafe( "Mk2@unsafe_Item::VisorActivation", 0, 0, 0, null, null );
+        else if( armPerk == ARMOR_PERK_POWERED || armPerk == ARMOR_PERK_POWERED_II )
+            RunServerScriptUnsafe( "Mk2@unsafe_Item::NVActivation", 0, 0, 0, null, null );
+        else
+            Message( GetMsgStr( TEXTMSG_GAME, 530 ) );
+    }
+}
+
+
+// TabaK. Интерфейс автовыстрела
+class BullsEye : IGUI::ElementCallbackInit
+{
+    void OnInit()
+    {
+        @AimInd = GUI_GetElementOptions();
+        AimInd.ToHide( !__AutoAim || __IfaceHidden || @ ( GetChosen() ) == null );
+    }
+}
+
+class AimTorsoButton : IGUI::ElementCallbackInit, IGUI::ElementCallbackMouseClick
+{
+    void OnInit()
+    {
+        @ButtonAimTorso = GUI_GetElementOptions();
+        if( __AutoAim )
+        {
+			SwitchPicture( @ButtonAimTorso, Aim::Option::GUI::TorsoButtonImage );
+            ButtonAimTorso.Font( FONT_FALLOUT, COLOR_GREEN );
+        }
+        ButtonAimTorso.ToHide( __IfaceHidden || @ ( GetChosen() ) == null );
+    }
+    void OnMouseClick( int click )
+    {
+        if( click != MOUSE_CLICK_LEFT )
+            return;
+        if( __AutoAim )
+        {
+            __AutoAim = false;
+            AimInd.ToHide( !__AutoAim || __IfaceHidden );
+            ButtonAimTorso.Font( FONT_FALLOUT, COLOR_BLACK );
+			SwitchPicture( @ButtonAimTorso, Aim::Option::GUI::TorsoButtonActiveImage );
+            switch( AutoAimLocation )
+            {
+            case HIT_LOCATION_HEAD:
+				SwitchPicture( @ButtonAimHead, Aim::Option::GUI::HeadButtonImage );
+                ButtonAimHead.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            case HIT_LOCATION_EYES:
+				SwitchPicture( @ButtonAimEyes, Aim::Option::GUI::EyesButtonImage );
+                ButtonAimEyes.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            case HIT_LOCATION_LEFT_ARM:
+				SwitchPicture( @ButtonAimLHand, Aim::Option::GUI::LHandButtonImage );
+                ButtonAimLHand.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            case HIT_LOCATION_RIGHT_ARM:
+				SwitchPicture( @ButtonAimRHand, Aim::Option::GUI::RHandButtonImage );
+                ButtonAimRHand.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            case HIT_LOCATION_RIGHT_LEG:
+				SwitchPicture( @ButtonAimRLeg, Aim::Option::GUI::RLegButtonImage );
+                ButtonAimRLeg.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            case HIT_LOCATION_LEFT_LEG:
+				SwitchPicture( @ButtonAimLLeg, Aim::Option::GUI::LLegButtonImage );
+                ButtonAimLLeg.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            case HIT_LOCATION_GROIN:
+				SwitchPicture( @ButtonAimGroin, Aim::Option::GUI::GroinButtonImage );
+                ButtonAimGroin.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            default:
+                break;
+            }
+            AutoAimLocation = 0;
+        }
+    }
+}
+
+class AimHeadButton : IGUI::ElementCallbackInit, IGUI::ElementCallbackMouseClick
+{
+    void OnInit()
+    {
+        @ButtonAimHead = GUI_GetElementOptions();
+        if( __AutoAim && AutoAimLocation == HIT_LOCATION_HEAD )
+        {
+            ButtonAimHead.Font( FONT_FALLOUT, COLOR_BLACK );
+			SwitchPicture( @ButtonAimHead, Aim::Option::GUI::HeadButtonActiveImage );
+        }
+        ButtonAimHead.ToHide( __IfaceHidden || @ ( GetChosen() ) == null );
+    }
+    void OnMouseClick( int click )
+    {
+        if( click != MOUSE_CLICK_LEFT || !valid( GetChosen() ) )
+            return;
+        uint8            mode = 0;
+        const ProtoItem@ weapon = GetChosen().GetSlotProto( SLOT_HAND1, mode );
+        if( !valid( weapon ) )
+            return;
+        mode = _WeaponModeUse( mode );
+        if( weapon.Type != ITEM_TYPE_WEAPON )
+            return;
+        if( ( mode == ITEM_MODE_PRIMARY && weapon.Weapon_Aim_0 ) || ( mode == ITEM_MODE_SECONDARY && weapon.Weapon_Aim_1 ) || ( mode == ITEM_MODE_THIRD && weapon.Weapon_Aim_2 ) )
+        {
+            if( !__AutoAim )
+            {
+                __AutoAim = true;
+                AimInd.ToHide( !__AutoAim || __IfaceHidden );
+				SwitchPicture( @ButtonAimTorso, Aim::Option::GUI::TorsoButtonImage );
+                ButtonAimTorso.Font( FONT_FALLOUT, COLOR_GREEN );
+            }
+
+            ButtonAimHead.Font( FONT_FALLOUT, COLOR_BLACK );
+			SwitchPicture( @ButtonAimHead, Aim::Option::GUI::HeadButtonActiveImage );
+            switch( AutoAimLocation )
+            {
+            case HIT_LOCATION_EYES:
+				SwitchPicture( @ButtonAimEyes, Aim::Option::GUI::EyesButtonImage );
+                ButtonAimEyes.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            case HIT_LOCATION_LEFT_ARM:
+				SwitchPicture( @ButtonAimLHand, Aim::Option::GUI::LHandButtonImage );
+                ButtonAimLHand.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            case HIT_LOCATION_RIGHT_ARM:
+				SwitchPicture( @ButtonAimRHand, Aim::Option::GUI::RHandButtonImage );
+                ButtonAimRHand.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            case HIT_LOCATION_RIGHT_LEG:
+				SwitchPicture( @ButtonAimRLeg, Aim::Option::GUI::RLegButtonImage );
+                ButtonAimRLeg.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            case HIT_LOCATION_LEFT_LEG:
+				SwitchPicture( @ButtonAimLLeg, Aim::Option::GUI::LLegButtonImage );
+                ButtonAimLLeg.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            case HIT_LOCATION_GROIN:
+				SwitchPicture( @ButtonAimGroin, Aim::Option::GUI::GroinButtonImage );
+                ButtonAimGroin.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            default:
+                break;
+            }
+            AutoAimLocation = HIT_LOCATION_HEAD;
+        }
+    }
+}
+
+class AimEyesButton : IGUI::ElementCallbackInit, IGUI::ElementCallbackMouseClick
+{
+    void OnInit()
+    {
+        @ButtonAimEyes = GUI_GetElementOptions();
+        if( __AutoAim && AutoAimLocation == HIT_LOCATION_EYES )
+        {
+            ButtonAimEyes.Font( FONT_FALLOUT, COLOR_BLACK );
+			SwitchPicture( @ButtonAimEyes, Aim::Option::GUI::EyesButtonActiveImage );
+        }
+        ButtonAimEyes.ToHide( __IfaceHidden || @ ( GetChosen() ) == null );
+    }
+	
+    void OnMouseClick( int click )
+    {
+        if( click != MOUSE_CLICK_LEFT || !valid( GetChosen() ) )
+            return;
+        uint8            mode = 0;
+        const ProtoItem@ weapon = GetChosen().GetSlotProto( SLOT_HAND1, mode );
+        if( !valid( weapon ) )
+            return;
+        mode = _WeaponModeUse( mode );
+        if( weapon.Type != ITEM_TYPE_WEAPON )
+            return;
+        if( ( mode == ITEM_MODE_PRIMARY && weapon.Weapon_Aim_0 ) || ( mode == ITEM_MODE_SECONDARY && weapon.Weapon_Aim_1 ) || ( mode == ITEM_MODE_THIRD && weapon.Weapon_Aim_2 ) )
+        {
+            if( !__AutoAim )
+            {
+                __AutoAim = true;
+                AimInd.ToHide( !__AutoAim || __IfaceHidden );
+				SwitchPicture( @ButtonAimTorso, Aim::Option::GUI::TorsoButtonImage );
+                ButtonAimTorso.Font( FONT_FALLOUT, COLOR_GREEN );
+            }
+
+            ButtonAimEyes.Font( FONT_FALLOUT, COLOR_BLACK );
+			SwitchPicture( @ButtonAimEyes, Aim::Option::GUI::EyesButtonActiveImage );
+            switch( AutoAimLocation )
+            {
+            case HIT_LOCATION_HEAD:
+				SwitchPicture( @ButtonAimHead, Aim::Option::GUI::HeadButtonImage );
+                ButtonAimHead.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            case HIT_LOCATION_LEFT_ARM:
+				SwitchPicture( @ButtonAimLHand, Aim::Option::GUI::LHandButtonImage );
+                ButtonAimLHand.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            case HIT_LOCATION_RIGHT_ARM:
+				SwitchPicture( @ButtonAimRHand, Aim::Option::GUI::RHandButtonImage );
+                ButtonAimRHand.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            case HIT_LOCATION_RIGHT_LEG:
+				SwitchPicture( @ButtonAimRLeg, Aim::Option::GUI::RLegButtonImage );
+                ButtonAimRLeg.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            case HIT_LOCATION_LEFT_LEG:
+				SwitchPicture( @ButtonAimLLeg, Aim::Option::GUI::LLegButtonImage );
+                ButtonAimLLeg.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            case HIT_LOCATION_GROIN:
+				SwitchPicture( @ButtonAimGroin, Aim::Option::GUI::GroinButtonImage );
+                ButtonAimGroin.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            default:
+                break;
+            }
+            AutoAimLocation = HIT_LOCATION_EYES;
+        }
+    }
+}
+
+class AimRHandButton : IGUI::ElementCallbackInit, IGUI::ElementCallbackMouseClick
+{
+    void OnInit()
+    {
+        @ButtonAimRHand = GUI_GetElementOptions();
+        if( __AutoAim && AutoAimLocation == HIT_LOCATION_RIGHT_ARM )
+        {
+            ButtonAimRHand.Font( FONT_FALLOUT, COLOR_BLACK );
+			SwitchPicture( @ButtonAimRHand, Aim::Option::GUI::RHandButtonActiveImage );
+        }
+        ButtonAimRHand.ToHide( __IfaceHidden || @ ( GetChosen() ) == null );
+    }
+    void OnMouseClick( int click )
+    {
+        if( click != MOUSE_CLICK_LEFT || !valid( GetChosen() ) )
+            return;
+        uint8            mode = 0;
+        const ProtoItem@ weapon = GetChosen().GetSlotProto( SLOT_HAND1, mode );
+        if( !valid( weapon ) )
+            return;
+        mode = _WeaponModeUse( mode );
+        if( weapon.Type != ITEM_TYPE_WEAPON )
+            return;
+        if( ( mode == ITEM_MODE_PRIMARY && weapon.Weapon_Aim_0 ) || ( mode == ITEM_MODE_SECONDARY && weapon.Weapon_Aim_1 ) || ( mode == ITEM_MODE_THIRD && weapon.Weapon_Aim_2 ) )
+        {
+            if( !__AutoAim )
+            {
+                __AutoAim = true;
+                AimInd.ToHide( !__AutoAim || __IfaceHidden );
+				SwitchPicture( @ButtonAimTorso, Aim::Option::GUI::TorsoButtonImage );
+                ButtonAimTorso.Font( FONT_FALLOUT, COLOR_GREEN );
+            }
+
+            ButtonAimRHand.Font( FONT_FALLOUT, COLOR_BLACK );
+			SwitchPicture( @ButtonAimRHand, Aim::Option::GUI::RHandButtonActiveImage );
+            switch( AutoAimLocation )
+            {
+            case HIT_LOCATION_EYES:
+				SwitchPicture( @ButtonAimEyes, Aim::Option::GUI::EyesButtonImage );
+                ButtonAimEyes.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            case HIT_LOCATION_LEFT_ARM:
+				SwitchPicture( @ButtonAimLHand, Aim::Option::GUI::LHandButtonImage );
+                ButtonAimLHand.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            case HIT_LOCATION_HEAD:
+				SwitchPicture( @ButtonAimHead, Aim::Option::GUI::HeadButtonImage );
+                ButtonAimHead.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            case HIT_LOCATION_RIGHT_LEG:
+				SwitchPicture( @ButtonAimRLeg, Aim::Option::GUI::RLegButtonImage );
+                ButtonAimRLeg.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            case HIT_LOCATION_LEFT_LEG:
+				SwitchPicture( @ButtonAimLLeg, Aim::Option::GUI::LLegButtonImage );
+                ButtonAimLLeg.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            case HIT_LOCATION_GROIN:
+				SwitchPicture( @ButtonAimGroin, Aim::Option::GUI::GroinButtonImage );
+                ButtonAimGroin.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            default:
+                break;
+            }
+            AutoAimLocation = HIT_LOCATION_RIGHT_ARM;
+        }
+    }
+}
+
+class AimLHandButton : IGUI::ElementCallbackInit, IGUI::ElementCallbackMouseClick
+{
+    void OnInit()
+    {
+        @ButtonAimLHand = GUI_GetElementOptions();
+        if( __AutoAim && AutoAimLocation == HIT_LOCATION_LEFT_ARM )
+        {
+            ButtonAimLHand.Font( FONT_FALLOUT, COLOR_BLACK );
+			SwitchPicture( @ButtonAimLHand, Aim::Option::GUI::LHandButtonActiveImage );
+        }
+        ButtonAimLHand.ToHide( __IfaceHidden || @ ( GetChosen() ) == null );
+    }
+    void OnMouseClick( int click )
+    {
+        if( click != MOUSE_CLICK_LEFT || !valid( GetChosen() ) )
+            return;
+        uint8            mode = 0;
+        const ProtoItem@ weapon = GetChosen().GetSlotProto( SLOT_HAND1, mode );
+        if( !valid( weapon ) )
+            return;
+        mode = _WeaponModeUse( mode );
+        if( weapon.Type != ITEM_TYPE_WEAPON )
+            return;
+        if( ( mode == ITEM_MODE_PRIMARY && weapon.Weapon_Aim_0 ) || ( mode == ITEM_MODE_SECONDARY && weapon.Weapon_Aim_1 ) || ( mode == ITEM_MODE_THIRD && weapon.Weapon_Aim_2 ) )
+        {
+            if( !__AutoAim )
+            {
+                __AutoAim = true;
+                AimInd.ToHide( !__AutoAim || __IfaceHidden );
+				SwitchPicture( @ButtonAimTorso, Aim::Option::GUI::TorsoButtonImage );
+                ButtonAimTorso.Font( FONT_FALLOUT, COLOR_GREEN );
+            }
+
+            ButtonAimLHand.Font( FONT_FALLOUT, COLOR_BLACK );
+			SwitchPicture( @ButtonAimLHand, Aim::Option::GUI::LHandButtonActiveImage );
+            switch( AutoAimLocation )
+            {
+            case HIT_LOCATION_EYES:
+				SwitchPicture( @ButtonAimEyes, Aim::Option::GUI::EyesButtonImage );
+                ButtonAimEyes.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            case HIT_LOCATION_RIGHT_ARM:
+				SwitchPicture( @ButtonAimRHand, Aim::Option::GUI::RHandButtonImage );
+                ButtonAimRHand.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            case HIT_LOCATION_HEAD:
+				SwitchPicture( @ButtonAimHead, Aim::Option::GUI::HeadButtonImage );
+                ButtonAimHead.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            case HIT_LOCATION_RIGHT_LEG:
+				SwitchPicture( @ButtonAimRLeg, Aim::Option::GUI::RLegButtonImage );
+                ButtonAimRLeg.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            case HIT_LOCATION_LEFT_LEG:
+				SwitchPicture( @ButtonAimLLeg, Aim::Option::GUI::LLegButtonImage );
+                ButtonAimLLeg.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            case HIT_LOCATION_GROIN:
+				SwitchPicture( @ButtonAimGroin, Aim::Option::GUI::GroinButtonImage );
+                ButtonAimGroin.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            default:
+                break;
+            }
+            AutoAimLocation = HIT_LOCATION_LEFT_ARM;
+        }
+    }
+}
+
+class AimRLegButton : IGUI::ElementCallbackInit, IGUI::ElementCallbackMouseClick
+{
+    void OnInit()
+    {
+        @ButtonAimRLeg = GUI_GetElementOptions();
+        if( __AutoAim && AutoAimLocation == HIT_LOCATION_RIGHT_LEG )
+        {
+            ButtonAimRLeg.Font( FONT_FALLOUT, COLOR_BLACK );
+			SwitchPicture( @ButtonAimRLeg, Aim::Option::GUI::RLegButtonActiveImage );
+        }
+        ButtonAimRLeg.ToHide( __IfaceHidden || @ ( GetChosen() ) == null );
+    }
+    void OnMouseClick( int click )
+    {
+        if( click != MOUSE_CLICK_LEFT || !valid( GetChosen() ) )
+            return;
+        uint8            mode = 0;
+        const ProtoItem@ weapon = GetChosen().GetSlotProto( SLOT_HAND1, mode );
+        mode = _WeaponModeUse( mode );
+        if( !valid( weapon ) || weapon.Type != ITEM_TYPE_WEAPON )
+            return;
+        if( ( mode == ITEM_MODE_PRIMARY && weapon.Weapon_Aim_0 ) || ( mode == ITEM_MODE_SECONDARY && weapon.Weapon_Aim_1 ) || ( mode == ITEM_MODE_THIRD && weapon.Weapon_Aim_2 ) )
+        {
+            if( !__AutoAim )
+            {
+                __AutoAim = true;
+                AimInd.ToHide( !__AutoAim || __IfaceHidden );
+				SwitchPicture( @ButtonAimTorso, Aim::Option::GUI::TorsoButtonImage );
+                ButtonAimTorso.Font( FONT_FALLOUT, COLOR_GREEN );
+            }
+
+            ButtonAimRLeg.Font( FONT_FALLOUT, COLOR_BLACK );
+			SwitchPicture( @ButtonAimRLeg, Aim::Option::GUI::RLegButtonActiveImage );
+            switch( AutoAimLocation )
+            {
+            case HIT_LOCATION_EYES:
+				SwitchPicture( @ButtonAimEyes, Aim::Option::GUI::EyesButtonImage );
+                ButtonAimEyes.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            case HIT_LOCATION_LEFT_ARM:
+				SwitchPicture( @ButtonAimLHand, Aim::Option::GUI::LHandButtonImage );
+                ButtonAimLHand.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            case HIT_LOCATION_HEAD:
+				SwitchPicture( @ButtonAimHead, Aim::Option::GUI::HeadButtonImage );
+                ButtonAimHead.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            case HIT_LOCATION_RIGHT_ARM:
+				SwitchPicture( @ButtonAimRHand, Aim::Option::GUI::RHandButtonImage );
+                ButtonAimRHand.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            case HIT_LOCATION_LEFT_LEG:
+				SwitchPicture( @ButtonAimLLeg, Aim::Option::GUI::LLegButtonImage );
+                ButtonAimLLeg.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            case HIT_LOCATION_GROIN:
+				SwitchPicture( @ButtonAimGroin, Aim::Option::GUI::GroinButtonImage );
+                ButtonAimGroin.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            default:
+                break;
+            }
+            AutoAimLocation = HIT_LOCATION_RIGHT_LEG;
+        }
+    }
+}
+
+class AimLLegButton : IGUI::ElementCallbackInit, IGUI::ElementCallbackMouseClick
+{
+    void OnInit()
+    {
+        @ButtonAimLLeg = GUI_GetElementOptions();
+        if( __AutoAim && AutoAimLocation == HIT_LOCATION_LEFT_LEG )
+        {
+            ButtonAimLLeg.Font( FONT_FALLOUT, COLOR_BLACK );
+			SwitchPicture( @ButtonAimLLeg, Aim::Option::GUI::LLegButtonActiveImage );
+        }
+        ButtonAimLLeg.ToHide( __IfaceHidden || @ ( GetChosen() ) == null );
+    }
+    void OnMouseClick( int click )
+    {
+        if( click != MOUSE_CLICK_LEFT || !valid( GetChosen() ) )
+            return;
+        uint8            mode = 0;
+        const ProtoItem@ weapon = GetChosen().GetSlotProto( SLOT_HAND1, mode );
+        mode = _WeaponModeUse( mode );
+        if( !valid( weapon ) || weapon.Type != ITEM_TYPE_WEAPON )
+            return;
+        if( ( mode == ITEM_MODE_PRIMARY && weapon.Weapon_Aim_0 ) || ( mode == ITEM_MODE_SECONDARY && weapon.Weapon_Aim_1 ) || ( mode == ITEM_MODE_THIRD && weapon.Weapon_Aim_2 ) )
+        {
+            if( !__AutoAim )
+            {
+                __AutoAim = true;
+                AimInd.ToHide( !__AutoAim || __IfaceHidden );
+				SwitchPicture( @ButtonAimTorso, Aim::Option::GUI::TorsoButtonImage );
+                ButtonAimTorso.Font( FONT_FALLOUT, COLOR_GREEN );
+            }
+
+            ButtonAimLLeg.Font( FONT_FALLOUT, COLOR_BLACK );
+            // Aim::Option::GUI::LLegButtonActiveImage
+			SwitchPicture( @ButtonAimLLeg, Aim::Option::GUI::LLegButtonActiveImage );
+            switch( AutoAimLocation )
+            {
+            case HIT_LOCATION_EYES:
+				SwitchPicture( @ButtonAimEyes, Aim::Option::GUI::EyesButtonImage );
+                ButtonAimEyes.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            case HIT_LOCATION_LEFT_ARM:
+				SwitchPicture( @ButtonAimLHand, Aim::Option::GUI::LHandButtonImage );
+                ButtonAimLHand.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            case HIT_LOCATION_HEAD:
+				SwitchPicture( @ButtonAimHead, Aim::Option::GUI::HeadButtonImage );
+                ButtonAimHead.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            case HIT_LOCATION_RIGHT_LEG:
+				SwitchPicture( @ButtonAimRLeg, Aim::Option::GUI::RLegButtonImage );
+                ButtonAimRLeg.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            case HIT_LOCATION_RIGHT_ARM:
+				SwitchPicture( @ButtonAimRHand, Aim::Option::GUI::RHandButtonImage );
+                ButtonAimRHand.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            case HIT_LOCATION_GROIN:
+				SwitchPicture( @ButtonAimGroin, Aim::Option::GUI::GroinButtonImage );
+                ButtonAimGroin.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            default:
+                break;
+            }
+            AutoAimLocation = HIT_LOCATION_LEFT_LEG;
+        }
+    }
+}
+
+class AimGroinButton : IGUI::ElementCallbackInit, IGUI::ElementCallbackMouseClick
+{
+    void OnInit()
+    {
+        @ButtonAimGroin = GUI_GetElementOptions();
+        if( __AutoAim && AutoAimLocation == HIT_LOCATION_GROIN )
+        {
+            ButtonAimGroin.Font( FONT_FALLOUT, COLOR_BLACK );
+			SwitchPicture( @ButtonAimGroin, Aim::Option::GUI::GroinButtonActiveImage );
+        }
+        ButtonAimGroin.ToHide( __IfaceHidden || @ ( GetChosen() ) == null );
+    }
+    void OnMouseClick( int click )
+    {
+        if( click != MOUSE_CLICK_LEFT || !valid( GetChosen() ) )
+            return;
+        uint8            mode = 0;
+        const ProtoItem@ weapon = GetChosen().GetSlotProto( SLOT_HAND1, mode );
+        mode = _WeaponModeUse( mode );
+        if( !valid( weapon ) || weapon.Type != ITEM_TYPE_WEAPON )
+            return;
+        if( ( mode == ITEM_MODE_PRIMARY && weapon.Weapon_Aim_0 ) || ( mode == ITEM_MODE_SECONDARY && weapon.Weapon_Aim_1 ) || ( mode == ITEM_MODE_THIRD && weapon.Weapon_Aim_2 ) )
+        {
+            if( !__AutoAim )
+            {
+                __AutoAim = true;
+                AimInd.ToHide( !__AutoAim || __IfaceHidden );
+				SwitchPicture( @ButtonAimTorso, Aim::Option::GUI::TorsoButtonImage );
+                ButtonAimTorso.Font( FONT_FALLOUT, COLOR_GREEN );
+            }
+
+            ButtonAimGroin.Font( FONT_FALLOUT, COLOR_BLACK );
+			SwitchPicture( @ButtonAimGroin, Aim::Option::GUI::GroinButtonActiveImage );
+            switch( AutoAimLocation )
+            {
+            case HIT_LOCATION_EYES:
+				SwitchPicture( @ButtonAimEyes, Aim::Option::GUI::EyesButtonImage );
+                ButtonAimEyes.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            case HIT_LOCATION_LEFT_ARM:
+				SwitchPicture( @ButtonAimLHand, Aim::Option::GUI::LHandButtonImage );
+                ButtonAimLHand.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            case HIT_LOCATION_HEAD:
+				SwitchPicture( @ButtonAimHead, Aim::Option::GUI::HeadButtonImage );
+                ButtonAimHead.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            case HIT_LOCATION_RIGHT_LEG:
+				SwitchPicture( @ButtonAimRLeg, Aim::Option::GUI::RLegButtonImage );
+                ButtonAimRLeg.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            case HIT_LOCATION_LEFT_LEG:
+				SwitchPicture( @ButtonAimLLeg, Aim::Option::GUI::LLegButtonImage );
+                ButtonAimLLeg.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            case HIT_LOCATION_RIGHT_ARM:
+				SwitchPicture( @ButtonAimRHand, Aim::Option::GUI::RHandButtonImage );
+                ButtonAimRHand.Font( FONT_FALLOUT, COLOR_GREEN );
+                break;
+            default:
+                break;
+            }
+            AutoAimLocation = HIT_LOCATION_GROIN;
+        }
+    }
+}
+
+class MapCritterCl
+{
+    uint    Id;
+
+    string@ SayText;
+    uint    DelayText;
+    uint    StartTickText;
+
+    MapCritterCl( uint id )
+    {
+        Id = id;
+
+        @ SayText = null;
+        DelayText = 0;
+        StartTickText = 0;
+    }
+
+    string@ IsSay()
+    {
+        if( ( StartTickText + DelayText ) > GetTick() && valid( SayText ) )
+        {
+            return SayText;
+        }
+        return null;
+    }
+}
+
+void MapCritterSay( string& message, int& sayType, uint& critterId, uint& delay )
+{
+    for( uint i = 0; i < MapCritters.length(); i++ )
+    {
+        if( @MapCritters !is null && MapCritters[ i ].Id == critterId )
+        {
+            @MapCritters[ i ].SayText = message;
+            MapCritters[ i ].DelayText = delay;
+            MapCritters[ i ].StartTickText = GetTick();
+            return;
+        }
+    }
+
+    MapCritterCl cl( critterId );
+    @cl.SayText = message;
+    cl.DelayText = delay;
+    cl.StartTickText = GetTick();
+    MapCritters.insertLast( @cl );
+
+}
+
+bool CritterIsSay( CritterCl& cr )
+{
+    for( uint i = 0; i < MapCritters.length(); i++ )
+    {
+        if( valid( MapCritters[ i ] ) && MapCritters[ i ].Id == cr.Id )
+        {
+            if( valid( MapCritters[ i ].IsSay() ) )
+            {
+                return true;
+            }
+            MapCritters.removeAt( i );
+            return false;
+        }
+    }
+    return false;
+}
+
+class CritResistSign : IGUI::ElementCallbackInit
+{
+    void OnInit()
+    {
+        if( valid( GetChosen() ) )
+            GUI_GetElementOptions().Text( GetChosen().Param[ ST_CRITICAL_RESISTANCE ] + "%", FONT_FALLOUT, COLOR_GREEN, COLOR_DRED, FT_CENTERY | FT_ALIGN );
+    }
+}
+
+uint GetEmblemFractionSprId( CritterCl& cr )
+{
+    string@ frName;
+    if( cr.Param[ ST_FACTION ] == 0 || !OrgNames.get( "" + cr.Param[ ST_FACTION ], @frName ) )
+        return 0;
+    if( valid( frName ) )
+    {
+        uint index = 0;
+        if( ImageDict.exists( frName ) && ImageDict.get( frName, index ) && index != 0 )
+        {
+            return IndexEmblems[ index ];
+        }
+        else
+        {
+            index = LoadSprite( frName + "_emblem.png", int(PT_ART_INTRFACE) );
+            ImageDict.set( frName, IndexEmblems.length() );
+            IndexEmblems.insertLast( index );
+            return index;
+        }
+    }
+    return 0;
+}
+
+uint GetEmblemNumber( CritterCl& cr )
+{
+    uint hash = uint( cr.Param[ ST_HASH_EMBLEM ] );
+    if( hash != 0 )
+    {
+        uint index = 0;
+        if( ImageDict.exists( "emblem_" + hash ) && ImageDict.get( "emblem_" + hash, index ) && index != 0 )
+        {
+            return index;
+        }
+        else
+        {
+            index = LoadSprite( hash, 0 );
+            ImageDict.set( "emblem_" + hash, index );
+            return index;
+        }
+    }
+    return 0;
+}
+
+
+uint GetEmblem( string& name )
+{
+    // name
+    uint hash = GetStrHash( "art\\intrface\\" + name );
+    if( hash != 0 )
+    {
+        uint index = 0;
+        if( ImageDict.exists( "emblem_" + hash ) && ImageDict.get( "emblem_" + hash, index ) && index != 0 )
+        {
+            return index;
+        }
+        else
+        {
+            index = LoadSprite( hash, 0 );
+            ImageDict.set( "emblem_" + hash, index );
+            return index;
+        }
+    }
+    return 0;
+}
+
+uint GetSprIdByItemPickHash( uint hash )
+{
+    if( hash != 0 )
+    {
+        uint index = 0;
+        if( ItemImageDict.exists( "Item_" + hash ) && ItemImageDict.get( "Item_" + hash, index ) && index != 0 )
+        {
+            return index;
+        }
+        else
+        {
+            index = LoadSprite( hash, 0 );
+            ItemImageDict.set( "Item_" + hash, index );
+            return index;
+        }
+    }
+    return 0;
+}
+
+class Point
+{
+	int X = 0;	int Y = 0;
+	
+			Point	( int x, int y ) { 	Set( x, y );		}
+	void 	Set		( int x, int y ) { 	X = x; 	Y = y; }
+}
+
+class ClassRender
+{
+    ClassRender()
+    {
+        FrEmbOffX = -20;
+        FrEmbOffY = -13;
+        EmbOffX = 10;
+        EmbOffY = -13;
+        isDrawEmblems = true;
+    }
+
+    void DrawCritter( CritterCl@ cr, int x, int y, int w, int h )
+    {
+        if( @cr == null || ( cr.IsNpc() && cr.Pid == NPC_WALKING_MINE ) )
+            return;
+
+        {
+            if( cr.Param[ ST_FIRE_DATA ] != 0 )
+            {
+                int fw = Fire::Option::Customization::CritterImage.Width / __SpritesZoom,
+                    fh = Fire::Option::Customization::CritterImage.Height / __SpritesZoom;
+                DrawSprite( Fire::Option::Customization::CritterImage.Id, -1, x - fw * 0.25, y - fh * 0.5, fw, fh, true, true, Fire::Option::Customization::CritterImage.Color );
+            }
+			
+			if( Assist::Id == cr.Id )
+			{
+				if( cr.IsDead() )
+                    Assist::Id = 0;
+				else
+                {
+					DrawSprite( Assist::Option::GUI::Image.Id, 0, x + w / 2 - Assist::Option::GUI::Width / 2 / __SpritesZoom, y - h / 2 + Assist::Option::GUI::Height / 2 / __SpritesZoom, Assist::Option::GUI::Width / __SpritesZoom, Assist::Option::GUI::Height / __SpritesZoom, true, false, Assist::Option::GUI::Image.Color );
+					
+					uint8            handWeaponMode = 0;
+					const ProtoItem@ handWeaponChosen = GetChosen().GetSlotProto( SLOT_HAND1, handWeaponMode );
+				
+					if( valid( handWeaponChosen ) )
+					{
+						int hit = to_hit( GetChosen(), cr, handWeaponChosen, handWeaponMode );
+						if( hit >= 5 )
+							DrawText( "" + hit + "%", (  x + w / 2 + Assist::Option::GUI::Width / 2 / __SpritesZoom ) + Assist::Option::GUI::ToHitOffset.X, ( y + h / 2 + Assist::Option::GUI::Height / 2 / __SpritesZoom ) + Assist::Option::GUI::ToHitOffset.Y, 100, 100, Assist::Option::GUI::ToHitColor, FONT_FALLOUT, 0 );
+					}
+				}
+			}
+			
+            if( cr.IsDead() || CritterIsSay( cr ) )
+                return;
+			string name = "";
+            int    centerName = -1;
+            if( cr.NameOnHead == " " )
+                centerName = 0;
+            else if( cr.NameOnHead == "" )
+                name = cr.Name;
+            else
+                name = cr.NameOnHead;
+            if( FLAG( cr.Flags, CRITTER_DISCONNECT ) )
+                name += "(off)";
+			int  wt = 0, ht = 0, lines = 0;  // Координты отрисовки имени криттера.
+            GetTextInfo( name, 200, 200, FONT_FALLOUT, 0, wt, ht, lines );
+            if( isDrawEmblems )
+            {
+				uint emId = GetEmblemFractionSprId( cr );
+			
+                
+				
+                if( emId != 0 && cr.IsPlayer() && !IS_ARENA_MAP( GetCurrentMapPid( ) ) )
+				{
+                    DrawSprite( emId, 0, x + w * 0.5 - ( ( centerName == 0 ) ? 0 : wt * 0.5 - FrEmbOffX ), y + FrEmbOffY, 15, 15, false, false, 0 );
+                }
+				
+				if( cr.Param[ ST_HASH_EMBLEM ] != 0 && !IS_ARENA_MAP( GetCurrentMapPid( ) ) )
+				{
+                    DrawSprite( GetEmblemNumber( cr ), 0, x + w * 0.5 + ( ( centerName == 0 ) ? 0 : wt * 0.5 + EmbOffX ), y + EmbOffY, 15, 15, false, false, 0 );
+				}
+				else if( cr.Param[ CITY_ROLE_FLAG ] == 3 )
+                {
+                    DrawSprite( GetEmblem( "city_enemy.png" ), 0, x + w * 0.5 + ( ( centerName == 0 ) ? 0 : wt * 0.5 + EmbOffX ), y + EmbOffY, 15, 15, false, false, 0 );
+                }
+                else if( cr.Param[ CITY_ROLE_FLAG ] == 2 )
+                {
+                    DrawSprite( GetEmblem( "city_provoker.png" ), 0, x + w * 0.5 + ( ( centerName == 0 ) ? 0 : wt * 0.5 + EmbOffX ), y + EmbOffY, 15, 15, false, false, 0 );
+                }
+            }
+
+            if( valid( GetChosen() ) && GetChosen().Param[ PE_AWARENESS ] == 0 && Health::Option::ToDoConvert::IsShow  && cr.Id != GetChosen().Id && !cr.IsDead() )
+            {
+                y -= ( cr.IsPlayer() ? 20 : 10 ) + ht;
+                if( Health::Option::Bars::Image.Id != 0 && Health::Option::Bars::Pixel.Id != 0 )           // Если есть картинки хелсбаров.
+                {
+                    uint hpColor = 0;
+					int hpProc = cr.Param[ ST_CURRENT_HP ];
+                    DrawSprite( Health::Option::Bars::Image.Id, 0, x + w * 0.5 - Health::Option::Bars::Image.Width * 0.5, y, Health::Option::Bars::Image.Width, Health::Option::Bars::Image.Height, true, false, Health::Option::Bars::Image.Color );
+                    if( hpProc > 0 )
+                    {
+                        if( hpProc <= 20 )
+                            hpColor = Health::Option::Bars::ColorBad;
+                        else if( hpProc <= 40 )
+                            hpColor = Health::Option::Bars::ColorNotGood;
+                        else
+                            hpColor = Health::Option::Bars::ColorGood;
+						
+						Health::Option::Bars::Pixel.Pattern( x + w * 0.5 - Health::Option::Bars::Image.Width * 0.5 + 5, y + 3, hpProc * 0.25, 3, hpColor );
+                    }
+                }
+            }
+        }
+    }
+
+    // Эмблемы.
+    // Для фракционных, за 0 берутся координаты отрисовки ника. Для обычных берется конечные координаты отрисовки ника.
+    int  FrEmbOffX;
+    int  FrEmbOffY;
+    int  EmbOffX;
+    int  EmbOffY;
+    bool isDrawEmblems;
+}
+
+class LocationData
+{
+    LocationData( uint pid, int x, int y, uint r = 24 )
+    {
+        ProtoId = pid;
+        WorldX = x;
+        WorldY = y;
+        Radius = r;
+    }
+
+    uint ProtoId;
+    int  WorldX;
+    int  WorldY;
+    uint Radius;
+}
+
+LocationData@ GetGMCity( int worldX, int worldY )
+{
+    LocationData@ ild = null;
+    for( uint i = 0, iEnd = GlobalMapCity.length(); i < iEnd; i++ )
+    {
+        @ ild = GlobalMapCity[ i ];
+        if( valid( ild ) && ild.WorldX - ild.Radius <= worldX && ild.WorldX + ild.Radius >= worldX &&
+            ild.WorldY - ild.Radius <= worldY && ild.WorldY + ild.Radius >= worldY )
+			return @ild;
+    }
+    return null;
+}
+
+void InitGlobalMapCity()
+{
+    GlobalMapCity.insertLast( @LocationData( 1, 475, 275 ) );       // @   1   475   275 # The Den
+    GlobalMapCity.insertLast( @LocationData( 2, 375, 125 ) );       // @   2   375   125 # Klamath
+    GlobalMapCity.insertLast( @LocationData( 3, 925, 275 ) );       // @   3   925   275 # Modoc
+    GlobalMapCity.insertLast( @LocationData( 4, 1225, 325 ) );      // @   4  1225   325 # Vault City
+    GlobalMapCity.insertLast( @LocationData( 5, 1275, 225 ) );      // @   5  1275   225 # Gecko
+    GlobalMapCity.insertLast( @LocationData( 6, 1175, 875 ) );      // @   6  1175   875 # Broken Hills
+    GlobalMapCity.insertLast( @LocationData( 7, 925, 925 ) );       // @   7   925   925 # New Reno
+    GlobalMapCity.insertLast( @LocationData( 9, 1275, 1425 ) );     // @   9  1275  1425 # Vault 15
+    GlobalMapCity.insertLast( @LocationData( 10, 1125, 1425 ) );    // @  10  1125  1425 # NCR
+    GlobalMapCity.insertLast( @LocationData( 13, 675, 525 ) );      // @  13   675   525 # Redding
+    GlobalMapCity.insertLast( @LocationData( 14, 475, 1325 ) );     // @  14   475  1325 # San Francisco
+    GlobalMapCity.insertLast( @LocationData( 16, 175, 125 ) );      // @  16   175   125 # Arroyo
+}
+
+class ClientGameTime
+{
+    ClientGameTime()
+    {
+        Hour = 0;
+        Minute = 0;
+    }
+
+    void Refresh()
+    {
+        uint16 var = 0;
+        GetGameTime( __FullSecond, var, var, var, var, Hour, Minute, var );
+
+    }
+
+    void Draw()
+    {
+        DrawText( ( Hour > 9 ? "" + Hour : "0" + Hour ) + ( Minute > 9 ? ":" + Minute : ":0" + Minute ), __ScreenWidth - 80, 10, 50, 50, COLOR_DGREEN, 0, 0 );
+    }
+
+    uint16 Hour;
+    uint16 Minute;
+}
+
+void ClearLexemsItem( int itId )
+{
+    if( DescriptionItem::ItemDescrLexems.exists( "Item_" + itId ) )
+        DescriptionItem::ItemDescrLexems.delete( "Item_" + itId );
+}
+
+class _Timeout
+{
+    _Timeout( uint time, string & str, int index )
+    {
+        Value = time;
+        Str = str;
+        Index = index;
+        Pid = 0;
+        ChosId = 0;
+    }
+
+    uint   Value;
+    string Str;
+    int    Pid;
+    int    Index;
+    uint   ChosId;
+}
+
+void __DropTimers( int index, int pid, int, string@ str, int[] @ )
+{
+    for( uint i = 0, iEnd = _Timeouts.length(); i < iEnd; i++ )
+        if( @_Timeouts[ i ] is null || _Timeouts[ i ].Index == index )
+        {
+            if( @_Timeouts[ i ] !is null && pid != 0 && pid != _Timeouts[ i ].Pid )
+                continue;
+            _Timeouts.removeAt( i-- );
+            iEnd--;
+        }
+}
+
+void __AddTimer( int time, int index, int pid, string@ str, int[] @ )
+{
+    CritterCl@ cr = GetChosen();
+    if( !valid( cr ) )
+        return;
+
+    if( !valid( str ) && pid != 0 )
+        @str = "" + GetMsgStr( TEXTMSG_ITEM, pid * 100 );
+
+    if( valid( str ) )
+    {
+        _Timeout timeH = _Timeout( time, str, index );
+        timeH.Pid = pid;
+        timeH.ChosId = cr.Id;
+        _Timeouts.insertLast( @timeH );
+    }
+}

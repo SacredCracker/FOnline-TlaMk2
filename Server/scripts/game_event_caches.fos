@@ -1,0 +1,259 @@
+// Author rifleman17
+// Энкаунтер квест, периодически доступный. В караванах попадается охранник, который за деньги продает карту с координатами запертого ящика.
+#include "_macros.fos"
+#include "_msgstr.fos"
+#include "pids_groups.fos"
+
+import string GetCode( Item& item ) from "electronic_lock";
+import void   GenerateCode( Item& item ) from "electronic_lock";
+
+// Game event
+uint e_StatusOn( uint[] @ values )
+{
+    GameVar@ status = GetGlobalVar( GVAR_game_event_caches );
+    status = 1;
+    return 0;
+}
+
+// Выдача карты
+void r_GiveCart( Critter& player, Critter@ npc )
+{
+    Item@ item = player.AddItem( PID_MAP, 1 );
+    if( valid( item ) )
+    {
+        GenerateCode( item );
+        item.Info = 2;
+        item.Val1 = Random( 0, parameters.length() - 1 );
+        item.Val2 = 3;
+        item.SetLexems( "$location@msg gm " + STR_GM_NAME( parameters[ item.Val1 ][ 0 ][ 0 ] ) + "@$code" + GetCode( item ) );
+        item.SetScript( "_TreasureMapInit" );
+        item.Update();
+        GameVar@ qItem = GetLocalVar( LIVAR_is_quest_item, item.Id );
+        if( valid( qItem ) )
+            qItem = 1;
+    }
+}
+
+void _TreasureMapInit( Item& item, bool firstTime )
+{
+    item.SetEvent( ITEM_EVENT_FINISH, "_TreasureMapFinish" );
+}
+
+void _TreasureMapFinish( Item& item, bool deleted )
+{
+	@item.ScriptDescriptor = null;
+    if( deleted && IsAnyData( "ELock_" + item.Id ) )
+        EraseAnyData( "ELock_" + item.Id );
+}
+
+const uint16[] containerPids =
+{
+    PID_ICE_CHEST_LEFT, PID_ICE_CHEST_RIGHT, PID_DESK_0, PID_DESK_1, PID_DRESSER_0, PID_FOOTLOCKER_CLEAN_LEFT,
+    PID_FOOTLOCKER_RUSTY_LEFT, PID_FOOTLOCKER_CLEAN_RIGHT, PID_FOOTLOCKER_RUSTY_RIGHT, PID_LOCKER_CLEAN_LEFT, PID_LOCKER_RUSTY_LEFT, PID_LOCKER_CLEAN_RIGHT, PID_LOCKER_RUSTY_RIGHT, PID_WORKBENCH, PID_CONTAINER_WOOD_CRATE, PID_LOCKER_7, PID_LOCKER_8, PID_CHEST, PID_SM_LT_AMMO_CRATE, PID_SM_RT_AMMO_CRATE
+};
+
+#define aPids_WeaponSmallGuns    ( 1 )
+#define aPids_WeaponPistols      ( 2 )
+#define aPids_WeaponRifles       ( 3 )
+#define aPids_WeaponUnarmed      ( 4 )
+#define aPids_ArmorMedium        ( 5 )
+#define aPids_AmmoOther          ( 6 )
+#define aPids_Drugs              ( 7 )
+
+void PlaceLoot2Container( Map& map, Critter& cr )
+{
+    Location@ loc = map.GetLocation();
+    if( valid( loc ) )
+    {
+        GameVar@ isEnc = GetLocalVar( LLVAR_is_encounter, loc.Id );
+        GameVar@ checked = GetLocalVar( LLVAR_cache_checked, loc.Id );
+        if( valid( isEnc ) && isEnc == 1 && valid( checked ) && checked == 0 )
+        {
+            Item@[] items;
+            Item@[] containers;
+            Item@ container;
+            if( cr.GetItems( -1, items ) > 0 )
+            {
+                for( uint i = 0, l = items.length(); i < l; i++ )
+                {
+                    Item@ item = items[ i ];
+                    if( valid( item ) && item.GetProtoId() == PID_MAP )
+                    {
+                        GameVar@ isQuestItem = GetLocalVar( LIVAR_is_quest_item, item.Id );
+                        if( isQuestItem == 1 )
+                        {
+                            checked = 1;
+                            // карта найдена, теперь проверяем, что карта подходит и есть контейнеры из списка
+                            // если карт несколько, остальные игнорируются
+                            @container = GetValidContainer( loc );
+                            Location@ locWhere = GetLocationByPid( parameters[ item.Val1 ][ 0 ][ 0 ], 0 );
+                            if( valid( container ) && valid( locWhere ) && GlobalDistance( locWhere, loc ) < __GlobalMapZoneLength * 2 )
+                            {
+                                isQuestItem = 0;
+                                CreateTimeEvent( __FullSecond + REAL_HOUR( 1 ), "e_DeleteItem", item.Id, true );
+                                container.Val0 = item.Id;
+                                container.Val2 = 0;
+                                container.SetScript( "electronic_lock@_LockedInit" );
+                                for( uint i = 0, l = parameters[ item.Val1 ][ 1 ].length(); i < l; i++ )
+                                {
+                                    container.AddItem( parameters[ item.Val1 ][ 1 ][ i ], parameters[ item.Val1 ][ 1 ][ i + 1 ], 0 );
+                                    i++;
+                                }
+                                if( parameters[ item.Val1 ].length() > 2 )
+                                {
+                                    if( parameters[ item.Val1 ][ 2 ].length() >= 3 )
+                                    {
+                                        int pid = 0;
+                                        switch( parameters[ item.Val1 ][ 2 ][ 0 ] )
+                                        {
+                                        case aPids_WeaponSmallGuns:
+                                            pid = Pids_WeaponSmallGuns[ Random( 0, Pids_WeaponSmallGuns.length() - 1 ) ];
+                                            break;
+                                        case aPids_WeaponPistols:
+                                            pid = Pids_WeaponPistols[ Random( 0, Pids_WeaponPistols.length() - 1 ) ];
+                                            break;
+                                        case aPids_WeaponRifles:
+                                            pid = Pids_WeaponRifles[ Random( 0, Pids_WeaponRifles.length() - 1 ) ];
+                                            break;
+                                        case aPids_WeaponUnarmed:
+                                            pid = Pids_WeaponUnarmed[ Random( 0, Pids_WeaponUnarmed.length() - 1 ) ];
+                                            break;
+                                        case aPids_ArmorMedium:
+                                            pid = Pids_ArmorMedium[ Random( 0, Pids_ArmorMedium.length() - 1 ) ];
+                                            break;
+                                        case aPids_AmmoOther:
+                                            pid = Pids_AmmoOther[ Random( 0, Pids_AmmoOther.length() - 1 ) ];
+                                            break;
+                                        case aPids_Drugs:
+                                            pid = Pids_Drugs[ Random( 0, Pids_Drugs.length() - 1 ) ];
+                                            break;
+                                        }
+                                        if( pid > 0 )
+                                        {
+                                            container.AddItem( pid, Random( parameters[ item.Val1 ][ 2 ][ 1 ], parameters[ item.Val1 ][ 2 ][ 2 ] ), 0 );
+                                        }
+                                    }
+                                }
+
+                                cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, 7115 );
+                            }
+
+                        }
+                        return;
+                    }
+                }
+            }
+        }
+    }
+}
+
+uint GlobalDistance( Location@ loc1, Location@ loc2 )
+{
+    if( !valid( loc1 ) || !valid( loc2 ) )
+        return 0;
+    return DISTANCE( loc1.WorldX, loc1.WorldY, loc2.WorldX, loc2.WorldY );
+}
+
+uint e_DeleteItem( uint[] @ values )
+{
+    Item@ item = GetItem( values[ 0 ] );
+    if( valid( item ) )
+        DeleteItem( item );
+    return 0;
+}
+
+
+Item@ GetValidContainer( Location& loc )
+{
+    Map@ map;
+    Item@[] containers;
+    Item@[] validContainers;
+    for( uint i = 0, l = loc.GetMapCount(); i < l; i++ )
+    {
+        @map = loc.GetMapByIndex( i );
+        if( valid( map ) )
+            map.GetItemsByType( ITEM_TYPE_CONTAINER, containers );
+    }
+    for( uint i = 0, l = containers.length(); i < l; i++ )
+    {
+        if( containerPids.find( containers[ i ].GetProtoId() ) >= 0 )
+            validContainers.insertLast( @containers[ i ] );
+    }
+    if( validContainers.length() == 0 )
+        return null;
+    return validContainers[ Random( 0, validContainers.length() - 1 ) ];
+}
+
+uint[][][] parameters =
+{
+    {
+        { LOCATION_Arroyo },
+        { PID_LEATHER_JACKET, 1, PID_DESERT_EAGLE, 1, PID_44_MAGNUM_JHP, 100, PID_BOTTLE_CAPS, 500, PID_STIMPAK, 5 },
+        { aPids_Drugs, 1, 2 }
+    },
+    {
+        { LOCATION_Arroyo },
+        { PID_SAWED_OFF_SHOTGUN, 1, PID_SHOTGUN_SHELLS, 1, PID_44_MAGNUM_JHP, 100, PID_BOTTLE_CAPS, 500, PID_STIMPAK, 3 },
+        { aPids_WeaponPistols, 1, 1 }
+    },
+    {
+        { LOCATION_Klamath },
+        { PID_LEATHER_JACKET, 1, PID_HUNTING_RIFLE, 1, PID_223_FMJ, 50, PID_BOTTLE_CAPS, 800, PID_NUKA_COLA, 2, PID_GAMMA_GULP_BEER, 1 },
+        { aPids_WeaponUnarmed, 1, 1 }
+    },
+    {
+        { LOCATION_Den },
+        { PID_LEATHER_JACKET, 1, PID_LOUISVILLE_SLUGGER, 1, PID_COOKIE, 1, PID_BOTTLE_CAPS, 1000, PID_BOOZE, 2, PID_STIMPAK, 5 },
+        { aPids_WeaponRifles, 1, 1 }
+    },
+    {
+        { LOCATION_Redding },
+        { PID_LEATHER_ARMOR_MK_II, 1, PID_ASSAULT_RIFLE, 1, PID_5MM_AP, 300, PID_BOTTLE_CAPS, 1200, PID_STIMPAK, 5, PID_ANTIDOTE, 2 },
+        { aPids_AmmoOther, 50, 90 }
+    },
+    {
+        { LOCATION_Modoc },
+        { PID_LEATHER_ARMOR, 1, PID_14MM_PISTOL, 1, PID_14MM_AP, 100, PID_BOTTLE_CAPS, 1000, PID_STIMPAK, 5, PID_HEALING_POWDER, 2, PID_BOTTLE_EMPTY, 3 },
+        { aPids_WeaponRifles, 1, 1 }
+    },
+    /*{
+        { LOCATION_BarterGround },
+        { PID_LEATHER_ARMOR_MK_II, 1, PID_SNIPER_RIFLE, 1, PID_223_FMJ, 100, PID_BOTTLE_CAPS, 3000, PID_STIMPAK, 10, PID_BUFFOUT, 1 },
+        { aPids_Drugs, 4, 5 }
+       },
+       {
+        { LOCATION_BarterGround },
+        { PID_CURED_LEATHER_ARMOR, 1, PID_COMBAT_KNIFE, 1, PID_CATTLE_PROD, 1, PID_BOTTLE_CAPS, 1500, PID_STIMPAK, 5, PID_JET, 10, PID_BOTTLE_AMMIAK, 2 },
+        { aPids_ArmorMedium, 1, 1 }
+       },*/
+    {
+        { LOCATION_NewReno },
+        { PID_METAL_ARMOR, 1, PID_COMBAT_SHOTGUN, 1, PID_SHOTGUN_SHELLS, 300, PID_BOTTLE_CAPS, 1500, PID_STIMPAK, 5, PID_POWER_FIST, 1 },
+        { aPids_WeaponPistols, 1, 1 }
+    },
+    {
+        { LOCATION_BrokenHills },
+        { PID_METAL_ARMOR, 1, PID_223_PISTOL, 1, PID_223_FMJ, 100, PID_BOTTLE_CAPS, 1600, PID_STIMPAK, 5, PID_SUPER_STIMPAK, 2, PID_SPIKED_KNUCKLES, 1 },
+        { aPids_WeaponRifles, 1, 1 }
+    },
+    {
+        { LOCATION_Gecko },
+        { PID_METAL_ARMOR_MK_II, 1, PID_FN_FAL, 1, PID_EXPLOSIVE_ROCKET, 10, PID_BOTTLE_CAPS, 1500, PID_STIMPAK, 5, PID_ROCKET_LAUNCHER, 1 },
+        { aPids_WeaponSmallGuns, 1, 1 }
+    },
+    {
+        { LOCATION_VaultCity },
+        { PID_METAL_ARMOR_MK_II, 1, PID_INDEPENDENT, 1, PID_FRAG_GRENADE, 10, PID_BOTTLE_CAPS, 1500, PID_STIMPAK, 10, PID_MENTATS, 4 },
+        { aPids_ArmorMedium, 1, 1 }
+    },
+    {
+        { LOCATION_NCR },
+        { PID_TESLA_ARMOR, 1, PID_MINIGUN, 1, PID_5MM_AP, 500, PID_BOTTLE_CAPS, 3500, PID_SUPER_STIMPAK, 5, PID_MENTATS, 2, PID_PLASMA_GRENADE, 9 },
+        { aPids_AmmoOther, 200, 250 }
+    },
+    {
+        { LOCATION_SanFrancisco },
+        { PID_TESLA_ARMOR, 1, PID_IMPROVED_FLAMETHROWER, 1, PID_FLAMETHROWER_FUEL_MK_II, 10, PID_BOTTLE_CAPS, 4500, PID_HK_G11, 3, PID_RAD_X, 3, PID_4_7MM_CASELESS, 150, PID_PK12_GAUSS_PISTOL, 1 },
+        { aPids_Drugs, 3, 5 }
+    }
+};

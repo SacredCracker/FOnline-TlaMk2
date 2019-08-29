@@ -1,0 +1,63 @@
+#define PHASE_NOT_STARTED      ( 0 )
+#define PHASE_STATE_RUNNING    ( 1 )
+#define PHASE_STOPPED          ( 2 )
+
+#define AD_ID_DEN_RACING       ( 1 )
+
+
+#define GE_KEY                 # (geId)                ( "GE_" + geId )
+
+class GameEventTime
+{
+    bool IsAbsoluteTime;
+    int  Value;
+
+    GameEventTime( bool abs, int eTime )
+    {
+        this.IsAbsoluteTime = abs;
+        this.Value = eTime;
+    }
+
+    int GetTime( uint eTime )
+    {
+        if( IsAbsoluteTime )
+            return this.Value;
+        else
+            return eTime + this.Value;
+    }
+
+    int GetPeriod( uint eTime )
+    {
+        if( IsAbsoluteTime )
+            return this.Value - eTime;
+        else
+            return this.Value;
+    }
+}
+
+class GameEventPhaseInfo
+{
+    GameEventTime PhaseWhenRun;
+    GameEventTime PhaseWhenStop;
+    string        PhaseRunFunction;
+    string        PhaseStopFunction;
+
+    void Run( uint& idRun, uint& idStop )
+    {
+        idRun = CreateTimeEvent( this.PhaseWhenRun.GetTime( __FullSecond ), this.PhaseRunFunction, true );
+        idStop = CreateTimeEvent( this.PhaseWhenStop.GetTime( __FullSecond ), this.PhaseStopFunction, true );
+    }
+}
+
+
+class GameEvent
+{
+    GameEventPhaseInfo@[] Phases;
+    uint CurrentPhase;
+    uint CurrentPhaseState;
+    uint
+}
+
+#ifndef __GAME_EVENT__
+
+#endif

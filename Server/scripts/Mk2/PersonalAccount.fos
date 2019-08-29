@@ -1,0 +1,593 @@
+// FOS Server
+// rifleman17
+
+enum Define
+{
+	MsgNoareaToplaceCar = 150217,  // Невозможно найти свободное место для транспортного средства. Попробуйте в другой раз.
+	
+	DlgWrongLengthPass    = 83 , // Максимальная допустимая длина пароля 15 символов
+	DlgPassOk             = 40 , // Счет создан
+	
+    DlgError              = 84 , // Неизвестная ошибка при привязке счета.
+    DlgWrongPass		= 85 ,          // Неправильный пароль
+    DlgAccNotExists = 86 ,       // Не найден счет
+    DlgSuccess            = 40 , // Счет привязан
+    DlgWrongAcc		= 87 ,            // У игрока уже привязан другой счет
+
+    DlgWrongNum           = 82 , // Неверно задан номер счета.
+    DlgAccnumFree         = 39 , // Задайте пароль для вашего счета, допускаются буквы и цифры. (нажав кнопку "Сказать")
+    DlgWrongLength        = 80 , // Максимальная длина номера счета 8 знаков
+    DlgAccNumBusy         = 81 	// Номер счета уже занят
+}
+
+class PersonalAccount
+{
+    int    Number;    // Номер счета
+    uint   CreatorId; // Код персонажа открывшего счет
+    int    Amount;    // Сумма счета
+    ::string Password;  // Пароль
+    bool   Loaded;
+
+    PersonalAccount( int number )
+    {
+        this.Number = number;
+        // Amount = 0;
+        Amount = 10000000;
+        Loaded = false;
+    }
+
+    bool NumberExist()
+    {
+        return ::IsAnyData( "PACCOUNT" + this.Number );
+    }
+
+    void Save()
+    {
+        Serializator::Serializator save;
+        save.Set( this.Number );
+        save.Set( this.CreatorId );
+        save.Set( this.Amount );
+        save.Set( this.Password );
+        save.Save( "PACCOUNT" +( this.Number ) );
+    }
+
+    void Load()
+    {
+        if( !Loaded )
+        {
+            if( NumberExist() )
+            {
+                Serializator::Serializator load;
+                if( load.Load( "PACCOUNT" +( this.Number ) ) )
+                {
+                    load.Get( this.Number  );
+                    load.Get( this.CreatorId  );
+                    load.Get( this.Amount  );
+                    load.Get( this.Password  );
+                    Loaded = true;
+                }
+            }
+        }
+    }
+
+    bool CheckValue( int value )
+    {
+        Load();
+        return this.Amount > value;
+    }
+
+    bool ChangeValue( int value )
+    {
+        if( CheckValue( value ) )
+        {
+            this.Amount = this.Amount - value;
+            if( this.Amount < 0 )
+                this.Amount = 0;
+            Save();
+            return true;
+        }
+        return false;
+    }
+
+}
+
+uint dlg_CreateAccount( ::Critter& player, ::Critter@, ::string@ text )
+{
+    if( !valid( text ) )
+        return 0;
+    if( text.length() > 8 || text.length() < 2 )
+        return PersonalAccount::Define::DlgWrongLength;
+    int account;
+    account = 0;
+    if( ::SafeStrToInt( text, account ) )
+    {
+        if( account > 0 )
+        {
+            PersonalAccount::PersonalAccount pa( account );
+            if( pa.NumberExist() )
+            {
+                return PersonalAccount::Define::DlgAccNumBusy;
+            }
+            else
+            {
+                ::GameVar@ acc = ::GetLocalVar( LVAR_personal_account_number, player.Id );
+                if( valid( acc ) )
+                {
+                    acc = account;
+                    return PersonalAccount::Define::DlgAccnumFree;
+                }
+            }
+        }
+    }
+    return PersonalAccount::Define::DlgWrongNum;
+}
+
+uint dlg_SetPassword( ::Critter& player, ::Critter@, ::string@ text )
+{
+    if( !valid( text ) )
+        return 0;
+    if( text.length() > 15 || text.length() < 5 )
+        return PersonalAccount::Define::DlgWrongLengthPass;
+    ::GameVar@ acc = ::GetLocalVar( LVAR_personal_account_number, player.Id );
+    ::GameVar@ setup = ::GetLocalVar( LVAR_personal_account_setup, player.Id );
+    if( valid( acc ) && acc > 0 )
+    {
+        PersonalAccount::PersonalAccount pa( acc.GetValue() );
+        if( !pa.NumberExist() )
+        {
+            pa.CreatorId = player.Id;
+            pa.Password = text;
+            pa.Save();
+            setup = 1;
+            return PersonalAccount::Define::DlgPassOk;
+        }
+    }
+    return PersonalAccount::Define::DlgWrongLengthPass;
+}
+
+void dlg_ReadAccountData( ::Critter& player, ::Critter@, ::string@ lexems )
+{
+    if( !IS_DIALOG_GENERATED( lexems ) )
+        return;
+    ::GameVar@ acc = ::GetLocalVar( LVAR_personal_account_number, player.Id );
+    if( valid( acc ) && acc > 0 )
+    {
+        PersonalAccount::PersonalAccount pa( acc.GetValue() );
+        lexems = "";
+        if( pa.NumberExist() )
+        {
+            lexems += "$acc" + acc.GetValue();
+            pa.Load();
+            if( pa.CreatorId == player.Id )
+            {
+                lexems += "$pass" + pa.Password;
+            }
+            else
+            {
+                lexems += "$pass N-A";
+            }
+            lexems += "$sum" + pa.Amount;
+        }
+    }
+
+}
+
+// первое слово в строке номер счета, второе = пароль
+uint dlg_BindAccount( ::Critter& player, ::Critter@, ::string@ text )
+{
+    if( !IS_DIALOG_SAY_MODE( text ) )
+        return 0;
+
+    ::string@[] temp = ::splitEx( text, " " );
+    ::GameVar@ acc = ::GetLocalVar( LVAR_personal_account_number, player.Id );
+    ::GameVar@ setup = ::GetLocalVar( LVAR_personal_account_setup, player.Id );
+    if( temp.length() > 1 && valid( acc ) && valid( setup ) )
+    {
+        int account = 0;
+        if( ::SafeStrToInt( temp[ 0 ], account ) )
+        {
+            if( acc > 0 && acc.GetValue() != account )
+            {
+                return PersonalAccount::Define::DlgWrongAcc;
+            }
+            if( account > 0 )
+            {
+                PersonalAccount::PersonalAccount pa( account );
+                if( pa.NumberExist() )
+                {
+                    pa.Load();
+                    if( pa.Password == temp[ 1 ] )
+                    {
+                        acc = pa.Number;
+                        setup = 1;
+                        return PersonalAccount::Define::DlgSuccess;
+                    }
+                    else
+                    {
+                        return PersonalAccount::Define::DlgWrongPass;
+                    }
+                }
+            }
+        }
+    }
+    return PersonalAccount::Define::DlgAccNotExists;
+}
+// Проверка, счет существует
+bool d_AccountExist( ::Critter& cr, ::Critter@ npc )
+{
+    ::GameVar@ acc = ::GetLocalVar( LVAR_personal_account_number, cr.Id );
+    if( valid( acc ) )
+    {
+        if( acc == 0 )
+            return true;
+        PersonalAccount::PersonalAccount pa( acc.GetValue() );
+        return pa.NumberExist();
+    }
+    return false;
+}
+// проверка, что игрок может создать новый счет
+// в т.ч. если и при предыдущих попытках ему что-то помешало довести процесс до конца
+bool d_CanCreateNewAcc( ::Critter& cr, ::Critter@ npc )
+{
+    ::GameVar@ acc = ::GetLocalVar( LVAR_personal_account_number, cr.Id );
+    if( valid( acc ) )
+    {
+        if( acc == 0 )
+            return true;
+        PersonalAccount::PersonalAccount pa( acc.GetValue() );
+        return !pa.NumberExist();
+    }
+    return false;
+}
+
+// Проверка: на счете достаточно денег
+bool d_CheckValue( ::Critter& cr, ::Critter@npc, int value )
+{
+    ::GameVar@ acc = ::GetLocalVar( LVAR_personal_account_number, cr.Id );
+    if( valid( acc ) )
+    {
+        if( acc > 0 )
+        {
+            PersonalAccount::PersonalAccount pa( acc.GetValue() );
+            if( pa.NumberExist() )
+            {
+                pa.Load();
+                return ( pa.Amount >= value && value > 0 );
+            }
+        }
+    }
+    return false;
+}
+
+// Изменение суммы счета
+void r_ChangeValue( ::Critter& cr, ::Critter@ npc, int value )
+{
+    ::GameVar@ acc = ::GetLocalVar( LVAR_personal_account_number, cr.Id );
+    if( valid( acc ) )
+    {
+        if( acc > 0 )
+        {
+            PersonalAccount::PersonalAccount pa( acc.GetValue() );
+            if( pa.NumberExist() )
+            {
+                pa.Load();
+                pa.Amount -= value;
+                if( pa.Amount < 0 )
+                    pa.Amount = 0;
+                pa.Save();
+            }
+        }
+    }
+}
+
+// спавн робота
+uint r_SpawnBot( ::Critter& cr, ::Critter@ npc, int value )
+{
+    ::Map@ map = cr.GetMap();
+    if( valid( map ) && value > 0 )
+    {
+        ::Location@ loc = map.GetLocation();
+        if( valid( loc ) )
+        {
+            uint pid = loc.GetProtoId();
+            // 308-313, 327-332
+            if( ( pid >= 308 && pid <= 313 ) || ( pid >= 327 && pid <= 332 ) )
+            {
+                ::GameVar@ acc = ::GetLocalVar( LVAR_personal_account_number, cr.Id );
+                if( valid( acc ) )
+                {
+                    if( acc > 0 )
+                    {
+                        PersonalAccount::PersonalAccount pa( acc.GetValue() );
+                        if( pa.NumberExist() )
+                        {
+                            pa.Load();
+                            if( pa.Amount >= value )
+                            {
+                                uint16 x = 0;
+                                uint16 y = 0;
+                                if( map.GetEntireCoords( 90, 0, x, y ) )
+                                {
+                                    ::Critter@ mob = map.AddNpc( 679, x, y, 0, null, null, null );
+                                    if( valid( mob ) )
+                                    {
+                                        pa.Amount -= value;
+                                        if( pa.Amount < 0 )
+                                            pa.Amount = 0;
+                                        pa.Save();
+                                    }
+                                    return 41;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return 49;
+}
+// спавн мопеда
+uint r_SpawnBike( ::Critter& cr, ::Critter@ npc, int value )
+{
+    ::Map@ map = cr.GetMap();
+    if( valid( map ) && value > 0 )
+    {
+        ::Location@ loc = map.GetLocation();
+        if( valid( loc ) )
+        {
+            uint pid = loc.GetProtoId();
+            // 308-313, 327-332
+            if( ( pid >= 308 && pid <= 313 ) || ( pid >= 327 && pid <= 332 ) )
+            {
+                ::GameVar@ acc = ::GetLocalVar( LVAR_personal_account_number, cr.Id );
+                if( valid( acc ) )
+                {
+                    if( acc > 0 )
+                    {
+                        PersonalAccount::PersonalAccount pa( acc.GetValue() );
+                        if( pa.NumberExist() )
+                        {
+                            pa.Load();
+                            if( pa.Amount >= value )
+                            {
+                                // -->
+                                Entires::Entire[] entires;
+                                Entires::ParseEntires( map, entires, 91 );
+                                uint16 hx, hy, entNum;
+                                for( int i = 0, iMax = entires.length(); i <= iMax; i++ )
+                                {
+                                    if( i == iMax )
+                                    {
+                                        cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, PersonalAccount::Define::MsgNoareaToplaceCar );
+                                        return 41;
+                                    }
+                                    Entires::Entire@ ent = entires[ i ];
+                                    if( map.CheckPlaceForItem( ent.HexX, ent.HexY, Content::Item::BIKE ) )
+                                    {
+                                        hx = ent.HexX;
+                                        hy = ent.HexY;
+                                        entNum = ent.Number;
+                                        break;
+                                    }
+                                }
+                                uint  keyId = _CritEyesDoorId( cr.Id );
+                                ::Item@ car = map.AddItem( hx, hy, Content::Item::BIKE, 1 );
+                                if( valid( car ) )
+                                {
+                                    _CarSetNoLockpick( car );
+                                    car.LockerId = keyId;
+                                    car.LockerComplexity = 1000;
+                                    car.Charge = car.Proto.Car_TankVolume;
+                                    car.Deterioration = 0;
+                                    car.Update();
+                                    ::Item@ bag = car.GetChild( 0 );
+                                    if( valid( bag ) )
+                                    {
+                                        bag.LockerId = keyId;
+                                        bag.LockerComplexity = 1000;
+                                        bag.Update();
+                                    }
+                                    pa.Amount -= value;
+                                    if( pa.Amount < 0 )
+                                        pa.Amount = 0;
+                                    pa.Save();
+                                    return 41;
+                                }
+                                // -->
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return 49;
+}
+// консольная команда, добавляет бабло на счет (добавляет к имеющейся сумме
+// ~run personal_account AddMoney 11 999999999 0
+void AddMoney( ::Critter& cr, int account, int value, int )
+{
+    PersonalAccount::PersonalAccount pa( account );
+    if( !pa.NumberExist() )
+    {
+        cr.Say( SAY_NETMSG, "Cannot found account" );
+        return;
+    }
+    pa.Load();
+    pa.Amount = pa.Amount + value;
+    cr.Say( SAY_NETMSG, "total account balance: " + pa.Amount );
+    pa.Save();
+}
+// консольная команда, выводит параметры счета
+void Check( ::Critter& cr, int account, int, int )
+{
+    if( account == 0 )
+    {
+        cr.Say( SAY_NETMSG, "Cannot found account" );
+        return;
+
+    }
+    PersonalAccount::PersonalAccount pa( account );
+    Log( "check pa called" );
+    if( !pa.NumberExist() )
+    {
+        cr.Say( SAY_NETMSG, "Cannot found account" );
+        return;
+    }
+    pa.Load();
+    cr.Say( SAY_NETMSG, "Account: " + pa.Number + "; Sum: " + pa.Amount + "; Pass: " + pa.Password + "; Created by: " + ::GetPlayerName( pa.CreatorId ) );
+}
+
+bool d_IsAddContaner( ::Critter& cr, ::Critter@npc )
+{
+    if( valid( npc ) )
+    {
+        ::Map@ map = npc.GetMap();
+        if( valid( map ) )
+        {
+            ::Location@ loc = map.GetLocation();
+            if( valid( loc ) )
+            {
+                int pidLoc = loc.GetProtoId();
+                if( ( pidLoc >= 308 && pidLoc <= 313 ) || ( pidLoc >= 327 && pidLoc <= 332 ) )
+                    return true;
+            }
+        }
+    }
+    return false;
+}
+
+// Выдача контейнеров
+void r_AddContainer( ::Critter& cr, ::Critter@npc, int pid, int count )
+{
+    if( count > 0 )
+    {
+        ::Map@ m = cr.GetMap();
+        if( valid( m ) )
+        {
+            ::Location@ loc = m.GetLocation();
+            if( valid( loc ) )
+            {
+                int pidLoc = loc.GetProtoId();
+                if( ( pidLoc >= 308 && pidLoc <= 313 ) || ( pidLoc >= 327 && pidLoc <= 332 ) )
+                {
+                    for( int i = 0; i < count; i++ )
+                    {
+                        ::Item@ item = cr.AddItem( pid, 1 );
+                        if( valid( item ) )
+                            item.SetScript( "PersonalAccount::_ContInit" );
+                    }
+                }
+                else
+                    Log( "Пидры ломают диалоги" );
+            }
+            else
+                Log( "Пидры ломают диалоги" );
+        }
+        else
+            Log( "Пидры ломают диалоги" );
+    }
+}
+
+void _ContInit( ::Item& item, bool firstTime )
+{
+    item.SetEvent( ITEM_EVENT_DROP, "PersonalAccount::_ContDrop" );
+    if( item.Accessory == ACCESSORY_HEX )
+    {
+        uint16 hexX = 0, hexY = 0;
+        ::Map@   map = item.GetMapPosition( hexX,  hexY );
+        if( valid( map ) )
+        {
+            ::Location@ loc = map.GetLocation();
+            if( valid( loc ) )
+            {
+                int pid = loc.GetProtoId();
+                if( ( pid >= 308 && pid <= 313 ) || ( pid >= 327 && pid <= 332 ) )
+                {
+                    return;
+                }
+                ::DeleteItem( item );
+            }
+        }
+    }
+}
+
+void _ContDrop( ::Item& item, ::Critter& cr )
+{
+    ::Map@ map = null;
+    if( item.Accessory == ACCESSORY_CRITTER_DROP_ITEM )
+        @ map = cr.GetMap();
+    else if( item.Accessory == ACCESSORY_HEX )
+    {
+        uint16 hexX = 0, hexY = 0;
+        @ map = item.GetMapPosition( hexX,  hexY );
+    }
+
+    {
+        if( valid( map ) )
+        {
+            ::Location@ loc = map.GetLocation();
+            if( valid( loc ) )
+            {
+                int pid = loc.GetProtoId();
+                if( ( pid >= 308 && pid <= 313 ) || ( pid >= 327 && pid <= 332 ) )
+                    return;
+                ::DeleteItem( item );
+            }
+        }
+    }
+}
+// firstCheckedId - начало диапазона проверки Id персонажей, например 1
+// lastCheckedId - конец диапазона проверки Id
+// loadAll - признак, грузить все. Если = 0, то счета с нулевым количеством в лог выводиться не будут.
+void LogAllAccounts( int firstCheckedNum, int lastCheckedNum, int loadAll )
+{
+    /*
+           if (lastCheckedNum == 0)
+                   lastCheckedNum = 30000;
+           int[] accounts;
+           bool found;
+           if(firstCheckedNum==0)
+                   firstCheckedNum=1;
+           for(int i = firstCheckedNum; i <= lastCheckedNum; i++)
+           {
+                   ::GameVar@ acc = ::GetLocalVar(LVAR_personal_account_number, i);
+                   if(valid(acc) && acc.GetValue() > 0)
+                   {
+                           int accN = acc.GetValue();
+                           found = false;
+                           for(int j=0, len=accounts.length(); j < len; j++)
+                           {
+                                   if(accounts[j] == accN)
+                                   {
+                                           found = true;
+                                           break;
+                                   }
+                           }
+                           if(!found)
+                           {
+                                   accounts.insertLast(accN);
+                           }
+                   }
+           }*/
+    int[] accounts = { 10000000,  10041996,  10101410,  10101983,  10101988,  10119203,  10121985,  10162010,  1018,  10293847,  1031174,  104048,  105,  10551055,  10610244,  10644011,  107392,  10850413,  11,  11011980,  11031986,  11050089,  11081988,  1111,  11111111,  11111989,  11112222,  11112345,  11116779,  11121990,  11122233,  11122235,  11133322,  11133344,  11221122,  11223344,  11235813,  11367833,  11381138,  11526134,  11555511,  11685663,  12,  12011985,  12041985,  12050013,  12061999,  12081987,  12101981,  12111984,  12121212,  12121988,  12122121,  12167,  1221,  122112,  12211221,  123,  12312312,  12312890,  123321,  1233211,  12333,  12340987,  12341111,  1234123,  12341234,  12343214,  12344321,  12345,  12345123,  12345228,  12345432,  123456,  12345654,  12345670,  12345678,  12345687,  12345689,  12346,  12348765,  12349876,  1235789,  12380811,  12437893,  12651265,  12652126,  12652652,  12700012,  13000404,  13012000,  1303,  13031985,  13052000,  13071995,  13091309,  13091999,  13117664,  13131313,  13141314,  13151315,  1316,  13166613,  13182666,  13198366,  131992,  13241324,  13285769,  133133,  13320589,  13371337,  13371488,  13372281,  13372288,  13372888,  13377331,  13527496,  13579135,  13666130,  13798624,  14011988,  14031979,  14031997,  14041988,  14221414,  14235867,  14253117,  14259717,  14401080,  14401440,  1442414,  14683225,  14785236,  14789632,  1488,  14880000,  14881337,  14881488,  14881936,  14882280,  14882281,  14882288,  1500,  15039413,  15050793,  15051974,  150699,  15111988,  15111989,  15284729,  15455000,  15487325,  15525585,  15634567,  15654138,  15744751,  15935745,  15935746,  15935755,  159753,  15975355,  15975382,  16021994,  16071989,  16091981,  16111989,  161986,  16204,  16205,  16281124,  16432134,  16489067,  16777215,  16794350,  16814523,  16986,  17009658,  17031987,  17031993,  17031995,  17071987,  17080121,  17089658,  17091999,  17121986,  17184355,  17385572,  1781788,  18011993,  18012003,  18031998,  18040906,  18042000,  18042033,  18051986,  18101993,  18112002,  18211998,  18273645,  18326461,  18349276,  1845986,  18459869,  18633091,  18871887,  18890504,  18918030,  19031996,  19054433,  19061983,  19061992,  19081900,  19121989,  19131989,  19171917,  19171937,  19181716,  19216811,  19243619,  19247953,  19297751,  19348956,  19391945,  19411941,  19412206,  19531953,  19541954,  1960,  19721972,  19740906,  19781708,  19781978,  19810710,  19810814,  19813001,  19831983,  19851507,  19861986,  19861990,  1987,  19871208,  19876454,  19877,  198777,  1988,  19880401,  19880406,  19881988,  198989,  19900417,  19900921,  1991,  19911105,  19911991,  19912105,  19912709,  1992,  199203,  19920707,  199213,  1993,  19950912,  19960710,  19970503,  19970515,  1998,  19981105,  19982000,  19988991,  19990410,  19990512,  20031985,  20041973,  20041981,  2007,  20081980,  200896,  20101987,  20101995,  20119713,  20202,  20211341,  20223120,  20224242,  2023719,  203,  20440227,  20452546,  2053,  21012702,  21028411,  21031986,  21051990,  21101967,  21111983,  21121990,  21197500,  21201179,  21212121,  21212323,  21216355,  21386021,  21549648,  215634,  21570,  21593542,  21966666,  21971989,  22021999,  22032203,  22071987,  22111980,  222,  2220222,  22221111,  222222,  22222222,  22224444,  22228844,  22228888,  222333,  22233344,  2227222,  22313221,  22334455,  22345621,  22441122,  22446688,  22526134,  22777722,  22778811,  228,  22813371,  22814881,  22814888,  22822822,  22822823,  22832200,  22833711,  23011986,  23011995,  23021981,  23032000,  23032303,  23081980,  23109808,  23109878,  23121981,  231298,  23143532,  231994,  2323,  2332223,  23361266,  23392339,  23423,  234536,  23456789,  23473006,  23568912,  23654138,  23841147,  23841148,  23841149,  24041997,  24078777,  24081977,  24091994,  24101972,  24122208,  24172519,  24238212,  24425011,  24537777,  24582225,  24672467,  24702470,  24759073,  24789123,  24789125,  24869516,  25013086,  25018844,  25022000,  25031994,  25081983,  25091989,  25251337,  25252525,  25352325,  25565228,  257,  2578607,  25812581,  258963,  26011997,  26041986,  26041991,  26071990,  26072000,  26091980,  26111989,  26204531,  26481729,  2683848,  27011985,  27011986,  27011990,  27018625,  27022702,  27029222,  2705,  27050126,  27062014,  27091989,  27091992,  2710,  27101991,  27182818,  27230807,  27272727,  27727627,  27913,  28,  28007370,  28031988,  28041989,  280499,  28049915,  28051986,  28062011,  28081998,  280898,  28112011,  28355359,  28686155,  28871404,  28890643,  29,  29016032,  29031989,  29091989,  29092010,  29099595,  29101981,  29102010,  29121988,  295295,  30041072,  30081983,  30081995,  30118730,  30121988,  30160321,  30634739,  31001278,  31011986,  31122008,  311311,  31131131,  31415900,  31501994,  31513151,  31531515,  31759222,  31768512,  32130589,  32167321,  32167555,  32167911,  322354,  32235490,  32283228,  32320509,  3242323,  3243,  329270,  32977945,  33063306,  33096,  33311666,  33333329,  33333333,  33339009,  33345633,  3335,  33366622,  3339583,  334,  3364939,  33722854,  34076200,  34386463,  345,  34663466,  34673467,  3472,  3490862,  34923492,  34927057,  35397641,  355355,  355665,  35566565,  35639685,  35937233,  36300000,  363756,  36548436,  3664939,  36936900,  36987341,  37364736,  38103810,  38163816,  38383838,  38973562,  3918143,  39493949,  4000,  4004,  4011,  41185581,  41361242,  41404140,  42077811,  42077822,  42424242,  42760200,  42760277,  4321,  43584397,  4364,  44441980,  44444411,  44444444,  44445555,  445,  44554455,  44644,  44664466,  44822844,  44964496,  45004542,  45030388,  45045045,  45225108,  45358753,  45362718,  45369123,  45454100,  45545545,  45634563,  45645519,  45998868,  46361766,  46395452,  47037565,  47424742,  4774497,  47884700,  47985726,  48151623,  48151624,  484002,  48484848,  48554855,  48621989,  48713121,  4874,  50055005,  50057507,  50170021,  50501928,  50510537,  51204258,  5134208,  51549348,  51569185,  51673700,  51696100,  52047212,  52132437,  5217527,  52607552,  5297000,  53647899,  54255425,  54321543,  54321678,  54321876,  54435158,  5449180,  54545454,  54584983,  54900476,  55052591,  55225522,  5533,  55332100,  555,  55533311,  55535355,  555422,  55544410,  55555,  555551,  55555555,  55557777,  55566622,  55588811,  55598555,  556282,  5566,  55667788,  5567157,  56350000,  565148,  5654321,  56543219,  56748301,  56802801,  56874391,  57057057,  57318190,  57649123,  57700775,  57735411,  58202222,  58259714,  5830221,  58732965,  5923631,  60609088,  61736173,  62019124,  62061186,  62087419,  624043,  63794000,  64326432,  65001000,  65432178,  65478,  66246624,  666,  66613666,  66661313,  66666666,  66668888,  6667666,  66677766,  66699977,  67036703,  67183455,  67183456,  6746563,  6796475,  68241992,  68246824,  69696969,  69875037,  70017700,  70271023,  70719487,  71204315,  71219811,  71345068,  71402329,  71594816,  71595007,  71944516,  72381473,  72435189,  72817281,  72943816,  73264875,  7331,  73821673,  74581964,  74600453,  74819990,  75737,  75757575,  75859565,  76253397,  76313371,  76374677,  77,  77014884,  77073021,  77101981,  77246644,  77298601,  77402575,  77653941,  77661967,  777,  77707088,  77755533,  77776666,  7777777,  77777777,  77788877,  77889944,  78,  78009199,  78255337,  78450178,  78538504,  78563254,  78787878,  787898,  7891,  78913000,  78945612,  78956423,  78963215,  79246751,  79358147,  79378425,  79846513,  80000008,  80291893,  80482945,  80663134,  80819611,  80884404,  80888808,  8121315,  81369020,  821543,  82232412,  82458255,  8285277,  829694,  8326487,  83373930,  83514907,  83836996,  84230987,  84392148,  84826848,  85741904,  85867475,  85988598,  86973456,  87052061,  87135643,  87612537,  87654320,  87654321,  87710000,  87772113,  88,  88001981,  88771964,  88776655,  88888,  8888888,  88888888,  89009889,  89033445,  89041414,  89047696,  89064011,  89105939,  89126050,  89134666,  89137996,  89162987,  89221402,  89232192,  89241493,  89241749,  89244353,  89258735,  89295681,  89513824,  89517763,  89523635,  89533840,  89644493,  89651892,  89672458,  89889966,  89898989,  90025984,  90099009,  90235252,  90399112,  90414103,  90454342,  90575353,  9069054,  90894811,  910,  910471,  911,  91179332,  91191191,  91261840,  91329029,  91368799,  91391391,  91549154,  91687771,  91817688,  91966700,  92031011,  922922,  92349094,  92364694,  92617975,  92702689,  92702698,  9282877,  92922929,  9379992,  93799920,  93979246,  9452,  94882455,  94899496,  95002954,  95073314,  95118030,  95151559,  95178799,  9522423,  95338656,  95342122,  95952685,  96085112,  96086496,  961991,  96277555,  96332626,  97685974,  98088597,  98521078,  98756456,  98765432,  987858,  98910000,  98989898,  990099,  99415488,  99521250,  99887766,  99977755,  99988822,  9999,  99999998,  99999999 };
+    for( int i = 0, len = accounts.length(); i < len; i++ )
+    {
+        PersonalAccount::PersonalAccount pa( accounts[ i ] );
+        if( pa.NumberExist() )
+        {
+            pa.Load();
+            if( loadAll != 0 || pa.Amount != 0 )
+            {
+                // Log("acc: " + pa.Number + "; creator: " + (pa.CreatorId == 0?"%НЕИЗВЕСТЕН!%":GetPlayerName(pa.CreatorId)) + "; balance: " + pa.Amount +"; pass: " + pa.Password);
+                Log( "acc: " + pa.Number + "; creator: " + ( pa.CreatorId == 0 ? "%НЕИЗВЕСТЕН!%" : "" + pa.CreatorId ) + "; balance: " + pa.Amount + "; pass: " + pa.Password );
+            }
+        }
+    }
+}
+
+void LogAccs( ::Critter& cr, int first, int last, int all )
+{
+    LogAllAccounts( first, last, all );
+}

@@ -1,0 +1,73 @@
+// FOS Server
+// Author: cvet
+// Server and client stuff for radio
+
+void ChangeChannel( ::Critter& player, int radioId, int radioChannel, int, ::string@, int[] @ )
+{
+    ::Item@ radio = player.GetItemById( radioId );
+    if( ! valid( radio ) || ! FLAG( radio.Flags, ITEM_RADIO ) )
+        return;
+    if( FLAG( radio.RadioFlags, RADIO_DISABLE_SHIFT_CHANNEL ) )
+        return;
+
+    radio.RadioChannel = CLAMP( radioChannel, 0, 0xFFFF );
+    radio.Update();
+}
+
+void ChangeActivity( ::Critter& player, int radioId, int isSend, int, ::string@, int[] @ )
+{
+    ::Item@ radio = player.GetItemById( radioId );
+    if( ! valid( radio ) || ! FLAG( radio.Flags, ITEM_RADIO ) )
+        return;
+
+    if( isSend != 0 )
+    {
+        if( ! FLAG( radio.RadioFlags, RADIO_DISABLE_SHIFT_SEND ) )
+        {
+            radio.RadioFlags ^= RADIO_DISABLE_SEND;
+            radio.Update();
+            // player.Say(SAY_NETMSG,"isSend1");
+        }
+    }
+    else
+    {
+        if( ! FLAG( radio.RadioFlags, RADIO_DISABLE_SHIFT_RECV ) )
+        {
+            radio.RadioFlags ^= RADIO_DISABLE_RECV;
+            radio.Update();
+            // player.Say(SAY_NETMSG,"isSend2");
+        }
+    }
+}
+
+void ChangeBroadcast( ::Critter& player, int radioId, int broadcastSend, int broadcastRecv, ::string@, int[] @ )
+{
+    ::Item@ radio = player.GetItemById( radioId );
+    if( ! valid( radio ) || ! FLAG( radio.Flags, ITEM_RADIO ) )
+        return;
+
+    // Change send
+    if( ! FLAG( radio.RadioFlags, RADIO_DISABLE_SHIFT_BC_SEND ) )
+    {
+        if( broadcastSend == RADIO_BROADCAST_WORLD || broadcastSend == RADIO_BROADCAST_LOCATION ||
+            broadcastSend == RADIO_BROADCAST_MAP || broadcastSend == RADIO_BROADCAST_ZONE( 2 ) ||
+            broadcastSend == RADIO_BROADCAST_ZONE( 5 ) )
+        {
+            radio.RadioBroadcastSend = broadcastSend;
+            radio.Update();
+        }
+    }
+
+    // Change recv
+    if( ! FLAG( radio.RadioFlags, RADIO_DISABLE_SHIFT_BC_RECV ) )
+    {
+        if( broadcastRecv == RADIO_BROADCAST_WORLD || broadcastRecv == RADIO_BROADCAST_LOCATION ||
+            broadcastRecv == RADIO_BROADCAST_MAP || broadcastRecv == RADIO_BROADCAST_ZONE( 2 ) ||
+            broadcastRecv == RADIO_BROADCAST_ZONE( 5 ) )
+        {
+            radio.RadioBroadcastRecv = broadcastRecv;
+            radio.Update();
+        }
+    }
+}
+

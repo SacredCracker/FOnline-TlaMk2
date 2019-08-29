@@ -1,0 +1,62 @@
+// FOS Server
+// Author: Тринитротолуол, heX, rifleman17
+
+// Для удобства последующей заскриптовки карты, квесты "Пасти браминов", "Сгубить браминов"
+// и "Отнести мясо псам" вынесены в отдельные файлы.
+
+#define STR_ROBOT_ITEM_SEE         (1)
+
+#define ENTRANCE_TORR     (3)
+#define ENTRANCE_NORTH     (4)
+#define ENTRANCE_TRAP_WEST     (5)
+#define ENTRANCE_TRAP_SOUTH     (6)
+#define ENTRANCE_CANYON     (7)
+
+bool entrance_Klamath( ::Location& klamath, ::array<::Critter@>& critters, uint8 entrance)
+{
+	::Critter@ leader = critters[0];
+	if(entrance==ENTRANCE_TORR || entrance==ENTRANCE_TRAP_SOUTH) return leader.Skill[SK_OUTDOORSMAN]>=60;
+	else if(entrance==ENTRANCE_NORTH || entrance==ENTRANCE_TRAP_WEST) return leader.Skill[SK_OUTDOORSMAN]>=30;
+		else if(entrance==ENTRANCE_CANYON) return leader.Skill[SK_OUTDOORSMAN]>=90;
+        return true;
+}
+
+void GrazInit( ::Map& map, bool firstTime)
+{
+	KlamCowboy::InitCowboy(map, firstTime);
+}
+
+void TrapInit( ::Map& map, bool firstTime)
+{
+	Mob::ActivateMobScript(map);
+	KlamDantonKilling::InitDantonKilling(map, firstTime);
+}
+
+// Использование вакцины в квесте на прививку браминов
+void BrahmaInit( ::Critter& cr, bool firstTime)
+{
+	cr.SetEvent(CRITTER_EVENT_SMTH_USE_ITEM, "MapKlamath::_BrahmaSmthUseItem");
+}
+
+void _BrahmaSmthUseItem( ::Critter& cr, ::Critter& fromCr, ::Item& item, ::Critter@ onCritter, ::Item@ onItem, ::Scenery@ onScenery)
+{
+	if(valid(onCritter) && onCritter.Id==cr.Id && fromCr.IsPlayer() && item.GetProtoId()==Content::Item::VACCINE)
+		::Mk2RunDialog(fromCr, cr, true);
+}
+
+
+void RobotInit( ::Critter& cr, bool firstTime)
+{
+	Collector::Init(cr, firstTime);
+	cr.SetEvent(CRITTER_EVENT_PLANE_BEGIN, "MapKlamath::_RobotPlaneBegin");
+}
+
+int _RobotPlaneBegin( ::Critter& cr, ::NpcPlane& plane, int reason, ::Critter@ someCr, ::Item@ someItem)
+{
+	if(plane.Type==AI_PLANE_PICK && uint(cr.Stat[ST_VAR2])<::__FullSecond)
+	{
+		cr.StatBase[ST_VAR2]=::__FullSecond + ::__TimeMultiplier * 5;
+		cr.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR (cr.Stat[ST_DIALOG_ID],1));
+	}	
+	return PLANE_RUN_GLOBAL;
+}

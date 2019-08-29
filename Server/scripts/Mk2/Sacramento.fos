@@ -1,0 +1,37 @@
+// Author: Dagnir
+
+int StrSuburbIn = 104000; // "Помните, что центральные улицы в пригородах зачастую заминированы."
+int StrDenbusOut = 1051;   // "Где-то в глубине души вы очень рады, что покинули это место."
+
+void Lair( ::Map& map, bool firstTime )
+{
+    ::ActivateMobScript( map );
+    map.SetEvent( MAP_EVENT_IN_CRITTER, "Sacramento::CritterIn" );
+    map.SetEvent( MAP_EVENT_OUT_CRITTER, "Sacramento::CritterOut" );
+}
+
+void North( ::Map& map, bool firstTime )
+{
+    ::ActivateMobScript( map );
+    map.SetEvent( MAP_EVENT_IN_CRITTER, "Sacramento::CritterIn" );
+    map.SetEvent( MAP_EVENT_OUT_CRITTER, "Sacramento::CritterOut" );
+}
+
+void Alley( ::Map& map, bool firstTime )
+{
+    ::ActivateMobScript( map );
+    map.SetEvent( MAP_EVENT_IN_CRITTER, "Sacramento::CritterIn" );
+    map.SetEvent( MAP_EVENT_OUT_CRITTER, "Sacramento::CritterOut" );
+}
+
+void CritterIn( ::Map& map, ::Critter& player )
+{
+    if( player.IsPlayer() && player.IsLife() )
+        player.SayMsg( SAY_NETMSG, TEXTMSG_TEXT,  StrSuburbIn );
+}
+
+void CritterOut( ::Map& map, ::Critter& player )
+{
+    if( player.IsPlayer() && player.IsLife() )
+        player.SayMsg( SAY_NETMSG, TEXTMSG_TEXT,  StrDenbusOut );
+}

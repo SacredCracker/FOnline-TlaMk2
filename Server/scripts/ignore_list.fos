@@ -1,0 +1,87 @@
+// Author: rifleman17
+#include "_client_defines.fos"
+
+#define IGNORELIST_FILE_NAME    "IgnoreList.txt"
+
+import bool CompareName( string& crName, string& nameStr ) from "name_colorizing";
+
+string@[] ignoredPlayers;
+
+void InitIgnoreList()
+{
+    file   f;
+    if( f.open( IGNORELIST_FILE_NAME, "r" ) != -1 )
+    {
+        string name = "";
+
+        f.readString( uint( f.getSize() ), name );
+        f.close();
+
+        ignoredPlayers = splitEx( strlwr( name ), "@" );
+    }
+}
+
+bool EraseIgnoredPlayer( string& message )
+{
+    const uint pad = 10;   // ~unignore_ 8 cимволов
+    if( message.length() <= pad )
+        return false;
+    string name = substring( message, pad, message.length() - pad );
+    for( uint i = 0; i < ignoredPlayers.length(); i++ )
+        if( @ignoredPlayers[ i ] !is null && CompareName( name, ignoredPlayers[ i ] ) )
+        {
+            ignoredPlayers.removeAt( i );
+            Message( "" + name + " is removed from ignore list." );
+        }
+
+    file f;
+    if( f.open( IGNORELIST_FILE_NAME, "w" ) == 0 )
+    {
+        for( uint n = 0; n < ignoredPlayers.length(); n++ )
+        {
+            if( @ignoredPlayers[ n ] == null || ignoredPlayers[ n ] == "" )
+                continue;
+            if( f.writeString( strlwr( ignoredPlayers[ n ] ) + "@" ) != int( ( name + "@" ).length() ) )
+                Log( "Failed to save " + ignoredPlayers[ n ] + " to ignore list!" );
+        }
+        f.close();
+        return true;
+    }
+    return false;
+}
+
+bool IgnorePlayer( string& message )
+{
+    const uint pad = 8;   // ~ignore_ 8 cимволов
+    if( message.length() <= pad )
+        return false;
+    string name = strlwr( substring( message, pad, message.length() - pad ) );
+    if( PlayerIgnored( name ) )
+    {
+        Message( "" + name + " already ignored." );
+        return true;
+    }
+    ignoredPlayers.insertLast( @name );
+    file f;
+    if( f.open( IGNORELIST_FILE_NAME, "a" ) == 0 )
+    {
+        if( f.writeString( name + "@" ) == int( ( name + "@" ).length() ) )
+        {
+            Message( name + " now ignored." );
+            f.close();
+            return true;
+        }
+        f.close();
+    }
+    return false;
+}
+
+bool PlayerIgnored( string& crName )
+{
+    for( uint i = 0, iMax = ignoredPlayers.length(); i < iMax; i++ )
+        if( @ignoredPlayers[ i ] !is null && CompareName( strlwr( crName ), ignoredPlayers[ i ] ) )
+            return true;
+    return false;
+}
+
+bool PlayerIgnored( CritterCl& cr ){ return PlayerIgnored( cr.Name ); }

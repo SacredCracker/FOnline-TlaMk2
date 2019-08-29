@@ -1,0 +1,205 @@
+// Обробка механіки креслень
+
+// ====================
+// Генерація креслень
+// ====================
+
+// Пошук змінної в таблиці крафта
+craftInfo@ getBpInfo( uint16 pid )
+{
+    for( uint16 i = 0, iMax = CraftList.length(); i < iMax; i++ )
+    {
+        if( CraftList[ i ].ResultItem != pid )
+            continue;
+
+        return CraftList[ i ];
+    }
+
+    // Log("Ошибка крафта. Не существует чертежа для Pid="+pid);
+    return null;
+}
+
+// Генерація креслення, в інвентарь кріттера
+void addBlueprint( Critter@ cr, uint16 pid, uint16 count )
+{
+    if( !validEngineObject( cr ) )
+        return;
+    craftInfo@ info = getBpInfo( pid );
+    if( !valid( info ) )
+        return;
+    Item@ bp = cr.AddItem( PID_BLUEPRINT, 1 );
+    if( !validEngineObject( bp ) )
+        return;
+
+    setBp( bp, pid, count, info.VarNum, info.MinLvl, info.Count );
+}
+
+// Генерація креслення, на точку карти
+void addBlueprint( Map@ map, uint16  hexX, uint16  hexY, uint16 pid, uint16 count )
+{
+    if( !validEngineObject( map ) )
+        return;
+    craftInfo@ info = getBpInfo( pid );
+    Item@      bp = map.AddItem( hexX, hexY, PID_BLUEPRINT, 1 );
+    if( !validEngineObject( bp ) )
+        return;
+
+    setBp( bp, pid, count, info.VarNum, info.MinLvl, info.Count );
+}
+
+// Генерація креслення, в контейнер
+void addBlueprint( Item@ cont, uint16 pid, uint16 count )
+{
+    if( !validEngineObject( cont ) )
+        return;
+    craftInfo@ info = getBpInfo( pid );
+    Item@      bp = cont.AddItem( PID_BLUEPRINT, 1, 0 );
+    if( !validEngineObject( bp ) )
+        return;
+
+    setBp( bp, pid, count, info.VarNum, info.MinLvl, info.Count );
+}
+
+// Генерація креслення, в інвентарь кріттера
+Item@ AddBlueprint( Critter& cr, const uint16& in pid, const uint16& in count )
+{
+    craftInfo@ info = getBpInfo( pid );
+    if( !valid( info ) )
+        return null;
+    Item@ bp = cr.AddItem( PID_BLUEPRINT, 1 );
+    if( !validEngineObject( bp ) )
+        return null;
+
+    setBp( bp, pid, count, info.VarNum, info.MinLvl, info.Count );
+    return bp;
+}
+
+// Генерація креслення, на точку карти
+Item@ AddBlueprint( Map& map, const uint16& in  hexX, const uint16& in  hexY, const uint16& in pid, const uint16& in count )
+{
+    craftInfo@ info = getBpInfo( pid );
+    if( !valid( info ) )
+        return null;
+    Item@ bp = map.AddItem( hexX, hexY, PID_BLUEPRINT, 1 );
+    if( !validEngineObject( bp ) )
+        return null;
+
+    setBp( bp, pid, count, info.VarNum, info.MinLvl, info.Count );
+    return bp;
+}
+
+// Генерація креслення, в контейнер
+Item@ AddBlueprint( Item& cont, const uint16& in pid, const uint16& in count )
+{
+    craftInfo@ info = getBpInfo( pid );
+    if( !valid( info ) )
+        return null;
+    Item@ bp = cont.AddItem( PID_BLUEPRINT, 1, 0 );
+    if( !validEngineObject( bp ) )
+        return null;
+
+    setBp( bp, pid, count, info.VarNum, info.MinLvl, info.Count );
+    return bp;
+}
+
+// =================
+
+// Встановлення параметрів креслення
+void setBp( Item@ bp, uint16 pid, uint16 count, uint16 var, uint16 minLvl, uint16 countItem )
+{
+    count = MAX( 1, count );
+    if( !validEngineObject( bp ) )
+        return;
+    bp.Val1 = pid;
+    bp.Val2 = count;
+    bp.Val3 = var;
+    bp.Val4 = minLvl;
+
+    string stCount;
+    if( count == 100 )
+        stCount = "@msg game " + STR_NO_UNLIMITED + "@";
+    else
+        stCount = "" + count;
+
+    bp.SetLexems( "$n@msg item " + pid * 100 + "@$d@msg item " + ( pid * 100 ) + "@$c " + stCount + "$l " + minLvl );
+    const ProtoItem@ proto = GetProtoItem( pid );
+    if( !valid( proto ) )
+    {
+        Log( "Прототип под номером " + pid + " не валиден." );
+        return;
+    }
+    uint8 picName = Random( 0, 2 );
+    if( proto.Type == ITEM_TYPE_ARMOR )
+    {
+        if( picName == 0 )
+            bp.PicInv = GetStrHash( "art\\inven\\Blueprint1_armor.png" );
+        else if( picName == 1 )
+            bp.PicInv = GetStrHash( "art\\inven\\Blueprint2_armor.png" );
+        else
+            bp.PicInv = GetStrHash( "art\\inven\\Blueprint3_armor.png" );
+    }
+    else if( proto.Type == ITEM_TYPE_WEAPON )
+    {
+        if( picName == 0 )
+            bp.PicInv = GetStrHash( "art\\inven\\Blueprint1_smallguns.png" );
+        else if( picName == 1 )
+            bp.PicInv = GetStrHash( "art\\inven\\Blueprint2_smallguns.png" );
+        else
+            bp.PicInv = GetStrHash( "art\\inven\\Blueprint3_smallguns.png" );
+    }
+    else if( proto.Type == ITEM_TYPE_AMMO )
+    {
+        if( picName == 0 )
+            bp.PicInv = GetStrHash( "art\\inven\\Blueprint1_ammo.png" );
+        else if( picName == 1 )
+            bp.PicInv = GetStrHash( "art\\inven\\Blueprint2_ammo.png" );
+        else
+            bp.PicInv = GetStrHash( "art\\inven\\Blueprint3_ammo.png" );
+    }
+    else
+    {
+        if( picName == 0 )
+            bp.PicInv = GetStrHash( "art\\inven\\Blueprint1.png" );
+        else if( picName == 1 )
+            bp.PicInv = GetStrHash( "art\\inven\\Blueprint2.png" );
+        else
+            bp.PicInv = GetStrHash( "art\\inven\\Blueprint3.png" );
+    }
+    if( count > 99 )
+        count = 10;
+    bp.Cost = ( proto.Cost / ( countItem > 5 ? 4 : 2 ) ) * count * countItem;
+    bp.Update();
+}
+
+// Ініціалізація креслення
+void _BlueprintInit( Item& item, bool firstTime )
+{
+    item.SetEvent( ITEM_EVENT_USE, "_BlueprintUse" );
+}
+
+// Вивчення креслення гравцем
+bool _BlueprintUse( Item& item, Critter& cr, Critter@ onCritter, Item@ onItem, Scenery@ onScenery )
+{
+    if( validEngineObject( onItem ) || valid( onScenery ) )
+        return false;                                                   // поюзать можно только на себя
+    GameVar@ var = GetLocalVar( item.Val3, cr.Id );
+    if( !valid( var ) )
+        return false;
+
+    if( ( item.Val2 + var.GetValue() ) > 99 && var.GetValue() != 0 )
+    {
+        cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT,  STR_BLUEPRINT_COUNT_IS_MAX );
+        return true;
+    }
+
+    if( item.Val4 > cr.StatBase[ ST_LEVEL ] )
+    {
+        cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT,  STR_IS_NOOB );
+        return true;
+    }
+
+    var += item.Val2;
+    cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT,  STR_BLUEPRINT_USE );
+    DeleteItem( item );
+    return true;
+}

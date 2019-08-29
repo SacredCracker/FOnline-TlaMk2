@@ -1,0 +1,33 @@
+// FOS Server
+// Author: cvet, dagnir
+
+enum Defines
+{
+	StrDenbusIn = 1050,
+	StrDenbusOut
+}
+
+void _DenBusInit(::Map& denBus, bool firstTime)
+{
+	denBus.SetEvent(MAP_EVENT_IN_CRITTER,"MapDenbus::_DenBusInCritter");
+	denBus.SetEvent(MAP_EVENT_OUT_CRITTER,"MapDenbus::_DenBusOutCritter");
+	
+	//Убираем запоминание - слишком опасно для безопасной зоны
+    ::array<::Critter@> critters;
+    
+    for(uint i=0, iMax=denBus.GetCritters(0,FIND_LIFE|FIND_ONLY_NPC, critters); i<iMax; i++)
+	{
+		critters[i].ModeBase[MODE_NO_ENEMY_STACK]=1;
+	}
+}
+
+void _DenBusInCritter(::Map& denBus, ::Critter& player)
+{
+	DenBOS::_DenInCritterMap(denBus, player);
+	if(player.IsPlayer() && player.IsLife()) player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT,  MapDenbus::Defines::StrDenbusIn); 
+}
+
+void _DenBusOutCritter(::Map& denBus, ::Critter& player)
+{
+	if(player.IsPlayer() && player.IsLife()) player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT,  MapDenbus::Defines::StrDenbusOut); 
+}

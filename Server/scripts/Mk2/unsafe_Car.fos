@@ -1,0 +1,9 @@
+// FOS Server
+
+void Lockpick( ::Critter& cr, int, int, int, ::string@, int[] @ )
+{
+    uint[] indexes;
+    uint iEnd = cr.GetTimeEvents( CTE_CAR_LOCKPICK, indexes );
+    while( iEnd != 0 )
+        cr.EraseTimeEvent( indexes[ --iEnd ] );
+}

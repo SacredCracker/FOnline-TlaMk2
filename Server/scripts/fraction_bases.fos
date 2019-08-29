@@ -1,0 +1,720 @@
+#include "_macros.fos"
+#include "_colors.fos"
+#include "_animation.fos"
+#include "_maps.fos"
+#include "_msgstr.fos"
+
+#define ENTRANCE_METRO         ( 265 )
+
+#define I_AM_INVADER           ( 1 )
+#define ROLE_GUARD             ( 666 )
+
+#define _BaseOwner             # ( player, map )( map.GetData( 0 ) == player.Stat[ ST_FACTION ] || map.GetData( 0 ) == 0 )
+#define _ActivateSecurity      # ( map, set )( map.SetData( 1, ( ( set ) ? 1 : 0 ) ) )
+#define _EventGeneratorDead    # ( map, set )( map.SetData( 2, ( ( set ) ? 1 : 0 ) ) )
+#define _ActivationTimeout     # ( map, set )( map.SetData( 3, ( ( set ) ? 1 : 0 ) ) )
+#define _DayToCapture          # ( map, day )( map.SetData( 4, day ) )
+#define _HourToCapture         # ( map, day )( map.SetData( 5, day ) )
+#define _HourToStop            # ( map, day )( map.SetData( 6, day ) )
+#define _StoreMapTime          # (map)                 ( map.SetData( 7, map.GetTime() ) )
+#define _RestoreMapTime        # (map)                 ( map.SetTime( map.GetData( 7 ) ) )
+#define _SetTimeOnCapture      # ( map, time )( map.SetData( 8, time ) )
+#define _CaptureTimeoutId      # ( map, id )( map.SetData( 9, id ) )
+
+#define BASE_OWNER             # (map)             ( map.GetData( 0 ) )
+#define SECURITY_ACTIVE        # (map)         ( map.GetData( 1 ) == 1 )
+#define GENERATOR_DEAD         # (map)         ( map.GetData( 2 ) == 1 )
+#define ACTIVATION_TIMEOUT     # (map)         ( map.GetData( 3 ) == 1 )
+#define CAPTURE_DAY            # (map)         ( map.GetData( 4 ) )
+#define CAPTURE_HOUR           # (map)         ( map.GetData( 5 ) )
+#define CAPTURE_STOP_HOUR      # (map)         ( map.GetData( 6 ) )
+#define CAPTURE_DAYTIME        # (map)             ( map.GetData( 8 ) )
+#define CAPTURE_TIMEOUT        # (map)                 ( map.GetData( 9 ) )
+
+import bool    AddAttackPlane( Critter& npc, uint priority, uint critId, bool run ) from "npc_planes";
+import void    SayToAllPlayers( uint16 textMsg, uint strNum, string@ lexems ) from "Mk2";
+import bool    IsKeyAviable( Critter& cr, uint lockerId, Item& locker ) from "Mk2";
+import string@ GetFractionName( uint num ) from "Mk2";
+import bool    GetFreeHex( Map& map, uint radius, uint16& hx, uint16& hy ) from "caravan";
+import void    SwitchMultiHexDoor( Item& door, bool open ) from "Mk2";
+
+
+bool s_DoorTerminal( Critter& player, Scenery& terminal, int skill, Item@ item, int secured, int entire )
+{
+    return s_DoorTerminal( player, terminal, skill, item, secured, entire, 1 );
+}
+
+// Терминал входной двери.
+// Параметр secured: 1-открывать только владельцам базы(при включенной охране), 0 - всем.
+// Параметр entire - энтайры, на которых расположена входная дверь.
+// lockOnEvent - отключать терминал во время захвата базы
+bool s_DoorTerminal( Critter& player, Scenery& terminal, int skill, Item@ item, int secured, int entire, int lockOnEvent )
+{
+    if( player.IsPlayer() && skill == -1 && not valid( item ) )
+    {
+        Map@ map = player.GetMap().GetLocation().GetMapByIndex( 0 );
+        if( lockOnEvent == 1 && GENERATOR_DEAD( map ) )
+            return false;
+        if( _BaseOwner( player, map ) || !SECURITY_ACTIVE( map ) || secured == 0 )
+        {
+            bool toClose = true;
+            @map = player.GetMap();
+            for( uint n = 0; n < map.CountEntire( entire ); n++ )
+            {
+                uint16[] coords = { 0, 0 };
+                map.GetEntireCoords( entire, n, coords[ 0 ], coords[ 1 ] );
+                Item@ door = map.GetDoor( coords[ 0 ], coords[ 1 ] );
+                if( valid( door ) )
+                {
+                    if( n == 0 )
+                        toClose = FLAG( door.LockerCondition, LOCKER_ISOPEN );                     // TabaK. Двери переключаются в соответствии с состоянием первой.
+                    SwitchMultiHexDoor( door, !toClose );
+                }
+            }
+        }
+        else
+        {
+            player.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, 100103 );
+        }
+    }
+    else if( skill == SK_SCIENCE )
+    {
+        Map @map = player.GetMap().GetLocation().GetMapByIndex( 0 );
+        if( Random( player.Skill[ SK_SCIENCE ], 10000 / player.Stat[ ST_LUCK ] ) == 666 || !SECURITY_ACTIVE( map ) || secured == 0 )
+        {
+            @map = player.GetMap();
+            for( uint n = 0; n < map.CountEntire( entire ); n++ )
+            {
+                uint16[] coords = { 0, 0 };
+                map.GetEntireCoords( entire, n, coords[ 0 ], coords[ 1 ] );
+                Item@ door = map.GetDoor( coords[ 0 ], coords[ 1 ] );
+                if( valid( door ) )
+                {
+                    SwitchMultiHexDoor( door, true );
+                }
+            }
+        }
+        else
+            player.SayMsg( SAY_NETMSG, TEXTMSG_GAME, 10451 );
+    }
+
+    return true;
+}
+
+
+
+// Туррели и роботы
+
+void t_enter( Critter& cr, Scenery& trigger, bool entered, uint8 dir )
+{
+    if( entered )
+    {
+        Map@ map = cr.GetMap().GetLocation().GetMapByIndex( 0 );
+        if( BASE_OWNER( map ) == 0 || ( !_BaseOwner( cr, map ) && SECURITY_ACTIVE( map ) ) )
+            cr.SendMessage( 0, I_AM_INVADER, MESSAGE_TO_ALL_ON_MAP );
+    }
+}
+
+void _GuardInit( Critter& npc, bool firstTime )
+{
+    npc.SetEvent( CRITTER_EVENT_MESSAGE, "_GuardMessage" );
+    npc.SetEvent( CRITTER_EVENT_ATTACKED, "_GuardAttacked" );
+    npc.ModeBase[ MODE_UNLIMITED_AMMO ] = 1;
+    npc.ModeBase[ MODE_NO_ENEMY_STACK ] = 1;
+    npc.StatBase[ ST_NPC_ROLE ] = ROLE_GUARD;
+    npc.StatBase[ ST_TEAM_ID ] = ROLE_GUARD;
+}
+
+void _ExtGuardInit( Critter& npc, bool f )
+{
+    _GuardInit( npc, f );
+    npc.SetEvent( CRITTER_EVENT_SHOW_CRITTER, "_GuardSpot" );
+}
+
+void _GuardSpot( Critter& guard, Critter& showCr )
+{
+    _GuardAttacked( guard, showCr );
+}
+
+bool _GuardAttacked( Critter& cr, Critter& attacker )
+{
+    Map@ map = cr.GetMap().GetLocation().GetMapByIndex( 0 );
+    if( !_BaseOwner( attacker, map ) || BASE_OWNER( map ) == 0 )
+    {
+        attacker.SendMessage( 0, I_AM_INVADER, MESSAGE_TO_ALL_ON_MAP );
+        // attacker.Say(SAY_NORM_ON_HEAD, "I AM INVADER, BIATCH!");
+    }
+    return ( cr.Param[ ST_TEAM_ID ] == attacker.Param[ ST_TEAM_ID ] );
+}
+
+
+void _GuardMessage( Critter& cr, Critter& fromCr, int message, int value )
+{
+    if( value == I_AM_INVADER && cr.Param[ ST_TEAM_ID ] != fromCr.Param[ ST_TEAM_ID ] )
+    {
+        // Log("Attacking! Team: "+cr.Param[ST_TEAM_ID]+". Enemy team: "+fromCr.Param[ST_TEAM_ID]);
+        AddAttackPlane( cr, 1, fromCr.Id, false );
+        // if(fromCr.IsPlayer()) cr.Say(SAY_NORM_ON_HEAD, "Attacking player: "+GetPlayerName(fromCr.Id));
+    }
+}
+
+bool d_NoCaptureTimeout( Critter& player, Critter@ npc )
+{
+    Map@ map = player.GetMap().GetLocation().GetMapByIndex( 0 );
+    uint duration = 0;
+    uint[] vals;
+    return ( !GetTimeEvent( CAPTURE_TIMEOUT( map ), duration, vals ) );
+}
+
+bool d_NotBaseOwner( Critter& player, Critter@ npc )
+{
+    return player.Stat[ ST_FACTION ] != 0 && player.GetMap().GetLocation().GetMapByIndex( 0 ).GetData( 0 ) != player.Stat[ ST_FACTION ];
+}
+
+void dlg_GetOrgName( Critter& player, Critter@ npc, string@ lexems )
+{
+    if( not IS_DIALOG_GENERATED( lexems ) )
+        return;
+    lexems = "$name" + GetFractionName( player.Param[ ST_FACTION ] );
+}
+
+bool d_SecurityActivated( Critter& player, Critter@ npc )
+{
+    return  ( SECURITY_ACTIVE( player.GetMap().GetLocation().GetMapByIndex( 0 ) ) );
+}
+
+bool d_SecurityNotActivated( Critter& player, Critter@ npc )
+{
+    Map@ map = player.GetMap().GetLocation().GetMapByIndex( 0 );
+    return  ( !SECURITY_ACTIVE( map ) && map.GetData( 0 ) > 0 );
+}
+
+uint r_ActivateSecurity( Critter& player, Critter@ npc )
+{
+    Location@ loc = player.GetMap().GetLocation();
+    Map@      map = loc.GetMapByIndex( 0 );
+    if( GENERATOR_DEAD( map ) || ACTIVATION_TIMEOUT( map ) )
+        return 5;
+    _ActivateSecurity( map, true );
+    string@ lexems = "$pid @msg gm " + ( player.GetMap().GetLocation().GetProtoId() * 1000 + 100000 ) + "@";
+    SayToAllPlayers( TEXTMSG_TEXT, 100101, @lexems );
+    loc.Color = 0;
+    Item@[] doors;
+    for( uint n = 0; n < loc.GetMapCount(); n++ )
+    {
+        loc.GetMapByIndex( n ).GetItemsByType( ITEM_TYPE_DOOR, doors );
+    }
+    for( uint n = 0, nMax = doors.length(); n < nMax; n++ )
+    {
+        if( !FLAG( doors[ n ].LockerCondition, LOCKER_TAGGED ) )
+            continue;
+        int scriptId = doors[ n ].GetScriptId();
+        if( scriptId > 0 && GetScriptName( scriptId ) == "Mk2@Lockers::_MultiHexDoor" )
+        {
+            SwitchMultiHexDoor( doors[ n ], false );
+        }
+        else
+            doors[ n ].LockerClose();
+    }
+    return 6;
+}
+
+void r_DeactivateSecurity( Critter& player, Critter@ npc )
+{
+    Location@ loc = player.GetMap().GetLocation();
+    loc.Color = COLOR_RED;
+    Map@      map = loc.GetMapByIndex( 0 );
+    _ActivateSecurity( map, false );
+    _ActivationTimeout( map, true );
+    CreateTimeEvent( __FullSecond + REAL_MINUTE( 10 ), "e_DropActivationTimeout", map.Id, false );
+    Item@[] doors;
+    for( uint n = 0; n < loc.GetMapCount(); n++ )
+    {
+        loc.GetMapByIndex( n ).GetItemsByType( ITEM_TYPE_DOOR, doors );
+    }
+    for( uint n = 0, nMax = doors.length(); n < nMax; n++ )
+    {
+        if( !FLAG( doors[ n ].LockerCondition, LOCKER_TAGGED ) )
+            continue;
+        int scriptId = doors[ n ].GetScriptId();
+        if( scriptId > 0 && GetScriptName( scriptId ) == "Mk2@Lockers::_MultiHexDoor" )
+        {
+            SwitchMultiHexDoor( doors[ n ], true );
+        }
+        else
+            doors[ n ].LockerOpen();
+    }
+    string@ lexems = "$pid @msg gm " + ( player.GetMap().GetLocation().GetProtoId() * 1000 + 100000 ) + "@";
+    SayToAllPlayers( TEXTMSG_TEXT, 100100, @lexems );
+}
+
+uint e_DropActivationTimeout( uint[] @ values )
+{
+    Map@ map = GetMap( values[ 0 ] );
+    if( valid( map ) )
+        _ActivationTimeout( map, false );
+    return 0;
+}
+
+void r_BaseCapture( Critter& player, Critter@ npc )
+{
+    Location@ loc = player.GetMap().GetLocation();
+    Map@      map = loc.GetMapByIndex( 0 );
+    map.SetData( 0, player.Param[ ST_FACTION ] );
+    string@   lexems = "$name" + GetFractionName( player.Param[ ST_FACTION ] ) + "$pid @msg gm " + ( loc.GetProtoId() * 1000 + 100000 ) + "@";
+    SetCaptureTimeout( map, 2 );
+    SayToAllPlayers( TEXTMSG_TEXT, 100102, @lexems );
+    Item@[] doors;
+    for( uint n = 0; n < loc.GetMapCount(); n++ )
+    {
+        Map@ curMap = loc.GetMapByIndex( n );
+        curMap.GetItemsByType( ITEM_TYPE_DOOR, doors );
+    }
+    for( uint n = 0, nMax = doors.length(); n < nMax; n++ )
+    {
+        if( !GENERATOR_DEAD( map ) )
+        {
+            int scriptId = doors[ n ].GetScriptId();
+            if( scriptId > 0 && GetScriptName( scriptId ) == "Mk2@Lockers::_MultiHexDoor" )
+            {
+                SwitchMultiHexDoor( doors[ n ], false );
+            }
+            else
+                doors[ n ].LockerClose();
+        }
+        if( FLAG( doors[ n ].LockerCondition, LOCKER_FACTION ) )
+            doors[ n ].LockerId = player.Param[ ST_FACTION ];
+    }
+
+    if( !GENERATOR_DEAD( map ) )
+    {
+        _ActivateSecurity( map, true );
+        map.GetLocation().Color = 0;
+    }
+
+    switch( loc.GetProtoId() )   // Уникальные события для баз
+    {
+    case LOCATION_Pilgrim:
+        AssignCars( loc, uint( player.Param[ ST_FACTION ] ) );
+        break;
+
+    default:
+        break;
+    }
+}
+
+void Capture( Critter& player, int, int, int )
+{
+    r_BaseCapture( player, null );
+}
+
+void ResetCars( Critter& player, int, int, int )
+{
+    AssignCars( player.GetMap().GetLocation(), player.Stat[ ST_FACTION ] );
+}
+
+void ReregCars( Critter& player, int, int, int )
+{
+    RegisterCars( player.GetMap().GetLocation() );
+}
+
+void AssignCars( Location@ loc, uint factionId ) // Сбор и переназначение владельцев траспорта
+{
+    uint[] cars;
+    if( !GetAnyData( "BaseCars_" + loc.Id, cars ) )
+    {
+        Log( "UNABLE TO ASSIGN FACTION CARS! Location id: " + loc.Id );
+        return;
+    }
+    // Log("Восстанавливаем автомобили...");
+    uint index = 0;
+    for( uint n = 0; n < loc.GetMapCount(); n++ )
+    {
+        Map@ map = loc.GetMapByIndex( n );
+        uint number = cars[ index++ ];
+        // Log("На карте "+n+" сохранено "+number+" автомобилей");
+        for( uint c = 0; c < number; c++ )
+        {
+            Item@ car = GetItem( cars[ index++ ] );
+            if( @car == null )
+            {
+                Log( "Unable to find faction car! id: " + cars[ index - 1 ] );
+                @car = map.AddItem( cars[ index + 1 ], cars[ index + 2 ], cars[ index ], 1 );
+                if( @car == null )
+                {
+                    index += 3;
+                    continue;
+                }
+                SETFLAG( car.LockerCondition, LOCKER_FACTION );
+                _CarSetNoLockpick( car );
+                Item@ child = car.GetChild( 0 );
+                if( valid( child ) )
+                    DeleteItem( child );
+                cars[ index - 1 ] = car.Id;
+                SetAnyData( "BaseCars_" + loc.Id, cars );
+                index += 3;
+            }
+            else
+            {
+                index++;
+                MoveItem( car, 1, map, cars[ index ], cars[ index + 1 ] );
+                index += 2;
+            }
+            UNSETFLAG( car.Flags, ITEM_HIDDEN );
+            _CarSetNoLockpick( car );
+            car.Charge = car.Proto.Car_TankVolume;
+            car.Deterioration = 0;
+            car.LockerId = factionId;
+            car.Update();
+        }
+    }
+}
+
+void _BaseInit( Map& map, bool firstTime ) // Строго для "Феникса".
+{
+    _DayToCapture( map, 0 );               // Захват в воскресенье
+    _HourToCapture( map, 19 );             // В 19 часов.
+    _HourToStop( map, 20 );                // А в 20 прекращаем.
+    _SetTimeOnCapture( map, 300 );         // Время суток на карте во время захвата.
+    map.SetEvent( MAP_EVENT_LOOP_0, "_BaseLoop" );
+    map.SetLoopTime( 0, HOURS_TO_MS( 1 ) );
+    _BaseLoop( map );
+}
+
+void _PilgrimInit( Map& lmap, bool firstTime ) // Вешать на ПОСЛЕДНЮЮ в списках карту! Все карты
+{
+    // локации должны быть проинициализированы!
+    if( firstTime )
+    {
+        RegisterCars( lmap.GetLocation() );
+    }
+    Map@ map = lmap.GetLocation().GetMapByIndex( 0 );
+    _DayToCapture( map, 5 );         // Захват в пятницу
+    _HourToCapture( map, 19 );       // В 19 часов.
+    _HourToStop( map, 20 );          // А в 20 прекращаем.
+    map.SetEvent( MAP_EVENT_LOOP_0, "_BaseLoop" );
+    map.SetLoopTime( 0, HOURS_TO_MS( 1 ) );
+    _BaseLoop( map );
+}
+
+void RegisterCars( Location@ loc )
+{
+    uint[] carData;
+    for( uint n = 0; n < loc.GetMapCount(); n++ )
+    {
+        Item@[] cars;
+        Map@ map = loc.GetMapByIndex( n );
+        map.GetItemsByType( ITEM_TYPE_CAR, cars );
+        // Log("На карте " + n + " найдено "+cars.length()+" автомобилей.");
+        carData.insertLast( cars.length() );
+        if( cars.length() == 0 )
+            continue;
+        uint index = carData.length();
+        carData.grow( cars.length() * 4 );
+        for( uint c = 0; c < cars.length(); c++ )
+        {
+            SETFLAG( cars[ c ].LockerCondition, LOCKER_FACTION );
+            _CarSetNoLockpick( cars[ c ] );
+            Item@ child = cars[ c ].GetChild( 0 );
+            if( valid( child ) )
+                DeleteItem( child );
+            carData[ index++ ] = cars[ c ].Id;
+            carData[ index++ ] = cars[ c ].GetProtoId();
+            carData[ index++ ] = cars[ c ].HexX;
+            carData[ index++ ] = cars[ c ].HexY;
+        }
+    }
+    if( !SetAnyData( "BaseCars_" + loc.Id, carData ) )
+        Log( "Unable to register faction base cars! Location id: " + loc.Id );
+}
+
+void _BaseLoop( Map& map ) // TabaK. А вот это уже универсально для любой фракционной базы.
+{
+    uint16[] time = { 0, 0, 0, 0, 0, 0, 0, 0 };
+    GetTime( time[ 0 ], time[ 1 ], time[ 2 ], time[ 3 ], time[ 4 ], time[ 5 ], time[ 6 ], time[ 7 ] );
+    if( BASE_OWNER( map ) == 0 )
+        return;
+    if( time[ 3 ] == CAPTURE_DAY( map ) && time[ 4 ] == CAPTURE_HOUR( map ) )
+    {
+        Location@ loc = map.GetLocation();
+        _EventGeneratorDead( map, true );
+        _ActivateSecurity( map, false );
+        loc.Color = COLOR_RED;
+        Item@[] doors;
+        for( uint n = 0, nMax = loc.GetMapCount(); n < nMax; n++ )
+        {
+            Map@ curMap = loc.GetMapByIndex( n );
+            curMap.GetItemsByType( ITEM_TYPE_DOOR, doors );
+            if( curMap.GetTime() < 0 || map.GetData( 8 ) == 0 )
+                continue;
+            _StoreMapTime( curMap );
+            curMap.SetTime( CAPTURE_DAYTIME( map ) );
+        }
+        for( uint n = 0, nMax = doors.length(); n < nMax; n++ )
+        {
+            if( !FLAG( doors[ n ].LockerCondition, LOCKER_TAGGED ) )
+                continue;
+            int scriptId = doors[ n ].GetScriptId();
+            if( scriptId > 0 && GetScriptName( scriptId ) == "Mk2@Lockers::_MultiHexDoor" )
+            {
+                SwitchMultiHexDoor( doors[ n ], true );
+            }
+            else
+                doors[ n ].LockerOpen();
+        }
+        string@ lexems = "$pid @msg gm " + ( map.GetLocation().GetProtoId() * 1000 + 100000 ) + "@";
+        SayToAllPlayers( TEXTMSG_TEXT, 100100, @lexems );
+    }
+    else if( GENERATOR_DEAD( map ) &&
+             ( time[ 3 ] != CAPTURE_DAY( map ) || time[ 4 ] >= CAPTURE_STOP_HOUR( map ) || time[ 4 ] <= CAPTURE_HOUR( map ) ) )
+    {
+        Location@ loc = map.GetLocation();
+        uint      fractionId = BASE_OWNER( map );
+        if( !valid( loc ) )
+            return;
+        _ActivateSecurity( map, true );
+        _EventGeneratorDead( map, false );
+        loc.Color = 0;
+        string@ lexems = "$pid @msg gm " + ( map.GetLocation().GetProtoId() * 1000 + 100000 ) + "@";
+        SayToAllPlayers( TEXTMSG_TEXT, 100101, @lexems );
+        Item@[] doors;
+        for( uint n = 0, nMax = loc.GetMapCount(); n < nMax; n++ )
+        {
+            Map@ curMap = loc.GetMapByIndex( n );
+            curMap.GetItemsByType( ITEM_TYPE_DOOR, doors );
+            if( curMap.GetTime() < 0 || map.GetData( 8 ) == 0 )
+                continue;
+            _RestoreMapTime( curMap );
+        }
+        SetCaptureTimeout( map, 4 );
+        for( uint n = 0, nMax = doors.length(); n < nMax; n++ )
+        {
+            int scriptId = doors[ n ].GetScriptId();
+            if( scriptId > 0 && GetScriptName( scriptId ) == "Mk2@Lockers::_MultiHexDoor" )
+            {
+                SwitchMultiHexDoor( doors[ n ], false );
+            }
+            else
+                doors[ n ].LockerClose();
+        }
+    }
+}
+
+uint _CaptureCountdown( uint[] @ values )
+{
+    if( valid( values ) )
+    {
+        Map@ map = GetMap( values[ 0 ] );
+        if( @map == null )
+            return 0;
+        Location@ loc = map.GetLocation();
+        Critter@[] crs;
+        for( uint n = 0; n < loc.GetMapCount(); n++ )
+        {
+            Map@ curMap = loc.GetMapByIndex( n );
+            curMap.GetCritters( 0, FIND_ONLY_PLAYERS | FIND_LIFE_AND_KO, crs );
+        }
+        for( uint n = 0; n < crs.length(); n++ )
+            crs[ n ].SayMsg( SAY_NETMSG, TEXTMSG_TEXT, values[ 1 ] > 0 ? 100110 : 100111, "$hours" + values[ 1 ] );
+        if( values[ 1 ] == 0 )
+        {
+            _CaptureTimeoutId( map, 0 );
+            return 0;
+        }
+        values[ 1 ]--;
+        return REAL_MINUTE( 1 );
+    }
+    return 0;
+}
+
+void SetCaptureTimeout( Map& map, uint hours )
+{
+    uint duration = 0;
+    uint[] values = { map.Id, hours };
+    uint[] vals;
+    if( GetTimeEvent( CAPTURE_TIMEOUT( map ), duration, vals ) )
+    {
+        SetTimeEvent( CAPTURE_TIMEOUT( map ), 1, values );
+    }
+    else
+        _CaptureTimeoutId( map, CreateTimeEvent( __FullSecond + 1, "_CaptureCountdown", values, true ) );
+}
+
+// Терминал управления парковкой.
+bool s_ParkingTerminal( Critter& player, Scenery& terminal, int skill, Item@ item )
+{
+    Map@ map = player.GetMap();
+    if( player.IsPlayer() && skill == -1 && not valid( item ) )
+    {
+        if( _BaseOwner( player, map ) )
+        {
+            bool found = false;
+            for( uint n = 0, nMax = map.CountEntire( 243 ); n <= nMax; n++ )
+            {
+                uint16[] coords = { 0, 0, 0, 0 };
+                map.GetEntireCoords( 243, n, coords[ 0 ], coords[ 1 ] );
+                Item@ car = map.GetCar( coords[ 0 ], coords[ 1 ] );
+                if( valid( car ) )
+                {
+                    if( IsKeyAviable( player, car.LockerId, car ) )
+                    {
+                        found = true;
+                        for( uint m = 0, mMax = map.CountEntire( 100 ); m <= mMax; m++ )
+                        {
+                            map.GetEntireCoords( 100, m, coords[ 2 ], coords[ 3 ] );
+                            if( map.IsHexPassed( coords[ 2 ], coords[ 3 ] ) )
+                            {
+                                player.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, 100104 );
+                                // for(uint child=0; child<3; child++)
+                                Item@ bag = GetItem( car.Id + 1 );
+                                if( valid( bag ) && ITEM_TYPE_CONTAINER == bag.GetType()  && bag.GetProtoId() >= PID_HIGHWAYMAN_BAG && bag.GetProtoId() <= PID_VERTIBIRD_BAG )
+                                    // {
+                                    // Item@ bag=car.GetChild(child);
+                                    // if(valid(bag))
+                                    MoveItem( bag, 1, map, coords[ 2 ] - int(car.HexX - bag.HexX), coords[ 3 ] - int(car.HexY - bag.HexY) );
+                                // }
+                                MoveItem( car, 1, map, coords[ 2 ], coords[ 3 ] );
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            if( !found )
+                player.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, 100105 );
+        }
+        else
+            player.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, 100103 );
+    }
+    return true;
+}
+
+bool entrance_Phoenix( Location& loc, Critter@[]& critters, uint8 entrance )
+{
+    if( entrance == 3 )
+        return ( critters[ 0 ].Skill[ SK_OUTDOORSMAN ] >= 115 && critters[ 0 ].Param[ ST_PERCEPTION ] >= 10 );
+    return true;
+}
+
+bool entrance_Pilgrim( Location& loc, Critter@[]& critters, uint8 entrance )
+{
+    Item@[] items;
+    uint entire = 0;
+    for( uint n = 0; n < critters.length(); n++ )
+    {
+        if( critters[ n ].GetItemsByType( ITEM_TYPE_CAR, items ) > 0 && valid( items[ 0 ] ) )
+        {
+            entire = items[ 0 ].Proto.Car_Entrance;
+            break;
+        }
+    }
+    if( entire == 246 )
+        return ( entrance == 2 );
+    return ( entire == 245 || entrance == 0 );
+}
+
+// Метро
+
+bool d_NotLocation( Critter& player, Critter@ npc, int locPid ) // Возвращает true, если игрок НЕ находится на заданной локации
+{
+    return player.GetMap().GetLocation().GetProtoId() != uint( locPid );
+}
+
+bool d_IsBaseOwner( Critter& player, Critter@ npc, int locPid ) // Проверяет, является ли игрок членом фракции-хозяина заданной фракционной базы
+{
+    Location@ base = GetLocationByPid( uint( locPid ), 0 );
+    if( @base == null )
+        return false;
+    int owner = base.GetMapByIndex( 0 ).GetData( 0 );
+    return ( owner != 0 && owner == player.Stat[ ST_FACTION ] );
+}
+
+void r_TransferTo( Critter& player, Critter@ npc, int mapPid )
+{
+    if( player.Timeout[ TO_TRANSFER ] > 0 )
+    {
+        player.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_TIMEOUT_TRANSFER_WAIT );
+        return;
+    }
+    else if( player.Timeout[ TO_BATTLE ] > 0 )
+    {
+        player.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_TIMEOUT_BATTLE_WAIT );
+        return;
+    }
+    Map@ map = GetMapByPid( uint( mapPid ), 0 );
+    if( @map == null )
+        return;
+    Location@ loc = map.GetLocation();
+
+    uint[] data( 4 );
+    data[ 0 ] = map.Id;
+    data[ 1 ] = ENTRANCE_METRO;
+    data[ 2 ] = loc.WorldX;
+    data[ 3 ] = loc.WorldY;
+    SetAnyData( player.Id + "_MetroMove", data );
+    player.SetEvent( CRITTER_EVENT_GLOBAL_PROCESS, "_MetroMove" );
+    player.SetEvent( CRITTER_EVENT_FINISH, "_QuitGame" );
+    player.TransitToGlobal( true );
+    Item@ metro = player.AddItem( PID_METRO, 1 );
+    metro.Charge = metro.Proto.Car_TankVolume;
+    metro.SetScript( "fraction_bases@_MetroInit" );
+}
+
+void _QuitGame( Critter& cr, bool )
+{
+    uint metroCount = cr.CountItem( PID_METRO );
+    if( metroCount > 0 )
+        cr.DeleteItem( PID_METRO, metroCount );
+}
+
+bool _MetroMove( Critter& cr, int type, Item@ car, float& x, float& y, float& toX, float& toY, float& speed, uint& encounterDescriptor, bool& waitForAnswer )
+{
+    uint[] data;
+    if( !GetAnyData( cr.Id + "_MetroMove", data ) )
+    {
+        if( car.GetProtoId() == PID_METRO )
+            DeleteItem( car );
+        cr.SetEvent( CRITTER_EVENT_GLOBAL_PROCESS, "" );
+        return false;
+    }
+
+    if( type == GLOBAL_PROCESS_MOVE )
+        return false;
+
+    if( type == GLOBAL_PROCESS_STOPPED && uint( x ) == data[ 2 ] && uint( y ) == data[ 3 ] )
+    {
+        if( valid( car ) && car.GetProtoId() == PID_METRO )
+            DeleteItem( car );
+        Critter@[] group = cr.GetGlobalGroup();
+        for( uint n = 0; n < group.length(); n++ )
+        {
+            group[ n ].TransitToMap( data[ 0 ], data[ 1 ] );
+        }
+        EraseAnyData( cr.Id + "_MetroMove" );
+        cr.SetEvent( CRITTER_EVENT_GLOBAL_PROCESS, "" );
+        return true;
+    }
+    if( type != GLOBAL_PROCESS_START_FAST )
+    {
+        speed = 25.0f;
+        toX = data[ 2 ];
+        toY = data[ 3 ];
+    }
+    return true;
+}
+
+void _MetroInit( Item& metro, bool firstTime )
+{
+    if( metro.Accessory == ACCESSORY_CRITTER )
+    {
+        Critter@ cr = GetCritter( metro.CritId );
+        if( valid( cr ) )
+        {
+            cr.SetEvent( CRITTER_EVENT_GLOBAL_PROCESS, "_MetroMove" );
+        }
+        else
+            DeleteItem( metro );
+    }
+    else
+        DeleteItem( metro );
+}

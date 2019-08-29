@@ -1,0 +1,106 @@
+// Name:	map_arroyo_rayders_camp
+// Author:	Sufir
+
+// Uses
+#include "_macros.fos"
+
+
+void _RaidersCampInit( Map& camp, bool firstTime )
+{
+
+    camp.SetEvent( MAP_EVENT_IN_CRITTER, "_CampInCritter" );
+    camp.SetEvent( MAP_EVENT_OUT_CRITTER, "_CampOutCritter" );
+
+}
+
+
+void _CampInCritter( Map& camp, Critter& player )
+{
+
+    // Сразу проверим игрок ли криттер
+    if( player.IsPlayer() )
+    {
+        // Если игрок не взял квест (например прицепился к группе позже), гоним его.
+        GameVar@ quest = GetLocalVar( LVAR_q_arroyo_mynoc_defence, player.Id );
+        if( valid( quest ) )
+        {
+            if( quest.GetValue() == 0 )
+            {
+                player.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, 3481 );
+                player.TransitToGlobal( false );
+            }
+            else
+            {
+                player.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, 3482 );
+            }
+        }
+    }
+
+}
+
+
+void _CampOutCritter( Map& camp, Critter& player )
+{
+
+    uint[] RaidersCount( 1 );
+    uint[] LastGoupArrDef;
+    // Сразу проверим игрок ли криттер
+    if( player.IsPlayer() )
+    {
+        GetAnyData( "ArrouoRaidersCount", RaidersCount );
+        if( RaidersCount[ 0 ] == 0 )
+        {
+            // Если все рейдеры убиты, даем опыт и устанавливаем значение квестовой переменной.
+            GetAnyData( "LastGoupArrDef", LastGoupArrDef );
+            GameVar@ quest = GetLocalVar( LVAR_q_arroyo_mynoc_defence, player.Id );
+            if( valid( quest ) )
+            {
+                if( quest.GetValue() == 1 )
+                {
+                    quest = 2;
+                    // Делим опыт на всю банду.
+                    uint Exp = 6000 / LastGoupArrDef.length();
+                    if( Exp % 10 <= 5 )
+                    {
+                        player.StatBase[ ST_EXPERIENCE ] = player.StatBase[ ST_EXPERIENCE ] + ( uint( Exp / 10 ) * 10 );
+                        player.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, 3480, "$exp" + ( uint( Exp / 10 ) * 10 ) );
+                    }
+                    else
+                    {
+                        player.StatBase[ ST_EXPERIENCE ] = player.StatBase[ ST_EXPERIENCE ] + ( uint( Exp / 10 ) * 10 + 10 );
+                        player.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, 3480, "$exp" + ( uint( Exp / 10 ) * 10 ) );
+                    }
+                    player.ReputationBase[ REPUTATION_ARROYO ] += 1;
+                }
+                else if( quest.GetValue() == 3 )
+                {
+                    quest = 6;
+                    // Делим опыт на всю банду.
+                    uint Exp = 9000 / LastGoupArrDef.length();
+                    if( Exp % 10 <= 5 )
+                    {
+                        player.StatBase[ ST_EXPERIENCE ] = player.StatBase[ ST_EXPERIENCE ] + ( uint( Exp / 10 ) * 10 );
+                        player.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, 3480, "$exp" + ( uint( Exp / 10 ) * 10 ) );
+                    }
+                    else
+                    {
+                        player.StatBase[ ST_EXPERIENCE ] = player.StatBase[ ST_EXPERIENCE ] + ( uint( Exp / 10 ) * 10 + 10 );
+                        player.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, 3480, "$exp" + ( uint( Exp / 10 ) * 10 ) );
+                    }
+                    player.ReputationBase[ REPUTATION_ARROYO ] += 3;
+                }
+            }
+            // Теперь уберём локацию с карты игрока. Нечего ему здесь больше делать.
+            GameVar@ campLoc = GetGlobalVar( GVAR_arroyo_mynoc_map );
+            if( valid( campLoc ) )
+            {
+                if( campLoc.GetValue() != 0 )
+                {
+                    Location@ loc = GetLocation( campLoc.GetValue() );
+                    if( player.IsKnownLoc( true, loc.Id ) )
+                        player.UnsetKnownLoc( true, loc.Id );
+                }
+            }
+        }
+    }
+}

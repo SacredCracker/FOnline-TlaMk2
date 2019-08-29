@@ -1,0 +1,34 @@
+// FOS Server
+// Author: Dagnir
+
+const int TimeToDeath = REAL_MINUTE(50);
+
+// Если этого торговца убить, то его уже нельзя будет встретить на глобале.
+void Trader( ::Critter& npc, bool firstTime)
+{
+	npc.StatBase[ST_REPLICATION_TIME]=-1;
+	npc.ModeBase[MODE_NO_STEAL]=1;
+	npc.AddTimeEvent("EncOceanTrader::cte_HeartAttack",TimeToDeath,CTE_AUTOKILL);
+	npc.SetEvent(CRITTER_EVENT_DEAD,"EncOceanTrader::_TraderDead");
+}
+
+void _TraderDead(::Critter& npc, ::Critter@ killer)
+{
+	::GameVar@ var=::GetGlobalVar(GVAR_enc_ocean_trader_alive);
+	if(valid(var))
+		var=0;
+}
+
+uint cte_HeartAttack(::Critter& cr, int identifier, int& rate, int&)
+{
+	if (!cr.IsDead()) cr.ToDead(ANIM2_DEAD_FRONT,null);
+	return TimeToDeath;
+}
+
+void America(::Critter& npc, bool firstTime)
+{
+	npc.StatBase[ST_REPLICATION_TIME]=-1;
+	npc.StatBase[ST_MELEE_DAMAGE] +=5;
+	npc.StatBase[ST_CRITICAL_CHANCE]=50;
+	npc.SkillBase[SK_UNARMED]=150;
+}

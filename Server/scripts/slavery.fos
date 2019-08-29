@@ -1,0 +1,525 @@
+#include "_defines.fos"
+#include "_macros.fos"
+#include "_itempid.fos"
+#include "_dialogs.fos"
+
+import uint GetPlayerMercs( Critter& player, Critter@[]& mercs ) from "merc";
+import bool merc2plr( Critter& crit, Critter@ onCritter ) from "merc";
+import int  count_mercs( Critter& player ) from "merc";
+import bool CanGetSlave( Critter& crit ) from "merc";
+
+#define BASE_COST         ( 2000 )
+
+#define _IsChild          # (cr)  ( ( cr.Stat[ ST_BODY_TYPE ] == BT_CHILDREN ) )
+#define SLAVE_CHILDREN    ( 4 )
+
+
+// sex==-1 - любой пол(не считая детей);
+// sex==4 - ребенок
+
+
+uint GetSexSlaveCost( Critter& player, Critter& slave )
+{
+    uint cost = BASE_COST + slave.Stat[ ST_CHARISMA ] * 500 + player.Skill[ SK_BARTER ] * 10;
+    if( _IsChild( slave ) )
+        cost *= 3;
+    else if( slave.Stat[ ST_GENDER ] == GENDER_MALE )
+        cost /= 3;
+    return cost;
+}
+
+uint GetGenericSlaveCost( Critter& player, Critter& slave )
+{
+    uint cost = ( BASE_COST + slave.Stat[ ST_STRENGTH ] * 250 + slave.Stat[ ST_ENDURANCE ] * 250 + player.Skill[ SK_BARTER ] * 10 );
+    if( _IsChild( slave ) )
+        cost *= 3;
+    return cost;
+}
+
+uint GetSlaverSlaveCost( Critter& player, Critter& slave ) // Цена продажи рабов работорговцам в пустоши
+{
+    uint cost = MAX( slave.Stat[ ST_CHARISMA ], slave.Stat[ ST_STRENGTH ] ) * 100 + BASE_COST / 2 + player.Skill[ SK_BARTER ] * 5;
+    if( slave.Stat[ ST_BODY_TYPE ] == BT_CHILDREN )
+        cost *= 2;
+    return cost;
+}
+
+uint GetSlaveCost( Critter& player, Critter& slave ) // Цена покупки у работорговцев в пустоши
+{
+    return ( slave.Stat[ ST_CHARISMA ] + slave.Stat[ ST_STRENGTH ] ) * 100 + BASE_COST - player.Skill[ SK_BARTER ] * 8;
+}
+
+uint GetSlaveCount( Critter& master, int sex )
+{
+    Critter@[] mercs;
+    uint sCount = 0;
+    uint count = GetPlayerMercs( master, mercs );
+    for( uint n = 0; n < count; n++ )
+    {
+        if( mercs[ n ].Merc[ MERC_IS_SLAVE ] != 0 )
+        {
+            if( _IsChild( mercs[ n ] ) )
+            {
+                if( sex == SLAVE_CHILDREN )
+                    sCount++;
+                continue;
+            }
+            if( mercs[ n ].Stat[ ST_GENDER ] == sex || sex < 0 )
+                sCount++;
+        }
+    }
+    return sCount;
+}
+
+Critter@ GetSlave( Critter& player, int sex )
+{
+    Critter@[] mercs;
+    uint count = GetPlayerMercs( player, mercs );
+    for( uint n = 0; n < count; n++ )
+    {
+        if( mercs[ n ].Merc[ MERC_IS_SLAVE ] != 0 )
+        {
+            if( _IsChild( mercs[ n ] ) )
+            {
+                if( sex == SLAVE_CHILDREN )
+                    return @mercs[ n ];
+                continue;
+            }
+            if( mercs[ n ].Stat[ ST_GENDER ] == sex || sex < 0 )
+                return @mercs[ n ];
+        }
+    }
+    return null;
+}
+
+Critter@[] GetSlaves( Critter& player, int sex )
+{
+    Critter@[] mercs;
+    Critter@[] slaves;
+    uint count = GetPlayerMercs( player, mercs );
+    for( uint n = 0; n < count; n++ )
+    {
+        if( mercs[ n ].Merc[ MERC_IS_SLAVE ] != 0 )
+        {
+            if( _IsChild( mercs[ n ] ) )
+            {
+                if( sex == SLAVE_CHILDREN )
+                    slaves.insertLast( @mercs[ n ] );
+                continue;
+            }
+            if( mercs[ n ].Stat[ ST_GENDER ] == sex || sex < 0 )
+                slaves.insertLast( @mercs[ n ] );
+        }
+    }
+    return slaves;
+}
+
+bool d_HasSlave( Critter& master, Critter@, int sex )
+{
+    Critter@[] mercs;
+    uint count = GetPlayerMercs( master, mercs );
+    for( uint n = 0; n < count; n++ )
+    {
+        if( mercs[ n ].Merc[ MERC_IS_SLAVE ] != 0 )
+        {
+            if( _IsChild( mercs[ n ] ) )
+            {
+                if( sex == SLAVE_CHILDREN )
+                    return true;
+                continue;
+            }
+            if( mercs[ n ].Stat[ ST_GENDER ] == sex || sex < 0 )
+                return true;
+        }
+    }
+    return false;
+}
+
+bool d_HasNoSlave( Critter& master, Critter@, int sex )
+{
+    return !d_HasSlave( master, null, sex );
+}
+
+bool d_HasManySlaves( Critter& master, Critter@, int sex )
+{
+    return GetSlaveCount( master, sex ) > 1;
+}
+
+bool d_HasOneSlave( Critter& master, Critter@, int sex )
+{
+    return GetSlaveCount( master, sex ) == 1;
+}
+
+
+void dlg_ChildSlaveCost( Critter& player, Critter@ npc, string@ lexems )
+{
+    Critter@ slave = GetSlave( player, SLAVE_CHILDREN );
+    if( @slave == null )
+        return;
+    if( npc.Stat[ ST_DIALOG_ID ] == DIALOG_DEN_SLAVERS )
+    {
+        lexems = "$cost" + GetSlaverSlaveCost( player, slave );
+        return;
+    }
+    if( slave.Stat[ ST_GENDER ] == GENDER_FEMALE )
+        lexems = "$cost" + GetSexSlaveCost( player, slave );
+    else
+        lexems = "$cost" + GetGenericSlaveCost( player, slave );
+}
+
+void dlg_AllChildrenCost( Critter& player, Critter@ npc, string@ lexems )
+{
+    Critter@[] slaves = GetSlaves( player, SLAVE_CHILDREN );
+    uint cost = 0;
+    for( uint n = 0; n < slaves.length(); n++ )
+    {
+        if( @slaves[ n ] == null )
+            continue;
+        if( npc.Stat[ ST_DIALOG_ID ] == DIALOG_DEN_SLAVERS )
+            cost += GetSlaverSlaveCost( player, slaves[ n ] );
+        else if( slaves[ n ].Stat[ ST_GENDER ] == GENDER_MALE )
+            cost += GetGenericSlaveCost( player, slaves[ n ] );
+        else
+            cost += GetSexSlaveCost( player, slaves[ n ] );
+    }
+    lexems = "$cost" + cost;
+}
+
+void dlg_WomanSexSlaveCost( Critter& player, Critter@, string@ lexems )
+{
+    Critter@ slave = GetSlave( player, GENDER_FEMALE );
+    if( @slave == null )
+        return;
+    lexems = "$cost" + GetSexSlaveCost( player, slave );
+}
+
+void dlg_ManSexSlaveCost( Critter& player, Critter@, string@ lexems )
+{
+    Critter@ slave = GetSlave( player, GENDER_MALE );
+    if( @slave == null )
+        return;
+    lexems = "$cost" + GetSexSlaveCost( player, slave );
+}
+
+void dlg_AllWomenSexSlavesCost( Critter& player, Critter@, string@ lexems )
+{
+    Critter@[] slaves = GetSlaves( player, GENDER_FEMALE );
+    uint cost = 0;
+    for( uint n = 0; n < slaves.length(); n++ )
+    {
+        if( @slaves[ n ] == null )
+            continue;
+        cost += GetSexSlaveCost( player, slaves[ n ] );
+    }
+    lexems = "$cost" + cost;
+}
+
+void dlg_AllMenSexSlavesCost( Critter& player, Critter@, string@ lexems )
+{
+    Critter@[] slaves = GetSlaves( player, GENDER_MALE );
+    uint cost = 0;
+    for( uint n = 0; n < slaves.length(); n++ )
+    {
+        if( @slaves[ n ] == null )
+            continue;
+        cost += GetSexSlaveCost( player, slaves[ n ] );
+    }
+    lexems = "$cost" + cost;
+}
+
+void dlg_ManSlaveCost( Critter& player, Critter@ npc, string@ lexems )
+{
+    Critter@ slave = GetSlave( player, GENDER_MALE );
+    if( @slave == null )
+        return;
+    if( npc.Stat[ ST_DIALOG_ID ] == DIALOG_DEN_SLAVERS )
+        lexems = "$cost" + GetSlaverSlaveCost( player, slave );
+    else
+        lexems = "$cost" + GetGenericSlaveCost( player, slave );
+}
+
+void dlg_WomanSlaveCost( Critter& player, Critter@ npc, string@ lexems )
+{
+    Critter@ slave = GetSlave( player, GENDER_FEMALE );
+    if( @slave == null )
+        return;
+    if( npc.Stat[ ST_DIALOG_ID ] == DIALOG_DEN_SLAVERS )
+        lexems = "$cost" + GetSlaverSlaveCost( player, slave );
+    else
+        lexems = "$cost" + GetGenericSlaveCost( player, slave );
+}
+
+void dlg_AllSlavesCost( Critter& player, Critter@ npc, string@ lexems )
+{
+    Critter@[] slaves = GetSlaves( player, -1 );
+    uint cost = 0;
+    for( uint n = 0; n < slaves.length(); n++ )
+    {
+        if( @slaves[ n ] == null )
+            continue;
+        if( npc.Stat[ ST_DIALOG_ID ] == DIALOG_DEN_SLAVERS )
+            cost += GetSlaverSlaveCost( player, slaves[ n ] );
+        else
+            cost += GetGenericSlaveCost( player, slaves[ n ] );
+    }
+    lexems = "$cost" + cost;
+}
+
+void dlg_AllMenSlavesCost( Critter& player, Critter@ npc, string@ lexems )
+{
+    Critter@[] slaves = GetSlaves( player, GENDER_MALE );
+    uint cost = 0;
+    for( uint n = 0; n < slaves.length(); n++ )
+    {
+        if( @slaves[ n ] == null )
+            continue;
+        if( npc.Stat[ ST_DIALOG_ID ] == DIALOG_DEN_SLAVERS )
+            cost += GetSlaverSlaveCost( player, slaves[ n ] );
+        else
+            cost += GetGenericSlaveCost( player, slaves[ n ] );
+    }
+    lexems = "$cost" + cost;
+}
+
+void dlg_AllWomenSlavesCost( Critter& player, Critter@ npc, string@ lexems )
+{
+    Critter@[] slaves = GetSlaves( player, GENDER_FEMALE );
+    uint cost = 0;
+    for( uint n = 0; n < slaves.length(); n++ )
+    {
+        if( @slaves[ n ] == null )
+            continue;
+        if( npc.Stat[ ST_DIALOG_ID ] == DIALOG_DEN_SLAVERS )
+            cost += GetSlaverSlaveCost( player, slaves[ n ] );
+        else
+            cost += GetGenericSlaveCost( player, slaves[ n ] );
+    }
+    lexems = "$cost" + cost;
+}
+
+void r_SellSexSlave( Critter& player, Critter@, int sex )
+{
+    Critter@ slave = GetSlave( player, sex );
+    if( @slave == null )
+        return;
+    uint cost = GetSexSlaveCost( player, slave );
+    player.AddItem( PID_BOTTLE_CAPS, cost );
+    player.DeleteMerc( slave );
+    player.StatBase[ ST_KARMA ] -= 10;
+    DeleteNpc( slave );
+}
+
+void r_SellGenericSlave( Critter& player, Critter@ npc, int sex )
+{
+    Critter@ slave = GetSlave( player, sex );
+    if( @slave == null )
+        return;
+    uint cost = GetGenericSlaveCost( player, slave );
+    if( npc.Stat[ ST_DIALOG_ID ] == DIALOG_DEN_SLAVERS )
+        cost = GetSlaverSlaveCost( player, slave );
+    player.AddItem( PID_BOTTLE_CAPS, cost );
+    player.DeleteMerc( slave );
+    player.StatBase[ ST_KARMA ] -= 10;
+    DeleteNpc( slave );
+}
+
+void r_SellAllSexSlaves( Critter& player, Critter@, int sex )
+{
+    Critter@[] slaves = GetSlaves( player, sex );
+    uint cost = 0;
+    for( uint n = 0; n < slaves.length(); n++ )
+    {
+        if( @slaves[ n ] == null )
+            continue;
+        cost += GetSexSlaveCost( player, slaves[ n ] );
+        player.DeleteMerc( slaves[ n ] );
+        player.StatBase[ ST_KARMA ] -= 10;
+        DeleteNpc( slaves[ n ] );
+    }
+    player.AddItem( PID_BOTTLE_CAPS, cost );
+}
+
+void r_SellAllSlaves( Critter& player, Critter@ npc, int sex )
+{
+    Critter@[] slaves = GetSlaves( player, sex );
+    uint cost = 0;
+    for( uint n = 0; n < slaves.length(); n++ )
+    {
+        if( @slaves[ n ] == null )
+            continue;
+        if( npc.Stat[ ST_DIALOG_ID ] == DIALOG_DEN_SLAVERS )
+            cost += GetSlaverSlaveCost( player, slaves[ n ] );
+        else
+            cost += GetGenericSlaveCost( player, slaves[ n ] );
+        player.DeleteMerc( slaves[ n ] );
+        player.StatBase[ ST_KARMA ] -= 10;
+        DeleteNpc( slaves[ n ] );
+    }
+    player.AddItem( PID_BOTTLE_CAPS, cost );
+}
+
+void r_SellChildSlave( Critter& cr, Critter@ npc )
+{
+    Critter@ slave = GetSlave( cr, SLAVE_CHILDREN );
+    if( @slave == null )
+        return;
+    uint cost = 0;
+    if( npc.Stat[ ST_DIALOG_ID ] == DIALOG_DEN_SLAVERS )
+        cost = GetSlaverSlaveCost( cr, slave );
+    else if( slave.Stat[ ST_GENDER ] == GENDER_FEMALE )
+        cost = GetSexSlaveCost( cr, slave );
+    else
+        cost = GetGenericSlaveCost( cr, slave );
+    cr.DeleteMerc( slave );
+    cr.StatBase[ ST_KARMA ] -= 50;
+    DeleteNpc( slave );
+    cr.AddItem( PID_BOTTLE_CAPS, cost );
+}
+
+void r_SellAllChildren( Critter& player, Critter@ npc )
+{
+    Critter@[] slaves = GetSlaves( player, SLAVE_CHILDREN );
+    uint cost = 0;
+    for( uint n = 0; n < slaves.length(); n++ )
+    {
+        if( @slaves[ n ] == null )
+            continue;
+        if( npc.Stat[ ST_DIALOG_ID ] == DIALOG_DEN_SLAVERS )
+            cost += GetSlaverSlaveCost( player, slaves[ n ] );
+        else if( slaves[ n ].Stat[ ST_GENDER ] == GENDER_FEMALE )
+            cost += GetSexSlaveCost( player, slaves[ n ] );
+        else
+            cost += GetGenericSlaveCost( player, slaves[ n ] );
+        player.DeleteMerc( slaves[ n ] );
+        player.StatBase[ ST_KARMA ] -= 50;
+        DeleteNpc( slaves[ n ] );
+    }
+    player.AddItem( PID_BOTTLE_CAPS, cost );
+}
+
+
+
+// Buying slaves
+
+bool d_EnoughMoney( Critter& player, Critter@ npc )
+{
+    if( @npc == null )
+        return false;
+    int  pid = npc.Stat[ ST_VAR1 ];
+    Map@ map = player.GetMap();
+    Critter@[] crits;
+    uint c = map.GetCritters( pid, FIND_ONLY_NPC | FIND_LIFE_AND_KO, crits );
+    for( uint n = 0; n < c; n++ )
+    {
+        if( crits[ n ].Merc[ MERC_MASTER_ID ] == 0 )
+        {
+            return ( GetSlaveCost( player, crits[ n ] ) <= player.CountItem( PID_BOTTLE_CAPS ) );
+        }
+    }
+    return false;
+}
+
+bool d_CanGetSlave( Critter& player, Critter@ )
+{
+    return CanGetSlave( player );
+}
+
+bool d_CantGetSlave( Critter& player, Critter@ )
+{
+    return !CanGetSlave( player );
+}
+
+bool d_SlaverHasAnySlaves( Critter& player, Critter@, int p1, int p2, int p3, int p4, int p5 )
+{
+    Map@ map = player.GetMap();
+    int  pid = 0;
+    for( uint n = 0; n < 5; n++ )
+    {
+        switch( n )
+        {
+        case 0:
+            pid = p1;
+            break;
+        case 1:
+            pid = p2;
+            break;
+        case 2:
+            pid = p3;
+            break;
+        case 3:
+            pid = p4;
+            break;
+        default:
+            pid = p5;
+            break;
+        }
+        if( pid == 0 )
+            return false;
+        Critter@[] npcs;
+        uint c = map.GetCritters( pid, FIND_ONLY_NPC | FIND_LIFE_AND_KO, npcs );
+        for( uint n = 0; n < c; n++ )
+        {
+            if( npcs[ n ].Merc[ MERC_MASTER_ID ] == 0 )
+                return true;
+        }
+    }
+    return false;
+}
+
+bool d_SlaverHasNoSlaves( Critter& player, Critter@, int p1, int p2, int p3, int p4, int p5 )
+{
+    return !d_SlaverHasAnySlaves( player, null, p1, p2, p3, p4, p5 );
+}
+
+bool d_SlaverHasSlave( Critter& player, Critter@, int pid )
+{
+    Map@ map = player.GetMap();
+    Critter@[] crits;
+    uint count = map.GetCritters( pid, FIND_ONLY_NPC | FIND_LIFE_AND_KO, crits );
+    for( uint n = 0; n < count; n++ )
+    {
+        if( crits[ n ].Merc[ MERC_MASTER_ID ] == 0 )
+            return true;
+    }
+    return false;
+}
+
+void r_BuySlave( Critter& player, Critter@ slaver )
+{
+    if( @slaver == null || slaver.Stat[ ST_VAR1 ] == 0 )
+        return;
+    int  pid = slaver.Stat[ ST_VAR1 ];
+    Map@ map = player.GetMap();
+    Critter@[] crits;
+    uint c = map.GetCritters( pid, FIND_ONLY_NPC | FIND_LIFE_AND_KO, crits );
+    for( uint n = 0; n < c; n++ )
+    {
+        if( crits[ n ].Merc[ MERC_MASTER_ID ] == 0 )
+        {
+            uint price = GetSlaveCost( player, crits[ n ] );
+            if( price > player.CountItem( PID_BOTTLE_CAPS ) )
+                return;
+            player.DeleteItem( PID_BOTTLE_CAPS, price );
+            merc2plr( player, crits[ n ] );
+            return;
+        }
+    }
+}
+
+void dlg_ShowSlaveBuyCost( Critter& player, Critter@ slaver, string@ lexems )
+{
+    if( @slaver == null )
+        return;
+    int  pid = slaver.Stat[ ST_VAR1 ];
+    Critter@[] npc;
+    Map@ map = player.GetMap();
+    uint c = map.GetCritters( pid, FIND_ONLY_NPC | FIND_LIFE_AND_KO, npc );
+    for( uint n = 0; n < c; n++ )
+    {
+        if( npc[ n ].Merc[ MERC_MASTER_ID ] == 0 )
+        {
+            lexems = "$price" + GetSlaveCost( player, npc[ n ] );
+            return;
+        }
+    }
+}

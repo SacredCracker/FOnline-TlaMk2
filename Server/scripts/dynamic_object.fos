@@ -1,0 +1,480 @@
+
+// dynamic object
+#include "_macros.fos"
+
+#define MAP_DYNAMIC_NOT         ( -1 )
+#define MAP_DYNAMIC_NOT_INIT    ( 0 )
+
+namespace dynamic_object
+{
+    enum Data
+    {
+        ID = 0,
+        TypeDynamic,
+        HexX,
+        HexY,
+        Proto,
+        SprHash,
+        Count
+    };
+
+    enum ETypeDynamic
+    {
+        TypeScenery,
+        TypeTile,
+        TypeRoof,
+        TypeCount
+    };
+
+    class ClientData
+    {
+        ClientData( array< int > memm )
+        {
+            Memmory = memm;
+        }
+
+        #ifndef __MAPPER
+        dynamic_object::ClientData@ opAddAssign( const DynamicObject& in other )
+        {
+            uint id = other.Id;
+            uint pos = ( id ) * dynamic_object::Data::Count;
+            uint count = Memmory.length() / dynamic_object::Data::Count;
+
+            if( count <= id  )
+            {
+                Memmory.resize( ( id + 1 ) * dynamic_object::Data::Count );
+            }
+            // ::Log( " length = " + Memmory.length() + " pos + dynamic_object::Data::ID = " + ( pos + dynamic_object::Data::ID ) );
+            Memmory[ pos + dynamic_object::Data::ID ] = id;
+            Memmory[ pos + dynamic_object::Data::HexX ] = other.HexX;
+            Memmory[ pos + dynamic_object::Data::HexY ] = other.HexY;
+            Memmory[ pos + dynamic_object::Data::SprHash ] = other.SprHash;
+            Memmory[ pos + dynamic_object::Data::Proto ] = other.ProtoId;
+            return this;
+        }
+
+        dynamic_object::ClientData@ opAssign( const array< int >& in other )
+        {
+            Memmory = other;
+            return this;
+        }
+
+        dynamic_object::ClientData@ opSubAssign( const DynamicObject& in other )
+        {
+            uint id = other.Id;
+            uint pos = ( id ) * dynamic_object::Data::Count;
+            uint count = Memmory.length() / dynamic_object::Data::Count;
+
+            if( count <= id  )
+                return this;
+
+            for( uint i = 0; i < uint( dynamic_object::Data::Count ); i++ )
+                Memmory.removeAt( pos );
+
+            // ::Log( " length = " + Memmory.length() + " pos + dynamic_object::Data::ID = " + ( pos + dynamic_object::Data::ID ) );
+
+            return this;
+        }
+        #endif
+
+        int[] @ GetObjectData( uint id )
+        {
+
+            uint pos = ( id ) * dynamic_object::Data::Count;
+            uint count = Memmory.length() / dynamic_object::Data::Count;
+
+            if( count <= id  )
+                return null;
+            int[] ret;
+            for( uint i = 0; i < uint( dynamic_object::Data::Count ); i++ )
+                ret.insertLast( Memmory[ pos + i ] );
+
+            return ret;
+        }
+
+        int[] Memmory;
+    }
+};
+
+#ifndef __MAPPER
+# ifndef __SERVER
+DynamicMap@ currentMap;
+# endif
+# ifdef __SERVER
+array< DynamicMap@ > AllDynamicMap;
+# endif
+
+class DynamicMap
+{
+    # ifdef __SERVER
+    DynamicMap( Map & map )
+    {
+        MapId = map.Id;
+    # endif
+    # ifndef __SERVER
+    DynamicMap()
+    {
+    # endif
+		Version = 0;
+	}
+	# ifdef __SYNTAX
+	}         // Заглушка для синтаксиса
+	# endif
+	# ifndef __SERVER
+
+	void Draw()
+	{
+		for( uint i = 0, iEnd = AllDynamicObject.length(); i < iEnd; i++ )
+			if( valid( AllDynamicObject[ i ] ) )
+				AllDynamicObject[ i ].Draw();
+	}
+
+	void ClearData()
+	{
+		for( uint i = 0, iEnd = AllDynamicObject.length(); i < iEnd; i++ )
+			if( valid( AllDynamicObject[ i ] ) )
+				AllDynamicObject[ i ].ClearFlag();
+
+		AllDynamicObject.resize( 0 );
+	}
+
+	void AddObject( uint16 hexX, uint16 hexY, const ProtoItem@ pi, uint sprHash )
+	{
+		DynamicObject@ dO = DynamicObject( pi, hexX, hexY, sprHash );
+		if( valid( dO ) )
+		{
+			dO.Id = AllDynamicObject.length();
+			AllDynamicObject.insertLast( @dO );
+		}
+		RefreshMap( false, false, false );
+	}
+	# endif
+	# ifdef __SERVER
+
+	void BlockHex( uint16 x, uint16 y, bool isRaked = false )
+	{
+		Map@ M = GetMap( MapId );
+		if( valid( M ) )
+			M.BlockHex( x, y, isRaked );
+	}
+
+	void AddObject( Map& map, uint16 hexX, uint16 hexY, const ProtoItem@ pi, uint sprHash )
+	{
+		DynamicObject@ dO = DynamicObject( map, pi, hexX, hexY, sprHash );
+		if( valid( dO ) )
+		{
+			dO.Id = AllDynamicObject.length();
+			AllDynamicObject.insertLast( @dO );
+			map.MapDynamicVersion++;
+			map.MapDynamicObjectCount++;
+			_ClientData += dO;
+
+			Update( map );
+		}
+	}
+
+	void Update( Map& map )
+	{
+		Critter@[] crs;
+
+		for( uint i = 0, iEnd = map.GetCritters( 0, FIND_ONLY_PLAYERS | FIND_ALL, crs ); i < iEnd; i++ )
+			crs[ i ].RunClientScript( "dynamic_object@__AddDynamicScenery", map.MapDynamicIndex, map.MapDynamicVersion, map.MapDynamicObjectCount, null, _ClientData.Memmory );
+
+	}
+
+	void ClearHex( Map& map, uint16 hexX, uint16 hexY )
+	{
+
+		for( uint i = 0, iEnd = AllDynamicObject.length(); i < iEnd; i++ )
+			if( valid( AllDynamicObject[ i ] ) )
+			{
+				if( AllDynamicObject[ i ].HexX == hexX && AllDynamicObject[ i ].HexY == hexY )
+				{
+					// Log("Clear");
+					AllDynamicObject[ i ].ClearFlag();
+					_ClientData -= AllDynamicObject[ i ];
+					AllDynamicObject.removeAt( i-- );
+					iEnd--;
+				}
+			}
+		Update( map );
+	}
+
+	uint MapId;
+	# endif
+
+	dynamic_object::ClientData _ClientData;
+
+	uint                       Version;
+	array< DynamicObject@ >    AllDynamicObject;
+}
+
+class DynamicObject
+{
+    # ifndef __SERVER
+    DynamicObject( const ProtoItem@ pi, uint16 x, uint16 y, uint sprHash = 0 /*, bool isStatic = true*/ )
+    {
+        SprHash = sprHash;
+        if( valid( pi ) )
+        {
+            isPassed = FLAG( ITEM_NO_BLOCK, pi.Flags );
+            isRaked = FLAG( ITEM_SHOOT_THRU, pi.Flags );
+            SpriteId = LoadSprite( ( SprHash == 0 ) ? pi.PicMap : SprHash, 0 );
+            ProtoId = pi.ProtoId;
+        }
+        else
+        {
+            isPassed = true;
+            isRaked = true;
+            SpriteId = LoadSprite( SprHash, 0 );
+            ProtoId = 0;
+        }
+        isChangeFlag = false;
+        // SprHash
+    # endif
+    # ifdef __SERVER
+    uint MapId;
+
+    DynamicObject( Map & map, const ProtoItem@ pi, uint16 x, uint16 y, uint sprHash = 0 /*, bool isStatic = true */ )
+    {
+        isChangeFlag = false;
+        SprHash = sprHash;
+        if( valid( pi ) )
+        {
+            isPassed = FLAG( ITEM_NO_BLOCK, pi.Flags );
+            isRaked = FLAG( ITEM_SHOOT_THRU, pi.Flags );
+            if( not isPassed )
+            {
+                map.BlockHex( x, y, not isRaked );
+                isChangeFlag = true;
+            }
+            ProtoId = pi.ProtoId;
+        }
+        else
+        {
+            isPassed = true;
+            isRaked = true;
+            ProtoId = 0;
+        }
+
+        MapId = map.Id;
+    # endif
+    Id = 0;
+
+    HexX = x;
+    HexY = y;
+}
+
+# ifdef __SYNTAX
+}         // Заглушка для синтаксиса
+# endif
+# ifndef __SERVER
+void Draw()
+{
+    if( IsHexPassed( HexX, HexY ) != isPassed )
+    {
+        if( not isPassed )
+        {
+            isChangeFlag = true;
+            BlockHexPassed( HexX, HexY );
+        }
+    }
+    if( IsHexRaked( HexX, HexY ) != isRaked )
+    {
+        if( not isRaked )
+        {
+            isChangeFlag = true;
+            BlockHexRaked( HexX, HexY );
+        }
+    }
+    DrawMapSprite( HexX, HexY, ProtoId, SpriteId, -1, 0, 0 );
+}
+
+uint SpriteId;
+# endif
+
+void ClearFlag()
+{
+    if( isChangeFlag )
+    # ifndef __SERVER
+    {
+        UnblockHexPassed( HexX, HexY );
+        UnblockHexRaked( HexX, HexY );
+    }
+    # endif
+    # ifdef __SERVER
+    {
+        Map@ m = GetMap( MapId );
+        if( valid( m ) )
+            m.UnblockHex( HexX, HexY );
+    }
+    # endif
+        }
+
+        bool isPassed;
+    bool                         isRaked;
+    bool                         isChangeFlag;
+
+    uint                         Id;
+    uint                         ProtoId;
+
+    uint16                       HexX;
+    uint16                       HexY;
+
+    uint                         SprHash;
+    dynamic_object::ETypeDynamic TypeDynamic;
+}
+
+# ifdef __SERVER
+
+void unsafe_GetMapObject( Critter& cr, int dynamicIdMap, int, int, string@, int[] @ )
+{
+    Map@ map = cr.GetMap();
+    if( valid( map ) && dynamicIdMap != 0 && dynamicIdMap != -1 && uint( dynamicIdMap ) < AllDynamicMap.length() )
+    {
+        DynamicMap@ dm = AllDynamicMap[ dynamicIdMap ];
+        if( valid( dm ) )
+        {
+            cr.RunClientScript( "dynamic_object@__AddDynamicScenery", dynamicIdMap, map.MapDynamicVersion, map.MapDynamicObjectCount, null, dm._ClientData.Memmory );
+        }
+    }
+}
+
+void AddDynamicObject( Map& map, uint16 hexX, uint16 hexY, uint pid, uint sprHash )
+{
+    const ProtoItem@ pi = GetProtoItem( pid );
+    // if( valid( pi ) )
+    {
+        if( map.MapDynamicIndex == MAP_DYNAMIC_NOT || map.MapDynamicIndex == MAP_DYNAMIC_NOT_INIT )
+        {
+            Log( "Dynamic map init" );
+            map.MapDynamicIndex = AllDynamicMap.length();
+            if( map.MapDynamicIndex == 0 )
+                map.MapDynamicIndex++;
+        }
+
+        if( uint( map.MapDynamicIndex ) >= AllDynamicMap.length() )
+        {
+            AllDynamicMap.resize( map.MapDynamicIndex + 1 );
+            @AllDynamicMap[ map.MapDynamicIndex ] = @DynamicMap( map );
+        }
+
+        DynamicMap@ dm = AllDynamicMap[ map.MapDynamicIndex ];
+        if( valid( dm ) )
+        {
+            dm.AddObject( map, hexX, hexY, pi, sprHash );
+        }
+    }
+    // else Log("Error, no valid pid");
+}
+
+void ClearDynamicObject( Map& map, uint16 hexX, uint16 hexY )
+{
+    if( map.MapDynamicIndex == MAP_DYNAMIC_NOT || map.MapDynamicIndex == MAP_DYNAMIC_NOT_INIT )
+        return;
+    if( uint( map.MapDynamicIndex ) >= AllDynamicMap.length() )
+        return;
+
+    DynamicMap@ dm = AllDynamicMap[ map.MapDynamicIndex ];
+    if( valid( dm ) )
+    {
+        Log( "Clear DO" );
+        dm.ClearHex( map, hexX, hexY );
+    }
+}
+
+// ~run dynamic_object AddDynamic 0 0 0
+void AddDynamic( Critter& cr, int xy, int hashPic, int pid )
+{
+    Map@ m = cr.GetMap();
+    if( not valid( m ) )
+        return;
+
+    uint16 x = ( xy ) & 0xFFFF, y = ( xy >> 16 ) & 0xFFFF;
+    AddDynamicObject( m, x, y, pid, hashPic );
+}
+
+// ~run dynamic_object ClearDynamic 0 0 0
+void ClearDynamic( Critter& cr, int x, int y, int  )
+{
+    Map@ m = cr.GetMap();
+    if( not valid( m ) )
+        return;
+
+    ClearDynamicObject( m, x, y );
+}
+
+void player_UpdateDynamicMap( Critter& player, Map& map )
+{
+    if( not ( map.MapDynamicIndex == MAP_DYNAMIC_NOT || map.MapDynamicIndex == MAP_DYNAMIC_NOT_INIT || uint( map.MapDynamicIndex ) >= AllDynamicMap.length() ) )
+    {
+        DynamicMap@ dm = AllDynamicMap[ map.MapDynamicIndex ];
+        if( valid( dm ) )
+        {
+            player.RunClientScript( "dynamic_object@__AddDynamicScenery", map.MapDynamicIndex, map.MapDynamicVersion, map.MapDynamicObjectCount, null, dm._ClientData.Memmory );
+            return;
+        }
+    }
+    player.RunClientScript( "dynamic_object@__AddDynamicScenery", 0, 0, 0, null, null );
+}
+
+# endif
+
+# ifndef __SERVER
+
+void __AddDynamicScenery( int isDynamic, int dynamicVersion, int count, string@, int[] @ data )
+{
+    if( valid( currentMap ) )
+        currentMap.ClearData();
+    @currentMap = DynamicMap();
+    if( valid( currentMap ) )
+    {
+        currentMap.Version = dynamicVersion;
+        for( int i = 0; i < count; i++ )
+        {
+            uint id = data[ i * dynamic_object::Data::Count + dynamic_object::Data::ID ],
+                 x = data[ i * dynamic_object::Data::Count + dynamic_object::Data::HexX ],
+                 y = data[ i * dynamic_object::Data::Count + dynamic_object::Data::HexY ],
+                 proto = data[ i * dynamic_object::Data::Count + dynamic_object::Data::Proto ],
+                 sprHash = data[ i * dynamic_object::Data::Count + dynamic_object::Data::SprHash ];
+
+            const ProtoItem@ pi = GetProtoItem( proto );
+            if( valid( pi ) )
+                currentMap.AddObject( x, y, pi, sprHash );
+        }
+    }
+}
+
+void RenderInfo()
+{}
+
+#include "_client_defines.fos"
+import int  GUI_GetActiveMainScreen() from "client_gui";
+
+bool DrawMap_DynamicScenery(  )
+{
+    if( GUI_GetActiveMainScreen() == CLIENT_MAIN_SCREEN_GAME && valid( currentMap ) && valid( GetChosen() ) )
+        currentMap.Draw();
+	return true;
+}
+
+void ClearDynamic()
+{
+    if( valid( currentMap ) )
+        currentMap.ClearData();
+    @ currentMap = null;
+}
+
+// ToDo добавить реакцию на мышку
+
+bool MouseDown_DynamicScenery( int click )
+{
+
+    return false;
+}
+
+void MouseMove_DynamicScenery()
+{}
+
+# endif
+#endif

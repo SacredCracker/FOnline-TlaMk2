@@ -1,0 +1,66 @@
+// FOS Client
+
+void ModuleInit( )
+{
+	GuiKit::Add( CLIENT_SCREEN_INVENTORY_MK2, null, @ThisModule::Inventore( "Weapon" ) );
+	GuiKit::Add( CLIENT_SCREEN_INVENTORY_MK2, null, @ThisModule::Inventore( "Ammo" ) );
+	GuiKit::Add( CLIENT_SCREEN_INVENTORY_MK2, null, @ThisModule::Inventore( "Armor" ) );
+	GuiKit::Add( CLIENT_SCREEN_INVENTORY_MK2, null, @ThisModule::Inventore( "Drug" ) );
+	GuiKit::Add( CLIENT_SCREEN_INVENTORY_MK2, null, @ThisModule::Inventore( "Misc" ) );
+	GuiKit::Add( CLIENT_SCREEN_INVENTORY_MK2, null, @ThisModule::Inventore( "Blueprint" ) );
+}
+
+class Default : GuiKit::IGuiKitElement
+{
+	Default( ::string name )
+	{
+		MyName = name;
+		@ Position = null;
+	}
+
+	::string@ get_Name( ) override {
+		return @GuiKit::FormatKey( "Filter" + MyName );
+	}
+	
+	GuiKit::IGuiKitElement@ Build( int screenIndex ) override { return @this; }
+	
+	::string MyName;
+	int[]@ Position;
+}
+
+class Inventore : ThisModule::Default
+{	
+	Inventore( ::string name ){ super( name ); }
+
+	GuiKit::IGuiKitElement@ Build( int screenIndex ) override
+	{
+		if( IniParser::IsKey( Name ) )
+		{
+			@Position = IniParser::GetCoord( Name );
+			::string@ pic = null;
+			if( IniParser::IsKey( Name + "Pic" ) )
+				@pic = ::GetIfaceIniStr( Name + "Pic" );
+			else if( IniParser::IsKey( "FilterPic" ) )
+				@pic = ::GetIfaceIniStr( "FilterPic" );
+			
+			for( uint i = 0, iEnd = Position.length(); i < iEnd; i++ )
+				if( Position[i] != 0 )
+				{
+					IGUIElementOpt@ opt = GUI_AddScreenElement( screenIndex, pic, 0, 0 )
+						.Position( Position )
+						.SetJamming( true );
+					
+					@pic = null;
+					if( IniParser::IsKey( Name + "PicDn" ) )
+						@pic = ::GetIfaceIniStr( Name + "PicDn" );
+					else if( IniParser::IsKey( "FilterPicDn" ) )
+						@pic = ::GetIfaceIniStr( "FilterPicDn" );
+					if( @pic !is null )
+						opt.DownPic( pic );
+						
+					break;
+				}
+		}
+		return @this;
+	}
+}

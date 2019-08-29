@@ -1,0 +1,33 @@
+// FOS Common
+shared enum Triggered
+{
+	None = 0,
+	CritterDamage, 	// Вызывается когда криттеру наносят дамаг, 
+	LineDamage, 		// Урон с линейной трассировкой ( ололоболт ) 
+}
+
+shared interface Data{ }
+shared interface UpgradeDescriptor
+{ 
+#ifdef __SERVER
+	bool CheckData( UpgradeItem::Data& data, int trigger ); // Проверка всех апгрейдов в итеме
+	bool GetData( UpgradeItem::Data& data, int trigger ); 	// Получение данныъ с объекта
+#endif
+	bool IsUpgrade( ::ItemMutual& base, ::ItemMutual& upgrade );
+}
+
+#ifdef __SERVER
+shared class LineDamageData : UpgradeItem::Data
+{
+	uint16 Effect;
+    bool   IsFire;
+    float  DamageMod;
+}
+
+shared class CritterDamageData : UpgradeItem::Data
+{
+	::CombatProccess@ CombatData;
+	int TotalDamage;
+	::CritterMutual@ Critter;
+}
+#endif

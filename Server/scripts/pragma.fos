@@ -1,0 +1,364 @@
+
+// /
+// / Global variables
+// /
+
+// Possible types:
+// int8, int16, int32, int64, int,
+// uint8, uint16, uint32, uint64, uint,
+// bool, float, double, string.
+// Default value is zero.
+// To set start value use '=' after var name.
+// This vars works like engine global vars.
+// Also recommended use "__" prefix in var name.
+# pragma globalvar "bool __NewbieLocationIsActive = true"
+# pragma globalvar "uint __HitAimEyes = 60"
+# pragma globalvar "uint __HitAimHead = 40"
+# pragma globalvar "uint __HitAimGroin = 30"
+# pragma globalvar "uint __HitAimTorso = 0"
+# pragma globalvar "uint __HitAimArms = 30"
+# pragma globalvar "uint __HitAimLegs = 20"
+# pragma globalvar "uint __MaxLifeLevelSoftCap = 0" // Максимальный уровень персонажа, на котором происходит увеличение хп. 0 =не используется
+# pragma globalvar "uint __EncounterTime = 0"       // Как часто пробовать создать энкаунтер, в миллисекундах
+# pragma globalvar "uint __ExperienceRate =1"
+# pragma globalvar "string __ServerMessage"
+# ifdef __CLIENT
+# pragma globalvar "uint	__MercClickMode = 0"
+#  pragma globalvar "bool   __AutoAim = false"
+#  pragma globalvar "bool   __GrenadeMode = false"
+#  pragma globalvar "uint   __ChosenId = 0"
+#  pragma globalvar "string  __ChosenName"
+#  pragma globalvar "bool   __IsFirst  = true"
+#  pragma globalvar "string __Language"
+#  pragma globalvar "bool   __IfaceHidden = false"
+# endif
+# ifdef __SERVER
+#  pragma globalvar "int  __StartServerVersion"
+# endif
+
+// /
+// / Critter data parameters
+// /
+# pragma crdata "Stat           0 199"
+# pragma crdata "Skill        200 217"
+# pragma crdata "TagSkill     226 229"
+# pragma crdata "Timeout      230 249"
+# pragma crdata "Kill         260 282"
+# pragma crdata "Perk         300 469"
+# pragma crdata "Addiction    470 479"
+# pragma crdata "Karma        480 498"
+# pragma crdata "Damage       500 507"
+# pragma crdata "Mode         510 549"
+# pragma crdata "Trait        550 565"
+# pragma crdata "Reputation   570 599"
+# pragma crdata "CityPenalty  600 629 +"
+# pragma crdata "CityRole	  630 640"
+# pragma crdata "MyBonus      700 739"
+# pragma crdata "Industrial   750 799"
+# pragma crdata "Merc         800 829"
+# pragma crdata "NpcPlaneParam 950 959"
+# pragma crdata "Patrol		  960 969"
+# pragma crdata "BookBonus 970 989 +"
+
+// /
+// / Extended critter fields and methods
+// /
+
+# ifdef __SERVER
+
+#  pragma bindfunc "uint Critter::GetViewMapParams( uint16& ViewMapHx, uint16& ViewMapHy, uint8& ViewMapDir, uint& ViewMapLocEnt, uint& ViewMapLocId ) -> fonline_tla.dll Critter_GetViewMapParams"
+#  pragma bindfunc "uint Critter::get_ViewMapId( ) -> fonline_tla.dll Critter_GetViewMapId"
+
+#  pragma bindfunc "bool UnsetKnownLocation(string@ name, uint crId, uint locId) -> fonline_offplayer.dll UnsetKnownLocation"
+#  pragma bindfunc "bool SetKnownLocation(string@ name, uint crId, uint locId) -> fonline_offplayer.dll SetKnownLocation"
+#  pragma bindfunc "bool ToGlobalMap(string@ name, uint crId) -> fonline_offplayer.dll ToGlobalMap"
+#  pragma bindfunc "bool SetParameter(string@ name, uint crId, uint index, int val) -> fonline_offplayer.dll SetParameter"
+#  pragma bindfunc "bool Transit(string@ name, uint id, Map& map, uint16 pid, uint16 hexX, uint16 hexY, uint16 locX, uint16 locY) -> fonline_offplayer.dll Transit"
+#  pragma bindfunc "int GetParameter(string@ name, uint id, uint index) -> fonline_offplayer.dll GetParameter"
+#  pragma bindfunc "bool IsKnownLocation(string@ name, uint id, uint locId) -> fonline_offplayer.dll IsKnownLocation"
+#  pragma bindfunc "uint GetCurMap(string@ name, uint id) -> fonline_offplayer.dll GetMapId"
+
+#  pragma bindfunc "bool FileDelete(string& filename) -> fonline_tla.dll FileDelete"
+#  pragma bindfunc "int MakeBackup(string@ parameters) -> fonline_tla.dll MakeBackup"
+#  pragma bindfunc "void BackupDatabase() -> AuctionMK2.dll BackupDatabase"
+#  pragma bindfunc "void RestoreDatabase() -> AuctionMK2.dll RestoreDatabase"
+#  pragma bindfunc "void AddOfflineClient(Critter& cr) -> fonline_offplayer.dll AddClient"
+#  pragma bindfunc "void RemoveOfflineClient(Critter& cr) -> fonline_offplayer.dll RemoveClient"
+#  pragma bindfunc "void ClearOfflineClients() -> fonline_offplayer.dll ClearClients"
+#  pragma bindfunc "void SaveClient(string@ name, Critter& cr) -> fonline_offplayer.dll SaveParams"
+
+#  pragma bindfunc "uint Critter::GetGlobalGroupCarId( ) -> fonline_tla.dll Critter_GetGlobalGroupCarId"
+#  pragma bindfunc "uint Critter::GetGlobalGroupTimeCanFollow( ) -> fonline_tla.dll Critter_GetGlobalGroupTimeCanFollow"
+#  pragma bindfunc "uint Critter::GetGlobalGroupProcessLastTick( ) -> fonline_tla.dll Critter_GetGlobalGroupProcessLastTick"
+
+#  pragma bindfunc "bool Critter::IsInjured()    -> fonline_tla.dll Critter_IsInjured   "
+#  pragma bindfunc "bool Critter::IsDmgEye()     -> fonline_tla.dll Critter_IsDmgEye    "
+#  pragma bindfunc "bool Critter::IsDmgLeg()     -> fonline_tla.dll Critter_IsDmgLeg    "
+#  pragma bindfunc "bool Critter::IsDmgTwoLeg()  -> fonline_tla.dll Critter_IsDmgTwoLeg "
+#  pragma bindfunc "bool Critter::IsDmgArm()     -> fonline_tla.dll Critter_IsDmgArm    "
+#  pragma bindfunc "bool Critter::IsDmgTwoArm()  -> fonline_tla.dll Critter_IsDmgTwoArm "
+#  pragma bindfunc "bool Critter::IsAddicted()   -> fonline_tla.dll Critter_IsAddicted  "
+#  pragma bindfunc "bool Critter::IsOverweight() -> fonline_tla.dll Critter_IsOverweight"
+#  pragma bindfunc "uint Critter::GetLanguage()  -> fonline_tla.dll Critter_GetLanguage"
+#  pragma bindfunc "void Critter::RefreshSpeed()  -> fonline_tla.dll Critter_RefreshSpeed"
+#  pragma bindfunc "void Map::GetExitGlobalGrid(Critter& cr,uint16& x, uint16& y) -> fonline_tla.dll Map_GetExitGlobalGrid"
+#  pragma bindfunc "void Map::GetExitGrid(Critter& cr,uint16& x, uint16& y,uint16& MapPid, uint& EntireId) -> fonline_tla.dll Map_GetExitGrid"
+
+#  pragma bindfunc "bool Item::Weapon_IsHtHAttack(uint8 mode)    -> fonline_tla.dll Item_Weapon_IsHtHAttack   "
+#  pragma bindfunc "bool Item::Weapon_IsGunAttack(uint8 mode)    -> fonline_tla.dll Item_Weapon_IsGunAttack   "
+#  pragma bindfunc "bool Item::Weapon_IsRangedAttack(uint8 mode) -> fonline_tla.dll Item_Weapon_IsRangedAttack"
+
+#  pragma bindfunc "uint GetFarmEntire( Map& map, array < int >&inout outArr, uint pid, uint id ) -> fonline_tla.dll GetFarmEntire"
+#  pragma bindfunc "bool RunFarmScriptBoolById( uint ) -> fonline_tla.dll RunFarmScriptBoolById"
+#  pragma bindfunc "bool RunFarmScriptBool( string@, string@ ) -> fonline_tla.dll RunFarmScriptBool"
+#  pragma bindfunc "uint BindFarmScript( string@, string@ ) -> fonline_tla.dll BindFarmScript"
+#  pragma bindfunc "void ClearLog( string& ) -> fonline_tla.dll ClearLog"
+
+#  pragma bindfunc "void SetParam(Critter&, uint, int) -> fonline_tla.dll SetParam"
+#  pragma bindfunc "bool FileRename(string&, string&) -> fonline_tla.dll FileRename"
+
+#  pragma bindfunc "uint SearchDeleteItem(Item@[]@+ inItems,Item@[]@+ outItems, uint count) -> fonline_tla.dll SearchDeleteItem"
+
+#  pragma bindfunc "int Critter::AddScoreMK2( uint scoreIndex, int value )    -> fonline_tla.dll Critter_AddScoreMK2"
+
+#  pragma bindfunc "int OpenLotC( uint FOItemProtoId, uint crId, string& playerName, uint itemId, uint lotSize, uint cost, uint itemInfo, uint timeOpened, uint timeCancel, string@ lexems, uint containerId, uint comissionOpen) -> AuctionMK2.dll OpenLot"
+#  pragma bindfunc "void GetOpenLots(int fromPage, int pageSize, bool isActual, string@ searchVal, string@ orderBy, string@ additionalFilter, bool orderDesc,  int typeFilter, int& rows, int& columns, string[]& arr) -> AuctionMK2.dll GetOpenLots"
+#  pragma bindfunc "int CountOpenLots(bool isActual, string@ searchVal, string@ additionalFilter,  int typeFilter) -> AuctionMK2.dll CountOpenLots"
+#  pragma bindfunc "bool CloseLot(int lotId, int playerId, int dateWhen) -> AuctionMK2.dll CloseLot"
+#  pragma bindfunc " bool CCancelLot(int lotId, int dateWhem) -> AuctionMK2.dll CancelLot"
+#  pragma bindfunc " bool CheckSaleAllowed(uint pid) -> AuctionMK2.dll CheckSaleAllowed"
+
+#  pragma bindfield "uint       Critter::GlobalMapMoveCounter -> 0"
+#  pragma bindfield "bool       Critter::isEmail -> 4"
+#  pragma bindfield "int                Critter::Email_PassCod -> 5"
+#  pragma bindfield "uint8      Critter::LookItems_HexRefreshCount -> 9"
+#  pragma bindfield "int                Critter::LookItems_Time -> 10"
+#  pragma bindfield "bool       Critter::IsNoTeamTransit -> 14"
+#  pragma bindfield "uint       Critter::CountInit -> 15"
+#  pragma bindfield "uint       Critter::CountFinish -> 19"
+#  pragma bindfield "uint       Critter::TimeAttackId -> 23"
+
+# endif
+
+# ifdef __MAPPER
+#  pragma bindfunc "void ClearLog( string& ) -> fo_mapper.dll ClearLog"
+#  pragma bindfunc "uint MapperMap::GetContObjects( uint pid ) -> fo_mapper.dll GetContObjects"
+#  pragma bindfunc "void MapperMap::GetObjectIndex( uint index, uint pid, uint16& hx, uint16& hy, int& p0 ) -> fo_mapper.dll GetObjectIndex"
+#  pragma bindfunc "void MapperMap::MapperMap_GetTileName( uint16 hx, uint16 hy, uint numberHex, string&inout name ) -> fo_mapper.dll MapperMap_GetTileName"
+#  pragma bindfunc "bool GetMyFolderFiles( string&inout dirName, string&inout outStr ) -> fo_mapper.dll GetMyFolderFiles"
+#  pragma bindfunc "bool CreateFolder( string&inout name) -> fo_mapper.dll CreateFolder"
+#  pragma bindfunc "void GetNameByHash( uint hash, string&inout name) -> fo_mapper.dll GetNameByHash"
+#  pragma bindfunc "bool CheckFile( string&inout name, string@ outName = null ) -> fo_mapper.dll CheckFile"
+# endif
+
+# ifdef __CLIENT
+
+#  pragma bindfunc "void ClearLog( string& ) -> fonline_tla_client.dll ClearLog"
+
+#  pragma bindfunc "bool checkWorkbenchInRadius(uint16 pid, uint hexX, uint hexY, uint16 radius) -> fonline_tla_client.dll checkWorkbenchInRadius"
+#  pragma bindfunc "uint GetItemsHex(uint16 pid, uint hexX, uint hexY) -> fonline_tla_client.dll getItemInHex"
+
+#  pragma bindfunc "void SetFocus()  -> fonline_tla_client.dll FocusClient"
+#  pragma bindfunc "void FlashWindow()  -> fonline_tla_client.dll FlashClient"
+#  pragma bindfunc "bool IsFocused() -> fonline_tla_client.dll ClientIsFocused"
+
+#  pragma bindfunc "void BlockHexPassed( uint hexX, uint hexY ) -> fonline_tla_client.dll BlockHexPassed"
+#  pragma bindfunc "void BlockHexRaked( uint hexX, uint hexY ) -> fonline_tla_client.dll BlockHexRaked"
+#  pragma bindfunc "void UnblockHexPassed( uint hexX, uint hexY ) -> fonline_tla_client.dll UnblockHexPassed"
+#  pragma bindfunc "void UnblockHexRaked( uint hexX, uint hexY ) -> fonline_tla_client.dll UnblockHexRaked"
+#  pragma bindfunc "bool IsScenNoPassed( uint hexX, uint hexY ) -> fonline_tla_client.dll IsScenNoPassed"
+#  pragma bindfunc "bool IsHexPassed( uint hexX, uint hexY ) -> fonline_tla_client.dll IsHexPassed"
+#  pragma bindfunc "bool IsHexRaked( uint hexX, uint hexY ) -> fonline_tla_client.dll IsHexRaked"
+
+#  pragma bindfunc "bool CritterCl::IsInjured()    -> fonline_tla_client.dll Critter_IsInjured  "
+#  pragma bindfunc "bool CritterCl::IsDmgEye()     -> fonline_tla_client.dll Critter_IsDmgEye   "
+#  pragma bindfunc "bool CritterCl::IsDmgLeg()     -> fonline_tla_client.dll Critter_IsDmgLeg   "
+#  pragma bindfunc "bool CritterCl::IsDmgTwoLeg()  -> fonline_tla_client.dll Critter_IsDmgTwoLeg"
+#  pragma bindfunc "bool CritterCl::IsDmgArm()     -> fonline_tla_client.dll Critter_IsDmgArm   "
+#  pragma bindfunc "bool CritterCl::IsDmgTwoArm()  -> fonline_tla_client.dll Critter_IsDmgTwoArm"
+#  pragma bindfunc "bool CritterCl::IsAddicted()   -> fonline_tla_client.dll Critter_IsAddicted "
+#  pragma bindfunc "bool CritterCl::IsOverweight() -> fonline_tla_client.dll Critter_IsOverweight"
+
+#  pragma bindfunc "bool ItemCl::Weapon_IsHtHAttack(uint8 mode)   	-> fonline_tla_client.dll Item_Weapon_IsHtHAttack   "
+#  pragma bindfunc "bool ItemCl::Weapon_IsGunAttack(uint8 mode)    	-> fonline_tla_client.dll Item_Weapon_IsGunAttack   "
+#  pragma bindfunc "bool ItemCl::Weapon_IsRangedAttack(uint8 mode) 	-> fonline_tla_client.dll Item_Weapon_IsRangedAttack"
+#  pragma bindfunc "void GetOnline( uint&, uint& )  								-> fonline_tla_client.dll GetOnline"
+#  pragma bindfunc "int ClearWSA( )  								-> fonline_tla_client.dll ClearWSA"
+#  pragma bindfunc "int PrepareWSA( )  								-> fonline_tla_client.dll PrepareWSA"
+
+#  pragma bindfunc "void ChangeClientParam(CritterCl& cr, int param, int value) -> fonline_tla_client.dll ChangeClientParam"
+
+#  pragma bindfunc "bool CritterSetColor( CritterCl& cr, int cType, uint cColor, uint color ) -> fonline_renderhelper.dll CritterSetColor"
+#  pragma bindfunc "bool GetCritterMonitorPosition(CritterCl& cr, int& X, int& Y) -> fonline_renderhelper.dll GetCritterMonitorPosition"
+#  pragma bindfunc "bool GetCritterMonitorPositionA(CritterCl& cr, int& X, int& Y, int& W, int& H) -> fonline_renderhelper.dll GetCritterMonitorPositionA"
+#  pragma bindfunc "void GetCrittersMonitorPosition( CritterCl@[]& crArray, CritterCl@[]& crOutArray, int[]@ outArray ) -> fonline_renderhelper.dll GetCrittersMonitorPosition"
+#  pragma bindfunc "bool CritterSetAlpha(CritterCl& cr,uint8 Alpha) -> fonline_renderhelper.dll CritterSetAlpha"
+#  pragma bindfunc "bool CritterSetEgg(CritterCl& cr,int type) -> fonline_renderhelper.dll CritterSetEgg"
+
+# endif
+
+// /
+// / Item fields
+// /
+
+# pragma bindfield "uint   Item::CrafterId              -> 0"
+
+// weapon
+# pragma bindfield "uint8   Item::WeaponBonus_MinDamage  -> 4"
+# pragma bindfield "uint8   Item::WeaponBonus_MaxDamage  -> 5"
+# pragma bindfield "uint8   Item::WeaponBonus_Critroll   -> 6"
+# pragma bindfield "uint8   Item::WeaponBonus_ToHit      -> 7"
+# pragma bindfield "uint8   Item::WeaponBonus_CritChance -> 8"
+# pragma bindfield "uint8   Item::WeaponBonus_AP         -> 9"
+
+// armor
+# pragma bindfield "uint8   Item::ArmorBonus_DRNormal -> 10"
+# pragma bindfield "uint8   Item::ArmorBonus_DRLaser  -> 11"
+# pragma bindfield "uint8   Item::ArmorBonus_DRFire   -> 12"
+# pragma bindfield "uint8   Item::ArmorBonus_DRPlasma  -> 13"
+# pragma bindfield "uint8   Item::ArmorBonus_DRElectr  -> 14"
+# pragma bindfield "uint8   Item::ArmorBonus_DRExplode  -> 15" 
+# pragma bindfield "uint8   Item::ArmorBonus_DTNormal  -> 16"
+# pragma bindfield "uint8   Item::ArmorBonus_DTLaser  -> 17"
+# pragma bindfield "uint8   Item::ArmorBonus_DTFire  -> 18"
+# pragma bindfield "uint8   Item::ArmorBonus_DTPlasma  -> 19"
+# pragma bindfield "uint8   Item::ArmorBonus_DTElectr  -> 20"
+# pragma bindfield "uint8   Item::ArmorBonus_AC  -> 21"
+# pragma bindfield "uint8   Item::ArmorBonus_DTExplode  -> 22"
+# pragma bindfield "uint8   Item::ArmorBonus_DRRad  -> 23"
+# pragma bindfield "uint    Item::ArmorBonus_CarryWeight  -> 24"
+# pragma bindfield "uint8   Item::ArmorBonus_FasterHealing  -> 28"
+# pragma bindfield "uint8   Item::ArmorBonus_Harisma  -> 29"
+# pragma bindfield "uint8   Item::ArmorBonus_Perception  -> 30"
+# pragma bindfield "uint8   Item::ArmorBonus_Strength  -> 31"
+# pragma bindfield "uint8   Item::ArmorBonus_CriticalResist  -> 32"
+# pragma bindfield "uint8   Item::ArmorBonus_Luck  -> 33"
+# pragma bindfield "uint8   Item::ArmorBonus_AP  -> 34"
+# pragma bindfield "uint    Item::ArmorBonus_DeteriorateResist  -> 35"
+
+// /
+// / Item prototypes fields
+// /
+
+# pragma bindfield "const bool   ProtoItem::Ignition              -> 0"
+
+// Whole size for data - 500 bytes
+// Armor
+# pragma bindfield "const uint   ProtoItem::Armor_CrTypeMale   -> 100"
+# pragma bindfield "const uint   ProtoItem::Armor_CrTypeFemale -> 104"
+# pragma bindfield "const int    ProtoItem::Armor_AC           -> 108"
+# pragma bindfield "const uint   ProtoItem::Armor_Perk         -> 112"
+# pragma bindfield "const int    ProtoItem::Armor_DRNormal     -> 116"
+# pragma bindfield "const int    ProtoItem::Armor_DRLaser      -> 120"
+# pragma bindfield "const int    ProtoItem::Armor_DRFire       -> 124"
+# pragma bindfield "const int    ProtoItem::Armor_DRPlasma     -> 128"
+# pragma bindfield "const int    ProtoItem::Armor_DRElectr     -> 132"
+# pragma bindfield "const int    ProtoItem::Armor_DREmp        -> 136"
+# pragma bindfield "const int    ProtoItem::Armor_DRExplode    -> 140"
+# pragma bindfield "const int    ProtoItem::Armor_DTNormal     -> 144"
+# pragma bindfield "const int    ProtoItem::Armor_DTLaser      -> 148"
+# pragma bindfield "const int    ProtoItem::Armor_DTFire       -> 152"
+# pragma bindfield "const int    ProtoItem::Armor_DTPlasma     -> 156"
+# pragma bindfield "const int    ProtoItem::Armor_DTElectr     -> 160"
+# pragma bindfield "const int    ProtoItem::Armor_DTEmp        -> 164"
+# pragma bindfield "const int    ProtoItem::Armor_DTExplode    -> 168"
+
+# pragma bindfield "const uint8   ProtoItem::Emp_SlowEffect     ->      172"
+# pragma bindfield "const uint8   ProtoItem::Emp_TimeSlow       ->      173"
+# pragma bindfield "const uint8   ProtoItem::Emp_LostAP         ->      174"
+
+// Weapon
+# pragma bindfield "const uint8    ProtoItem::Weapon_TypeAttack_0 -> 196"
+# pragma bindfield "const uint8    ProtoItem::Weapon_TypeAttack_1 -> 197"
+# pragma bindfield "const uint8    ProtoItem::Weapon_TypeAttack_2 -> 198"
+
+# pragma bindfield "const int    ProtoItem::Weapon_DmgType_0 -> 200"
+# pragma bindfield "const int    ProtoItem::Weapon_DmgType_1 -> 204"
+# pragma bindfield "const int    ProtoItem::Weapon_DmgType_2 -> 208"
+# pragma bindfield "const uint   ProtoItem::Weapon_Anim2_0   -> 212"
+# pragma bindfield "const uint   ProtoItem::Weapon_Anim2_1   -> 216"
+# pragma bindfield "const uint   ProtoItem::Weapon_Anim2_2   -> 220"
+# pragma bindfield "const int    ProtoItem::Weapon_DmgMin_0  -> 224"
+# pragma bindfield "const int    ProtoItem::Weapon_DmgMin_1  -> 228"
+# pragma bindfield "const int    ProtoItem::Weapon_DmgMin_2  -> 232"
+# pragma bindfield "const int    ProtoItem::Weapon_DmgMax_0  -> 236"
+# pragma bindfield "const int    ProtoItem::Weapon_DmgMax_1  -> 240"
+# pragma bindfield "const int    ProtoItem::Weapon_DmgMax_2  -> 244"
+# pragma bindfield "const uint16 ProtoItem::Weapon_Effect_0  -> 248"
+# pragma bindfield "const uint16 ProtoItem::Weapon_Effect_1  -> 250"
+# pragma bindfield "const uint16 ProtoItem::Weapon_Effect_2  -> 252"
+# pragma bindfield "const bool   ProtoItem::Weapon_Remove_0  -> 254"
+# pragma bindfield "const bool   ProtoItem::Weapon_Remove_1  -> 255"
+# pragma bindfield "const bool   ProtoItem::Weapon_Remove_2  -> 256"
+# pragma bindfield "const uint   ProtoItem::Weapon_ReloadAp  -> 260"
+# pragma bindfield "const int    ProtoItem::Weapon_UnarmedCriticalBonus -> 264"
+# pragma bindfield "const uint   ProtoItem::Weapon_CriticalFailture     -> 268"
+# pragma bindfield "const bool   ProtoItem::Weapon_UnarmedArmorPiercing -> 272"
+// lightning weapon
+# pragma bindfield "const uint16   ProtoItem::Weapon_LightningRadius -> 273"
+# pragma bindfield "const uint8   ProtoItem::Weapon_LightningCountTarget -> 275"
+// Mortira
+# pragma bindfield "const uint8   ProtoItem::Weapon_FlyingDistance -> 276"
+
+# pragma bindfield "const uint8   ProtoItem::BonusForOutOfCombat -> 277"
+
+# pragma bindfield "const uint8   ProtoItem::CraftInfo -> 279"      // Информация по декрафту/крафту предмета
+# pragma bindfield "const uint8   ProtoItem::MaxRepairCount -> 280" // Потолок изнашеваемости предмета
+                                                                    // Ammo
+# pragma bindfield "const int8    ProtoItem::Ammo_AcMod   -> 281"
+# pragma bindfield "const int8    ProtoItem::Ammo_DrMod   -> 282"
+# pragma bindfield "const uint8   ProtoItem::Ammo_DmgMult -> 283"
+# pragma bindfield "const uint8   ProtoItem::Ammo_DmgDiv  -> 284"
+# pragma bindfield "const uint8   ProtoItem::Weapon_SecondPerk  -> 285"
+# pragma bindfield "const int8    ProtoItem::Weapon_CriticalBonus  -> 286"
+# pragma bindfield "const int8    ProtoItem::Weapon_BonusCritRoll  -> 287"
+
+// Randomisable
+# pragma bindfield "const uint8   ProtoItem::Randomisable -> 289"
+
+// Для книг. Cracker+++
+# pragma bindfield "const uint8   ProtoItem::IsReadableBook -> 290"
+# pragma bindfield "const uint8   ProtoItem::BookAddPoint -> 291"
+# pragma bindfield "const uint8   ProtoItem::BookCountRead -> 292"
+# pragma bindfield "const uint8   ProtoItem::IsSkillBook -> 293"
+# pragma bindfield "const uint8   ProtoItem::BookNumberParam -> 294"
+# pragma bindfield "const uint8   ProtoItem::BookNumber -> 295"
+
+# pragma bindfield "const uint8   ProtoItem::BrokenCoefficient -> 296"
+
+# pragma bindfield "const uint8   ProtoItem::Weapon_NoBurst_0 -> 299"
+# pragma bindfield "const uint8   ProtoItem::Weapon_NoBurst_1 -> 300"
+# pragma bindfield "const uint8   ProtoItem::Weapon_NoBurst_2 -> 301"
+
+# pragma bindfield "const uint16   ProtoItem::IndexCraftList -> 302"
+
+# pragma bindfield "const uint8    ProtoItem::HexWeapon_Radius                  -> 307"
+# pragma bindfield "const uint8    ProtoItem::Ammo_Perk                 -> 308"
+# pragma bindfield "const uint8    ProtoItem::Ammo_DmgType              -> 309"
+
+# pragma bindfield "const uint8    ProtoItem::Weapon_IgnoreAC   ->      310"
+
+# pragma bindfield "const uint8	   ProtoItem::Ammo_DTDiv	 -> 311"
+
+# pragma bindfield "const int16         ProtoItem::Weapon_BonusToHit  -> 314"
+# pragma bindfield "const bool          ProtoItem::Weapon_ZoneAttackIgnoreNotRaked  -> 316"
+
+# pragma bindfield "const uint8         ProtoItem::Upgrade_Trigger                              -> 317"
+# pragma bindfield "const int           ProtoItem::Upgrade_TriggerValue0			-> 318"
+# pragma bindfield "const int           ProtoItem::Upgrade_TriggerValue1			-> 322"
+
+# pragma bindfield "const uint8         ProtoItem::Upgrade_Effect	                                -> 326"
+# pragma bindfield "const int           ProtoItem::Upgrade_EffectValue0				-> 327"
+# pragma bindfield "const int           ProtoItem::Upgrade_EffectValue1				-> 331"
+
+# pragma bindfield "const uint8         ProtoItem::Upgrade_Type		                                -> 335"
+# pragma bindfield "const int           ProtoItem::Upgrade_TypeValue0                           -> 336"
+# pragma bindfield "const int           ProtoItem::Upgrade_TypeValue1                           -> 340"
+
+# pragma bindfield "const uint16          ProtoItem::Weapon_TimeAttack_0                           -> 400"
+# pragma bindfield "const uint16          ProtoItem::Weapon_TimeAttack_1                           -> 402"
+# pragma bindfield "const uint16          ProtoItem::Weapon_TimeAttack_2                           -> 404"
+
+# pragma bindfield "const uint16          ProtoItem::Weapon_BreakTime_0                           -> 406"
+# pragma bindfield "const uint16          ProtoItem::Weapon_BreakTime_1                           -> 408"
+# pragma bindfield "const uint16          ProtoItem::Weapon_BreakTime_2                           -> 410"

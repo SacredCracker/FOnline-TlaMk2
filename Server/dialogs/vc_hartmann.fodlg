@@ -1,0 +1,872 @@
+[comment]
+Автор: Ponchick
+Доводка: rifleman17
+
+[data]
+lang=russ engl ukra
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 D _var p q_vc_hartman_fight = 0 #
+72 1020 D _param p ST_INTELLECT < 4 #
+70 1030 D _var p q_vc_hartman_fight = 1 D _var p vc_hartman_fight_status < 2 #
+11 1040 D _var p vc_hartman_fight_status > 1 D _var p q_vc_hartman_fight = 1 R _var p q_vc_hartman_fight = 2 R _param p REPUTATION_VAULT_CITY + 1 R _param p ST_EXPERIENCE + 950 #
+11 1050 D _var p q_vc_hartman_rifles = 0 D _var p q_vc_hartman_fight = 2 #
+13 1060 D _var p q_vc_hartman_rifles = 1 #
+16 1070 D _var p q_vc_hartman_rifles = 2 D _var p q_vc_hartman_march = 0 #
+19 1080 D _var p q_vc_hartman_march > 0 D _var p q_vc_hartman_march < 3 D _var p vc_hartman_march_status = 1 #
+18 1090 D _var p vc_hartman_march_status = 0 D _var p q_vc_hartman_march > 0 D _var p q_vc_hartman_march < 3 #
+20 1100 D _var p q_vc_hartman_march = 3 R _param p ST_EXPERIENCE + 800 R _var p q_vc_hartman_march = 4 #
+21 1110 D _var p q_vc_hartman_march = 4 D _var p vc_guard_rank = 0 D _param p KARMA_VC_GUARDSMAN = 0 #
+72 1120 D _script dialog@d_NotTimeoutOk 0  #
+28 1130 D _param p KARMA_VC_GUARDSMAN > 0 D _var p vc_patrol_counter < 3 D _script dialog@d_TimeoutOk 0  D _var p q_vc_shrim_patrol = 0 #
+31 1140 D _var p q_vc_shrim_patrol > 0 #
+36 1150 D _var p vc_patrol_counter > 2 D _var p vc_guard_rank = 1 #
+40 1160 D _var p vc_guard_rank = 2 D _script dialog@d_TimeoutOk 0  D _var p q_vc_hartmann_recon = 0 D _var p vc_caves_counter < 4 #
+43 1170 D _var p q_vc_hartmann_recon > 1 D _var p q_vc_hartmann_recon < 4 #
+46 1180 D _var p q_vc_hartmann_recon = 4 D _script dialog@d_TimeoutOk 0  D _var p q_vc_hartmann_clear_cave = 0 #
+49 1190 D _var p q_vc_hartmann_clear_cave > 0 D _var p q_vc_hartmann_clear_cave < 4 #
+54 1200 D _var p vc_caves_counter > 3 D _var p vc_guard_rank = 2 #
+74 1210 D _var p vc_guard_rank = 3 D _param p ST_LEVEL < 18 D or D _param p SK_SPEECH < 100 D _var p vc_guard_rank = 3 #
+57 1220 D _param p SK_SPEECH } 100 D _param p ST_EXPERIENCE } 18 D _var p vc_guard_rank = 3 D _var p q_vc_hartman_ncr_help = 0 D _script dialog@d_TimeoutOk 0  #
+64 1230 D _var p q_vc_hartman_ncr_help > 0 D _var p q_vc_hartman_ncr_help < 4 #
+75 1240 D _var p vc_guard_rank = 4 @
+2 2000 None 0 #
+0 2010 #
+3 2020 @
+3 3000 None 0 #
+4 3010 @
+4 4000 None 0 #
+5 4010 D _var p q_vc_hartman_fight = 0 D _param p KILL_MEN < 48 D or D _param p SK_OUTDOORSMAN < 91 D _var p q_vc_hartman_fight = 0 D or D _param p ST_LEVEL < 10 D _var p q_vc_hartman_fight = 0 #
+6 4020 D _param p SK_OUTDOORSMAN } 91 D _param p KILL_MEN } 48 D _var p q_vc_hartman_fight = 0 D _param p ST_LEVEL } 10 #
+0 4030 @
+5 5000 None 0 #
+0 5010 @
+6 6000 None 0 #
+7 6010 #
+0 6020 @
+7 7000 None 0 #
+8 7010 #
+0 7020 @
+8 8000 None 0 #
+9 8010 #
+10 8020 @
+9 9000 None 0 #
+0 9010 D _var p q_vc_hartman_fight = 0 R _var p q_vc_hartman_fight = 1 @
+10 10000 None 0 @
+11 11000 None 0 #
+12 11010 D _var p q_vc_hartman_rifles = 0 R _var p q_vc_hartman_rifles = 1 R _script vc_guardsman@r_GiveWearItems 3 753 2 95 #
+0 11020 @
+12 12000 None 0 #
+0 12010 @
+13 13000 None 0 #
+0 13010 #
+14 13020 D _script vc_guardsman@d_CheckWear 3 753 2 1 #
+15 13030 D _script vc_guardsman@d_CheckWear 3 754 2 1 @
+14 14000 None 0 #
+0 14010 R _param p ST_EXPERIENCE + 1400 R _var p q_vc_hartman_rifles = 2 R _item p PID_ASSAULT_RIFLE - 2 @
+15 15000 None 0 #
+0 15010 R _param p ST_EXPERIENCE + 1400 R _var p q_vc_hartman_rifles = 2 R _item p PID_ASSAULT_RIFLE_EXT_MAG - 1 @
+16 16000 None 0 #
+17 16010 @
+17 17000 None 0 #
+18 17010 #
+0 17020 @
+18 18000 None 0 #
+0 18010 R _var p q_vc_hartman_march = 1 @
+19 19000 None 0 #
+0 19010 @
+20 20000 None 0 #
+21 20010 @
+21 21000 None 0 #
+0 21010 #
+22 21020 @
+22 22000 None 0 #
+23 22010 @
+23 23000 None 0 #
+24 23010 @
+24 24000 None 0 #
+25 24010 @
+25 25000 None 0 #
+26 25010 @
+26 26000 None 0 #
+27 26010 @
+27 27000 None 0 #
+0 27010 D _param p KARMA_VC_GUARDSMAN = 0 D _var p vc_guard_rank = 0 R _param p ST_EXPERIENCE + 3500 R _item p PID_ASSAULT_RIFLE + 1 R _item p PID_5MM_AP + 200 R _item p PID_METAL_ARMOR_MK_II + 1 R _var p vc_guard_rank = 1 R _param p KARMA_VC_GUARDSMAN = 1 R _script vc_guardsman@r_SetGuardSalary 0  @
+28 28000 None 0 #
+29 28010 @
+29 29000 None 0 #
+30 29010 R _var p q_vc_shrim_patrol = 1 @
+30 30000 None 0 #
+0 30010 #
+71 30020 @
+31 31000 None 0 #
+32 31010 D _var p q_vc_shrim_patrol = 8 D _var p vc_dead_patrollers = 0 R _var p q_vc_shrim_patrol = 0 R _var p vc_patrol_counter + 1 R _var p vc_dead_patrollers = 0 R _script dialog@r_SetUniqTO 1 2880 #
+33 31020 D _var p q_vc_shrim_patrol = 8 D _var p vc_dead_patrollers = 1 R _var p q_vc_shrim_patrol = 0 R _var p vc_patrol_counter + 1 R _var p vc_dead_patrollers = 0 R _script dialog@r_SetUniqTO 1 2880 #
+34 31030 D _var p q_vc_shrim_patrol = 8 D _var p vc_dead_patrollers > 1 R _var p q_vc_shrim_patrol = 0 R _var p vc_patrol_counter + 1 R _var p vc_dead_patrollers = 0 R _script dialog@r_SetUniqTO 1 2880 #
+35 31040 D _var p q_vc_shrim_patrol > 1 D _var p q_vc_shrim_patrol < 8 R _var p q_vc_shrim_patrol = 0 R _var p vc_dead_patrollers = 0 R _script dialog@r_SetUniqTO 1 10080 #
+0 31050 @
+32 32000 None 0 #
+0 32010 R _param p ST_EXPERIENCE + 3800 R _param p REPUTATION_VAULT_CITY + 2 @
+33 33000 None 0 #
+0 33010 R _param p ST_EXPERIENCE + 3800 R _param p REPUTATION_VAULT_CITY + 1 @
+34 34000 None 0 #
+0 34010 R _param p ST_EXPERIENCE + 3800 @
+35 35000 None 0 #
+0 35010 @
+36 36000 None 0 #
+37 36010 D _var p vc_guard_rank = 1 R _var p vc_guard_rank = 2 @
+37 37000 None 0 #
+38 37010 @
+38 38000 None 0 #
+39 38010 @
+39 39000 None 0 #
+0 39010 R _script dialog@r_SetUniqTO 1 1440 @
+40 40000 None 0 #
+41 40010 @
+41 41000 None 0 #
+42 41010 #
+0 41020 @
+42 42000 None 0 #
+0 42010 R _var p q_vc_hartmann_recon = 1 @
+43 43000 None 0 #
+44 43010 D _var p q_vc_hartmann_recon = 2 #
+45 43020 D _var p q_vc_hartmann_recon = 3 #
+0 43030 @
+44 44000 None 0 #
+0 44010 D _var p q_vc_hartmann_recon = 2 R _param p REPUTATION_VAULT_CITY + 1 R _param p ST_EXPERIENCE + 3000 R _var p q_vc_hartmann_recon = 4 R _script dialog@r_SetUniqTO 1 1440 R _var p q_vc_hartmann_clear_cave = 0 @
+45 45000 None 0 #
+0 45010 D _var p q_vc_hartmann_recon = 3 R _script dialog@r_SetUniqTO 1 10080 R _var p q_vc_hartmann_recon = 0 R _var p vc_recon_cave_id = 0 @
+46 46000 None 0 #
+47 46010 @
+47 47000 None 0 #
+48 47010 D _var p vc_recon_cave_id > 0 R _var p q_vc_hartmann_clear_cave = 1 R _var p vc_dead_ally_counter = 0 R _script vc_guardsman@r_ShowCave 0  #
+0 47020 @
+48 48000 None 0 #
+0 48010 @
+49 49000 None 0 #
+0 49010 #
+50 49020 D _var p q_vc_hartmann_clear_cave = 3 #
+73 49030 D _var p q_vc_hartmann_clear_cave = 2 R _var p q_vc_hartmann_recon = 0 R _var p q_vc_hartmann_clear_cave = 0 @
+50 50000 None 0 #
+51 50010 D _var p vc_dead_ally_counter = 0 #
+52 50020 D _var p vc_dead_ally_counter = 1 #
+52 50030 D _var p vc_dead_ally_counter = 2 #
+52 50040 D _var p vc_dead_ally_counter = 3 #
+53 50050 D _var p vc_dead_ally_counter = 4 #
+53 50060 D _var p vc_dead_ally_counter > 4 @
+51 51000 None 0 #
+0 51010 R _param p ST_EXPERIENCE + 6000 R _item p PID_BOTTLE_CAPS + 3000 R _item p PID_SUPER_STIMPAK + 2 R _item p PID_COMBAT_ARMOR + 1 R _item p PID_2MM_EC_AMMO + 28 R _item p PID_PK12_GAUSS_PISTOL + 1 R _item p PID_MEGA_POWER_FIST + 1 R _param p REPUTATION_VAULT_CITY + 3 R _var p q_vc_hartmann_recon = 0 R _script dialog@r_SetUniqTO 1 4320 R _var p vc_caves_counter + 1 R _var p q_vc_hartmann_clear_cave = 4 @
+52 52000 None 0 #
+0 52010 R _param p ST_EXPERIENCE + 6000 R _item p PID_BOTTLE_CAPS + 3000 R _item p PID_SUPER_STIMPAK + 2 R _item p PID_COMBAT_ARMOR + 1 R _param p REPUTATION_VAULT_CITY + 1 R _var p q_vc_hartmann_recon = 0 R _script dialog@r_SetUniqTO 1 4320 R _var p vc_caves_counter + 1 R _var p q_vc_hartmann_clear_cave = 4 @
+53 53000 None 0 #
+0 53010 R _param p ST_EXPERIENCE + 6000 R _item p PID_BOTTLE_CAPS + 3000 R _item p PID_SUPER_STIMPAK + 2 R _var p q_vc_hartmann_recon = 0 R _script dialog@r_SetUniqTO 1 4320 R _var p vc_caves_counter + 1 R _var p q_vc_hartmann_clear_cave = 4 @
+54 54000 None 0 #
+55 54010 R _var p vc_guard_rank = 3 @
+55 55000 None 0 #
+56 55010 @
+56 56000 None 0 #
+0 56010 @
+57 57000 None 0 #
+58 57010 @
+58 58000 None 0 #
+59 58010 #
+0 58020 @
+59 59000 None 0 #
+60 59010 #
+0 59020 R _script dialog@r_SetUniqTO 1 10080 @
+60 60000 None 0 #
+61 60010 R _var p q_vc_hartman_ncr_help = 1 @
+61 61000 None 0 #
+62 61010 @
+62 62000 None 0 #
+63 62010 @
+63 63000 None 0 #
+0 63010 @
+64 64000 None 0 #
+0 64010 #
+67 64020 D _var p vc_trainig_access = 0 D _var p q_vc_hartman_ncr_help = 3 R _var p q_vc_hartman_ncr_help = 4 #
+65 64030 D _var p vc_trainig_access = 1 D _var p q_vc_hartman_ncr_help = 3 R _var p q_vc_hartman_ncr_help = 4 @
+65 65000 None 0 #
+68 65010 R _item p PID_BOTTLE_CAPS + 9000 R _item p PID_VINDICATOR_MINIGUN + 1 R _item p PID_M72_GAUSS_RIFLE + 1 R _item p PID_COMBAT_ARMOR + 1 R _param p ST_EXPERIENCE + 24000 R _param p REPUTATION_VAULT_CITY + 5 @
+66 66000 None 0 #
+68 66010 R _var p vc_citizenship = 1 R _item p PID_BOTTLE_CAPS + 9000 R _item p PID_VINDICATOR_MINIGUN + 1 R _item p PID_M72_GAUSS_RIFLE + 1 R _item p PID_COMBAT_ARMOR + 1 R _param p ST_EXPERIENCE + 24000 R _param p REPUTATION_VAULT_CITY + 5 @
+67 67000 None 0 #
+68 67010 R _item p PID_BOTTLE_CAPS + 9000 R _item p PID_COMBAT_ARMOR + 1 R _item p PID_BOZAR + 1 R _item p PID_TURBO_PLASMA_RIFLE + 1 R _param p ST_EXPERIENCE + 24000 R _param p REPUTATION_VAULT_CITY + 5 @
+68 68000 None 0 #
+69 68010 D _var p vc_guard_rank = 3 R _var p vc_guard_rank = 4 R _param p ST_ACTION_POINTS + 1 R _script dialog@r_InfoMessage 1 11 R _item p PID_COMBAT_ARMOR_MK_II + 1 @
+69 69000 None 0 #
+0 69010 @
+70 70000 None 0 #
+0 70010 #
+11 70020 D _param p SK_SPEECH > 29 D _var p q_vc_hartman_fight = 1 D _var p vc_hartman_fight_status = 1 R _var p q_vc_hartman_fight = 2 R _param p ST_EXPERIENCE + 1350 @
+71 71000 None 0 #
+0 71010 @
+72 72000 None 0 @
+73 73000 None 0 #
+0 73010 @
+74 74000 None 0 @
+75 75000 None 0 &
+
+[russ]
+{100}{}{Йохан Хартманн}
+{200}{}{Сурово выглядящий вояка.}
+{210}{}{Человек в возрасте, но подтянут и собран. Он явно привык командовать.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{игрок не выполнял квесты Хартмана}
+{1020}{}{низкий интеллект}
+{1030}{}{Взят квест на поединок, не выполнен}
+{1040}{}{Взят квест на поединок, выполнен. }
+{1050}{}{Квест на винтовки не брался}
+{1060}{}{Взят квест на ремонт винтовок}
+{1070}{}{Выполнен квест на ремонт винтовок}
+{1080}{}{Взят квест на строевую подготовку, но игрок вылетел. Подготовка активна, выполняет кто-то другой или зависла (сбросится через 5 реальных минут),}
+{1090}{}{Взят квест на строевую подготовку, но игрок вылетел. Никто не занимается строевой подготовкой}
+{1100}{}{Выполнен квест на строевую подготовку}
+{1110}{}{Строевая подготовка сдана игрок не стал гвардейцем}
+{1120}{}{есть таймаут на один из повторяемых квестов}
+{1130}{}{игрок гвардеец, выполнено меньше 3 патрулей. Таймаут прошел. Квест на патруль не взят.}
+{1140}{}{Игрок выполнил или провалил квест на патруль}
+{1150}{}{Игрок выполнил три квеста на патрулирование. Ранг не повышен.}
+{1160}{}{Ранг = мл. сержант. Таймаут свободен. Менее 4 зачищенных пещер с мутантами. Не выполнен преквест разведки.}
+{1170}{}{Игрок в процессе выполнения квеста-разведки, квест не сдан}
+{1180}{}{Разведка выполнена, зачистка нет.}
+{1190}{}{Зачистка выполнена, либо игрок  не успел до удаления локации}
+{1200}{}{Выполнено 4 разведки, статус младший сержант}
+{1210}{}{Ранг = старший сержант, нет 18 уровня или 100 красноречия}
+{1220}{}{Ранг = старший сержант, 18 ур, 100 спича, не выполнен квест Дипкурьер}
+{1230}{}{Взят и не сдан квест Дипкурьер}
+{1240}{}{Лейтенант}
+{2000}{}{В чем дело?}
+{2010}{}{Извините, моя ошибка. Уже ухожу. [Выход]}
+{2020}{}{Возникли вопросы. Не поможете?}
+{3000}{}{Задавайте.}
+{3010}{}{Кто вы и чем занимаетесь?}
+{4000}{}{Йохан Хартманн. Капитан Йохан Хартманн. Командующий Гвардией Города. Ещё вопросы есть?}
+{4010}{}{Командующий Гвардией? Ого! А я могу стать гвардейцем? Всю жизнь @sex@|мечтал||мечтала| о военной карьере. Романтика, войсковое  товарищество, защита  мирного населения. Прелесть.}
+{4020}{}{Командующий Гвардией? Ого! А я могу стать гвардейцем? Всю жизнь @sex@|мечтал||мечтала| о военной карьере. Романтика, войсковое  товарищество, защита  мирного населения. Прелесть.}
+{4030}{}{Никак нет! Разрешите идти?@@Никаких вопросов, прощайте.}
+{5000}{}{Нет, не выйдет. Сходи подкачайся, наберись опыта, приведи себя в соответствие… Тогда и поговорим.}
+{5010}{}{Да я и так лучш@sex@|ий||ая|!}
+{6000}{}{Романтика, защита…У тебя с головой всё в порядке? В детстве не роняли со стола? Гм. Ну в принципе мы ведем набор. Ты @sex@|уверен||уверена|, что хочешь этого?}
+{6010}{}{Так точно. Именно таково моё желание!}
+{6020}{}{Мне нужно ещё подумать. [Выход]}
+{7000}{}{Ну что ж. НО! Прежде чем стать гвардейцем, нужно доказать, что ты @sex@|достоин||достойна| этого звания. А для этого придется постараться. И очень постараться!  Зато потом - все блага: проход в город, бесплатная медицина, неплохие деньги. Что скажешь?}
+{7010}{}{Отлично звучит, а трудности меня не пугают.}
+{7020}{}{И тут всё не просто так. Ну нафиг, надоело.}
+{8000}{}{Ну тогда вот первое задание. Тебе нужно сойтись врукопашную с одним из наших. Покажи себя.}
+{8010}{}{Почему нет. Я считаю - или кулак вдребезги, или башка пополам. С которым тут?}
+{8020}{}{Я, ну это, того. У меня, знаете, навыки рукопашного боя, они угу, не прокачаны… Может как-нибудь по-другому?}
+{9000}{}{Вот это верно! Вот стоит паренёк отдельно - с ним зарубайся.}
+{9010}{}{Как скажете...}
+{10000}{}{Мама дорогая! Солдат, гвардеец, чё сказать. А ну иди отсюда, чтоб я тебя не видел.}
+{11000}{}{Ну хорошо, первое испытание - зачет. Продолжаем?}
+{11010}{}{Всегда готов!}
+{11020}{}{Мне нужно время на подготовку. [Выход]}
+{12000}{}{Так, на службе тебе придется часто пользоваться личным оружием. Сейчас твоя задача - показать, что ты можешь с ним обращаться. Вот возьми-ка. [Даёт два засраных до неподвижности затвора ствола] До завтра чтоб всё блестело, как новое! Шагом марш!}
+{12010}{}{Так точно! [Выход]}
+{13000}{}{Ну что? Как успехи?}
+{13010}{}{Процесс идет... [Выход]}
+{13020}{}{Оружие любит ласку, чистку и смазку! Получите ваши волыны!}
+{13030}{}{Я тут @sex@|подумал||подумала | немного. И @sex@|решил||решила|  кое-что к ним приделать.}
+{14000}{}{Отлично!}
+{14010}{}{@sex@|Рад||рада| стараться! [Выход]}
+{15000}{}{Чё за самодеятельность! А ну дай сюда! Чё ты… О. Неплохо, очень даже. Молодец. Хм. Оставь одну себе. Надо же. Какие новобранцы пошли продвинутые, мдя…}
+{15010}{}{@sex@|Рад||рада| стараться! [Выход]}
+{16000}{}{Слушаю тебя.}
+{16010}{}{Еще задания будут, или я уже в гвардии?}
+{17000}{}{Разумеется. Разумеется будут, и разумеется ты ещё не в гвардии. На очереди строевая подготовка.}
+{17010}{}{Так чего мы ждём?}
+{17020}{}{Ой. Я тут сейчас, я сейчас тут… [Выход]}
+{18000}{}{Так. Вставай в строй рядом с этими обезья… гвардейцами, всё делай, как они. Ясно? Вперед!}
+{18010}{}{Так точно! [Выход]}
+{19000}{}{Все разговоры потом. У меня занятия! Освободил@sex@|||а| площадку, быстро!}
+{19010}{}{А как же я...}
+{20000}{}{Так. @pname@. Вот ты где.}
+{20010}{}{Всегда к вашим услугам, капитан.}
+{21000}{}{Ннну, испытания для тебя окончены. Пока. Не @sex@|передумал||передумала | со  вступлением  в Гвардию?}
+{21010}{}{Мне нужно время на принятие решения. [Выход]}
+{21020}{}{Я не меняю своих решений.}
+{22000}{}{Если твои намерения вступить в гвардию неизменны, я должен привести тебя к присяге. Стой смирно и повторяй за мной: Я, @pname@...}
+{22010}{}{Я, @pname@...}
+{23000}{}{Вступая в ряды Гвардейцев Города-Убежища…}
+{23010}{}{Вступая в ряды Гвардейцев Города-Убежища…}
+{24000}{}{Принимаю эту присягу и торжественно клянусь. Быть честным, верным, дисциплинированным, бдительным воином. С достоинством переносить тяготы и лишения воинской службы…}
+{24010}{}{Принимаю эту присягу и торжественно клянусь. Быть честным, верным, дисциплинированным, бдительным воином. С достоинством переносить тяготы и лишения воинской службы…}
+{25000}{}{Беспекословно выполнять приказы и приказания командиров и начальников. Не жалеть своей крови, а если понадобится и жизни для защиты Города и борьбы с его врагами…}
+{25010}{}{Беспекословно выполнять приказы и приказания командиров и начальников. Не жалеть своей крови, а если понадобится и жизни для защиты Города и борьбы с его врагами…}
+{26000}{}{Если же я нарушу эту торжественную присягу, пусть меня постигнет кара военного трибунала. И да помилует Господь мою душу.}
+{26010}{}{Если же я нарушу эту торжественную присягу, пусть меня постигнет кара военного трибунала. И да помилует Господь мою душу.}
+{27000}{}{Мои поздравления, гвардеец. Так. Денежное довольствие 68 монет в день. Зачисляется на счет в банке. Это пока. Повысишь звание - оплата вырастет. В город можешь входить без пропуска. Раз в неделю док в убежище будет выдавать по 5 стимпаков. Так же раз в неделю - бесплатный ремонт у Вэлери. Задания по службе получаешь лично у меня. Всё ясно? Свободен.}
+{27010}{}{Слуга народа! [Выход]}
+{28000}{}{Так, рядовой @pname@. Ко мне!}
+{28010}{}{Рядовой  @pname@ по вашему приказанию прибыл!}
+{29000}{}{Слушай мою команду. Ты отряжаешься в патруль. С тобой будут трое наших, обходишь с ними город, уничтожаешь все враждебно настроенные элементы. Своих людей беречь, врагов уничтожать. Смотри не перепутай, Кутузов. По исполнении доложишь. Что не ясно?}
+{29010}{}{Кто будет командовать патрулем?}
+{30000}{}{Иди за ворота к казармам Гвардии. Найди капрала Креветку, будешь под его началом. Марш!}
+{30010}{}{Всё ясно! Разрешите бегом?}
+{30020}{}{Разрешите вопрос, сэр? Почему капрала зовут "Креветка"?}
+{31000}{}{Докладывай!}
+{31010}{}{Ваше приказание выполнено!}
+{31020}{}{Ваше приказание выполнено!}
+{31030}{}{Ваше приказание выполнено!}
+{31040}{}{У меня, эээ. Не вышло…}
+{31050}{}{Прошу прощения капитан, я скоро вернусь.}
+{32000}{}{Отлично, рядовой. Так, отдыхай два дня, потом подойдешь. Это приказ. }
+{32010}{}{Так точно.[Выход]}
+{33000}{}{Неплохо справился. Не без потерь, но всё же. Сейчас можешь отдыхать. Через два дня подойдешь.}
+{33010}{}{Так точно. [Выход]}
+{34000}{}{Нда. Слышал уже. Мне стыдно, что я принял тебя в гвардию…Но, за неимением кухарки, ебут дворника. Так что, дорогой дворник, подходи через пару дней. Будет возможность реабилитироваться.}
+{34010}{}{Так точно. [Выход]}
+{35000}{}{Так, рядовой, чтоб больше я этого не видел. Неделя  на самоподготовку, потом подойдешь}
+{35010}{}{Так точно.[Выход]}
+{36000}{}{Рядовой @pname@!}
+{36010}{}{Я!}
+{37000}{}{Разреши поздравить тебя с присвоением очередного воинского звания - младший сержант!}
+{37010}{}{Слуга народа!}
+{38000}{}{Твоё денежное довольствие увеличено до 98 монет в день. Будут переводиться на твой счет. Раз в неделю док выдаст тебе суперстимпак. Ремонт оружия у Велери - 1 ствол в день. Вопросы есть?}
+{38010}{}{Никак нет! @sex@|Рад||Рада| стараться!}
+{39000}{}{Вольно, младший сержант. Отпразднуй повышение с друзьями, завтра явишься ко мне.}
+{39010}{}{Так точно. [Выход]}
+{40000}{}{Младший сержант @pname@!}
+{40010}{}{Здесь, капитан!}
+{41000}{}{Есть задание для тебя.}
+{41010}{}{Слушаю, капитан, сэр.}
+{41020}{}{Мне нужно произвести подгонку снаряжения. [Выход]}
+{42000}{}{Слушай вводную. Получена информация, что в окрестности города снова стягиваются бандформирования мутантов. Но, информация пока недостоверная. Необходимо произвести разведку. Этим займешься ты. Задание - произвести разведку окрестностей, найти логово мутантов. Чётко локализовать место. Доложить мне. Ни в коем случае, повторяю - ни в коем случае не обнаруживать себя. Никаких вооруженных столкновений. Найти - и доложить. Задание ясно?}
+{42010}{}{Так точно. Разрешите выполнять? [Выход]}
+{43000}{}{Младший сержант @pname@! Жду доклада.}
+{43010}{}{Так точно, капитан! Информация подтвердилась. Это супермутанты. База найдена. Они  меня не засекли.}
+{43020}{}{База найдена, но…мне пришлось вступить с ними в бой, капитан.}
+{43030}{}{Разрешите доложить, нахожусь в процессе выполнения, капитан, сэр! [Выход]}
+{44000}{}{Отличная работа, @pname@! Я должен обдумать стратегию, подойти ко мне завтра.}
+{44010}{}{Слушаюсь. [Выход]}
+{45000}{}{Ты @sex@|тупой осёл||безмозглая овца|, младший сержант! Теперь они поменяли местоположение и их нужно снова искать. Чем ты задание @sex@|слушал||слушала|?Вон отсюда. Через неделю подойдешь.}
+{45010}{}{Слушаюсь. [Выход]}
+{46000}{}{Младший сержант @pname@!}
+{46010}{}{Здесь, капитан!}
+{47000}{}{@sex@|Готов||Готова| к следующему заданию?}
+{47010}{}{Так точно.}
+{47020}{}{Мне нужно время на подготовку. [Выход]}
+{48000}{}{Командование поручает тебе операцию  по ликвидации  логова мутантов. Отдаю под твоё начало  пятерых гвардейцев. Они будут ждать тебя на месте. Цель - прибыть на обнаруженную тобой базу супермутантов  и произвести полную зачистку. Супермутанты - вояки суровые, поэтому вы должны быть отлично подготовлены  к операции. По исполнении жду твоего доклада здесь. Вопросов нет? Выполняйте!}
+{48010}{}{Слушаюсь! [Выход]}
+{49000}{}{Младший сержант @pname@! Жду доклада.}
+{49010}{}{Я работаю над этим, сэр. [Выход]}
+{49020}{}{Разрешите доложить, задание выполнено! }
+{49030}{}{Капитан, сэр. Мы опоздали... Мутанты успели сменить позицию...}
+{50000}{}{Рад слышать. Докладывай подробности.}
+{50010}{}{Нами уничтожено 9 супермутантов. Потерь среди личного состава нет.}
+{50020}{}{Нами уничтожено 9 супермутантов. Потери среди личного состава - 1 человек.}
+{50030}{}{Нами уничтожено 9 супермутантов. Потери среди личного состава - 2 человека.}
+{50040}{}{Нами уничтожено 9 супермутантов. Потери среди личного состава - 3 человека.}
+{50050}{}{Нами уничтожено 9 супермутантов. Потери среди личного состава - 4 человека.}
+{50060}{}{Нами уничтожено 9 супермутантов. Мной потеряны все ведомые. Бой был тяжелый.}
+{51000}{}{Отличная работа, просто превосходно. Держи, это тебе от меня лично. Будь поблизости, ты еще понадобишься через три дня.}
+{51010}{}{Так точно, сэр. [Выход]}
+{52000}{}{Неплохо. И по потерям в норматив уложились. Прибыть ко мне через три дня. Пока - отдыхать.}
+{52010}{}{Так точно, сэр. [Выход]}
+{53000}{}{Слишком дорогая цена за такое задание. Ты совсем не бережешь людей. Так тебе не стать хорошим командиром. Я недоволен. Жду тебя здесь через три дня.}
+{53010}{}{Так точно, сэр. [Выход]}
+{54000}{}{Младший сержант @pname@!}
+{54010}{}{Здесь, капитан!}
+{55000}{}{Поздравляю с присвоением  воинского звания - старший сержант. Твоё денежное довольствие увеличено до 151 монеты в день.  Раз в неделю будешь получать 2 суперстимпака у доктора в убежище. Ремонт оружия у Велери - 2 предмета в день.}
+{55010}{}{Слуга народа!}
+{56000}{}{Вольно, старший сержант. Пока свободны. Не отлучайтесь надолго из города. Вы можете понадобиться.}
+{56010}{}{Есть, капитан! [Выход]}
+{57000}{}{Старший сержант @pname@! Ко мне!}
+{57010}{}{Здесь, капитан!}
+{58000}{}{У меня для тебя задание особой важности. @sex@|Готов||Готова|?}
+{58010}{}{Так точно.}
+{58020}{}{Прибуду, когда лучше подготовлюсь. [Выход]}
+{59000}{}{Слушай меня внимательно, @pname@. Миссия, которую я тебе поручаю, очень важна для Города. И благодарность за выполнение будет немалой. В случае же неудачи… Не хочется думать об этом, но знай, что в случае провала я могу здорово испортить тебе жизнь.}
+{59010}{}{Кто бы сомневался… Гм. Я @sex@|хотел||хотела| сказать - я @sex@|готов||готова| к выполнению любых заданий командования.}
+{59020}{}{Ну если вы так ставите вопрос, я хочу попросить отстранить меня от выполнения этого задания. [Выход]}
+{60000}{}{Итак. События последних недель наводят на определенные мысли. Нашим аналитикам не нравится усиление активности мутантов. Отсюда следует твоё задание. 
+ Твоя миссия - прибыть в НКР и договориться с генералом Шейманом о военной помощи для нашего города. Донеси до него мысль, что мы не просим их ввязываться в каждую стычку на нашей территории, а хотим заручиться поддержкой на случай серьезного конфликта. В свою очередь мы тоже будем готовы оказать им помощь. По необходимости.}
+{60010}{}{Ясно. Дело серьёзное. Можете что-нибудь посоветовать?}
+{61000}{}{Из наших в помощь дать никого не могу, извини. Настоятельно рекомендую прибыть к Шейману не в одиночку, а с тремя-четырьмя друзьями. Есть люди, которым ты доверяешь? Это должны быть серьёзные люди, не менее опытные, чем ты. Пусть видит, что тут у нас не школьники собрались.}
+{61010}{}{Так точно. Людей найду. Ещё что-нибудь?}
+{62000}{}{Ну как вести переговоры, советовать не могу. Я не дипломат. И вообще предпочитаю действия, а не слова, так что это всё на твоё усмотрение.
+}
+{62010}{}{Разрешите идти?}
+{63000}{}{Иди. Ни пуха.}
+{63010}{}{К чёрту. [Выход]}
+{64000}{}{@pname@! Наконец-то! Докладывай!}
+{64010}{}{Переговоры идут. Прибуду с докладом позже. [Выход]}
+{64020}{}{Выполнено. Они согласны нам помочь. Вот код экстренной радиосвязи. Подробно будете говорить лично с Шейманом.}
+{64030}{}{Выполнено. Они согласны нам помочь. Вот код экстренной радиосвязи. И кроме того, он согласен принять наших вояк на стажировку.}
+{65000}{}{Отлично, @pname@! Я верил в тебя, но такого результата не ожидал. Ну и я тебя порадую.От меня лично - именное оружие, ну и денежная премия, само собой.}
+{65010}{}{Служу народу!}
+{66000}{}{Отлично, @pname@! Я верил в тебя, но такого результата не ожидал. Ну и я тебя порадую. Ты с этого момента @sex@|Гражданин||Гражданка| Города-убежища. От меня лично - именное оружие, ну и денежная премия, само собой.}
+{66010}{}{Служу народу!}
+{67000}{}{Неплохо, очень неплохо @pname@! Ты очень сильно @sex@|помог||помогла| всему Городу. И город тебе благодарен. Возьми это.}
+{67010}{}{Служу народу!}
+{68000}{}{И неплохо служишь! Кстати, разреши поздравить. Ты теперь лейтенант. Денежное довольствие - 360 монет в день. Любое лечение у доктора Троя бесплатно. Три суперстимпака в неделю у него же. Вэлери починит в день три любых предмета… Да, хоть гражданство ты еще не получил, но мы сделали для тебя исключение и теперь ты можешь покупать любые вещи в Службе Обустройства.
+Думаю, погоны надо обмыть.}
+{68010}{}{ Так точно, капитан!}
+{69000}{}{Можешь звать меня Йохан.}
+{69010}{}{Так точно… эээ… Хорошо, Йохан. [Выход]}
+{70000}{}{Не понял... Ты же дол@sex@|жен||жна| сейчас развлекаться с моим бойцом. Какие-то проблемы?}
+{70010}{}{Да, к нему и направляюсь.}
+{70020}{}{Капитан, я мог@sex@|||ла| бы побить этого парня. Но, посудите сами, как это будет выглядеть со стороны? Я не хочу, чтобы все считали, что любой бродяга с Пустоши легко отделает бойца Гвардии...}
+{71000}{}{Это ты у него сам спроси. [Усмехается] Все. Разговор окончен. Марш!}
+{71010}{}{Слушаюсь, сэр!}
+{72000}{}{Не сейчас, @pname@!@@ Я занят, позже подойди. @@ Для тебя пока ничего нет.@@ Займись своими делами.@@Ты отвлекаешь меня, @pname@!}
+{73000}{}{Проклятье! Не ожидал, младший сержант, что ты подведешь. Ну, что поделать. Приходи через неделю. Будут новые приказы.}
+{73010}{}{Есть, сэр...}
+{74000}{}{Все бы так служили Городу-Убежищу, как ты. Я горжусь тобой!@@Эй, обезьяны, смотрите, с кого нужно брать пример!@@Старший сержант, ты заслужил@sex@|||а| свое звание. Пока такие ребята в Гвардии, Город может спать спокойно.}
+{75000}{}{Все бы так служили Городу-Убежищу, как ты. Я горжусь тобой!@@Эй, обезьяны, смотрите, с кого нужно брать пример!@@Лейтенант. Приветствую.}
+{100000000}{}{Гвардейцы! Слушай мою команду. Равнение на середину!}
+{100000001}{}{Три шага вперед, шагом. Марш!}
+{100000002}{}{Кру-у-у-угом!}
+{100000003}{}{Оружие на-грудь}
+{100000004}{}{Оружие - за спину}
+{100000005}{}{Пять шагов вперед, бегом. Марш!}
+{100000006}{}{Кру-гом!}
+{100000007}{}{Два шага вперед, шагом. Марш}
+{100000008}{}{Вольно!}
+{100000009}{}{Это чучело безнадежно. Я так и думал.@@Ну, как идет, как идет! Корова какая то! Свинья, наверное.@@ Строй не ломай, ты!@@Дубьё, сороконожки! @@ Наберут по объявлению! @@ Чё-то я не понял, вы вообще ходить умеете?}
+{100000010}{}{Вольно. Разойдись.}
+{100000011}{}{Служба в рядах Гвардии закалила вас, вы научились действовать в  бою решительно и без промедлений. Никакому штатскому это недоступно . Вы получаете 1 единицу действия.}
+
+[engl]
+{100}{}{Johan Hartman}
+{200}{}{A sternly looking soldier.}
+{210}{}{This man is not that young, but he looks fit and concentrated. He's clearly used to giving orders.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{игрок не выполнял квесты Хартмана}
+{1020}{}{низкий интеллект}
+{1030}{}{Взят квест на поединок, не выполнен}
+{1040}{}{Взят квест на поединок, выполнен. }
+{1050}{}{Квест на винтовки не брался}
+{1060}{}{Взят квест на ремонт винтовок}
+{1070}{}{Выполнен квест на ремонт винтовок}
+{1080}{}{Взят квест на строевую подготовку, но игрок вылетел. Подготовка активна, выполняет кто-то другой или зависла (сбросится через 5 реальных минут),}
+{1090}{}{Взят квест на строевую подготовку, но игрок вылетел. Никто не занимается строевой подготовкой}
+{1100}{}{Выполнен квест на строевую подготовку}
+{1110}{}{Строевая подготовка сдана игрок не стал гвардейцем}
+{1120}{}{есть таймаут на один из повторяемых квестов}
+{1130}{}{игрок гвардеец, выполнено меньше 3 патрулей. Таймаут прошел. Квест на патруль не взят.}
+{1140}{}{Игрок выполнил или провалил квест на патруль}
+{1150}{}{Игрок выполнил три квеста на патрулирование. Ранг не повышен.}
+{1160}{}{Ранг = мл. сержант. Таймаут свободен. Менее 4 зачищенных пещер с мутантами. Не выполнен преквест разведки.}
+{1170}{}{Игрок в процессе выполнения квеста-разведки, квест не сдан}
+{1180}{}{Разведка выполнена, зачистка нет.}
+{1190}{}{Зачистка выполнена, либо игрок  не успел до удаления локации}
+{1200}{}{Выполнено 4 разведки, статус младший сержант}
+{1210}{}{Ранг = старший сержант, нет 18 уровня или 100 красноречия}
+{1220}{}{Ранг = старший сержант, 18 ур, 100 спича, не выполнен квест Дипкурьер}
+{1230}{}{Взят и не сдан квест Дипкурьер}
+{1240}{}{Лейтенант}
+{2000}{}{What is it?}
+{2010}{}{Sorry, my mistake. I'm leaving. [Leave]}
+{2020}{}{I have some questions. Can you help me?}
+{3000}{}{Go ahead.}
+{3010}{}{Who are you and what do you do?}
+{4000}{}{Johan Hartman. Captain Johan Hartman. Commander of City Guard. Any questions?}
+{4010}{}{Commander of City Guard? Wow! Can I become a guard? I've always dreamt of military career. Romanticism, leadership, protection of civilians. Awesome.}
+{4020}{}{Commander of City Guard? Wow! Can I become a guard? I've always dreamt of military career. Romanticism, leadership, protection of civilians. Awesome.}
+{4030}{}{No sir! Permission to leave?@@No questions, goodbye.}
+{5000}{}{No way. Work out some, get some more experience, get yourself in shape… Then we'll talk.}
+{5010}{}{But I'm the best!}
+{6000}{}{Romanticism, protection… Are you all right? Have you been hit in the head recently? Hmm. Actually we do take on recruits. Are you sure it's what you want?}
+{6010}{}{Yes, sir. This is my true desire!}
+{6020}{}{I need to think it over. [Leave]}
+{7000}{}{Well then. But before becoming a guard you need to prove that you are worthy of this rank. You have to work for this. And work hard! But after that it only gets better: admission to the city, free medical aid, good money. What do you say?}
+{7010}{}{Sounds great, I'm not afraid of hardships.}
+{7020}{}{So complicated. No, man, I'm tired of this.}
+{8000}{}{Well, here is your first task. You need to fight one of our men unarmed. Prove yourself.}
+{8010}{}{Why not. Either fist smashed or head split up. Who's the guy?}
+{8020}{}{I... hmm... I'm not sure. You know, my fighting skills are not that good… Maybe there is another way?}
+{9000}{}{It's true! There is the guy standing aside, fight him.}
+{9010}{}{As you wish...}
+{10000}{}{God damn! A soldier... A guard, huh. I'm lost for words. Get the hell out of here and don't even catch my eye again.}
+{11000}{}{Fine, you handled the first task. Shall we continue?}
+{11010}{}{Ready, sir!}
+{11020}{}{I need time to prepare. [Leave]}
+{12000}{}{So, you'll have to use a personal gun during your service often. Now your task is to show you can handle it. Here, take. [Gives you two guns so dirty the bolt doesn't move] They must shine like new before tomorrow. Forward march!}
+{12010}{}{Yes, sir! [Leave]}
+{13000}{}{So? How is your progress?}
+{13010}{}{I'm working on it... [Leave]}
+{13020}{}{Guns like endearment, cleaning and greasing! Here are your guns!}
+{13030}{}{I thought for a while. And decided to attach something to them.}
+{14000}{}{Fine!}
+{14010}{}{Vault City prevails! [Leave]}
+{15000}{}{What's this amateur initiative?! Give it to me! What… Oh. Not bad, not bad at all. Hmm. Keep one to yourself. The recruits are far better these days…}
+{15010}{}{Vault City prevails! [Leave]}
+{16000}{}{I'm listening to you.}
+{16010}{}{Any more tasks, or am I in?}
+{17000}{}{Sure. Sure, you are not a guard yet. Parade drill is next on the list.}
+{17010}{}{What are we waiting for?}
+{17020}{}{Oh. Just a moment… [Leave]}
+{18000}{}{Fine. Get in the rank with those monkey… guards, do everything they do. Clear? Do it!}
+{18010}{}{Yes, sir! [Leave]}
+{19000}{}{We'll talk later. I have training here! Clear this area immediately!}
+{19010}{}{What about me...}
+{20000}{}{So. @pname@. Here you are.}
+{20010}{}{At your service, captain.}
+{21000}{}{That's enough with tests for you. Meanwhile. Didn't you change your mind about enlisting in the Guard?}
+{21010}{}{I need some time to make my decision. [Leave]}
+{21020}{}{I don't change my decisions.}
+{22000}{}{If your intentions remain the same you must take your oath of enlistment now. Stand still and repeat after me: I, @pname@...}
+{22010}{}{I, @pname@...}
+{23000}{}{Entering Vault City Guard…}
+{23010}{}{Entering Vault City Guard…}
+{24000}{}{Take this oath and proudly swear. To be a sincere, faithful, disciplined, vigilant soldier. To carry out the duties of military service with dignity…}
+{24010}{}{Take this oath and proudly swear. To be a sincere, faithful, disciplined, vigilant soldier. To carry out the duties of military service with dignity…}
+{25000}{}{To execute Commander's orders without question. Not to spare myself and if necessary lay my life for Vault City protection and fight with it's enemies…}
+{25010}{}{To execute Commander's orders without question. Not to spare myself and if necessary lay my life for Vault City protection and fight with it's enemies…}
+{26000}{}{If I ever break this oath let me be court-martialed and punished. God bless my soul.}
+{26010}{}{If I ever break this oath let me be court-martialed and punished. God bless my soul.}
+{27000}{}{Congratulations, guard. So. From now on you'll receive your daily allowance of $68. It'll be put to your account. That's it for now. You'll be paid more when you are promoted. You can enter the city without a pass. Doc will give you 5 stimpaks every week. Also once a week you can have a free repair at Valerie's. I'll personally give you assignments. Is everything clear? Dismissed.}
+{27010}{}{Vault City prevails, sir! [Leave]}
+{28000}{}{So, guard @pname@. Come to me!}
+{28010}{}{Guard @pname@ reporting as ordered!}
+{29000}{}{Listen up, son. You've been assigned to a patrol squad. There'll be another three guards with you. You must circle the area outside the city and neutralize all hostility. Take care of our people, kill enemies. Don't screw up, fellow. Report when it's done. Are we on the same page?}
+{29010}{}{Who will be in command, sir?}
+{30000}{}{Go to the guard barracks gates. Find corporal Shrimp, he will be in charge of the mission. March!}
+{30010}{}{It's clear, sir! Permission to run?}
+{30020}{}{May I inquire, sir? Why do people call the corporal “Shrimp”?}
+{31000}{}{Report!}
+{31010}{}{Your order has been executed!}
+{31020}{}{Your order has been executed!}
+{31030}{}{Your order has been executed!}
+{31040}{}{I… Didn't manage…}
+{31050}{}{Excuse me, I'll return soon.}
+{32000}{}{Fine, guardsman. Take a two days rest, then return. It's an order. }
+{32010}{}{Yes, sir.[Leave]}
+{33000}{}{Well done. Not without casualties, but the job's done. Now you can have some rest. Return in two days.}
+{33010}{}{Yes, sir. [Leave]}
+{34000}{}{Yep. Already heard. I'm ashamed that I admitted you into the Guard… But there was no other way. Come back in two days. You'll have a chance to rehabilitate yourself.}
+{34010}{}{Yes, sir. [Leave]}
+{35000}{}{Listen up, guard, no more screwing up. You have a week for self-preparing, then return.}
+{35010}{}{Yes, sir.[Leave]}
+{36000}{}{Guard @pname@!}
+{36010}{}{Sir!}
+{37000}{}{Let me congratulate you on your promotion, lance sergeant!}
+{37010}{}{Vault City prevails, sir!}
+{38000}{}{Your allowance increased up to $98 per day. It will be put to your account. Once a week Doc will give you a superstimpak. Weapon maintenance - 1 gun a week. Any questions?}
+{38010}{}{No sir! Vault City prevails!}
+{39000}{}{Dismissed, lance sergeant. You can have a party on this occasion with your friends. Check with me tomorrow.}
+{39010}{}{Yes, sir. [Leave]}
+{40000}{}{Lance sergeant @pname@!}
+{40010}{}{Here, captain!}
+{41000}{}{I have a task for you.}
+{41010}{}{Yes, captain, sir.}
+{41020}{}{I need to prepare my gear. [Leave]}
+{42000}{}{Listen up. We've got information that near city  mutant groups are gathering. But the information has not been confirmed yet. You have to carry out a recon mission. You'll handle this. Your task is to scout the neighborhood for mutant camp. Locate the place, then report. Under no circumstances should reveal yourself. No firefights. Detect and report. Is the task clear?}
+{42010}{}{Yes, sir. Permission to execute? [Leave]}
+{43000}{}{Lance sergeant @pname@! I'm waiting for a report.}
+{43010}{}{Yes, captain! Information has been confirmed. Theses are super mutants. Their base has been discovered. I wasn't detected.}
+{43020}{}{Base was discovered… but I had to fight them, captain.}
+{43030}{}{In progress, captain, sir! [Leave]}
+{44000}{}{Nice job, @pname@! I need to think over the strategy. Check with me tomorrow.}
+{44010}{}{Yes, sir. [Leave]}
+{45000}{}{You are stupid asshole, lance sergeant! Now they've changed their location and we have to search them again. This is the way you listen to me? Get the hell out of here. Come back in a week.}
+{45010}{}{Yes, sir. [Leave]}
+{46000}{}{Lance sergeant @pname@!}
+{46010}{}{Here, captain!}
+{47000}{}{Ready for the next task?}
+{47010}{}{Yes, sir.}
+{47020}{}{I need time to get ready. [Leave]}
+{48000}{}{Headquarter entrusts you with the operation of elimination of the Supermutants den. You'll take command of five guards. They'll be waiting for you on the spot. Your objective is to get to the located base and execute a complete wipe out. Supermutants are severe soldiers, this is why you must be well prepared for the operation. I'm waiting for your report right here. Any questions? Dismissed!}
+{48010}{}{Yes, sir! [Leave]}
+{49000}{}{Lance sergeant @pname@! I'm waiting for a report.}
+{49010}{}{I'm working on it, sir. [Leave]}
+{49020}{}{Let me report, mission complete!}
+{49030}{}{Captain, sir. We were late... Mutants managed to change their location...}
+{50000}{}{Glad to hear it. Report details.}
+{50010}{}{We neutralized 5 Super mutants. We had no casualties.}
+{50020}{}{We neutralized 5 Super mutants. Losses among guards - 1 person.}
+{50030}{}{We neutralized 5 Super mutants. Losses among guards - 2 persons.}
+{50040}{}{We neutralized 5 Super mutants. Losses among guards - 3 persons.}
+{50050}{}{We neutralized 5 Super mutants. Losses among guards - 4 persons.}
+{50060}{}{We neutralized 5 Super mutants. I've lost the whole squad. The battle was hard.}
+{51000}{}{Nice job, excellent. Here, it is from me personally. Be nearby, you'll be needed in three days.}
+{51010}{}{Yes, sir. [Leave]}
+{52000}{}{Not bad. Permissible losses. Come to me in three days. Now you can have some rest.}
+{52010}{}{Yes, sir. [Leave]}
+{53000}{}{Too high a price for such a mission. You don't care about your men. You won't become a good commander with such an attitude. I am not satisfied. Expecting you in three days.}
+{53010}{}{Yes, sir. [Leave]}
+{54000}{}{@pname@!}
+{54010}{}{Here, captain!}
+{55000}{}{Congratulations on your promotion, staff sergeant. Your salary is increased up to $151 a day. Once a week you'll get two superstimpaks from the Doc. Weapon maintenance at Valerie's  - 2 units per day.}
+{55010}{}{Vault City Prevails, sir!}
+{56000}{}{Dismissed, staff sergeant. You're free for a while. Don't leave the city for too long. We might need you.}
+{56010}{}{Yes, captain! [Leave]}
+{57000}{}{Staff sergeant @pname@! Come to me!}
+{57010}{}{Captain, sir!}
+{58000}{}{I have a task of special importance for you. Are you ready?}
+{58010}{}{Yes, sir.}
+{58020}{}{I need to  prepare for such a task. [Leave]}
+{59000}{}{Listen attentively, @pname@. This mission is very important for the city. And you will be generously rewarded. In the case of misfortune… I don't even want to think of it, in case of failure your life can be spoiled forever, keep it in mind son.}
+{59010}{}{I had no doubts… I just wanted to say that I am ready for every headquarters task.}
+{59020}{}{In that case I ask to dismiss me from this task. [Leave]}
+{60000}{}{So. Last week events make us think in a direct way. Our analysts don't like the spreading mutant activity. This takes us to this mission. Your mission is to get to the NCR and convince general Shaiman to give some military support to our city. You must explain him that we don't ask them to join us in every battle, we just want to know that we can count on them in case of “special occasion”. We can give them a helping hand if they need it in return.}
+{60010}{}{It's clear. It's a serious business. Can you give me any advice?}
+{61000}{}{I can't give you any assistance. I strongly advice you not to go to Shaiman on your own, take three or four friends with you. Are there any people you can trust? They should be serious people, not less experienced than you. Let him see that we are no schoolboys.}
+{61010}{}{Yes, sir. I'll find people. Anything else?}
+{62000}{}{I can't tell you how to conduct negotiations. I'm not a diplomat at all. And I prefer to act rather than talk at all, so it's all for you to decide.}
+{62010}{}{May I go?}
+{63000}{}{You may. Good luck.}
+{63010}{}{Thanks, sir. [Leave]}
+{64000}{}{@pname@! I've been waiting! Report!}
+{64010}{}{Negotiations are on the way. I'll report later. [Leave]}
+{64020}{}{It's done. They are ready to help. Here is an emergency radio code. You'll talk personally to Shaiman in detail.}
+{64030}{}{It's done. They are ready to help. Here is an emergency radio code. And they are even ready to take our guards for a training course.}
+{65000}{}{Fine, @pname@! I believed in you, but you still surprised me. So I'll surprise you. Personally from me - a custom gun, and some money of course.}
+{65010}{}{Vault City prevails, sir!}
+{66000}{}{Fine, @pname@! I believed in you, but you still surprised me. So I'll surprise you. You are a citizen of a Vault City from this moment. Personally from me - a custom gun, and some money of course.}
+{66010}{}{Vault City prevails, sir!}
+{67000}{}{not bad, not bad @pname@! You helped the whole city. And the city is grateful to you. Take this.}
+{67010}{}{Vault City prevails, sir!}
+{68000}{}{Not bad! By the way, let me congratulate you. From now on you are a lieutenant. You'll be paid $360 a day. Doc Troy will treat you for free. Three superstimpaks a week. Valerie will do three repairs a day… Even though you didn't get your citizenship yet, we've made an exception. You are now able to buyany items in Amenities Officer. 
+I think you should celebrate that.}
+{68010}{}{Yes, captain!}
+{69000}{}{You can call me Johan.}
+{69010}{}{Yes, sir… erm… I mean, okay, Johan. [Leave]}
+{70000}{}{What the... You must be having fun with my fighter now. Any problem?}
+{70010}{}{I'm on my way.}
+{70020}{}{Captain, I can fight this guy. But think of how it will be seen from aside? I don't want people to think that every man from the wasteland can fight a Guard...}
+{71000}{}{Ask him about it. [Grins] That's all. No more talking. March!}
+{71010}{}{Yes, sir!}
+{72000}{}{Not now, @pname@!@@ I am busy, come later. @@ There is nothing for you right now.@@ Don't you have any of your own business?@@I'm in the middle of something, @pname@!}
+{73000}{}{Damn! I didn't think you'd let me down, sergeant. So what should I do... Return back in a week. There'll be new orders.}
+{73010}{}{Yes, sir...}
+{74000}{}{I wish everyone served Vault City as good as you. I am proud of you!@@Hey, monkeys, look at the man you should follow the example of!@@Staff sergeant, you earned your rank. While such guys are among guards our city can sleep safely.}
+{75000}{}{I wish everyone served Vault City as good as you. I am proud of you!@@Hey, monkeys, look at the man you should follow the example of!@@Lieutenant. Congratulations.}
+{100000000}{}{Guards! Listen to my order. Fall in!}
+{100000001}{}{Three steps forward. March!}
+{100000002}{}{About, FACE!}
+{100000003}{}{Present, ARMS!}
+{100000004}{}{Order, ARMS}
+{100000005}{}{Five steps forward, fast. March!}
+{100000006}{}{About, FACE!}
+{100000007}{}{Two steps forward, slow. March!}
+{100000008}{}{At ease!}
+{100000009}{}{This scarecrow is worthless. Just as I thought.@@Look at the way he marches! Just like a pig in the sty.@@ Don't break formation!@@Just look at that crap! @@ Where do they even find imbeciles like this? @@ I can't understand, can you walk at all?}
+{100000010}{}{At ease. Dismissed.}
+{100000011}{}{Service in the Guard made you tough, you learned to act resolutely and without delay. No civilian can act like that. You gain 1 action point.}
+
+[ukra]
+{100}{}{Йохан Хартманн}
+{200}{}{Сурово выглядящий вояка.}
+{210}{}{Человек в возрасте, но подтянут и собран. Он явно привык командовать.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{игрок не выполнял квесты Хартмана}
+{1020}{}{низкий интеллект}
+{1030}{}{Взят квест на поединок, не выполнен}
+{1040}{}{Взят квест на поединок, выполнен. }
+{1050}{}{Квест на винтовки не брался}
+{1060}{}{Взят квест на ремонт винтовок}
+{1070}{}{Выполнен квест на ремонт винтовок}
+{1080}{}{Взят квест на строевую подготовку, но игрок вылетел. Подготовка активна, выполняет кто-то другой или зависла (сбросится через 5 реальных минут),}
+{1090}{}{Взят квест на строевую подготовку, но игрок вылетел. Никто не занимается строевой подготовкой}
+{1100}{}{Выполнен квест на строевую подготовку}
+{1110}{}{Строевая подготовка сдана игрок не стал гвардейцем}
+{1120}{}{есть таймаут на один из повторяемых квестов}
+{1130}{}{игрок гвардеец, выполнено меньше 3 патрулей. Таймаут прошел. Квест на патруль не взят.}
+{1140}{}{Игрок выполнил или провалил квест на патруль}
+{1150}{}{Игрок выполнил три квеста на патрулирование. Ранг не повышен.}
+{1160}{}{Ранг = мл. сержант. Таймаут свободен. Менее 4 зачищенных пещер с мутантами. Не выполнен преквест разведки.}
+{1170}{}{Игрок в процессе выполнения квеста-разведки, квест не сдан}
+{1180}{}{Разведка выполнена, зачистка нет.}
+{1190}{}{Зачистка выполнена, либо игрок  не успел до удаления локации}
+{1200}{}{Выполнено 4 разведки, статус младший сержант}
+{1210}{}{Ранг = старший сержант, нет 18 уровня или 100 красноречия}
+{1220}{}{Ранг = старший сержант, 18 ур, 100 спича, не выполнен квест Дипкурьер}
+{1230}{}{Взят и не сдан квест Дипкурьер}
+{1240}{}{Лейтенант}
+{2000}{}{В чем дело?}
+{2010}{}{Извините, моя ошибка. Уже ухожу. [Выход]}
+{2020}{}{Возникли вопросы. Не поможете?}
+{3000}{}{Задавайте.}
+{3010}{}{Кто вы и чем занимаетесь?}
+{4000}{}{Йохан Хартманн. Капитан Йохан Хартманн. Командующий Гвардией Города. Ещё вопросы есть?}
+{4010}{}{Командующий Гвардией? Ого! А я могу стать гвардейцем? Всю жизнь @sex@|мечтал||мечтала| о военной карьере. Романтика, войсковое  товарищество, защита  мирного населения. Прелесть.}
+{4020}{}{Командующий Гвардией? Ого! А я могу стать гвардейцем? Всю жизнь @sex@|мечтал||мечтала| о военной карьере. Романтика, войсковое  товарищество, защита  мирного населения. Прелесть.}
+{4030}{}{Никак нет! Разрешите идти?@@Никаких вопросов, прощайте.}
+{5000}{}{Нет, не выйдет. Сходи подкачайся, наберись опыта, приведи себя в соответствие… Тогда и поговорим.}
+{5010}{}{Да я и так лучш@sex@|ий||ая|!}
+{6000}{}{Романтика, защита…У тебя с головой всё в порядке? В детстве не роняли со стола? Гм. Ну в принципе мы ведем набор. Ты @sex@|уверен||уверена|, что хочешь этого?}
+{6010}{}{Так точно. Именно таково моё желание!}
+{6020}{}{Мне нужно ещё подумать. [Выход]}
+{7000}{}{Ну что ж. НО! Прежде чем стать гвардейцем, нужно доказать, что ты @sex@|достоин||достойна| этого звания. А для этого придется постараться. И очень постараться!  Зато потом - все блага: проход в город, бесплатная медицина, неплохие деньги. Что скажешь?}
+{7010}{}{Отлично звучит, а трудности меня не пугают.}
+{7020}{}{И тут всё не просто так. Ну нафиг, надоело.}
+{8000}{}{Ну тогда вот первое задание. Тебе нужно сойтись врукопашную с одним из наших. Покажи себя.}
+{8010}{}{Почему нет. Я считаю - или кулак вдребезги, или башка пополам. С которым тут?}
+{8020}{}{Я, ну это, того. У меня, знаете, навыки рукопашного боя, они угу, не прокачаны… Может как-нибудь по-другому?}
+{9000}{}{Вот это верно! Вот стоит паренёк отдельно - с ним зарубайся.}
+{9010}{}{Как скажете...}
+{10000}{}{Мама дорогая! Солдат, гвардеец, чё сказать. А ну иди отсюда, чтоб я тебя не видел.}
+{11000}{}{Ну хорошо, первое испытание - зачет. Продолжаем?}
+{11010}{}{Всегда готов!}
+{11020}{}{Мне нужно время на подготовку. [Выход]}
+{12000}{}{Так, на службе тебе придется часто пользоваться личным оружием. Сейчас твоя задача - показать, что ты можешь с ним обращаться. Вот возьми-ка. [Даёт два засраных до неподвижности затвора ствола] До завтра чтоб всё блестело, как новое! Шагом марш!}
+{12010}{}{Так точно! [Выход]}
+{13000}{}{Ну что? Как успехи?}
+{13010}{}{Процесс идет... [Выход]}
+{13020}{}{Оружие любит ласку, чистку и смазку! Получите ваши волыны!}
+{13030}{}{Я тут @sex@|подумал||подумала | немного. И @sex@|решил||решила|  кое-что к ним приделать.}
+{14000}{}{Отлично!}
+{14010}{}{@sex@|Рад||рада| стараться! [Выход]}
+{15000}{}{Чё за самодеятельность! А ну дай сюда! Чё ты… О. Неплохо, очень даже. Молодец. Хм. Оставь одну себе. Надо же. Какие новобранцы пошли продвинутые, мдя…}
+{15010}{}{@sex@|Рад||рада| стараться! [Выход]}
+{16000}{}{Слушаю тебя.}
+{16010}{}{Еще задания будут, или я уже в гвардии?}
+{17000}{}{Разумеется. Разумеется будут, и разумеется ты ещё не в гвардии. На очереди строевая подготовка.}
+{17010}{}{Так чего мы ждём?}
+{17020}{}{Ой. Я тут сейчас, я сейчас тут… [Выход]}
+{18000}{}{Так. Вставай в строй рядом с этими обезья… гвардейцами, всё делай, как они. Ясно? Вперед!}
+{18010}{}{Так точно! [Выход]}
+{19000}{}{Все разговоры потом. У меня занятия! Освободил@sex@|||а| площадку, быстро!}
+{19010}{}{А как же я...}
+{20000}{}{Так. @pname@. Вот ты где.}
+{20010}{}{Всегда к вашим услугам, капитан.}
+{21000}{}{Ннну, испытания для тебя окончены. Пока. Не @sex@|передумал||передумала | со  вступлением  в Гвардию?}
+{21010}{}{Мне нужно время на принятие решения. [Выход]}
+{21020}{}{Я не меняю своих решений.}
+{22000}{}{Если твои намерения вступить в гвардию неизменны, я должен привести тебя к присяге. Стой смирно и повторяй за мной: Я, @pname@...}
+{22010}{}{Я, @pname@...}
+{23000}{}{Вступая в ряды Гвардейцев Города-Убежища…}
+{23010}{}{Вступая в ряды Гвардейцев Города-Убежища…}
+{24000}{}{Принимаю эту присягу и торжественно клянусь. Быть честным, верным, дисциплинированным, бдительным воином. С достоинством переносить тяготы и лишения воинской службы…}
+{24010}{}{Принимаю эту присягу и торжественно клянусь. Быть честным, верным, дисциплинированным, бдительным воином. С достоинством переносить тяготы и лишения воинской службы…}
+{25000}{}{Беспекословно выполнять приказы и приказания командиров и начальников. Не жалеть своей крови, а если понадобится и жизни для защиты Города и борьбы с его врагами…}
+{25010}{}{Беспекословно выполнять приказы и приказания командиров и начальников. Не жалеть своей крови, а если понадобится и жизни для защиты Города и борьбы с его врагами…}
+{26000}{}{Если же я нарушу эту торжественную присягу, пусть меня постигнет кара военного трибунала. И да помилует Господь мою душу.}
+{26010}{}{Если же я нарушу эту торжественную присягу, пусть меня постигнет кара военного трибунала. И да помилует Господь мою душу.}
+{27000}{}{Мои поздравления, гвардеец. Так. Денежное довольствие 68 монет в день. Зачисляется на счет в банке. Это пока. Повысишь звание - оплата вырастет. В город можешь входить без пропуска. Раз в неделю док в убежище будет выдавать по 5 стимпаков. Так же раз в неделю - бесплатный ремонт у Вэлери. Задания по службе получаешь лично у меня. Всё ясно? Свободен.}
+{27010}{}{Слуга народа! [Выход]}
+{28000}{}{Так, рядовой @pname@. Ко мне!}
+{28010}{}{Рядовой  @pname@ по вашему приказанию прибыл!}
+{29000}{}{Слушай мою команду. Ты отряжаешься в патруль. С тобой будут трое наших, обходишь с ними город, уничтожаешь все враждебно настроенные элементы. Своих людей беречь, врагов уничтожать. Смотри не перепутай, Кутузов. По исполнении доложишь. Что не ясно?}
+{29010}{}{Кто будет командовать патрулем?}
+{30000}{}{Иди за ворота к казармам Гвардии. Найди капрала Креветку, будешь под его началом. Марш!}
+{30010}{}{Всё ясно! Разрешите бегом?}
+{30020}{}{Разрешите вопрос, сэр? Почему капрала зовут "Креветка"?}
+{31000}{}{Докладывай!}
+{31010}{}{Ваше приказание выполнено!}
+{31020}{}{Ваше приказание выполнено!}
+{31030}{}{Ваше приказание выполнено!}
+{31040}{}{У меня, эээ. Не вышло…}
+{31050}{}{Прошу прощения капитан, я скоро вернусь.}
+{32000}{}{Отлично, рядовой. Так, отдыхай два дня, потом подойдешь. Это приказ. }
+{32010}{}{Так точно.[Выход]}
+{33000}{}{Неплохо справился. Не без потерь, но всё же. Сейчас можешь отдыхать. Через два дня подойдешь.}
+{33010}{}{Так точно. [Выход]}
+{34000}{}{Нда. Слышал уже. Мне стыдно, что я принял тебя в гвардию…Но, за неимением кухарки, ебут дворника. Так что, дорогой дворник, подходи через пару дней. Будет возможность реабилитироваться.}
+{34010}{}{Так точно. [Выход]}
+{35000}{}{Так, рядовой, чтоб больше я этого не видел. Неделя  на самоподготовку, потом подойдешь}
+{35010}{}{Так точно.[Выход]}
+{36000}{}{Рядовой @pname@!}
+{36010}{}{Я!}
+{37000}{}{Разреши поздравить тебя с присвоением очередного воинского звания - младший сержант!}
+{37010}{}{Слуга народа!}
+{38000}{}{Твоё денежное довольствие увеличено до 98 монет в день. Будут переводиться на твой счет. Раз в неделю док выдаст тебе суперстимпак. Ремонт оружия у Велери - 1 ствол в день. Вопросы есть?}
+{38010}{}{Никак нет! @sex@|Рад||Рада| стараться!}
+{39000}{}{Вольно, младший сержант. Отпразднуй повышение с друзьями, завтра явишься ко мне.}
+{39010}{}{Так точно. [Выход]}
+{40000}{}{Младший сержант @pname@!}
+{40010}{}{Здесь, капитан!}
+{41000}{}{Есть задание для тебя.}
+{41010}{}{Слушаю, капитан, сэр.}
+{41020}{}{Мне нужно произвести подгонку снаряжения. [Выход]}
+{42000}{}{Слушай вводную. Получена информация, что в окрестности города снова стягиваются бандформирования мутантов. Но, информация пока недостоверная. Необходимо произвести разведку. Этим займешься ты. Задание - произвести разведку окрестностей, найти логово мутантов. Чётко локализовать место. Доложить мне. Ни в коем случае, повторяю - ни в коем случае не обнаруживать себя. Никаких вооруженных столкновений. Найти - и доложить. Задание ясно?}
+{42010}{}{Так точно. Разрешите выполнять? [Выход]}
+{43000}{}{Младший сержант @pname@! Жду доклада.}
+{43010}{}{Так точно, капитан! Информация подтвердилась. Это супермутанты. База найдена. Они  меня не засекли.}
+{43020}{}{База найдена, но…мне пришлось вступить с ними в бой, капитан.}
+{43030}{}{Разрешите доложить, нахожусь в процессе выполнения, капитан, сэр! [Выход]}
+{44000}{}{Отличная работа, @pname@! Я должен обдумать стратегию, подойти ко мне завтра.}
+{44010}{}{Слушаюсь. [Выход]}
+{45000}{}{Ты @sex@|тупой осёл||безмозглая овца|, младший сержант! Теперь они поменяли местоположение и их нужно снова искать. Чем ты задание @sex@|слушал||слушала|?Вон отсюда. Через неделю подойдешь.}
+{45010}{}{Слушаюсь. [Выход]}
+{46000}{}{Младший сержант @pname@!}
+{46010}{}{Здесь, капитан!}
+{47000}{}{@sex@|Готов||Готова| к следующему заданию?}
+{47010}{}{Так точно.}
+{47020}{}{Мне нужно время на подготовку. [Выход]}
+{48000}{}{Командование поручает тебе операцию  по ликвидации  логова мутантов. Отдаю под твоё начало  пятерых гвардейцев. Они будут ждать тебя на месте. Цель - прибыть на обнаруженную тобой базу супермутантов  и произвести полную зачистку. Супермутанты - вояки суровые, поэтому вы должны быть отлично подготовлены  к операции. По исполнении жду твоего доклада здесь. Вопросов нет? Выполняйте!}
+{48010}{}{Слушаюсь! [Выход]}
+{49000}{}{Младший сержант @pname@! Жду доклада.}
+{49010}{}{Я работаю над этим, сэр. [Выход]}
+{49020}{}{Разрешите доложить, задание выполнено! }
+{49030}{}{Капитан, сэр. Мы опоздали... Мутанты успели сменить позицию...}
+{50000}{}{Рад слышать. Докладывай подробности.}
+{50010}{}{Нами уничтожено 9 супермутантов. Потерь среди личного состава нет.}
+{50020}{}{Нами уничтожено 9 супермутантов. Потери среди личного состава - 1 человек.}
+{50030}{}{Нами уничтожено 9 супермутантов. Потери среди личного состава - 2 человека.}
+{50040}{}{Нами уничтожено 9 супермутантов. Потери среди личного состава - 3 человека.}
+{50050}{}{Нами уничтожено 9 супермутантов. Потери среди личного состава - 4 человека.}
+{50060}{}{Нами уничтожено 9 супермутантов. Мной потеряны все ведомые. Бой был тяжелый.}
+{51000}{}{Отличная работа, просто превосходно. Держи, это тебе от меня лично. Будь поблизости, ты еще понадобишься через три дня.}
+{51010}{}{Так точно, сэр. [Выход]}
+{52000}{}{Неплохо. И по потерям в норматив уложились. Прибыть ко мне через три дня. Пока - отдыхать.}
+{52010}{}{Так точно, сэр. [Выход]}
+{53000}{}{Слишком дорогая цена за такое задание. Ты совсем не бережешь людей. Так тебе не стать хорошим командиром. Я недоволен. Жду тебя здесь через три дня.}
+{53010}{}{Так точно, сэр. [Выход]}
+{54000}{}{Младший сержант @pname@!}
+{54010}{}{Здесь, капитан!}
+{55000}{}{Поздравляю с присвоением  воинского звания - старший сержант. Твоё денежное довольствие увеличено до 151 монеты в день.  Раз в неделю будешь получать 2 суперстимпака у доктора в убежище. Ремонт оружия у Велери - 2 предмета в день.}
+{55010}{}{Слуга народа!}
+{56000}{}{Вольно, старший сержант. Пока свободны. Не отлучайтесь надолго из города. Вы можете понадобиться.}
+{56010}{}{Есть, капитан! [Выход]}
+{57000}{}{Старший сержант @pname@! Ко мне!}
+{57010}{}{Здесь, капитан!}
+{58000}{}{У меня для тебя задание особой важности. @sex@|Готов||Готова|?}
+{58010}{}{Так точно.}
+{58020}{}{Прибуду, когда лучше подготовлюсь. [Выход]}
+{59000}{}{Слушай меня внимательно, @pname@. Миссия, которую я тебе поручаю, очень важна для Города. И благодарность за выполнение будет немалой. В случае же неудачи… Не хочется думать об этом, но знай, что в случае провала я могу здорово испортить тебе жизнь.}
+{59010}{}{Кто бы сомневался… Гм. Я @sex@|хотел||хотела| сказать - я @sex@|готов||готова| к выполнению любых заданий командования.}
+{59020}{}{Ну если вы так ставите вопрос, я хочу попросить отстранить меня от выполнения этого задания. [Выход]}
+{60000}{}{Итак. События последних недель наводят на определенные мысли. Нашим аналитикам не нравится усиление активности мутантов. Отсюда следует твоё задание. 
+ Твоя миссия - прибыть в НКР и договориться с генералом Шейманом о военной помощи для нашего города. Донеси до него мысль, что мы не просим их ввязываться в каждую стычку на нашей территории, а хотим заручиться поддержкой на случай серьезного конфликта. В свою очередь мы тоже будем готовы оказать им помощь. По необходимости.}
+{60010}{}{Ясно. Дело серьёзное. Можете что-нибудь посоветовать?}
+{61000}{}{Из наших в помощь дать никого не могу, извини. Настоятельно рекомендую прибыть к Шейману не в одиночку, а с тремя-четырьмя друзьями. Есть люди, которым ты доверяешь? Это должны быть серьёзные люди, не менее опытные, чем ты. Пусть видит, что тут у нас не школьники собрались.}
+{61010}{}{Так точно. Людей найду. Ещё что-нибудь?}
+{62000}{}{Ну как вести переговоры, советовать не могу. Я не дипломат. И вообще предпочитаю действия, а не слова, так что это всё на твоё усмотрение.
+}
+{62010}{}{Разрешите идти?}
+{63000}{}{Иди. Ни пуха.}
+{63010}{}{К чёрту. [Выход]}
+{64000}{}{@pname@! Наконец-то! Докладывай!}
+{64010}{}{Переговоры идут. Прибуду с докладом позже. [Выход]}
+{64020}{}{Выполнено. Они согласны нам помочь. Вот код экстренной радиосвязи. Подробно будете говорить лично с Шейманом.}
+{64030}{}{Выполнено. Они согласны нам помочь. Вот код экстренной радиосвязи. И кроме того, он согласен принять наших вояк на стажировку.}
+{65000}{}{Отлично, @pname@! Я верил в тебя, но такого результата не ожидал. Ну и я тебя порадую.От меня лично - именное оружие, ну и денежная премия, само собой.}
+{65010}{}{Служу народу!}
+{66000}{}{Отлично, @pname@! Я верил в тебя, но такого результата не ожидал. Ну и я тебя порадую. Ты с этого момента @sex@|Гражданин||Гражданка| Города-убежища. От меня лично - именное оружие, ну и денежная премия, само собой.}
+{66010}{}{Служу народу!}
+{67000}{}{Неплохо, очень неплохо @pname@! Ты очень сильно @sex@|помог||помогла| всему Городу. И город тебе благодарен. Возьми это.}
+{67010}{}{Служу народу!}
+{68000}{}{И неплохо служишь! Кстати, разреши поздравить. Ты теперь лейтенант. Денежное довольствие - 360 монет в день. Любое лечение у доктора Троя бесплатно. Три суперстимпака в неделю у него же. Вэлери починит в день три любых предмета…
+Думаю, погоны надо обмыть.}
+{68010}{}{ Так точно, капитан!}
+{69000}{}{Можешь звать меня Йохан.}
+{69010}{}{Так точно… эээ… Хорошо, Йохан. [Выход]}
+{70000}{}{Не понял... Ты же дол@sex@|жен||жна| сейчас развлекаться с моим бойцом. Какие-то проблемы?}
+{70010}{}{Да, к нему и направляюсь.}
+{70020}{}{Капитан, я мог@sex@|||ла| бы побить этого парня. Но, посудите сами, как это будет выглядеть со стороны? Я не хочу, чтобы все считали, что любой бродяга с Пустоши легко отделает бойца Гвардии...}
+{71000}{}{Это ты у него сам спроси. [Усмехается] Все. Разговор окончен. Марш!}
+{71010}{}{Слушаюсь, сэр!}
+{72000}{}{Не сейчас, @pname@!@@ Я занят, позже подойди. @@ Для тебя пока ничего нет.@@ Займись своими делами.@@Ты отвлекаешь меня, @pname@!}
+{73000}{}{Проклятье! Не ожидал, младший сержант, что ты подведешь. Ну, что поделать. Приходи через неделю. Будут новые приказы.}
+{73010}{}{Есть, сэр...}
+{74000}{}{Все бы так служили Городу-Убежищу, как ты. Я горжусь тобой!@@Эй, обезьяны, смотрите, с кого нужно брать пример!@@Старший сержант, ты заслужил@sex@|||а| свое звание. Пока такие ребята в Гвардии, Город может спать спокойно.}
+{75000}{}{Все бы так служили Городу-Убежищу, как ты. Я горжусь тобой!@@Эй, обезьяны, смотрите, с кого нужно брать пример!@@Лейтенант. Приветствую.}
+{100000000}{}{Гвардейцы! Слушай мою команду. Равнение на середину!}
+{100000001}{}{Три шага вперед, шагом. Марш!}
+{100000002}{}{Кру-у-у-угом!}
+{100000003}{}{Оружие на-грудь}
+{100000004}{}{Оружие - за спину}
+{100000005}{}{Пять шагов вперед, бегом. Марш!}
+{100000006}{}{Кру-гом!}
+{100000007}{}{Два шага вперед, шагом. Марш}
+{100000008}{}{Вольно!}
+{100000009}{}{Это чучело безнадежно. Я так и думал.@@Ну, как идет, как идет! Корова какая то! Свинья, наверное.@@ Строй не ломай, ты!@@Дубьё, сороконожки! @@ Наберут по объявлению! @@ Чё-то я не понял, вы вообще ходить умеете?}
+{100000010}{}{Вольно. Разойдись.}
+{100000011}{}{Служба в рядах Гвардии закалила вас, вы научились действовать в  бою решительно и без промедлений. Никакому штатскому это недоступно . Вы получаете 1 единицу действия.}
+

@@ -1,0 +1,876 @@
+[comment]
+* 20 и дальше квест "потерянный караван даппо"(rifleman17 26/10/09)
+* 40 и дальше квест "караван нкр-реддинг"
+* 50+ - квест "поиски шпиона для Сантьяго"
+* 60+ - квест "бракованная партия винтовок"
+* 90+ квест на бонус к торговле
+
+[data]
+lang=russ engl ukra
+
+[dialog]
+&
+1 1000 None 0 #
+11 1010 D _param p ST_INTELLECT < 4 #
+2 1020 D _var n name_mem_npc_player = 0 #
+3 1030 D _var n name_mem_npc_player = 1 D _param p REPUTATION_NCR < 30 #
+90 1040 D _param p REPUTATION_NCR > 29 D _var p q_ncr_duppo_find_dasies = 0 #
+3 1050 D _var p q_ncr_duppo_find_dasies > 0 D _param p REPUTATION_NCR > 29 @
+2 2000 None 0 #
+6 2010 #
+4 2020 R _var n name_mem_npc_player = 1 #
+0 2030 @
+3 3000 None 0 #
+6 3010 #
+0 3020 #
+20 3030 D _var p ncr_dappo_lost_c_status = 0 D _param p ST_LEVEL > 5 #
+23 3040 D _var p ncr_dappo_lost_c_status = 2 #
+33 3050 D _var p ncr_dappo_lost_c_status = 3 #
+35 3060 D _var p ncr_dappo_lost_c_status = 4 #
+10 3070 #
+44 3080 D _var p q_ncr_redding_caravan_escort = 1 #
+50 3090 D _var p q_ncr_santiaga_find_spy_status > 0 D _var p q_ncr_santiaga_find_spy_status < 17 #
+60 3100 D _var p q_ncr_buster_brokenrifles < 3 D _var p q_ncr_buster_brokenrifles > 0 #
+70 3110 D _var p q_ncr_buster_brokenrifles = 5 #
+76 3120 D _var p q_ncr_buster_brokenrifles = 13 #
+93 3130 D _var p q_ncr_duppo_find_dasies = 1 D _item p PID_DAISIES > 0 D _param p REPUTATION_NCR > 29 R _var p q_ncr_duppo_find_dasies = 2 R _param p ST_EXPERIENCE + 14000 R _item p PID_DAISIES - 1 #
+100 3140 D _var p q_ncr_redding_caravan_escort > 1 D _var p q_ncr_redding_caravan_escort < 7 @
+4 4000 None 0 #
+10 4010 #
+9 4020 @
+6 5000 None 0 #
+65506 5010 #
+0 5020 @
+8 6000 None 0 #
+6 6010 #
+0 6020 @
+9 7000 None 0 @
+10 8000 None 0 #
+40 8010 D _var p q_ncr_redding_caravan_escort = 0 #
+0 8020 @
+11 9000 None 0 @
+20 10000 None 0 #
+21 10010 @
+21 11000 None 0 #
+22 11010 @
+22 12000 None 0 #
+0 12010 #
+0 12020 R _var p ncr_dappo_lost_c_status = 1 R _var p q_ncr_dappo_lost_c = 1 @
+23 13000 None 0 #
+24 13010 @
+24 14000 None 0 #
+25 14010 @
+25 15000 None 0 #
+26 15010 @
+26 16000 None 0 #
+27 16010 #
+28 16020 #
+29 16030 #
+30 16040 #
+31 16050 #
+0 16060 #
+32 16070 @
+27 17000 None 0 #
+28 17010 #
+29 17020 #
+30 17030 #
+31 17040 #
+0 17050 #
+32 17060 @
+28 18000 None 0 #
+27 18010 #
+29 18020 #
+30 18030 #
+31 18040 #
+0 18050 #
+32 18060 @
+29 19000 None 0 #
+27 19010 #
+28 19020 #
+30 19030 #
+31 19040 #
+0 19050 #
+32 19060 @
+30 20000 None 0 #
+27 20010 #
+28 20020 #
+29 20030 #
+31 20040 #
+0 20050 #
+32 20060 @
+31 21000 None 0 #
+27 21010 #
+28 21020 #
+29 21030 #
+30 21040 #
+0 21050 #
+32 21060 @
+32 22000 None 0 #
+0 22010 R _var p q_ncr_dappo_lost_c = 3 R _var p ncr_dappo_lost_c_status = 3 #
+0 22020 @
+33 23000 None 0 #
+34 23010 @
+34 24000 None 0 #
+0 24010 @
+35 25000 None 0 #
+36 25010 @
+36 26000 None 0 #
+37 26010 @
+37 27000 None 0 #
+38 27010 @
+38 28000 None 0 #
+39 28010 R _var p ncr_dappo_lost_c_status = 5 R _var p q_ncr_dappo_lost_c = 5 R _param p ST_EXPERIENCE + 4000 R _item p PID_BOTTLE_CAPS + 2000 R _param p ST_EXPERIENCE + 5000 R _item p PID_BOTTLE_CAPS + 1000 @
+39 29000 None 0 #
+0 29010 @
+40 30000 None 0 #
+0 30010 #
+41 30020 @
+41 31000 None 0 #
+0 31010 #
+42 31020 R _var p q_ncr_redding_caravan_escort = 1 @
+42 32000 None 0 #
+43 32010 @
+43 33000 None 0 #
+0 33010 @
+44 34000 None 0 #
+0 34010 @
+50 35000 None 0 #
+54 35010 #
+51 35020 @
+51 36000 None 0 #
+52 36010 @
+52 37000 None 0 #
+53 37010 @
+53 38000 None 0 #
+54 38010 @
+54 39000 None 0 #
+55 39010 @
+55 40000 None 0 #
+56 40010 @
+56 41000 None 0 #
+0 41010 D _var p npc_story = 0 R _var p npc_story = 1 R _param p ST_EXPERIENCE + 550 #
+0 41020 D _var p npc_story = 1 @
+60 42000 None 0 #
+0 42010 #
+61 42020 @
+61 43000 None 0 #
+62 43010 @
+62 44000 None 0 #
+63 44010 D _var p q_ncr_buster_brokenrifles = 1 R _var p q_ncr_buster_brokenrifles = 2 #
+63 44020 D _var p q_ncr_buster_brokenrifles = 2 @
+63 45000 None 0 #
+0 45010 #
+64 45020 @
+64 46000 None 0 #
+0 46010 #
+65 46020 @
+65 47000 None 0 #
+0 47010 #
+66 47020 D _var p q_ncr_buster_brokenrifles = 2 D _item p PID_BOTTLE_CAPS > 29999 R _var p q_ncr_buster_brokenrifles = 3 R _item p PID_BOTTLE_CAPS - 30000 R _param p ST_EXPERIENCE + 14000 #
+67 47030 D _param p SK_BARTER > 99 @
+66 48000 None 0 #
+0 48010 @
+67 49000 None 0 #
+68 49010 @
+68 50000 None 0 #
+0 50010 #
+69 50020 D _param p SK_BARTER > 99 D _var p q_ncr_buster_brokenrifles = 2 D _item p PID_BOTTLE_CAPS > 4999 R _var p q_ncr_buster_brokenrifles = 3 R _item p PID_BOTTLE_CAPS - 5000 R _param p ST_EXPERIENCE + 1500 @
+69 51000 None 0 #
+0 51010 @
+70 52000 None 0 #
+71 52010 @
+71 53000 None 0 #
+0 53010 #
+72 53020 @
+72 54000 None 1 #
+0 54010 #
+73 54020 #
+74 54030 D _var p q_ncr_buster_brokenrifles = 5 D _item p PID_BOTTLE_CAPS > 5999 R _var p q_ncr_buster_brokenrifles = 6 R _param p ST_EXPERIENCE + 3000 R _item p PID_BOTTLE_CAPS - 6000 #
+74 54040 D _var p q_ncr_buster_brokenrifles = 5 D _item p PID_BOTTLE_CAPS > 9999 R _var p q_ncr_buster_brokenrifles = 6 R _param p ST_EXPERIENCE + 4500 R _item p PID_BOTTLE_CAPS - 10000 @
+73 55000 None 0 @
+74 56000 None 0 #
+75 56010 @
+75 57000 None 0 #
+0 57010 @
+76 58000 None 0 #
+76 58010 #
+77 58020 @
+77 59000 None 0 #
+78 59010 @
+78 60000 None 0 #
+79 60010 @
+79 61000 None 0 #
+80 61010 @
+80 62000 None 0 #
+81 62010 D _var p q_ncr_buster_brokenrifles = 13 R _var p q_ncr_buster_brokenrifles = 14 @
+81 63000 None 0 #
+0 63010 @
+90 64000 None 0 #
+3 64010 #
+91 64020 @
+91 65000 None 0 #
+92 65010 @
+92 66000 None 0 #
+0 66010 D _var p q_ncr_duppo_find_dasies = 0 R _var p q_ncr_duppo_find_dasies = 1 #
+0 66020 @
+93 67000 None 0 #
+0 67010 D _param p REPUTATION_NCR > 29 D _param p PE_NCR_BARTER = 0 R _param p PE_NCR_BARTER = 1 R _script dialog@r_InfoMessage 1 1 @
+100 68000 None 0 #
+101 68010 @
+101 69000 None 0 #
+0 69010 #
+0 69020 D _item p PID_BOTTLE_CAPS } 3000 R _item p PID_BOTTLE_CAPS - 3000 R _var p q_ncr_redding_caravan_escort = 0 R _script dialog@r_InfoMessage 1 2 &
+
+[russ]
+{100}{}{Даппо}
+{200}{}{Вы видите краснолицего, дружелюбного человека.}
+{210}{}{Вы видите Даппо. Он управляет Ассоциацией Акционеров.}
+{210}{}{Вы видите солидного человека, с постоянно меняющимся лицом и копной тонких белых волос. Он ходит, немного прихрамывая.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{тупой}
+{1020}{}{не знаком}
+{1030}{}{знаком репутация ниже 30}
+{1040}{}{Знаком, репутация 30+, квест не взят на маргаритки}
+{1050}{}{Знаком, репутация 30+, квест взят или сдан на маргаритки}
+{2000}{}{Привет вам, незнакомец. Не видел вас здесь раньше, значит вы не с ранчо. Вы хотите наняться на работу, или купить что-то?}
+{2010}{}{Купить.}
+{2020}{}{Работу.}
+{2030}{}{Пока.}
+{3000}{}{Че надо?}
+{3010}{}{Покажи, что у тебя есть на продажу?}
+{3020}{}{Не бери в голову. [Уйти]}
+{3030}{}{Вид у тебя какой-то озабоченный, Даппо. Что-то случилось?}
+{3040}{}{Я поговорил с Бастером.}
+{3050}{}{Даппо, я перерыл@sex@|||а| всю Пустошь в поисках твоего каравана. }
+{3060}{}{Я наш@sex@|ел||ла| твой караван, Даппо.}
+{3070}{}{Я ищу работу.}
+{3080}{}{Напомни, когда выходит караван в Реддинг?}
+{3090}{}{Слушай, Даппо, у тебя минутка свободная есть?}
+{3100}{}{Даппо, я от Бастера...}
+{3110}{}{Эй, Даппо, я снова к тебе по тому делу, насчет испорченных стволов...}
+{3120}{}{Даппо, помнится, ты обвинял Бастера в том, что он подсунул тебе левую партию винтовок.}
+{3130}{}{Даппо, у меня есть букет маргариток. [Отдать горшок с маргаритками]}
+{3140}{}{Даппо, есть разговор. Насчет того каравана, с Хэлом.}
+{4000}{}{Xорошо, мое имя Даппо. Вещи для ранчо и биржа труда, все находится здесь. Нужно сказать, вы не похожи на пастуха браминов. Как у вас с оружием?}
+{4010}{}{Нормально.}
+{4020}{}{Я не слишком люблю жестокости.}
+{5000}{}{Окей, вот мой магазин. Посмотрите также на столах. Если не понравится то, что я продаю. то идите к этому негодяю. Он, конечно, вам запудрит мозги.}
+{5010}{}{[Обмен]}
+{5020}{}{Мне пора.}
+{6000}{}{Что-то еще?}
+{6010}{}{Купить.}
+{6020}{}{Пока.}
+{7000}{}{Здесь нет подходящей работы для вас. Пустошь - место простое до грубости. Слабаки не приживаются.}
+{8000}{}{Возможно, мы сможем договориться. Мне нужны люди для охраны караванов. Это опасное занятие.}
+{8010}{}{Опасности меня не страшат.}
+{8020}{}{Я не люблю напрасный риск. [Уйти]}
+{9000}{}{Не мешай.}
+{10000}{}{Угу. С Бастером посрался. То есть Бастер со мной.}
+{10010}{}{А какое тебе дело до Бастера?}
+{11000}{}{Он мне оружие для караванов подгонял. Теперь будут проблемы со снарягой...}
+{11010}{}{Могу чем-то помочь?}
+{12000}{}{Попробуй. Нужно уболтать Бастера перестать тупить. Я тебе заплачу, если выгорит.}
+{12010}{}{Нет, не хочу в ваши разборки вмешиваться. [Уйти]}
+{12020}{}{Хорошо, я выясню, в чем дело. [Уйти]}
+{13000}{}{И чего? Какая муха его укусила?}
+{13010}{}{Говорит, что ты у него какой-то ценный груз увел. Он тебе заказывал доставку.}
+{14000}{}{Вот дерьмо! Проклятый ящик...}
+{14010}{}{Рассказывай!}
+{15000}{}{Короче. Бастер у меня заказал доставку одного здорового ящика. С военной базы.}
+{15010}{}{Ты согласился?}
+{16000}{}{Ну да, мы друг другу помогаем. Он мне пушки, я ему доставку, если надо чего...}
+{16010}{}{Что в ящике?}
+{16020}{}{Откуда караван шел?}
+{16030}{}{Где сейчас караван?}
+{16040}{}{А ты не присвоил ли, случаем, груз из ящика?}
+{16050}{}{Никто из пропавшего каравана не объявлялся?}
+{16060}{}{Ерунда какая-то. Может, попозже загляну. [Уйти]}
+{16070}{}{Понятно. Караван нужно найти. Сколько заплатишь?}
+{17000}{}{Да откуда мне знать? Ящик был огромный! Что-то ценное и очень нужное Бастеру...}
+{17010}{}{Откуда караван шел?}
+{17020}{}{Где сейчас караван?}
+{17030}{}{А ты не присвоил ли, случаем, груз из ящика?}
+{17040}{}{Никто из пропавшего каравана не объявлялся?}
+{17050}{}{Ерунда какая-то. Может, попозже загляну. [Уйти]}
+{17060}{}{Понятно. Караван нужно найти. Сколько заплатишь?}
+{18000}{}{Из Фриско шли ребята. Надежные парни. Из-за Бастера петлю на восток сделали. На военной базе подобрали груз.}
+{18010}{}{Что в ящике?}
+{18020}{}{Где сейчас караван?}
+{18030}{}{А ты не присвоил ли, случаем, груз из ящика?}
+{18040}{}{Никто из пропавшего каравана не объявлялся?}
+{18050}{}{Ерунда какая-то. Может, попозже загляну. [Уйти]}
+{18060}{}{Понятно. Караван нужно найти. Сколько заплатишь?}
+{19000}{}{Пропал... Последний раз с ними на связь выходили - они прошли Убежище 15. Уже к НКР приближались.}
+{19010}{}{Что в ящике?}
+{19020}{}{Откуда караван шел?}
+{19030}{}{А ты не присвоил ли, случаем, груз из ящика?}
+{19040}{}{Никто из пропавшего каравана не объявлялся?}
+{19050}{}{Ерунда какая-то. Может, попозже загляну. [Уйти]}
+{19060}{}{Понятно. Караван нужно найти. Сколько заплатишь?}
+{20000}{}{Да что я, враг себе чтоли? Мне не резон с Бастером проблемы иметь...}
+{20010}{}{Что в ящике?}
+{20020}{}{Откуда караван шел?}
+{20030}{}{Где сейчас караван?}
+{20040}{}{Никто из пропавшего каравана не объявлялся?}
+{20050}{}{Ерунда какая-то. Может, попозже загляну. [Уйти]}
+{20060}{}{Понятно. Караван нужно найти. Сколько заплатишь?}
+{21000}{}{Нет, как они с Волта 15 отметились, больше ничего не слышали...}
+{21010}{}{Что в ящике?}
+{21020}{}{Откуда караван шел?}
+{21030}{}{Где сейчас караван?}
+{21040}{}{А ты не присвоил ли, случаем, груз из ящика?}
+{21050}{}{Ерунда какая-то. Может, попозже загляну. [Уйти]}
+{21060}{}{Понятно. Караван нужно найти. Сколько заплатишь?}
+{22000}{}{Ты серьезно? Без шуток? Найдешь караван, ребят и груз Бастера - получишь два куска.}
+{22010}{}{Две тыщи? По рукам.[Уйти]}
+{22020}{}{Две тысячи всего за такую пыльную работу? Не смеши меня. [Уйти]}
+{23000}{}{Есть результаты?}
+{23010}{}{Полный голяк! Никаких следов, слухов, Н И Ч Е Г О!}
+{24000}{}{Проклятье. Ищи дальше. Около Убежища 15 пропали ребята.}
+{24010}{}{Ладно, будем надеяться на лучшее. [Уйти]}
+{25000}{}{Отлично! Где эти ублюдки и, главное, где ящик Бастера?}
+{25010}{}{Твои люди мертвы. Ящик я оставил@sex@|||а| в Пустоши.}
+{26000}{}{Мертвы? Что случилось?}
+{26010}{}{Ты знаешь, что было в ящике Бастера?.}
+{27000}{}{Нет.}
+{27010}{}{В ящике был боевой робот. По каким-то причинам он выбрался наружу и положил твоих людей.}
+{28000}{}{Вот черт! Я так и знал, что тут что-то неладно, с этим странным ящиком. Ну ничего, я прочищу мозги Бастеру. }
+{28010}{}{Как насчет платы?}
+{29000}{}{Держи. Ты заработал@sex@|||а|. Спасибо за помощь!}
+{29010}{}{Всегда к твоим услугам, Даппо.}
+{30000}{}{Это хорошо. Ближайший караван будет 15 числа. Идет в Реддинг. }
+{30010}{}{Мне это не интересно. [Уйти]}
+{30020}{}{Сколько я получу?}
+{31000}{}{Если все будет в порядке, караван дойдет до точки назначения и выживет проводник. Ты получишь 3000 монет.}
+{31010}{}{Я подумаю. [Уйти]}
+{31020}{}{Условия меня устраивают. Что мне нужно сделать?}
+{32000}{}{Ближайший караван отправляется 15 числа в 14:00. Мы ведем браминов в Реддинг. Ведет караван Хэл. Он отлично справляется с браминами. Ошивается где-то недалеко от моей лавки.}
+{32010}{}{Кроме меня будут еще охранники?}
+{33000}{}{Да, маршрут очень опасный. Нужно много охраны. Если не найдем нужное число людей, караван будет отменен.}
+{33010}{}{Хорошо. Я запомню. [Уйти]}
+{34000}{}{Найди Хэла до 14 часов 15 числа. Покажись, чтобы он тебя увидел и жди отправления.}
+{34010}{}{Ясно, это все что мне нужно было знать. [Уйти]}
+{35000}{}{Чего хотел@sex@|||а|?}
+{35010}{}{Ты про ребят из Нью-Рено слышал что-нибудь?}
+{35020}{}{Тут в городе слухи всякие ходят...}
+{36000}{}{ Что за слухи?}
+{36010}{}{Бастер, говорят, умом тронулся, скупает у крестьян браминьи лепешки и баррикаду вокруг своей палатки строит.}
+{37000}{}{Ха! Бастер известный идиот.}
+{37010}{}{Но я, вообще-то, не за этим приш@sex@|ел||ла|.}
+{38000}{}{Не томи, что там у тебя?}
+{38010}{}{Ты про ребят из Нью-Рено слышал что-нибудь?}
+{39000}{}{Каких еще ребят?}
+{39010}{}{Вроде как, банда одна из Рено хочет всю торговлю к лапам прибрать в НКР. Достойный человек мне сказал.}
+{40000}{}{Ох, йопрст. Плохие новости. Надо охрану удвоить...}
+{40010}{}{Я так понимаю, не слышал ты ничего?}
+{41000}{}{В точку! А теперь проваливай, мне нужно о своей шкуре позаботиться.}
+{41010}{}{Ну ты и хитрюга, Даппо. [Уйти]}
+{41020}{}{Ну ты и хитрюга, Даппо. [Уйти]}
+{42000}{}{Пош@sex@|ел||ла| вон! И передай Бастеру, чтобы забыл дорогу в мою лавку!}
+{42010}{}{Вернусь, когда ты придешь в себя}
+{42020}{}{Эй, успокойся! Если есть проблема, которой мы с Бастером пока не видим, нужно ее решать.}
+{43000}{}{Проблема? [Лицо Даппо багровеет] Проблема? Да! У меня большие проблемы! Эти подонки вскрыли караван! Я тонну убытков несу, гребаный дохлый скорпион!}
+{43010}{}{Кто-то ограбил твой караван?}
+{44000}{}{Именно! И, угадай, почему мои ребята не положили всех этих долбаных уродов?}
+{44010}{}{Струсили?}
+{44020}{}{Струсили?}
+{45000}{}{Мои ребята не трусят. Иди, у Хэла спроси, если не веришь. Пушки Бастер подогнал кривые! Отказали в самый нужный момент!}
+{45010}{}{У, Бастер-то, оказывается, сволочь! Зря я ему поверил@sex@|||а|...}
+{45020}{}{Да не может этого быть, ты что!}
+{46000}{}{Не может? Я тоже так думал. А Бастер решил на мне заработать и подсунул бракованные стволы!}
+{46010}{}{Я все выясню. Уверен@sex@|||а|, ты ошибаешься}
+{46020}{}{Сколько ты потерял? Я легко возмещу все твои расходы.}
+{47000}{}{Да ты за всю свою никчемную жизнь столько не заработаешь! Груза увели на 30 косарей!}
+{47010}{}{Нихрена себе. Нет, столько мне не достать.}
+{47020}{}{Да без проблем. 30 штук - для меня копейки. Забирай. [Отдать деньги]}
+{47030}{}{Да ты че, опух, караванщик? Называй реальную цену. Что там у тебя за товар был, мне не известно. Может, ты за дохлых браминов 30 косых просишь?}
+{48000}{}{Богатый, да? Ну ладно, это деловой разговор. Хорошо. Передай Бастеру - на этот раз я его прощаю. Но если подобное повторится...}
+{48010}{}{Не повторится. Это ошибка какая-то была.}
+{49000}{}{Дохлых браминов? Ты надо мной издеваешься? Гони 20 штук, или убирайся отсюда.}
+{49010}{}{Двадцатка тоже слишком дохрена. 5000 - максимум, что твой дрянной караван перевести мог.}
+{50000}{}{Да вы все оборзели! [Задумывается] Ладно, черт с тобой. Пустошь дала, Пустошь забрала. Груз все равно не вернуть. Давай деньги.}
+{50010}{}{Я с собой монеты не ношу. Обожди, вернусь через минуту.}
+{50020}{}{Ну вот и славно! [Отдать деньги] Что Бастеру передать?}
+{51000}{}{Передай этому долбаному кретину... Передай Бастеру, мы в расчете. Пока. Но если эта хрень еще раз повторится... Я с ним разберусь.}
+{51010}{}{Заметано. Так и скажу Бастеру.}
+{52000}{}{Жулик Бастер снова прислал сво@sex@|его||ю| @sex@|мальчика||девочку| на побегушках к старому Даппо? Чего тебе еще нужно? Неужели, я недостаточно ясно выразился в прошлый раз?}
+{52010}{}{Я здесь, чтобы решить эту проблему сейчас. Бастер готов заплатить за твой потерянный груз.}
+{53000}{}{Да ну? А откуда у Бастера денежки? Уж не его ли ребята напали на мой караван? Если так - все с ним ясно!}
+{53010}{}{С тобой невозможно разговаривать.}
+{53020}{}{Ничего подобного. Бастер здесь совершенно не причем. Но ради сохранения деловых отношений готов заплатить тебе, чтобы частично компенсировать ущерб.}
+{54000}{}{И сколько готов отстегнуть Бастер?}
+{54010}{}{Надо посчитать финансы, минуточку, сейчас вернусь}
+{54020}{}{5 000}
+{54030}{}{6 000}
+{54040}{}{10 000}
+{55000}{}{Ты смеешься надо мной? Этого слишком мало!}
+{56000}{}{Да это же кропаль! По сравнению с тем, что от меня ушло! Но на крайний случай... Ладно, гони монеты.}
+{56010}{}{Вот и отлично. Я могу сказать Бастеру, что больше не будет проблем?}
+{57000}{}{Угу. Если он будет вести себя прилично, и перестанет впаривать мне кривые винтовки...}
+{57010}{}{Нормально. Прощай!}
+{58000}{}{А, это снова ты? Бастер - продажная свинья. Знаешь, были такие твари? Рассказать тебе, что они представляли из себя?}
+{58010}{}{Не нужно, я ухожу.}
+{58020}{}{Нет. Давай лучше я расскажу тебе, что случилось с твоими пушками?}
+{59000}{}{Ну, попробуй.}
+{59010}{}{У тебя в охране был некто Джим, так?}
+{60000}{}{Гребаный наркоман. От него обычно куча проблем, но не в этот раз. Тут пушки просто отказали. Он пропал куда-то, да, но подобное с ним и раньше случалось.}
+{60010}{}{Ты ошибаешься. Я нашел Джима, в 15ом Убежище.}
+{61000}{}{Ишь ты. Куда его занесло. Но причем здесь Джим?}
+{61010}{}{Я с ним поговорил немного. И он рассказал. Перед выходом каравана Джиму срочно доза потребовалась. Он взломал ящик с патронами охраны и вынес все. Сдал дилеру джета и заполнил ящик холостыми патронами.}
+{62000}{}{Что??! Джим? Вот, сука... Я его...}
+{62010}{}{Теперь ты понимаешь, что Бастер не виноват в том, что твой караван нагрели рейдеры?}
+{63000}{}{Бастер все равно в чем-то виноват... Но я готов признать, что в этом деле нет его вины. Передай Бастеру мои слова.}
+{63010}{}{Хорошо. Я передам.}
+{64000}{}{Ба! Да это же сам@sex@|||а| @pname@! Слушай, у меня к тебе есть дело.}
+{64010}{}{Не интересует, ответь лучше на пару вопросов.}
+{64020}{}{Что за дело?}
+{65000}{}{Можешь достать одну редкую вещицу? }
+{65010}{}{Какую?}
+{66000}{}{Горшок с маргаритками, поставлю на подоконник. В наше время - редкая и ценная штука.}
+{66010}{}{Без проблем.}
+{66020}{}{Нет, слишком сложно.}
+{67000}{}{Ох! Невероятно! Правду люди про тебя говорят! Моя признательность не знает границ! Послушай, что я тебе расскажу...}
+{67010}{}{[Слушать внимательно]}
+{68000}{}{И у тебя хватает совести приходить ко мне с этим сейчас? Ты не выполняешь свои обязательства, я несу убытки! Убирайся!}
+{68010}{}{Даппо, я готов@sex@|||а| возместить твои потери, сколько это будет стоить?}
+{69000}{}{А это уже деловой разговор! Хорошо, трех тысяч монет будет достаточно. Мы забудем об этом досадном недоразумении.}
+{69010}{}{У меня столько нет сейчас. Я вернусь с нужной суммой.}
+{69020}{}{Да, я соглас@sex@|ен||на|. [Отдать деньги]}
+{100000001}{}{После беседы с Даппо навык бартера персонажа увеличен на 5 пунктов.}
+{100000002}{}{Вы заплатили штраф Даппо. Теперь Хэл снова будет нанимать вас для охраны караванов.}
+
+[engl]
+{100}{}{Duppo}
+{200}{}{You see a red-faced, friendly looking man.}
+{210}{}{It's Duppo. He runs the Stockmen's Association.}
+{210}{}{He's a stocky fellow and with constantly flushed face and shock of thin blond hair. He walks with a slight limp.}
+{1000}{}{Initial preferences orig: Scduppo.msg}
+{1010}{}{dumb}
+{1020}{}{stranger}
+{1030}{}{acquainted}
+{1040}{}{Знаком, репутация 30+, квест не взят на маргаритки}
+{1050}{}{Знаком, репутация 30+, квест взят или сдан на маргаритки}
+{2000}{}{Greetings, stranger. Don't know you from these parts, so that means you're not a rancher. You come looking for work or are you here to buy?}
+{2010}{}{Buy.}
+{2020}{}{Work.}
+{2030}{}{Goodbye.}
+{3000}{}{What'll it be?}
+{3010}{}{Buy.}
+{3020}{}{Goodbye.}
+{3030}{}{You're looking anxious Duppo. Has anything happened?}
+{3040}{}{I talked to Buster.}
+{3050}{}{Duppo, I've searched all up and down the Wasteland for your caravan. }
+{3060}{}{Duppo, I found your caravan.}
+{3070}{}{I'm looking for work.}
+{3080}{}{Remind me, when does the caravan leave Redding?}
+{3090}{}{Duppo, do you have a minute?}
+{3100}{}{Duppo, I'm back from Buster...}
+{3110}{}{Hey Duppo, I'm back because of those spoiled guns...}
+{3120}{}{Duppo, I remember you accused Buster of selling spoiled rifles.}
+{3130}{}{Duppo, I have a bouquet of daisies. [Give a pot of daisies]}
+{3140}{}{Hey, Duppo, I wanted to talk to you about Hal's caravan...}
+{4000}{}{Well, my name's Duppo. Ranch supplies and hiring hall, all done right here. Gotta say, you don't look like a brahmin puncher. How are you with a gun?}
+{4010}{}{Good enough.}
+{4020}{}{I'm not into violence.}
+{5000}{}{Well, here's my stock. Make sure to look at all my tables for more inventory. If you don't like what I got, get your ass to that shyster Buster. Of course, he'll rob you blind.}
+{5010}{}{[Barter]}
+{5020}{}{It's time for me to leave.}
+{6000}{}{Anything else?}
+{6010}{}{Buy.}
+{6020}{}{Goodbye.}
+{7000}{}{Well, then there's no work for you here. Countryside's a rough place. No room for weaklings, stranger.}
+{8000}{}{Great, be ready when the next caravan arrives.}
+{8010}{}{I'm not afraid of danger.}
+{8020}{}{I don't like to take a risk in vain. [Leave]}
+{9000}{}{Don't bother me.}
+{10000}{}{Yeah. I had a conflict with Buster. I mean Buster had a conflict with with me.}
+{10010}{}{And what's your business with Buster?}
+{11000}{}{He got me weapons for the caravans. Now I'll have problems with armament...}
+{11010}{}{Can I help somehow?}
+{12000}{}{Try to. Find out what's bothering Buster. I will pay if you handle it.}
+{12010}{}{I don't want to interfere with your businesses. [Leave]}
+{12020}{}{Ok, I'll find out what the point is. [Leave]}
+{13000}{}{So? What's the matter with him?}
+{13010}{}{He told me that you took some of his valuable cargo. He used to offer a delivery.}
+{14000}{}{Shit! The damn box...}
+{14010}{}{Spill it!}
+{15000}{}{Well. Buster asked me for a delivery of a huge box. From a military base.}
+{15010}{}{You agreed?}
+{16000}{}{Yes, sure we help each other. He gives me weapons, I make a delivery if he needs to...}
+{16010}{}{What was in the box?}
+{16020}{}{Where was the caravan from?}
+{16030}{}{Where is the caravan now?}
+{16040}{}{Haven't you, by chance, expropriated the cargo from that box?}
+{16050}{}{Has anybody shown up from the missing caravan?}
+{16060}{}{What a load of crap. Maybe I'll visit you later. [Leave]}
+{16070}{}{It's clear. The caravan must be found. How much are you going pay me?}
+{17000}{}{How should I know? The box was huge! Something very valuable and very necessary for Buster...}
+{17010}{}{Where was the caravan from?}
+{17020}{}{Where is the caravan now?}
+{17030}{}{Haven't you, by chance, expropriated the cargo from that box?}
+{17040}{}{Has anybody shown up from the missing caravan?}
+{17050}{}{What a load of crap. Maybe I'll visit you later. [Leave]}
+{17060}{}{It's clear. The caravan must be found. How much are you going to pay me?}
+{18000}{}{Guys were coming from Frisco. Reliable guys. They took a detour to the west and picked up some cargo from a military base.}
+{18010}{}{What was in the box?}
+{18020}{}{Where is the caravan now?}
+{18030}{}{Haven't you, by chance, expropriated the cargo from that box?}
+{18040}{}{Has anybody show up from the missing caravan?}
+{18050}{}{What a load of crap. Maybe I'll visit you later. [Leave]}
+{18060}{}{It's clear. The caravan must be found. How much are you going to pay me?}
+{19000}{}{Lost... The last time they were contacted – they were just past Vault 15. They were reaching NCR.}
+{19010}{}{What was in the box?}
+{19020}{}{Where was the caravan from?}
+{19030}{}{Haven't you, by chance, expropriate the cargo from that box?}
+{19040}{}{Has anybody shown up from the missing caravan?}
+{19050}{}{What a load of crap. Maybe I'll visit you later. [Leave]}
+{19060}{}{It's clear. The caravan must be found. How much are you going pay me?}
+{20000}{}{You think I want to harm myself? I wouldn't want to have any problems with Buster...}
+{20010}{}{What was in the box?}
+{20020}{}{Where was the caravan from?}
+{20030}{}{Where is the caravan now?}
+{20040}{}{Has anybody shown up from the missing caravan?}
+{20050}{}{What a laod of crap. Maybe I'll visit you later. [Leave]}
+{20060}{}{It's clear. The caravan must be found. How much are you going pay me?}
+{21000}{}{No since they reached Vault 15, nobody heard from them...}
+{21010}{}{What was in the box?}
+{21020}{}{Where was the caravan from?}
+{21030}{}{Where is the caravan now?}
+{21040}{}{Haven't you, by chance, expropriated the cargo from that box?}
+{21050}{}{What a load of crap. Maybe I'll visit you later. [Leave]}
+{21060}{}{It's clear. The caravan must be found. How much are you going pay me?}
+{22000}{}{Are you sure? No tricks? If you find the missing caravan, guys and Buster's cargo –I'll pay you $2000.}
+{22010}{}{Two thousand it is. [Leave]}
+{22020}{}{Two thousand for such dirty work? Don't make a fool out of of me. [Leave]}
+{23000}{}{Any result?}
+{23010}{}{Simply nothing! No traces, rumors, NOTHING AT ALL!}
+{24000}{}{Damn. Search some more. They disappeared near Vault 15.}
+{24010}{}{Fine, we'll hope for the best. [Leave]}
+{25000}{}{Fine! Where are those fuckers and Buster's crate?}
+{25010}{}{Your guys are dead. I have left the box in the wasteland.}
+{26000}{}{Dead? What happened to them?!}
+{26010}{}{Do you know what was in Buster's box?}
+{27000}{}{No, I told you I don't.}
+{27010}{}{There was a combat robot in that box. For some reasons he got out of the box and wiped out all of your people.}
+{28000}{}{God damn! I knew there was something wrong with that strange crate. That's fine, I will talk to Buster.}
+{28010}{}{What about my money?}
+{29000}{}{Here you are. You earned it. Thank you for help!}
+{29010}{}{Anytime, Duppo.}
+{30000}{}{That's fine. Next caravan will start at 1600. It goes to Redding.}
+{30010}{}{I'm not interested in that. [Leave]}
+{30020}{}{How much will I get paid?}
+{31000}{}{If everything goes fine, the caravan reaches the point of it's destination and the guide stays alive, you will be paid $5000.}
+{31010}{}{I'll think about it. [Leave]}
+{31020}{}{Conditions suit me. What do I have to do?}
+{32000}{}{Nearest caravan will depart at 1400. Find NCR caravan guide Hal. He usually hangs around Westin's ranch. He is an experienced and reliable person. He will lead the caravan.}
+{32010}{}{Will there be any other security besides me?}
+{33000}{}{Yes there will be five security guards assisting the caravan. If we don't find the required amount of people, the caravan will be canceled.}
+{33010}{}{Fine. I'll remember that. [Leave]}
+{34000}{}{Come to NCR at 2 PM. Find Hal. When you reach Redding talk to James Hoffy.}
+{34010}{}{Ok, that is all I wanted to know. [Leave]}
+{35000}{}{What do you want?}
+{35010}{}{Have you heard something about the guys from New-Reno?}
+{35020}{}{There is a lot of gossip in town...}
+{36000}{}{What kind of gossip?}
+{36010}{}{People say that Buster is out of his mind, buys Brahmin dung and makes a barricade in front of his tent.}
+{37000}{}{Ha! Buster is a well-known town idiot.}
+{37010}{}{But that's not why I'm here.}
+{38000}{}{Don't be silent, what's up with you?}
+{38010}{}{Have you heard something about the guys from New-Reno?}
+{39000}{}{What guys?}
+{39010}{}{Seems like one Reno gang wants to take all the NCR trade into their hands. A respectable person told me that.}
+{40000}{}{Oh, damn. Bad news. You'll need to double the security...}
+{40010}{}{You haven't heard anything?}
+{41000}{}{Bingo! And be off, I have to take care of myself.}
+{41010}{}{What a fox you are, Duppo. [Leave]}
+{41020}{}{What a fox you are, Duppo. [Leave]}
+{42000}{}{Get out! And tell Buster to forget the way to my office!}
+{42010}{}{I'll return when you're back to your senses.}
+{42020}{}{Hey, calm down! If there is any kind of problem, which me and Buster don't see, it can be solved.}
+{43000}{}{Problem? [Duppo's face is getting red] Problem? Yes! I've got a big problem! Those bastards held up a caravan! I bear a ton of losses!}
+{43010}{}{Somebody robbed your caravan?}
+{44000}{}{Exactly! And guess why my guys haven't killed all of those fucking freaks?}
+{44010}{}{They were afraid?}
+{44020}{}{They were afraid?}
+{45000}{}{My guys are never afraid. Go and ask Hal, if you don't believe me. Buster gave them spoiled guns! They failed at a very unsuitable time!}
+{45010}{}{What a bastard! I Shouldn't have trusted him...}
+{45020}{}{It can't be that way!}
+{46000}{}{Can't be? I'm not so sure about that. Buster decided to make some extra cash and gave me spoiled guns!}
+{46010}{}{I'll find out. I'm sure you're mistaken.}
+{46020}{}{How much you have lost? I will easily refund all your expenses.}
+{47000}{}{You won't earn so much in all your miserable life! They stole 30 thousand worth of cargo!}
+{47010}{}{God damn. No, I can't afford that much.}
+{47020}{}{No worries. 30 thousand is nothing for me. Here, take it. [Give money]}
+{47030}{}{Are you out of your mind, caravaner? State a real price. I can't possibly know what was in that cargo. Maybe you are asking 30 grand for a dead brahmin?}
+{48000}{}{Are you rich? Fine, Let's talk some business. Ok. Tell Buster that I forgive him for it this time. But if the same thing happens again...}
+{48010}{}{It won't happen. There was some kind of mistake.}
+{49000}{}{Dead brahmin? Are you laughing at me? Give me my 20 thousand or get out of here.}
+{49010}{}{Twenty is too much. 5 thousand is the maximum that your worthless caravan could carry.}
+{50000}{}{You lousy... [Thinking] Fine, damn. The wasteland has given, the wasteland has taken away. There's no retrieving the cargo now anyway. Might as well take the money.}
+{50010}{}{I don't have cash on me. Wait, I will come back in a minute.}
+{50020}{}{Well, fine! [Give money] What should I tell Buster?}
+{51000}{}{Tell that fucking moron... OK, damn. Tell Buster we are even. Goodbye. But if this shit happens again... I'll handle him myself.}
+{51010}{}{It's a deal. I'll tell it to Buster.}
+{52000}{}{Has that swindler Buster sent a new mail boy to old Duppo? What do you need? Didn't I express myself clearly enough last time?}
+{52010}{}{I'm here to solve this problem. Buster is ready to pay for the lost caravan.}
+{53000}{}{Is he? Where did Buster get the money? Maybe his guys were the ones who attacked my caravan? If so - I'll take care of him!}
+{53010}{}{It's impossible to talk to you.}
+{53020}{}{It's not true. Buster is not guilty here. But for saving a business relations he is ready to compensate you a part of the losses.}
+{54000}{}{How much is Buster ready to pay?}
+{54010}{}{I need to count up the finances, I'll return in a minute.}
+{54020}{}{$5000}
+{54030}{}{$6000}
+{54040}{}{$10000}
+{55000}{}{Are you laughing at me? It's not enough for me!}
+{56000}{}{It's a trifle! In comparison with what has happened! But oh well... Fine, give me the money.}
+{56010}{}{That's it. Can I tell Buster there will be no problem?}
+{57000}{}{Yup. If he'll behave himself decently and won't sell me rifles with bent up barrels...}
+{57010}{}{Fine. Goodbye!}
+{58000}{}{It's you again? Buster is a treacherous pig. Do you know about these animals? Should I tell you what they are?}
+{58010}{}{No, you needn't. I'm leaving.}
+{58020}{}{No, will you let me tell you what happened to your guns?}
+{59000}{}{Try to.}
+{59010}{}{Was there a man named Jim among the guards?}
+{60000}{}{Fucking junkie. Usually there were lots of problems with him, but not this time. Guns just broke down. He has gone somewhere, yes, but the same thing used to happen with him before.}
+{60010}{}{You are mistaken. I have found Jim at Vault 15.}
+{61000}{}{A long way from home. But what's with Jim?}
+{61010}{}{I talked to him. And made him tell me everything. Before the caravan left he urgently needed a dose. He cracked open the box with the cartridges and took all of them out. He sold everything to a Jet dealer and filled the box with cheap blank cartridges.}
+{62000}{}{What?! Jim? Fucker... I will...}
+{62010}{}{Now you understand that Buster is not guilty that your caravan being robbed by raiders?}
+{63000}{}{Oh I'm sure Buster is guilty of something... But I am ready to admit that it is not his fault this time. Tell Buster that he's off the hook.}
+{63010}{}{Fine. I'll tell him.}
+{64000}{}{Oh! It's @pname@! Listen, I have some business for you.}
+{64010}{}{I'm not interested, you'd better answer some question for me.}
+{64020}{}{What's the deal?}
+{65000}{}{Can you get something for me?}
+{65010}{}{Depends, what do you want?}
+{66000}{}{A pot of daises, I'll put it on the window. Nowadays it's quite rare and very valuable.}
+{66010}{}{No problem.}
+{66020}{}{No, it's too hard.}
+{67000}{}{Oh! Unbelievable! People tell the truth about you! My gratitude has no limit! Listen to what I'm about to tell you...}
+{67010}{}{[Listen attentively]}
+{68000}{}{And you have the audacity to come here again? I sustain damages because of your irresponsibility! Get out!}
+{68010}{}{Duppo, I'm ready to make up for your losses, how much is it?}
+{69000}{}{Now we're talking some business! All right, three grand should be enough. We can forget about this misunderstanding.}
+{69010}{}{I don't have this much. I'll be back when I get the money.}
+{69020}{}{It's a deal. [Give the money]}
+{100000001}{}{After a conversation with Duppo your barter skill is increased by 5 points.}
+{100000002}{}{You paid for Duppo's losses. Now he may hire you for his caravan guard again.}
+
+[ukra]
+{100}{}{Даппо}
+{200}{}{Вы видите краснолицего, дружелюбного человека.}
+{210}{}{Вы видите Даппо. Он управляет Ассоциацией Акционеров.}
+{210}{}{Вы видите солидного человека, с постоянно меняющимся лицом и копной тонких белых волос. Он ходит, немного прихрамывая.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{тупой}
+{1020}{}{не знаком}
+{1030}{}{знаком репутация ниже 30}
+{1040}{}{Знаком, репутация 30+, квест не взят на маргаритки}
+{1050}{}{Знаком, репутация 30+, квест взят или сдан на маргаритки}
+{2000}{}{Привет вам, незнакомец. Не видел вас здесь раньше, значит вы не с ранчо. Вы хотите наняться на работу, или купить что-то?}
+{2010}{}{Купить.}
+{2020}{}{Работу.}
+{2030}{}{Пока.}
+{3000}{}{Че надо?}
+{3010}{}{Покажи, что у тебя есть на продажу?}
+{3020}{}{Не бери в голову. [Уйти]}
+{3030}{}{Вид у тебя какой-то озабоченный, Даппо. Что-то случилось?}
+{3040}{}{Я поговорил с Бастером.}
+{3050}{}{Даппо, я перерыл@sex@|||а| всю Пустошь в поисках твоего каравана. }
+{3060}{}{Я наш@sex@|ел||ла| твой караван, Даппо.}
+{3070}{}{Я ищу работу.}
+{3080}{}{Напомни, когда выходит караван в Реддинг?}
+{3090}{}{Слушай, Даппо, у тебя минутка свободная есть?}
+{3100}{}{Даппо, я от Бастера...}
+{3110}{}{Эй, Даппо, я снова к тебе по тому делу, насчет испорченных стволов...}
+{3120}{}{Даппо, помнится, ты обвинял Бастера в том, что он подсунул тебе левую партию винтовок.}
+{3130}{}{Даппо, у меня есть букет маргариток. [Отдать горшок с маргаритками]}
+{3140}{}{Даппо, есть разговор. Насчет того каравана, с Хэлом.}
+{4000}{}{Xорошо, мое имя Даппо. Вещи для ранчо и биржа труда, все находится здесь. Нужно сказать, вы не похожи на пастуха браминов. Как у вас с оружием?}
+{4010}{}{Нормально.}
+{4020}{}{Я не слишком люблю жестокости.}
+{5000}{}{Окей, вот мой магазин. Посмотрите также на столах. Если не понравится то, что я продаю. то идите к этому негодяю. Он, конечно, вам запудрит мозги.}
+{5010}{}{[Обмен]}
+{5020}{}{Мне пора.}
+{6000}{}{Что-то еще?}
+{6010}{}{Купить.}
+{6020}{}{Пока.}
+{7000}{}{Здесь нет подходящей работы для вас. Пустошь - место простое до грубости. Слабаки не приживаются.}
+{8000}{}{Возможно, мы сможем договориться. Мне нужны люди для охраны караванов. Это опасное занятие.}
+{8010}{}{Опасности меня не страшат.}
+{8020}{}{Я не люблю напрасный риск. [Уйти]}
+{9000}{}{Не мешай.}
+{10000}{}{Угу. С Бастером посрался. То есть Бастер со мной.}
+{10010}{}{А какое тебе дело до Бастера?}
+{11000}{}{Он мне оружие для караванов подгонял. Теперь будут проблемы со снарягой...}
+{11010}{}{Могу чем-то помочь?}
+{12000}{}{Попробуй. Нужно уболтать Бастера перестать тупить. Я тебе заплачу, если выгорит.}
+{12010}{}{Нет, не хочу в ваши разборки вмешиваться. [Уйти]}
+{12020}{}{Хорошо, я выясню, в чем дело. [Уйти]}
+{13000}{}{И чего? Какая муха его укусила?}
+{13010}{}{Говорит, что ты у него какой-то ценный груз увел. Он тебе заказывал доставку.}
+{14000}{}{Вот дерьмо! Проклятый ящик...}
+{14010}{}{Рассказывай!}
+{15000}{}{Короче. Бастер у меня заказал доставку одного здорового ящика. С военной базы.}
+{15010}{}{Ты согласился?}
+{16000}{}{Ну да, мы друг другу помогаем. Он мне пушки, я ему доставку, если надо чего...}
+{16010}{}{Что в ящике?}
+{16020}{}{Откуда караван шел?}
+{16030}{}{Где сейчас караван?}
+{16040}{}{А ты не присвоил ли, случаем, груз из ящика?}
+{16050}{}{Никто из пропавшего каравана не объявлялся?}
+{16060}{}{Ерунда какая-то. Может, попозже загляну. [Уйти]}
+{16070}{}{Понятно. Караван нужно найти. Сколько заплатишь?}
+{17000}{}{Да откуда мне знать? Ящик был огромный! Что-то ценное и очень нужное Бастеру...}
+{17010}{}{Откуда караван шел?}
+{17020}{}{Где сейчас караван?}
+{17030}{}{А ты не присвоил ли, случаем, груз из ящика?}
+{17040}{}{Никто из пропавшего каравана не объявлялся?}
+{17050}{}{Ерунда какая-то. Может, попозже загляну. [Уйти]}
+{17060}{}{Понятно. Караван нужно найти. Сколько заплатишь?}
+{18000}{}{Из Фриско шли ребята. Надежные парни. Из-за Бастера петлю на восток сделали. На военной базе подобрали груз.}
+{18010}{}{Что в ящике?}
+{18020}{}{Где сейчас караван?}
+{18030}{}{А ты не присвоил ли, случаем, груз из ящика?}
+{18040}{}{Никто из пропавшего каравана не объявлялся?}
+{18050}{}{Ерунда какая-то. Может, попозже загляну. [Уйти]}
+{18060}{}{Понятно. Караван нужно найти. Сколько заплатишь?}
+{19000}{}{Пропал... Последний раз с ними на связь выходили - они прошли Убежище 15. Уже к НКР приближались.}
+{19010}{}{Что в ящике?}
+{19020}{}{Откуда караван шел?}
+{19030}{}{А ты не присвоил ли, случаем, груз из ящика?}
+{19040}{}{Никто из пропавшего каравана не объявлялся?}
+{19050}{}{Ерунда какая-то. Может, попозже загляну. [Уйти]}
+{19060}{}{Понятно. Караван нужно найти. Сколько заплатишь?}
+{20000}{}{Да что я, враг себе чтоли? Мне не резон с Бастером проблемы иметь...}
+{20010}{}{Что в ящике?}
+{20020}{}{Откуда караван шел?}
+{20030}{}{Где сейчас караван?}
+{20040}{}{Никто из пропавшего каравана не объявлялся?}
+{20050}{}{Ерунда какая-то. Может, попозже загляну. [Уйти]}
+{20060}{}{Понятно. Караван нужно найти. Сколько заплатишь?}
+{21000}{}{Нет, как они с Волта 15 отметились, больше ничего не слышали...}
+{21010}{}{Что в ящике?}
+{21020}{}{Откуда караван шел?}
+{21030}{}{Где сейчас караван?}
+{21040}{}{А ты не присвоил ли, случаем, груз из ящика?}
+{21050}{}{Ерунда какая-то. Может, попозже загляну. [Уйти]}
+{21060}{}{Понятно. Караван нужно найти. Сколько заплатишь?}
+{22000}{}{Ты серьезно? Без шуток? Найдешь караван, ребят и груз Бастера - получишь два куска.}
+{22010}{}{Две тыщи? По рукам.[Уйти]}
+{22020}{}{Две тысячи всего за такую пыльную работу? Не смеши меня. [Уйти]}
+{23000}{}{Есть результаты?}
+{23010}{}{Полный голяк! Никаких следов, слухов, Н И Ч Е Г О!}
+{24000}{}{Проклятье. Ищи дальше. Около Убежища 15 пропали ребята.}
+{24010}{}{Ладно, будем надеяться на лучшее. [Уйти]}
+{25000}{}{Отлично! Где эти ублюдки и, главное, где ящик Бастера?}
+{25010}{}{Твои люди мертвы. Ящик я оставил@sex@|||а| в Пустоши.}
+{26000}{}{Мертвы? Что случилось?}
+{26010}{}{Ты знаешь, что было в ящике Бастера?.}
+{27000}{}{Нет.}
+{27010}{}{В ящике был боевой робот. По каким-то причинам он выбрался наружу и положил твоих людей.}
+{28000}{}{Вот черт! Я так и знал, что тут что-то неладно, с этим странным ящиком. Ну ничего, я прочищу мозги Бастеру. }
+{28010}{}{Как насчет платы?}
+{29000}{}{Держи. Ты заработал@sex@|||а|. Спасибо за помощь!}
+{29010}{}{Всегда к твоим услугам, Даппо.}
+{30000}{}{Это хорошо. Ближайший караван будет 15 числа. Идет в Реддинг. }
+{30010}{}{Мне это не интересно. [Уйти]}
+{30020}{}{Сколько я получу?}
+{31000}{}{Если все будет в порядке, караван дойдет до точки назначения и выживет проводник. Ты получишь 3000 монет.}
+{31010}{}{Я подумаю. [Уйти]}
+{31020}{}{Условия меня устраивают. Что мне нужно сделать?}
+{32000}{}{Ближайший караван отправляется 15 числа в 14:00. Мы ведем браминов в Реддинг. Ведет караван Хэл. Он отлично справляется с браминами. Ошивается где-то недалеко от моей лавки.}
+{32010}{}{Кроме меня будут еще охранники?}
+{33000}{}{Да, маршрут очень опасный. Нужно много охраны. Если не найдем нужное число людей, караван будет отменен.}
+{33010}{}{Хорошо. Я запомню. [Уйти]}
+{34000}{}{Найди Хэла до 14 часов 15 числа. Покажись, чтобы он тебя увидел и жди отправления.}
+{34010}{}{Ясно, это все что мне нужно было знать. [Уйти]}
+{35000}{}{Чего хотел@sex@|||а|?}
+{35010}{}{Ты про ребят из Нью-Рено слышал что-нибудь?}
+{35020}{}{Тут в городе слухи всякие ходят...}
+{36000}{}{ Что за слухи?}
+{36010}{}{Бастер, говорят, умом тронулся, скупает у крестьян браминьи лепешки и баррикаду вокруг своей палатки строит.}
+{37000}{}{Ха! Бастер известный идиот.}
+{37010}{}{Но я, вообще-то, не за этим приш@sex@|ел||ла|.}
+{38000}{}{Не томи, что там у тебя?}
+{38010}{}{Ты про ребят из Нью-Рено слышал что-нибудь?}
+{39000}{}{Каких еще ребят?}
+{39010}{}{Вроде как, банда одна из Рено хочет всю торговлю к лапам прибрать в НКР. Достойный человек мне сказал.}
+{40000}{}{Ох, йопрст. Плохие новости. Надо охрану удвоить...}
+{40010}{}{Я так понимаю, не слышал ты ничего?}
+{41000}{}{В точку! А теперь проваливай, мне нужно о своей шкуре позаботиться.}
+{41010}{}{Ну ты и хитрюга, Даппо. [Уйти]}
+{41020}{}{Ну ты и хитрюга, Даппо. [Уйти]}
+{42000}{}{Пош@sex@|ел||ла| вон! И передай Бастеру, чтобы забыл дорогу в мою лавку!}
+{42010}{}{Вернусь, когда ты придешь в себя}
+{42020}{}{Эй, успокойся! Если есть проблема, которой мы с Бастером пока не видим, нужно ее решать.}
+{43000}{}{Проблема? [Лицо Даппо багровеет] Проблема? Да! У меня большие проблемы! Эти подонки вскрыли караван! Я тонну убытков несу, гребаный дохлый скорпион!}
+{43010}{}{Кто-то ограбил твой караван?}
+{44000}{}{Именно! И, угадай, почему мои ребята не положили всех этих долбаных уродов?}
+{44010}{}{Струсили?}
+{44020}{}{Струсили?}
+{45000}{}{Мои ребята не трусят. Иди, у Хэла спроси, если не веришь. Пушки Бастер подогнал кривые! Отказали в самый нужный момент!}
+{45010}{}{У, Бастер-то, оказывается, сволочь! Зря я ему поверил@sex@|||а|...}
+{45020}{}{Да не может этого быть, ты что!}
+{46000}{}{Не может? Я тоже так думал. А Бастер решил на мне заработать и подсунул бракованные стволы!}
+{46010}{}{Я все выясню. Уверен@sex@|||а|, ты ошибаешься}
+{46020}{}{Сколько ты потерял? Я легко возмещу все твои расходы.}
+{47000}{}{Да ты за всю свою никчемную жизнь столько не заработаешь! Груза увели на 30 косарей!}
+{47010}{}{Нихрена себе. Нет, столько мне не достать.}
+{47020}{}{Да без проблем. 30 штук - для меня копейки. Забирай. [Отдать деньги]}
+{47030}{}{Да ты че, опух, караванщик? Называй реальную цену. Что там у тебя за товар был, мне не известно. Может, ты за дохлых браминов 30 косых просишь?}
+{48000}{}{Богатый, да? Ну ладно, это деловой разговор. Хорошо. Передай Бастеру - на этот раз я его прощаю. Но если подобное повторится...}
+{48010}{}{Не повторится. Это ошибка какая-то была.}
+{49000}{}{Дохлых браминов? Ты надо мной издеваешься? Гони 20 штук, или убирайся отсюда.}
+{49010}{}{Двадцатка тоже слишком дохрена. 5000 - максимум, что твой дрянной караван перевести мог.}
+{50000}{}{Да вы все оборзели! [Задумывается] Ладно, черт с тобой. Пустошь дала, Пустошь забрала. Груз все равно не вернуть. Давай деньги.}
+{50010}{}{Я с собой монеты не ношу. Обожди, вернусь через минуту.}
+{50020}{}{Ну вот и славно! [Отдать деньги] Что Бастеру передать?}
+{51000}{}{Передай этому долбаному кретину... Передай Бастеру, мы в расчете. Пока. Но если эта хрень еще раз повторится... Я с ним разберусь.}
+{51010}{}{Заметано. Так и скажу Бастеру.}
+{52000}{}{Жулик Бастер снова прислал сво@sex@|его||ю| @sex@|мальчика||девочку| на побегушках к старому Даппо? Чего тебе еще нужно? Неужели, я недостаточно ясно выразился в прошлый раз?}
+{52010}{}{Я здесь, чтобы решить эту проблему сейчас. Бастер готов заплатить за твой потерянный груз.}
+{53000}{}{Да ну? А откуда у Бастера денежки? Уж не его ли ребята напали на мой караван? Если так - все с ним ясно!}
+{53010}{}{С тобой невозможно разговаривать.}
+{53020}{}{Ничего подобного. Бастер здесь совершенно не причем. Но ради сохранения деловых отношений готов заплатить тебе, чтобы частично компенсировать ущерб.}
+{54000}{}{И сколько готов отстегнуть Бастер?}
+{54010}{}{Надо посчитать финансы, минуточку, сейчас вернусь}
+{54020}{}{5 000}
+{54030}{}{6 000}
+{54040}{}{10 000}
+{55000}{}{Ты смеешься надо мной? Этого слишком мало!}
+{56000}{}{Да это же кропаль! По сравнению с тем, что от меня ушло! Но на крайний случай... Ладно, гони монеты.}
+{56010}{}{Вот и отлично. Я могу сказать Бастеру, что больше не будет проблем?}
+{57000}{}{Угу. Если он будет вести себя прилично, и перестанет впаривать мне кривые винтовки...}
+{57010}{}{Нормально. Прощай!}
+{58000}{}{А, это снова ты? Бастер - продажная свинья. Знаешь, были такие твари? Рассказать тебе, что они представляли из себя?}
+{58010}{}{Не нужно, я ухожу.}
+{58020}{}{Нет. Давай лучше я расскажу тебе, что случилось с твоими пушками?}
+{59000}{}{Ну, попробуй.}
+{59010}{}{У тебя в охране был некто Джим, так?}
+{60000}{}{Гребаный наркоман. От него обычно куча проблем, но не в этот раз. Тут пушки просто отказали. Он пропал куда-то, да, но подобное с ним и раньше случалось.}
+{60010}{}{Ты ошибаешься. Я нашел Джима, в 15ом Убежище.}
+{61000}{}{Ишь ты. Куда его занесло. Но причем здесь Джим?}
+{61010}{}{Я с ним поговорил немного. И он рассказал. Перед выходом каравана Джиму срочно доза потребовалась. Он взломал ящик с патронами охраны и вынес все. Сдал дилеру джета и заполнил ящик холостыми патронами.}
+{62000}{}{Что??! Джим? Вот, сука... Я его...}
+{62010}{}{Теперь ты понимаешь, что Бастер не виноват в том, что твой караван нагрели рейдеры?}
+{63000}{}{Бастер все равно в чем-то виноват... Но я готов признать, что в этом деле нет его вины. Передай Бастеру мои слова.}
+{63010}{}{Хорошо. Я передам.}
+{64000}{}{Ба! Да это же сам@sex@|||а| @pname@! Слушай, у меня к тебе есть дело.}
+{64010}{}{Не интересует, ответь лучше на пару вопросов.}
+{64020}{}{Что за дело?}
+{65000}{}{Можешь достать одну редкую вещицу? }
+{65010}{}{Какую?}
+{66000}{}{Горшок с маргаритками, поставлю на подоконник. В наше время - редкая и ценная штука.}
+{66010}{}{Без проблем.}
+{66020}{}{Нет, слишком сложно.}
+{67000}{}{Ох! Невероятно! Правду люди про тебя говорят! Моя признательность не знает границ! Послушай, что я тебе расскажу...}
+{67010}{}{[Слушать внимательно]}
+{68000}{}{И у тебя хватает совести приходить ко мне с этим сейчас? Ты не выполняешь свои обязательства, я несу убытки! Убирайся!}
+{68010}{}{Даппо, я готов@sex@|||а| возместить твои потери, сколько это будет стоить?}
+{69000}{}{А это уже деловой разговор! Хорошо, трех тысяч монет будет достаточно. Мы забудем об этом досадном недоразумении.}
+{69010}{}{У меня столько нет сейчас. Я вернусь с нужной суммой.}
+{69020}{}{Да, я соглас@sex@|ен||на|. [Отдать деньги]}
+{100000001}{}{После беседы с Даппо навык бартера персонажа увеличен на 5 пунктов.}
+

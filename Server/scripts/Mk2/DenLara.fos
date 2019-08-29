@@ -1,0 +1,15 @@
+// FOS Server
+
+void Init(::Critter& lara, bool firstTime)
+{
+    lara.SetEvent(CRITTER_EVENT_BARTER, "DenLara::_EventBarter");
+}
+
+/** Обрабатывает события бартера.
+ * С Ларой могут торговать только те, к кому она лояльна.
+ */
+bool _EventBarter( ::Critter& lara, ::Critter& player, bool attach, uint barterCount)
+{
+    ::GameVar@ loyality=::GetUnicumVar(UVAR_loyality, lara.Id, player.Id);
+    return (valid(loyality) && loyality.GetValue()>=5);
+}

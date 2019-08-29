@@ -1,0 +1,36 @@
+// FOS Server
+// NrSalvatore
+// Author: rifleman17
+// New Reno Salvatore scripts.
+
+const uint CteMoveMason = 12;
+uint MaisonId=0;
+
+// Мэйсон загораживает проход к Сальваторе. Может отойти только, если у игрока есть доступ
+void Mason(::Critter& cr, bool firstTime)
+{
+    MaisonId=cr.Id;
+    cr.ModeBase[ MODE_NO_PUSH ]=1;
+}
+
+void dlg_MoveMason(::Critter& cr, ::Critter@npc, ::string@ text)
+{
+    if(validEngineObject(npc) && npc.GetTimeEvents(CteMoveMason, null, null, null)==0)
+        npc.AddTimeEvent("NrSalvatore::cte_MoveMason", REAL_SECOND(3), CteMoveMason);
+}
+
+uint cte_MoveMason(::Critter& cr, int identifier, int& rate, int&)
+{
+    cr.MoveRandom();
+    return 0;
+}
+
+void dlg_AttackMaison(::Critter& player, ::Critter@npc, ::string@ text)
+{
+    if(MaisonId > 0)
+    {
+        ::Critter@ cr=::GetCritter(MaisonId);
+        if(validEngineObject(cr))
+            NpcPlanes::AddAttackPlane(cr, 0, player);
+    }
+}

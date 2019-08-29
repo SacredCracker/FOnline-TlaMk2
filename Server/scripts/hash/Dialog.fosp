@@ -1,0 +1,24 @@
+
+bool Hash(string&name,string&code,int&sort)
+{            
+	
+	return false;
+}
+
+string@LoadFile(const string&fileName)
+{
+	file f;
+	if(f.open(fileName,"r")!=-1)
+	{
+		string txt="";
+		while(!f.isEndOfFile())
+		{
+			string line="";
+			if(f.readLine(line)>0)
+			txt+="\n"+line;
+		}
+		f.close();
+		return@txt;
+	}
+	return null;
+}

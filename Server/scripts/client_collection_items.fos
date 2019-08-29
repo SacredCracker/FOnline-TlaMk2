@@ -1,0 +1,234 @@
+bool[] CollectSee = { true, true, true, true, true, false, true };
+#define AmmoSee    ( CollectSee[ 0 ] )
+#define WeaponSee( CollectSee[ 1 ] )
+#define MiskSee( CollectSee[ 2 ] )
+#define DrugSee( CollectSee[ 3 ] )
+#define ArmorSee( CollectSee[ 4 ] )
+#define InvSee( CollectSee[ 5 ] )
+#define BprSee( CollectSee[ 6 ] )
+
+bool FCDrawName = false;
+int  FCNOffX = 0;
+int  FCNOffY = 0;
+
+void AddCollectInit( string@ name, uint numberCollect, uint CollectType, int screen, int posX, int posY )
+{
+    SeeCollectionItems coll;
+    @coll.Name = name;
+    coll.CollectScreen = numberCollect;
+    coll.CollectType = CollectType;
+    @coll.Opt = GUI_AddScreenElement( screen, GetIfaceIniStr( "FiltrPicture" ), posX, posY )
+                .CallbackMouseClick( coll )
+                .DownPic( GetIfaceIniStr( "FiltrPictureDn" ) )
+                .CallbackDrawPos( coll );
+}
+
+void _CollectionInit()
+{
+    StrToInt( GetIfaceIniStr( "NameFiltrX" ), FCNOffX );
+    StrToInt( GetIfaceIniStr( "NameFiltrY" ), FCNOffY );
+
+    {
+        int var = 0;
+        StrToInt( GetIfaceIniStr( "NameFiltrDraw" ), var );
+        FCDrawName = ( var == 0 );
+    }
+
+    bool ActiveFiltrAmmo = true,
+         ActiveFiltrArmor = true,
+         ActiveFiltrWeapon = true,
+         ActiveFiltrDrugs = true,
+         ActiveFiltrMisc = true,
+         ActiveFiltrInv = true,
+         ActiveFiltrBlP = true;
+
+    {
+        int var = 0;
+        StrToInt( GetIfaceIniStr( "ActiveFiltrAmmo" ), var );
+        ActiveFiltrAmmo = ( var == 0 );
+    }
+    {
+        int var = 0;
+        StrToInt( GetIfaceIniStr( "ActiveFiltrArmor" ), var );
+        ActiveFiltrArmor = ( var == 0 );
+    }
+    {
+        int var = 0;
+        StrToInt( GetIfaceIniStr( "ActiveFiltrWeapon" ), var );
+        ActiveFiltrWeapon = ( var == 0 );
+    }
+    {
+        int var = 0;
+        StrToInt( GetIfaceIniStr( "ActiveFiltrDrugs" ), var );
+        ActiveFiltrDrugs = ( var == 0 );
+    }
+    {
+        int var = 0;
+        StrToInt( GetIfaceIniStr( "ActiveFiltrMisc" ), var );
+        ActiveFiltrMisc = ( var == 0 );
+    }
+    {
+        int var = 0;
+        StrToInt( GetIfaceIniStr( "ActiveFiltrInv" ), var );
+        ActiveFiltrInv = ( var == 0 );
+    }
+    {
+        int var = 0;
+        StrToInt( GetIfaceIniStr( "ActiveFiltrBlP" ), var );
+        ActiveFiltrBlP = ( var == 0 );
+    }
+
+    int var = 0, var0 = 0, var1 = 0, var2 = 0, var3 = 0;
+
+    string@ NameFiltrAmmo     = GetIfaceIniStr( "NameFiltrAmmo_" + __Language ),
+            NameFiltrArmor    = GetIfaceIniStr( "NameFiltrArmor_" + __Language ),
+            NameFiltrWeapon   = GetIfaceIniStr( "NameFiltrWeapon_" + __Language ),
+            NameFiltrDrugs    = GetIfaceIniStr( "NameFiltrDrugs_" + __Language ),
+            NameFiltrMisc     = GetIfaceIniStr( "NameFiltrMisc_" + __Language ),
+            NameFiltrInv      = GetIfaceIniStr( "NameFiltrInv_" + __Language ),
+            NameFiltrBlP      = GetIfaceIniStr( "NameFiltrBlP_" + __Language );
+			
+    StrToInt( GetIfaceIniStr( "BrtFiltrX" ), var0 );
+    StrToInt( GetIfaceIniStr( "BrtFiltrY" ), var1 );
+    StrToInt( GetIfaceIniStr( "BrtFiltrOffX" ), var2 );
+    StrToInt( GetIfaceIniStr( "BrtFiltrOffY" ), var3 );
+
+    if( ActiveFiltrArmor )
+    {
+        AddCollectInit( NameFiltrArmor, ITEMS_BARTER, 4, CLIENT_SCREEN_BARTER, var0 + ( var2 * var ), var1 + ( var * var3 ) );
+        var++;
+    }
+    if( ActiveFiltrAmmo )
+    {
+        AddCollectInit( NameFiltrAmmo, ITEMS_BARTER, 0, CLIENT_SCREEN_BARTER, var0 + ( var2 * var ), var1 + ( var * var3 ) );
+        var++;
+    }
+    if( ActiveFiltrWeapon )
+    {
+        AddCollectInit( NameFiltrWeapon, ITEMS_BARTER, 1, CLIENT_SCREEN_BARTER, var0 + ( var2 * var ), var1 + ( var * var3 ) );
+        var++;
+    }
+    if( ActiveFiltrMisc )
+    {
+        AddCollectInit( NameFiltrMisc, ITEMS_BARTER, 2, CLIENT_SCREEN_BARTER, var0 + ( var2 * var ), var1 + ( var * var3 ) );
+        var++;
+    }
+    if( ActiveFiltrDrugs )
+    {
+        AddCollectInit( NameFiltrDrugs, ITEMS_BARTER, 3, CLIENT_SCREEN_BARTER, var0 + ( var2 * var ), var1 + ( var * var3 ) );
+        var++;
+    }
+    if( ActiveFiltrInv )
+    {
+        AddCollectInit( NameFiltrInv, ITEMS_BARTER, 5, CLIENT_SCREEN_BARTER, var0 + ( var2 * var ), var1 + ( var * var3 ) );
+        var++;
+    }
+    if( ActiveFiltrBlP )
+        AddCollectInit( NameFiltrBlP, ITEMS_BARTER, 6, CLIENT_SCREEN_BARTER, var0 + ( var2 * var ), var1 + ( var * var3 ) );
+
+    StrToInt( GetIfaceIniStr( "UseFiltrX" ), var0 );
+    StrToInt( GetIfaceIniStr( "UseFiltrY" ), var1 );
+    StrToInt( GetIfaceIniStr( "UseFiltrOffX" ), var2 );
+    StrToInt( GetIfaceIniStr( "UseFiltrOffY" ), var3 );
+    var = 0;
+    if( ActiveFiltrArmor )
+    {
+        AddCollectInit( NameFiltrArmor, ITEMS_USE, 4, CLIENT_SCREEN_USE, var0 + ( var2 * var ), var1 + ( var * var3 ) );
+        var++;
+    }
+    if( ActiveFiltrAmmo )
+    {
+        AddCollectInit( NameFiltrAmmo, ITEMS_USE, 0, CLIENT_SCREEN_USE, var0 + ( var2 * var ), var1 + ( var * var3 ) );
+        var++;
+    }
+    if( ActiveFiltrWeapon )
+    {
+        AddCollectInit( NameFiltrWeapon, ITEMS_USE, 1, CLIENT_SCREEN_USE, var0 + ( var2 * var ), var1 + ( var * var3 ) );
+        var++;
+    }
+    if( ActiveFiltrMisc )
+    {
+        AddCollectInit( NameFiltrMisc, ITEMS_USE, 2, CLIENT_SCREEN_USE, var0 + ( var2 * var ), var1 + ( var * var3 ) );
+        var++;
+    }
+    if( ActiveFiltrDrugs )
+    {
+        AddCollectInit( NameFiltrDrugs, ITEMS_USE, 3, CLIENT_SCREEN_USE, var0 + ( var2 * var ), var1 + ( var * var3 ) );
+        var++;
+    }
+    if( ActiveFiltrBlP )
+        AddCollectInit( NameFiltrBlP, ITEMS_USE, 6, CLIENT_SCREEN_USE, var0 + ( var2 * var ), var1 + ( var * var3 ) );
+
+    StrToInt( GetIfaceIniStr( "PickupFiltrX" ), var0 );
+    StrToInt( GetIfaceIniStr( "PickupFiltrY" ), var1 );
+    StrToInt( GetIfaceIniStr( "PickupFiltrOffX" ), var2 );
+    StrToInt( GetIfaceIniStr( "PickupFiltrOffY" ), var3 );
+    var = 0;
+    if( ActiveFiltrArmor )
+    {
+        AddCollectInit( NameFiltrArmor, ITEMS_PICKUP, 4, CLIENT_SCREEN_PICKUP, var0 + ( var2 * var ), var1 + ( var * var3 ) );
+        var++;
+    }
+    if( ActiveFiltrAmmo )
+    {
+        AddCollectInit( NameFiltrAmmo, ITEMS_PICKUP, 0, CLIENT_SCREEN_PICKUP, var0 + ( var2 * var ), var1 + ( var * var3 ) );
+        var++;
+    }
+    if( ActiveFiltrWeapon )
+    {
+        AddCollectInit( NameFiltrWeapon, ITEMS_PICKUP, 1, CLIENT_SCREEN_PICKUP, var0 + ( var2 * var ), var1 + ( var * var3 ) );
+        var++;
+    }
+    if( ActiveFiltrMisc )
+    {
+        AddCollectInit( NameFiltrMisc, ITEMS_PICKUP, 2, CLIENT_SCREEN_PICKUP, var0 + ( var2 * var ), var1 + ( var * var3 ) );
+        var++;
+    }
+    if( ActiveFiltrDrugs )
+    {
+        AddCollectInit( NameFiltrDrugs, ITEMS_PICKUP, 3, CLIENT_SCREEN_PICKUP, var0 + ( var2 * var ), var1 + ( var * var3 ) );
+        var++;
+    }
+    if( ActiveFiltrBlP )
+        AddCollectInit( NameFiltrBlP, ITEMS_PICKUP, 6, CLIENT_SCREEN_PICKUP, var0 + ( var2 * var ), var1 + ( var * var3 ) );
+}
+
+class SeeCollectionItems : IGUI::ElementCallbackMouseClick, IGUI::ElementCallbackDrawPos
+{
+
+    void OnDraw( int ScreenX, int ScreenY, int ElementX, int ElementY )
+    {
+        if( valid( Name ) && FCDrawName )
+        {
+            int flags = FT_CENTERY | FT_CENTERX,
+      w = 0,
+      h = 0,
+      lines = 0;
+            GetTextInfo( Name, 200, 200, FONT_FALLOUT, flags, w, h, lines );
+            DrawText( Name, ScreenX + ElementX + FCNOffX, ScreenY + ElementY + FCNOffY, w, h, CollectSee[ CollectType ] ? COLOR_LGREEN : COLOR_DDGREEN, FONT_FALLOUT, flags );
+        }
+    }
+
+    void OnMouseClick( int click )
+    {
+        if( click == MOUSE_CLICK_LEFT )
+        {
+            CollectSee[ CollectType ] = !CollectSee[ CollectType ];
+            if( CollectScreen == ITEMS_BARTER && CollectType != 5 )
+            {
+                RefreshItemsCollection( ITEMS_BARTER_OPPONENT );
+                return;
+            }
+            else if( CollectScreen == ITEMS_PICKUP )
+            {
+                RefreshItemsCollection( ITEMS_PICKUP_FROM );
+            }
+            RefreshItemsCollection( CollectScreen );
+        }
+    }
+
+    uint            CollectScreen;
+    uint8           CollectType;
+    string@         Name;
+    IGUIElementOpt@ Opt;
+}

@@ -1,0 +1,87 @@
+// FOS Server
+
+funcdef int GetSaveData( uint index, int value );
+funcdef int SetSaveData( uint index, int value, int oldValue );
+
+class SaveData
+{
+	SaveData( const int size )
+	{
+		AnyData.resize( size );
+		Getters.resize( size );
+		Setters.resize( size );
+		
+		if( ::IsAnyData( "SaveData_" + get_Name( ) ) )
+			::GetAnyData( "SaveData_" + get_Name( ), AnyData );
+	}
+	
+	SaveData( const int size, string&in name )
+	{
+		AnyData.resize( size );
+		Getters.resize( size );
+		Setters.resize( size );
+		
+		if( ::IsAnyData( "SaveData_" + name ) )
+			::GetAnyData( "SaveData_" + name, AnyData );
+	}
+
+	void Erase()
+	{
+		::EraseAnyData( "SaveData_" + get_Name() );
+	}
+	
+	::string@ get_Name( )
+	{
+		Log( "Error: no override get_Name" );
+		return null;
+	}
+	
+	int get_Data( uint index ) final
+	{
+		if( index >= Getters.length() )
+		{
+			Log( "Error: unbound index" );
+			return -1;
+		}
+		
+		GetSaveData@ getter = @Getters[ index ];
+		if( @getter !is null )
+		{
+			return getter( index, AnyData[index] );
+		}
+		return AnyData[index];
+	}
+	
+	int set_Data( uint index, int value ) final
+	{
+		if( index >= Setters.length() )
+		{
+			Log( "Error: unbound index" );
+			return -1;
+		}
+		value = set_NoUpdateData( index, value );
+		Update();
+		return value;
+	}
+	
+	int set_NoUpdateData( uint index, int value ) final
+	{
+		if( index >= Setters.length() )
+		{
+			Log( "Error: unbound index" );
+			return -1;
+		}
+		SetSaveData@ setter = @Setters[ index ];
+		if( @setter !is null )	return ( AnyData[index] = setter( index, value, AnyData[index] ) );
+		else return ( AnyData[index] = value );		
+	}
+	
+	void Update()
+	{
+		::SetAnyData( "SaveData_" + get_Name( ), AnyData );
+	}
+	
+	private SaveData::GetSaveData@[] Getters;
+	private SaveData::SetSaveData@[] Setters;
+	private int[] AnyData;
+}

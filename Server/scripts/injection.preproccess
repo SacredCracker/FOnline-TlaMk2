@@ -1,0 +1,100 @@
+
+void entry(){}
+void exit(){}
+
+bool preproccess_injection( string& code, Preprocessor::ScriptFile& script, Preprocessor::ReasonRun reason )
+{
+	string return_code = "";
+	string letter = " ";
+	for( uint i = 0; i < code.length(); i++ )
+		{
+			letter[0] = code[i];
+			return_code += letter;
+		}
+	
+	code = return_code;
+	return true;
+}
+
+interface Injection
+{
+	string@ code{ get const; set; };
+	string@ name{ get const; set; };
+	int opCmp( const string&in arg_name );
+}
+
+// Инъекция в модуль
+class InjectionModule : Injection
+{
+	string@ code
+	{ 
+		get const override
+		{
+			return @_code;
+		}
+		
+		set override
+		{ 
+			@_code = @value;
+		}
+	}
+	
+	string@ name
+	{ 
+		get const override
+		{
+			return @_name;
+		}
+		
+		set override
+		{ 
+			@_name = @value;
+		}
+	}
+	
+	int opCmp( const string&in arg_name ) override
+	{
+		return _name.opCmp( arg_name );
+	}
+	
+	private string@ _name;
+	private string@ _code;
+}
+
+// Инъекция по маркеру
+class InjectionMarker : Injection
+{
+	string@ code
+	{ 
+		get const override
+		{
+			return @_code;
+		}
+		
+		set override
+		{ 
+			@_code = @value;
+		}
+	}
+	
+	string@ name
+	{ 
+		get const override
+		{
+			return @_name;
+		}
+		
+		set override
+		{ 
+			@_name = @value;
+		}
+	}
+	
+	int opCmp( const string&in arg_name ) override
+	{
+		return _name.opCmp( arg_name );
+	}
+	
+	private string@ _name;
+	private string@ _code;
+}

@@ -1,0 +1,87 @@
+#ifndef _SKILL_MAX
+#define _SKILL_MAX
+
+#ifndef __NATIVE
+# ifndef  _MAIN_
+#  ifdef __SERVER
+import int GetMaxSkill( int index ) from "main";
+#  endif
+#  ifdef __CLIENT
+import int GetMaxSkill( int index ) from "client_main";
+#  endif
+# endif
+#endif
+
+#ifdef _MAIN_
+
+# ifdef __NATIVE
+#  define __SkillMaxValue            ( FOnline->SkillMaxValue )
+# endif
+
+# define MAX_SKILL_SMALL_GUNS        ( __SkillMaxValue )
+# define MAX_SKILL_BIG_GUNS          ( __SkillMaxValue )
+# define MAX_SKILL_ENERGY_WEAPONS    ( __SkillMaxValue )
+# define MAX_SKILL_UNARMED           ( __SkillMaxValue )
+# define MAX_SKILL_LIONHEART         ( __SkillMaxValue )
+# define MAX_SKILL_THROWING          ( __SkillMaxValue )
+# define MAX_SKILL_FIRST_AID         ( __SkillMaxValue )
+# define MAX_SKILL_DOCTOR            ( __SkillMaxValue )
+# define MAX_SKILL_SNEAK             ( __SkillMaxValue )
+# define MAX_SKILL_LOCKPICK          ( __SkillMaxValue )
+# define MAX_SKILL_STEAL             ( __SkillMaxValue )
+# define MAX_SKILL_TRAPS             ( 200 )
+# define MAX_SKILL_SCIENCE           ( __SkillMaxValue )
+# define MAX_SKILL_REPAIR            ( __SkillMaxValue )
+# define MAX_SKILL_SPEECH            ( __SkillMaxValue )
+# define MAX_SKILL_BARTER            ( 125 )
+# define MAX_SKILL_GAMBLING          ( __SkillMaxValue )
+# define MAX_SKILL_OUTDOORSMAN       ( 115 )
+
+int GetMaxSkill( int index )
+{
+    switch( index )
+    {
+    case    SK_SMALL_GUNS:
+        return MAX_SKILL_SMALL_GUNS;
+    case    SK_BIG_GUNS:
+        return MAX_SKILL_BIG_GUNS;
+    case    SK_ENERGY_WEAPONS:
+        return MAX_SKILL_ENERGY_WEAPONS;
+    case    SK_UNARMED:
+        return MAX_SKILL_UNARMED;
+    case    SK_LIONHEART:
+        return MAX_SKILL_LIONHEART;
+    case    SK_THROWING:
+        return MAX_SKILL_THROWING;
+    case    SK_FIRST_AID:
+        return MAX_SKILL_FIRST_AID;
+    case    SK_DOCTOR:
+        return MAX_SKILL_DOCTOR;
+    case    SK_SNEAK:
+        return MAX_SKILL_SNEAK;
+    case    SK_LOCKPICK:
+        return MAX_SKILL_LOCKPICK;
+    case    SK_STEAL:
+        return MAX_SKILL_STEAL;
+    case    SK_TRAPS:
+        return MAX_SKILL_TRAPS;
+    case    SK_SCIENCE:
+        return MAX_SKILL_SCIENCE;
+    case    SK_REPAIR:
+        return MAX_SKILL_REPAIR;
+    case    SK_SPEECH:
+        return MAX_SKILL_SPEECH;
+    case    SK_BARTER:
+        return MAX_SKILL_BARTER;
+    case    SK_GAMBLING:
+        return MAX_SKILL_GAMBLING;
+    case    SK_OUTDOORSMAN:
+        return MAX_SKILL_OUTDOORSMAN;
+    default:
+        return 0;
+    }
+    return 0;
+}
+
+#endif
+#endif

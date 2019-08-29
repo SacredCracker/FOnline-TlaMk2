@@ -1,0 +1,75 @@
+// FOS Server
+
+int GetBestScore( uint index )
+{
+	::array<int> data = {};
+	if( ::IsAnyData ( "BestScore" ) )
+		if( ::GetAnyData ( "BestScore", data ) )
+			return data [ index ];
+	
+	return 0;
+}
+
+bool ChangeBestScore( uint index , int newScore )
+{
+	::array<int> data( SCORES_MAX );
+	if( ::IsAnyData ( "BestScore" ) )
+		::GetAnyData ( "BestScore", data );
+	else
+	{
+		for(uint i = 0; i < SCORES_MAX; i++ )
+			data[i] = 0;
+	}
+	data [ index ] = newScore;
+	return ::SetAnyData  ( "BestScore", data );
+}
+
+void ChangePlayerScore( ::Critter& player, uint scoreIndex , int value )
+{	
+	if( player.IsPlayer( ) )
+	{
+		value = player.AddScoreMK2( scoreIndex, value );
+		if ( value > GetBestScore( scoreIndex ) ) 
+		{
+			if( ChangeBestScore( scoreIndex, value ) )
+			{
+				::string@ name = ::GetPlayerName( player.Id );
+				if( valid( name ) )
+					::SetBestScore ( scoreIndex ,  null,  ( ( not ( name is null ) ) ? name: " " ) + "(" + value + ")" );
+			}
+		}
+	}
+}
+
+void ChangeScore( ::Critter& cr, int ind,int v,int )
+{
+	ChangePlayerScore( cr, ind , v );
+}
+
+void GetAllScore( ::Critter& cr, int,int,int )
+{
+	for( uint i = 0; i < SCORES_MAX; i++ )
+		cr.Say( SAY_NETMSG, "" + i + " - " + cr.GetScore( i ) );
+}
+
+void GetAllBest( ::Critter& cr, int,int,int )
+{
+	::array<int> data = {};
+	if( ::IsAnyData ( "BestScore" ) )
+	{
+		if(!::GetAnyData ( "BestScore", data ))
+			Log("No GetAnyData");
+	}
+	for( uint i = 0; i < SCORES_MAX; i++ )
+		cr.Say( SAY_NETMSG, "" + i + " - " + data[ i ] );
+}
+// ~run scoremk2 ClearAnyData 0 0 0
+void ClearAnyData( ::Critter& cr, int,int,int )
+{
+	::array<int> data( SCORES_MAX );
+	
+	for(uint i = 0; i < SCORES_MAX; i++ )
+		data[i] = 0;
+	
+	::SetAnyData  ( "BestScore", data );
+}

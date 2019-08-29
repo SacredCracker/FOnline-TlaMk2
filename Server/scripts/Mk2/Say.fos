@@ -1,0 +1,99 @@
+// FOS Client
+
+SayMainScreen SayMaster;
+ 
+namespace Option
+{
+	namespace GUI
+	{
+		uint ColorButtonText = COLOR_SAND;
+		uint ColorInputText = COLOR_GREEN;
+		uint ColorText = COLOR_DGREEN;
+	}
+}
+
+interface SayResult{
+	void Say( ::string& say );
+}
+
+void Show( Say::SayResult@ result )
+{
+	@SayMaster.Current = result;
+	::ShowScreen( CLIENT_SCREEN_SAY_MK2, 0, 0, 0 );
+}
+
+void ModuleInit( ){
+	GuiKit::Add( CLIENT_SCREEN_SAY_MK2, @SayMaster );
+}
+
+void CancelFuncdef( int click ){
+	if( click == MOUSE_CLICK_LEFT )
+		::HideScreen( CLIENT_SCREEN_SAY_MK2, 0, 0, 0 );
+}
+
+void OkFuncdef( int click )
+{
+	if( click == MOUSE_CLICK_LEFT )
+		SayMaster.Okay( );
+}
+
+class SayMainScreen : IGUI::ElementCallbackKeyPress, IGUI::ScreenCallbackHide, GuiKit::GUIScreenPattern
+{
+	::string@ get_Name( )
+	{
+		return "Say";
+	}
+
+	void Build( int screenIndex, ::IGUIScreenOpt@ opt )
+	{
+		GuiKit::Button( @OkFuncdef, "Ok" );
+		GuiKit::Text( "Ok", STR_SAY_OK )
+			.SetColor( ThisModule::Option::GUI::ColorButtonText );
+			
+		GuiKit::Button( @CancelFuncdef, "Cancel" );
+		GuiKit::Text( "Cancel", STR_SAY_CANCEL )
+			.SetColor( ThisModule::Option::GUI::ColorButtonText );
+		
+		GuiKit::Text( "Main", STR_SAY_TITLE )
+			.SetColor( ThisModule::Option::GUI::ColorButtonText );
+		
+		uint[] blockKeys = { DIK_RETURN };
+		GUI_AddScreenElement( screenIndex, null, 0, 0 )
+			.Position( IniParser::GetCoord( GuiKit::FormatKey( "Say" ) ) )
+			.Text( "", FONT_FALLOUT, ThisModule::Option::GUI::ColorText, ThisModule::Option::GUI::ColorText, FT_ALIGN | FT_CENTERY )
+			.TextInput( true, 50, ThisModule::Option::GUI::ColorInputText )
+			.SetNoFocusedKeyPress( true )
+			.SetName( "SaySay" )
+			.CallbackKeyPress( @this )
+			.BlockInput( "\n", @blockKeys );
+	}
+	
+	SayMainScreen( )
+	{
+		@Current = null;
+	}
+
+	void OnKeyPress( uint8 key, uint8 letter, bool& result )
+	{
+		if( key == DIK_RETURN || key == DIK_NUMPADENTER )
+		{
+			Okay( );
+			result = true;
+		}
+	}
+	
+	void Okay( )
+	{
+		Say::SayResult@ result = @ Current;
+		::string say = GUI_GetActiveScreenOptions( CLIENT_SCREEN_SAY_MK2, 0 ).ElementOpt["SaySay"].GetText();;
+		::HideScreen( CLIENT_SCREEN_SAY_MK2, 0, 0, 0 );
+		result.Say( say );
+	}
+	
+	void OnHide( int, int, int ) override
+	{
+		@ Current = null;
+	}
+	
+	Say::SayResult@ Current;
+}

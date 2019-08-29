@@ -1,0 +1,165 @@
+#include "_macros.fos"
+#include "_maps.fos"
+#include "entire.fos"
+#include "pids_groups.fos"
+#include "npc_menege_lib.fos"
+#include "_teams.fos"
+#include "_npc_pids.fos"
+
+// Номер Entire респа машины и мобов на карте
+#define ENTIRE_SPAWN_CAR                  ( 50 )
+#define ENTIRE_SPAWN_MOBS                 ( 100 )
+// Номер Entire на карте, точка к которой двигаться мобам
+#define ENTIRE_TROOPER_DIR                ( 101 )
+#define ENTIRE_SNIPER_DIR                 ( 102 )
+
+#define CAR_WAIT_TIME                     ( REAL_MINUTE( 5 ) )
+
+// Эквип мобов
+#define BAG_TermPtrn1                     ( 276 )
+#define BAG_TermPtrn2                     ( 277 )
+#define BAG_TermPtrn3                     ( 278 )
+#define BAG_TermPtrn4                     ( 279 )
+#define BAG_SniperPtrn1                   ( 270 )
+#define BAG_SniperPtrn2                   ( 271 )
+#define BAG_SniperPtrn3                   ( 272 )
+#define BAG_SniperPtrn4                   ( 273 )
+
+#define BAG_RDRC_Raiders_RaiderMale       ( 169 )
+#define BAG_RDRC_Raiders_RaiderMale2      ( 170 )
+#define BAG_RDRC_Raiders_RaiderFemale     ( 171 )
+#define BAG_RDRC_Raiders_RaiderFemale2    ( 172 )
+#define BAG_All_BountyHunters_5           ( 238 )
+
+// Список карт, где потенциально может спавниться тачка
+const int[] mapsSpawnCar = { MAP_lf0_lvl_g1, MAP_lf0_lvl_g5, MAP_lf0_lvl_g6 };
+
+void r_NovatoSpawnCar( Critter& master, Critter@ slave )
+{
+    Map@ map = GetMapByPid( mapsSpawnCar[ Random( 0, mapsSpawnCar.length() - 1 ) ], 0 );
+    // Сложность волны (0-2 - рейдеры, 3 - анклав)
+    int  complexity = Random( 0, 3 );
+    SpawnCar( map, complexity );
+    SpawnSquad( map, complexity );
+}
+
+void SpawnCar( Map@ map, int complexity )
+{
+
+    Entire[] entires;
+    ParseEntires( map, entires, ENTIRE_SPAWN_CAR );
+    Item@ car;
+    int   carPid = PID_SCOUT;
+    for( int i = 0, iMax = entires.length(); i < iMax; i++ )
+    {
+        Entire@ ent = entires[ i ];
+        if( map.CheckPlaceForItem( ent.HexX, ent.HexY, carPid ) )
+        {
+            @car = map.AddItem( ent.HexX, ent.HexY, carPid, 1 );
+            // map.PlaySound("carbreaks.ogg");
+            break;
+        }
+    }
+
+    if( not valid( car ) )
+    {
+        return;
+    }
+
+    Item@ bag = car.GetChild( 0 );
+    uint  keyId = Random( 10000, 50000 );
+    car.Charge = Random( 0, car.Proto.Car_TankVolume );
+    car.LockerId = 1;
+
+    uint[] args = { car.Id, map.Id };
+    CreateTimeEvent( __FullSecond + CAR_WAIT_TIME, "e_DeleteCar", args, true );
+
+    car.Update();
+    FillingBag( bag, complexity );
+}
+
+// Удаление машины и НПС, которые ее защищают
+// TODO юзать ф-ю в скрипте base.fos
+uint e_DeleteCar( uint[] @ values )
+{
+    Item@ car = GetItem( values[ 0 ] );
+    if( valid( car ) )
+    {
+        DeleteItem( car );
+    }
+    // Удаление НПЦ
+    Critter@[] npcs;
+    Map@ map = GetMap( values[ 1 ] );
+    uint iMax = map.GetCritters( 0, FIND_ALL | FIND_ONLY_NPC, npcs );
+    for( uint i = 0; i < iMax; i++ )
+    {
+        if( npcs[ i ].Stat[ ST_TEAM_ID ] == TEAM_EnclaveTrooper )
+        {
+            _CritterDead( npcs[ i ], null );
+        }
+    }
+
+    return 0;
+}
+
+void FillingBag( Item& bag, int complexity )
+{
+    bag.AddItem( PID_PURPLE_ROBE, 1, 0 ); // Заглушка
+}
+
+void SpawnSquad( Map@ map, int complexity )
+{
+    if( not valid( map ) )
+    {
+        return;
+    }
+
+    Critter@[] trooper, snipper;
+
+    int[] bagsTrooper = { BAG_RDRC_Raiders_RaiderMale, BAG_RDRC_Raiders_RaiderMale, BAG_RDRC_Raiders_RaiderMale2, BAG_TermPtrn4 };
+    int[] bagsSniper = { BAG_SniperPtrn1, BAG_SniperPtrn2, BAG_SniperPtrn3, BAG_SniperPtrn4 };
+    int[] teamTrooper = { NPC_PID_RaiderMale, NPC_PID_RaiderMale, NPC_PID_RaiderMale, NPC_PID_EnclavePatrolMale };
+    int[] teamSniper = { NPC_PID_RaiderFemale, NPC_PID_RaiderFemale, NPC_PID_RaiderFemale, NPC_PID_EnclavePatrolFemale };
+
+    int[] paramsTrooper =
+    {
+        ST_TEAM_ID, ( TEAM_EnclaveTrooper ),
+        ST_BAG_ID, ( bagsTrooper[ complexity ] ),
+        // ST_CRITICAL_RESISTANCE, 45,
+        ST_KILL_EXPERIENCE, 100,
+        MODE_NO_DROP, 1,
+        MODE_NO_KNOCK, 1,
+        MODE_UNLIMITED_AMMO, 1,
+        ST_REPLICATION_TIME, -1
+    };
+
+    int[] paramsSniper =
+    {
+        ST_TEAM_ID, ( TEAM_EnclaveTrooper ),
+        ST_BAG_ID, ( bagsSniper[ complexity ] ),
+        PE_SILENT_RUNNING, 1,
+        SK_SNEAK, 300,
+        MODE_HIDE, 1,
+        MODE_NO_DROP, 1,
+        MODE_NO_KNOCK, 1,
+        MODE_UNLIMITED_AMMO, 1,
+        ST_PERCEPTION, 10,
+        ST_AGILITY, 10,
+        ST_KILL_EXPERIENCE, 80,
+        ST_REPLICATION_TIME, -1
+    };
+    int countNpc = Random( 1, 3 ) * ( complexity + 1 );
+    trooper = addGroupNpc( map, teamTrooper[ complexity ], paramsTrooper, 84, 84, ENTIRE_SPAWN_MOBS, 5, countNpc, "pattern_term@_CritterInit" );
+    snipper = addGroupNpc( map, teamSniper[ complexity ], paramsSniper, 84, 84, ENTIRE_SPAWN_MOBS, 5, countNpc, "pattern_sniper@_CritterInit" );
+    GroupInit( trooper );
+    GroupInit( snipper );
+
+    // addEnemyGroupsNpc(map, trooper);
+    // addEnemyGroupsNpc(map, snipper);
+
+    // Передвижение группы снайперов
+    moveGroupsNpc( map, snipper, 0, 0, ENTIRE_SNIPER_DIR, 0, 100, true );
+
+    // Передвижение группы штурмовиков
+    moveGroupsNpc( map, trooper, 0, 0, ENTIRE_TROOPER_DIR, 0, 0, true );
+}

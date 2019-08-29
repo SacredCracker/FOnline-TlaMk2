@@ -1,0 +1,640 @@
+#include "_colors.fos"
+
+#define LOC_NAME         # (mapId)                       ( ( mapId + 100 ) * 1000 ) // поиск названия локации в файле FOGM.msg
+
+#define PLAYER_ID        ( 0 )
+#define NPC_TRADER_ID    ( 1 )
+
+// Дебаг
+// ~run hiding_place_dlg test 0 0 0
+void test( Critter& cr, int, int, int  )
+{
+    r_StartDialog( cr, null );
+}
+
+// Вызов диалога покупки локации с основного диалога
+void r_StartDialog( Critter& player, Critter@ npc )
+{
+    if( valid( npc ) )
+    {
+        player.StatBase[ ST_VAR7 ] = npc.Id;
+        if( CreateTimeEvent( __FullSecond + REAL_MS( 100 ), "e_startDialog", player.Id, false ) == 0 )
+            Log( "Error, CreateTimeEvent not success. (" + GetLastError() + ")" );
+    }
+}
+
+uint e_startDialog( uint[] @ values )
+{
+    if( valid( values ) )
+    {
+        Critter@ player = GetCritter( values[ 0 ] );
+        if( valid( player ) )
+        {
+            Critter@ realNpc = null;
+            {
+                uint realNpcId = player.StatBase[ ST_VAR7 ];
+                if( realNpcId >= FIRST_NPC_ID )
+                    @ realNpc = GetCritter( realNpcId );
+            }
+            uint16 x, y;
+			::Map@ map = null;
+            if( !valid( realNpc ) )
+            {
+                x = player.HexX;
+                y = player.HexY;
+				@map = @player.GetMap( );
+            }
+            else
+            {
+                x = realNpc.HexX;
+                y = realNpc.HexY;
+				@map = @realNpc.GetMap( );
+            }
+            if( !Mk2RunDialog( player, DIALOG_all_hiding_place, map, x, y, true ) )
+                Log( "Error, Mk2RunDialog not success. (" + GetLastError() + ")" );
+        }
+    }
+    return 0;
+}
+
+// Проверяет, а существует ли следующая локация для ветки диалога
+uint r_CheckPossibleNextLoc( Critter& player, Critter@ )
+{
+    if( getCity( player ) != 0 )
+        return 3;
+    return 7;
+}
+
+// Формирует ветку диалога с названиями локаций
+void dlg_GenLocName( Critter& player, Critter@, string@ lexems )
+{
+    if( IS_DIALOG_GENERATED( lexems ) )
+    {
+        // Получаем масив локаций городов
+        Location@ loc = GetLocation( getCity( player ) );
+        if( valid( loc ) )
+            lexems += "$loc_name @msg gm " + LOC_NAME( loc.GetProtoId() ) + "@";
+    }
+}
+
+// Формирует ветку диалога с названиями баз
+void dlg_GenBaseName( Critter& player, Critter@, string@ lexems )
+{
+    if( IS_DIALOG_GENERATED( lexems ) )
+    {
+        Location@ city = GetLocationByPid( getCity( player ), 0 );
+        if( valid( city ) )
+        {
+            uint zx = city.WorldX / ZONE_LENGTH,
+                 zy = city.WorldY / ZONE_LENGTH;
+
+            if( zx >= ZONE_COUNT_X || zy >= ZONE_COUNT_Y )
+                return;
+
+            CZone@ zone = @WorldmapGround[ zy * ZONE_COUNT_X + zx ];
+
+            if( valid( zone ) )
+            {
+                GameVar@ indexVar = GetLocalVar( LVAR_all_hiding_place_misc2, player.Id );
+                if( valid( indexVar ) )
+                {
+                    lexems += "$b_name " + "@msg gm " + ( LOC_NAME( getPidBaseByIndex( player ) ) + 6 ) + "@";
+                    lexems += "$cost" + zone.Table.HidingPlace[ indexVar.GetValue() ].Cost;
+                }
+            }
+        }
+    }
+}
+
+// Проверяет, а существует ли следующая база для ветки диалога
+uint r_CheckPossibleNextBase( Critter& player, Critter@ )
+{
+    if( getPidBaseByIndex( player ) == 0 )
+        return 7;
+    return 8;
+}
+
+uint16 getPidBaseByIndex( Critter& player )
+{
+    Location@ city = GetLocationByPid( getCity( player ), 0 );
+    if( valid( city ) )
+    {
+        uint zx = city.WorldX / ZONE_LENGTH,
+             zy = city.WorldY / ZONE_LENGTH;
+
+        if( zx >= ZONE_COUNT_X || zy >= ZONE_COUNT_Y )
+            return 0;
+
+        CZone@ zone = @WorldmapGround[ zy * ZONE_COUNT_X + zx ];
+        if( valid( zone ) )
+        {
+            GameVar@ indexVar = GetLocalVar( LVAR_all_hiding_place_misc2, player.Id );
+            if( valid( indexVar ) )
+            {
+                if( uint16( indexVar.GetValue() + 1 ) > zone.Table.HidingPlace.length() )
+                    return 0;
+                return zone.Table.HidingPlace[ indexVar.GetValue() ].LocPid;
+            }
+        }
+    }
+    return 0;
+}
+
+uint r_GetMoney( Critter& player, Critter@ )
+{
+    Item@ money = player.GetItem( PID_BOTTLE_CAPS, -1 );
+    if( !valid( money ) )
+        return 10;
+
+    GameVar@ indexVar = GetLocalVar( LVAR_all_hiding_place_misc2, player.Id );
+    if( !valid( indexVar ) )
+        return 10;
+
+    Location@ city = GetLocationByPid( getCity( player ), 0 );
+    if( !valid( city ) )
+        return 10;
+
+    uint zx = city.WorldX / ZONE_LENGTH,
+         zy = city.WorldY / ZONE_LENGTH;
+
+    CZone@ zone = @WorldmapGround[ zy * ZONE_COUNT_X + zx ];
+    if( !valid( zone ) )
+        return 10;
+
+    uint16 index = indexVar.GetValue();
+
+    if( zx >= ZONE_COUNT_X || zy >= ZONE_COUNT_Y )
+        return 10;
+    if( money.GetCount() < zone.Table.HidingPlace[ index ].Cost )
+        return 10;
+
+    uint locId = createLoc( player );
+    if( locId == 0 )
+        return 10;
+
+    Critter@ realNpc = GetCritter( player.Stat[ ST_VAR7 ] );
+    if( not valid( realNpc ) )
+        return 10;
+
+    SetUnicumVar( player, realNpc, locId );
+
+    if( money.GetCount() <= zone.Table.HidingPlace[ index ].Cost )
+    {
+        DeleteItem( money );
+        return 9;
+    }
+    money.SetCount( money.GetCount() - zone.Table.HidingPlace[ index ].Cost );
+
+    return 9;
+}
+
+void SetUnicumVar( Critter& player, Critter@ npc, uint val )
+{
+    if( not valid( npc ) )
+        return;
+
+    GameVar @ baseBye = GetUnicumVar( UVAR_selected_caravan, player.Id, npc.Id );
+    if( not valid( baseBye ) )
+        return;
+
+    baseBye = val;
+}
+
+uint r_CheckOldLoc( Critter& player, Critter@ npc )
+{
+    Critter@ realNpc = GetCritter( player.StatBase[ ST_VAR7 ] );
+    if( not valid( realNpc ) )
+        return 2;
+    GameVar@ baseBye = GetUnicumVar( UVAR_selected_caravan, player.Id, realNpc.Id );
+    if( not valid( baseBye ) )
+        return 2;
+    if( baseBye.GetValue() == 0 )
+        return 2;
+    warning1( player );
+    return 11;
+}
+
+void warning1( Critter& cr )
+{
+    cr.ShowScreen( SCREEN_DIALOGBOX, 1, "answer_warning1" );
+    cr.SayMsg( SAY_DIALOGBOX_TEXT, TEXTMSG_TEXT, STR_WARNING_1 );
+    cr.SayMsg( SAY_DIALOGBOX_BUTTON( 0 ), TEXTMSG_TEXT, STR_WARNING_COMFIRM );
+}
+
+void answer_warning1( Critter& cr, uint answerI, string& answerS )
+{
+    warning2( cr );
+}
+
+void warning2( Critter& cr )
+{
+    cr.ShowScreen( SCREEN_DIALOGBOX, 1, "answer_warning2" );
+    cr.SayMsg( SAY_DIALOGBOX_TEXT, TEXTMSG_TEXT, STR_WARNING_2 );
+    cr.SayMsg( SAY_DIALOGBOX_BUTTON( 0 ), TEXTMSG_TEXT, STR_WARNING_COMFIRM );
+}
+
+void answer_warning2( Critter& cr, uint answerI, string& answerS )
+{
+    GameVar @ baseBye = GetUnicumVar( UVAR_selected_caravan, cr.Id, cr.StatBase[ ST_VAR7 ] );
+    if( not valid( baseBye ) )
+        return;
+    Location@ loc = GetLocation( baseBye.GetValue() );
+    if( not valid( loc ) )
+        return;
+    loc.AutoGarbage = true;
+    loc.GeckVisible = true;
+    loc.Visible = true;
+    baseBye = 0;
+
+    cr.ShowScreen( SCREEN_DIALOGBOX, 0, "" );
+    cr.SayMsg( SAY_DIALOGBOX_TEXT, TEXTMSG_TEXT, STR_POST_WARNING );
+}
+
+
+// Возвращает массив пидов подходящих локаций в заданом радиусе
+uint16 getCity( Critter& cr ) // import
+{
+    uint16[] locationPids;
+    Location@[] locations;
+    if( GetLocations( cr.WorldX, cr.WorldY, LOC_SEARCH_RADIUS, locations ) < 1 )
+        return 0;
+
+    GameVar@ indexVar = GetLocalVar( LVAR_all_hiding_place_base_pid, cr.Id );
+    if( not valid( indexVar ) )
+        return 0;
+
+    for( uint8 i = LOC_PID_MIN; i < LOC_PID_MAX; i++ )
+        for( uint16 j = 0, jMax = locations.length(); j < jMax; j++ )
+            if( locations[ j ].GetProtoId() == i && locations[ j ].GetProtoId() != LOCATION_Sierra && locations[ j ].GetProtoId() != LOCATION_Vault15 &&
+                locations[ j ].GetProtoId() != LOCATION_Cathedral && locations[ j ].GetProtoId() != LOCATION_MilitaryBase )
+                locationPids.insertLast( locations[ j ].Id );
+
+    if( uint16( indexVar.GetValue() + 1 ) > locationPids.length() )
+        return 0;
+    return locationPids[ indexVar.GetValue() ];
+}
+
+uint createLoc( Critter& cr )
+{
+    GameVar@ cityPidIndex = GetLocalVar( LVAR_all_hiding_place_base_pid, cr.Id );
+    if( not valid( cityPidIndex ) )
+    {
+        Log( "Не создана личная локация для игрока id=" + cr.Id + ", так как не валидна локальная переменная LMVAR_all_hiding_place_base_pid" );
+        return 0;
+    }
+
+    Location@ city = GetLocationByPid( getCity( cr ), 0 );
+    if( not valid( city ) )
+    {
+        Log( "Не создана личная локация для игрока id=" + cr.Id + ", так как не валиден город" );
+        return 0;
+    }
+
+    uint zx = city.WorldX / ZONE_LENGTH;
+    uint zy = city.WorldY / ZONE_LENGTH;
+    int  dl = 0;
+
+    if( zx >= ZONE_COUNT_X || zy >= ZONE_COUNT_Y )
+    {
+        Log( "Не создана личная локация для игрока id=" + cr.Id + ", так как зона выходит за пределы карты" );
+        return 0;
+    }
+
+    GameVar@ indexVar = GetLocalVar( LVAR_all_hiding_place_misc1, cr.Id );
+    if( not valid( indexVar ) )
+    {
+        Log( "Не создана личная локация для игрока id=" + cr.Id + ", так как не валидна локальная переменная LVAR_all_hiding_place_misc1" );
+        return 0;
+    }
+
+    switch( indexVar.GetValue() )
+    {
+    case NORTH:
+        zy -= 1;
+        dl -= ZONE_LENGTH / 3;
+        break;
+    case SOUTH:
+        zy += 1;
+        dl += ZONE_LENGTH / 3;
+        break;
+    case WEST:
+        zx -= 1;
+        dl -= ZONE_LENGTH / 3;
+        break;
+    case EAST:
+        zx += 1;
+        dl += ZONE_LENGTH / 3;
+        break;
+    case NORTHWEST:
+        zy -= 1;
+        zx -= 1;
+        dl -= ZONE_LENGTH / 4;
+        break;
+    case NORTHEAST:
+        zy -= 1;
+        zx += 1;
+        dl += ZONE_LENGTH / 4;
+        break;
+    case SOUTHWEST:
+        zy += 1;
+        zx -= 1;
+        dl -= ZONE_LENGTH / 4;
+        break;
+    case SOUTHEAST:
+        zy += 1;
+        zx += 1;
+        dl += ZONE_LENGTH / 4;
+        break;
+    default:
+        break;
+    }
+
+    CZone@ zone = @WorldmapGround[ zy * ZONE_COUNT_X + zx ];
+
+    zx = Random( zx * ZONE_LENGTH /*+zone.Table.HidingPlace[indexVar.GetValue()].Offset*/, zx * ZONE_LENGTH + ZONE_LENGTH ) + dl;
+    zy = Random( zy * ZONE_LENGTH, zy * ZONE_LENGTH + ZONE_LENGTH ) + dl;
+    Critter@[] criters;
+    criters.insertLast( @cr );
+
+    uint      idLoc = CreateLocation( getPidBaseByIndex( cr ), zx, zy, criters );
+    Location@ loc = GetLocation( idLoc );
+    if( not valid( loc ) )
+        return 0;
+
+    loc.AutoGarbage = false;
+    loc.GeckVisible = false;
+    loc.Color = COLOR_SAND;
+    loc.Visible = false;
+
+    Map@ map = loc.GetMapByIndex( 0 );
+    if( not valid( map ) )
+        return 0;
+    if( cr.IsPlayer() )
+        InhabitAdd( GetPlayerName( cr.Id ), map );
+    map.SetData( PLAYER_ID, cr.Id );
+    map.SetData( NPC_TRADER_ID, cr.Stat[ ST_VAR7 ] );
+    return idLoc;
+}
+
+// Диалог терминала для прописки на базу.
+
+#define DLG_ERROR             ( 9 )     // Номер ветки диалога (Неизвестная ошибка.)
+#define DLG_ADD_PLAYER        ( 7 )     // Номер ветки диалога [Добавлен новый проживалец]
+#define DLG_DEL_PLAYER        ( 8 )     // Номер ветки диалога [Проживалец исключен из списка]
+#define DLG_NO_NAME           ( 10 )    // Номер ветки диалога [[Невозможно найти никого с таким именем]]
+#define DLG_DEL_ALL_PLAYER    ( 16 )    // Номер ветки диалога [Список проживальцев обнулен]
+#include "_offplayer.fos"
+
+// worldmap@dlg_NewMaster
+uint dlg_NewMaster( Critter& player, Critter@ npc, string@ text )
+{
+    if( IS_DIALOG_SAY_MODE( text ) && d_isAccess( player, npc ) )
+    {
+        Map @map = player.GetMap();
+        if( valid( map ) && map.GetData( NPC_TRADER_ID ) != 0 )
+        {
+            Critter @inhabit = GetPlayer( text );
+            if( valid( inhabit ) )
+            {
+                Location @loc = map.GetLocation();
+                if( valid( loc ) )
+                {
+                    GameVar@ baseBye = GetUnicumVar( UVAR_selected_caravan, player.Id, map.GetData( NPC_TRADER_ID ) );
+                    if( valid( baseBye ) && loc.Id == uint( baseBye.GetValue() ) )
+                    {
+                        baseBye = 0;
+                        @ baseBye = GetUnicumVar( UVAR_selected_caravan, inhabit.Id, map.GetData( NPC_TRADER_ID ) );
+                        if( valid( baseBye ) )
+                            baseBye = loc.Id;
+                        inhabit.SetKnownLoc( true, loc.Id );
+                        InhabitAdd( text, map );
+                        map.SetData( PLAYER_ID, inhabit.Id );
+                        return DLG_ADD_PLAYER;
+                    }
+                }
+            }
+            else
+                return DLG_NO_NAME;
+        }
+    }
+    return DLG_ERROR;
+}
+
+// Есть ли доступ к командам.
+// worldmap@d_isAccess
+bool d_isAccess( Critter& master, Critter@ )
+{
+    Map @map = master.GetMap();
+    if( valid( map ) )
+        return ( uint( map.GetData( PLAYER_ID ) ) == master.Id );
+    return false;
+}
+
+bool d_isNoAccess( Critter& master, Critter@ slave )
+{
+    Map @map = master.GetMap();
+    if( valid( map ) )
+        return ( not ( uint( map.GetData( PLAYER_ID ) ) == master.Id ) );
+    return true;
+}
+
+// worldmap@d_NoActiv
+bool d_NoActiv( Critter& master, Critter@ slave ) { return false; }
+
+// worldmap@dlg_AddInhabitant
+uint dlg_AddInhabitant( Critter& player, Critter@ npc, string@ text )
+{
+    if( IS_DIALOG_SAY_MODE( text ) && d_isAccess( player, npc ) )
+    {
+        Map @map = player.GetMap();
+        if( valid( map ) )
+        {
+            Location @loc = map.GetLocation();
+            if( valid( loc ) )
+            {
+                Critter @inhabit = GetPlayer( text );
+                if( valid( inhabit ) )
+                {
+                    inhabit.SetKnownLoc( true, loc.Id );
+                    InhabitAdd( text, map );
+                    return DLG_ADD_PLAYER;
+                }
+                return DLG_NO_NAME;
+            }
+        }
+    }
+    return DLG_ERROR;
+}
+
+void InhabitAdd( string& name, Map& map )
+{
+    file fBase;
+    if( fBase.open( "save\\base\\basemap_" + map.Id + ".bsmk2", "a" ) != -1 )
+    {
+        fBase.writeString( strlwr( name ) + "@" );
+        fBase.close();
+    }
+}
+
+// worldmap@r_DeleteAllInhabitant
+uint r_DeleteAllInhabitant( Critter& player, Critter@ npc )
+{
+    Map @map = player.GetMap();
+    if( valid( map ) && d_isAccess( player, npc ) )
+    {
+        Location @loc = map.GetLocation();
+        if( valid( loc ) )
+        {
+            file fBase;
+            if( fBase.open( "save\\base\\basemap_" + map.Id + ".bsmk2", "r" ) != -1 )
+            {
+                string allName = "";
+                fBase.readString( fBase.getSize(), allName );
+                fBase.close();
+
+                Critter@ inhabit = null;
+                string@[] Data = split( allName, "@" );
+                for( uint i = 0, iEnd = Data.length(); i < iEnd; i++ )
+                {
+                    if( valid( Data[ i ] ) )
+                    {
+                        @inhabit = GetPlayer( Data[ i ] );
+                        if( valid( inhabit ) && inhabit.Id != player.Id )
+                        {
+                            inhabit.UnsetKnownLoc( true, loc.Id );
+                            continue;
+                        }
+                        OffClient@ cl = GetOffClient( Data[ i ] );
+                        if( valid( cl ) )
+                        {
+                            if( cl.GetLocationId() == loc.Id )
+                                cl.ToGlobal();
+                            cl.UnsetKnownLoc( loc.Id );
+                        }
+                    }
+                }
+
+                if( fBase.open( "save\\base\\basemap_" + map.Id + ".bsmk2", "w" ) != -1 )
+                {
+                    fBase.close();
+                    InhabitAdd( GetPlayerName( player.Id ), map );
+                    return DLG_DEL_ALL_PLAYER;
+                }
+            }
+        }
+    }
+    return DLG_ERROR;
+}
+// worldmap@dlg_GetAllInhabitant
+void dlg_GetAllInhabitant( Critter& player, Critter@ npc, string@ text )
+{
+    if( IS_DIALOG_GENERATED( text ) && d_isAccess( player, npc ) )
+    {
+        Map@ map = player.GetMap();
+        if( valid( map ) )
+        {
+            // Location @loc=map.GetLocation();
+            // if(valid(loc))
+            {
+                file fBase;
+                if( fBase.open( "save\\base\\basemap_" + map.Id + ".bsmk2", "r" ) != -1 )
+                {
+                    string allName;
+                    fBase.readString( fBase.getSize(), allName );
+                    fBase.close();
+                    text = "$listAllInhabitant";
+                    string@[] Data = split( allName, "@" ), temp;
+                    bool first = false;
+                    for( uint i = 0, iEnd = Data.length(); i < iEnd; i++ )
+                        if( valid( Data[ i ] ) && Data[ i ].length() >= 2 )
+                        {
+                            text = text + ( ( not first ) ? ", " : " " ) + Data[ i ];
+                            first = true;
+                        }
+                }
+            }
+        }
+    }
+}
+
+// worldmap@dlg_DeleteInhabitant
+uint dlg_DeleteInhabitant( Critter& player, Critter@ npc, string@ text )
+{
+    if( IS_DIALOG_SAY_MODE( text ) && d_isAccess( player, npc ) )
+    {
+        Map@ map = player.GetMap();
+        if( valid( map ) )
+        {
+            Location @loc = map.GetLocation();
+            if( valid( loc ) )
+            {
+                Critter @inhabit = GetPlayer( text );
+                if( valid( inhabit ) )
+                {
+                    text = strlwr( text );
+                    inhabit.UnsetKnownLoc( true, loc.Id );
+
+                    file fBase;
+                    if( fBase.open( "save\\base\\basemap_" + map.Id + ".bsmk2", "r" ) != -1 )
+                    {
+                        string allName;
+                        fBase.readString( fBase.getSize(), allName );
+                        fBase.close();
+
+                        if( fBase.open( "save\\base\\basemap_" + map.Id + ".bsmk2", "w" ) != -1 )
+                        {
+                            string@[] Data = split( allName, "@" );
+                            for( uint i = 0, iEnd = Data.length(); i < iEnd; i++ )
+                                if( valid( Data[ i ] ) && Data[ i ] != text )
+                                    fBase.writeString( Data[ i ] + "@" );
+
+                            fBase.close();
+                        }
+                    }
+                    return DLG_DEL_PLAYER;
+                }
+                file       f;
+                OffClient@ cl = GetOffClient( text );
+                if( valid( cl ) )
+                {
+                    if( cl.GetLocationId() == loc.Id )
+                        cl.ToGlobal();
+                    cl.UnsetKnownLoc( loc.Id );
+
+                    if( f.open( "save\\base\\basemap_" + map.Id + ".bsmk2", "r" ) != -1 )
+                    {
+                        string allName;
+                        f.readString( f.getSize(), allName );
+                        f.close();
+
+                        if( f.open( "save\\base\\basemap_" + map.Id + ".bsmk2", "w" ) != -1 )
+                        {
+                            string@[] Data = splitEx( allName, "@" );
+                            for( uint i = 0, iEnd = Data.length(); i < iEnd; i++ )
+                            {
+                                if( valid( Data[ i ] ) )
+                                {
+                                    if( Data[ i ] != text )
+                                    {
+                                        f.writeString( Data[ i ] + "@" );
+                                    }
+                                }
+                            }
+                            f.close();
+                        }
+                    }
+
+                    return DLG_DEL_PLAYER;
+                }
+                return DLG_NO_NAME;
+            }
+        }
+    }
+    return DLG_ERROR;
+}
+
+// worldmap@d_NoActiv
+uint dlg_FuncName( Critter& player, Critter@ npc, string@ text )
+{
+    return uint( -1 );
+}

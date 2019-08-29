@@ -1,0 +1,81 @@
+// FOS Client Sort -2 
+
+bool Loop( uint& loop )
+{
+	loop = main_loop();
+	return true;
+}
+
+bool Start( )
+{
+	return main_start();
+}
+
+bool RenderMap(  )
+{
+	return DrawMap_DynamicScenery();
+}
+
+bool InputLost( )
+{
+	return main_input_lost();
+}
+
+bool CritterAction( bool localCall, ::CritterCl& cr, int action, int actionExt, ::ItemCl@ item )
+{
+	return main_critter_action( localCall, cr, action, actionExt, @item );
+}
+
+void ModuleInit()
+{
+	::__EventRenderMap.Subscribe( RenderMap );
+	::__EventInputLost.Subscribe( InputLost );
+	::__EventStart.Subscribe( Start );
+	::__EventLoop.Subscribe( Loop );
+	::__EventCritterAction.Subscribe( CritterAction );
+	
+	::InitializeGame();
+	
+    {
+        ::file cfg;
+        if( cfg.open( "FOnline.cfg", "r" ) >= 0 )
+        {
+            ::string str = "";
+            cfg.readString( uint( cfg.getSize() ), str );
+            cfg.close();
+            ::string@[] settings = ::splitEx( str, "\n" ), temp;
+            str = "";
+            for( uint i = 0, iEnd = settings.length(); i < iEnd; i++ )
+            {
+                temp = ::splitEx( settings[ i ], "=" );
+                if( temp.length() < 2 )
+                    continue;
+
+                if( temp[ 0 ] == "Language" )
+                {
+                    str = "    ";
+                    for( uint i = 0; i < 4; i++ )
+                        if( temp[ 1 ][ i ] != ' ' )
+                            str[ i ] = temp[ 1 ][ i ];
+
+                    ::__Language = str;
+                    break;
+                }
+            }
+        }
+        else
+            ::__Language = "russ";
+    }
+
+    ::LoadDataFile( "fallout.dat" );
+    ::LoadDataFile( "Mk2Art.zip" );
+
+    if( ::__ScreenWidth < 800 || ::__ScreenWidth > 1920 || ::__ScreenHeight < 600 || ::__ScreenHeight > 1080 )
+    {
+        // Recomendation message
+        ::Message( ::GetMsgStr( TEXTMSG_GAME, STR_INVALID_RESOLUTION ) );
+    }
+    ::LoadFont( FONT_COURIER_NEW_SMALL, "CourierNewSmall" );
+	
+	GUI_Init();
+}

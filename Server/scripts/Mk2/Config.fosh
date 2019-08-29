@@ -1,0 +1,344 @@
+//FOS Common
+// Game configuration, for server/client/mapper, call in start functions
+
+#ifndef __COMPILER
+
+///
+/// Server and client initialization
+///
+
+#ifndef __MAPPER
+
+int getParam_Skill(CritterMutual& cr, uint i)
+{
+	int val=cr.ParamBase[i];
+	return (((val)>(GetMaxSkill(i)))?(GetMaxSkill(i)):(((val)<(0))?(0):(val)));
+}
+
+void changedParam_Hp(CritterMutual& cr, uint, int oldValue)
+{
+#ifdef __CLIENT
+	CritterCl@ chos = GetChosen();
+	if( @chos != null )
+		return;
+	if(!cr.IsChosen() || cr.Mode[MODE_TERMOVISOR]>0 || cr.Mode[MODE_NIGHTVISOR]>0) return;
+	if(!cr.IsDead() && cr.Stat[ST_CURRENT_HP]* 100 / chos.Stat[ST_MAX_LIFE]<=20)
+	{
+		uint EffectAll=EFFECT_2D_GENERIC|EFFECT_2D_TILE|EFFECT_2D_ROOF|EFFECT_2D_CRITTER;
+		SetEffect(EffectAll, 0, "2D_Red"+(__OpenGLRendering?".glsl":".fx"));
+	}
+	else if(oldValue * 100 / chos.Stat[ST_MAX_LIFE]<=20 || cr.IsDead()) RunServerScriptUnsafe("Mk2@unsafe_Drugs::Check",0,0,0,null,null);
+#endif
+}
+
+void InitializeGame() // Export
+{
+	/// Init global vars
+	__ScriptRunSuspendTimeout=10000; 			// In milliseconds
+	__ScriptRunMessageTimeout=1000; 			// In milliseconds
+	__LoggingVars     =true;			//
+	__DisableTcpNagle =true;				//
+	__DisableZlibCompression =false;			//
+	__FloodSize       =4096; 			// In bytes
+	__NoAnswerShuffle =false;			//	
+	__FixBoyDefaultExperience=50; 				// опыт за крафт по умолчанию
+	__SneakDivider    =6;				//
+	__LevelCap        =36; 				// максимальный достижимый уровень(левелкап)
+	__LevelCapAddExperience  =true; 			// добавлять ли экспу после левелкапа
+	__LookNormal      =20;				//
+	__LookMinimum     =0;				//
+	__CritterIdleTick = 1500;			//
+	__TurnBasedTick   =30000;			//
+	__Breaktime       =1200;				//
+	__TimeoutTransfer =0;				//
+	__TimeoutBattle   =REAL_SECOND(45); 	// боевой таймаут по умолчанию
+	__ApRegeneration  =7000;				//
+	__RtApCostCritterWalk = 0; 				// 1 AP==100, maximim 255
+	__RtApCostCritterRun  = 33;				// 1 AP==100, maximim 255
+	__RtApCostMoveItemContainer=0;				//
+	__RtApCostMoveItemInventory=2;				//
+	__RtApCostPickItem=0;				//
+	__RtApCostDropItem=0;				//
+	__RtApCostReloadWeapon=2;				//
+	__RtApCostPickCritter =0;				//
+	__RtApCostUseItem =3;				//
+	__RtApCostUseSkill=2;				//
+	__RtAlwaysRun     =false;			//
+	__TbApCostCritterMove =1;				//
+	__TbApCostMoveItemContainer=0;				//
+	__TbApCostMoveItemInventory=2;				//
+	__TbApCostPickItem=3;				//
+	__TbApCostDropItem=2;				//
+	__TbApCostReloadWeapon=2;				//
+	__TbApCostPickCritter =3;				//
+	__TbApCostUseItem =3;				//
+	__TbApCostUseSkill=3;				//
+	__TbAlwaysRun     =false;			//
+	__ApCostAimEyes   =1; 				// Штраф ОД за стрельбу в глаза
+	__ApCostAimHead   =1; 				// Штраф ОД за стрельбу в голову
+	__ApCostAimGroin  =1; 				// Штраф ОД за стрельбу в яйца
+	__ApCostAimTorso  =0; 				// Штраф ОД за стрельбу в торс
+	__ApCostAimArms   =1; 				// Штраф ОД за стрельбу в руку
+	__ApCostAimLegs   =1; 				// Штраф ОД за стрельбу в ногу
+	__HitAimEyes      =60;				// Штраф точности за стрельбу в глаза
+	__HitAimHead      =40;				// Штраф точности за стрельбу в голову
+	__HitAimGroin     =30;				// Штраф точности за стрельбу в яйца
+	__HitAimTorso     =0;				// Штраф точности за стрельбу в торс
+	__HitAimArms      =30;				// Штраф точности за стрельбу в руку
+	__HitAimLegs      =20;				// Штраф точности за стрельбу в ногу
+	__RunOnCombat     =true;			// Бег в бою
+	__RunOnTransfer   =true;					
+	__GlobalMapWidth  =28; 				// Maximum 100
+	__GlobalMapHeight =30; 				// Maximum 100
+	__GlobalMapZoneLength =50; 				// Maximum 500
+	__GlobalMapMaxGroupCount =15;				//
+	__GlobalMapMoveTime   = 250;				//
+	__EncounterTime   = 2200;				//
+	__DeadHitPoints   =-20;				// Минусовые ХП до смерти
+	__BagRefreshTime  =60; 				// Real minutes
+	__WisperDist      =2;				//
+	__ShoutDist       =400;				//
+	__CustomItemCost  =false;			//
+	__RegistrationTimeout =5*60;  			// Таймаут на регистрацию в секундах (0-отсутствует таймаут)
+	__AccountPlayTime =0; 				// Таймаут на логирование с другого аккаунта (0-отсутствует таймаут)
+	__TalkDistance    =3;				// Дистанция с которой доступно открытие окна диалога
+	__NpcMaxTalkers = 3;
+	__MinNameLength   =2;  				// Минимальная длина имени
+	__MaxNameLength   =14; 				// Максимальная длина имени
+	__DlgTalkMinTime  =900000;			//
+	__DlgBarterMinTime=50000;			//
+	__MinimumOfflineTime  =0; 			// Время до розлоширования персонажа, по выходе его в оффлайн (3 минуты)
+	__NewbieLocationIsActive = false;				// Нуболокация
+	__MaxLifeLevelSoftCap =36;				//
+	__ExperienceRate = 2; // Рейт всего получаемого опыта
+	// Look modifiers
+	__LookChecks=0; // See Look checks in _defines.fos
+	// __LookChecks |=LOOK_CHECK_DIR; // Nerfe look by directions of look
+	__LookDir0=0; // Nerfe 0% of look radius with direct look
+	__LookDir1=20; // Nerfe 20% of look radius with front side look
+	__LookDir2=40; // Nerfe 40% of look radius with back side look
+	__LookDir3=60; // Nerfe 60% of look radius with back look
+	__LookDir4=60; // Nerfe 60% of look radius with back look (Square geometry)
+	// __LookChecks |=LOOK_CHECK_SNEAK_DIR; // Nerfe opponent sneak by directions of look
+	__LookSneakDir0=90; // Nerfe 90% of opponent sneak with direct look
+	__LookSneakDir1=60; // Nerfe 60% of opponent sneak with front side look
+	__LookSneakDir2=30; // Nerfe 30% of opponent sneak with back side look
+	__LookSneakDir3=0; // Nerfe 0% of opponent sneak with back look
+	__LookSneakDir4=0; // Nerfe 0% of opponent sneak with back look (Square geometry)
+	// __LookChecks |=LOOK_CHECK_SNEAK_WEIGHT; // Nerfe sneak by current weight
+	// __LookWeight=10; // Lost 1 sneak point per 200 gramm
+	// __LookChecks |=LOOK_CHECK_TRACE; // Tracing for wall aviablility
+	__LookChecks |=LOOK_CHECK_SCRIPT; // Allow bool check_look(...) in main.fos, all other defines ignored
+	__LookChecks |=LOOK_CHECK_ITEM_SCRIPT; // Allow bool check_trap_look(...) in main.fos, for items with ITEM_TRAP flag
+	
+	// Range of values for client engine
+	__AbsoluteOffsets=true;				//
+	__SkillBegin=200;				//
+	__SkillEnd  =217;				//
+	__TimeoutBegin =230;				//
+	__TimeoutEnd=249;				//
+	__KillBegin =260;				//
+	__KillEnd   =282;				//
+	__PerkBegin =300;				//
+	__PerkEnd   =469;				//
+	__AddictionBegin =470;				//
+	__AddictionEnd =479;				//
+	__KarmaBegin=480;				//
+	__KarmaEnd  =498;				//
+	__DamageBegin  =500;				//
+	__DamageEnd =506;				//
+	__TraitBegin=550;				//
+	__TraitEnd  =565;				//
+	__ReputationBegin=570;				//
+	__ReputationEnd=589;				//
+
+	// Compare with >=
+	__ReputationLoved  =30;			//
+	__ReputationLiked  =15;			//
+	__ReputationAccepted =1;			//
+	__ReputationNeutral=0;			//
+	__ReputationAntipathy=-14;			//
+	__ReputationHated  =-29;			//
+	// Other is Vilified
+	
+	// Registation values
+	__StartSpecialPoints =40;
+	__StartTagSkillPoints=3;
+
+	// Skill modifiers
+	__SkillMaxValue=300;
+	__SkillModAdd2 =100;
+	__SkillModAdd3 =125;
+	__SkillModAdd4 =150;
+	__SkillModAdd5 =175;
+	__SkillModAdd6 =200;
+	
+	/// Client specific definitions
+#ifdef __CLIENT
+	__RoofAlpha   =200;			//
+	__HideCursor  =false;
+	__DisableLMenu=false;
+	__DisableMouseEvents =false;
+	__DisableKeyboardEvents=false;
+	__HidePassword=true;
+	__ShowNpcNames=true;
+	__PlayerOffAppendix  ="|0x44ffffff  (off)";
+	__SpritesZoomMax  =2.5f;
+	__SpritesZoomMin  =0.2f;
+	
+	__AlwaysRunMoveDist  =1;
+	__AlwaysRunUseDist=0;
+	__CritterFidgetTime  =50000;
+	__Anim2CombatBegin=ANIM2_BEGIN_COMBAT;
+	__Anim2CombatIdle =ANIM2_IDLE_COMBAT;
+	__Anim2CombatEnd  =ANIM2_END_COMBAT;
+#endif
+
+	/// Parameters behavoiours
+#ifndef __CLIENT
+	string dllName="fonline_tla.dll@";
+	string dllParamName="fonline_tla.dll@";
+#endif
+#ifdef __CLIENT
+	string dllName="fonline_tla_client.dll@";
+	string dllParamName="fonline_tla_client.dll@";
+#endif
+	SetParameterGetBehaviour(ST_VISIBLE_DIST        , dllName + "getParam_VisibleDist"   );
+	SetParameterGetBehaviour(ST_STRENGTH            , dllParamName + "getParam_Strength"      );
+	SetParameterGetBehaviour(ST_PERCEPTION          , dllParamName + "getParam_Perception"    );
+	SetParameterGetBehaviour(ST_ENDURANCE           , dllParamName + "getParam_Endurance"     );
+	SetParameterGetBehaviour(ST_CHARISMA            , dllParamName + "getParam_Charisma"      );
+	SetParameterGetBehaviour(ST_INTELLECT           , dllParamName + "getParam_Intellegence"  );
+	SetParameterGetBehaviour(ST_AGILITY             , dllParamName + "getParam_Agility"       );
+	SetParameterGetBehaviour(ST_LUCK                , dllParamName + "getParam_Luck"          );
+	SetParameterGetBehaviour(ST_CURRENT_HP          , dllParamName + "getParam_Hp"            );
+	SetParameterGetBehaviour(ST_MAX_LIFE            , dllParamName + "getParam_MaxLife"       );
+	SetParameterGetBehaviour(ST_ACTION_POINTS       , dllParamName + "getParam_MaxAp"         );
+	SetParameterGetBehaviour(ST_CURRENT_AP          , dllParamName + "getParam_Ap"            );
+	SetParameterGetBehaviour(ST_MAX_MOVE_AP         , dllParamName + "getParam_MaxMoveAp"     );
+	SetParameterGetBehaviour(ST_MOVE_AP             , dllParamName + "getParam_MoveAp"        );
+	SetParameterGetBehaviour(ST_CARRY_WEIGHT        , dllParamName + "getParam_MaxWeight"     );
+	SetParameterGetBehaviour(ST_MELEE_DAMAGE        , dllParamName + "getParam_MeleeDmg"      );
+	SetParameterGetBehaviour(ST_THROWING_DAMAGE     , dllParamName + "getParam_ThrowingDmg"   );
+	SetParameterGetBehaviour(ST_SEQUENCE            , dllParamName + "getParam_Sequence"      );
+	SetParameterGetBehaviour(ST_HEALING_RATE        , dllParamName + "getParam_HealingRate"   );
+	SetParameterGetBehaviour(ST_CRITICAL_CHANCE     , dllParamName + "getParam_CriticalChance");
+	SetParameterGetBehaviour(ST_MAX_CRITICAL        , dllParamName + "getParam_MaxCritical"   );
+	SetParameterGetBehaviour(ST_ARMOR_CLASS         , dllParamName + "getParam_Ac"            );
+	SetParameterGetBehaviour(ST_RADIATION_RESISTANCE, dllParamName + "getParam_RadiationResist");
+	SetParameterGetBehaviour(ST_CRITICAL_RESISTANCE, dllParamName + "getParam_CriticalResist");
+	SetParameterGetBehaviour(ST_POISON_RESISTANCE   , dllParamName + "getParam_PoisonResist"  );
+	for(uint i=ST_NORMAL_RESIST; i<=ST_EXPLODE_RESIST; i++) SetParameterGetBehaviour(i, dllParamName + "getParam_DamageResistance");
+	for(uint i=ST_NORMAL_ABSORB; i<=ST_EXPLODE_ABSORB; i++) SetParameterGetBehaviour(i, dllParamName + "getParam_DamageThreshold");
+	for(uint i=ARMOR_BONUS_DRNORMAL; i<=ARMOR_BONUS_ACTION_POINTS; i++) SetParameterGetBehaviour(i, dllParamName + "getParam_ArmorBonus");
+	for(uint i=TIMEOUT_BEGIN   ; i<=TIMEOUT_END      ; i++) SetParameterGetBehaviour(i, dllParamName + "getParam_Timeout"        );
+	
+	SetParameterChangeBehaviour(ST_CURRENT_HP  , "changedParam_Hp"       );
+	for(uint i=SKILL_BEGIN; i<=SKILL_END; i++) 
+	{
+#ifndef __CLIENT
+		SetParameterChangeBehaviour( i, dllName+"changedParam_Skill");
+#endif
+		SetParameterGetBehaviour(i   ,dllName+"getParam_Skill"  );
+	}
+#ifndef __CLIENT
+	for( uint i = 600, iEnd = 630; i < iEnd; i++ ) 	
+		SetParameterChangeBehaviour(i, "Mk2@CityGuard::changedParam_Penalty");
+	SetParameterChangeBehaviour( CITY_ROLE_FLAG, "Mk2@CityGuard::changedParam_RoleFlag");
+	SetParameterChangeBehaviour( ST_ROLE_CITY, "Mk2@ProcessingRoleCity::changedParam_RoleCity");
+	
+	SetParameterChangeBehaviour(ST_BONUS_WALK_TIME        , "main@changedParam_Speed"      );
+	SetParameterChangeBehaviour(ST_BONUS_RUN_TIME        , "main@changedParam_Speed"      );
+	SetParameterGetBehaviour(SK_LIONHEART   ,dllParamName+"getParam_Lionhead"  );
+	
+	SetParameterChangeBehaviour(MODE_HIDE      , "parameters@changedParam_Hide"     );
+	SetParameterChangeBehaviour(MODE_TERMOVISOR, "parameters@changedParam_ArmorGadget");
+	SetParameterChangeBehaviour(MODE_NIGHTVISOR, "parameters@changedParam_ArmorGadget");
+	for(uint i=PERK_BEGIN; i<=PERK_END; i++) 
+		SetParameterChangeBehaviour(i, "parameters@changedParam_Perks");
+	/*SetParameterDialogGetBehaviour(ST_INTELLECT,  dllName+"getParamDialog_Intellect");
+	for(uint i=REPUTATION_BEGIN; i<=REPUTATION_END; i++)
+		SetParameterDialogGetBehaviour(i, dllName+"getParamDialog_Reputation");
+	SetParameterGetBehaviour(MASTER_COUNT_MERC, dllName+"getParam_CountMerc"  );*/
+#endif
+#ifdef __CLIENT
+	SetParameterChangeBehaviour(ST_LEVEL        , "parameters@changedParam_Level"      );
+	SetParameterChangeBehaviour(ST_EXPERIENCE   , "parameters@changedParam_Experience" );
+	SetParameterChangeBehaviour(ST_UNSPENT_PERKS, "parameters@changedParam_UnspentPerks");
+	SetParameterChangeBehaviour(MODE_TERMOVISOR, "parameters@changedParam_VisorMode");
+	SetParameterChangeBehaviour(MODE_NIGHTVISOR, "parameters@changedParam_NVMode");
+	SetParameterChangeBehaviour(MASTER_COUNT_MERC, "parameters@changedParam_Leadership");
+	SetParameterChangeBehaviour(ST_FR_LEADERSHIP, "parameters@changedParam_Leadership");
+#endif
+	
+	/// Registration parameters
+	for(uint i=ST_STRENGTH; i<=ST_LUCK   ; i++) SetRegistrationParameter(i, true);
+	for(uint i=TAG_SKILL1 ; i<=TAG_SKILL3; i++) SetRegistrationParameter(i, true);
+	for(uint i=TRAIT_BEGIN; i<=TRAIT_END ; i++) SetRegistrationParameter(i, true);
+	SetRegistrationParameter(ST_AGE   , true);
+	SetRegistrationParameter(ST_GENDER, true);
+
+	AllowSlot(SLOT_BONUS,"InvBonus");
+	/// Geometry
+	InitializeGeometry();
+}
+
+#endif // !__MAPPER
+
+///
+/// Mapper initialization
+///
+
+#ifdef __MAPPER
+
+void InitializeGame() // Export
+{
+	__RoofAlpha   =200;
+	__SpritesZoomMax  =10.0f;
+	__SpritesZoomMin  =0.2f;
+	__Anim2CombatBegin=ANIM2_BEGIN_COMBAT;
+	__Anim2CombatIdle =ANIM2_IDLE_COMBAT;
+	__Anim2CombatEnd  =ANIM2_END_COMBAT;
+	__SplitTilesCollection =true;
+
+	InitializeGeometry();
+}
+
+#endif // __MAPPER
+
+///
+/// Geometry
+///
+
+void InitializeGeometry()
+{
+	// Geometry customization
+	// GEOMETRY_FALLOUT
+
+	// __MapHexagonal     true - hexagonal, false - square;
+	// __MapHexWidth      hex/square width;
+	// __MapHexHeight     hex/square height;
+	// __MapHexLineHeight hex/square line height;
+	// __MapTileOffsX/Y   tile default offsets;
+	// __MapRoofOffsX/Y   roof default offsets;
+	// __MapRoofSkipSize  default length (in hexes/squares) of roof tiles;
+	// __MapCameraAngle   angle for 3d critters rendering;
+	// __MapSmoothPath    enable pathfinding path smoothing;
+	// __MapDataPrefix    path and prefix for names used for geometry sprites.
+
+	__MapHexagonal  =true;
+	__MapHexWidth=32;
+	__MapHexHeight  =16;
+	__MapHexLineHeight=12;
+	__MapTileOffsX  =-8;
+	__MapTileOffsY  =34;
+	__MapRoofOffsX  =-8;
+	__MapRoofOffsY  =-64;
+	__MapRoofSkipSize =2;
+	__MapCameraAngle=25.7f;
+	__MapSmoothPath =true;
+	__MapDataPrefix ="art/geometry/fallout_";
+	
+}
+
+

@@ -1,0 +1,1352 @@
+//  Author: cvet
+#define _MAIN_
+#include "_macros.fos"
+#include "_msgstr.fos"
+#include "_teams.fos"
+#include "_npc_pids.fos"
+#include "_animation.fos"
+#include "teams_table.fos"
+#include "_colors.fos"
+
+#include "fractions.h"
+#include "GrupPatrol_h.fos"
+#include "trader.fos"
+
+// city guard
+import bool CityGuard_ProcessOfCrime( Critter&, int, int, Critter@, Item@, bool ) from "Mk2";
+import void CityGuard_SneakCritter( Critter& cr, const bool& in InSneak ) from "Mk2";
+
+// #define __ZOMBIE
+
+// Imports
+import bool OnUseExplode( ::Critter& cr, ::Item& explode, ::Critter@ targetCr, ::Item@ targetItem, ::Scenery@ targetScen, uint timer ) from "explode";
+import bool UseItemOnCar( ::Critter& cr, ::Item& car, ::Item& item ) from "Mk2";
+import bool UseSkillOnCar( ::Critter& cr, ::Item& car, int skill ) from "Mk2";
+import void SetStartLocation( ::Critter& cr ) from "Mk2";
+
+import void ReplicateCritter( ::Critter& cr ) from "Mk2";
+import bool TryRepairItem( ::Critter& cr, ::Item& item ) from "Mk2";
+import bool UseGeiger( ::Critter& cr, ::Item& geiger ) from "Mk2";
+import bool UseItemOnGeiger( ::Critter& cr, ::Item& geiger, ::Item& item ) from "Mk2";
+import bool UseSkillOnGeiger( ::Critter& cr, ::Item& geiger, int skill ) from "Mk2";
+import bool AddAttackPlane( ::Critter& npc, uint priority, ::Critter& target ) from "npc_planes";
+import bool AddAttackPlane( ::Critter& npc, uint priority, ::Critter& target, int minHp ) from "npc_planes";
+import bool UseSkillOnLocker( ::Critter& cr, ::Item& locker, int skill ) from "Mk2";
+import bool UseItemOnLocker( ::Critter& cr, ::Item@ locker, ::Item& item ) from "Mk2";
+
+import void player_data_generate( ::Critter& cr ) from "parameters";
+import void NpcProcessLevel( ::Critter& npc ) from "parameters";
+import bool SetPlayerToNewbieLocation( ::Critter& player )  from "q_newbie_scripts"; // //newbie loc
+import void EditRadioSettings( ::Critter& player, ::Item& radio ) from "Mk2";
+import void Healing( ::Critter& cr, ::Critter& tr ) from "healing";
+import void Healing( ::Critter& cr, ::Critter& tr, uint16 activePid ) from "healing";
+import void UseDoctor( ::Critter& cr, ::Critter@ targetCr, uint16 activePid ) from "healing";
+import void CombatAttack( ::Critter& cr, ::Critter& target, ::ProtoItem& weapon, uint8 weaponMode, ::ProtoItem@ ammo ) from "combat";
+import bool Attack( ::Critter& cr, ::Item& item, uint8 weaponMode, uint16 hexX, uint16 hexY ) from "combat";
+
+import bool _UsedOnSlave( ::Item& item, ::Critter& crit, ::Critter@ onCritter, ::Item@ onItem, ::Scenery@ onScenery ) from "merc";
+// /////////////////////////////////////////////////////////////////
+
+import bool e_TrapSpikeUse( ::Item& item, ::Critter& cr, ::Critter@ onCritter, ::Item@ onItem, ::Scenery@ onScenery ) from "trap";
+import bool _TrySetupTrap( ::Item @ door, ::Item @ trap, ::Critter& player ) from "trap";
+import bool UseSkillOnTrappedItem( ::Critter& cr, ::Item& trappedItem, int skill )  from "trap";
+import bool BagPick( ::Critter& crit, ::Item@  item ) from "Mk2";
+
+import bool s_UseScenery( ::Critter& cr, ::Scenery& scenery, int skill ) from "ncr_common";
+
+import bool _useDeactivativeItem( ::Item& item, ::Critter& crit, ::Critter@ onCritter, ::Item@ onItem, ::Scenery@ onScenery ) from "Mk2";
+import bool _useActivativeItem( ::Item& item, ::Critter& crit, ::Critter@ onCritter, ::Item@ onItem, ::Scenery@ onScenery ) from "Mk2";
+import void ChangePlayerScore( ::Critter& player, uint scoreIndex, int value ) from "Mk2";
+import void processing_role_city( ::Critter& cr, bool ft ) from "Mk2";
+import void SetDeleteItem( ::Item& item, uint delHours ) from "Mk2";
+import void TryReadBook( ::Critter& cr, ::Item& book ) from "Mk2";
+import void AddBonus( ::Critter& cr, ::Item@ armor ) from "Mk2";
+import void DeleteBonus( ::Critter& cr ) from "Mk2";
+import void UseDrug( ::Critter& cr, ::Item& drug ) from "Mk2";
+import void UseDrugOn( ::Critter& cr, ::Critter& onCr, ::Item& drug ) from "Mk2";
+import void DropDrug( ::Critter& cr, uint16 drugPid, uint stage ) from "Mk2";
+
+import bool WantedSignSet( ::Item& wantedSign, ::string& name, uint cost ) from "Mk2";
+
+import bool _ToolUse( ::Item& item, ::Critter& cr, ::Critter@ onCritter, ::Item@ onItem, ::Scenery@ onScenery ) from "resources";
+
+// //////////////////////////////////////////////////////////////////////////////////////////////////
+// Called before world generation.
+
+uint16 GetVersionWorldSave( ::string@ time )
+{
+    ::array< uint > data;
+    if( IsAnyData( "VersionWorldSave" ) && ::GetAnyData( "VersionWorldSave", data ) )
+    {
+        if( valid( time ) )
+            time = "" + data[ 1 ] + "_" + data[ 2 ] + "_" + data[ 3 ] + "_" + data[ 4 ] + "_" + data[ 5 ];
+        return data[ 0 ] % 9999;
+    }
+    return 0;
+}
+
+bool SaveWorldNextVersion()
+{
+    uint16 Year = 0, Month = 0, Day = 0, Hour = 0, Minute = 0, var = 0;
+    GetTime( Year, Month, Day, var, Hour, Minute, var, var );
+    ::array< uint > data = { GetVersionWorldSave( null ) + 1, Year, Month, Day, var, Hour, Minute };
+	file version;
+	if( version.open( "WorldVersion","w") != -1 )
+	{	
+		version.writeString( "" + data[0] );
+		version.close();
+	}
+    return ::SetAnyData( "VersionWorldSave", data );
+}
+
+void critter_attack( ::Critter& cr, ::Critter& target ) // Заглушка для погексовой атаки.
+{
+    if( CityGuard_ProcessOfCrime( cr, City::PenaltyListing::Attacked, 0, target, null, false ) )
+        return;
+
+    if( cr.IsPlayer() )
+    {
+        if( target.IsPlayer() )
+        {
+            ::Map@ map = cr.GetMap();
+            if( validEngineObject( map ) && map.GetLocation().GetProtoId() == LOCATION_NewbieLocation )
+                return;                                                                                               // ноПвП на начальной локации
+        }
+        CityGuard_SneakCritter( cr, cr.Mode[ MODE_HIDE ] == 1 );
+    }
+    else
+    {
+        if( IsGrup( cr ) )
+        {
+            _Attack( cr, target );
+        }
+    }
+    cr.TimeoutBase[ TO_AGGRESSOR ] = ::__FullSecond + REAL_MINUTE( 1 );
+}
+
+// //////////////////////////////////////////////////////////////////////////////////////////////////
+// Call on something critter attack another.
+void critter_attack( ::Critter& cr, ::Critter& target, ::ProtoItem& weapon, uint8 weaponMode, ::ProtoItem@ ammo )
+{
+
+    if( CityGuard_ProcessOfCrime( cr, City::PenaltyListing::Attacked, 0, target, null, false ) &&  ( target.IsNpc() && target.Merc[ MERC_MASTER_ID ] != 0 ) && cr.CityRole_IsGuard )
+        return;
+
+    if( cr.IsPlayer() )
+    {
+        if( target.IsPlayer() )
+        {
+            ::Map@ map = cr.GetMap();
+            if( validEngineObject( map ) && map.GetLocation().GetProtoId() == LOCATION_NewbieLocation )
+                return;                                                                                               // ноПвП на начальной локации
+        }
+        CityGuard_SneakCritter( cr, cr.Mode[ MODE_HIDE ] == 1 );
+        cr.RunClientScript( "client_main@__SetAttacked", int(target.Id), 0, 0, null, null );
+    }
+    else
+    {
+        if( IsGrup( cr ) )
+        {
+            _Attack( cr, target );
+        }
+    }
+    cr.TimeoutBase[ TO_AGGRESSOR ] = ::__FullSecond + REAL_MINUTE( 1 );
+
+    if( _WeaponeIsPerk( weapon, ammo, WEAPON_PERK_HEX_ATTACKING ) || _WeaponAttackType( weapon, _WeaponModeUse( weaponMode ) ) == WTA_BURST_REGION )
+    {
+        if( cr.IsNpc() )
+            Attack( cr, _CritGetItemHand( cr ), weaponMode, target.HexX, target.HexY );
+        return;
+    }
+    else
+        CombatAttack( cr, target, weapon, weaponMode, ammo );
+}
+
+class TestTT
+{
+	private int var;
+}
+// //////////////////////////////////////////////////////////////////////////////////////////////////
+// Call on something critter use item.
+bool critter_use_item( ::Critter& cr, ::Item& item, ::Critter@ targetCr, ::Item@ targetItem, ::Scenery@ targetScen, uint param )
+{
+    if( _ToolUse( item, cr, targetCr, targetItem, targetScen ) )
+        return true;
+
+    bool   isPlayer = cr.IsPlayer(), useOnSelf = ( not validEngineObject( targetCr ) && not validEngineObject( targetItem ) && not valid( targetScen ) );
+    uint16 pid = item.GetProtoId();
+
+    if( _TrySetupTrap( targetItem, item, cr ) )
+        return true;
+
+    if( useOnSelf && pid == PID_TRAP_PLANT_SPIKE )
+        return e_TrapSpikeUse( item, cr, targetCr, targetItem, targetScen );
+    // Radio
+    if( FLAG( item.Flags, ITEM_RADIO ) && useOnSelf )
+    {
+        if( isPlayer )
+            EditRadioSettings( cr, item );
+        return true;
+    }
+    if( UseItemOnLocker( cr, targetItem, item ) )
+        return true;
+    // Book reading
+    if( useOnSelf && item.Proto.IsReadableBook != 0 )
+    {
+        TryReadBook( cr, item );
+        return true;
+    }
+
+    // Explosion
+    if( OnUseExplode( cr, item, targetCr, targetItem, targetScen, param ) )
+        return true;
+
+    // Cars
+    if( validEngineObject( targetItem ) && targetItem.GetType() == ITEM_TYPE_CAR && UseItemOnCar( cr, targetItem, item ) )
+        return true;
+
+    switch( pid )
+    {
+    case PID_ROPE:
+    {
+        if( validEngineObject( targetCr ) && targetCr.IsNpc() )
+        {
+            if( _UsedOnSlave( item, cr, targetCr, targetItem, targetScen ) )
+                return true;
+
+            uint crProtoId = targetCr.GetProtoId();
+            uint itemProtoId = 0;
+            switch( crProtoId )
+            {
+            case NPC_PID_GoldenGecko:
+            case NPC_PID_ToughGoldenGecko:
+            {
+                itemProtoId = PID_LIFE_GOLD_GECKO;
+                break;
+            }
+            case NPC_PID_SmallSilverGecko:
+            case NPC_PID_ToughSilverGecko:
+            {
+                itemProtoId = PID_LIFE_GECKO;
+                break;
+            }
+            case NPC_PID_FireGecko:
+            case NPC_PID_ToughFireGecko:
+            {
+                itemProtoId = PID_LIFE_FIRE_GECKO;
+                break;
+            }
+            }
+
+            if( itemProtoId != 0 && targetCr.IsKnockout() )
+            {
+                ::Map@ map = cr.GetMap();
+                if( validEngineObject( map ) )
+                {
+                    ::Location@ loc = map.GetLocation();
+                    if( validEngineObject( loc ) &&  loc.AutoGarbage )
+                    {
+                        const uint locPid = loc.GetProtoId();
+                        if(  locPid >= LOCATION_DesertEncounter1 && locPid <= LOCATION_CoastEncounter11 )
+                        {
+                            ::Item@ animal = cr.AddItem( itemProtoId, 1 );
+                            if( validEngineObject( animal ) )
+                            {
+                                cr.DeleteItem( PID_ROPE, 1 );
+                                EraseAnyData( "mob_in_enc" + targetCr.Id );
+                                animal.Val0 = targetCr.GetProtoId();
+                                ::DeleteNpc( targetCr );
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+    case PID_FLARE:
+    {
+        ::Item@ active = cr.AddItem( PID_ACTIVE_FLARE, 1 );
+        if( validEngineObject( active ) )
+            SetDeleteItem( active, 2 );
+        _SubItem( item, 1 );
+        return true;
+    }
+    case PID_STEALTH_BOY:
+    case PID_MOTION_SENSOR:
+        return _useActivativeItem( item, cr, targetCr, targetItem, targetScen );
+    case PID_ACTIVE_STEALTH_BOY:
+    case PID_ACTIVE_MOTION_SENSOR:
+        return _useDeactivativeItem( item, cr, targetCr, targetItem, targetScen );
+    case PID_DICE:
+    {
+        cr.SayMsg( SAY_EMOTE_ON_HEAD, TEXTMSG_TEXT, STR_DICE_THROW, "$result" + ( ::Random( 1, 6 ) ) );
+        return true;
+    }
+    case PID_LOADED_DICE:
+    {
+        cr.SayMsg( SAY_EMOTE_ON_HEAD, TEXTMSG_TEXT, STR_DICE_THROW, "$result" + uint( ( item.Id % 6 ) + 1 ) );
+        return true;
+    }
+    case PID_MAGIC_8_BALL:
+    {
+        // cr.SayMsg(SAY_EMOTE_ON_HEAD,TEXTMSG_TEXT,::Random(1,2)==1?STR_MAGIC_BALL_YES:STR_MAGIC_BALL_NO);
+        return true;
+    }
+    case PID_COSMETIC_CASE:
+    {
+        if( cr.Stat[ ST_GENDER ] == GENDER_FEMALE )
+        {
+            cr.SayMsg( SAY_EMOTE_ON_HEAD, TEXTMSG_TEXT, STR_COSMETIC_USE );
+            return true;
+        }
+    }
+    case PID_CIGARETTES:
+    {
+        if( _CritCountItem( cr, PID_LIGHTER ) > 0 )
+        {
+            cr.SayMsg( SAY_EMOTE_ON_HEAD, TEXTMSG_TEXT, STR_CIGARETTES_SMOKE );
+            return true;
+        }
+    }
+    case PID_MEAT_ON_A_STICK:
+    case PID_IGUANA_ON_A_STICK:
+    case PID_MEAT_JERKY:
+    case PID_MEAT:
+    {
+        if( validEngineObject( targetCr ) && targetCr.IsNpc() && targetCr.IsLife() && targetCr.Stat[ ST_BODY_TYPE ] == BT_DOG && targetCr.Merc[ MERC_MASTER_ID ] == 0 )
+        {
+            if( ::Random( 1, 100 ) + cr.Stat[ ST_CHARISMA ] * 2 + cr.Stat[ ST_LUCK ] * 3 < 80 )
+            {
+                cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, 100015, "$name@MSG DLG " + targetCr.GetProtoId() * 10 + "@" );
+                cr.DeleteItem( pid, 1 );
+                return true;
+            }
+            else if( _UsedOnSlave( item, cr, targetCr, targetItem, targetScen ) )
+                return true;
+        }
+    } break;
+    case PID_MUTATED_FRUIT:
+    case PID_MUTATED_FRUIT_MK2:
+        // cr.Say(SAY_NETMSG, "Using fruit!");
+        if( validEngineObject( targetCr ) && targetCr.IsNpc() && targetCr.IsLife() && targetCr.Stat[ ST_BODY_TYPE ] == BT_BRAHMIN && targetCr.Merc[ MERC_MASTER_ID ] == 0 )
+        {
+            if( ::Random( 1, 100 ) + cr.Stat[ ST_CHARISMA ] * 2 + cr.Stat[ ST_LUCK ] * 3 < 80 )
+            {
+                cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, 100015, "$name" + targetCr.GetProtoId() * 10 );
+                cr.DeleteItem( pid, 1 );
+                return true;
+            }
+            else if( _UsedOnSlave( item, cr, targetCr, targetItem, targetScen ) )
+                return true;
+        }
+        break;
+    default:
+        break;
+    }
+
+    // Drugs
+    if( item.GetType() == ITEM_TYPE_DRUG )
+    {
+        if( useOnSelf )
+            UseDrug( cr, item );
+        else if( validEngineObject( targetCr ) )
+            UseDrugOn( cr, targetCr, item );
+        else
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_USE_NOTHING );
+        return true;
+    }
+
+    if( pid == PID_FIRST_AID_KIT || pid == PID_FIELD_MEDIC_KIT )
+    {
+        if( validEngineObject( targetItem ) || valid( targetScen ) )
+        {
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_USE_NOTHING );
+            return true;
+        }
+
+        if( not validEngineObject( targetCr ) )
+            @targetCr = cr;
+        bool is_self = ( targetCr.Id == cr.Id );
+
+        if( targetCr.IsDead() )
+        {
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_SKILL_NORESSURECT );
+            return true;
+        }
+
+        if( isPlayer && cr.Timeout[ TO_SK_FIRST_AID ] > int( REAL_SECOND( 85 ) ) )
+        {
+            if( cr.Timeout[ TO_SK_FIRST_AID ] > 0 )
+            {
+                cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_SKILL_WEARINESS );
+                return true;
+            }
+        }
+
+        if( item.CritSlot == SLOT_HAND1 || item.CritSlot == SLOT_BONUS )
+        {
+            main_critter_use_skill( cr, SK_FIRST_AID, targetCr, null, null );
+        }
+        else
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, 10103 );
+        return true;
+    }
+    else if( pid == PID_DOCTORS_BAG || pid == PID_PARAMEDICS_BAG )
+    {
+        if( validEngineObject( targetItem ) || valid( targetScen ) )
+        {
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_USE_NOTHING );
+            return true;
+        }
+        if( item.CritSlot == SLOT_HAND1 || item.CritSlot == SLOT_BONUS )
+        {
+            main_critter_use_skill( cr, SK_DOCTOR, targetCr, null, null );
+        }
+        else
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, 10103 );
+        return true;
+    }
+
+    // Geiger counter
+    if( pid == PID_GEIGER_COUNTER && useOnSelf && UseGeiger( cr, item ) )
+        return true;
+    if( validEngineObject( targetItem ) && targetItem.GetProtoId() == PID_GEIGER_COUNTER && UseItemOnGeiger( cr, targetItem, item ) )
+        return true;
+
+    // Take process to engine
+    return false;
+}
+
+// //////////////////////////////////////////////////////////////////////////////////////////////////
+// Call on something critter use skill.
+bool main_critter_use_skill( ::Critter@ cr, int skill, ::Critter@ targetCr, ::Item@ targetItem, ::Scenery@ targetScen )
+{	
+    if( skill == SKILL_CHECK_ENEMY )
+        return false;
+
+    if( skill == SKILL_TALK && !validEngineObject( targetCr ) && !valid( targetScen ) && !validEngineObject( targetItem ) )
+        ::Log( "Разговаривает сам с собой, внимание!!!!" );
+
+    bool   isPlayer = cr.IsPlayer();
+    bool   validTargetItem = validEngineObject( targetItem );
+    uint16 pidTargetItem = validTargetItem ? targetItem.GetProtoId() : 0;
+
+    if( validTargetItem && skill == SK_TRAPS )
+    {
+        // if( OnUseSkillExplode( cr, pidTargetItem, targetItem) ) return true;
+    }
+
+    // item
+    if( validTargetItem && skill == SKILL_PICK_ON_GROUND && ( pidTargetItem == PID_BAG || pidTargetItem == PID_BACKPACK ) )
+    {
+        if( BagPick( cr, targetItem ) )
+            return true;
+    }
+
+    validTargetItem = validEngineObject( targetItem );
+    if( !validTargetItem )
+        @targetItem = null;
+
+    if( validTargetItem && UseSkillOnTrappedItem( cr, targetItem, skill ) )
+        return true;
+
+    // Cars
+    if( validTargetItem && targetItem.GetType() == ITEM_TYPE_CAR && UseSkillOnCar( cr, targetItem, skill ) )
+        return true;
+
+    // Geiger counter
+    if( validTargetItem && pidTargetItem == PID_GEIGER_COUNTER && UseSkillOnGeiger( cr, targetItem, skill ) )
+        return true;
+
+    // Doors or containers
+    if( validTargetItem && ( targetItem.GetType() == ITEM_TYPE_DOOR || targetItem.GetType() == ITEM_TYPE_CONTAINER ) && UseSkillOnLocker( cr, targetItem, skill ) )
+        return true;
+
+    switch( skill )
+    {
+    case SKILL_PICK_ON_GROUND:     // Pick item or scenery on ground
+    {
+        // ::Scenery
+        if( valid( targetScen ) )
+        {
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_USE_NOTHING );
+            return true;
+        }
+
+        // Wanted
+        if( validTargetItem && pidTargetItem == PID_WANTED_SIGN && WantedSignSet( targetItem, cr.Name, ::Random( 1000, 2000 ) ) )
+            return true;
+        // Explosion
+        if( validTargetItem && pidTargetItem == PID_ACTIVE_MINE && OnUseExplode( cr, targetItem, null, null, null, 0 ) )
+            return true;
+
+        // Pick some item
+        if( validTargetItem )
+        {
+            if( not FLAG( targetItem.Flags, ITEM_CAN_PICKUP ) )
+            {
+                cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_USE_NOTHING );
+                break;
+            }
+
+            int freeWeight = cr.Stat[ ST_CARRY_WEIGHT ] - cr.ItemsWeight();
+            if( freeWeight >= int( targetItem.Proto.Weight * targetItem.GetCount() ) )
+            {
+                // Pick full
+				targetItem.StackUid = 0;
+                MoveItem( targetItem, 0, cr );
+				return true;
+            }
+            else
+            {
+                // Pick half
+                if( freeWeight >= int(targetItem.Proto.Weight) )
+				{
+					targetItem.StackUid = 0;
+                    MoveItem( targetItem, freeWeight / targetItem.Proto.Weight, cr );
+					return true;
+				}
+                // Overweight
+                else
+                    cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_OVERWEIGHT );
+            }
+        }
+    }
+    break;
+    case SKILL_PUT_CONT:      // Put item in container, only targetItem is valid
+    case SKILL_TAKE_CONT:     // Take item from container, only targetItem is valid
+    case SKILL_TAKE_ALL_CONT: // Take all items from critter or item container
+        return false;         // Allow transactions
+    case SKILL_LOOT_CRITTER:  // Loot critter, only targetCr is valid
+        cr.Action( ACTION_PICK_CRITTER, 0, null );
+        cr.ShowContainer( targetCr, null, TRANSFER_CRIT_LOOT );
+        return true;
+    case SKILL_PUSH_CRITTER:     // Push critter, only targetCr is valid
+        cr.Action( ACTION_PICK_CRITTER, 2, null );
+        if( ( cr.Timeout[ TO_BATTLE ] == 0 && targetCr.Timeout[ TO_BATTLE ] == 0 ) &&
+            ( targetCr.IsPlayer() || ( targetCr.IsNoPlanes() && targetCr.GetTalkedPlayers( null ) == 0 ) ) )
+            targetCr.MoveRandom();
+        return true;
+    case SK_SCIENCE:
+    {
+        // Radio
+        if( validTargetItem && FLAG( targetItem.Flags, ITEM_RADIO ) && targetItem.Accessory == ACCESSORY_CRITTER && targetItem.CritId == cr.Id )
+        {
+            if( isPlayer )
+                EditRadioSettings( cr, targetItem );
+            return true;
+        }
+
+        cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_USE_NOTHING );             // Todo: "You fail to learn anything."
+    }
+    break;
+    case SK_REPAIR:
+    {
+        // Generic repair
+        if( validTargetItem && targetItem.Accessory == ACCESSORY_CRITTER && TryRepairItem( cr, targetItem ) )
+            return true;
+
+        cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_USE_NOTHING );
+    }
+    break;
+    case SK_SNEAK:
+    {
+        if( cr.Mode[ MODE_HIDE ] != 0 )
+        {
+            cr.ModeBase[ MODE_HIDE ] = 0;
+            CityGuard_SneakCritter( cr, false );
+        }
+        else if( not isPlayer )
+            cr.ModeBase[ MODE_HIDE ] = 1;
+        else
+        {
+            if( cr.Timeout[ TO_SNEAK ] > 0 )
+                cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_TIMEOUT_SNEAK_WAIT );
+            else if( IS_TURN_BASED_TIMEOUT( cr ) )
+                cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_TIMEOUT_BATTLE_WAIT );
+            //	else if(cr.GetCritters(true,FIND_LIFE,null)>0)
+            //	{
+            //		cr.TimeoutBase[TO_SNEAK]=SNEAK_TIMEOUT(cr);
+            //		cr.SayMsg(SAY_NETMSG,TEXTMSG_GAME,STR_SKILL_SNEAK_VISIBLE);
+            //	}
+            else
+            {
+                cr.ModeBase[ MODE_HIDE ] = 1;
+                CityGuard_SneakCritter( cr, true );
+            }
+        }
+    }
+    break;
+    case SK_STEAL:
+    {
+        if( validTargetItem )
+        {
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_USE_NOTHING );
+        }
+        else if( validEngineObject( targetCr ) )
+        {
+            // Loot
+            if( targetCr.IsDead() )
+            {
+                cr.Action( ACTION_PICK_CRITTER, 0, null );
+                cr.ShowContainer( targetCr, null, TRANSFER_CRIT_LOOT );
+            }
+            else if( targetCr.IsKnockout() )
+            {
+                cr.Action( ACTION_PICK_CRITTER, 0, null );
+                cr.ShowContainer( targetCr, null, TRANSFER_CRIT_STEAL );
+            }
+            // Steal
+            else
+            {
+                if( isPlayer && cr.Timeout[ TO_SK_STEAL ] > 0 )
+                    cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_SKILL_WEARINESS );
+                else
+                {
+                    if( cr.Perk[ PE_PICKPOCKET ] == 0 )
+                        cr.Action( ACTION_PICK_CRITTER, 1, null );
+                    cr.ShowContainer( targetCr, null, TRANSFER_CRIT_STEAL );
+                    cr.TimeoutBase[ TO_SK_STEAL ] = STEAL_TIMEOUT( cr );
+                    cr.StatBase[ ST_LAST_STEAL_CR_ID ] = 0;
+                    cr.StatBase[ ST_STEAL_COUNT ] = 0;
+                }
+            }
+        }
+        else
+        {
+            if( valid( targetScen ) && isPlayer && s_UseScenery( cr, targetScen, SK_STEAL ) )
+            {
+                return true;
+            }
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_USE_NOTHING );
+        }
+    }
+    break;
+    case SK_FIRST_AID:
+    {
+        if( validTargetItem || valid( targetScen ) )
+        {
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_USE_NOTHING );
+            break;
+        }
+
+        if( not validEngineObject( targetCr ) )
+            @targetCr = cr;
+        bool is_self = ( targetCr.Id == cr.Id );
+
+        if( targetCr.IsDead() )
+        {
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_SKILL_NORESSURECT );
+            break;
+        }
+
+        if( isPlayer && cr.Timeout[ TO_SK_FIRST_AID ] > int( REAL_SECOND( 85 ) ) )
+        {
+            if( cr.Timeout[ TO_SK_FIRST_AID ] > 0 )
+            {
+                cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_SKILL_WEARINESS );
+                break;
+            }
+        }
+        Healing( cr, targetCr );
+    }
+    break;
+    case SK_DOCTOR:
+        UseDoctor( cr, targetCr, 0 );
+        break;
+    case SK_LOCKPICK:
+    {
+        // Lockers processed in lockers.fos
+    }
+    break;
+    case SK_TRAPS:
+    {
+        // Explosion
+        if( validTargetItem )
+        {
+            if( ( pidTargetItem == PID_ACTIVE_DYNAMITE || pidTargetItem == PID_ACTIVE_PLASTIC_EXPLOSIVE || pidTargetItem == PID_ACTIVE_MINE ) &&
+                OnUseExplode( cr, targetItem, null, null, null, 0 ) )
+                return true;
+        }
+
+        cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_USE_NOTHING );
+    }
+    break;
+    default:
+    {
+        cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_USE_NOTHING );
+    }
+    break;
+    }
+
+    return true;
+}
+
+// //////////////////////////////////////////////////////////////////////////////////////////////////
+// Call on something critter reload weapon.
+// If ammo is not valid than only unload.
+void critter_reload_weapon( ::Critter& cr, ::Item& weapon, ::Item@ ammo )
+{
+    // Special weapons
+    if( weapon.Proto.Weapon_Caliber == 0 )
+    {
+        if( weapon.GetProtoId() == PID_SOLAR_SCORCHER )
+        {
+            if( IS_NIGHT( __Hour ) )
+                cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_SOLAR_SCORCHER_NO_LIGHT );
+            else
+            {
+                weapon.AmmoCount = weapon.Proto.Weapon_MaxAmmoCount;
+                weapon.Update();
+            }
+        }
+
+        return;
+    }
+
+    // Other weapons
+    // Unload
+    if( not validEngineObject( ammo ) || ( weapon.AmmoCount > 0 && weapon.AmmoPid != ammo.GetProtoId() ) )
+    {
+        if( weapon.AmmoPid != 0 )
+        {
+            ::Item@ existAmmo = cr.GetItem( weapon.AmmoPid, -1 );
+            if( not validEngineObject( existAmmo ) )
+                cr.AddItem( weapon.AmmoPid, weapon.AmmoCount );
+            else
+                _IncItem( existAmmo, weapon.AmmoCount );
+        }
+        weapon.AmmoCount = 0;
+    }
+
+    // Load
+    if( validEngineObject( ammo ) )
+    {
+        uint count = MIN( ammo.GetCount(), weapon.Proto.Weapon_MaxAmmoCount - weapon.AmmoCount );
+        weapon.AmmoCount += count;
+        weapon.AmmoPid = ammo.GetProtoId();
+        _SubItem( ammo, count );
+    }
+    weapon.Update();
+}
+
+void main_critter_init( ::Critter& cr, bool firstTime )
+{
+    if( cr.IsPlayer() )
+    {
+        array< uint > ids;
+        for( uint i = 0, iEnd = cr.GetMercIds( ids ); i < iEnd; i++ )
+        {
+            ::Critter@ merc = GetCritter( ids[ i ] );
+            if( !validEngineObject( merc ) )
+            {
+                cr.FreeMercSlot( i-- );
+                iEnd--;
+                cr.Say( SAY_NETMSG, "You lose merc" );
+            }
+        }
+
+        /*if(cr.Stat[ST_CRITICAL_RESISTANCE]!=0)
+           {
+                //::Log("Восстанавливаем критрезист игрока: "+::GetPlayerName(cr.Id));
+                // Заплатка для отката наабузенного резиста к критам
+                ::array<::Item@> armor, hand1, hand2;
+                cr.GetItems(SLOT_ARMOR, armor);
+                if(armor.length()>0) _CritMoveItem(cr,armor[0],SLOT_INV);
+                cr.GetItems(SLOT_HAND1, hand1);
+                if(hand1.length()>0) _CritMoveItem(cr,hand1[0],SLOT_INV);
+                cr.GetItems(SLOT_HAND2, hand2);
+                if(hand2.length()>0) _CritMoveItem(cr,hand2[0],SLOT_INV);
+
+                ::array<uint> rates;
+                uint count=cr.GetTimeEvents(PID_MUTIE, null, null, rates);
+                for(uint n=0; n<count; n++) DropDrug(cr,PID_MUTIE,rates[n]);
+                cr.EraseTimeEvents(PID_MUTIE);
+                //::Log("Текущий критрезист(без брони): "+cr.Stat[ST_CRITICAL_RESISTANCE]);
+                cr.StatBase[ST_CRITICAL_RESISTANCE]=cr.Perk[PE_CHIP_CRITICAL_RESISTANCE]*5;
+                ::GameVar@ radioResist=GetLocalVar(LVAR_q_radio_CritResistTaken, cr.Id);
+                if(valid(radioResist)) cr.StatBase[ST_CRITICAL_RESISTANCE]+=radioResist.GetValue();
+                else ::Log("Не найдена переменная бонуса к критрезисту от радиоквестов!");
+                //::Log("После восстановления(без брони): "+cr.Stat[ST_CRITICAL_RESISTANCE]);
+                if(armor.length()>0) _CritMoveItem(cr,armor[0],SLOT_ARMOR);
+                if(hand1.length()>0) _CritMoveItem(cr,hand1[0],SLOT_HAND1);
+                if(hand2.length()>0) _CritMoveItem(cr,hand2[0],SLOT_HAND2);
+           }
+
+           if(cr.BookBonus[BB_RANGED_CRIT]>8)
+           {
+                ::Log("Внимание! У игрока "+::GetPlayerName(cr.Id)+" "+cr.BookBonus[BB_RANGED_CRIT]+" книжного бонуса к криту для ranged атак!");
+                cr.BookBonusBase[BB_RANGED_CRIT]=8;
+           }
+
+           if(cr.BookBonus[BB_MELEE_AND_THROWING_CRIT]>8)
+           {
+                ::Log("Внимание! У игрока "+::GetPlayerName(cr.Id)+" "+cr.BookBonus[BB_RANGED_CRIT]+" книжного бонуса мили-криту!");
+                cr.BookBonusBase[BB_MELEE_AND_THROWING_CRIT]=8;
+           }
+
+           if(cr.BookBonus[BB_ENERGY_DAMAGE]>15)
+           {
+                ::Log("Внимание! У игрока "+::GetPlayerName(cr.Id)+" "+cr.BookBonus[BB_RANGED_CRIT]+" книжного бонуса к энерго урону!");
+                cr.BookBonusBase[BB_ENERGY_DAMAGE]=15;
+           }
+
+           if(cr.BookBonus[BB_SMALL_DAMAGE]>15)
+           {
+                ::Log("Внимание! У игрока "+::GetPlayerName(cr.Id)+" "+cr.BookBonus[BB_RANGED_CRIT]+" книжного бонуса к легкому урону!");
+                cr.BookBonusBase[BB_SMALL_DAMAGE]=15;
+           }
+
+           if(cr.BookBonus[BB_BIG_DAMAGE]>15)
+           {
+                ::Log("Внимание! У игрока "+::GetPlayerName(cr.Id)+" "+cr.BookBonus[BB_RANGED_CRIT]+" книжного бонуса к тяжелому урону!");
+                cr.BookBonusBase[BB_BIG_DAMAGE]=15;
+           }
+
+           if(cr.BookBonus[BB_MELEE_AND_THROWING_CRIT_ROLL]>15)
+           {
+                ::Log("Внимание! У игрока "+::GetPlayerName(cr.Id)+" "+cr.BookBonus[BB_RANGED_CRIT]+" книжного бонуса к мили-критроллу!");
+                cr.BookBonusBase[BB_MELEE_AND_THROWING_CRIT_ROLL]=15;
+           }*/
+
+        ::GameVar@ redemption = GetLocalVar( LVAR_q_newbie_redemption, cr.Id );
+
+        // Newbie location
+        if( ::__NewbieLocationIsActive )
+        {
+            SetPlayerToNewbieLocation( cr );
+            cr.ModeBase[ MODE_ONLY_ARMOR_PID ] = PID_EXP_COLLAR;
+        }
+        else
+        {
+            redemption = 20;
+            cr.ModeBase[ MODE_ONLY_ARMOR_PID ] = 0;
+        }
+		
+        if( cr.Perk[ PE_CAUTIOUS_NATURE ] > 0 && cr.Stat[ ST_VAR4 ] == 3 && cr.Stat[ ST_PERCEPTION_EXT ] > 2 )
+        {
+            cr.StatBase[ ST_PERCEPTION_EXT ] -= 3;
+            cr.StatBase[ ST_VAR4 ] = 0;
+        }
+
+        RemoveOfflineClient( cr );
+    }
+    else
+    {
+        int traderIndex = GetTraderIndex( cr );
+        if( traderIndex >= 0 )
+        {
+            cr.StatBase[ ST_TALK_DISTANCE ] = 5;
+            cr.StatBase[ ST_MAX_TALKERS ] = 6;
+            cr.StatBase[ ST_REPLICATION_TIME ] = 30;
+            cr.SkillBase[ SK_BARTER ]  = TABLE_SKILL( traderIndex );
+            cr.ModeBase[ MODE_NO_ITEM_GARBAGER ] = 1;
+            cr.ModeBase[ MODE_NO_BARTER ]  = 0;
+            cr.ModeBase[ MODE_NO_DROP ] = 1;
+            cr.ModeBase[ MODE_NO_STEAL ]   = 1;
+            cr.ModeBase[ MODE_NO_LOOT ] = 1;
+            cr.ModeBase[ MODE_NO_ENEMY_STACK ] = 1;
+            traderItems( traderIndex );
+
+            if( cr.GetTimeEvents( CTE_TRADER ) == 0 )
+            {
+                uint nextCall = UpdateItems( cr );
+                if( nextCall > 0 )
+                    cr.AddTimeEvent( "trader@cte_UpdateItems", nextCall, CTE_TRADER );
+            }
+        }
+
+        for( uint i = PENALTY_BEGIN; i < PENALTY_END; i++ )
+            cr.ParamBase[ i ] = 0;
+        cr.ParamBase[ CITY_ROLE_FLAG ] = 0;
+
+        if( cr.Stat[ ST_ROLE_CITY ] == CITY_ROLE_DEAD_PLAYER && cr.Timeout[ TO_REPLICATION ] > int( REAL_MINUTE( 60 ) ) )
+        {
+            if( validEngineObject( cr.GetMap() ) )
+            {
+                array< ::Item@ > items;
+                cr.GetItems( -1, items );
+                MoveItems( items, cr.GetMap(), cr.HexX, cr.HexY );
+
+                for( uint i = 0, iEnd = items.length(); i < iEnd; i++ )
+                {
+                    if( validEngineObject( items[ i ] ) )
+                        items[ i ].EventDrop( cr );
+                }
+
+            }
+            ::DeleteNpc( cr );
+            return;
+
+        }
+        cr.ModeBase[ MODE_NO_FAVORITE_ITEM ] = 1;
+        cr.StatBase[ ST_HASH_EMBLEM ] = 0;
+        int dialogId = cr.Stat[ ST_DIALOG_ID ];
+        if( dialogId == DIALOG_ncr_westin || dialogId == DIALOG_ncr_smit || dialogId == DIALOG_sf_citizen_shue || dialogId == DIALOG_vc_kohl || dialogId == DIALOG_vc_randal || dialogId == DIALOG_vc_ed || dialogId == DIALOG_vc_guard_fighter )
+            cr.StatBase[ ST_ROLE_CITY ] = CITY_NONE_PROTECT;
+
+        if( cr.CityRole_IsGuard )
+        {
+            if( !Mk2::IsEvent( cr, CRITTER_EVENT_SHOW_CRITTER ) )
+                cr.SetEvent( CRITTER_EVENT_SHOW_CRITTER, "Mk2@CityGuard::_GuardShowCritter" );
+
+            cr.SkillBase[ SK_DOCTOR ] = 250;
+            cr.SkillBase[ SK_FIRST_AID ] = 250;
+        }
+        else
+        {
+            if( cr.Skill[ SK_DOCTOR ] < 100 )
+                cr.SkillBase[ SK_DOCTOR ] = 100;
+            if( cr.Skill[ SK_FIRST_AID ] < 100 )
+                cr.SkillBase[ SK_FIRST_AID ] = 100;
+        }
+    }
+
+    if( firstTime )
+    {
+        if( cr.IsPlayer() )
+        {
+            // Input: 7 special, 3 tag skills, 2 traits, age, gender
+            uint traits = 0;
+            for( uint i = TRAIT_BEGIN; i <= TRAIT_END; i++ )
+            {
+                if( cr.TraitBase[ i ] != 0 && traits < 2 )
+                {
+                    cr.TraitBase[ i ] = 1;
+                    traits++;
+                }
+                else
+                    cr.TraitBase[ i ] = 0;
+            }
+
+            if( cr.StatBase[ ST_GENDER ] < 0 || cr.StatBase[ ST_GENDER ] > 1 )
+                cr.StatBase[ ST_GENDER ] = 0;
+            if( cr.StatBase[ ST_AGE ] < 14 || cr.StatBase[ ST_AGE ] > 80 )
+                cr.StatBase[ ST_AGE ] = 25;
+            for( uint i = ST_STRENGTH; i <= ST_LUCK; i++ )
+                cr.StatBase[ i ] = CLAMP( cr.StatBase[ i ], 1, 10 );
+
+            if( ( cr.StatBase[ ST_STRENGTH ] + cr.StatBase[ ST_PERCEPTION ] + cr.StatBase[ ST_ENDURANCE ] +
+                  cr.StatBase[ ST_CHARISMA ] + cr.StatBase[ ST_INTELLECT ] + cr.StatBase[ ST_AGILITY ] + cr.StatBase[ ST_LUCK ] ) != __StartSpecialPoints )
+            {
+                for( uint i = ST_STRENGTH; i <= ST_LUCK; i++ )
+                    cr.StatBase[ i ] = 5;
+            }
+
+            cr.StatBase[ ST_EMP_RESIST ] = 500;
+            cr.AddHolodiskInfo( 42 );           // Journalist's research
+        }
+
+        if( cr.TagSkill[ TAG_SKILL1 ] < int(SKILL_BEGIN) || cr.TagSkill[ TAG_SKILL1 ] > int(SKILL_END) )
+            cr.TagSkillBase[ TAG_SKILL1 ] = 0;
+        if( cr.TagSkill[ TAG_SKILL2 ] < int(SKILL_BEGIN) || cr.TagSkill[ TAG_SKILL2 ] > int(SKILL_END) )
+            cr.TagSkillBase[ TAG_SKILL2 ] = 0;
+        if( cr.TagSkill[ TAG_SKILL3 ] < int(SKILL_BEGIN) || cr.TagSkill[ TAG_SKILL3 ] > int(SKILL_END) )
+            cr.TagSkillBase[ TAG_SKILL3 ] = 0;
+        if( cr.TagSkill[ TAG_SKILL1 ] == cr.TagSkill[ TAG_SKILL2 ] )
+            cr.TagSkillBase[ TAG_SKILL1 ] = 0;
+        if( cr.TagSkill[ TAG_SKILL2 ] == cr.TagSkill[ TAG_SKILL3 ] )
+            cr.TagSkillBase[ TAG_SKILL2 ] = 0;
+        if( cr.TagSkill[ TAG_SKILL3 ] == cr.TagSkill[ TAG_SKILL1 ] )
+            cr.TagSkillBase[ TAG_SKILL3 ] = 0;
+
+        player_data_generate( cr );
+
+        cr.StatBase[ ST_CURRENT_HP ] = cr.Stat[ ST_MAX_LIFE ];
+        if( cr.IsNpc() )
+            cr.StatBase[ ST_CURRENT_HP ] += cr.StatBase[ ST_STRENGTH ] + cr.StatBase[ ST_ENDURANCE ] * 2;
+        cr.StatBase[ ST_CURRENT_AP ] = cr.Stat[ ST_ACTION_POINTS ] * 100;
+
+        if( cr.IsPlayer() )
+        {
+            for( uint i = ST_STRENGTH; i <= ST_LUCK; i++ )
+                cr.StatBase[ i ] = CLAMP( cr.StatBase[ i ], 1, 10 );
+
+            cr.StatBase[ ST_REPLICATION_COST ] = 100;
+            cr.StatBase[ ST_REPLICATION_MONEY ] = 0;
+            cr.StatBase[ ST_REPLICATION_COUNT ] = 0;
+            cr.StatBase[ ST_TEAM_ID ] = 1;
+            cr.StatBase[ ST_DAMAGE_TYPE ] = DAMAGE_NORMAL;
+            if( !::__NewbieLocationIsActive )
+                SetStartLocation( cr );
+        }
+        else
+        {
+            ::Map@ map = cr.GetMap();
+            if( validEngineObject( map ) )
+            {
+                const uint locPid = map.GetLocation().GetProtoId();
+                const uint mapPid = map.GetProtoId();
+                bool       isBonus = false;
+
+                if( map.FarmMapIsProtect )
+                {
+                    isBonus = true;
+                }
+                else if( LOCATION_IS_CITY( locPid ) )
+                {
+                    isBonus = true;
+                }
+
+                if( MAP_IS_HELL( mapPid ) )
+                {
+                    isBonus = false;
+                }
+
+                if( LOCATION_Novato == locPid )
+                {
+                    if( not MAP_IS_NOVATO_FARM( mapPid ) )
+                    {
+                        isBonus = true;
+                    }
+                }
+
+                if( isBonus && IsHumanoid( cr ) && cr.Stat[ ST_ROLE_CITY ] != CITY_NONE_PROTECT )
+                {
+                    cr.StatBase[ ST_ACTION_POINTS ] = ::Random( 10, 16 );
+                    cr.StatBase[ ST_KILL_EXPERIENCE ] = 0;
+                    cr.StatBase[ ST_ARMOR_CLASS ] = ::Random( 15, 30 );
+                    cr.PerkBase[ PE_MORE_CRITICALS ] = ::Random( 1, 5 );
+
+                    uint16 MaxLife = ::Random( 200, 300 );
+                    cr.StatBase[ ST_MAX_LIFE ] += MaxLife;
+                    cr.StatBase[ ST_CURRENT_HP ] += MaxLife;
+
+                    cr.StatBase[ ST_CRITICAL_RESISTANCE ] += ::Random( 20, 25 );
+                    cr.StatBase[ ST_NORMAL_RESIST ] += ::Random( 20, 25 );
+                    cr.StatBase[ ST_LASER_RESIST ] += ::Random( 20, 25 );
+                    cr.StatBase[ ST_EXPLODE_RESIST ] += ::Random( 20, 25 );
+                    cr.StatBase[ ST_FIRE_RESIST ] += ::Random( 20, 25 );
+                    cr.StatBase[ ST_PLASMA_RESIST ] += ::Random( 20, 25 );
+                    cr.StatBase[ ST_ELECTRO_RESIST ] += ::Random( 20, 25 );
+
+                    cr.StatBase[ ST_NORMAL_ABSORB ] += ::Random( 4, 6 );
+                    cr.StatBase[ ST_LASER_ABSORB ] += ::Random( 4, 6 );
+                    cr.StatBase[ ST_EXPLODE_ABSORB ] += ::Random( 10, 16 );
+                    cr.StatBase[ ST_FIRE_ABSORB ] += ::Random( 14, 20 );
+                    cr.StatBase[ ST_PLASMA_ABSORB ] += ::Random( 8, 12 );
+                    cr.StatBase[ ST_ELECTRO_ABSORB ] += ::Random( 6, 12 );
+
+                    cr.SkillBase[ SK_SMALL_GUNS ] += 60;
+                    cr.SkillBase[ SK_BIG_GUNS ] += 60;
+                    cr.SkillBase[ SK_UNARMED ] += 60;
+                    cr.SkillBase[ SK_ENERGY_WEAPONS ] += 60;
+
+                    cr.PerkBase[ PE_SNIPER ] = 1;
+                    cr.PerkBase[ PE_SLAYER ] = 1;
+                    cr.PerkBase[ PE_MORE_CRITICALS ] += 3;
+                    cr.ModeBase[ MODE_UNLIMITED_AMMO ] = 1;
+                }
+            }
+            cr.ChangeCrType( cr.StatBase[ ST_BASE_CRTYPE ] );
+            if( cr.Stat[ ST_LEVEL ] != 0 )
+                NpcProcessLevel( cr );
+        }
+    }
+    else
+    {
+        if( cr.IsPlayer() )
+        {
+            // Переначисление бонусов с той брони, которая реально на игроке.
+            DeleteBonus( cr );
+            ::Item@ armor = cr.GetItem( 0, SLOT_ARMOR );
+            if( validEngineObject( armor ) && armor.Accessory == ACCESSORY_CRITTER && armor.CritSlot == SLOT_ARMOR )
+                AddBonus( cr, armor );
+
+            cr.ModeBase[ MODE_DEFAULT_COMBAT ] = COMBAT_MODE_REAL_TIME;
+
+            ::Map@ map = cr.GetMap();
+            if( validEngineObject( map ) )
+            {
+                file fBase;
+                ::string@ pName = strlwr( ::GetPlayerName( cr.Id ) );
+                if( valid( pName ) )
+                {
+                    if( fBase.open( "save\\base\\basemap_" + map.Id + ".bsmk2", "r" ) != -1 )
+                    {
+                        ::string allName;
+                        fBase.readString( fBase.getSize(), allName );
+                        allName = strlwr( allName );
+                        if( uint( map.GetData( 0 ) ) != cr.Id )
+                        {
+                            ::array< ::string@ > Data = split( allName, "@" );
+                            bool isToGlobal = true;
+                            for( uint i = 0, iEnd = Data.length(); i < iEnd; i++ )
+                            {
+                                // ::Log(Data[i] + " " +  pName);
+                                if( valid( Data[ i ] ) && Data[ i ] == pName )
+                                {
+                                    isToGlobal = false;
+                                    break;
+                                }
+                            }
+                            if( isToGlobal )
+                                cr.TransitToGlobal( false );
+                        }
+                        fBase.close();
+                    }
+                }
+            }
+        }
+
+        // Clear timeouts if too long (happens when saves got removed)
+        for( uint i = TIMEOUT_BEGIN; i <= TIMEOUT_END; i++ )
+            if( i != TO_BATTLE && cr.Timeout[ i ] > int(MAXIMUM_TIMEOUT) )
+                cr.TimeoutBase[ i ] = ::__FullSecond;
+
+        // Erase zero time events
+        cr.EraseTimeEvents( 0 );
+    }
+
+    // Current skin validation
+    ::Item@ armor = cr.GetItem( 0, SLOT_ARMOR );
+    if( not validEngineObject( armor ) )
+    {
+        uint crType = cr.Stat[ ST_BASE_CRTYPE ];
+        if( crType == 0 )
+            crType = ( cr.Stat[ ST_GENDER ] == GENDER_MALE ? CRTYPE_DEFAULT_M : CRTYPE_DEFAULT_F );
+        if( cr.CrType != crType )
+            cr.ChangeCrType( crType );
+    }
+
+    if( cr.IsNpc() )
+    {
+        ::Map@ map = cr.GetMap();
+        if( validEngineObject( map ) )
+        {
+            const uint locPid = map.GetLocation().GetProtoId();
+            const uint mapPid = map.GetProtoId();
+            bool       isBonus = false;
+
+            if( map.FarmMapIsProtect )
+            {
+                isBonus = true;
+            }
+            else if( LOCATION_IS_CITY( locPid ) )
+            {
+                isBonus = true;
+            }
+
+            if( MAP_IS_HELL( mapPid ) )
+            {
+                isBonus = false;
+            }
+
+            if( isBonus && IsHumanoid( cr ) && cr.Stat[ ST_ROLE_CITY ] != CITY_NONE_PROTECT && cr.Stat[ ST_ROLE_CITY ] != CITY_ROLE_DEAD_PLAYER )
+            {
+
+                cr.ModeBase[ MODE_NO_DROP ] = 1;
+                cr.ModeBase[ MODE_NO_LOOT ] = 1;
+            }
+        }
+        processing_role_city( cr, firstTime );
+    }
+    cr.RefreshSpeed();
+}
+
+void critter_idle_dead( ::Critter& cr )
+{
+    // if(cr.IsDead() && cr.Stat[ST_REPLICATION_TIME]>=0 && cr.Timeout[TO_REPLICATION]==0) // Уже проверено.
+    {
+        ::Map@ m = cr.GetMap();
+        if( validEngineObject( m ) )
+        {
+            if( cr.IsPlayer() )
+            {
+                cr.IsNoTeamTransit = true;
+                array< int > params = { MODE_NO_LOOT, 0, ST_REPLICATION_TIME, 20, ST_BASE_CRTYPE, cr.CrType, ST_ROLE_CITY, CITY_ROLE_DEAD_PLAYER, MODE_NO_ANIMATED_DEATH, 1 };
+                ::Critter@ dead = m.AddNpc( 1, cr.HexX, cr.HexY, cr.Dir, params, null, null );
+                if( validEngineObject( dead ) )
+                {
+                    dead.ToDead( cr.Anim2Dead, null );
+                    ::array< ::Item@ > items;
+                    cr.GetItems( -1, items );
+                    MoveItems( items, dead );
+                }
+            }
+            else if( cr.Stat[ ST_ROLE_CITY ] == CITY_ROLE_DEAD_PLAYER )
+            {
+                uint anim2 = cr.Anim2Dead;
+                if( cr.Stat[ ST_VAR0 ] == 0 && anim2 != ANIM2_DEAD_PULSE && anim2 != ANIM2_DEAD_PULSE_DUST )
+                {
+                    cr.StatBase[ ST_VAR0 ] = 1;
+                    cr.TimeoutBase[ TO_REPLICATION ] = ::__FullSecond + REAL_MINUTE( cr.Stat[ ST_REPLICATION_TIME ] );
+
+
+                    uint anim1 = 0;
+                    cr.ChangeCrType( 129 );
+
+                    switch( anim2 )
+                    {
+                    case ANIM2_DEAD_PULSE:                                        // (113)
+                    case ANIM2_DEAD_PULSE_DUST:                                   // (114)
+                    case ANIM2_DEAD_FUSED:
+                        anim1 = ::Random( 0, 3 ) + 4;
+                        break;                                                    // (116)
+                    case ANIM2_DEAD_EXPLODE:
+                        anim1 = ::Random( 0, 3 ) + 4;
+                        break;                                                    // (117)
+
+                    case ANIM2_DEAD_BURN:                                         // (118)
+                    case ANIM2_DEAD_BURN_RUN:
+                        anim1 = ::Random( 0, 5 ) + 4;
+                        break;                                                    // (119)
+
+                    case ANIM2_DEAD_LASER:                                        // (115)
+                    case ANIM2_DEAD_PRONE_FRONT:                                  // (100)
+                    case ANIM2_DEAD_PRONE_BACK:                                   // (101)
+                    case ANIM2_DEAD_FRONT:                                        // (102) // Hardcoded
+                    case ANIM2_DEAD_BACK:                                         // (103) // Hardcoded
+                    case ANIM2_DEAD_BLOODY_SINGLE:                                // (110)
+                    case ANIM2_DEAD_BLOODY_BURST:                                 // (111)
+                    case ANIM2_DEAD_BURST:                                        // (112)
+                    default:
+                        anim1 = ::Random( 0, 2 ) + 4;
+                        break;
+                    }
+                    cr.SetAnims( 0, anim1, anim2 );
+                }
+                else
+                {
+                    array< ::Item@ > items;
+                    cr.GetItems( -1, items );
+                    MoveItems( items, m, cr.HexX, cr.HexY );
+                    for( uint i = 0, iEnd = items.length(); i < iEnd; i++ )
+                    {
+                        if( validEngineObject( items[ i ] ) )
+                            items[ i ].EventDrop( cr );
+                    }
+                    ::DeleteNpc( cr );
+                }
+                return;
+            }
+        }
+        ReplicateCritter( cr );
+    }
+}
+
+// Глобальный обработчик запуска пластида.
+// runner криттер который запускает пластид.
+// map карта на которой взрываеться пластид.
+// plastic взрывчатка.
+// explCr это криттер в инвентаре которого взрываеться итем.
+// Если возвращаеться false, то взрывчатка не среагирует, если true то взрываеться.
+bool explode_run_plastic( ::Critter& runner, ::Map@ map, ::Item@ plastic, ::Critter@ explCr, uint16 hexX, uint16 hexY )
+{
+    if( validEngineObject( map ) )
+    {
+        {
+            ::array< ::Critter@ > critters;
+            if( validEngineObject( explCr ) && explCr.IsPlayer() )
+            {
+                /*uint AccesoryId =
+                   uint ownerId = */
+                for( uint i = 0, iEnd = map.GetCrittersHex( hexX, hexY, 30, FIND_LIFE_AND_KO, critters ); i < iEnd; i++ )
+                {
+                    if( validEngineObject( critters[ i ] ) )
+                    {
+                        bool signalQuencher = false;
+                        if( critters[ i ].IsPlayer() )
+                        {
+                            if( PID_SIGNAL_QUENCHER != 0 )
+                            {
+                                ::Item@ q = critters[ i ].GetItem( PID_SIGNAL_QUENCHER, SLOT_HAND1 );
+                                signalQuencher = ( validEngineObject( q ) );
+                            }
+                        }
+                        else if( LOCATION_IS_CITY( map.GetLocation().GetProtoId() ) )
+                        {
+                            signalQuencher = ( critters[ i ].CityRole_IsGuard );
+                        }
+                        if( signalQuencher )
+                        {
+                            if( validEngineObject( runner ) )
+                            {
+                                runner.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, 101000 );
+                                if( valid( runner.GetMap() ) && runner.GetMap().Id == map.Id )
+                                    AddAttackPlane( critters[ i ], 0, runner );
+                            }
+                            if( validEngineObject( plastic ) )
+                            {
+                                if( plastic.Steal != 2 )
+                                    AddAttackPlane( critters[ i ], 0, explCr );
+                            }
+                            else
+                                AddAttackPlane( critters[ i ], 0, explCr );
+                            return false;
+                        }
+                    }
+                }
+            }
+            else if( validEngineObject( plastic ) )
+            {
+                for( uint i = 0, iEnd = map.GetCrittersHex( hexX, hexY, 30, FIND_LIFE_AND_KO, critters ); i < iEnd; i++ )
+                {
+                    if( validEngineObject( critters[ i ] ) )
+                    {
+                        bool signalQuencher = false;
+                        if( critters[ i ].IsPlayer() )
+                        {
+                            if( PID_SIGNAL_QUENCHER != 0 )
+                            {
+                                ::Item@ q = critters[ i ].GetItem( PID_SIGNAL_QUENCHER, SLOT_HAND1 );
+                                signalQuencher = ( validEngineObject( q ) );
+                            }
+                        }
+                        else
+                        {
+                            signalQuencher = ( critters[ i ].CityRole_IsGuard );
+                        }
+                        if( signalQuencher )
+                        {
+                            runner.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, 101000 );
+                            if( validEngineObject( runner.GetMap() ) && runner.GetMap().Id == map.Id )
+                            {
+                                AddAttackPlane( critters[ i ], 0, runner );
+                            }
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+        return true;
+    }
+    return false;
+}
+
+enum ClientProperty
+{
+    LOOK_ITEMS_REFRESH_HEX,
+    LOOK_ITEMS_REFRESH_TIME,
+    ClientPropertyLength
+}
+
+void unsafe_SetClientProperty( ::Critter& player, int, int, int, ::string@, ::array< int >@ Prop )
+{
+    if( valid( Prop ) && Prop.length() == uint( ClientProperty::ClientPropertyLength ) )
+    {
+        player.LookItems_HexRefreshCount = Prop[ ClientProperty::LOOK_ITEMS_REFRESH_HEX ];
+        player.LookItems_Time = Prop[ ClientProperty::LOOK_ITEMS_REFRESH_TIME ];
+    }
+}
+
+bool isExplosive( ::Item@ item )
+{
+    if( !validEngineObject( item ) )
+        return false;
+    uint pid = item.GetProtoId();
+    return ( pid == PID_ACTIVE_DYNAMITE || pid == PID_ACTIVE_PLASTIC_EXPLOSIVE || pid == PID_ACTIVE_MINE );
+}
+
+void changedParam_Speed( ::Critter& cr, uint, int )
+{
+    cr.RefreshSpeed();
+}
+
+void unsafe_get_global_coord( ::Critter& player, int, int, int, ::string@, ::array< int >@ )
+{
+    player.Say( SAY_NETMSG, "WorldX " + player.WorldX + " WorldY " + player.WorldY );
+}

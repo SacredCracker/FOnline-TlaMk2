@@ -1,0 +1,27 @@
+// FOS Server
+// Author: heX
+// Отец Клифф
+// читает проповедь в 18 часов
+
+int currentMsg = 1;
+
+void Init(::Critter& npc, bool firstTime)
+{
+	currentMsg=1;
+	::CreateTimeEvent(Time::GetNearFullSecond(0,0,0,18,0,0),"DenKliff::e_Say",npc.Id,false);
+}
+
+uint e_Say(::array<uint>@ values)
+{
+	::Critter@ npc=::GetCritter(values[0]);
+	if(validEngineObject(npc))
+		npc.SayMsg(SAY_NORM_ON_HEAD,TEXTMSG_DLG,DLGSTR(npc.Stat[ST_DIALOG_ID],currentMsg));
+
+	currentMsg++;
+	if(currentMsg>10)
+	{
+		currentMsg=1;
+		return Time::GetNearFullSecond(0,0,0,18,::Random(0,10),0)-::__FullSecond;
+	}
+	return REAL_SECOND(10);
+}

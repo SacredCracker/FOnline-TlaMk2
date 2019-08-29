@@ -1,0 +1,1931 @@
+// FOS Server
+// Библиотека общих функций городской охраны.
+
+void ModuleInit( )
+{
+	IgnoredCity.insertLast( @CityGuard::ProtoIgnoredCity( LOCATION_NewReno, false ).AddMapPid( MAP_newr_carstop ) );
+	
+	// Города и карты с игнором штрафов
+	IgnoredPenaltyCity.insertLast( @CityGuard::ProtoIgnoredCity( LOCATION_NewReno ).AddMapPid( MAP_newr_carstop ) );
+	IgnoredPenaltyCity.insertLast( @CityGuard::ProtoIgnoredCity( LOCATION_ReplicationHell ) );
+	IgnoredPenaltyCity.insertLast( @CityGuard::ProtoIgnoredCity( LOCATION_NewbieLocation ) );
+	IgnoredPenaltyCity.insertLast( @CityGuard::ProtoIgnoredCity( LOCATION_Navarro ) );
+	
+	::__EventCritterInMap.Subscribe( @CritterInitMap );
+	::__EventCritterOutMap.Subscribe( @CritterOutMap );
+}
+
+ScriptInfo::Enum@ PenaltyEnum = @ScriptInfo::Enum( "City", "Penalty", "Mk2" );
+
+bool CrIsSneak( ::Critter@ cr )
+{
+	return (cr.Mode[MODE_HIDE]!=0 && (cr.IsNpc() || cr.GetAccess()!=ACCESS_ADMIN));
+}
+
+enum EFlagGuest
+{
+	Begin 	= 0,
+	
+	None	= 0,
+	Guest,
+	Provoker,
+	Enem,
+	
+	End
+}
+
+void CheckEnumPenalty(::Critter& cr, int ind, int, int)
+{
+	cr.Say( SAY_NETMSG, "" + PenaltyEnum[ind] );
+}
+
+int AddPenaltyCity( ::Critter@ cr, int penalty, const uint locPid, int info = 0, ::Critter@ infoCr = null, ::Item@ infoIt = null )
+{ 
+	int addStat = PenaltyEnum[penalty];
+	switch(penalty)
+	{
+		case City::PenaltyListing::Pay:
+			addStat = 0 - info;
+			break;
+		case City::PenaltyListing::Steal:
+			addStat = ( ( info ) * 0.01 * addStat );
+		default: 
+			if( CrIsSneak(cr))
+				addStat = MAX(addStat, addStat * City::Penalty::Sneak * 0.01);
+			break;
+	}
+
+	{
+		{
+			if( locPid < PENALTY_COUNT )
+			{
+				if( addStat > 0 )
+				{
+					addStat += addStat * 0.01 * cr.CityRole[ CITY_ROLE_PENALTY_MODULE ];
+					cr.CityRoleBase[ CITY_ROLE_PENALTY_MODULE ] += City::Penalty::NextPenaltyModule;
+				}
+				if( cr.IsNpc( ) )
+				{
+					if( cr.Merc[ MERC_MASTER_ID ] != 0 )
+					{
+						::Critter@ master = ::GetCritter( cr.Merc[MERC_MASTER_ID] );
+						if( validEngineObject( master ) )
+							 @cr = master;
+						else
+						{
+							::OffClient@ offMaster = ::GetOffClient( cr.Merc[ MERC_MASTER_ID ] );
+							if( valid( offMaster ) )
+							{
+								offMaster.SetParam( City::Penalty::PragmaBegin + locPid, offMaster.GetParam( City::Penalty::PragmaBegin + locPid ) + addStat );
+								return offMaster.GetParam( City::Penalty::PragmaBegin + locPid );
+							}
+						}
+					}
+					else return 0;
+				}
+				if( locPid < FR_CITY_PENALTY_COUNT )
+				{
+					if( cr.IsPlayer( ) && cr.Stat[ ST_FACTION ] != 0 )
+					{
+						::Fraction@ fr = Fractions::Get( cr.Stat[ ST_FACTION ] );
+						if( valid( fr ) )
+						{
+							fr.Stats[ locPid + FR_CITY_PENALTY_BEGIN ] += addStat;
+							if( fr.Stats[ locPid + FR_CITY_PENALTY_BEGIN ] < 0 ) fr.Stats[ locPid + FR_CITY_PENALTY_BEGIN ] = 0;
+						}
+					}
+				}			
+				
+				cr.CityPenaltyBase[ locPid ] += addStat;
+				if( cr.CityPenalty[ locPid ] < 0 ) cr.CityPenaltyBase[ locPid ] = 0;
+				if( addStat < 0) addStat = 0 - addStat;
+						::string lexems = "$count" + addStat;
+				if(validEngineObject(infoCr))
+				{
+					if(infoCr.IsPlayer())
+						lexems += "$name" + ::GetPlayerName(infoCr.Id);
+					else 
+						lexems += "$name" + "@msg DLG " + STR_NPC_NAME(infoCr.Stat[ ST_DIALOG_ID ], infoCr.GetProtoId()) + "@";
+				}
+				if(validEngineObject(infoIt))
+				{
+					lexems += "$item@msg ITEM " + (infoIt.GetProtoId()*100);
+				}
+				if( cr.IsPlayer( ) )
+				{
+					cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, City::Penalty::MSGNumber + penalty - City::PenaltyListing::Begin - 1,lexems);
+					//cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, City::Penalty::MSGNumberTotalPenalty);
+				}
+				return cr.CityPenalty[ locPid ];
+			}
+		}
+	}
+	return 0;
+}
+	
+void SetPenaltyCity( ::Critter& cr, const uint&in newStat, const uint&in pidLoc = 0 )	
+{ 
+	uint locPid = 0;
+	if( pidLoc == 0 )
+	{
+		::Map@ map = cr.GetMap( );
+		if( validEngineObject( map ) ) 
+		{
+			::Location@ loc = map.GetLocation( );
+			if( validEngineObject( loc ) )
+				locPid = loc.GetProtoId( ) - 1;
+		}
+	}
+	else locPid = pidLoc - 1; 
+	if( locPid < PENALTY_COUNT )
+	{		
+		if( locPid < FR_CITY_PENALTY_COUNT && cr.IsPlayer( ) && cr.Stat[ ST_FACTION ] != 0 )
+		{
+			::Fraction@ fr = Fractions::Get( cr.Stat[ ST_FACTION ] );
+			if( valid( fr ) )
+			{ 
+				fr.Stats[ locPid + FR_CITY_PENALTY_BEGIN ] = newStat;
+				if( fr.Stats[ locPid + FR_CITY_PENALTY_BEGIN ] < 0 ) fr.Stats[ locPid + FR_CITY_PENALTY_BEGIN ] = 0;
+			}
+		}	
+		
+		if( cr.IsNpc( ) )
+		{
+			if( cr.Merc[ MERC_MASTER_ID ] != 0 )
+			{
+				::Critter@ master = ::GetCritter( cr.Merc[ MERC_MASTER_ID ] );
+				if( validEngineObject( master ) )
+					master.CityPenaltyBase[ locPid ] = newStat;
+				else
+				{
+					::OffClient@ offMaster = ::GetOffClient( cr.Merc[ MERC_MASTER_ID ] );
+					if( valid( offMaster ) )
+						offMaster.SetParam( City::Penalty::PragmaBegin + locPid, newStat );
+				}
+			}
+			else { cr.CityPenaltyBase[ locPid ] = 0; return; }
+		}
+		cr.CityPenaltyBase[ locPid ] = newStat;
+	}
+	if( cr.IsPlayer( ) )
+	{
+		// lexems += "$where@msg GM " + STR_GM_NAME( loc.GetProtoId() ) + "@";
+		cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, City::Penalty::MSGNumberTotalPenalty, "$count" + GetPenaltyCity( cr, pidLoc )+"$loc@msg GM " + STR_GM_NAME( pidLoc ) + "@");
+	}
+}
+
+int GetPenaltyCity( ::Critter& cr, uint locPid )
+{
+	if( --locPid < uint( PENALTY_COUNT ) )
+	{
+		if( cr.IsNpc( ) )
+		{
+			if( cr.Merc[ MERC_MASTER_ID ] == 0 )
+				return 0;
+			else
+			{
+				::Critter@ master = ::GetCritter( cr.Merc[ MERC_MASTER_ID ] );
+				if( validEngineObject( master ) )
+					return master.CityPenaltyBase[ locPid ];
+				else
+				{
+					::OffClient@ offMaster = ::GetOffClient( cr.Merc[ MERC_MASTER_ID ] );
+					if( valid( offMaster ) )
+						return offMaster.GetParam( City::Penalty::PragmaBegin + locPid );
+				}
+			}
+		}
+		int penalty = cr.CityPenalty[ locPid ];
+		
+		if( locPid < FR_CITY_PENALTY_COUNT )
+		{
+			if( cr.IsPlayer( ) && cr.Stat[ ST_FACTION ] != 0 )
+			{
+				::Fraction@ fr = Fractions::Get( cr.Stat[ ST_FACTION ] );
+				if( valid( fr ) && int( fr.Stats[ uint( locPid + FR_CITY_PENALTY_BEGIN ) ] ) > penalty )
+					penalty = fr.Stats[ locPid + FR_CITY_PENALTY_BEGIN ];
+			}
+		}
+				
+		return penalty;
+	}
+	return 0;
+}
+
+bool isAllowedBt( const int&in bt )
+{
+	switch( bt )
+	{
+		case BT_RADSCORPION:
+		case BT_RAT:
+		case BT_DOG:
+		case BT_PLANT:
+		case BT_GECKO:
+		case BT_GIANT_ANT:
+		case BT_WASP: 
+		case BT_GIANT_WASP: 
+		case BT_GIANT_BEETLE: 
+		case BT_DEADCLAW: return true;
+		default: return false;
+	}
+	return false;
+}
+
+int8 GetTimeBonus( )
+{
+	uint16 hour = 0, p0 = 0;
+	::GetGameTime( ::__FullSecond, p0, p0, p0, p0, hour, p0, p0 );
+	if( hour >= 9 && hour < 17) return 0;
+	else if( hour >= 21 || hour < 5 ) return 6;
+	else if( hour < 9) return( 9 - hour );
+	else return( hour - 16 );
+}
+
+bool targetEnemy( ::Critter& target ) 
+{
+	if( isAllowedBt( target.Stat[ST_BODY_TYPE] ) ) return ( not target.CityRole_IsProtected );
+	return false;
+}
+
+bool IsNpcCity( ::Critter& cr )
+{
+	return ( cr.IsNpc() && cr.Merc[MERC_MASTER_ID] == 0 && not targetEnemy( cr ) );
+}
+
+void _GuardMessage( ::Critter& cr, ::Critter& fromCr, int message, int value )
+{
+	switch( message )
+	{
+		case MSG_IM_HAVE_ILLEGAL_ITEMS:
+		{
+			AttackCityPlane(cr,fromCr);
+			if ( fromCr.IsPlayer( ) && ::Random( 0, 4 ) == 1 ) 
+				cr.SayMsg( SAY_SHOUT, TEXTMSG_TEXT, STR_NO_ILLEGAL_ITEMS, ::GetPlayerName( fromCr.Id ) );
+		} break;
+		
+		case MSG_CANCEL_PICKUP:
+		{
+			uint count =	cr.GetPlanes( PLANE_LOOT, fromCr.Id, null );
+			for( uint i = 0, iMax = count; i < iMax; i++ )
+					cr.ErasePlane( i );
+
+		} break;
+		case MESSAGE_I_AM_BLOCK_DOOR:
+		{
+			if( ::Random( 0, 4 ) == 1 ) 
+				cr.SayMsg( SAY_SHOUT, TEXTMSG_DLG, DLGSTR( 196, 9 ) );
+		} break;
+		
+		case MESSAGE_KILL_ME:
+		{
+			::NpcPlane@ plane = ::CreatePlane( );
+			plane.Type = AI_PLANE_ATTACK;
+			plane.Priority = AI_PLANE_ATTACK_PRIORITY;
+			plane.Attack_TargId = fromCr.Id;
+			plane.Attack_MinHp = ::__DeadHitPoints;
+			plane.Attack_IsGag = false;
+			plane.Attack_GagHexX = 0;
+			plane.Attack_GagHexY = 0;
+			plane.Attack_LastHexY = fromCr.HexY;
+			plane.Attack_LastHexX = fromCr.HexX;
+			plane.Run = true;
+			cr.AddPlane( plane );
+		} break;
+		
+		case MESSAGE_KILL_BLOCKING_DOOR:
+		{
+			::Map@ map = cr.GetMap( );
+			if( not validEngineObject( map ) || fromCr.IsDead( ) )
+				return;
+			// Осматриваем гексы вокруг для проверки заблочен игрок или нет, если заблочен, убиваем тех кто блочит его, иначе атакуем блокировщика пока тот не сойдет с блока.
+			// Проверка, может ли игрок дойти до гварда, если нет, то считаем что он заблочен и ищем цель вокруг.
+			
+			// Подготовим план атаки.
+			::NpcPlane@ plane = ::CreatePlane( );
+			plane.Type = AI_PLANE_ATTACK;
+			plane.Priority = AI_PLANE_ATTACK_PRIORITY;
+			plane.Attack_MinHp = ::__DeadHitPoints;
+			plane.Attack_IsGag = false;
+			
+			if( map.GetPathLength( cr, fromCr.HexX, fromCr.HexY, 1 ) > 0 && ::GetDistantion( cr.HexX, cr.HexY, fromCr.HexX, fromCr.HexY ) >= 2 )
+			{
+				// Не заблочен, пинаем его пока не убежит с гекса.
+				plane.Attack_IsGag = true;
+				plane.Attack_TargId = fromCr.Id;
+				plane.Attack_LastHexY = fromCr.HexY;
+				plane.Attack_LastHexX = fromCr.HexX;
+				plane.Attack_GagHexX = fromCr.HexX;
+				plane.Attack_GagHexY = fromCr.HexY;
+				plane.Run = false; //Спешить некуда, пускай пока уходит с гекса.
+			}
+			else 
+			{
+				// Не может пройти, ищем всех криттеров в радиусе 1 гекса.
+				::array<Critter@> critters;
+				::Critter@ crBlock;
+				for( uint i = 0, iEnd = map.GetCrittersHex ( fromCr.HexX, fromCr.HexY, 1, FIND_LIFE|FIND_ONLY_PLAYERS, critters ); i < iEnd; i++ )
+				{
+					@ crBlock = critters[ i ];
+					if( not validEngineObject( crBlock ) ) 
+						continue;
+					if( cr.Id != crBlock.Id )
+					{
+						// Можем дойти до него, или нет. Если можем, то он и будет жертвой, иначе ищем другого, если не находим пытаемся атаковать его.
+						if( map.GetPathLength( cr, crBlock.HexX, crBlock.HexY, 1 ) > 0 )
+						{
+							plane.Attack_TargId = crBlock.Id;
+							plane.Attack_LastHexY = crBlock.HexY;
+							plane.Attack_LastHexX = crBlock.HexX;
+							plane.Attack_GagHexX = 0;
+							plane.Attack_GagHexY = 0;
+							plane.Run = true;
+							break;
+						}
+						else
+						{
+							plane.Attack_TargId = crBlock.Id;
+							plane.Attack_LastHexY = crBlock.HexY;
+							plane.Attack_LastHexX = crBlock.HexX;
+							plane.Attack_GagHexX = 0;
+							plane.Attack_GagHexY = 0;
+							plane.Run = true;
+						}
+					}
+				}
+			}
+		
+			cr.AddPlane( plane );
+		} break;
+		default: break;
+	}
+}
+
+bool AttackCityPlane( ::Critter& attacker, ::Critter& attacked )
+{
+	if( IsNpcCity( attacked ) ) 
+		return false;
+	
+	if( CrIsSneak( attacked ) )
+	{
+		attacked.ModeBase[ MODE_HIDE ] = 0;
+		attacked.TimeoutBase[ TO_SNEAK ] = SNEAK_TIMEOUT( attacked );
+		_CritAnimateThrow( attacker );
+		attacker.GetMap( ).RunFlyEffect( 4024, attacker, attacked, 0, 0, 0, 0, EFFECT_INSTRUCTION_POST_EXPLODE );
+	}
+	return NpcPlanes::AddAttackPlane( attacker, 0, attacked, true );
+}
+
+void changedParam_RoleFlag(::Critter& cr, uint index, int oldValue)
+{
+	if( cr.IsNpc() && cr.Merc[ MERC_MASTER_ID ] == 0 )	
+		cr.ParamBase[ index ] = 0;		
+}
+
+void changedParam_Penalty(::Critter& cr, uint index, int oldValue)
+{
+	if( cr.IsNpc() && cr.Merc[ MERC_MASTER_ID ] == 0 )	
+	{
+		cr.StatBase[ ST_BIG_CITY_PENALTY ] = 0;
+		cr.ParamBase[ index ] = 0;
+		return;
+	}
+	
+	const int currentValue = cr.Param[ index ];
+	if( oldValue > currentValue ) // Уменьшили.
+	{
+		if( cr.Stat[ ST_BIG_CITY_PENALTY ] != 0 && oldValue >= City::Penalty::CheckBorderAllCityEnemy ) // Враг всея пустоши из-за этого города.
+		{
+			if( currentValue <= City::Penalty::CheckBorderAllCityEnemy ) // Штраф снизился за планку, проверяем штрафы в другом городе.
+			{
+				bool isEnemy = false;
+				for( uint i = 600, iEnd = 630; i < iEnd; i++ ) 
+					if( cr.Param[ i ] >= City::Penalty::CheckBorderAllCityEnemy ) // Все еще враг.
+					{
+						isEnemy = true;
+						break;
+					}
+				if( not isEnemy )
+					cr.StatBase[ ST_BIG_CITY_PENALTY ] = 0;
+			}
+			// cr.Stat[ ST_BIG_CITY_PENALTY ]
+		}
+	}
+	else if ( oldValue < currentValue ) // Увеличили
+	{
+		if( cr.Stat[ ST_BIG_CITY_PENALTY ] == 0 && currentValue >= City::Penalty::CheckBorderAllCityEnemy )
+			cr.StatBase[ ST_BIG_CITY_PENALTY ] = index;
+			
+		cr.StatBase[ ST_KARMA ] -= ( currentValue - oldValue ) / City::Penalty::CheckPenaltyKarma;
+	}
+	else // Ничего не сделали...
+	{
+	 // Ничего не делаем.
+	}
+	
+}
+
+void r_ClearPenalty( ::Critter& player, ::Critter@, int val, int isRealCash )
+{
+	int penalty = GetPenaltyCity( player, val );
+	if ( penalty <= 0 )
+		return;
+	if( isRealCash == 0 )
+	{
+		::Item@ money = player.GetItem( Content::Item::BOTTLE_CAPS, -1 );
+		if ( validEngineObject ( money ) && money.GetCount() >= uint( penalty ) )
+		{
+			SetPenaltyCity( player, 0, val );
+			player.DeleteItem( Content::Item::BOTTLE_CAPS, penalty );
+		}
+	}
+	else 
+	{
+		if( player.Stat[ ST_REPLICATION_MONEY ] >= penalty )
+		{
+			SetPenaltyCity( player, 0, val );
+			player.StatBase[ ST_REPLICATION_MONEY ] -= penalty;
+		}
+	}
+}
+
+void dlg_CountAllPenalty(::Critter& player, ::Critter@ , ::string@ lexems)
+{
+	if( not IS_DIALOG_GENERATED(lexems) ) return; 
+	lexems+="$moneyDen"+GetPenaltyCity( player, LOCATION_Den )+
+			"$moneyKlamath"+GetPenaltyCity( player, LOCATION_Klamath )+
+			"$moneyModoc"+GetPenaltyCity( player, LOCATION_Modoc )+
+			"$moneyVaultCity"+GetPenaltyCity( player, LOCATION_VaultCity )+
+			"$moneyGecko"+GetPenaltyCity( player, LOCATION_Gecko )+
+			"$moneyBrokenHills"+GetPenaltyCity( player, LOCATION_BrokenHills )+
+			"$moneyNewReno"+GetPenaltyCity( player, LOCATION_NewReno )+
+			"$moneyVault15"+GetPenaltyCity( player, LOCATION_Vault15 )+
+			"$moneyNCR"+GetPenaltyCity( player, LOCATION_NCR )+
+			"$moneyRedding"+GetPenaltyCity( player, LOCATION_Redding )+
+			"$moneySanFrancisco"+GetPenaltyCity( player, LOCATION_SanFrancisco )+
+			"$moneyArroyo"+GetPenaltyCity( player, LOCATION_Arroyo );
+}
+/* 
+bool d_RealIsClearPenalty( ::Critter& player, ::Critter@ , int val, int isRealCash )
+{
+	int penalty = GetPenaltyCity( player, val );
+	Log( penalty );
+	if ( penalty <= 0 )
+		return false;
+	Log( isRealCash );
+	if( isRealCash == 0 )
+	{
+		::Item@ money = player.GetItem( Content::Item::BOTTLE_CAPS, -1 );
+		if ( validEngineObject ( money ) )
+		{
+			Log( money.GetCount() );
+			return ( money.GetCount() >= uint( penalty ) );
+		}
+		return false;
+	}
+	return ( player.Stat[ ST_REPLICATION_MONEY ] >= penalty );
+}
+ */
+bool d_IsClearPenalty( ::Critter& player, ::Critter@ , int val, int isRealCash )
+{
+	int penalty = GetPenaltyCity( player, val );
+	if ( penalty <= 0 )
+		return false;
+	if( isRealCash == 0 )
+	{
+		::Item@ money = player.GetItem( Content::Item::BOTTLE_CAPS, -1 );
+		if ( validEngineObject ( money ) )
+			return ( money.GetCount() >= uint( penalty ) );
+		return false;
+	}
+	return ( player.Stat[ ST_REPLICATION_MONEY ] >= penalty );
+}
+
+bool d_IsPenalty( ::Critter& player, ::Critter@ , int val )
+{
+	return GetPenaltyCity( player, val ) != 0;
+}
+
+::dictionary __ListingManageMap;
+
+::array <CityGuard::ProtoIgnoredCity@> IgnoredCity;
+::array <CityGuard::ProtoIgnoredCity@> IgnoredPenaltyCity;
+
+class ProtoIgnoredCity
+{
+	ProtoIgnoredCity( const uint&in locationPid, const bool&in isIgnor = true )
+	{
+		LocationPid = locationPid;
+		IsIgnored = isIgnor;
+	}
+	
+	CityGuard::ProtoIgnoredCity@ AddMapPid( const uint&in pid )
+	{
+		MapPids.insertLast( pid );
+		return this;
+	}
+	
+	CityGuard::ProtoIgnoredCity@ AddMap( ::Map&inout map )
+	{
+		return AddMapPid( map.GetProtoId( ) );
+	}
+	
+	bool isMapIgnored( ::Map&inout map )
+	{
+		return ( ( MapPids.find( map.GetProtoId( ) ) > -1 ) == IsIgnored );
+	}
+	
+	uint LocationPid;
+	bool IsIgnored;
+	::array < uint > MapPids;
+}
+
+bool IsIgnoredMap( ::Map&inout map )
+{
+	const uint locPid = map.GetLocation( ).GetProtoId( );
+	for( uint i = 0, iEnd = IgnoredCity.length(); i < iEnd; i++ )
+		if( valid( IgnoredCity[ i ] ) &&	IgnoredCity[ i ].LocationPid == locPid )
+			return IgnoredCity[ i ].isMapIgnored( map );
+	return ( map.CityManagerIndex == -1 );
+}
+
+bool IsIgnoredPenaltyMap( ::Map&inout map )
+{
+	const uint locPid = map.GetLocation( ).GetProtoId( );
+	for( uint i = 0, iEnd = IgnoredPenaltyCity.length(); i < iEnd; i++ )
+	if( valid( IgnoredPenaltyCity[ i ] ) &&	IgnoredPenaltyCity[ i ].LocationPid == locPid )
+		return IgnoredPenaltyCity[ i ].isMapIgnored( map );
+	return false;
+}
+
+bool IsValidManager( ::Map& map )
+{
+	return valid(GetManager( map ));
+}
+
+CityGuard::ManageMap@ GetManager( ::Map&inout map )
+{
+	if( IsIgnoredMap( map ) )
+		return null;
+		
+	CityGuard::ManageMap@ returnMan = null;
+	if( __ListingManageMap.exists( ""+map.Id ) )
+	{
+		__ListingManageMap.get( ""+map.Id, @returnMan);
+		return returnMan;
+	}
+	
+	const uint locPid = map.GetLocation( ).GetProtoId( );
+	if( LOCATION_IS_CITY( locPid ) || map.FarmMapIsProtect )
+	{
+		map.CityManagerIndex = 1;
+		map.CityManager_IsNoob = ( locPid == LOCATION_NewbieLocation );
+		
+		@ returnMan = @CityGuard::ManageMap( map.Id, locPid, map.CityManager_IsNoob );
+		__ListingManageMap.set( ""+map.Id, returnMan);
+		
+		return returnMan; 
+	}
+	
+	map.CityManagerIndex = -1;
+	return null;
+}
+
+#define IsMerc	#(cr) ( cr.Merc[ MERC_MASTER_ID ] != 0 )
+
+void _GuardShowCritter(::Critter& cr, ::Critter& showCr)
+{
+	::Map@ map = cr.GetMap( );
+		if( validEngineObject( map ) )
+		{
+			CityGuard::ManageMap@ man = GetManager( map );
+			if( valid( man ) )
+			{
+				if(showCr.CityRole[ CITY_ROLE_FLAG ] == CityGuard::EFlagGuest::Enem )
+					man.GuardAttack(showCr,cr);
+			}
+		}
+}
+
+void CritterRespawn( ::Critter& cr )
+{
+	{
+		::Map@ map = cr.GetMap( );
+		if( validEngineObject( map ) )
+		{
+			CityGuard::ManageMap@ man = GetManager( map );
+			if( valid( man ) )
+			{
+				if( !( cr.IsPlayer( ) || IsMerc( cr ) ) && cr.Stat[ ST_ROLE_CITY ] != TEMPLATE_MOB )
+					cr.ModeBase[MODE_NO_ENEMY_STACK] = 1;
+				
+				man.RespawnCritter( cr );
+			}
+		}
+	}
+}
+
+bool CritterInitMap( ::Critter@ cr, ::Map@ map )
+{
+	CityGuard::ManageMap@ man = GetManager( map );
+	if( valid( man ) )
+	{
+		if( cr.IsPlayer( ) || IsMerc( cr ) )
+			man.InCritter( cr );
+		else if( cr.StatBase[ ST_ROLE_CITY ] != TEMPLATE_MOB ) cr.ModeBase[MODE_NO_ENEMY_STACK] = 1;
+	}
+	return true;
+}
+
+bool CritterOutMap( ::Critter@ cr, ::Map@ map )
+{
+	if( cr.IsPlayer( ) || IsMerc( cr ) )
+	{
+		CityGuard::ManageMap@ man = GetManager( map );
+		if( valid( man ) ) 
+			man.OutCritter( cr );
+	}
+	return true;
+}
+
+void IdleCritter( ::Critter& cr )
+{
+	::Map@ map = cr.GetMap( );
+	if( validEngineObject( map ) )
+	{
+		CityGuard::ManageMap@ man = GetManager( map );
+		if( valid( man ) )
+			man.IdleCritter( cr );
+	}
+}
+
+bool ProcessOfCrime( ::Critter& cr, int penalty, int info = 0, ::Critter@ infoCr = null, ::Item@ infoIt = null, bool noPenalty = false )
+{
+	::Map@ map = cr.GetMap( );
+	if( validEngineObject( map ) )
+	{
+		CityGuard::ManageMap@ man = GetManager( map );
+		if( valid( man ) )
+		{
+			if( cr.IsPlayer( ) || IsMerc( cr ))
+			{
+				if(validEngineObject(infoCr) )
+				{ 
+					if( cr.Id==infoCr.Id || ( infoCr.IsNpc() &&	( uint(infoCr.Stat[ST_NPC_ATTACK_PLAYER_ID]) == cr.Id || not infoCr.CityRole_IsProtected ) )) // Если жертва и есть преступник, то пофигу.
+					return true;
+				}
+				
+				return man.ProcessOfCrime( cr, penalty, info,infoCr, infoIt, noPenalty );
+			}
+		}
+	}
+	return cr.CityRole_IsGuard;
+}
+
+bool PlayerDead( ::Critter& player, ::array<::Item@>@ items, ::Map& map )
+{
+	if( player.IsPlayer( ) ) 
+	{
+		CityGuard::ManageMap@ man = GetManager( map );
+		if( valid( man ) )
+			return man.Dead( player, items, map );
+	}
+	return false;
+}
+
+void SneakCritter( ::Critter& cr, const bool&in InSneak )
+{
+	::Map@ map = cr.GetMap( );
+	if( validEngineObject( map ) && cr.IsPlayer( ) )
+	{
+		CityGuard::ManageMap@ man = GetManager( map );
+		if( valid( man ) )
+			man.Sneak( cr, InSneak );
+	}
+}
+
+// ~run main NullPenalty 0 0 0
+void NullPenalty(::Critter& cr, int, int, int)
+{
+	for( uint i = 0; i < PENALTY_COUNT; i++ )
+	{
+		cr.CityPenaltyBase[ i ] = 0;
+	}
+}
+
+bool City_NpcPlaneProccess( ::Critter& npc, ::NpcPlane& plane, const int&in reason, ::Critter@ someCr, ::Item@ someItem, const bool&in isBegin )
+{
+	if( npc.CityRole_IsGuard )
+	{
+		::Map@ map = npc.GetMap( );
+		if( validEngineObject(map) )
+		{
+			CityGuard::ManageMap@ Man = GetManager( map );
+			if( valid( Man ) )
+			{
+				if( isBegin )
+				{
+					if( validEngineObject( someCr ) && plane.Type == AI_PLANE_ATTACK )
+					{
+						{
+							if( someCr.IsPlayer( ) )
+							{				
+								{
+									bool isRealEnem = false;
+									if( Man.IsCritterEnemy( someCr ) )
+										isRealEnem = true;
+									
+									::Item@ item = _CritGetItemHand( someCr );
+									if( validEngineObject( item ) && ( item.GetType( ) == ITEM_TYPE_WEAPON && _WeaponSkill( item.Proto, item.Mode ) != SK_UNARMED ) )
+										isRealEnem = true;
+									
+									if( GetPenaltyCity( someCr, map.GetLocation().GetProtoId() ) > City::Penalty::CheckBorderKill || ( someCr.Stat[ ST_BIG_CITY_PENALTY ] > 0 && not Man.isPenaltyCity( map ) ) )
+										isRealEnem = true;
+									
+									if( someCr.ModeBase[ MODE_HIDE ] != 0 )
+										isRealEnem = true;
+									
+									if( npc.CheckEnemyInStack ( someCr.Id ) )
+										isRealEnem = true;
+									
+									if( not isRealEnem )
+									{
+										// npc.Say( SAY_NORM, "Атакую \"" + ::GetPlayerName( someCr.Id ) + "\" потому что я дибил." );
+										plane.Type = -1;
+										return false;
+									}
+								}				
+							}
+							else
+							{
+								plane.Type = -1;
+								return false;
+							}
+						}
+						
+					}
+					//else Man.IdleCritter( npc );
+				}
+				else Man.IdleCritter( npc );
+			}
+		}
+	}
+	else if( validEngineObject( someCr ) && someCr.IsNpc( ) && plane.Type == AI_PLANE_ATTACK )
+	{
+		plane.Type = -1;
+		return false;
+	}	
+	return true;
+}
+
+uint CityGuard_GetLookTargets(::Critter& guard, uint locProtoId, ::array<::Critter@>& targetCrs, ::array<::Critter@>& sneakCrs, bool noDouble )
+{
+	::array<Critter@> critters;
+	::Critter@ cr = null;
+	const uint crlen = guard.GetCritters( false, FIND_LIFE_AND_KO | FIND_ONLY_NPC, critters ); 
+	for( uint i = 0; i < crlen; i++ )
+	{
+		@ cr = critters[ i ];
+		if( validEngineObject( cr ) && cr.IsPlayer( ) )
+		{
+			if( cr.Mode[MODE_HIDE] == 1 && (cr.IsNpc() || cr.GetAccess()!=ACCESS_ADMIN))
+			{
+				sneakCrs.insertLast(@cr);
+				if( not noDouble ) continue;
+			}
+			
+			if( GetPenaltyCity( cr, locProtoId ) >= City::Penalty::CheckBorderKill )
+				targetCrs.insertLast(@cr);
+		}
+	}
+	return crlen;
+}
+
+void CityGuard_GetTargets(::Critter& guard, uint locProtoId, ::array<::Critter@>& targetCrs, ::array<::Critter@>& sneakCrs, bool isDouble = false)
+{
+	::array<Critter@> critters;
+	::Critter@ cr = null;
+	const uint crlen = guard.GetMap().GetCrittersHex ( guard.HexX, guard.HexY, 30, FIND_LIFE, critters );//guard.GetCritters( false, FIND_LIFE_AND_KO | FIND_ONLY_NPC, critters ); 
+	for( uint i = 0; i < crlen; i++ )
+	{
+		@ cr = critters[ i ];
+		if( validEngineObject( cr ) && cr.IsPlayer( ) )
+		{
+			if( cr.Mode[MODE_HIDE] == 1 && cr.GetAccess()!=ACCESS_ADMIN)
+			{
+				sneakCrs.insertLast(@cr);
+				if( not isDouble ) continue;
+			}
+			
+			if( GetPenaltyCity( cr, locProtoId ) >= City::Penalty::CheckBorderKill || cr.Stat[ ST_BIG_CITY_PENALTY ] > 0 )
+				targetCrs.insertLast(@cr);
+		}
+	}
+}
+
+class ManageMap
+{
+	ManageMap( uint mapId, uint locPid , const bool isNoob = false )
+	{
+		IsNoobLoc = isNoob;
+		LocationPid = locPid;
+		MapId = mapId;
+	}
+	
+	void RespawnCritter( ::Critter& cr )
+	{
+		if( cr.IsNpc( ) )
+		{
+			if( cr.CityRole_IsGuard )
+			{
+				cr.StatBase[ST_CURRENT_HP] = cr.Stat[ST_MAX_LIFE];
+				::array<Critter@> targetCrs, sneakCrs;
+				CityGuard_GetTargets( cr, cr.GetMap( ).GetLocation( ).GetProtoId( ), targetCrs, sneakCrs );
+				if( sneakCrs.length( ) > 0 )
+				{
+					const uint i = ::Random( 0, sneakCrs.length( ) );
+					// только одного.
+					sneakCrs[ i ].ModeBase[ MODE_HIDE ] = 0;
+					cr.SetDir( ::GetDirection( cr.HexX, cr.HexY, sneakCrs[ i ].HexX, sneakCrs[ i ].HexY ) );
+					_CritAnimateThrow( cr );
+					cr.GetMap( ).RunFlyEffect( 4024, cr, sneakCrs[ i ], cr.HexX, cr.HexY, sneakCrs[ i ].HexX, sneakCrs[ i ].HexY, EFFECT_INSTRUCTION_POST_EXPLODE );
+					sneakCrs[ i ].TimeoutBase[ TO_SNEAK ] = SNEAK_TIMEOUT( sneakCrs[ i ] );
+					return;
+				}
+				
+				if( targetCrs.length( ) > 0 )
+					GuardAttack( targetCrs[ ::Random( 0, targetCrs.length( ) - 1 ) ] );
+			}
+		} 
+		else InCritter( cr );
+	}
+	
+	void IdleCritter( ::Critter& cr )
+	{
+		::Map@ map=cr.GetMap( );	
+		if( cr.IsPlayer( ) ) // Простой игрока.
+		{
+			if( cr.Mode[ MODE_HIDE ] == 1 && (cr.IsNpc() || cr.GetAccess()!=ACCESS_ADMIN))
+				GuardToTargetOutSneak( cr );
+			if( IsCritterEnemy( cr ) )
+				GuardAttack( cr );
+		}
+		else
+		{
+			if( IsMyGuard( cr ) ) 
+			{
+				::array<Critter@> targetCrs, sneakCrs;
+				CityGuard_GetTargets( cr, cr.GetMap( ).GetLocation( ).GetProtoId( ), targetCrs, sneakCrs, false );
+				
+				uint j = 0, len = sneakCrs.length( );
+				while( j++ < len )
+				{
+					const uint i = j - 1;
+					::Critter@ player = sneakCrs[ i ];
+					if (!validEngineObject(player)) continue;
+					uint16 moveX = player.HexX, moveY = player.HexY, hexx = cr.HexX, hexy = cr.HexY;
+					if( map.GetPathLength( hexx, hexy, player.HexX, player.HexY, 1 ) == 0 && ::GetDistantion( hexx, hexy, player.HexX, player.HexY ) != 1 )
+						continue;
+					
+					bool isCont = false;
+					for( uint j = 0, jMax = map.GetPathLength( hexx, hexy, player.HexX, player.HexY, 1 ); j < jMax; j++)
+					{
+						map.MoveHexByDir (moveX, moveY, ::GetDirection( moveX, moveY, hexx, hexy ), 1);
+						if( !map.IsHexRaked (moveX, moveY) )
+						{
+							isCont = true;
+							break;
+						}
+					}		
+					if( isCont )
+						continue;
+					// Анимация
+					cr.SetDir(::GetDirection(hexx, hexy, player.HexX, player.HexY));
+					_CritAnimateThrow(cr);
+					map.RunFlyEffect(4024 , cr, player, hexx, hexy, player.HexX, player.HexY, EFFECT_INSTRUCTION_POST_EXPLODE);
+					::CreateTimeEvent(::__FullSecond, "pattern_term@e_UnsneakPlayer", player.Id, false);					
+					return;
+				}
+				
+				if( targetCrs.length( ) > 0 )
+					GuardAttack( targetCrs[ ::Random( 0, targetCrs.length( ) - 1 ) ] );
+			}
+		}
+	}
+	
+	void InCritter( ::Critter& cr )
+	{
+		::Critter@ master = cr;
+		{
+			const uint IdMaster = cr.Merc[ MERC_MASTER_ID ];
+			if( cr.IsNpc( ) )
+			{
+				if( IdMaster == 0 )
+				{
+					cr.CityRoleBase[ CITY_ROLE_FLAG ] = CityGuard::EFlagGuest::None;
+					return;
+				}
+				@ master = ::GetCritter( IdMaster );
+			}
+		}
+		
+		if( validEngineObject( master ) )
+		{
+			if( isPenaltyCity( cr ) && ( GetPenaltyCity( master, LocationPid ) >= City::Penalty::CheckBorderKill || master.Stat[ ST_BIG_CITY_PENALTY ] > 0 ) )
+			{
+				cr.CityRoleBase[ CITY_ROLE_FLAG ] = CityGuard::EFlagGuest::Enem;
+				GuardAttack( cr );
+			}
+			else cr.CityRoleBase[ CITY_ROLE_FLAG ] = CityGuard::EFlagGuest::Guest;
+		}
+		else 
+		{
+			if( isPenaltyCity( cr ) && ( GetPenaltyCity( cr, LocationPid ) >= City::Penalty::CheckBorderKill || cr.Stat[ ST_BIG_CITY_PENALTY ] > 0 ) )
+			{
+				cr.CityRoleBase[ CITY_ROLE_FLAG ] = CityGuard::EFlagGuest::Enem;
+				GuardAttack( cr );
+			} 
+			else cr.CityRoleBase[ CITY_ROLE_FLAG ] = CityGuard::EFlagGuest::Guest;
+		}
+	}
+	
+	bool OutCritter( ::Critter& cr )
+	{
+		cr.CityRoleBase[ CITY_ROLE_FLAG ] = CityGuard::EFlagGuest::None;
+		return true;
+	}
+	
+	bool IsCritterEnemy( ::Critter& cr )
+	{	
+		return ( cr.CityRole[ CITY_ROLE_FLAG ] == CityGuard::EFlagGuest::Enem || ( isPenaltyCity( cr ) && cr.Stat[ ST_BIG_CITY_PENALTY ] > 0 ) );
+	}
+	
+	bool CheckTargetNoProtectEnemy( ::Critter& attacker, ::Critter& target )
+	{
+		if( attacker.IsPlayer( ) )
+		{
+			if( target.IsPlayer( ) )
+				return IsCritterEnemy(target);
+			else return not target.CityRole_IsProtected;
+		}
+		return false;
+	}
+	
+	void Sneak( ::Critter& cr, const bool&in InSneak )
+	{
+		if( InSneak )
+			GuardToTargetOutSneak( cr );
+	}
+		
+	uint EraseAttackPlane(::Critter& npc, uint critId)
+	{
+		::array<::NpcPlane@> planes;
+		uint count=npc.GetPlanes(planes);
+		if(count==0) return 0;
+
+		uint erased=0;
+		for(uint i=0; i<count; i++)
+			if(planes[i].Attack_TargId==critId && npc.ErasePlane(i-erased)) 
+				erased++;
+
+		return erased;
+	}
+	
+	bool ProcessOfCrime( ::Critter& cr, int penalty, int info, ::Critter@ infoCr, ::Item@ infoIt, bool noPenalty )
+	{
+	
+		bool stealNoSuccess = (penalty == City::PenaltyListing::StealNoSuccess);
+			
+		if(stealNoSuccess)
+			penalty = City::PenaltyListing::Steal;
+		
+		switch(penalty)
+		{
+			case City::PenaltyListing::Kill:
+				if(validEngineObject(infoCr))
+				{
+					if( CheckTargetNoProtectEnemy( cr, infoCr ) || GetPenaltyCity( infoCr, LocationPid ) >= City::Penalty::CheckBorderNoGuard ) 
+						return true;
+				}
+				break;
+			
+			case City::PenaltyListing::Attacked:
+				if(validEngineObject(infoCr))
+				{
+					if( ( cr.IsNpc( ) && cr.Merc[ MERC_MASTER_ID ] != 0 ) && ( infoCr.IsNpc( ) && infoCr.Merc[ MERC_MASTER_ID ] != 0 ) )
+					{
+						this.EraseAttackPlane( cr, infoCr.Id );
+						this.EraseAttackPlane( infoCr, cr.Id );
+						return true;
+					}
+
+					if( GetPenaltyCity( infoCr, LocationPid ) >= City::Penalty::CheckBorderKill ||	infoCr.Stat[ ST_BIG_CITY_PENALTY ] > 0 )
+					{
+						GuardAttack( infoCr );
+						return true;
+					}
+
+					if( CheckTargetNoProtectEnemy( cr, infoCr ) || GetPenaltyCity( infoCr, LocationPid ) >= City::Penalty::CheckBorderNoGuard || infoCr.CityRole[ CITY_ROLE_FLAG ] >= CityGuard::EFlagGuest::Provoker )
+						return cr.IsPlayer( );
+				}
+				break;
+			
+			case City::PenaltyListing::Steal:
+				if(validEngineObject(infoCr) && validEngineObject(infoIt))
+				{
+					if( CheckTargetNoProtectEnemy( cr, infoCr ) )
+						return true;
+					
+					bool isGuard = false;
+					
+					if( stealNoSuccess || isExplosive(infoIt)) 
+					{
+						GuardAttack( cr );
+						isGuard = true;
+						if(isExplosive(infoIt))
+						{
+							infoIt.Val7 = cr.Id;
+							infoIt.Val8 = infoCr.Id;
+							//this.ProcessOfCrime( cr, City::PenaltyListing::ExplodeActivate, info,infoCr, infoIt, noPenalty );
+							return true;
+						}
+					}
+					else 
+					{
+						::array<Critter@> critters;
+						const uint crlen = cr.GetCritters( true, FIND_LIFE_AND_KO | FIND_ONLY_NPC, critters ); 
+						uint Distantion=0;
+						::Critter@ gu = null;
+						
+						const int timeBonus = GetTimeBonus( ),
+							crStealAndLuck50 = cr.Skill[ SK_STEAL ] * cr.Stat[ ST_LUCK ] * 0.2;
+						
+						uint16 crX = cr.HexX, crY = cr.HexY;
+						
+						for( uint i = 0; i < crlen; i++ )
+						{
+							@ gu = critters[ i ];
+							if( validEngineObject( gu ) )
+							{
+								Distantion = ::GetDistantion( crX, crY, gu.HexX, gu.HexY );
+								if( Distantion <= 20 &&	
+								::Random( 1, 100 ) < int( CLAMP( ( ( 50 + ( 16 - Distantion * 0.5 ) ) - timeBonus ) - crStealAndLuck50, 5, 50 ))) 
+								{
+									isGuard = true;
+									GuardAttack( cr );
+									break;
+								}
+							}
+						}
+					}
+					
+					if(not isGuard)
+						return true;
+				
+					info = infoIt.GetCost( );
+				}
+				break;
+				
+			case City::PenaltyListing::ExplodeActivate:
+				if(validEngineObject(infoIt))
+				{
+					if( uint(infoIt.Val8) == cr.Id )
+					{
+						if(validEngineObject(::GetCritter(infoIt.Val7)))
+							return this.ProcessOfCrime( ::GetCritter(infoIt.Val7), City::PenaltyListing::Explode, info,infoCr, infoIt, noPenalty );
+						return true;
+					}
+				}
+				break;
+			
+			case City::PenaltyListing::Explode:
+				if(validEngineObject(infoIt))
+				{
+					if( uint(infoIt.Val8) == cr.Id )
+					{
+						if(validEngineObject(::GetCritter(infoIt.Val7)))
+							return this.ProcessOfCrime( ::GetCritter(infoIt.Val7), City::PenaltyListing::Explode, info,infoCr, infoIt, noPenalty );
+						return true;
+					}
+				}
+				break;
+				
+				
+			default:
+				break;
+		}
+		if(!isPenaltyCity( cr ))
+		{
+			GuardAttack( cr );
+			return true;
+		}
+		
+		int penValue = 0;
+		
+		
+		if( cr.CityRole[ CITY_ROLE_FLAG ] < CityGuard::EFlagGuest::Provoker )
+			cr.CityRoleBase[ CITY_ROLE_FLAG ] = CityGuard::EFlagGuest::Provoker;	
+		
+			if( !noPenalty )
+			{
+				if(!noPenalty)
+					penValue = AddPenaltyCity(	cr, penalty, this.LocationPid - 1 , info, infoCr, infoIt );
+					 
+				if(penValue >= City::Penalty::CheckBorderAttacked || (validEngineObject( infoCr ) && infoCr.IsNpc( )))
+					GuardAttack( cr );
+			}
+			
+			return true;
+	}
+	
+	void GuardAttack( ::Critter& cr, ::Critter@ guard = null )
+	{
+		if( cr.IsNpc( ) )
+		{
+			if( cr.CityRole_IsProtected	)
+				return;
+				
+			::Critter@ master = ::GetCritter( cr.Merc[MERC_MASTER_ID] );
+			if( validEngineObject(master) )
+				GuardAttack( master, guard );
+		}
+			
+		if( validEngineObject( guard ) ) 
+			NpcPlanes::AddAttackPlane( guard, 0, cr );
+		else
+		{
+			//Log("2");
+			::Map@ map = cr.GetMap( );
+			::array<Critter@> critters;
+			uint crlen = cr.GetCritters (true, FIND_LIFE_AND_KO | FIND_ONLY_NPC, critters);
+			
+			cr.CityRoleBase[ CITY_ROLE_FLAG ] = CityGuard::EFlagGuest::Enem;
+					
+			for( uint i = 0; i < crlen; i++ )
+			{
+				::Critter@ gu = critters[ i ];
+				if( validEngineObject( gu ) && IsMyGuard( gu ) )
+				{		
+					//Log("1");
+					NpcPlanes::AddAttackPlane( gu, 0, cr );
+				}
+			}
+		}
+	}
+	
+	void BagsReturnToPlayer( const uint&in index, ::Critter& cr )
+	{
+		const uint crId = cr.Id;
+		uint ind=0;
+		
+		for( uint i = 0, im = Bags.length( ); i < im; i++ )
+		{
+			if( Bags[ i ].CritterId == crId ) 
+			{
+				if( ind++ == index )
+				{
+					::array<::Item@> items;
+					Bags[ i ].GetItems( items );
+					::MoveItems( items, cr );
+					Bags.removeAt( i );
+					return;
+				}
+			}
+		}
+	}
+	
+	void GuardToTargetOutSneak( ::Critter& cr )
+	{
+		::array<Critter@> critters;
+		::Map@ map=cr.GetMap();		
+		if(!validEngineObject(map)) return;
+		uint crlen = map.GetCritters( 0, FIND_LIFE | FIND_ONLY_NPC, critters );
+		for( uint i = 0; i < crlen; i++ )
+		{
+			::Critter@ gu = critters[ i ];
+			if( validEngineObject( gu ) )
+			{
+				if(::GetDistantion(cr.HexX, cr.HexY, gu.HexX, gu.HexY)>35) continue;
+				uint16	preBlockX=0,
+						preBlockY=0,
+						blockX=0,
+						blockY=0;
+				map.GetCrittersPath(gu.HexX, gu.HexY, cr.HexX, cr.HexY, 0, 35, FIND_ALL, null, preBlockX, preBlockY, blockX, blockY);
+				if(preBlockX!=blockX || preBlockY!=blockY) continue;
+				if( IsMyGuard( gu ) )
+				{
+					cr.ModeBase[ MODE_HIDE ] = 0;
+					cr.TimeoutBase[ TO_SNEAK ] = SNEAK_TIMEOUT( cr );
+					gu.SetDir( ::GetDirection( gu.HexX, gu.HexY, cr.HexX, cr.HexY ) );
+					_CritAnimateThrow( gu );
+					map.RunFlyEffect( 4024, gu, cr, gu.HexX, gu.HexY, cr.HexX, cr.HexY, EFFECT_INSTRUCTION_POST_EXPLODE );
+					return;
+				}
+			}
+		}
+	}
+	
+	bool Dead( ::Critter& player, ::array<::Item@>@ items, ::Map& map )
+	{
+		array<::Critter@> critters;
+		uint crlen = player.GetCritters( true, FIND_LIFE_AND_KO | FIND_ONLY_NPC, critters );
+		::Critter@ gu = null;
+		for( uint i = 0; i < crlen; i++ )
+		{
+			@ gu = critters[ i ];
+			if( validEngineObject( gu ) )
+			{
+				if( IsMyGuard( gu ) && gu.IsLife() )
+				{
+					if( not isPenaltyCity( map ) )
+					{
+						for( uint i = 0, iEnd = items.length( ); i < iEnd; i++ )
+							if( validEngineObject( items[ i ] ) && items[ i ].GetProtoId( ) == Content::Item::EXP_COLLAR )
+							{
+								::DeleteItem( items[ i ] );
+								@items[ i ] = null;
+							}
+					}
+					else
+					{
+						if( not IsCritterEnemy( player ) )
+						{
+							for( uint i = 0, iEnd = items.length( ); i < iEnd; i++ )
+								if( validEngineObject( items[ i ] ) && items[ i ].GetProtoId( ) == Content::Item::BOTTLE_CAPS )
+								{
+									uint pen = GetPenaltyCity( player, LocationPid );
+									uint count = items[ i ].GetCount( );
+									if( count > pen )
+									{
+										AddPenaltyCity( player, City::PenaltyListing::Pay, this.LocationPid - 1, pen );
+										player.StatBase[ ST_REPLICATION_MONEY ] += count - pen;
+									}
+									else AddPenaltyCity( player, City::PenaltyListing::Pay, this.LocationPid - 1, count );
+									::DeleteItem( items[ i ] );
+									items.removeAt( i );
+									break;
+								}
+								
+							if( items.length() > 0 )
+							{
+								CityGuard::BagsDeadPlayers bag( player, items );
+								
+								if( bag.GetCost( player, map.GetLocation( ).GetProtoId( ) ) > bag.GetLength( ) && bag.GetLength( ) > 0 ) 
+								{
+									::Map@ mapj = ::GetMapByPid( MAP_junk_yard_items, 0 );
+									if( validEngineObject( mapj ) )
+									{
+										Bags.insertLast( @bag );
+										uint hX = ::Random( 1, 100 ),
+											 hY = ::Random( 1, 100 );
+										uint currWhile = 0;
+										
+										while( not mapj.IsHexPassed( hX, hY ) )
+										{
+											hX = ::Random( 1, 100 );
+											hY = ::Random( 1, 100 );
+											if( currWhile++ > 50 )
+												break;
+										}
+										
+										::MoveItems( items, mapj, hX, hY );
+										return true;
+									}
+								}
+							}
+						}
+						else
+						{
+							for( uint i = 0, iEnd = items.length( ); i < iEnd; i++ )
+								if( validEngineObject( items[ i ] ) && items[ i ].GetProtoId( ) == Content::Item::BOTTLE_CAPS )
+								{
+									uint pen = GetPenaltyCity( player, LocationPid ),
+										 count = items[ i ].GetCount( );
+									if( count > pen )
+									{
+										AddPenaltyCity( player, City::PenaltyListing::Pay, this.LocationPid - 1, pen);
+										player.StatBase[ ST_REPLICATION_MONEY ] += count - pen;
+									}
+									else AddPenaltyCity( player, City::PenaltyListing::Pay, this.LocationPid - 1, count );
+									::DeleteItem( items[ i ] );
+									items.removeAt( i );
+									break;
+								}
+						}
+					}
+				}
+			}
+		}
+		return false;
+	}
+	
+	void ReturnLootToPlayer( ::Critter& cr )
+	{
+		::array<::Item@> items;
+		for( uint i = 0, im = Bags.length( ); i < im; i++ )
+		{
+			if( Bags[ i ].CritterId == cr.Id ) 
+			{
+				Bags[ i ].GetItems( items );
+				Bags.removeAt( i-- );
+				im--;
+			}
+		}
+		::MoveItems( items, cr );
+	}
+	
+	bool IsMyGuard( ::Critter& cr )
+	{
+		return ( cr.CityRole_IsGuard );
+	}
+	
+	uint CheckIsBagsPlayer( ::Critter& player, ::array<CityGuard::BagsDeadPlayers@>@+ bags )
+	{
+		uint len = 0;
+		for( uint i = 0, im = Bags.length( ); i < im; i++ )
+			if( Bags[ i ].CritterId == player.Id ) 
+			{
+				bags.insertLast( @Bags[ i ] );
+				len++;
+			}
+			
+		return len;
+	}
+	
+	bool isPenaltyCity( ::Critter& cr )
+	{
+		if( IsNoobLoc )
+			return false;
+		
+		return ( IsIgnoredPenaltyMap( cr.GetMap( ) ) != true );
+	}
+	
+	bool isPenaltyCity( ::Map& m )
+	{
+		return ( IsNoobLoc && IsIgnoredPenaltyMap( m ) != true );
+	}
+	
+	uint GetBags( )
+	{
+		return Bags.length();
+	}
+	
+	void SaveBags( ::file&inout f )
+	{
+		uint im = Bags.length( );
+		f.writeUint32( MapId );
+		f.writeUint32( LocationPid );
+		f.writeUint32( IsNoobLoc?1:0 );
+		f.writeUint32( im );
+		
+		for( uint i = 0; i < im; i++ )
+			Bags[ i ].Save( f );
+	}
+	
+	bool IsNoobLoc;
+	uint LocationPid;
+	uint MapId;
+	::array<CityGuard::BagsDeadPlayers@> Bags;
+}
+
+uint GetCostBags( ::Critter& cr )
+{
+	uint cost = 0;
+	::array<CityGuard::BagsDeadPlayers@> bags;
+	for( uint i = 0, iEnd = GetBagsMapToPlayer( cr, bags ); i < iEnd; i++ )
+		cost += bags[ i ].GetCost( cr, cr.GetMap( ).GetLocation( ).GetProtoId( ) );
+	
+	return cost;
+}
+
+uint GetBagsMap( ::Critter& cr )
+{
+	::Map@ m = cr.GetMap( );
+	if( not validEngineObject( m ) ) 
+		return 0;
+		
+	::Location@ loc = m.GetLocation( );
+	if( validEngineObject( loc ) )
+	{
+		uint countBags = 0;
+		for( uint i = 0, iEnd = loc.GetMapCount( ), index = 0; i < iEnd; i++ )
+		{
+			::Map@ map = loc.GetMapByIndex( i );
+			if( validEngineObject( map ) )
+			{
+				CityGuard::ManageMap@ man = GetManager( map );
+				if( valid( man ) )
+					countBags += man.GetBags( );
+				else Log( " Error " ) ;
+			}
+		}
+		return countBags;
+	}
+	return 0;
+}
+
+uint GetBagsMapToPlayer( ::Critter& cr, ::array<CityGuard::BagsDeadPlayers@>@+ bags )
+{
+	::Map@ m = cr.GetMap( );
+	if( not validEngineObject( m ) ) 
+		return 0;
+	
+	::Location@ loc = m.GetLocation( );
+	if( validEngineObject( loc ) )
+	{
+		uint countBags = 0;
+		for( uint i = 0, iEnd = loc.GetMapCount( ), index = 0; i < iEnd; i++ )
+		{
+			::Map@ map = loc.GetMapByIndex( i );
+			if( validEngineObject( map ) )
+			{
+				CityGuard::ManageMap@ man = GetManager( map );
+				if( valid( man ) )
+					countBags += man.CheckIsBagsPlayer( cr, bags );
+			}
+		}
+		return countBags;
+	}
+	return 0;
+}
+
+// ~run main GetCountBag 0 0 0
+void GetCountBag( ::Critter& cr, int, int, int )
+{
+	cr.Say( SAY_NETMSG, "" + GetBagsMap( cr ) );
+}
+
+// ~run main GetCountBagToPlayer 0 0 0
+void GetCountBagToPlayer( ::Critter& cr, int, int, int )
+{
+	::array<CityGuard::BagsDeadPlayers@> bags;
+	cr.Say( SAY_NETMSG, "" + GetBagsMapToPlayer( cr , bags ) );
+}
+
+// ~run main ReturnAllLoot 0 0 0
+void ReturnAllLoot( ::Critter& cr )
+{
+	::Map@ m = cr.GetMap( );
+	if( not validEngineObject( m ) ) 
+		return;
+		
+	::Location@ loc = m.GetLocation( );
+	if( validEngineObject( loc ) )
+		for( uint i = 0, iEnd = loc.GetMapCount( ), index = 0; i < iEnd; i++ )
+		{
+			::Map@ map = loc.GetMapByIndex( i );
+			if( validEngineObject( map ) )
+			{
+				CityGuard::ManageMap@ man = GetManager( map );
+				if( valid( man ) )
+					man.ReturnLootToPlayer( cr );
+			}
+		}
+}
+
+void ReturnLootByIndex( ::Critter& cr, const uint&in bagsIndex )
+{
+	::Map@ m = cr.GetMap( );
+	if( not validEngineObject( m ) ) 
+		return;
+	
+	::Location@ loc = m.GetLocation( );
+	if( validEngineObject( loc ) )
+	{
+		::array<CityGuard::BagsDeadPlayers@> bags;
+		uint countBags = 0, bagInd = 0, index = 0;
+		bool IsNewbie = false;
+		
+		for( uint i = 0, iEnd = loc.GetMapCount( ), index = 0; i < iEnd; i++ )
+		{
+			::Map@ map = loc.GetMapByIndex( i );
+			if( validEngineObject( map ) )
+			{
+				CityGuard::ManageMap@ man = GetManager( map );
+				if( valid( man ) )
+				{
+					countBags += man.CheckIsBagsPlayer( cr, bags );
+					if( countBags >= bagsIndex + 1 )
+					{
+						man.BagsReturnToPlayer( bagsIndex - bagInd, cr );
+						return;
+					}
+					bagInd = countBags;
+				}
+			}
+		}
+	}
+}
+
+void ReturnAllLoot( ::Critter& cr, int, int, int )
+{
+	ReturnAllLoot( cr );
+}
+
+void GetPenalty( ::Critter& cr, int, int, int )
+{
+	cr.Say( SAY_NETMSG, "" + GetPenaltyCity( cr, cr.GetMap().GetLocation().GetProtoId() ) );
+}
+
+// ~run main SaveBags 0 0 0
+void SaveBags( ::Critter& cr, int, int, int )
+{
+	SaveBags( );
+}
+
+void SaveBags( )
+{
+	::file f;
+	if( f.open( "save\\bagsDeadPlayer\\SaveBags_" + GetVersionWorldSave( null ) + ".save", "w" ) != -1 )
+	{
+	
+		::array<::string@> keys;
+		CityGuard::ManageMap@ m = null;
+		
+		for( uint i = 0; i < __ListingManageMap.keys( keys ); i++ )
+		{
+			__ListingManageMap.get( keys[i], @m );
+			if( valid( m ) )
+				m.SaveBags( f );
+			else 
+				f.writeUint32( 0 );
+		}
+		f.close( );
+	}
+}
+
+// ~run main LoadBags 0 0 0
+void LoadBags( ::Critter& cr, int, int, int )
+{
+	LoadBags( );
+}
+
+void LoadBags( )
+{
+	::file cfg;
+	if( cfg.open( "save\\bagsDeadPlayer\\SaveBags_" + GetVersionWorldSave( null ) + ".save", "r" ) != -1 )
+	{
+		/*
+		4 байта - количество мнеджеров карт.
+		Цикл по количеству менеджеров
+		{
+			4 байта айди карты
+			4 байта пид локации
+			4 байта Нублока или нет
+			4 байта количество сумок в менеджере.
+			Цикл по количеству сумок
+			{
+				4 байта айди криттера
+				4 байта количество итемов
+				цикл по количеству итемов
+				{
+					4 байта айди итема.
+				}
+			}
+		}		
+		*/
+		CityGuard::ManageMap@ m;
+		uint mapId = 0,
+			 locPid = 0,
+			 countBags = 0,
+			 crId = 0,
+			 countItems = 0,
+			 itId = 0,
+			 noob = 0;
+		
+		::Item@ it=null;
+
+		while( !cfg.isEndOfFile() )
+		{
+			mapId = cfg.readUint32( );
+			if( mapId == 0 )
+				continue;
+			locPid = cfg.readUint32( );
+			noob = cfg.readUint32( );
+			
+			@m = CityGuard::ManageMap( mapId, locPid, noob == 1 );
+			
+			countBags = cfg.readUint32( );
+			{
+				for(uint j = 0; j < countBags; j++ )
+				{
+					::array<::Item@> items;
+					crId = cfg.readUint32( );
+					countItems = cfg.readUint32( );
+					for( uint t = 0; t < countItems; t++ )
+					{
+						itId = cfg.readUint32( );
+						@ it = ::GetItem( itId );
+						if( validEngineObject( it ) )
+							items.insertLast( @it );
+						else Log("Не валидный итем");
+					}
+					
+					if( valid( m ) )
+					{
+						m.Bags.insertLast( @CityGuard::BagsDeadPlayers( crId, items ) );
+					}
+				}
+				if( valid( m ) )
+					__ListingManageMap.set( ""+mapId, m );
+			}
+		}
+		if( not cfg.isEndOfFile() && 0 != ( cfg.getSize ( ) - cfg.getPos ( ) ) ) Log( "Error. " + ( cfg.getSize () - cfg.getPos () ) );
+		cfg.close( );
+	}
+}
+
+//~run main TestIc 1 1000000 0	
+void TestIc( ::Critter& cr, int id, int f, int )
+{
+	uint startTick=::GetTick();
+	for(uint i=0;i<uint(f);i++)
+		::GetItem(uint(id));
+	cr.Say(SAY_NETMSG,""+(::GetTick()-startTick));
+}
+
+uint r_BankIsBags(::Critter& player, ::Critter@ npc)
+{
+	return GetBagsMap(player)!=0?14:15;
+}
+
+uint r_BankReturnLoot(::Critter& player, ::Critter@ npc)
+{
+	::Item@ money=player.GetItem(Content::Item::BOTTLE_CAPS,-1);
+	if(validEngineObject(money))
+	{
+		uint cost=GetCostBags(player);
+		if( money.GetCount() >= cost && cost!=0)
+		{
+			player.DeleteItem(Content::Item::BOTTLE_CAPS,cost);
+			ReturnAllLoot(player);
+			return 2;
+		}
+	}
+	return 16;
+}
+
+void r_ReturnBags(::Critter& player, ::Critter@ npc)
+{
+	if(!validEngineObject(npc)) return;
+	::Item@ money=player.GetItem(Content::Item::BOTTLE_CAPS,-1);
+	if(validEngineObject(money))
+	{
+		uint cost=GetCostBags(player);
+		if( money.GetCount() >= cost && cost!=0)
+		{
+			player.DeleteItem(Content::Item::BOTTLE_CAPS,cost);
+			ReturnAllLoot(player);
+		}
+	}
+}
+
+void dlg_CostBags(::Critter& player, ::Critter@ npc, ::string@ lexems)
+{
+	if(not IS_DIALOG_GENERATED(lexems) || !validEngineObject(npc)) return; 
+	npc.StatBase[ST_VAR1]=0;
+	lexems+="$money"+GetCostBags(player);
+	DL("GetCostBags(player)"+GetCostBags(player));
+}
+
+void dlg_BagsStatistic(::Critter& player, ::Critter@ npc, ::string@ lexems)
+{
+	if(not IS_DIALOG_GENERATED(lexems) || !validEngineObject(npc)) return; 
+	::array<CityGuard::BagsDeadPlayers@> bags;
+	uint iEnd=GetBagsMapToPlayer(player,bags);
+	npc.StatBase[ST_VAR0]=5;
+	npc.StatBase[ST_VAR2]=0;
+	npc.StatBase[ST_VAR3]=iEnd;
+	npc.StatBase[ST_VAR4]=0;
+	lexems+="$count_bags"+iEnd;
+	::string@ txt="";
+	for(uint i=0;i<iEnd;i++)
+		txt+=" Ячейка номер "+(i+1)+" стоит "+bags[i].GetCost(player,player.GetMap().GetLocation().GetProtoId())+".";
+	lexems+="$description_bags"+txt;
+	lexems+="$answer0"+(npc.Stat[ST_VAR0]*npc.Stat[ST_VAR1]+1);
+	lexems+="$answer1"+(npc.Stat[ST_VAR0]*npc.Stat[ST_VAR1]+2);
+	lexems+="$answer2"+(npc.Stat[ST_VAR0]*npc.Stat[ST_VAR1]+3);
+	lexems+="$answer3"+(npc.Stat[ST_VAR0]*npc.Stat[ST_VAR1]+4);
+	lexems+="$answer4"+(npc.Stat[ST_VAR0]*npc.Stat[ST_VAR1]+5);
+}
+
+void GetBagsDs( ::Critter& player, int count, int, int )
+{
+	::string@ lexems = "";
+	::array<CityGuard::BagsDeadPlayers@> bags;
+	::array<::Item@> items;
+	const uint iEnd = GetBagsMapToPlayer( player, bags );
+	player.Say( SAY_NETMSG, "сумок " + iEnd );
+	if( iEnd >= uint( count ) )
+	{
+		player.Say( SAY_NETMSG, "сумки с номером " + count + " ниту" );
+		return;
+	}
+	const uint len = bags[ uint( count ) ].GetItems( items );
+	lexems += "Ячейка номер " + ( 1 + count ) + " стоит " + bags[ count ].GetCost( player, player.GetMap( ).GetLocation( ).GetProtoId( ) ) + ".\nВ ней находится " + len + " итемов. Список итемов:\n";
+	for( uint i = 0; i < len; i++ )
+	{
+		if( i != 0 ) lexems += "; ";
+		count = items[ i ].GetCount( );
+		lexems += "@msg ITEM " + items[ i ].GetProtoId( ) * 100 + "@" + ( count > 1 ? ( " (" + count + ")" ) : ( "" ) );
+	}	
+	
+	player.Say( SAY_NETMSG, lexems );
+}
+
+void dlg_BagsDescription(::Critter& player, ::Critter@ npc, ::string@ lexems)
+{
+	if(not IS_DIALOG_GENERATED(lexems) || !validEngineObject(npc)) return; 
+	::array<CityGuard::BagsDeadPlayers@> bags;
+	GetBagsMapToPlayer(player,bags);
+	::array<::Item@> items;
+	uint iEnd=GetBagsMapToPlayer(player,bags),
+		count=npc.Stat[ST_VAR0]*npc.Stat[ST_VAR1]+npc.Stat[ST_VAR4],
+		len=bags[count].GetItems(items);
+	lexems+="$description_bags"+"Ячейка номер "+(1+count)+" стоит "+bags[count].GetCost(player,player.GetMap().GetLocation().GetProtoId())
+	+".\nВ ней находится "+len+" итемов. Список итемов:\n";	
+	for(uint i=0;i<len;i++)
+	{
+		if(i!=0) lexems+="; ";
+		count=items[i].GetCount();
+		lexems+="@msg ITEM "+items[i].GetProtoId()*100 + "@"+(count>1?(" ("+count+")"):(""));
+	}
+	lexems+=".";
+}
+
+void r_SetAnswer(::Critter& player, ::Critter@ npc, int p0)
+{
+	if(d_IsAnswer( player, npc, p0))
+		npc.StatBase[ST_VAR4]=p0;
+}
+
+void r_BuyBags(::Critter& player, ::Critter@ npc)
+{
+	if(!validEngineObject(npc)) return;
+	::Item@ money=player.GetItem(Content::Item::BOTTLE_CAPS,-1);
+	if(validEngineObject(money))
+	{
+		::array<CityGuard::BagsDeadPlayers@> bags;
+		GetBagsMapToPlayer(player,bags);
+		uint ind=npc.Stat[ST_VAR0]*npc.Stat[ST_VAR1]+npc.Stat[ST_VAR4],
+		cost=bags[ind].GetCost(player,player.GetMap().GetLocation().GetProtoId());
+		if( money.GetCount() >= cost && cost!=0)
+		{
+			ReturnLootByIndex(player,ind);
+			player.DeleteItem(Content::Item::BOTTLE_CAPS,cost);
+		}
+	}
+}
+
+bool d_IsCountMoney(::Critter& player, ::Critter@ npc)
+{
+	uint cost=GetCostBags(player);
+	return (player.CountItem(Content::Item::BOTTLE_CAPS)>=cost && cost!=0);
+}
+
+bool d_IsCountMoneyOneBags(::Critter& player, ::Critter@ npc)
+{
+	::array<CityGuard::BagsDeadPlayers@> bags;
+	uint len=GetBagsMapToPlayer(player,bags);
+	uint cost=bags[npc.Stat[ST_VAR0]*npc.Stat[ST_VAR1]+npc.Stat[ST_VAR4]].GetCost(player,player.GetMap().GetLocation().GetProtoId());
+	//player.Say(SAY_NETMSG,"Debug info - Сумок "+len+" Цена за №"+(npc.Stat[ST_VAR0]*npc.Stat[ST_VAR1]+npc.Stat[ST_VAR4])+"="+cost);
+	return (validEngineObject(npc) && player.CountItem(Content::Item::BOTTLE_CAPS)>=cost && cost!=0);
+}
+
+bool d_IsAnswer(::Critter& player, ::Critter@ npc,int p0)
+{
+	return (validEngineObject(npc) && npc.Stat[ST_VAR3]>(npc.Stat[ST_VAR0]*npc.Stat[ST_VAR1]+(p0)));
+}
+
+void r_Next(::Critter& player, ::Critter@ npc)
+{
+	if(d_Next(player,npc))npc.StatBase[ST_VAR1]++;
+}
+
+void r_Back(::Critter& player, ::Critter@ npc)
+{
+	if(d_Back(player,npc))npc.StatBase[ST_VAR1]--;
+}
+
+bool d_Next(::Critter& player, ::Critter@ npc)
+{
+	return (validEngineObject(npc) && npc.Stat[ST_VAR3]>(npc.Stat[ST_VAR0]*npc.Stat[ST_VAR1]+5));
+}
+
+bool d_Back(::Critter& player, ::Critter@ npc)
+{
+	return (validEngineObject(npc) && npc.Stat[ST_VAR1]!=0);
+}
+
+class BagsDeadPlayers
+{
+	BagsDeadPlayers(::Critter& cr, ::array<::Item@>@ it)
+	{
+		if(valid(it))
+		{
+			DL("it"+it.length());
+			for(uint i=0, iEnd=it.length();i<iEnd;i++)
+			{
+				DL("i"+i);
+				Items.insertLast(@it[i]);
+			}
+			DL("Items.length() "+Items.length());
+		}
+		else Log("it not valid");
+		PercentCost=10;
+		Cost=0;
+		prv_CritterId=cr.Id;
+	}
+	
+	BagsDeadPlayers(uint id, ::array<::Item@>@ it)
+	{
+		//Items=it;
+		if(valid(it))
+		{
+			DL("it"+it.length());
+			for(uint i=0, iEnd=it.length();i<iEnd;i++)
+			{
+				DL("i"+i);
+				Items.insertLast(@it[i]);
+			}
+			DL("Items.length() "+Items.length());
+		}
+		else Log("it not valid");
+		PercentCost=10;
+		Cost=0;
+		prv_CritterId=id;
+	}
+	
+	 void Save(::file& f)
+	{
+		f.writeUint32(prv_CritterId);
+		uint im=Items.length();
+		f.writeUint32(im);
+		for(uint i=0;i<im;i++)
+		{
+			::Item@ it =Items[i];
+			if(!validEngineObject(it)) continue;
+			f.writeUint32(it.Id);
+		}
+	}
+
+	uint GetCost(::Critter& cr, uint locPid)
+	{
+		int oldPerc=PercentCost;
+		if(REPUTATION_BEGIN+locPid > REPUTATION_END) PercentCost=20;
+		else PercentCost=40-(cr.Stat[ST_KARMA]/100)-cr.Reputation[REPUTATION_BEGIN-1+locPid];
+		PercentCost=CLAMP(PercentCost,20,60);
+		if(Cost!=0 && oldPerc==PercentCost) return Cost;
+		int cost=0,
+		iCost=0;
+		for(uint i=0, iEnd=Items.length(); i<iEnd;i++)
+			{
+				::Item@ it =Items[i];
+				if(!validEngineObject(it)) continue;
+				iCost=((it.GetCost())/100)*PercentCost;
+				cost+=(iCost==0)?1:iCost;
+				
+			}
+		Cost=(cost<=1)?1:cost;
+		return Cost;
+	}
+
+	uint GetLength()
+	{
+		return Items.length();
+	}
+
+	void SetCost(uint cost)
+	{
+		Cost=cost;
+	}
+
+	void CostNull()
+	{
+		Cost=0;
+	}
+	
+	uint GetItems(::array<::Item@>@+ items)
+	{
+		if(valid(items))
+		{
+			for(uint i=0, iEnd=Items.length();i<iEnd;i++)
+			{
+				items.insertLast(@Items[i]);
+			}
+		}
+		return Items.length();
+	}
+	
+	const uint CritterId
+	{
+		get
+		{
+			return prv_CritterId;
+		}
+	}
+	
+	private int PercentCost;
+	private int Cost;	
+	private uint prv_CritterId;
+	private ::array<::Item@> Items;
+}

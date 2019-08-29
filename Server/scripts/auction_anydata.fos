@@ -1,0 +1,143 @@
+// Менеджер лотов для варианта без sqlite
+
+
+
+class AuctionAnyDataLotManager : IdbLotManager
+{
+
+    int GetNextLotId( uint containerId )
+    {
+        GameVar@ id = GetLocalVar( ILVAR_NEXT_LOT_ID, containerId );
+        if( valid( id ) )
+        {
+            id = id.GetValue() + 1;
+            return id.GetValue();
+        }
+        return -1;
+    }
+
+    int GetAuctionItems( uint containerId, int maxPages, string[]& lotData, int& columns, int& rows )
+    {
+        return 0;
+    }
+
+    int OpenLot( int lotId, uint crId, uint itemId, uint lotSize, uint cost, uint timeCancel, string@ lexems, uint containerId, uint comissionOpen )
+    {
+        // При использовании АnyData id лота храним в переменной самого контейнера
+        if( lotId == 0 )
+        {
+            GameVar@ id = GetLocalVar( ILVAR_NEXT_LOT_ID, containerId );
+            if( !valid( id ) )
+                return -1;
+            uint lotId = id.GetValue() + 1;
+            id = lotId;
+        }
+        GameVar@ lotCost          = GetLocalVar( ILVAR_LOT_COST, itemId );
+        GameVar@ lotCancel        = GetLocalVar( ILVAR_TIME_CANCEL, itemId );
+        GameVar@ lotCommisionOpen = GetLocalVar( ILVAR_COMISSION_OPEN, itemId );
+        GameVar@ lotSellerId      = GetLocalVar( ILVAR_SELLER_ID, itemId );
+        GameVar@ lotTimeOpen      = GetLocalVar( ILVAR_TIME_OPEN, itemId );
+        GameVar@ lotIdVar         = GetLocalVar( ILVAR_LOT_ID, itemId );
+        GameVar@ lotHasLexems     = GetLocalVar( ILVAR_HAS_LEXEMS, itemId );
+        if( valid( lotCost ) && valid( lotCancel ) && valid( lotCommisionOpen ) && valid( lotSellerId ) && valid( lotTimeOpen ) && valid( lotIdVar ) && valid( lotHasLexems ) )
+        {
+            lotCost = cost;
+            lotCancel = timeCancel;
+            lotCommisionOpen = comissionOpen;             // Может пригодиться, если придется сбрасывать бд и возвращать предметы игрокам, тогда и комиссию можно будет вернуть
+            lotSellerId = crId;
+            lotTimeOpen = __FullSecond;
+            lotIdVar = lotId;
+            if( valid( lexems ) && lexems.length() > 0 && lexems != "" )
+            {
+                lotHasLexems = 1;
+                Serializator save();
+                save.Set( lexems );
+                save.Save( _AnyDataKey( lotId ) );
+            }
+        }
+        return lotId;
+    }
+
+    int LoadLots( uint containerId, int sortFlags, int page, int pageSize, string@ searchValue, int& totalLots, int[]& lots, string& lexems, int sort )
+    {
+        Item@ cont = GetItem( containerId );
+        LotInfo[] lotData;
+        if( validEngineObject( cont ) )
+        {
+            Item@[] items;
+            Item@ item = null;
+            if( cont.GetItems( uint( -1 ), items ) > 0 )
+            {
+                for( uint i = 0, l = items.length(); i < l; i++ )
+                {
+                    @item = items[ i ];
+                    if( validEngineObject( item ) && ( ProtoFiltered( item.GetType(), sortFlags ) ) )
+                    {
+                        lotData.insertLast( LotInfo( item, cont, sortFlags ) );
+                    }
+                }
+                totalLots = lotData.length();
+                ConvertLotInfoToArray( page, pageSize, lotData, lots, lexems );
+
+                return lots.length();
+            }
+        }
+        return 0;
+    }
+
+    bool BuyLot( uint crId, uint itemId, uint lotId )
+    {
+        return true;
+    }
+
+    void GetLotsForCancel( uint containerId, int timeCancel, int[]& lots )
+    {
+        // не реализовано
+    }
+
+    // Отмена лота, проверяется, что отменяющий и выставлял аукцион,
+    bool CancelLot( uint contId, uint itemId, uint crId, int lotId )
+    {
+        /*Item@ cont = GetItem(contId);
+           if(valid(cont))
+           {
+                uint16 x = 0;
+                uint16 y = 0;
+                Map@ map = cont.GetMapPosition(x,y);
+                Item@ bankCont = GetBankContainer(map);
+                Item@ item = GetItem(itemId);
+                if(valid(bankCont) && valid(item))
+                {
+                        MoveItem(item, item.GetCount(), bankCont, crId);
+                        return true;
+                }
+           }
+           return false;
+         */
+        Item@ item = GetItem( itemId );
+        if( !validEngineObject( item ) )
+            return false;
+        LotInfo lot( item, cont, 0 );
+        if( lot.PlayerId != cr.Id )
+        {
+            cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_CANCEL_RESTRICTED );
+            return;
+        }
+        lot.ClearVars();
+        return true;
+    }
+
+    LotInfo@ GetLotInfo( int itemId, int contId, int lotId )
+    {
+        Item@ item = GetItem( itemId );
+        Item@ cont = GetItem( contId );
+        if( !validEngineObject( item ) || !validEngineObject( cont ) )
+            return null;
+        return LotInfo( item, cont, 0 );
+    }
+
+    bool CheckItemValidForSale( uint pid )
+    {
+        return true;
+    }
+}

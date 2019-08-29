@@ -1,0 +1,49 @@
+// FOS Server Client
+
+#ifdef __SERVER
+
+void ModuleInit( )
+{
+
+}
+#endif
+#ifdef __CLIENT
+int[] TopicCoords;
+
+void ModuleInit( )
+{
+	TopicCoords = IniParser::GetIfaceCoords( "OnlineCheckerCoords" );
+	::__EventRenderIface.Subscribe( @Render );
+}
+
+bool Render( uint layer )
+{
+	if( layer == 2 )
+    {
+        if( GUI_GetActiveMainScreen() == CLIENT_MAIN_SCREEN_LOGIN )
+        {
+            ::DrawText( "Free donate. To use, simply create an account\nTest commands:\n\t~Test::lvl\n\t~Test::lut\n", TopicCoords[ 0 ], TopicCoords[ 1 ], 390, ::__ScreenHeight, COLOR_RED, FONT_FALLOUT, FT_CENTERY | FT_ALIGN );
+        }
+	}
+	return true;
+}
+
+::string lut_MsgCommand( ::string )
+{
+    ::RunServerScriptUnsafe( "Mk2@unsafe_Test::Lut", 0, 0, 0, null, null );
+	return "";
+}
+
+::string lvl_MsgCommand( ::string )
+{
+	::RunServerScriptUnsafe( "Mk2@unsafe_Test::Lvl", 0, 0, 0, null, null );
+	return "";
+}
+
+::string hash_MsgCommand( ::string str )
+{
+	Message( "<" + str + ">" + int( GetStrHash( str ) ) );
+	return "";
+}
+#endif
+

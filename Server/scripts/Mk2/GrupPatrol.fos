@@ -1,0 +1,427 @@
+// FOS Server
+
+::array<GrupPatrol::CGrupPatrol@> AllPatrols = {};
+
+GrupPatrol::CGrupPatrol@ GetPatrol( const uint&in id )
+{
+	return AllPatrols[id-1];
+}
+
+GrupPatrol::CGrupPatrol@ GetPatrolIndex( const uint&in index )
+{
+	for( uint i = 0, iMax = AllPatrols.length( ); i < iMax; i++ )
+		if( AllPatrols[ i ].Id == index ) 
+			return AllPatrols[ i ]; 
+
+	return null;
+}
+
+class Patroller
+{
+	Patroller( ::Critter& cr, const uint&in grupIndex, const uint&in ind )
+	{
+		index = ind;
+		GrupIndex = grupIndex;
+		@ Patrol = cr;
+		Patrol.PatrolBase[ PL_PATRULLER_ID ] = index;
+		FirstTime = true;
+		Talke = false;
+		GrupPatrol::CGrupPatrol@ grup = GetPatrolIndex( grupIndex );
+		
+		DifferentX = 0;
+		DifferentY = 0;
+		if( valid( grup ) )
+		{
+			GrupPatrol::Patroller@ l = grup.GetLider( );
+			if( valid( l ) && grup.Patrols.length( ) > 0 )
+			{
+				DifferentX = l.Patrol.HexX - Patrol.HexX;
+				DifferentY = l.Patrol.HexY - Patrol.HexY;;
+			}
+		}
+	}
+	
+	void Init()
+	{
+		if(FirstTime)
+		{
+			FirstTime=false;
+		}
+		else
+		{
+		
+		}
+		
+		GrupPatrol::CGrupPatrol@ gp=GetPatrolIndex(GrupIndex);
+		if (!valid(gp)) return;
+		uint16 hexX=0; uint16 hexY=0;
+		Entires::GetEntireFreeHex(gp.GetMap(),gp.CurrentPoint,hexX,hexY);
+		Patrol.AddPlane(gp.MovePlan(hexX+DifferentX,hexY+DifferentY,::Random(0,5),false,0));
+	}
+	
+	int8 DifferentX;
+	int8 DifferentY;
+	
+	bool FirstTime;
+	bool Talke;
+	
+	uint index;
+	uint GrupIndex;
+	
+	::Critter@ Patrol;
+	
+}
+/*
+class Hex
+{
+	uint16 X;
+	uint16 Y;
+	Map@ map;
+}
+*/
+class CGrupPatrol
+{
+	CGrupPatrol( ::Critter& cr )
+	{
+		Id=cr.Patrol[PL_GRUP_NUMBER];
+		GrupPatrol::Patroller Lider(cr, Id, Patrols.length());
+		Patrols.insertLast(@Lider);
+		FirstTime=true;
+		CountPoint=cr.Patrol[PL_COUNT_POINT];
+		StartPoint=cr.Patrol[PL_START_POINT];
+		CurrentPoint=0;
+		EndPoint=StartPoint+CountPoint;
+		cr.PatrolBase[PL_GRUP_NUMBER]=Id;
+		IdentifierExtPlaneGrup=10;
+		IdentifierPlaneGrup=5000+Id;
+		AttackCritterId=0;
+		MapId = cr.GetMapId();
+	}
+	
+	#define ACTUAL_IdentifierExtPlaneGrup_move	(IdentifierExtPlaneGrup+CurrentPoint)
+	#define ACTUAL_IdentifierExtPlaneGrup_wait	(IdentifierExtPlaneGrup+CurrentPoint+100)
+	//#define ACTUAL_IdentifierExtPlaneGrup_attack	(IdentifierExtPlaneGrup+AI_PLANE_ATTACK+AttackCritterId)
+	
+	GrupPatrol::Patroller@ AddPatroler(  ::Critter& cr )
+	{
+		if( cr.GetMapId() == MapId )
+		{
+			GrupPatrol::Patroller patrol=GrupPatrol::Patroller(cr, Id, Patrols.length()+1);
+			cr.PatrolBase[PL_GRUP_NUMBER]=Id;
+			Patrols.insertLast(@patrol);
+			return patrol;
+		}
+		return null;
+	}
+	
+	void PatrolInit()
+	{
+		if(FirstTime)
+		{
+			MoveToNextEntireGrup();
+			FirstTime=false;
+		}
+		else
+		{
+		
+		}
+	}
+	
+	int EndPlaneGrup(GrupPatrol::Patroller@ patr, ::NpcPlane& plane, int reason, ::Critter@ someCr, ::Item@ someItem)
+	{
+		if(NoPlan()) {plane.SetChild(WaitPlane(90));return 2;}
+		// EventIdle ()
+		return 0;
+	}
+	
+	bool NoPlan()
+	{
+		if(!valid(this))
+		{
+			Log("Я не валиден!");
+		}
+		::Critter@ Patrol = null;
+		for(uint i=0, iMax=Patrols.length(); i<iMax;i++)
+		{
+			if(valid(Patrols[i]) )
+			{
+				@ Patrol = Patrols[i].Patrol;
+				if( valid(Patrol) && !Patrol.IsNotValid && Patrol.IsLife() && !Patrol.IsNoPlanes()) 
+					return false;
+			}
+		}
+		return true;
+	}
+	
+	int BeginPlaneGrup(GrupPatrol::Patroller@ patr, ::NpcPlane& plane, int reason, ::Critter@ someCr, ::Item@ someItem)
+	{
+		if(plane.Identifier==IdentifierPlaneGrup)
+		{
+			const uint 	ext_move=ACTUAL_IdentifierExtPlaneGrup_move,
+						ext_wait=ACTUAL_IdentifierExtPlaneGrup_wait, 
+						ext=plane.IdentifierExt;
+						
+			if(ext==ext_move)
+			{
+			}
+			else if(ext==ext_wait)
+			{
+			}
+		}
+		return 0;
+	}
+	
+	bool Attack(GrupPatrol::Patroller@ patr, ::Critter@ target)
+	{
+		return false;
+	}
+	
+	bool Attacked(GrupPatrol::Patroller@ patr, ::Critter& attacker)
+	{
+		return false;
+	}
+	
+	void Idle(GrupPatrol::Patroller@ patr)
+	{
+	
+	}
+	
+	void Dead(GrupPatrol::Patroller@ patr, ::Critter@ killer)
+	{
+		
+	}
+	
+	void Respawn(GrupPatrol::Patroller@ patr)
+	{
+	
+	}
+	
+	bool Talke()
+	{
+		for(uint i=0, iMax=Patrols.length(); i<iMax; i++)
+		{
+			if(Patrols[i].Talke) return true;
+		}
+		return false;
+	}
+	
+	void MoveToNextEntireGrup()
+	{
+		uint EntNum=CurrentPoint;
+		if(EntNum==0 || EntNum==StartPoint+CountPoint) 
+		{
+			EntNum=StartPoint;
+		}
+		else
+		{
+			EntNum+=1;
+		} 
+
+		uint16 hexX=0, hexY=0;
+		Entires::GetEntireFreeHex(GetMap(),EntNum,hexX,hexY);
+		CurrentPoint=EntNum;
+		GrupMove(hexX,hexY,::Random(0,5),false,0);
+	}
+	
+	bool GrupMove(uint16 hexX,uint16 hexY, uint8 dir, bool run, uint cut)
+	{
+		if(Talke()) return false;
+		for(uint i=0, iMax=Patrols.length(); i<iMax; i++)
+		{
+			::Critter@ npc=Patrols[i].Patrol;
+			if(npc.Skill[SK_SNEAK]>=150) npc.ModeBase[MODE_HIDE]=1;
+			npc.AddPlane(MovePlan(hexX+Patrols[i].DifferentX,hexY+Patrols[i].DifferentY,dir,run,cut));
+		}
+		return true;
+	}
+	
+	bool GrupWait(uint second)
+	{
+		for(uint i=0, iMax=Patrols.length(); i<iMax;i++)
+		{
+			::Critter@ npc=Patrols[i].Patrol;
+			if (!valid(npc)) return false;
+			npc.AddPlane(WaitPlane(second));
+		}
+		return true;
+	}
+	
+	::NpcPlane@ WaitPlane(uint second)
+	{
+		::NpcPlane@ plane = ::CreatePlane();
+		plane.Type=AI_PLANE_MISC;
+		plane.Identifier=IdentifierPlaneGrup;
+		plane.IdentifierExt=ACTUAL_IdentifierExtPlaneGrup_wait;
+		plane.Priority=AI_PLANE_MISC_PRIORITY;
+		plane.Misc_WaitSecond= ::__FullSecond+(second);
+		plane.Misc_SetScript("GrupPatrol::plane_GrupPatrolMisc");
+		return plane;
+	}
+	
+	::NpcPlane@ MovePlan(uint16 hexX,uint16 hexY, uint8 dir, bool run, uint cut)
+	{
+		::NpcPlane@ plane = ::CreatePlane();
+		plane.Type=AI_PLANE_WALK;
+		plane.Identifier=IdentifierPlaneGrup;
+		plane.IdentifierExt=ACTUAL_IdentifierExtPlaneGrup_move;
+		plane.Priority=AI_PLANE_WALK_PRIORITY;
+		plane.Walk_HexX=hexX;
+		plane.Walk_HexY=hexY;
+		plane.Walk_Dir=dir;
+		plane.Run=run;
+		plane.Walk_Cut=cut;
+		return plane;
+	}
+	
+	GrupPatrol::Patroller@ GetLider()
+	{
+		if(Patrols.length()>0)
+			return Patrols[0];
+		return null;
+	}
+	
+	GrupPatrol::Patroller@ GetPatroller( ::Critter@ ptr)
+	{
+		if(valid(ptr))
+			for(uint i=0, iMax=Patrols.length(); i<iMax; i++)
+			{
+				if(Patrols[i].Patrol.Id==ptr.Id) return Patrols[i];
+			}
+		return null;
+	}
+	
+	::Map@ GetMap()
+	{
+		if(Patrols.length()>0)
+		{
+			return Patrols[0].Patrol.GetMap();
+		}
+		return null;
+	}
+	
+	bool FirstTime;
+	uint Id;
+	uint CountPoint;
+	uint EndPoint;
+	uint CurrentPoint;
+	uint StartPoint;
+	uint IdentifierExtPlaneGrup;
+	uint AttackCritterId;
+	uint MapId;
+	int IdentifierPlaneGrup;
+	//Hex@ CoordinatLider;
+	::array<GrupPatrol::Patroller@> Patrols;
+}
+
+void plane_GrupPatrolMisc(::Critter& cr)
+{
+	GrupPatrol::Patroller@ patr=GetPatroller(@cr, uint(cr.Patrol[PL_GRUP_NUMBER]));
+	if(valid(patr))
+	{
+		GrupPatrol::CGrupPatrol@ grup=GetPatrolIndex(cr.Patrol[PL_GRUP_NUMBER]);
+		grup.MoveToNextEntireGrup();
+	}
+}
+
+GrupPatrol::Patroller@ GetPatroller(::Critter@ cr, uint GrupId)
+{
+	if(valid(cr)) 
+	{
+		uint indx=uint(cr.Patrol[PL_GRUP_NUMBER]);
+		GrupPatrol::CGrupPatrol@ grup=GetPatrolIndex(indx);
+		if(valid(grup)) 
+		{
+			GrupPatrol::Patroller@ ptr=grup.GetPatroller(cr);
+			if(valid(ptr)) return ptr;
+		}
+	}
+	return null;
+}
+
+void AddPatrolerToGrup(::Critter& cr)
+{
+	GrupPatrol::CGrupPatrol@ grup = GetPatrolIndex( cr.Patrol[ PL_GRUP_NUMBER ] );
+	if(valid(grup))	
+	{
+		GrupPatrol::Patroller@ patr=grup.AddPatroler(cr);
+		if(valid(patr))
+		{
+			_PatrollerInit(cr, false);
+			patr.Init();
+		}
+	}
+	else
+	{
+		_CreateGrupPatrol(cr,false);
+	}
+}
+
+void _CreateGrupPatrol(::Critter& lider,bool ft)
+{
+	GrupPatrol::CGrupPatrol@ grup=GetPatrolIndex(lider.Patrol[PL_GRUP_NUMBER]);
+	if (!valid(grup))
+	{
+		GrupPatrol::CGrupPatrol NewGrup(lider);
+		AllPatrols.insertLast(@NewGrup);
+		NewGrup.PatrolInit();
+		_PatrollerInit(lider,ft);
+	}
+}
+
+void _PatrollerInit(::Critter& cr, bool ft)
+{
+	cr.ModeBase[MODE_NO_HOME]=1;
+	cr.ModeBase[MODE_NO_LOOT]=1;
+	cr.ModeBase[MODE_NO_BARTER]=1;
+	cr.ModeBase[MODE_NO_DROP]=1;
+	cr.ModeBase[MODE_NO_ENEMY_STACK]=1;
+	cr.ModeBase[MODE_NO_STEAL]=1;
+}
+
+bool _Attack(::Critter& cr, ::Critter& target)
+{
+	//return GetPatrolIndex(cr.PatrolBase[PL_GRUP_NUMBER]).Attack(GetPatroller(cr, cr.Patrol[PL_GRUP_NUMBER]),target);
+	return false;
+}
+
+int _GrupPlaneEnd(::Critter& npc, ::NpcPlane& plane, int reason, ::Critter@ someCr, ::Item@ someItem)
+{
+	return GetPatrolIndex(npc.Patrol[PL_GRUP_NUMBER]).EndPlaneGrup(GetPatroller(@npc, npc.Patrol[PL_GRUP_NUMBER]),plane,reason,someCr,someItem);
+}
+
+int _GrupPlaneBegin(::Critter& cr, ::NpcPlane& plane, int reason, ::Critter@ someCr, ::Item@ someItem)
+{
+	GrupPatrol::Patroller@ patr=GetPatroller(@cr, uint(cr.Patrol[PL_GRUP_NUMBER]));
+	if(valid(patr))	
+		return GetPatrolIndex(cr.Patrol[PL_GRUP_NUMBER]).BeginPlaneGrup(patr,plane,reason,someCr,someItem);
+	return 0;
+}
+
+bool _Attacked(::Critter& cr, ::Critter& attacker)
+{
+	//return GetPatrolIndex(cr.PatrolBase[PL_GRUP_NUMBER]).Attacked(GetPatroller(cr, cr.Patrol[PL_GRUP_NUMBER]),attacker);
+	return false;
+}
+
+void _Idle(::Critter& cr)
+{
+	/*GrupPatrol::CGrupPatrol@ grup=GetPatrolIndex(cr.Patrol[PL_GRUP_NUMBER]);
+	if(valid(grup))
+	{
+		GrupPatrol::Patroller@ patr = GetPatroller(cr, cr.Patrol[PL_GRUP_NUMBER]);
+		if(valid(patr)) 
+			grup.Idle(patr);
+		//else Log("Не валиден патрульный");
+	}
+	//else Log("Не валидна группа "+cr.PatrolBase[PL_GRUP_NUMBER]+"...."+AllPatrols.length()+"\n Доложите Крекеру!");*/
+}
+
+void _Dead(::Critter& cr, ::Critter@ killer)
+{
+	//GetPatrolIndex(cr.PatrolBase[PL_GRUP_NUMBER]).Dead(GetPatroller(cr, cr.Patrol[PL_GRUP_NUMBER]),killer);
+}
+
+void _Respawn(::Critter& cr)
+{
+	//GetPatrolIndex(cr.PatrolBase[PL_GRUP_NUMBER]).Respawn(GetPatroller(cr, cr.Patrol[PL_GRUP_NUMBER]));
+}

@@ -1,0 +1,42 @@
+// FOS Server
+// Cracker
+
+#define PLANE_LOOT                   	  (30)
+
+void Init(::Critter& cr, bool firstTime)
+{
+	if(firstTime)
+	{
+		for(uint i=0;i<=6;i++)
+		{
+			cr.StatBase[i]=10;
+		}
+		cr.StatBase[ST_REPLICATION_TIME]=60;
+		cr.StatBase[ST_ACTION_POINTS]= ::Random(10,16);
+		cr.StatBase[ST_ARMOR_CLASS]= ::Random(25,40);
+		cr.PerkBase[PE_MORE_CRITICALS]= ::Random(1,5);
+		
+		const uint16 MaxLife= ::Random(120,230);
+		cr.StatBase[ST_MAX_LIFE] +=MaxLife;
+		cr.StatBase[ST_CURRENT_HP] +=MaxLife;
+		
+		cr.StatBase[ST_CRITICAL_RESISTANCE]= ::Random(30,65);
+		cr.StatBase[ST_CRITICAL_RESISTANCE]=85;
+		cr.PerkBase[PE_SNIPER]=1;
+		cr.PerkBase[PE_SLAYER]=1;
+		
+		//ToDo: Сделать специализации на навык по которым будет выдавать инвентарь.
+		
+		cr.SkillBase[SK_SMALL_GUNS]=250;
+		cr.SkillBase[SK_BIG_GUNS]=250;
+		cr.SkillBase[SK_UNARMED]=250;
+		cr.SkillBase[SK_ENERGY_WEAPONS]=250;
+
+		cr.ModeBase[MODE_NO_STEAL]=1;
+		cr.ModeBase[MODE_NO_PUSH]=1;
+		cr.ModeBase[MODE_NO_ENEMY_STACK]=1;
+		cr.ModeBase[MODE_UNLIMITED_AMMO]=1;
+	}
+	
+	cr.SetEvent(CRITTER_EVENT_MESSAGE,"CityGuard::_GuardMessage");
+}

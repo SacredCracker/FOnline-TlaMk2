@@ -1,0 +1,210 @@
+// FOS Server
+// Author: rifleman17
+// Метательные крысы
+// RatGrenade:: 
+
+#define STR_AWAKE_GLOBAL    ( 30 ) // Одна из ваших оглушенных крыс пришла в себя и удрала из рюкзака! Черт. Чем это так пахнет, и что это за жидкость?
+#define STR_AWAKE_MAP       ( 31 ) // Одна оглушенная крыса, по всей видимости очнулась, и выскочила из рюкзака. Прикончите эту тварь немедленно.
+#define STR_VENOMED         ( 32 ) // Вы вкололи супертоксин оглушенной крысе. Теперь с каждым укусом она может отравить жертву.
+
+void Init( ::Item& item, bool firstTime )
+{
+    DL( "item init" );
+    if( firstTime )
+    {
+        // Есть шанс, что крыса очнется через пять реальных минут
+        if( ::Random( 1, 4 ) < 2 )
+        {
+            DL( "Awaking rat after 5 real minutes" );
+            item.Val1 = ::CreateTimeEvent( ::__FullSecond + REAL_MINUTE( ::Random( 4, 5 ) ), "RatGrenade::e_Awake", item.Id, false );
+            DL( "Awaking rat after 5 real minutes. EventId = " + item.Val1 );
+
+        }
+    }
+    item.SetEvent( ITEM_EVENT_ATTACK, "RatGrenade::Attack" );
+    item.SetEvent( ITEM_EVENT_FINISH, "RatGrenade::Finish" );
+    // item.SetEvent( ITEM_EVENT_USE_ON_ME, "_RatGrenadeUseOnMe"); //Не работает использование предмета на предмет
+}
+
+bool UseOnMe( ::Item& item, ::Critter& cr, ::Item@ usedItem )
+{
+	// RatGrenade::
+    if( validEngineObject( usedItem ) && item.GetProtoId() == Content::Item::RAT_GRENADE && usedItem.GetProtoId() == Content::Item::SUPERTOXINE )
+    {
+        // Только при использовании в инвентаре, не на земле
+        ::array<::Item@> items = {};
+        ::Item@ foundedItem = null;
+        if( cr.GetItems( -1, items ) > 0 )
+        {
+            for( uint i = 0, l = items.length(); i < l; i++ )
+            {
+                @foundedItem = items[ i ];
+                if( validEngineObject( foundedItem ) && foundedItem.Id == item.Id )
+                {
+                    ::DeleteItem( foundedItem );
+					@ foundedItem = null;
+                    cr.AddItem( Content::Item::RAT_GRENADE_VENOM, 1 );
+                    cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_VENOMED );
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+uint e_Awake( ::array<uint>@ values )
+{
+    DL( "Rat awaken" );
+    ::Item@ item = ::GetItem( values[ 0 ] );
+    if( validEngineObject( item ) )
+    {
+        item.Val1 = 0;
+        if( item.CritId > 0 )
+        {
+            ::Critter@ cr = ::GetCritter( item.CritId );
+            if( validEngineObject( cr ) )
+            {
+                ::Map@ map = cr.GetMap();
+                if( validEngineObject( map ) )
+                {
+                    cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_AWAKE_MAP );
+                    uint16 x = cr.HexX, y = cr.HexY;
+                    if( GetFreeHex( map, 2, x, y ) )
+                    {
+                        uint8    dir = ::GetDirection( x, y, cr.HexX, cr.HexY );
+                        ::array<int> values = { ST_VAR3, item.GetProtoId(), ST_VAR4, item.CritId };
+                        ::Critter@ rat = map.AddNpc( NPC_PID_RegularRat, x, y, dir, values, null, "RatGrenade::_RatInit" );
+                        if( validEngineObject( rat ) )
+                        {
+                            NpcPlanes::AddAttackPlane( rat, 0, cr );
+                        }
+                    }
+                }
+                else
+                {
+                    cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_AWAKE_GLOBAL );
+                }
+                ::DeleteItem( item );
+            }
+        }
+    }
+    return 0;
+}
+
+bool Attack( ::Item& item, ::Critter& cr, ::Critter& target )
+{
+    DL( "Rat attack" );
+    if( target.Mode[ MODE_NO_PVP ] == 0 )
+    {
+        ::array<uint> values = { cr.Id, target.Id, item.Id, 1 };
+        ::CreateTimeEvent( ::__FullSecond + 1, "RatGrenade::e_RatAttack", values, true );
+    }
+    if( target.Stat[ ST_BODY_TYPE ] == BT_FLOATER )
+    {
+        ::GameVar @ qVar = ::GetLocalVar( LVAR_q_mod_lourence_floater, cr.Id );
+        int value = qVar.GetValue();
+        switch( value )
+        {
+        case 1:
+            qVar = 2;
+            break;
+        case 3:
+            qVar = 4;
+            break;
+        }
+    }
+    return false;
+}
+
+uint e_RatAttack( ::array<uint>@ values )
+{
+    ::Critter@ target = ::GetCritter( values[ 1 ] );
+    ::Item@    item = ::GetItem( values[ 2 ] );
+    if( validEngineObject( item ) && validEngineObject( target ) )
+    {
+        uint16 hX = target.HexX, hY = target.HexY;
+        if( item.MapId > 0 )
+        {
+            ::Map@ map = item.GetMapPosition( hX, hY );
+            if( validEngineObject( map ) )
+            {
+                if( GetFreeHex( map, 2, hX, hY ) )
+                {
+                    uint8    dir = ::GetDirection( hX, hY, target.HexX, target.HexY );
+                    ::array<int> values = { ST_VAR3, item.GetProtoId(), ST_VAR4, item.CritId };
+                    ::Critter@ rat = map.AddNpc( NPC_PID_RegularRat, hX, hY, dir, values, null, "RatGrenade::_RatInit" );
+                    if( validEngineObject( rat ) )
+                    {
+                        NpcPlanes::AddAttackPlane( rat, 0, target );
+                        ::DeleteItem( item );
+                    }
+                }
+            }
+        }
+        else
+        {
+            if( values[ 3 ] < 2 )
+            {
+                DL( "Rat in inventory" );
+                values[ 3 ] = 2;
+                ::CreateTimeEvent( ::__FullSecond + 2, "RatGrenade::e_RatAttack", values, true );
+            }
+        }
+    }
+    return 0;
+}
+
+void Finish( ::Item& item, bool deleted )
+{
+	@item.ScriptDescriptor = null;
+    DL( "Rat grenade finish" );
+    if( deleted )
+        if( item.Val1 > 0 )
+            ::EraseTimeEvent( item.Val1 );
+}
+
+
+// Скрипт крысы, вылезающей из гранаты, если она проснулась
+void _RatInit( ::Critter& cr, bool firstTime )
+{
+    Mob::_MobInit( cr, firstTime );
+    cr.StatBase[ ST_TEAM_ID ] = TEAM_Mob0;
+    cr.StatBase[ ST_REPLICATION_TIME ] = -1;
+    cr.SetEvent( CRITTER_EVENT_DEAD, "RatGrenade::_RatDead" );
+    DL( "v7 " + cr.Stat[ ST_VAR3 ] );
+    switch( cr.Stat[ ST_VAR3 ] )
+    {
+    case Content::Item::RAT_GRENADE_VENOM:
+        cr.StatBase[ ST_TOXIC ] = 120;
+        break;
+    case Content::Item::RAT_GRENADE_TNT:
+        cr.AddTimeEvent( "RatGrenade::cte_ExplodeRat", REAL_SECOND( ::Random( 5, 10 ) ), 0 );
+        break;
+    }
+    cr.AddTimeEvent( "RatGrenade::cte_DeleteRat", REAL_MINUTE( ::Random( 5, 10 ) ), 0 );
+}
+uint cte_ExplodeRat( ::Critter& cr, int identifier, int& rate, int& )
+{
+    DL( "Exploded" );
+    ::Map@ map = cr.GetMap();
+    if( valid( map ) )
+        Explode( cr.GetMap(), cr.HexX, cr.HexY, null, Content::Item::ACTIVE_DYNAMITE, cr.Stat[ ST_VAR4 ], ::Random( 0, 50 ), ::Random( 0, 1 ) );
+    else
+        ::DeleteNpc( cr );
+    return 0;
+}
+
+void _RatDead( ::Critter& cr, ::Critter@ killer )
+{
+    DL( "Rat dead" );
+    cr.AddTimeEvent( "RatGrenade::cte_DeleteRat", REAL_MINUTE( 5 ), 0 );
+}
+
+uint cte_DeleteRat( ::Critter& cr, int identifier, int& rate, int& )
+{
+    DL( "Delete Rat" );
+    if( cr.IsNpc() )
+        ::DeleteNpc( cr );
+    return 0;
+}

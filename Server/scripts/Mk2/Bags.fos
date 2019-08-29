@@ -1,0 +1,68 @@
+// FOS Server
+
+void Init(::Item& item, bool firstTime)
+{
+	item.SetEvent(ITEM_EVENT_USE ,"Bags::Use"); 
+}
+
+bool Use(::Item& item, ::Critter& crit, ::Critter@ onCritter, ::Item@ onItem, ::Scenery@ onScenery)
+{
+	if(item.GetProtoId()!=uint(Content::Item::BAG) && item.GetProtoId()!=uint(Content::Item::BACKPACK)) 
+		return false;
+	::Map@ map=crit.GetMap();  // get current map 
+	if (!validEngineObject(map)) // check if our map is ok
+		return false; 
+		
+	if(item.Accessory==ACCESSORY_CRITTER && item.CritId == crit.Id)	
+	{
+		::MoveItem(item,1,map,crit.HexX,crit.HexY);
+		if(!item.IsNotValid)
+			crit.ShowContainer (null,item, TRANSFER_HEX_CONT_DOWN);
+	}		
+	item.Update();
+	return true;
+}
+
+bool Pick(::Critter& crit,::Item@ item)
+{
+	if (!validEngineObject(item) ) return false;
+	if(item.GetProtoId()!=uint(Content::Item::BAG) && item.GetProtoId()!=uint(Content::Item::BACKPACK)) return false;
+	if(item.Accessory!=ACCESSORY_HEX) return false;
+	int freeWeight=crit.Stat[ST_CARRY_WEIGHT]-crit.ItemsWeight(),
+		freeWeightCont=0;
+	
+	if(item.GetProtoId()==uint(Content::Item::BAG)) freeWeightCont=15000;
+	if(item.GetProtoId()==uint(Content::Item::BACKPACK)) freeWeightCont=30000;
+	
+	if(crit.CountItem(uint(Content::Item::BAG))>0 || crit.CountItem(uint(Content::Item::BACKPACK))>0) 
+	{
+		crit.SayMsg(SAY_NETMSG,TEXTMSG_GAME,STR_OVERWEIGHT);
+		return true;
+	}
+	
+	::array<::Item@> items = {}; 
+	for(int i=0,iMax=item.GetItems(0,items);i<iMax;i++)
+		if(validEngineObject(items[i]))	
+			freeWeightCont-=int(items[i].Proto.Weight)* int(items[i].GetCount());
+	
+	if(freeWeightCont<0)
+	{
+		crit.ShowContainer (null,item, TRANSFER_HEX_CONT_DOWN);
+		crit.SayMsg(SAY_NETMSG,TEXTMSG_GAME,STR_OVERWEIGHT);
+		return true;
+	}
+	
+	if(freeWeight>=int(item.Proto.Weight))
+	{
+		::Item@ newBag=crit.AddItem (item.GetProtoId(),1);
+		if(validEngineObject(newBag))
+		{
+			::MoveItems(items,newBag,0);
+			::DeleteItem(item);
+			@item = null;
+		}
+		return true;
+	}
+	else crit.SayMsg(SAY_NETMSG,TEXTMSG_GAME,STR_OVERWEIGHT);				
+	return false;
+}

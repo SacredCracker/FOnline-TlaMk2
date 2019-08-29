@@ -1,0 +1,211 @@
+#include "_animation.fos"
+#include "_macros.fos"
+/*
+   rifleman17
+
+   Шаблоны поведения НПЦ: снайпер, терминатор, медик, слеер
+ */
+
+import bool  AddAttackPlane( Critter& npc, uint priority, Critter& target ) from "npc_planes";
+import bool  AddMiscPlane( Critter& npc, uint priority, uint waitSecond, string@ funcName ) from "npc_planes";
+import bool  AddWalkPlane( Critter& npc, uint priority, int identifier, uint identifierExt, uint16 hexX, uint16 hexY, uint8 dir, bool run, uint cut ) from "npc_planes";
+import void  CombatAttack( Critter& cr, Critter& target, ProtoItem& weapon, uint8 weaponMode, ProtoItem@ ammo ) from "combat";
+import uint  EraseAttackPlane( Critter& npc, Critter& target ) from "npc_planes";
+import uint8 GetDir( Critter& cr0, Critter& cr1 ) from "merc";
+import bool  GetFreeHex( Map& map, uint radius, uint16& hx, uint16& hy ) from "caravan";
+import int   GetDeteriorationProcent( Item& item )  from "Mk2";
+import void  UseDrugOn( Critter& cr, Critter& onCr, Item& drug ) from "Mk2";
+import void  SetDeterioration( Item& item, int deteriorationProcent )  from "Mk2";
+import bool  Zone_Attack( Critter& cr, uint16 hexX, uint16 hexY, int slot ) from "combat";
+import bool  AddGoToHealPlane( Critter& npc, Critter& target, bool run ) from "npc_planes";
+
+import void UseDoctor( Critter& cr, Critter@ targetCr, uint16 activePid ) from "healing"; // Export
+import void Healing( Critter& cr, Critter& tr, uint16 activePid ) from "healing";         // Export
+// rifleman17
+// Базовый класс с общими методами и настройками. Не предусматривается использование его в качестве шаблона поведения.
+// Для настройки поведения используйте наследников.
+
+
+// сообщения
+#define MSG_ATTACK_TARGET       ( 156 )
+#define MSG_PLAYER_MUST_DIE     ( 157 )
+#define MSG_HEALME              ( 356 )
+#define MSG_ATTACKING_PLAYER    ( 357 )
+#define MSG_COVERME             ( 358 )
+// радиус реакции на сообщения, если расстояние между тем, кто отправил сообщение и тем, кто его принял меньше либо равно радиусу
+// получатель сообщения отреагирует, иначе проигнорирует сообшение
+#define ATMSG_HELP_DIST         ( 12 )
+
+class CommonPattern
+{
+    // вспомогательная функция - определяет, должен ли получатель реагировать на сообщение
+    bool _MsgReact( Critter& sender, Critter& reciever, const uint& in msg )
+    {
+        const uint dist = GetCrittersDistantion( sender, reciever );
+        if( dist == 0 || sender.Id == reciever.Id )
+            return false;
+
+        switch( msg )
+        {
+        case MSG_ATTACK_TARGET:
+            return ( dist <= ATMSG_HELP_DIST );
+        case MSG_PLAYER_MUST_DIE:
+            return true;
+        default:
+            break;
+        }
+        return false;
+    }
+
+    // Вспомогательная функция - попытка использовать стимпак, если он есть в инвентаре
+    // Если здоровья меньше 50% и в инвентаре есть стимпаки
+    void _TryUseStim( Critter& cr )
+    {
+        // if ( not cr.IsLife( ) || cr.IsBusy( )  || ( cr.Stat[ ST_CURRENT_HP ] * 2 > cr.Stat[ ST_MAX_LIFE ]  ) || ( cr.StatBase[ ST_CURRENT_AP ] < 200 ) )
+        //	return;
+        /*if( not cr.IsLife( ) || ( cr.Stat[ ST_CURRENT_HP ] * 2 > cr.Stat[ ST_MAX_LIFE ] && !_CritIsInjured(cr)) )
+                return;
+
+           AddGoToHealPlane(cr,cr,false);*/
+
+
+    }
+
+    // Игрок в радиусе видимости
+    void _ShowCritter( Critter& cr, Critter& showCrit )
+    {
+        if( not cr.IsCurPlane( AI_PLANE_ATTACK ) && showCrit.IsPlayer() )
+        {
+            NpcPlane@[] planes;
+            const uint count = cr.GetPlanes( planes ),
+                       critId = showCrit.Id;
+            for( uint i = 0; i < count; i++ )
+                if( planes[ i ].Attack_TargId == critId )
+                    return;
+
+            AttackPlayer( cr, showCrit );
+        }
+    }
+
+    // Криттер атакован
+    bool _Attacked( Critter& cr, Critter& attacker )
+    {
+        _TryUseStim( cr );
+        cr.SendMessage( MSG_HEALME, 0, MESSAGE_TO_ALL_ON_MAP );
+        return false;
+    }
+
+    // Криттер убит
+    void _Dead( Critter& cr, Critter@ killer )
+    {
+        if( not cr.IsDead() )
+            return;
+        Item@[] items;
+        const uint iCount = cr.GetItems( -1, items );
+        for( uint i = 0; i < iCount; i++ )
+        {
+            Item@ item = items[ i ];
+            if( not valid( item ) )
+                continue;
+            // Износ оружия
+            SetDeterioration( item, Random( 50, 90 ) );
+            // Удаление избыточных патронов
+            if( item.GetType() == ITEM_TYPE_AMMO && not cr.IsFarmGenerated )
+                _SubItem( item, uint( item.GetCount() - Random( 1, 30 ) ) );
+        }
+    }
+
+    // начало выполнения плана
+    int _PlaneBegin( Critter& cr, NpcPlane& plane, const int& in reason, Critter@ someCr, Item@ someItem )
+    {
+        if( plane.Type == AI_PLANE_ATTACK )
+        {
+            Critter@ target = GetCritter( plane.Attack_TargId );
+            if( valid( target ) && target.Stat[ ST_TEAM_ID ] == cr.Stat[ ST_TEAM_ID ] )
+            {
+                EraseAttackPlane( cr, target );
+                EraseAttackPlane( target, cr );
+                return PLANE_DISCARD;                 // Отмена атаки криттера из своей группы.
+            }
+        }
+        return PLANE_RUN_GLOBAL;
+    }
+
+    void AttackPlayer( Critter& cr, Critter& player )
+    {
+        AttackPlayer( cr, 0, player );
+    }
+
+    void AttackPlayer( Critter& cr, const uint& in priority, Critter& player )
+    {
+        if( player.IsNpc() )
+            return;
+        if( cr.GetMap().GetPathLength( cr.HexX, cr.HexY, player.HexX, player.HexY, 1 ) == 0 && GetDistantion( cr.HexX, cr.HexY, player.HexX, player.HexY ) != 1 && !Zone_Attack( cr, player.HexX, player.HexY,  SLOT_HAND1 ) )
+            return;
+        AddAttackPlane( cr, priority, player );
+    }
+
+    void SetEvents( Critter& cr )
+    {}
+}
+
+/* **************************************** Вспомогательные функции **************************************** */
+// Находит минимум и максимум в массиве целых. Если не найдены - вернет ложь
+bool _GetLimits( uint[] arr, uint& out min, uint& out max )
+{
+    if( arr.length() == 0 )
+        return false;
+    min = arr[ 0 ];
+    max = min;
+    for( uint i = 0, iMax = arr.length(); i < iMax; i++ )
+    {
+        if( arr[ i ] < min )
+            min = arr[ i ];
+        if( arr[ i ] > max )
+            max = arr[ i ];
+    }
+
+    return true;
+}
+// Находит индекс минимального значения в массиве
+bool _GetFirstMinIndex( uint[] arr, uint& out minIndex )
+{
+    uint min = 0,
+         max = 0;
+
+    if( not _GetLimits( arr, min, max ) )
+        return false;
+
+    for( uint i = 0, iMax = arr.length(); i < iMax; i++ )
+        if( arr[ i ] == min )
+            minIndex = i;
+    return false;
+}
+
+// Берет случайный элемент массива из всех элементов, равных максимуму в данном массиве
+bool _GetRandomMaxIndex( uint[] arr, uint& out maxIndex )
+{
+    uint min = 0,
+         max = 0;
+
+    if( not _GetLimits( arr, min, max ) )
+        return false;
+
+    uint[] maxes;
+    for( uint i = 0, iMax = arr.length(); i < iMax; i++ )
+        if( arr[ i ] == max )
+            maxes.insertLast( i );
+
+    maxIndex = maxes[ Random( 0, maxes.length() - 1 ) ];
+    return true;
+}
+
+void _CritterInit( Critter& cr, bool firstTime )
+{
+    pattern.SetEvents( cr );
+}
+// Debug log
+void DL( string s )
+{
+    // Log(s);
+}
