@@ -1,0 +1,422 @@
+[comment]
+Проверки в преддиалоговых - см. переменную q_klam_find_trappers.
+
+Dagnir, 20.11.2009.
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 D _var p q_klam_find_trappers < 2 D _param p ST_INTELLECT > 3 #
+15 1020 D _var p q_klam_find_trappers > 1 D _var p q_klam_find_trappers < 5 D _param p ST_INTELLECT > 3 #
+15 1030 D _var p q_klam_find_trappers = 6 D _param p ST_INTELLECT > 3 #
+25 1040 D _var p q_klam_find_trappers = 7 D _param p ST_INTELLECT > 3 #
+15 1050 D _var p q_klam_find_trappers = 8 D _param p ST_INTELLECT > 3 #
+28 1060 D _var p q_klam_find_trappers = 9 D _param p ST_INTELLECT > 3 #
+15 1070 D _var p q_klam_find_trappers = 5 D _param p ST_INTELLECT > 3 D _var p klam_trappers_radaway < 20 #
+26 1080 D _var p q_klam_find_trappers = 5 D _param p ST_INTELLECT > 3 D _var p klam_trappers_radaway = 20 #
+15 1090 D _var p q_klam_find_trappers = 10 D _param p ST_INTELLECT > 3 D _var p klam_trappers_radaway < 20 #
+26 1100 D _var p q_klam_find_trappers = 10 D _param p ST_INTELLECT > 3 D _var p klam_trappers_radaway = 20 #
+29 1110 D _var p q_klam_find_trappers < 2 D _param p ST_INTELLECT < 4 #
+32 1120 D _param p ST_INTELLECT < 4 D _var p q_klam_find_trappers > 1 D _var p q_klam_find_trappers < 5 #
+34 1130 D _var p q_klam_find_trappers = 5 D _param p ST_INTELLECT < 4 #
+35 1140 D _var p q_klam_find_trappers = 9 D _param p ST_INTELLECT < 4 @
+2 2000 None 1 #
+3 2010 #
+4 2020 D _var p q_klam_find_trappers = 1 #
+0 2030 @
+3 3000 None 1 #
+4 3010 D _var p q_klam_find_trappers = 1 #
+5 3020 D _var p q_klam_find_trappers = 0 #
+0 3030 @
+4 4000 None 1 #
+5 4010 #
+12 4020 @
+5 5000 None 1 #
+7 5010 #
+6 5020 D _param p SK_OUTDOORSMAN > 39 @
+6 6000 None 1 #
+7 6010 @
+7 7000 None 1 #
+8 7010 @
+8 8000 None 1 #
+10 8010 D _var p q_klam_find_trappers = 0 D _var p klam_trappers_radaway < 20 R _var p q_klam_find_trappers = 3 #
+9 8020 D _var p klam_trappers_radaway = 20 #
+11 8030 D _var p klam_trappers_radaway < 20 D _var p q_klam_find_trappers = 1 R _var p q_klam_find_trappers = 2 @
+9 9000 None 1 #
+10 9010 D _var p q_klam_find_trappers = 0 R _var p q_klam_find_trappers = 3 #
+11 9020 D _var p q_klam_find_trappers = 1 R _var p q_klam_find_trappers = 2 @
+10 10000 None 1 #
+13 10010 D _var p klam_trappers_radaway < 20 #
+0 10020 #
+0 10030 @
+11 11000 None 1 #
+13 11010 D _var p klam_trappers_radaway < 20 #
+0 11020 #
+0 11030 @
+12 12000 None 1 #
+5 12010 @
+13 13000 None 1 #
+0 13010 D _param p ST_INTELLECT > 5 #
+0 13020 @
+14 14000 None 0 @
+15 15000 None 1 #
+16 15010 D _var p q_klam_find_trappers = 4 R _var p q_klam_find_trappers = 5 R _param p ST_KARMA + 5 R _param p ST_EXPERIENCE + 800 R _param p REPUTATION_KLAMATH + 1 #
+25 15020 D _var p q_klam_find_trappers = 6 R _param p ST_KARMA - 5 R _var p q_klam_find_trappers = 7 R _param p ST_EXPERIENCE + 800 R _param p REPUTATION_KLAMATH - 1 #
+17 15030 D _param p ST_INTELLECT < 6 D _item p PID_STIMPAK > 0 D _var p klam_trappers_radaway < 20 R _item p PID_STIMPAK - 1 #
+18 15040 D _param p ST_INTELLECT < 6 D _item p PID_ANTIDOTE > 0 D _var p klam_trappers_radaway < 20 R _item p PID_ANTIDOTE - 1 #
+19 15050 D _item p PID_RADAWAY > 0 D _var p klam_trappers_radaway < 19 R _var p klam_trappers_radaway + 1 R _var p name_mem_npc_player + 1 R _item p PID_RADAWAY - 1 R _param p ST_EXPERIENCE + 1500 R _param p ST_KARMA + 10 #
+20 15060 D _var p klam_trappers_radaway = 19 D _item p PID_RADAWAY > 0 R _var p klam_trappers_radaway + 1 R _var p name_mem_npc_player + 1 R _item p PID_RADAWAY - 1 R _param p ST_EXPERIENCE + 1500 R _param p ST_KARMA + 10 R _script klam_trappers@r_StartMove 0  #
+21 15070 D _param p ST_INTELLECT < 6 D _item p PID_RAD_X > 0 D _var p klam_trappers_radaway < 20 R _item p PID_RAD_X - 1 #
+22 15080 D _param p ST_INTELLECT < 6 D _item p PID_BEER > 0 D _var p klam_trappers_radaway < 20 R _item p PID_BEER - 1 #
+24 15090 D _var p name_mem_npc_player = 1 D _var p klam_trappers_radaway = 20 #
+23 15100 D _var p klam_trappers_radaway = 20 D _var p name_mem_npc_player = 0 #
+16 15110 D _var p q_klam_find_trappers = 0 D _param p SK_SPEECH > 49 R _var p q_klam_find_trappers = 5 R _param p ST_KARMA - 10 R _param p ST_EXPERIENCE + 850 #
+27 15120 D _param p SK_SPEECH < 50 D _var p q_klam_find_trappers < 4 D _var p q_klam_find_trappers > 1 #
+0 15130 @
+16 16000 None 1 #
+0 16010 R _param p ST_KARMA + 5 #
+0 16020 R _item p PID_SHARP_SPEAR + 1 R _item p PID_GECKO_PELT + 5 R _item p PID_GOLDEN_GECKO_PELT + 8 @
+17 17000 None 1 #
+0 17010 #
+18 17020 D _item p PID_ANTIDOTE > 0 R _item p PID_ANTIDOTE - 1 #
+19 17030 D _item p PID_RADAWAY > 0 D _var p klam_trappers_radaway < 19 R _var p name_mem_npc_player + 1 R _item p PID_RADAWAY - 1 R _var p klam_trappers_radaway + 1 R _param p ST_EXPERIENCE + 1500 R _param p ST_KARMA + 10 #
+20 17040 D _item p PID_RADAWAY > 0 D _var p klam_trappers_radaway = 19 R _var p name_mem_npc_player + 1 R _item p PID_RADAWAY - 1 R _var p klam_trappers_radaway + 1 R _param p ST_EXPERIENCE + 1500 R _param p ST_KARMA + 10 R _script klam_trappers@r_StartMove 0  #
+21 17050 D _item p PID_RAD_X > 0 R _item p PID_RAD_X - 1 #
+22 17060 D _item p PID_BEER > 0 R _item p PID_BEER - 1 @
+18 18000 None 1 #
+0 18010 #
+17 18020 D _item p PID_STIMPAK > 0 R _item p PID_STIMPAK - 1 #
+19 18030 D _item p PID_RADAWAY > 0 D _var p klam_trappers_radaway < 19 R _var p name_mem_npc_player + 1 R _item p PID_RADAWAY - 1 R _param p ST_EXPERIENCE + 1500 R _param p ST_KARMA + 10 R _var p klam_trappers_radaway + 1 #
+20 18040 D _item p PID_RADAWAY > 0 D _var p klam_trappers_radaway = 19 R _var p klam_trappers_radaway + 1 R _var p name_mem_npc_player + 1 R _item p PID_RADAWAY - 1 R _param p ST_EXPERIENCE + 1500 R _param p ST_KARMA + 10 R _script klam_trappers@r_StartMove 0  #
+21 18050 D _item p PID_RAD_X > 0 R _item p PID_RAD_X - 1 #
+22 18060 D _item p PID_BEER > 0 R _item p PID_BEER - 1 @
+19 19000 None 1 #
+19 19010 D _var p klam_trappers_radaway < 19 D _item p PID_RADAWAY > 0 R _var p klam_trappers_radaway + 1 R _item p PID_RADAWAY - 1 R _param p ST_EXPERIENCE + 1500 R _param p ST_KARMA + 10 #
+20 19020 D _var p klam_trappers_radaway = 19 D _item p PID_RADAWAY > 0 R _var p klam_trappers_radaway + 1 R _item p PID_RADAWAY - 1 R _param p ST_EXPERIENCE + 1500 R _param p ST_KARMA + 10 R _script klam_trappers@r_StartMove 0  #
+0 19030 @
+20 20000 None 1 #
+0 20010 #
+0 20020 @
+21 21000 None 1 #
+0 21010 #
+17 21020 D _item p PID_STIMPAK > 0 R _item p PID_STIMPAK - 1 #
+18 21030 D _item p PID_ANTIDOTE > 0 R _item p PID_ANTIDOTE - 1 #
+19 21040 D _item p PID_RADAWAY > 0 D _var p klam_trappers_radaway < 19 R _var p name_mem_npc_player + 1 R _item p PID_RADAWAY - 1 R _var p klam_trappers_radaway + 1 R _param p ST_EXPERIENCE + 1500 R _param p ST_KARMA + 10 #
+20 21050 D _item p PID_RADAWAY > 0 D _var p klam_trappers_radaway = 19 R _var p name_mem_npc_player + 1 R _item p PID_RADAWAY - 1 R _var p klam_trappers_radaway + 1 R _param p ST_EXPERIENCE + 1500 R _param p ST_KARMA + 10 R _script klam_trappers@r_StartMove 0  #
+22 21060 D _item p PID_BEER > 0 R _item p PID_BEER - 1 @
+22 22000 None 1 #
+0 22010 #
+17 22020 D _item p PID_STIMPAK > 0 R _item p PID_STIMPAK - 1 #
+18 22030 D _item p PID_ANTIDOTE > 0 R _item p PID_ANTIDOTE - 1 #
+19 22040 D _item p PID_RADAWAY > 0 D _var p klam_trappers_radaway < 19 R _var p name_mem_npc_player + 1 R _item p PID_RADAWAY - 1 R _var p klam_trappers_radaway + 1 R _param p ST_EXPERIENCE + 1500 R _param p ST_KARMA + 10 #
+20 22050 D _item p PID_RADAWAY > 0 D _var p klam_trappers_radaway = 19 R _var p name_mem_npc_player + 1 R _item p PID_RADAWAY - 1 R _var p klam_trappers_radaway + 1 R _param p ST_EXPERIENCE + 1500 R _param p ST_KARMA + 10 R _script klam_trappers@r_StartMove 0  #
+21 22060 D _item p PID_RAD_X > 0 R _item p PID_RAD_X - 1 @
+23 23000 None 1 #
+16 23010 D _var p q_klam_find_trappers = 4 R _var p q_klam_find_trappers = 5 R _param p ST_EXPERIENCE + 800 R _param p REPUTATION_KLAMATH + 1 #
+25 23020 D _var p q_klam_find_trappers = 6 R _var p q_klam_find_trappers = 7 R _param p ST_EXPERIENCE + 800 R _param p REPUTATION_KLAMATH - 1 #
+0 23030 @
+24 24000 None 1 #
+16 24010 D _var p q_klam_find_trappers = 4 R _var p q_klam_find_trappers = 5 R _param p ST_EXPERIENCE + 800 R _param p REPUTATION_KLAMATH + 1 #
+0 24020 @
+25 25000 Attack 1 @
+26 26000 None 1 @
+27 27000 None 0 @
+28 28000 None 0 @
+29 29000 None 1 #
+30 29010 D _var p q_klam_find_trappers = 0 R _var p q_klam_find_trappers = 3 #
+31 29020 D _var p q_klam_find_trappers = 1 R _var p q_klam_find_trappers = 2 #
+0 29030 @
+30 30000 None 1 #
+0 30010 #
+0 30020 @
+31 31000 None 1 #
+0 31010 #
+0 31020 @
+32 32000 None 1 #
+33 32010 D _var p q_klam_find_trappers = 4 R _var p q_klam_find_trappers = 5 R _item p PID_GECKO_PELT + 5 R _item p PID_GOLDEN_GECKO_PELT + 3 R _param p ST_EXPERIENCE + 800 R _param p ST_KARMA + 5 R _param p REPUTATION_KLAMATH + 1 #
+0 32020 @
+33 33000 None 1 #
+0 33010 @
+34 34000 None 0 @
+35 35000 None 0 &
+
+[russ]
+{100}{}{Брайан Острое Копьё}
+{200}{}{Вы видите: траппер.}
+{210}{}{Немолодой, совершенно лысый траппер. У него нет даже бровей. Кожа почему-то сильно красная.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{0, 1}
+{1020}{}{2, 3, 4}
+{1030}{}{6}
+{1040}{}{7}
+{1050}{}{8}
+{1060}{}{9}
+{1070}{}{5 Трапперы больны.}
+{1080}{}{5 Трапперы здоровы.}
+{1090}{}{10 Трапперы больны.}
+{1100}{}{10 Трапперы здоровы.}
+{1110}{}{Тупой не знаком.}
+{1120}{}{Тупой взял квест у Брайана.}
+{1130}{}{Тупой выполнил квест.}
+{1140}{}{Тупой пытался обмануть Эмму.}
+{2000}{}{[Мужчина смотрит на вас мутным взглядом. Ему явно нездоровится.]}
+{2010}{}{Эй! Привет! Всё в порядке?}
+{2020}{}{Привет, мужик! Ты не видел тут траппера по имени Брайан?}
+{2030}{}{Фу, фу! Заразный!}
+{3000}{}{Привет... Как видишь, нет.}
+{3010}{}{Ну, окей. А, может, видел тут траппера по имени Брайан?}
+{3020}{}{А что случилось?}
+{3030}{}{Ну я пойду!}
+{4000}{}{Я... Брайан. Но зачем я тебе нужен? Ох, чёрт, Эмма... Она, наверное, с ног уже сбилась.}
+{4010}{}{Ага, Эмма. А что за нахрен с тобой произошло?}
+{4020}{}{Если ты Брайан, то я Смотритель Убежища. Слушай, не зли меня. Быстро говори, где он. Это такой волосатый малый в коже. Что ты с ним сделал?}
+{5000}{}{Мы с двумя друзьями решили вчера зайти поглубже в лес... И наткнулись на склад каких-то бочек со светящейся жидкостью. Ну, мы вспомнили, что Смайли говорил что-то про эту жидкость и гекко... Вроде они их боялись. Ну и мы решили вылить их в канаву вокруг логова гекко, чтобы они боялись выбегать. А то уже, гады, собак по ночам воруют. Таскали, таскали весь день эти бочки, потом пошли назад.}
+{5010}{}{[Далее.]}
+{5020}{}{Плохо вы слушали, видимо. Совсем они её не боятся.}
+{6000}{}{Ох ты чёрт. Ну, мы тогда нажравшись были, праздновали его возвращение. Ладно, слушай дальше.}
+{6010}{}{[Далее.]}
+{7000}{}{Ну и вижу, я, значит, что Майк светится. Сначала подумал, что показалось, отшутились. А потом, как потемней стало, понимаю, что и точно светится. И я тоже. И Терри. Заторопились в город, но тут так хреново что-то стало, что решили привал сделать. Ночью сильно рвало, Майк вообще слёг. А у меня волосы выпали. Терри ещё в нормальном состоянии был, мы ему говорили в город пойти, привести кого-нибудь.}
+{7010}{}{[Далее.]}
+{8000}{}{Но он решил сначала проверить, сработала ли задумка. Взял винтовку свою, утопал на юг. Я потом пару выстрелов слышал, а Терри больше не видел. Эх. Ну а нам потом совсем поплохело.}
+{8010}{}{[Далее.]}
+{8020}{}{[Далее.]}
+{8030}{}{[Далее.]}
+{9000}{}{Но потом тут проходила пара добрых человек... Они согласились нам с Майком помочь, дали лекарств каких-то довоенных. Сейчас мы уже совсем здоровы, надо отдохнуть только.}
+{9010}{}{[Далее.]}
+{9020}{}{[Далее.]}
+{10000}{}{Слушай, у меня в Кламате жена осталась, Эмма. Будь другом, если будешь там - передай ей, что у меня всё в порядке. Как получше станет, сразу дойду. Наш дом сразу за новым магазином Вика, найти не сложно.}
+{10010}{}{Да нет проблем. Может, тебе самому ещё помочь?}
+{10020}{}{Нет проблем.}
+{10030}{}{Посмотрим. Я совсем не туда сейчас иду.}
+{11000}{}{Будь другом, скажи Эмме, что у меня всё в порядке. Как получше станет, сразу дойду. Не пугай её там, окей?}
+{11010}{}{Да нет проблем. Может, тебе самому ещё помочь?}
+{11020}{}{Положись на меня!}
+{11030}{}{Не уверен@sex@|||а|, хочу ли я вам ещё помогать... Но посмотрим.}
+{12000}{}{Говорю же, я и есть Брайан. Только... [Показывает на матрац, рядом с которым он стоит. Там на изголовье лежит большая куча волос.] ...они ночью все выпали.}
+{12010}{}{В рот мне ноги! Что случилось-то?}
+{13000}{}{Да знать бы, что за зараза нас свалила. И лекарств найти.}
+{13010}{}{Светящиеся бочки, говоришь? Да вы, наверное, облучились сильно. Есть один препарат довоенный, постараюсь найти...}
+{13020}{}{Я посмотрю, что я смогу сделать.}
+{14000}{}{Спасибо, @sex@|друг||подруга|!}
+{15000}{}{Привет. Ну, как успехи?}
+{15010}{}{Я передал@sex@|||а| Эмме, что у тебя всё хорошо.}
+{15020}{}{Отлично. Я сказал@sex@|||а| Эмме всю правду. Что ты смертельно болен и умрёшь. Не надо тешить её лишними надеждами.}
+{15030}{}{Эй, Брайан, у меня тут есть стимулятор. Посмотри, может, поможет.}
+{15040}{}{Эй, Брайан, у меня тут есть противоядие. Посмотри, может, поможет.}
+{15050}{}{Эй, Брайан, у меня тут есть Рад-Эвей. Посмотри, может, поможет.}
+{15060}{}{Эй, Брайан, у меня тут есть Рад-Эвей. Посмотри, может, поможет.}
+{15070}{}{Эй, Брайан, у меня тут есть Рад-Икс. Посмотри, может, поможет.}
+{15080}{}{Эй, Брайан. Глотни пивка. Может, поможет.}
+{15090}{}{Эй, Брайан, ты выглядишь уже совсем здоровым.}
+{15100}{}{Эй, Брайан, ты выглядишь уже совсем здоровым.}
+{15110}{}{[Обмануть] Я передал@sex@|||а| Эмме, что у тебя всё хорошо.}
+{15120}{}{Я... Эээ... Передал@sex@|||а| Эмме, что у тебя всё хорошо!}
+{15130}{}{Спасибо, хорошо.}
+{16000}{}{Спасибо тебе, добрый человек! Но у меня почти ничего нет, чтобы отблагодарить тебя... Хотя вот, возьми мои трофеи с последней охоты. И это копьё, нам пока одного на двоих хватит.}
+{16010}{}{Спасибо, Брайан, но оставь это себе, я был рад помочь.}
+{16020}{}{Спасибо, пойду проткну им пару гекко.}
+{17000}{}{Давай попробуем... [Вкалывает себе] Ну... Вроде чуть получше, но без изменений. В любом случае, спасибо.}
+{17010}{}{От чёрт. Попробую найти что-нибудь ещё.}
+{17020}{}{У меня тут есть ещё противоядие. Посмотри, может, поможет.}
+{17030}{}{У меня тут есть ещё Рад-Эвей. Посмотри, может, поможет.}
+{17040}{}{У меня тут есть ещё Рад-Эвей. Посмотри, может, поможет.}
+{17050}{}{У меня тут есть ещё Рад-Икс. Посмотри, может, поможет.}
+{17060}{}{Вот, глотни пивка. Может, оно поможет.}
+{18000}{}{Давай попробуем... [Выпивает] Хммм... Ничего не чувствую. Да, значит, это не отравление.}
+{18010}{}{От чёрт. Попробую найти что-нибудь ещё.}
+{18020}{}{У меня тут есть ещё стимпак. Посмотри, может, поможет.}
+{18030}{}{У меня тут есть ещё Рад-Эвей. Посмотри, может, поможет.}
+{18040}{}{У меня тут есть ещё Рад-Эвей. Посмотри, может, поможет.}
+{18050}{}{У меня тут есть ещё Рад-Икс. Посмотри, может, поможет.}
+{18060}{}{Вот, глотни пивка. Может, оно поможет.}
+{19000}{}{Давай попробуем... [Вкалывает.] Тааак... Хммм... О! Слушай! Мне стало легче! Спасибо тебе!}
+{19010}{}{Возьми ещё один.}
+{19020}{}{Возьми ещё один.}
+{19030}{}{Попробую найти ещё.}
+{20000}{}{[Вкалывает половину себе, половину Майку.] Хм. А я, вроде, уже совсем оклемался. Ну и чудо эти довоенные препараты. Отдохну немного и пойду домой. Спасибо ещё раз за помощь. Я твой должник.}
+{20010}{}{Рад@sex@|||а| помочь.}
+{20020}{}{Буду обращаться, если что понадобится.}
+{21000}{}{Давай попробуем... [Выпивает] Хммм... Вроде без изменений.}
+{21010}{}{От чёрт. Попробую найти что-нибудь ещё.}
+{21020}{}{У меня тут есть ещё стимпак. Посмотри, может, поможет.}
+{21030}{}{У меня тут есть ещё противоядие. Посмотри, может, поможет.}
+{21040}{}{У меня тут есть ещё Рад-Эвей. Посмотри, может, поможет.}
+{21050}{}{У меня тут есть ещё Рад-Эвей. Посмотри, может, поможет.}
+{21060}{}{Вот, глотни пивка. Может, оно поможет.}
+{22000}{}{Пиво - это всегда хорошо. [Выпивает] Хммм... Вроде без изменений. Что не удивительно, ха-ха!}
+{22010}{}{От чёрт. Попробую найти что-нибудь ещё.}
+{22020}{}{У меня тут есть ещё стимпак. Посмотри, может, поможет.}
+{22030}{}{У меня тут есть ещё противоядие. Посмотри, может, поможет.}
+{22040}{}{У меня тут есть ещё Рад-Эвей. Посмотри, может, поможет.}
+{22050}{}{У меня тут есть ещё Рад-Эвей. Посмотри, может, поможет.}
+{22060}{}{У меня тут есть ещё Рад-Икс. Посмотри, может, поможет.}
+{23000}{}{Да, помогли добрые люди с лекарствами.}
+{23010}{}{Понятно. А я вот как раз сказал@sex@|||а| Эмме, что у тебя всё хорошо.}
+{23020}{}{Понятно. А я вот сказал@sex@|||а| Эмме, что ты болен и умрёшь.}
+{23030}{}{Ясно.}
+{24000}{}{Да, спасибо тебе.}
+{24010}{}{Рад@sex@|||а| помочь. Кстати, я уже рассказал@sex@|||а| Эмме, что у тебя всё хорошо.}
+{24020}{}{Рад@sex@|||а| помочь.}
+{25000}{}{Ах ты @sex@|грязный ублюдок||сволочь|!}
+{26000}{}{Привет, рад тебя видеть.@@Мне уже гораздо лучше.@@Скоро возвращаюсь домой.@@Терри жалко.@@Хорошо, что всё обошлось.@@Спасибо ещё раз за помощь.}
+{27000}{}{По-моему, ты врёшь.}
+{28000}{}{Не мешай мне.@@Ты как@sex@|ой-то подозрительный||ая-то подозрительная|.@@Уходи.@@Мы не любим чужаков.@@Чего тебе надо? Уходи?@@Уходи, @sex@|прихвостень||служанка| хабологов.}
+{29000}{}{Этот человек смотрит очень, очень странный взгляд. Как будто он пил огненный вода.}
+{29010}{}{Эй! Твоя всё хорошо?}
+{29020}{}{Эй! Твоя не видеть тут Брайана? Его искать Эма.}
+{29030}{}{Ахаха! Пь-яница!}
+{30000}{}{Моя... Моя всё хорошо. [Про себя] Хммм... А @sex@е|го||ё| можно использовать. [Показывает связку шкурок гекко.] Хочешь шкурок? Иди в Кламат, за дом Вика, найди женщину по имени Эмма. Скажи, что ты от Брайана. Скажи, у Брайана всё хорошо. Брайана - это моя.}
+{30010}{}{@pname@ ходить, искать, говорить!}
+{30020}{}{Может быть.}
+{31000}{}{Эмма, да? Ну конечно же, она же переживает, наверное. Скажи ей, что у Брайана всё хорошо. И я дам тебе шкурок гекко.}
+{31010}{}{Моя хотеть шкурок, да! @pname@ ходить!}
+{31020}{}{Моя думать, потом ходить или не ходить.}
+{32000}{}{Привет, @pname@. Ну что?}
+{32010}{}{Я говорить Э-ма Брайана всё хорошо.}
+{32020}{}{Ещё ничего!}
+{33000}{}{Молодец. Вот твои шкурки.}
+{33010}{}{Ух! Ух! Радость!}
+{34000}{}{Спасибо ещё раз.@@Ты не так@sex@|ой уж и плохой туземец||ая уж и плохая дикарка|.@@Удачной охоты.@@Мир твоему дому.}
+{35000}{}{Уходи, @sex@|туземец||дикарка|. Мне не до тебя.@@Отстань, я в печали.@@Не видишь, мне плохо? Уйди.@@Отойди, не путайся тут.@@Чего тебе?}
+
+[engl]
+{100}{}{Brian the Sharp Spear}
+{200}{}{You see: trapper.}
+{210}{}{An aging completely bald trapper. He doesn't even have eyebrows. His skin is distinctly red for some reason.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{0, 1}
+{1020}{}{2, 3, 4}
+{1030}{}{6}
+{1040}{}{7}
+{1050}{}{8}
+{1060}{}{9}
+{1070}{}{5 The trappers are sick.}
+{1080}{}{5 The trappers are healthy.}
+{1090}{}{10 The trappers are sick.}
+{1100}{}{10 The trappers are healthy.}
+{1110}{}{Dimwit is unacquainted.}
+{1120}{}{Dimwit agreed for Brian's quest.}
+{1130}{}{Dimwit finished the quest.}
+{1140}{}{Dimwit tried to trick Emma.}
+{2000}{}{[The man looks at you with a dull stare. He's definitely not well.]}
+{2010}{}{Hey! Hello! Are you all right?}
+{2020}{}{Hey, man! Have you seen a trapper named Brian?}
+{2030}{}{Eww! Eww! Contagious!}
+{3000}{}{Hi... As you can see, no.}
+{3010}{}{Okay. Hey, maybe you've seen a trapper named Brian around here?}
+{3020}{}{What happened?}
+{3030}{}{I got to go!}
+{4000}{}{I am... Brian. Why are you looking for me? Oh damn! Emma... She must be going nuts.}
+{4010}{}{Yeah, Emma. So what the hell happened to you?}
+{4020}{}{If you're Brian, I am the Vault Overseer. Look, don't drive me mad. Tell me where he is right away. He's a hairy dude dressed up in leather. What did you do to him?}
+{5000}{}{Me and two of my friends decided to go deeper into the woods yesterday... And we stumbled upon a storage of some barrels with radiant liquid. Well, we recalled Smiley saying something about this liquid and geckos... Like they were afraid of it. So we decided to pour it into the ditch around geckos' lair, so that they'd be scared to come out. The darn bastards grew bold enough to snatch our dogs at night. We dragged these barrels all day long, then we came back.}
+{5010}{}{[Further.]}
+{5020}{}{You weren't listening well. They're not afraid of it at all.}
+{6000}{}{God damn!. Well, we were drunk, we were celebrating his return. Okay, listen further.}
+{6010}{}{[Further.]}
+{7000}{}{So i see that Mike is glowing. At first i thought it only seemed to me, we were kidding. And then, when it got darker, i realized he was definitely glowing. And me too. And Terry. We hurried back to town, but we began to feel so sick, we decided to halt. We were throwing up heavily at night, Mike couldn't even get up. And all my hair fell out. Terry was more or less ok, we told him t go to town and bring someone.}
+{7010}{}{[Further.]}
+{8000}{}{But he decided to check out if our idea worked first. He took his rifle and headed south. I heard a couple of shots later and haven't seen Terry again. [sighs.] And than we started to feel really awful.}
+{8010}{}{[Further.]}
+{8020}{}{[Further.]}
+{8030}{}{[Further.]}
+{9000}{}{Than a couple of nice guys came by... They agreed to help me and Mike, gave us some pre-war medicine. We're completely well now, we only need to have some rest.}
+{9010}{}{[Further.]}
+{9020}{}{[Further.]}
+{10000}{}{Look here, I got a wife in Klamath, Emma. Do me a favor, If you're around there, tell her that I'm all right. I'll get to her as soon as I get better. Our house is right behind Vic's new shop, it's easy to find.}
+{10010}{}{No problem. Maybe I could help you as well?}
+{10020}{}{No problem.}
+{10030}{}{We'll see about that. I'm heading the opposite direction now.}
+{11000}{}{Do me a favor, tell Emma I'm ok. As soon as I get better, I'll head home. Just don't scare her, ok?}
+{11010}{}{No problem. Maybe I could help you as well?}
+{11020}{}{You can count on me!}
+{11030}{}{I'm not sure if I still want to help you... But we'll see.}
+{12000}{}{I'm telling you, I am Brian. Only... [He points at the mattress next to him. A huge heaps of hair lies at the head of it.] ...they all fell out at night.}
+{12010}{}{fuck me sideways! What the hell happened?}
+{13000}{}{If I only knew what illness struck us, and could find some medicine.}
+{13010}{}{Glowing barrels you say, huh? You must have gotten pretty radiated. There's one pre-war medicine, I'll try to find some...}
+{13020}{}{I'll see what I can do.}
+{14000}{}{Thanks, @sex@|bro||sis|!}
+{15000}{}{Hey. How is it going?}
+{15010}{}{I told Emma, that you're all right.}
+{15020}{}{Fine. I told Emma the truth that you are mortally ill. You shouldn't comfort her with false hope.}
+{15030}{}{Hey, Brian. I got a stimpak somewhere. See if it helps.}
+{15040}{}{Hey, Brian. I got an antidote somewhere. See if it helps.}
+{15050}{}{Hey, Brian. I got radAway somewhere. See if it helps.}
+{15060}{}{Hey, Brian. I got radAway somewhere. See if it helps.}
+{15070}{}{Hey, Brian. I got rad-X somewhere. See if it helps.}
+{15080}{}{Hey, Brian. Have some beer. See if it helps.}
+{15090}{}{Hey, Brian, you look quite healthy.}
+{15100}{}{Hey, Brian, you look quite healthy.}
+{15110}{}{[Lie] I told Emma that you're all right.}
+{15120}{}{I... Err... told Emma that you're all right!}
+{15130}{}{Okay, thanks.}
+{16000}{}{Thank you kind sir! I don't have anything to repay you... Wait, take these trophies from our last hunt. And this spear. We'll get along just fine with one.}
+{16010}{}{Thank you, Brian, but keep it. It was my pleasure to help.}
+{16020}{}{Thanks, I'll go stab some geckos with it now.}
+{17000}{}{Let's try it... [Injects] Well... Seems a little better, but no major change. Thanks anyway.}
+{17010}{}{Damn! I'll try to find something else.}
+{17020}{}{Hey, I also got an antidote here. See if it helps.}
+{17030}{}{Hey, I also got radAway here. See if it helps.}
+{17040}{}{Hey, I also got radAway here. See if it helps.}
+{17050}{}{Hey, I also got rad-x here. See if it helps.}
+{17060}{}{Hey, have some beer. Maybe it'll help}
+{18000}{}{Let's see... [drinks] Hmm... I don't feel anything. Yeah, it's must be not poisoning.}
+{18010}{}{Damn. I'll try to find something else.}
+{18020}{}{Hey, I also got a stimpak here. See if it helps.}
+{18030}{}{Hey, I also got radAway here. See if it helps.}
+{18040}{}{Hey, I also got radAway here. See if it helps.}
+{18050}{}{Hey, I also got rad-x here. See if it helps.}
+{18060}{}{Hey, have some beer. Maybe it'll help.}
+{19000}{}{Let's try it... [Injects.] Well... Hmm... Wow! Look! I feel much better! Thank you!}
+{19010}{}{Take another one.}
+{19020}{}{Take another one.}
+{19030}{}{I'll try to find some more.}
+{20000}{}{[Injects himself with a half, than injects Mike.] Hmm. I seem to have completely recovered. These pre-war medicines really work wonders. I'll have some rest and go home. Thank you once again for your help. I owe you.}
+{20010}{}{It's my pleasure.}
+{20020}{}{I'll call on you if I need anything.}
+{21000}{}{Let's see... [Drinks.] Hmm... There seems to be no change.}
+{21010}{}{Damn. I'll try to find something else.}
+{21020}{}{Hey, I also got a stimpak here. See if it helps.}
+{21030}{}{Hey, I also got an antidote here. See if it helps.}
+{21040}{}{Hey, I also got radAway here. See if it helps.}
+{21050}{}{Hey, I also got radAway here. See if it helps.}
+{21060}{}{Hey, have some beer. Maybe it'll help.}
+{22000}{}{Some beer can't hurt. [Drinks] Hmm... There seems to be no change. And somehow I'm not surprised, ha-ha!}
+{22010}{}{Damn. I'll try to find something else.}
+{22020}{}{Hey, I also got a stimpak here. See if it helps.}
+{22030}{}{Hey, I also got an antidote here. See if it helps.}
+{22040}{}{Hey, I also got radAway here. See if it helps.}
+{22050}{}{Hey, I also got radAway here. See if it helps.}
+{22060}{}{Hey, I also got rad-x here. See if it helps.}
+{23000}{}{Yeah, kind people helped me with some medicine.}
+{23010}{}{I see. And I just told Emma that you're all right.}
+{23020}{}{I see. And I just told Emma that you're ill and you will die.}
+{23030}{}{I see.}
+{24000}{}{Yes, thank you.}
+{24010}{}{My pleasure. By the way I already told Emma that you're all right.}
+{24020}{}{My pleasure.}
+{25000}{}{You lousy @sex@|bastard||bitch|!}
+{26000}{}{Hi, I'm glad to see you.@@I feel much better.@@I'm coming home soon.@@Poor Terry.@@All's well that ends well.@@Thank you once again for your help.}
+{27000}{}{I think you are lying.}
+{28000}{}{Don't bother me.@@You look suspicious.@@Go away.@@We don't like strangers.@@What do you want? Go away!@@Get out, you hubologist stooge.}
+{29000}{}{This man looks strange eyes. Like he be drinkin firewater.}
+{29010}{}{Hey! You alrite?}
+{29020}{}{Hey! You see Brian here. Ema look for him.}
+{29030}{}{Hahaha! Dru-unk!}
+{30000}{}{Me... Me alrite. [To himself] Hmm... I could use @sex@|him||her|. [Shows a bundle of gecko skins.] Want some skins? Go to Klamath behind Vic's house, Find a woman named Emma. Tell her Brian sent you. Tell her Brian is okay. Briana is me.}
+{30010}{}{@pname@ go, find, tell!}
+{30020}{}{Maybe.}
+{31000}{}{Emma, huh? But of course, she must be really worried. Tell her Brian is all right. And I'll give you some gecko skins.}
+{31010}{}{Me want skins, yes! @pname@ go!}
+{31020}{}{Me think, than me go or no go.}
+{32000}{}{Hello, @pname@. How did it go?}
+{32010}{}{I say Emma Brian is alrite.}
+{32020}{}{Nothing yet!}
+{33000}{}{Well done. Here are your skins.}
+{33010}{}{Yes! Yes! Me happy!}
+{34000}{}{Thanks once again.@@You're not such a bad savage.@@Have a good hunt.@@May peace be with you.}
+{35000}{}{Go away, barbarian. I don't have time for you.@@Leave me alone.@@Can't you se I'm not well? Go away.@@Get out, don't bother me.@@What do you want?}

@@ -1,0 +1,283 @@
+#include "_macros.fos"
+#include "_animation.fos"
+#include "hell_h.fos"
+
+#define ERROR_DIALOG_NODE    	(100)
+#define STR_BEGIN_PIPBOYS_WORK 	(3020)
+#define STR_PIP_CREATED			(3021)
+#define STR_CASH_MONEY			(3022)
+#define STR_REPL_MONEY			(3023)
+#define STR_DEBET_CLEAR			(3024)
+#define STR_NO_TOOL				(3025)
+#define STR_CASH_LIMIT_REACHED	(3026)
+
+
+
+import bool TransitToMap(Critter& cr, int locPid, int mapIndex, int entranceNum) from "stdlib";
+
+// Отправка игрока в огороженную зону с пипбоями. Дополнительно выдается гаечный ключ.
+
+void r_SendToPipboys(Critter& player, Critter@ slave)
+{
+	// телепортируем игрока на карту сборки пипбоев
+	bool result = TransitToMap(
+		player, LOCATION_ReplicationHell, MAP_INDEX_hell_pyjamas, ENTRANCE_out_to_pipboys);
+
+	// сбрасываем счетчик текущих работ
+	GameVar @ counter = GetLocalVar(LVAR_hell_cur_work_counter,player.Id);
+	if(!valid(counter)) {
+	//	__ForceDialog = ERROR_DIALOG_NODE;
+		return;
+	}
+	counter = 0;
+	// игрок не телепортировался
+	if (!result)
+	{
+	//	__ForceDialog = ERROR_DIALOG_NODE;
+		return;
+	}
+
+	// TODO: необходимо как-то идентифицировать предмет,
+	//       чтобы при выходе игрока из шахт затем его гарантированно изъять
+
+	// выдаем инструмент
+	Item@ tool = player.AddItem(PID_MULTI_TOOL, 1);
+	// проверка на всякий случай
+	if (tool is null)
+	{
+	//	__ForceDialog = ERROR_DIALOG_NODE;
+		return;
+	}
+	// сообщение игроку
+	//player.Say(SAY_NETMSG,"Вы допущены до работы по сборке пипбоев. Когда решите выйти отсюда, привлеките внимание надзирателя.");
+	player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_BEGIN_PIPBOYS_WORK);
+}
+
+import bool IsTimeoutExpired(Critter& cr) from "hell_mine_mining";
+
+#define STR_NEED_REST (2201) // строка из hell_mine_mining
+
+// сборка пипбоев - функция сценери, либо простое использование стола, либо использование итема
+bool s_Assemble(Critter& cr, Scenery& sc, int skill, Item@ item)
+{
+	if(!valid(item)){ if (skill != -1) return false; }
+	// проверяем, что у игрока есть в инвентаре гаечный ключ
+		if(cr.CountItem (PID_MULTI_TOOL)==0) {
+		cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_NO_TOOL);
+		return false;
+	}
+
+	if (not IsTimeoutExpired(cr))
+	{
+		// critter need a rest
+		cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_NEED_REST);
+
+		//cr.Animate(0xFF, ANIM1_EMPTY, 0, 0xFF, 0, true, true, true);
+
+		return true;
+	}
+	else
+	{
+		cr.SetDir(GetDirection(cr.HexX,cr.HexY,sc.HexX,sc.HexY));
+		_CritAnimateUse(cr);
+	}
+
+	//пипбой соберется в 100% случаев
+	AssemblePipboy(cr);
+	SetPBTimeout(cr);
+	return true;
+
+}
+
+
+
+// сборка пипбоя
+void AssemblePipboy(Critter & cr)
+{
+	GameVar @ counter = GetLocalVar(LVAR_hell_cur_work_counter,cr.Id);
+	if(!valid(counter)) {
+		Log("Cannot find local var: hell_cur_work_counter");
+		return;
+	}
+	counter+=1;
+
+	//cr.Say(SAY_NETMSG,"Вам удалось собрать PipBoy из деталей. Всего собрано, штук: " + counter.GetValue());
+	cr.SayMsg(SAY_NETMSG,TEXTMSG_TEXT,STR_PIP_CREATED,"$pipnum "+counter.GetValue());
+}
+
+#define T_O_BASE						(300) //timeout base
+
+// установка таймаута на сборку (Таймаут - 300/SK_SCIENCE или 300/SK_REPAIR, что меньше. )
+void SetPBTimeout(Critter& cr)
+{
+	GameVar@ timeoutExpireTime = GetLocalVar(LVAR_hell_mine_timeout_end, cr.Id);
+	if (not valid(timeoutExpireTime))
+	{
+		Log("Cannot find local var: hell_mine_timeout_end");
+		return;
+	}
+
+	// basic formula for timeout time in real minutes
+	int timeoutTime = cr.Skill[SK_SCIENCE]>cr.Skill[SK_REPAIR]?T_O_BASE/cr.Skill[SK_REPAIR]:T_O_BASE/cr.Skill[SK_SCIENCE];
+
+	// set timeout end timestamp
+	timeoutExpireTime = __FullSecond + __TimeMultiplier * timeoutTime/60;
+
+
+
+	cr.Say(SAY_NETMSG,
+		"Setting timeout: " + (timeoutExpireTime.GetValue() - __FullSecond));
+}
+
+//
+
+//тестирование|для лайтсервера
+// ~run hell_pipboys GoHell 9 17 0
+// p0 - карта, p1 номер гекса
+void GoHell(Critter& cr, int p0, int p1, int p2)
+{
+	Location @loc = GetLocationByPid (LOCATION_ReplicationHell,0);
+	if(!valid(loc)){cr.Say(SAY_NETMSG, "Бога нет и ад не найден");return;}
+	cr.Say(SAY_NETMSG, "Welcome to Hell!");
+	cr.TransitToMap(loc.GetMapByIndex(p0).Id,p1);
+
+
+}
+
+// выход наружу возможен через диалог или использование двери
+void _PipDoorInit(Item& door,bool firstTime)
+{
+	door.SetEvent(ITEM_EVENT_SKILL,"e_UsePipDoor");
+}
+// использование скила на итем
+void _PipAssembleItemsInit(Item& item,bool firstTime)
+{
+	item.SetEvent(ITEM_EVENT_SKILL,"e_UseAssembleInit");
+}
+bool e_UseAssembleInit(Item& item, Critter& cr, int skill)
+{
+	//s_Assemble(Critter& cr, Scenery& sc, int skill, Item@ item)
+	// проверяем, что у игрока есть в инвентаре гаечный ключ
+	if(cr.CountItem (PID_MULTI_TOOL)==0) {
+		cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_NO_TOOL);
+		return false;
+	}
+
+	if (not IsTimeoutExpired(cr))
+	{
+		// critter need a rest
+		cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_NEED_REST);
+
+		//cr.Animate(0xFF, ANIM1_EMPTY, 0, 0xFF, 0, true, true, true);
+
+		return true;
+	}
+	else
+	{
+		cr.SetDir(GetDirection(cr.HexX,cr.HexY,item.HexX,item.HexY));
+		_CritAnimateUse(cr);
+	}
+
+	//пипбой соберется в 100% случаев
+	AssemblePipboy(cr);
+	SetPBTimeout(cr);
+	return true;
+}
+bool e_UsePipDoor(Item& item, Critter& player, int skill)
+{
+	if (skill!=-1) return false;
+
+	return RunDialog(player, DIALOG_hell_pipboys_overseer, item.HexX, item.HexY, false);
+}
+// выход из зоны работ
+// type - игрок выбрал оплату наличными = 1, на счет = 0
+void r_SendFromPipboys(Critter& player, Critter@ slave, int type)
+{
+	bool inCash = (type!=0?true:false);
+
+	uint grantSum = 0;
+
+	GameVar @ counter = GetLocalVar(LVAR_hell_cur_work_counter,player.Id);
+
+	if(!valid(counter)) {
+		Log("Cannot find local var: hell_mine_timeout_end");
+		return;
+	}
+
+	grantSum = counter.GetValue()*COST_PIPBOY_ASSEMBLED;
+	// удаление итемов заданного типа
+	_DeletePlayerItem(player, PID_MULTI_TOOL, false);
+
+	bool result = TransitToMap(player, LOCATION_ReplicationHell, MAP_INDEX_hell_pyjamas, ENTRANCE_pipboys_to_out);
+
+	if(!result) return;
+
+	// сброс счетчика
+	counter = 0;
+
+	_GrantMoney(player, grantSum, inCash);
+}
+// удаление итемов по протитопу или всех
+void _DeletePlayerItem(Critter & cr, uint itemPid, bool deleteAll)
+{
+	if(deleteAll)
+	{
+		Item@[] items;
+		cr.GetItems(SLOT_INV,items);
+		cr.GetItems(SLOT_HAND1,items);
+		cr.GetItems(SLOT_HAND2,items);
+		DeleteItems(items);
+		return;
+	}
+
+	uint count = cr.CountItem( itemPid );
+	cr.DeleteItem( itemPid, count);
+}
+// выдача денег
+void _GrantMoney(Critter & cr, int sum, bool inCash)
+{
+
+	if(inCash)
+	{
+
+		sum = int(sum/10>MAX_WORK_MONEY?MAX_WORK_MONEY:sum/10); // не больше 500 наличных за один заход
+		_CheckCashLimit(sum, cr); // проверяем, что реально может взять столько
+		if (sum>0) cr.AddItem(PID_BOTTLE_CAPS,sum);
+		cr.SayMsg(SAY_NETMSG,TEXTMSG_TEXT,STR_CASH_MONEY,"$sum " + sum); //"Вы заработали sum монет"
+	}else{
+		cr.StatBase[ST_REPLICATION_MONEY] + = sum;
+		// больше нуля не заработать на счет
+		cr.StatBase[ST_REPLICATION_MONEY] = cr.StatBase[ST_REPLICATION_MONEY]>0?0:cr.StatBase[ST_REPLICATION_MONEY];
+		cr.SayMsg(SAY_NETMSG,TEXTMSG_TEXT,STR_REPL_MONEY,"$sum " + sum + "$bill " + cr.StatBase[ST_REPLICATION_MONEY]);
+		if (cr.StatBase[ST_REPLICATION_MONEY] ==0) cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT,STR_DEBET_CLEAR);//"Поздравляем! Вы погасили репликационную задолженность. Вы можете покинуть специальную станцию репликации.");
+	}
+}
+
+// проверка, не превышает ли сумма месячного лимита MONTH_CASH_LIMIT_MAX
+void _CheckCashLimit(int & sm, Critter & cr)
+{
+	//1. если таймаут истек, или равен нулю, устанавливаем новый таймаут и новый максимум лимита
+	GameVar @timeOut = GetLocalVar(LVAR_hell_next_cash_reset_time, cr.Id);
+	GameVar @limit = GetLocalVar(LVAR_hell_cash_limit, cr.Id);
+	if(!valid (timeOut)||!valid(limit))
+	{
+		sm = 0;
+		return;
+	}
+
+	if(timeOut.GetValue()==0||uint(timeOut.GetValue())<__FullSecond)
+	{
+		timeOut = __FullSecond + 30*24*60*60; // таймаут тридцать дней
+		limit = MONTH_CASH_LIMIT_MAX;
+	}
+
+	if(sm>limit.GetValue())
+	{
+		sm = limit.GetValue();
+		limit = 0;
+	} else {
+		limit = limit.GetValue() - sm;
+		limit = limit.GetValue()<0?0:limit.GetValue();
+	}
+	if(limit.GetValue()==0) cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_CASH_LIMIT_REACHED);
+}

@@ -1,0 +1,261 @@
+#include "_macros.fos"
+#include "_colors.fos"
+
+#ifdef __CLIENT
+#include "_client_defines.fos"
+#include "client_gui_h.fos"
+#define MODE_SET_CODE  (0)
+#define MODE_OPEN_DOOR (1)
+uint eLockerMode=0;
+uint elockerid=0;
+IGUIElementOpt@ lockerFace;
+
+class ELockerButton1:IGUIElementCallbackMouseClick
+{
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT)
+		{
+			if(lockerFace.GetText().length()<16) lockerFace.Text(lockerFace.GetText()+"1",FONT_BIG_NUM,COLOR_GREEN,COLOR_DRED,FT_CENTERY|FT_ALIGN);
+		}
+	}
+}
+
+class ELockerButton2:IGUIElementCallbackMouseClick
+{
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT)
+		{
+			if(lockerFace.GetText().length()<16) lockerFace.Text(lockerFace.GetText()+"2",FONT_BIG_NUM,COLOR_GREEN,COLOR_DRED,FT_CENTERY|FT_ALIGN);
+		}
+	}
+}
+
+class ELockerButton3:IGUIElementCallbackMouseClick
+{
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT)
+		{
+			if(lockerFace.GetText().length()<16) lockerFace.Text(lockerFace.GetText()+"3",FONT_BIG_NUM,COLOR_GREEN,COLOR_DRED,FT_CENTERY|FT_ALIGN);
+		}
+	}
+}
+
+class ELockerButton4:IGUIElementCallbackMouseClick
+{
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT)
+		{
+			if(lockerFace.GetText().length()<16) lockerFace.Text(lockerFace.GetText()+"4",FONT_BIG_NUM,COLOR_GREEN,COLOR_DRED,FT_CENTERY|FT_ALIGN);
+		}
+	}
+}
+
+class ELockerButton5:IGUIElementCallbackMouseClick
+{
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT)
+		{
+			if(lockerFace.GetText().length()<16) lockerFace.Text(lockerFace.GetText()+"5",FONT_BIG_NUM,COLOR_GREEN,COLOR_DRED,FT_CENTERY|FT_ALIGN);
+		}
+	}
+}
+
+class ELockerButton6:IGUIElementCallbackMouseClick
+{
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT)
+		{
+			if(lockerFace.GetText().length()<16) lockerFace.Text(lockerFace.GetText()+"6",FONT_BIG_NUM,COLOR_GREEN,COLOR_DRED,FT_CENTERY|FT_ALIGN);
+		}
+	}
+}
+
+class ELockerButton7:IGUIElementCallbackMouseClick
+{
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT)
+		{
+			if(lockerFace.GetText().length()<16) lockerFace.Text(lockerFace.GetText()+"7",FONT_BIG_NUM,COLOR_GREEN,COLOR_DRED,FT_CENTERY|FT_ALIGN);
+		}
+	}
+}
+
+class ELockerButton8:IGUIElementCallbackMouseClick
+{
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT)
+		{
+			if(lockerFace.GetText().length()<16) lockerFace.Text(lockerFace.GetText()+"8",FONT_BIG_NUM,COLOR_GREEN,COLOR_DRED,FT_CENTERY|FT_ALIGN);
+		}
+	}
+}
+
+class ELockerButton9:IGUIElementCallbackMouseClick
+{
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT)
+		{
+			if(lockerFace.GetText().length()<16) lockerFace.Text(lockerFace.GetText()+"9",FONT_BIG_NUM,COLOR_GREEN,COLOR_DRED,FT_CENTERY|FT_ALIGN);
+		}
+	}
+}
+
+class ELockerButton0:IGUIElementCallbackMouseClick
+{
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT)
+		{
+			if(lockerFace.GetText().length()<16) lockerFace.Text(lockerFace.GetText()+"0",FONT_BIG_NUM,COLOR_GREEN,COLOR_DRED,FT_CENTERY|FT_ALIGN);
+		}
+	}
+}
+
+class ELockerButtonEnter:IGUIElementCallbackMouseClick
+{
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT)
+		{
+			HideScreen(CLIENT_SCREEN_ELECTRIC_LOCKER,3,3,3);
+			if(eLockerMode==MODE_OPEN_DOOR) RunServerScriptUnsafe("e_locker@unsafe_OpenDoor",elockerid,0,0,lockerFace.GetText(),null);
+			else RunServerScriptUnsafe("e_locker@unsafe_SetDoorCode",elockerid,0,0,lockerFace.GetText(),null);
+		}
+	}
+}
+
+class ELockerFace:IGUIElementCallbackInit
+{
+	void OnInit()
+	{
+		@lockerFace=GUI_GetElementOptions();
+	}
+}
+ 
+ void InitLockerScreen()
+ {
+	ELockerButton1 button1;
+	ELockerButton2 button2;
+	ELockerButton3 button3;
+	ELockerButton4 button4;
+	ELockerButton5 button5;
+	ELockerButton6 button6;
+	ELockerButton7 button7;
+	ELockerButton8 button8;
+	ELockerButton9 button9;
+	ELockerButton0 button0;
+	ELockerButtonEnter enter;
+	ELockerFace face;
+	
+	GUI_CreateScreen(CLIENT_SCREEN_ELECTRIC_LOCKER,"e_locker.PNG")
+		.CanMove(true)
+		.Modal(false)
+		.Multiinstance(true);
+		
+	GUI_AddScreenElement(CLIENT_SCREEN_ELECTRIC_LOCKER, "e_locker_face.PNG", 15, 15)
+		.CallbackInit(face);
+	
+	GUI_AddScreenElement(CLIENT_SCREEN_ELECTRIC_LOCKER, "e_locker_button.PNG", 20, 50)
+		.CallbackMouseClick(button1)
+		.DownPic("e_locker_button_dwn.PNG")
+		.Text("1", FONT_BIG,COLOR_SAND,COLOR_DRED,FT_CENTERY|FT_CENTERX);
+	
+	GUI_AddScreenElement(CLIENT_SCREEN_ELECTRIC_LOCKER, "e_locker_button.PNG", 100, 50)
+		.CallbackMouseClick(button2)
+		.DownPic("e_locker_button_dwn.PNG")
+		.Text("2", FONT_BIG,COLOR_SAND,COLOR_DRED,FT_CENTERY|FT_CENTERX);
+		
+	GUI_AddScreenElement(CLIENT_SCREEN_ELECTRIC_LOCKER, "e_locker_button.PNG", 180, 50)
+		.CallbackMouseClick(button3)
+		.DownPic("e_locker_button_dwn.PNG")
+		.Text("3", FONT_BIG,COLOR_SAND,COLOR_DRED,FT_CENTERY|FT_CENTERX);
+		
+	GUI_AddScreenElement(CLIENT_SCREEN_ELECTRIC_LOCKER, "e_locker_button.PNG", 20, 125)
+		.CallbackMouseClick(button4)
+		.DownPic("e_locker_button_dwn.PNG")
+		.Text("4", FONT_BIG,COLOR_SAND,COLOR_DRED,FT_CENTERY|FT_CENTERX);
+		
+	GUI_AddScreenElement(CLIENT_SCREEN_ELECTRIC_LOCKER, "e_locker_button.PNG", 100, 125)
+		.CallbackMouseClick(button5)
+		.DownPic("e_locker_button_dwn.PNG")
+		.Text("5", FONT_BIG,COLOR_SAND,COLOR_DRED,FT_CENTERY|FT_CENTERX);
+	
+	GUI_AddScreenElement(CLIENT_SCREEN_ELECTRIC_LOCKER, "e_locker_button.PNG", 180, 125)
+		.CallbackMouseClick(button6)
+		.DownPic("e_locker_button_dwn.PNG")
+		.Text("6", FONT_BIG,COLOR_SAND,COLOR_DRED,FT_CENTERY|FT_CENTERX);
+		
+	GUI_AddScreenElement(CLIENT_SCREEN_ELECTRIC_LOCKER, "e_locker_button.PNG", 20, 200)
+		.CallbackMouseClick(button7)
+		.DownPic("e_locker_button_dwn.PNG")
+		.Text("7", FONT_BIG,COLOR_SAND,COLOR_DRED,FT_CENTERY|FT_CENTERX);
+		
+	GUI_AddScreenElement(CLIENT_SCREEN_ELECTRIC_LOCKER, "e_locker_button.PNG", 100, 200)
+		.CallbackMouseClick(button8)
+		.DownPic("e_locker_button_dwn.PNG")
+		.Text("8", FONT_BIG,COLOR_SAND,COLOR_DRED,FT_CENTERY|FT_CENTERX);
+		
+	GUI_AddScreenElement(CLIENT_SCREEN_ELECTRIC_LOCKER, "e_locker_button.PNG", 180, 200)
+		.CallbackMouseClick(button9)
+		.DownPic("e_locker_button_dwn.PNG")
+		.Text("9", FONT_BIG,COLOR_SAND,COLOR_DRED,FT_CENTERY|FT_CENTERX);
+		
+	GUI_AddScreenElement(CLIENT_SCREEN_ELECTRIC_LOCKER, "e_locker_button.PNG", 20, 275)
+		.CallbackMouseClick(button0)
+		.DownPic("e_locker_button_dwn.PNG")
+		.Text("0", FONT_BIG,COLOR_SAND,COLOR_DRED,FT_CENTERY|FT_CENTERX);
+		
+	GUI_AddScreenElement(CLIENT_SCREEN_ELECTRIC_LOCKER, "e_locker_enter.PNG", 100, 275)
+		.CallbackMouseClick(enter)
+		.DownPic("e_locker_enter_dwn.PNG")
+		.Text("Enter", FONT_BIG,COLOR_SAND,COLOR_DRED,FT_CENTERY|FT_CENTERX);
+		
+ }
+
+ void __LockerInput(int itemId, int mode, int param2, string@ param3, int[]@ param4)
+ {
+	eLockerMode=mode;
+	elockerid=itemId;
+	ShowScreen(CLIENT_SCREEN_ELECTRIC_LOCKER,3,3,3);
+ }
+ #endif
+ 
+#ifndef __CLIENT
+void  unsafe_OpenDoor(Critter& player, int doorId, int param1, int param2, string@ code, int[]@ param4)
+{
+	Item@ door=GetItem(doorId);
+	string compare;
+	compare+=door.LockerId;
+	if(compare==code)
+	{
+		door.LockerOpen();
+		if(door.GetType()==ITEM_TYPE_CONTAINER) player.ShowContainer(null, door, TRANSFER_HEX_CONT_UP);
+		player.Say(SAY_NETMSG, "Дверь открыто, сцуко!");
+	}
+	else 
+	{
+		player.Say(SAY_NETMSG, "Хуй там - неверный пароль!");
+	}
+}
+
+void  unsafe_SetDoorCode(Critter& player, int doorId, int param1, int param2, string@ code, int[]@ param4)
+{
+	Item@ door=GetItem(doorId);
+	int value=0;
+	StrToInt(code, value);
+	door.LockerId=value;
+	door.LockerComplexity=player.Skill[SK_LOCKPICK];
+	SETFLAG(door.LockerCondition, LOCKER_ELECTRO);
+	player.DeleteItem(PID_ELECTRO_LOCKER,1);
+	player.Say(SAY_NETMSG, "Вы установили электронный замок на дверь");
+}
+#endif

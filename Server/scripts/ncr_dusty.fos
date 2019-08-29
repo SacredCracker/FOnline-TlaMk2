@@ -1,0 +1,62 @@
+// Author: cvet
+// Для квеста Вечеринка у Дасти.
+#include "_macros.fos"
+
+
+void _DustyInit(Critter& dusty, bool firstTime)
+{
+	dusty.ModeBase[MODE_NO_BARTER]=0;
+	dusty.ModeBase[MODE_NO_STEAL]=1;
+	dusty.StatBase[ST_TALK_DISTANCE]=5;
+	dusty.SetEvent(CRITTER_EVENT_FINISH,"_DustyFinish");
+	if(firstTime)
+	{
+		dusty.StatBase[ST_VAR0]=CreateTimeEvent(__FullSecond+60*60,"e_OneHour",true);
+		dusty.StatBase[ST_VAR1]=CreateTimeEvent(__FullSecond+7*24*60*60,"e_OneWeek",true);
+	}
+}
+
+void _DustyFinish(Critter& dusty, bool deleted)
+{
+	if(deleted)
+	{
+		EraseTimeEvent(dusty.StatBase[ST_VAR0]);
+		EraseTimeEvent(dusty.StatBase[ST_VAR1]);
+	}
+}
+
+uint e_OneHour(uint[]@ values)
+{
+	GameVar@ rotgut=GetGlobalVar(GVAR_ncr_dusty_rotgut_counter);
+	GameVar@ beer=GetGlobalVar(GVAR_ncr_dusty_beer_gamma_counter);
+	if(rotgut>=20 && beer>=20)
+	{
+		GameVar@ party=GetGlobalVar(GVAR_ncr_dusty_party_status_global);
+		party=2;
+	}
+	return 60*60; // One hour
+}
+
+uint e_OneWeek(uint[]@ values)
+{
+	GameVar@ rotgut=GetGlobalVar(GVAR_ncr_dusty_rotgut_counter);
+	GameVar@ beer=GetGlobalVar(GVAR_ncr_dusty_beer_gamma_counter);
+	GameVar@ party=GetGlobalVar(GVAR_ncr_dusty_party_status_global);
+	rotgut=0;
+	beer=0;
+	party=0;
+	return 7*24*60*60; // One week
+}
+
+
+
+
+
+
+
+
+
+
+
+
+

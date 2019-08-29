@@ -1,0 +1,321 @@
+[comment]
+
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+4 1010 D _item p PID_BEER > 0 D _var p q_newbie_bender_active = 0 #
+2 1020 D _item p PID_BEER < 1 D _var p q_newbie_bender_active = 0 #
+3 1030 D _var p q_newbie_bender_active = 1 D _param p ST_INTELLECT < 4 D _var p name_mem_player_npc = 0 D _var p name_mem_npc_player = 0 #
+90 1040 D _param p ST_INTELLECT > 3 D _var p q_newbie_bender_active = 1 D _var p name_mem_player_npc = 0 D _var p name_mem_npc_player = 0 #
+30 1050 D _var p q_newbie_bender_active = 1 D _var p name_mem_npc_player = 1 D _var p name_mem_player_npc = 1 @
+2 2000 None 0 @
+3 3000 None 0 @
+4 4000 None 0 #
+0 4010 D _param p ST_INTELLECT > 3 #
+5 4020 D _item p PID_BEER > 0 D _param p ST_INTELLECT < 4 R _item p PID_BEER - 1 R _var p q_newbie_bender_active = 1 #
+5 4030 D _item p PID_BEER > 0 D _param p ST_INTELLECT > 3 R _item p PID_BEER - 1 R _var p q_newbie_bender_active = 1 #
+0 4040 D _param p ST_INTELLECT < 4 @
+5 5000 None 0 #
+90 5010 D _param p ST_INTELLECT > 3 #
+6 5020 D _param p ST_INTELLECT < 4 #
+0 5030 @
+6 6000 None 0 #
+80 6010 D _param p ST_INTELLECT < 4 R _var p loyality - 1 #
+0 6020 D _param p ST_INTELLECT < 4 @
+80 7000 None 0 #
+81 7010 D _param p ST_PERCEPTION > 4 D _item p PID_BOTTLE_CAPS > 0 R _item p PID_BOTTLE_CAPS - 99 R _script dialog@r_InfoMessage 1 1 #
+82 7020 D _item p PID_BOTTLE_CAPS > 0 D _param p ST_PERCEPTION < 5 R _item p PID_BOTTLE_CAPS - 99 #
+83 7030 D _item p PID_BOTTLE_CAPS < 1 @
+81 8000 None 0 #
+65507 8010 #
+0 8020 @
+82 9000 None 0 #
+83 9010 @
+83 10000 None 0 @
+90 11000 None 0 #
+91 11010 @
+91 12000 None 0 #
+92 12010 #
+0 12020 @
+92 13000 None 0 #
+93 13010 #
+0 13020 @
+93 14000 None 0 #
+94 14010 D _param p SK_SPEECH < 30 R _var p name_mem_player_npc = 1 R _var p name_mem_npc_player = 1 R _var p loyality + 1 #
+95 14020 D _param p SK_SPEECH > 29 D _param p PE_SMOOTH_TALKER < 1 R _var p loyality + 2 R _var p name_mem_player_npc = 1 R _var p name_mem_npc_player = 1 R _param p SK_REPAIR + 15 R _param p ST_EXPERIENCE + 225 R _script dialog@r_InfoMessage 1 2 #
+95 14030 D _param p PE_SMOOTH_TALKER > 0 R _param p ST_EXPERIENCE + 440 R _param p SK_REPAIR + 15 R _var p name_mem_npc_player = 1 R _var p name_mem_player_npc = 1 R _script dialog@r_InfoMessage 1 2 R _var p loyality + 2 @
+94 15000 None 0 #
+96 15010 @
+95 16000 None 0 #
+96 16010 @
+96 17000 None 0 #
+97 17010 D _param p SK_REPAIR > 39 #
+98 17020 D _param p SK_REPAIR < 40 @
+97 18000 None 0 #
+99 18010 D _param p SK_REPAIR < 60 D _param p ST_LUCK < 5 #
+99 18020 D _param p SK_REPAIR < 60 D _param p ST_LUCK > 4 R _param p ST_EXPERIENCE + 150 #
+99 18030 D _param p SK_REPAIR > 59 R _param p ST_EXPERIENCE + 300 @
+98 19000 None 0 #
+20 19010 @
+99 20000 None 0 #
+20 20010 @
+20 21000 None 0 #
+3 21010 D _item p PID_V15_COMPUTER_PART < 1 #
+31 21020 D _item p PID_V15_COMPUTER_PART < 1 R _var p q_newbie_bender_details = 1 #
+21 21030 D _item p PID_V15_COMPUTER_PART > 0 D _param p SK_REPAIR < 40 R _item p PID_V15_COMPUTER_PART - 1 R _param p ST_EXPERIENCE + 400 R _var p q_newbie_bender_details = 2 #
+21 21040 D _item p PID_V15_COMPUTER_PART > 0 D _param p SK_REPAIR > 39 R _item p PID_V15_COMPUTER_PART - 1 R _param p ST_EXPERIENCE + 500 R _var p q_newbie_bender_details = 2 #
+3 21050 D _item p PID_V15_COMPUTER_PART > 0 #
+0 21060 @
+21 22000 None 0 #
+31 22010 @
+22 23000 None 0 #
+31 23010 D _item p PID_V15_COMPUTER_PART < 1 #
+21 23020 D _item p PID_V15_COMPUTER_PART > 0 D _param p SK_REPAIR > 39 R _var p q_newbie_bender_details = 2 R _param p ST_EXPERIENCE + 500 R _item p PID_V15_COMPUTER_PART - 1 #
+21 23030 D _item p PID_V15_COMPUTER_PART > 0 R _var p q_newbie_bender_details = 2 R _item p PID_V15_COMPUTER_PART - 1 R _param p ST_EXPERIENCE + 500 #
+3 23040 D _item p PID_V15_COMPUTER_PART > 0 R _var p q_newbie_bender_details = 3 #
+3 23050 D _item p PID_V15_COMPUTER_PART < 1 R _var p q_newbie_bender_details = 3 #
+0 23060 @
+30 24000 None 0 #
+23 24010 D _var p q_newbie_bender_details = 0 #
+40 24020 D _var p q_newbie_bender_flint = 0 #
+22 24030 D _var p q_newbie_bender_details = 1 #
+31 24040 D _var p q_newbie_bender_details > 1 D _var p q_newbie_bender_flint > 1 #
+40 24050 D _var p q_newbie_bender_flint = 1 #
+0 24060 @
+31 25000 None 0 #
+22 25010 D _var p q_newbie_bender_details = 1 #
+40 25020 D _var p q_newbie_bender_flint = 1 #
+0 25030 @
+23 26000 None 0 #
+20 26010 @
+40 27000 None 0 #
+3 27010 D _item p PID_FLINT < 1 R _var p q_newbie_bender_flint = 4 #
+31 27020 D _item p PID_FLINT < 1 R _var p q_newbie_bender_flint = 1 #
+41 27030 D _param p SK_SPEECH > 29 R _var p q_newbie_bender_flint = 3 R _param p ST_EXPERIENCE + 450 #
+31 27040 D _item p PID_FLINT > 0 R _var p q_newbie_bender_flint = 2 R _param p ST_EXPERIENCE + 350 R _item p PID_BOTTLE_CAPS + 50 R _item p PID_FLINT - 1 #
+3 27050 D _item p PID_FLINT > 0 R _var p q_newbie_bender_flint = 4 #
+42 27060 D _item p PID_FLINT > 0 D _param p SK_SPEECH > 29 R _item p PID_FLINT - 1 R _param p ST_EXPERIENCE + 4000 R _item p PID_BOTTLE_CAPS + 100 R _var p q_newbie_bender_flint = 2 #
+0 27070 @
+41 28000 None 0 #
+31 28010 @
+42 29000 None 0 #
+31 29010 &
+
+[russ]
+{100}{}{Бендер}
+{200}{}{Вы видите Бендера Родригеса.}
+{210}{}{Надпись на корпусе робота "Робот сгибатель, Made in Mexico".}
+{220}{}{Вы видите Бендера Родригеса, он в отключке.}
+{230}{}{Надпись на корпусе робота "Робот сгибатель, Made in Mexico".}
+{240}{}{Вы видите Бендера Родригеса, робот сломан.}
+{250}{}{Надпись на корпусе сломанного робота "Робот сгибатель, Made in Mexico".}
+{260}{}{Вы видите Бендера Родригеса, робот совершенно сломан.}
+{270}{}{Надпись на корпусе разрушенного робота "Робот сгибатель, Made in Mexico".}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{Игрок с пивом, робот отключен}
+{1020}{}{Игрок без пива, робот отключен}
+{1030}{}{Глупый персонаж, робот включен, не знакомы}
+{1040}{}{Умный персонаж, робот включен, не знакомы}
+{1050}{}{Робот включен, знакомы}
+{2000}{}{Не бейте меня!.. я предам кого угодно!@@Убить всех человеков… убить… о, детка, давай убьем всех человеков?..@@Мне так плохо! Хочу, чтобы все умерли!@@Кто любимый мамочкин робот?@@Не вините себя... Просто бейте себя ржавыми цепями!}
+{3000}{}{Пока, неудачни@sex@|к||ца|!@@Поцелуй мой блестящий зад!@@Пока, начинка для гроба.@@Счастливо оставаться, неудачни@sex@|к||ца|!!!}
+{4000}{}{Пива! [C любопытством разглядываете робота. Как он здесь оказался]}
+{4010}{}{Странный какой-то, лучше его не трогать...}
+{4020}{}{Робот хотеть пить? Моя давать пить! [Сначала тычите ему в сенсоры пальцем, затем решаете залить в него пива]}
+{4030}{}{С чего бы вокруг этого робота столько пивных бутылок? Может он работает на спиртном? [Заливаете в робота пиво]}
+{4040}{}{Моя уходить.}
+{5000}{}{[Робот начинает более осмысленно двигаться и пропадает безумный блеск его сенсоров]}
+{5010}{}{Вау! Настоящий робот, да ещё и в рабочем состоянии! Или это дурацкий новогодний костюм?}
+{5020}{}{Ух-х-х! Живая машинка!}
+{5030}{}{[Молча уходите]}
+{6000}{}{Слушай, @sex@|приятель||детка|, я очень спешу. Давай по-быстрому.}
+{6010}{}{Моя не знать, чо роботы пить огненная вода!}
+{6020}{}{Моя должен идти!}
+{7000}{}{Эй, деревенщина! Смотри-ка туда!.. [Указывает на горизонт]}
+{7010}{}{Моя смотреть! Чо тама?!}
+{7020}{}{Моя смотреть! Чо тама?!}
+{7030}{}{Моя смотреть! Чо тама?!}
+{8000}{}{Туда, туда смотри, тузем@sex@|ец||ка|... [Указывает на горизонт, а другой рукой, тем временем, пытается залезть Вам в карман]}
+{8010}{}{Плохой робот! Моя побивать плохой робот! [Атаковать]}
+{8020}{}{Ты плохой робот! Моя не говорить с плохой робот!}
+{9000}{}{Туда, туда смотри, тузем@sex@|ец||ка|... [Указывает на горизонт]}
+{9010}{}{Моя ничого не увидеть, чо тама?! [Вы пялитесь на просторы Пустоши, но ничего не замечаете]}
+{10000}{}{Счастливо оставаться, неудачни@sex@|к||ца|!!!!@@Поцелуй мой блестящий зад!}
+{11000}{}{Поцелуй мой блестящий зад!}
+{11010}{}{Не такой уж он и блестящий.}
+{12000}{}{Получше твоего, кусок мяса. Слушай, @sex@|приятель||детка|, я очень спешу. Давай по-быстрому.}
+{12010}{}{Я и не знал@sex@|||а|, что роботам нужна выпивка.}
+{12020}{}{Не очень-то и хотелось...}
+{13000}{}{Да мне не нужна выпивка! Я могу завязать в любой момент.}
+{13010}{}{Правда? А что ты здесь делаешь, ты вообще работаешь?}
+{13020}{}{Я лучше пойду.}
+{14000}{}{Я сгибаю прутья, только на это и запрограммирован. Я лучший. Я могу согнуть прут под любым углом. Кстати, меня зовут Бендер.}
+{14010}{}{Я @pname@. А не мог бы ты и меня научить сгибать?@@Меня зовут @pname@. Можешь и меня научить сгибать?}
+{14020}{}{Я @pname@. А не мог бы ты и меня научить сгибать?@@Меня зовут @pname@. Можешь и меня научить сгибать?}
+{14030}{}{Я @pname@. А не мог бы ты и меня научить сгибать?@@Меня зовут @pname@. Можешь и меня научить сгибать?}
+{15000}{}{Нет, я не могу этим заниматься с тех пор, как выяснил, что эти прутья нужны для будок самоубийств.}
+{15010}{}{[Далее]}
+{16000}{}{Ну, хорошо, смотри, берёшь прут... [Несколько раз сгибает металлическую арматуру, умение сгибать может пригодиться при ремонте]}
+{16010}{}{[Далее]}
+{17000}{}{Ух, ну и утомил@sex@|||а| ты меня, надо выпить бы пивка! [Достаёт две бутылка пива и вливает в себя]}
+{17010}{}{Ты употребляешь много выпивки, Бендер. Кажется тебе нужен ремонт, хочешь я посмотрю?}
+{17020}{}{Ты употребляешь много выпивки, Бендер. Тебе нужна починка, хочешь я посмотрю?}
+{18000}{}{Давай, кусок мяса!}
+{18010}{}{[Вы ковыряетесь во внутренностях робота, но безуспешно. Это явно сложновато для вас]}
+{18020}{}{[Вы ковыряетесь во внутренностях робота. Получилось?! Вам повезло, ведь ремонт явно сложноват для ваших знаний]}
+{18030}{}{[Вы мастерски чините и настраиваете робота]}
+{19000}{}{Ну, да! Ты мне насмотришь, кусок мяса! Лучше-ка ты мне притащи одну детальку...}
+{19010}{}{[Далее]}
+{20000}{}{[Жужжит, вибрирует и искрится]}
+{20010}{}{Как всё запущено... Настройки здесь мало, для нормального ремонта понадобятся запчасти...}
+{21000}{}{Принеси детали компьютера. Разгрохай какую нибудь старую железяку и вынь запчасти.}
+{21010}{}{Нет, я не хочу... Где я тебе найду эти детали?}
+{21020}{}{Хорошо, я принесу тебе детали.}
+{21030}{}{Да у меня есть с собой. Вот, держи. Такие?}
+{21040}{}{У меня есть с собой то что нужно. Сейчас установлю...}
+{21050}{}{У меня есть с собой нужные детали. Но тебе я их не дам...}
+{21060}{}{Мне некогда. @@Я должен идти.}
+{22000}{}{О, да!.. Это то что надо! А ты не так уж плох@sex@|, кусок мяса||а, детка|.}
+{22010}{}{Ты тоже ничего, робот...}
+{23000}{}{Ну, что прин@sex@|ёс||есла|?@@Ну, что наш@sex@|ёл||ла|?@@Где мои запчасти, @sex@|кусок мяса||детка|?!}
+{23010}{}{Нет, я пока не наш@sex@|ел||ла| то что нужно...@@Нет, нету деталей...@@У меня не было времени заняться твоей проблемой, Бендер.}
+{23020}{}{Да у меня есть с собой то что нужно. Сейчас установлю...}
+{23030}{}{Вот, держи. Такие?}
+{23040}{}{Да, у меня есть детали... Но ты их не получишь, глупый робот!!!}
+{23050}{}{Я не хочу искать тебе детали. И вообще ты мне не нравишься.@@Я не стану искать тебе детали. И вообще отвали, грубая консервная банка.}
+{23060}{}{Мне некогда. @@Я должен идти.}
+{24000}{}{Привет, кусок мяса!@@Привет, @sex@|парень||детка|!@@Как делишки, неудач@sex@|ник||ца|?!}
+{24010}{}{Привет!@@Привет, Бендер!@@Как сам, робот?!}
+{24020}{}{Привет, Бендер! Как твой металлический зад?@@Привет, блестящая задница!}
+{24030}{}{Привет, Бендер! Я по поводу запчастей...@@Бендер, я на счёт деталей...@@Я по поводу твоих запчастей...}
+{24040}{}{Привет!@@Привет, Бендер!@@Как сам, робот?!@@Привет, Бендер! Как твой металлический зад?@@Привет, блестящая задница!}
+{24050}{}{Привет, Бендер! Я по поводу кремня...@@Бендер, я на счёт твоей задницы...@@Я по поводу кремня для зада...}
+{24060}{}{Мне некогда. @@Я должен идти.}
+{25000}{}{Ну, что скажешь, кусок мяса?@@Чего тебе, @sex@|парень||детка|.@@Как делишки, неудач@sex@|ник||ца|?!@@Может в картишки, неудач@sex@|ник||ца|?}
+{25010}{}{Привет, Бендер! Я по поводу запчастей...@@Бендер, я на счёт деталей...@@Я по поводу твоих запчастей...}
+{25020}{}{Привет, Бендер! Я по поводу кремня...@@Бендер, я на счёт твоей задницы...@@Я по поводу кремня для зада...}
+{25030}{}{Мне некогда. @@Я должен идти.}
+{26000}{}{Есть дельце, кусок мяса!@@Слушай, неудачник, сделай-ка для меня кое-что...}
+{26010}{}{Что ты хочешь?@@Что тебе нужно, робот?}
+{27000}{}{У тебя шлифовального камня нет? Моя металлическая задница несколько потускнела. Принеси мне кремень. Заплачу полсотни монет.}
+{27010}{}{Я не твой раб, камни таскать! Не дождёшься...}
+{27020}{}{Будет тебе кремень...@@Ладно, будет блестеть твоя задница...@@Ну, хорошо, принесу тебе кремень...}
+{27030}{}{Послушай, Бендер, ведь твой зад и без того сверкает как рождественская ёлка - смотреть больно. Не нужно его шлифовать.}
+{27040}{}{Есть у меня. Бери.}
+{27050}{}{У меня есть кремень, но ты его не получишь.}
+{27060}{}{У меня есть кремень, но достать его было не так-то просто. Может накинешь несколько монет сверху?}
+{27070}{}{Мне некогда. @@Я должен идти.}
+{28000}{}{Да, ты прав! Я и так достаточно крут!!!}
+{28010}{}{Верно, ты крут, Бендер!}
+{29000}{}{Ну, хорошо, хорошо... Вот, держи сотню и давай его сюда поскорее!!!}
+{29010}{}{Вот и отличненько, робот!}
+{100000001}{}{Бендер наглым образом обокрал Вас.}
+{100000002}{}{Вы сумели убедить Бендера научить вас сгибать. [Ремонт +15]}
+
+[engl]
+{100}{}{none}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{Игрок с пивом, робот отключен}
+{1020}{}{Игрок без пива, робот отключен}
+{1030}{}{Глупый персонаж, робот включен, не знакомы}
+{1040}{}{Умный персонаж, робот включен, не знакомы}
+{1050}{}{Робот включен, знакомы}
+{2000}{}{Don’t beat me!.. I’ll betray anyone!@@Kill all humans...kill...oh, babe, let’s kill all humans!..@@I’m so sick! I wanna everybody die!@@Who’s mommy’s dear robot?@@Don’t blame yourself... Just beat yourself with rusty chains!}
+{3000}{}{Bye, loser!@@Kiss my shining ass!@@Bye, coffin’s filling.@@Good luck, loser!!!}
+{4000}{}{Beer! [You look all over the robot. How could he got here...]}
+{4010}{}{A strange one, better not to touch it...}
+{4020}{}{Robo wanna drink? Me give drink! [At first you prod his sensors with a finger, then you decide to fill it up with the beer]}
+{4030}{}{Why is there so many beer bottles around the robot? Maybe it works on beer? [Fill up the robot with the beer]}
+{4040}{}{Me go.}
+{5000}{}{[The robot starts to move more sensible and the insane glitter in his sensors disappears]}
+{5010}{}{Wow! A real robot and even in working condition! Or is it an idiotic New Year costume?}
+{5020}{}{U-uh! A living machine!}
+{5030}{}{[Leave silently]}
+{6000}{}{Look here, @sex@|buddy||babe|, I’m in a hurry. Be quick.}
+{6010}{}{Me don’ know what robos drink firewater!}
+{6020}{}{Me now go!}
+{7000}{}{Hay, redneck! Look there!.. [Points at the horizon]}
+{7010}{}{Me look! Whatcha there?!}
+{7020}{}{Me look! Whatcha there?!}
+{7030}{}{8000}
+{8000}{}{error}
+{8010}{}{Bad robo! Me beat bad robo! [Attack]}
+{8020}{}{You bad robo! Me don’t speak bad robo!}
+{9000}{}{There, look there, indigene... [Points at horizon]}
+{9010}{}{Me not see there, whatch there? [You stare at Wastelands, but see nothing]}
+{10000}{}{Good luck, loser!!!@@Kiss my shining ass!}
+{11000}{}{Kiss my shining ass!}
+{11010}{}{Not so shining it is}
+{12000}{}{Better than yours one, piece of meat. Look, @sex@|buddy||babe|, I’m in a hurry. Be quick..}
+{12010}{}{I didn’t know that robots need booze.}
+{12020}{}{Not so wanted as you'd notice...}
+{13000}{}{But I don’t need drinks! I can give up at every moment.}
+{13010}{}{Really? What are you doing here? Do you work?}
+{13020}{}{I’d better leave.}
+{14000}{}{I bend rods. That’s the only thing, I was programmed for. I’m the best. I can bend the rod at any angle. By the way, my name’s Bender.}
+{14010}{}{I’m @pname@. Could you teach me how to bend?@@My name is @pname@. Could you teach me how to bend?}
+{14020}{}{I’m @pname@. Could you teach me how to bend?@@My name is @pname@. Could you teach me how to bend?}
+{14030}{}{I’m @pname@. Could you teach me how to bend?@@My name is @pname@. Could you teach me how to bend?}
+{15000}{}{No, I can’t continue doing it since I got known that these rods are needed for suicide boxes.}
+{15010}{}{[More]}
+{16000}{}{Okay, look here, so you take the rod... [Bends the rod several times] It could be useful  when repairing something.}
+{16010}{}{[More]}
+{17000}{}{Huh, you got me tired, time to drink a beer! [Pours a couple of bottles into himself]}
+{17010}{}{You take lots of drinks, Bender. It seems to me, you are in need of repair, do you want me to examine you?}
+{17020}{}{You take lots of drinks, Bender. You are in need of repair, do you want me to examine you?}
+{18000}{}{Come on, piece of meat!}
+{18010}{}{[You rummage inside the robot, but without success. It is obviously too hard for you]}
+{18020}{}{[You rummage inside the robot, but without success. Succeed?! You’re lucky, the repair is obviously too complicated for your skills]}
+{18030}{}{[You repair and adjust the robot skillfully]}
+{19000}{}{Come, come! Of course you’ll examine, huh! Better you’d bring me one part...}
+{19010}{}{[More]}
+{20000}{}{[Buzzes, vibrates and sparkles]}
+{20010}{}{How everything’s neglected... Adjusting is not enough here, some parts are needed for a normal repair...}
+{21000}{}{Bring me computer parts. Break down any old computer and take out the components.}
+{21010}{}{No, I don’t want... Where could I find these parts?}
+{21020}{}{Okay, I’ll bring ‘em.}
+{21030}{}{Huh, I got them along. Here, take it. Да у меня есть с собой. Вот, держи.  Is that it?}
+{21040}{}{I’ve got all that’s needed. Installing right now...}
+{21050}{}{I’ve got the needed parts along. But I’m not gonna give it to you...}
+{21060}{}{I have no time. @@I gotta go.}
+{22000}{}{Oh, yes!.. That’s exactly what I need! You’re not so bad @sex@|piece of meat||babe|}
+{22010}{}{You’re too not bad, robot...}
+{23000}{}{So, have you brought the parts?@@So, have you found the parts?@@Where are my parts, @sex@|piece of meat||babe|?!}
+{23010}{}{No, I haven’t found the needed parts yet...@@No, no at all.@@I hadn’t time to bother with your problem, Bender.}
+{23020}{}{I’ve got all that’s needed. Installing right now...}
+{23030}{}{Here, take it. Right ones?}
+{23040}{}{Yes, I’ve got the parts... But you won’t get them, dummy robot!!!}
+{23050}{}{I don’t wanna seek for the parts. And in general I don’t like you.@@I don’t wanna seek for the parts. Get lost, rude can.}
+{23060}{}{I have no time. @@I gotta go.}
+{24000}{}{Hello, piece of meat!@@Hi, @sex@|buddy||babe|.@@How do you do, looser?!}
+{24010}{}{Hi!@@Hi, Bender!@@How’re you, robot?!}
+{24020}{}{Hi, Bender! How’s your metal ass doing?@@Hi, shiny ass!}
+{24030}{}{Hi, Bender! I’m about the parts...@@Bender, I’m about the parts...@@Concerning your parts...}
+{24040}{}{Hi!@@Hi, Bender!@@How’re you, robot?!@@Hi, Bender! How’s your metal ass doing?@@Hi, shiny ass!}
+{24050}{}{Hi, Bender! I’m about the flint...@@Bender, concerning your ass...@@I’m about the flint for your ass...}
+{24060}{}{I have no time. @@I gotta go.}
+{25000}{}{So, what you’re wanna to say, piece of meat?@@Whatcha need, @sex@|buddy||babe|.@@How do you do, looser?!@@Wanna play cards, looser?}
+{25010}{}{Hi, Bender! I’m about the parts...@@Bender, I’m about the parts...@@Concerning your parts...}
+{25020}{}{Hi, Bender! I’m about the flint...@@Bender, concerning your ass...@@I’m about the flint for your ass...}
+{25030}{}{I have no time. @@I gotta go.}
+{26000}{}{I’ve got a business, piece of meat!@@Look here, looser, do one business for me...}
+{26010}{}{Whatcha need?@@Whatcha need, robot?}
+{27000}{}{Have you got a polishing rock? My metal ass grew dim a little. I’ll pay you 50 $.}
+{27010}{}{I’m not your slave! You'll never live that long!}
+{27020}{}{Okay, you’ll get the flint...@@Okay, your ass will be shining...@@Okay, I’ll bring you the flint...}
+{27030}{}{Look, Bender, your ass is already shining without it like a Christmas tree! You don’t need to polish it.}
+{27040}{}{I got it. Take.}
+{27050}{}{I’ve got a flint, but you won’t get it.}
+{27060}{}{I have a flint, but it was pretty hard to get it. Would you mark up the price?}
+{27070}{}{I have no time. @@I gotta go.}
+{28000}{}{Yes, you’re right! I am cool enough!!!}
+{28010}{}{Yep, you’re cool, Bender!}
+{29000}{}{Well, okay, okay... Take one hundred and give it to me quickly!!!}
+{29010}{}{That’s nice, robot!}
+{100000001}{}{Bender has robbed you impertinently	.}
+{100000002}{}{you have convinced Bender to teach you how to bend. [Repair +15]}
+

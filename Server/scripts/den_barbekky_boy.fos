@@ -1,0 +1,108 @@
+// Author: cvet
+#include "_macros.fos"
+
+import uint GetNearFullSecond(uint16 year, uint16 month, uint16 day, uint16 hour, uint16 minute, uint16 second) from "time";
+
+// Строки
+#define STR_STEAL_FAIL         (1100)
+#define STR_RADIO              (1101)
+#define STR_MORNING            (1102)
+
+// Инициализация нпц, происходит при вводе нпц в игру
+void _BoyInit(Critter& boy, bool firstTime)
+{
+	boy.SetEvent(CRITTER_EVENT_STEALING,"_BoyStealing");
+	boy.SetEvent(CRITTER_EVENT_RESPAWN,"_BoyRespawn");
+	// Создаем событие, где мальчик зазывает покупать у него рации
+	if(CreateTimeEvent(__FullSecond+Random(10,50)*60,"e_Announcement",boy.Id,false)==0)
+		Log("Time event Announcement create fail, "+GetLastError());
+	// Создаем событие, где мальчик приветсвует с добрым утром
+	if(CreateTimeEvent(GetNearFullSecond(0,0,0,8,0,0),"e_AnnouncementMorning",boy.Id,false)==0)
+		Log("Time event AnnouncementMorning create fail, "+GetLastError());
+}
+
+// Предопределенная функция, срабатывает, когда у нпц воруют
+void _BoyStealing(Critter& boy, Critter& thief, bool success, Item& item, uint count)
+{
+	// Иногда при удачном воровстве мальчик говорит Хмм
+	if(success==true && Random(0,5)==0) boy.SayMsg(SAY_NORM_ON_HEAD,TEXTMSG_TEXT,STR_STEAL_FAIL);
+}
+
+// Событие 1
+uint e_Announcement(uint[]@ values)
+{
+	// Ночью не говорим, ждем до утра.
+	if(__Hour>20 || __Hour<8) return GetNearFullSecond(0,0,0,8,Random(20,40),0)-__FullSecond;
+
+	// Зазываем.
+	Critter@ boy=GetCritter(values[0]);
+	if(valid(boy)) boy.SayMsg(SAY_NORM_ON_HEAD,TEXTMSG_TEXT,STR_RADIO);
+	return Random(50,70)*60;
+}
+
+//Событие 2
+uint e_AnnouncementMorning(uint[]@ values)
+{
+	Critter@ boy=GetCritter(values[0]);
+	if(valid(boy)) boy.SayMsg(SAY_NORM_ON_HEAD,TEXTMSG_TEXT,STR_MORNING);
+	return 24*60*60;
+}
+
+// Создание Хаммера. Ключ вручаем игроку.
+// Вызывается из диалога, в Результате.
+// При ошибке создания Хаммера диалоговая ветка отводится на №9.
+// master - игрок
+// slave - нпц
+// Обойдемся одним игроком.
+uint r_CreateHummer(Critter& player, Critter@ boy)
+{
+	// Берем карту на которой находится игрок с нпц
+	Map@ map=player.GetMap();
+	if(not valid(map))
+	{
+		Log("Map nullptr.");
+		return 9;
+	}
+
+	int pos=Random(0,4);
+	int[] x={252,250,251,250,255};
+	int[] y={182,186,192,195,192};
+
+	uint keyId=Random(10000,50000); // Генерация номера ключа
+
+	// Хаммер, комплексное создание всесте с багажником
+	Item@ car=map.AddItem(x[pos],y[pos],PID_HUMMER,1);
+	if(not valid(car)) return 9;
+
+	car.LockerId=keyId;
+
+	// Устанавливаем на багажник номер замка
+	Item@ bag=car.GetChild(0);
+	if(valid(bag)) bag.LockerId=keyId;
+	else Log("Bag not created.");
+
+	// Ключ
+	Item@ key=player.AddItem(PID_KEY,1);
+	if(valid(key)) key.LockerId=keyId;
+	else Log("Create key fail.");
+
+	// Удаляем 10000 монет
+	player.DeleteItem(PID_BOTTLE_CAPS,10000);
+	return 0;
+}
+
+void _BoyRespawn(Critter& boy)
+{
+	if(_CritCountItem(boy,PID_RADIO)<1) boy.AddItem(PID_RADIO,1);
+}
+
+
+
+
+
+
+
+
+
+
+

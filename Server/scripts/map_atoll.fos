@@ -1,0 +1,131 @@
+// Author: Dagnir
+#include "_macros.fos"
+
+void _MapInit(Map& map, bool firstTime)
+{
+    Critter @[] critters;
+    map.GetCritters(0, FIND_LIFE | FIND_ONLY_NPC, critters);
+
+    for(uint i=0; i<critters.length(); i++)
+    {
+        critters[ i ].StatBase[ ST_REPLICATION_TIME ]=480;
+        Critter@ cr;
+        @cr=critters[ i ];
+        if(valid(cr))
+        {
+            int dialog=cr.Stat[ ST_DIALOG_ID ];
+            if(dialog==DIALOG_atoll_trader)
+                cr.ModeBase[ MODE_BARTER_ONLY_CASH ]=1;
+        }
+    }
+
+}
+
+// rifleman17
+// Торговцы на Атолле. Периодически получают лут из таблицы atollLoot.
+// Предметы появляются группами, это позволяет настроить появление оружия и патронов к нему, например.
+
+#define CTE_REFRESH    (17)
+
+uint[][][] atollLoot=
+/*       Время до следующей генерации предметов, в реальных минутах
+         Код предмета,                        Кол-воОт, Кол-воДо, Шанс%*/
+{
+    /* Начало описания одной группы товаров */
+    {
+        { 120 },                                                          /* Первой строкой указано время следующего обновления товара у торговца в реальных минутах*/
+        { PID_COMBAT_ARMOR,                    0,       1,         100 }, /* Далее идет описание товаров в составе группы */
+        { PID_PK12_GAUSS_PISTOL,               1,       1,         100 },
+        { PID_2MM_EC_AMMO,                     100,     1,         100 },
+        { PID_MENTATS,                         2,       5,         100 }
+    },    /* {Хвост описания одной группы товаров */
+    {
+        { 240 },
+        { PID_EXPLOSIVE_ROCKET,                20,      35,        100 },
+        { PID_PULSE_GRENADE,                   6,       8,         100 },
+        { PID_ROCKET_LAUNCHER,                 1,       1,         100 },
+        { PID_LOUISVILLE_SLUGGER,              1,       2,         100 }
+    },
+    {
+        { 360 },
+        { PID_MEGA_POWER_FIST,                 1,       3,         100 },
+        { PID_BROTHERHOOD_COMBAT_ARMOR,        0,       1,         100 },
+        { PID_7_62MM_AMMO,                     300,     500,       100 },
+        { PID_SMALL_ENERGY_CELL,               400,     500,       100 },
+        { PID_FN_FAL_NIGHT_SCOPE,              1,       1,         100 }
+    },
+    {
+        { 240 },
+        { PID_M72_GAUSS_RIFLE,                 1,       1,         100 },
+        { PID_2MM_EC_AMMO,                     200,     300,       100 }
+    },
+    {
+        { 240 },
+        { PID_SUPER_STIMPAK,                   5,       15,        25 },
+        { PID_SUPER_STIMPAK,                   5,       5,         100 },
+        { PID_STIMPAK,                         20,      30,        100 }
+    },
+    {
+        { 1000 },
+        { PID_POWERED_ARMOR,                   1,       1,         10 },       /* Шанс появления=10%/число строк таблицы  */
+        { PID_TURBO_PLASMA_RIFLE,              1,       1,         100 },
+        { PID_MICRO_FUSION_CELL,               200,     400,       100 }
+    },
+    {
+        { 120 },
+        { PID_PLASMA_PISTOL,                   1,       2,         50 },
+        { PID_SMALL_ENERGY_CELL,               200,     300,       50 }
+    },
+    {
+        { 480 },
+        { PID_YK42B_PULSE_RIFLE,               1,       2,         25 },
+        { PID_4_7MM_CASELESS,                  400,     500,       50 }
+    },
+    {
+        { 120 },
+        { PID_MAGNETO_LASER_PISTOL,            1,       2,         50 },
+        { PID_SMALL_ENERGY_CELL,               100,     100,       50 }
+    },
+    {
+        { 120 },
+        { PID_METAL_ARMOR_MK_II,               1,       1,         50 },
+        { PID_HK_G11E,                         1,       1,         100 },
+        { PID_4_7MM_CASELESS,                  200,     400,       100 }
+    }
+};
+
+
+void _AtollTraderInit(Critter& cr, bool firstTime)
+{
+    cr.SkillBase[ SK_BARTER ]=200;
+    cr.ModeBase[ MODE_NO_ITEM_GARBAGER ]=1;
+    cr.ModeBase[ MODE_NO_BARTER ]  =0;
+    cr.ModeBase[ MODE_NO_DROP ]=1;
+    cr.ModeBase[ MODE_NO_STEAL ]   =1;
+    cr.ModeBase[ MODE_NO_LOOT ]=1;
+    cr.ModeBase[ MODE_NO_ENEMY_STACK ]=1;
+    cr.ModeBase[ MODE_BARTER_ONLY_CASH ]=1;
+    if(cr.GetTimeEvents(CTE_REFRESH, null, null, null)==0)
+        cr.AddTimeEvent("cte_RefreshBag", 0, CTE_REFRESH);
+}
+
+uint cte_RefreshBag(Critter& cr, int identifier, uint& rate)
+{
+    uint idx=Random(0, atollLoot.length() - 1);
+    uint timeNext=atollLoot[ idx ][ 0 ][ 0 ];
+    int  chance=0;
+    int  qty=0;
+    for(uint i=1, l=atollLoot[ idx ].length(); i<l; i++)
+    {
+        chance=atollLoot[ idx ][ i ][ 3 ];
+        if(chance >=100 || (Random(0, 99)<chance))
+        {
+            qty=Random(atollLoot[ idx ][ i ][ 1 ], atollLoot[ idx ][ i ][ 2 ]);
+            if(qty > 0)
+            {
+                cr.AddItem(atollLoot[ idx ][ i ][ 0 ], qty);
+            }
+        }
+    }
+    return timeNext;
+}

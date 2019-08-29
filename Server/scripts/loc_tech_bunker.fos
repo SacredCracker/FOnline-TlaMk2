@@ -1,0 +1,766 @@
+// Author: rifleman17 23/02/10
+// Квест на поиск книг для Просвещенной. Библиография Хаба.
+#include "_macros.fos"
+#include "_colors.fos"
+
+#define DL #(str)
+//#define DL #(str) Log(str)
+
+#define ENTIRE_NUM_SPAWN                                   (112) // номер гекса, на котором будут появляться книги
+
+#define VAR_FIRST_BOOK_ACCESS                              (LVAR_ncr_hub_book_access_1)//4277
+#define VAR_LAST_BOOK_ACCESS                               (LVAR_ncr_hub_book_access_7)//4283
+#define BOOKS_COUNT                                        (VAR_LAST_BOOK_ACCESS-VAR_FIRST_BOOK_ACCESS+1)
+
+#define MSG_PLAYER_MUST_DIE                                (157)
+
+#define RESP_MODE_ENTIRES                                  (ENTIRE_NUM_SPAWN)
+#define RESP_MODE_CRITTER                                  (1)
+#define RESP_MODE_CONTAINER                                (2)
+
+#define BOOK_RESP_TIME_MIN                                 (60*24*6) // раз в 6 дней
+#define BOOK_RESP_TIME_MAX                                 (60*24*9) // раз в 9 дней
+
+#define BOOK_RESP_TIME (Random(BOOK_RESP_TIME_MIN, BOOK_RESP_TIME_MAX))
+#define BOOK_INFO #(bookNum) (2*(1+bookNum))
+#define BOOK_COST #(bookInfo) ((bookInfo/2)-4)             // условная стоимость книги. Первая=-3; вторая -2 итд
+#define VAR_NUM   #(bookNum) (VAR_FIRST_BOOK_ACCESS+bookNum)
+#define GET_XP #(booksCost, baseXP)(baseXP+(baseXP*ABS(booksCost)))
+#define XP_BASE #(lvl)(((lvl>20)?2000:((lvl>10)?1000:500)))
+
+
+#define ArrayPushBack         #(groups,leader)(groups.insertLast(leader))
+        
+
+#define QST_BEGIN                                          (1)
+#define QST_END                                            (3)
+#define ACCEPT_BOOK                                        (1)
+
+#define STR_GET_COORDS_HUB                                 (5014) // Номер сообщения "вы узнали координаты бункера от просвещенной"
+#define STR_NO_LIFT_ACCESS                                 (5000) // Электрическое поле на лифте включено
+#define STR_POSTER_USE                                     (5001) // Использование чего либо на постере
+#define STR_POSTER_USE_KNIFE                               (5002) // использование ножа на постере
+#define STR_NEED_ROPE                                      (5003) // Строка: нужна веревка
+#define STR_SET_ROPE                                       (5004) // игрок применил веревку на норе
+#define STR_GENERATOR_SKILL_LOW                            (5005) // недостаточно навыка чтобы починить генератор
+#define STR_GENERATOR_BROKE_SUCCESS                        (5006) // игрок сломал генератор и получил до
+#define STR_GENERATOR_BROKEN                               (5007) // Генератор сломан
+
+#define MAP_INDEX_Level3                                   (3)
+
+#define ENTIRE_LVL3_CAVE                                   (2)
+
+
+#define DEAD_ZONE_ENTIRE_FIRST                             (113)
+#define DEAD_ZONE_ENTIRE_END                               (116)
+
+#define NPCROLE_SNIPER1                                    (21)
+#define NPCROLE_SNIPER2                                    (22)
+#define NPCROLE_SNIPER3                                    (23)
+#define NPCROLE_SNIPER4                                    (24) // Самый крутой
+#define NPCROLE_TERM1                                      (31)
+#define NPCROLE_TERM2                                      (32)
+#define NPCROLE_TERM3                                      (33)
+#define NPCROLE_TERM4                                      (34)
+#define NPCROLE_TERM5                                      (35) // Самый прокачаный терм
+
+#include "tbu_rebels.fos"
+
+import bool AddAttackPlane(Critter& npc, uint priority, Critter& target) from "npc_planes";
+
+import void RespawnItem(uint mapId, uint16 itemPid, uint itemCount, uint scriptId, uint16 hX, uint16 hY, uint varNum, uint modeResp, uint timeResp, uint itemInfo) from "respawn_item";
+import void _ExplodeInit(Item& item, bool firstTime) from "explode";
+import void SetSniperStats(Critter & cr, uint8 lvl) from "pattern_sniper";
+import void _SniperInit(Critter & cr, bool firstTime) from "pattern_sniper";
+import void _SniperIdle(Critter& sniper) from "pattern_sniper";
+import bool e_UseAutoCloseDoor(Item& door, Critter& cr, int skill) from "item";
+import void InjureCritter(Critter& cr, uint dmg, uint dmgType, uint8 dir, uint attackerId) from "combat";
+import bool TransitToMap(Critter& cr, int locPid, int mapIndex, int entranceNum) from "stdlib";
+import uint EraseAttackPlane(Critter& npc, Critter& target) from "npc_planes";
+import void _PatternInit(Critter & cr, bool firstTime) from "ai_pattern";
+import void SetTermStats(Critter & cr, uint8 lvl) from "pattern_term";
+import void r_RatchTimeOutSet(Critter& player, Critter@ npc ,int v0, int v1) from "ncr_ratch";
+
+
+//* ************************************** Мертвые рейнджеры и полицейские на поверхности ************************************** */
+void _DeadMenInit(Critter & npc, bool firstTime)
+{
+	if(not npc.IsDead())
+	{
+		npc.ToDead(Random(ANIM2_DEAD_BURST,ANIM2_DEAD_EXPLODE), null);
+	}
+	npc.StatBase[ST_REPLICATION_TIME]=-1;
+}
+
+//* ***************************************** Раненый полицейский и рейнджеры в засаде ***************************************** */
+#define STR_WOUNDED_HELPME                                 (1) // Номер строки диалога полицейского, в которой он просит о помощи
+void _TechBunkerEnterInit(Map & map, bool firstTime)
+{
+	// Полицейского нужно периодически пришибать, чтобы новые игроки могли его тоже вылечить
+	// Id полицеского сохраняем в map.GetData(1)
+	// время его выздоровления в Map.GetData(2)
+	map.SetLoopTime(4, 20000);
+	map.SetEvent(MAP_EVENT_LOOP_4,"_TbuEnterLoop4");
+
+
+
+
+}
+
+void _TbuEnterLoop4(Map& map)
+{
+	//Log("Loop4");
+	//DL("map loop");
+	Critter @ cr=GetCritter(map.GetData(1));
+	if(!valid(cr)) return;
+	//DL("cr valid");
+	if(!cr.IsKnockout())
+	{
+		uint time=map.GetData(2);
+		if(time==0&&map.GetCritters(0, FIND_LIFE|FIND_ONLY_PLAYERS, null)==0)
+		{
+			map.SetData(2, __FullSecond);
+			return;
+		}
+		if((time+(REAL_MINUTE(15)))<__FullSecond&& map.GetCritters(0, FIND_LIFE|FIND_ONLY_PLAYERS, null)==0)
+		{
+			map.SetData(2, 0);
+			_InitWoundedPoliceman(cr, false);
+		}
+	}else{
+		map.SetTextMsg(cr.HexX, cr.HexY, COLOR_LBLUE, TEXTMSG_DLG, DLGSTR(cr.Stat[ST_DIALOG_ID], STR_WOUNDED_HELPME));
+	}
+}
+
+void _InitWoundedPoliceman(Critter & cr, bool firstTime)
+{
+	cr.ModeBase[MODE_NO_HEAL]=1;
+	cr.StatBase[ST_CURRENT_HP]=-1;
+	if(cr.IsLife())
+	{
+		if(!cr.IsKnockout())
+		{
+			if(!cr.ToKnockout(KNOCKOUT_ANIM2_DEFAULT(true), 0, cr.HexX, cr.HexY))
+			{
+				Log("ToKnockout error");
+			}
+		}
+	}
+
+	cr.SetEvent(CRITTER_EVENT_RESPAWN, "_WoundedPolicemanOnRespawn");
+	cr.SetEvent(CRITTER_EVENT_SMTH_USE_SKILL, "_WoundedPolicemanOnSnthUseSkill");
+	cr.ShowCritterDist1=5;
+	cr.SetEvent(CRITTER_EVENT_SHOW_CRITTER_1,"_WoundedPolicemanShow1");
+	// Запись Id полицейского в поле карты
+	Map @ map=cr.GetMap();
+	if(valid(map))
+	{
+		map.SetData(1, cr.Id);
+	}
+
+}
+void _WoundedPolicemanShow1(Critter& cr, Critter& showCrit)
+{
+	if(!showCrit.IsPlayer()) return;
+	if(!showCrit.IsLife()) return;
+
+	cr.SendMessage(MSG_PLAYER_MUST_DIE, showCrit.Id, MESSAGE_TO_ALL_ON_MAP);
+}
+void _WoundedPolicemanOnSnthUseSkill(Critter& cr, Critter& fromCr, int skill, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+	if(!valid(onCritter)) return;
+	if(onCritter.Id!=cr.Id) return;
+	if(skill!=SK_FIRST_AID) return;
+	if(cr.Stat[ST_CURRENT_HP]!=-1) return;
+
+	GameVar @ var=GetLocalVar(LVAR_tbu_policeman_cured, fromCr.Id);
+	if(!valid(var)) return;
+	//DL("Policeman ?! + "+ var.GetValue());
+
+	if(var>0) return;
+	var=1;
+	//DL("Policeman cured!");
+}
+
+void _WoundedPolicemanOnRespawn(Critter& cr)
+{
+	//DL("on respawn");
+	//_InitWoundedPoliceman(cr, false);
+}
+//* *************************************************** Два снайпера снаружи *************************************************** */
+
+void _OutersInit(Critter & cr, bool firstTime)
+{
+	SetSniperStats(cr,1);
+	_SniperInit(cr, firstTime);
+	cr.ShowCritterDist1=15;
+	cr.ModeBase[MODE_UNLIMITED_AMMO]=1;
+	cr.SetEvent(CRITTER_EVENT_IDLE, "_OuterSniperIdle");
+	cr.SetEvent(CRITTER_EVENT_SHOW_CRITTER_1,"_OuterSniperSeeCritter1");
+	cr.SetEvent(CRITTER_EVENT_SHOW_CRITTER, "");
+	cr.StatBase[ST_EXPLODE_RESIST]=500;
+	cr.ModeBase[MODE_HIDE]=1;
+}//
+
+void _OuterSniperSeeCritter1(Critter& cr, Critter& showCrit)
+{
+	if(showCrit.IsNpc())
+	{
+		return;
+	}
+	cr.StatBase[ST_VAR3]=1;
+
+}
+
+void _OuterSniperIdle(Critter & cr)
+{
+	if(cr.IsDead())
+		return;
+	Map @ map=cr.GetMap();
+	if(!valid(map)) return;
+	if(map.GetCritters(0, FIND_LIFE_AND_KO|FIND_ONLY_PLAYERS, null)>0)
+	{
+		if(cr.Stat[ST_VAR3]>0)
+		{
+			_SniperIdle(cr);
+		}
+	}else{
+		if(cr.Mode[MODE_HIDE]==0) cr.ModeBase[MODE_HIDE]=1;
+		if(cr.Stat[ST_VAR3]>0) cr.StatBase[ST_VAR3]=0;
+	}
+}
+
+//* *********************************************** Мина, взрывающаяся на OnUse ************************************************ */
+void _InvMineInit(Item & item, bool firstTime)
+{
+	_ExplodeInit(item, firstTime);
+	item.SetEvent(ITEM_EVENT_SKILL, "_MineOnSkill");
+}
+
+bool _MineOnSkill(Item& mine, Critter& cr, int skill)
+{
+	if(skill>0) return false;
+
+	CreateTimeEvent(__FullSecond,"explode@e_Explode", mine.Id,false);
+
+	return true;
+}
+
+//* *********************************************************** Лифты ********************************************************** */
+void _LiftDoorInit(Item & door, bool firstTime)
+{
+	door.Val3=60;
+	door.SetEvent(ITEM_EVENT_SKILL, "_LiftDoorSkill");
+}
+
+bool _LiftDoorSkill(Item& door, Critter& cr, int skill)
+{
+	GameVar @ access=GetGlobalVar(GVAR_tbu_lift_access);
+	if(!valid(access)) return false;
+
+	if(access.GetValue()==1) {
+		CreateTimeEvent(__FullSecond + (door.Val3==0?2:door.Val3*__TimeMultiplier),"item@e_AutoCloseDoor", door.Id , true);
+		return false;
+	}
+	cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_NO_LIFT_ACCESS);
+	InjureCritter(cr, Random(20,60), DAMAGE_ELECTR, GetDirection(door.HexX,door.HexY,cr.HexX,cr.HexY), 0);
+	return true;
+}
+
+//* ****************************************************** Первый уровень ****************************************************** */
+// Лифтовая дверь
+void _LiftDoorLvl1Init(Item & door, bool firstTime)
+{
+	_LiftDoorInit(door, firstTime);
+}
+
+// Компьютер
+bool s_CompLvl1Use(Critter& player, Scenery& scenery, int skill, Item@ item)
+{
+	if(skill==SK_SCIENCE&&player.Skill[SK_SCIENCE]>149)
+	{
+		RunDialog(player,DIALOG_tbu_lvl1computer, scenery.HexX, scenery.HexY, false);
+	}
+	return true;
+}
+
+// Генератор
+bool s_GeneratorUse(Critter& player, Scenery& scenery, int skill, Item@ item)
+{
+	GameVar @ access=GetGlobalVar(GVAR_tbu_lift_access);
+
+	if(valid(access))
+	{
+		if(access.GetValue()==1)
+		{
+			player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_GENERATOR_BROKEN);
+			return true;
+		}else{
+			if(skill==SK_REPAIR&&!valid(item))
+			{
+				if(player.Skill[SK_REPAIR]<150)
+				{
+					player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_GENERATOR_SKILL_LOW);
+
+				}else{
+					access=1;
+					player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_GENERATOR_BROKE_SUCCESS);
+					GameVar @ status=GetLocalVar(LVAR_tbu_generator_broke, player.Id);
+					if(valid(status))
+					{
+						if(status.GetValue()==0)
+						{
+							status=1;
+							player.StatBase[ST_EXPERIENCE]+=1000;
+						}
+					}
+				}
+			}
+		}
+	}
+	return true;
+}
+
+// Дыра в полу
+bool s_HoleUse(Critter& player, Scenery& scenery, int skill, Item@ item)
+{
+	DL("try use hole");
+	GameVar @ status=GetGlobalVar(GVAR_tbu_rope_has_set);
+	if(!valid(status)) return true;
+
+	if(skill==-1&&status.GetValue()==1)
+	{
+		TransitToMap(player, LOCATION_TechBunker, MAP_INDEX_Level3, ENTIRE_LVL3_CAVE);
+	}
+	if(status.GetValue()==0&&valid(item))
+	{
+		if(item.GetProtoId()==PID_ROPE)
+		{
+			player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_SET_ROPE);
+			_SubItem(item,1);
+			status=1;
+			CreateTimeEvent(__FullSecond+REAL_DAY(1),"loc_tech_bunker@e_ResetGvar", GVAR_tbu_rope_has_set, true);
+			return true;
+		}
+	}
+	if(skill==-1)
+	{
+		player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_NEED_ROPE);
+	}
+	return true;
+}
+
+uint e_ResetGvar(uint[]@ values)
+{
+	GameVar @ gvar=GetGlobalVar(values[0]);
+	if(valid(gvar))
+	{
+		gvar=0;
+	}
+	return 0;
+}
+
+// Плакат на стене, на котором можно прочитать одну из команд робота
+bool s_PosterUse(Critter& player, Scenery& scenery, int skill, Item@ item)
+{
+	//~additemself 45 1
+	// ~run test SetStat 7 100000
+	if(valid(item))
+	{
+		uint pid=item.GetProtoId();
+		if(pid==PID_THROWING_KNIFE||pid==PID_KNIFE||pid==PID_COMBAT_KNIFE||pid==PID_SHIV||pid==PID_WAKIZASHI_BLADE)
+		{
+			player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_POSTER_USE_KNIFE);
+			GameVar @ status=GetLocalVar(LVAR_tbu_poster, player.Id);
+			if(valid(status))
+			{
+				if(status.GetValue()==0)
+				{
+					status=1;
+					player.StatBase[ST_EXPERIENCE]+=100;
+				}
+			}
+			return true;
+		}
+	}
+	player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_POSTER_USE);
+	return true;
+}
+
+//* ***************************************************** Скрипты для карт ***************************************************** */
+void _TechBunkerMapInit(Map & map, bool firstTime) // Общий скрипт с генерилкой книжек
+{
+	if(firstTime)
+	{
+		//SpawnHubBooks(map);
+		// за убийство рейнджеров не будет падать карма
+		Critter @[] rebels;
+		if(map.GetCritters(0, FIND_ALL|FIND_ONLY_NPC, rebels)>0)
+		{
+			for(uint i=0, l=rebels.length();i<l;i++)
+			{
+				rebels[i].ModeBase[MODE_NO_KARMA_ON_KILL]=1;
+			}
+		}
+	}
+	map.SetEvent(MAP_EVENT_CRITTER_DEAD, "_TechBunkerMapCritterDead");
+	DL("map init.Pid"+map.GetProtoId());
+	if(map.GetProtoId()==MAP_tech_bunker1)
+	{
+		//DL("map loop set");
+		map.SetLoopTime(1, 5000);
+		map.SetEvent(MAP_EVENT_LOOP_1, "_Lvl1MapLoop1");
+	}
+}
+
+void _Lvl1MapLoop1(Map& map)
+{
+//	Log("Loop1");
+	//DL("map loop fired");
+	Critter @[] players;
+	Critter @[] npcs;
+	if(map.GetCritters(0, FIND_LIFE|FIND_ONLY_PLAYERS, players)==0) return;
+	if(map.GetCritters(0, FIND_LIFE|FIND_ONLY_NPC, npcs)==0) return;
+	//DL("Before cycle");
+	for(uint i=0, l=players.length();i<l;i++)
+	{
+		Critter @ player=players[i];
+		if(!valid(player)) continue;
+		DL("loop" + l);
+		if(IsCritterInDeadZone(player, map, 0, DEAD_ZONE_ENTIRE_FIRST, DEAD_ZONE_ENTIRE_END))
+		{
+			//DL("found wrong player");
+			for(uint j=0,ln=npcs.length();j<ln;j++)
+			{
+				Critter @ npc=npcs[j];
+				if(valid(npc))
+				{
+					//DL("attack plane erased");
+					//if(npc.CheckEnemyInStack (player.Id)) DL("in stack");
+					EraseAttackPlane(npc, player);
+				}
+			}
+		}else{
+			//DL("ok coords");
+		}
+	}
+
+}
+
+void _TechBunkerMapCritterDead(Map& map, Critter& cr, Critter@ killer)
+{
+	OnRebelDead(cr, killer);
+}
+
+//* ******************************************* Мертвая зона, заданная EntireHex'ами ******************************************* */
+bool IsCritterInDeadZone(Critter & cr)
+{
+	DL("npc");
+	Map @ map=cr.GetMap();
+	if(!valid(map)) return false;
+	return IsCritterInDeadZone(cr, map, 0, DEAD_ZONE_ENTIRE_FIRST, DEAD_ZONE_ENTIRE_END);
+}
+
+
+//* ********************************************** Измененные шаблоны ai_pattern *********************************************** */
+void _TbuPatternInit(Critter & cr, bool firstTime)
+{
+
+	switch(cr.Stat[ST_NPC_ROLE])
+	{
+		case NPCROLE_SNIPER1:
+			SetSniperStats(cr, 0);
+			cr.SetScript("techbunker_sniper@_CritterInit");
+			break;
+		case NPCROLE_SNIPER2:
+			SetSniperStats(cr, 0);//SetSniperStats(cr, 1);
+			cr.SetScript("techbunker_sniper@_CritterInit");
+
+			break;
+		case NPCROLE_SNIPER3:
+			SetSniperStats(cr, 0);//SetSniperStats(cr, 2);
+			cr.SetScript("techbunker_sniper@_CritterInit");
+
+			break;
+		case NPCROLE_SNIPER4:
+			SetSniperStats(cr, 0);//SetSniperStats(cr, 3);
+			cr.SetScript("techbunker_sniper@_CritterInit");
+
+			break;
+		case NPCROLE_TERM1:
+			SetTermStats(cr, 0);
+			cr.SetScript("techbunker_term@_CritterInit");
+
+			break;
+		case NPCROLE_TERM2:
+			SetTermStats(cr, 0);//SetTermStats(cr, 1);
+			cr.SetScript("techbunker_term@_CritterInit");
+
+			break;
+		case NPCROLE_TERM3:
+			SetTermStats(cr, 0);//SetTermStats(cr, 2);
+			cr.SetScript("techbunker_term@_CritterInit");
+
+			break;
+		case NPCROLE_TERM4:
+			SetTermStats(cr, 0);//SetTermStats(cr, 3);
+			cr.SetScript("techbunker_term@_CritterInit");
+
+			break;
+		case NPCROLE_TERM5:
+			SetTermStats(cr, 0);//SetTermStats(cr, 4);
+			cr.SetScript("techbunker_term@_CritterInit");
+
+			break;
+		default:
+			_PatternInit(cr, firstTime);
+	}
+}
+
+//* *********************************** Запуск ускорителя и блокировка двери *********************************** */
+#define STR_CLOSE_PELLETRON_DOORS            (5008) // Активирована система автоматического планирования испытаний. Двери загерметизированы.
+#define STR_COUNTDOWN                        (5009) // Внимание! Запуск ускорителя через @lex time@ минут.
+#define STR_START_PELLETRON                  (5010) // СТАРТ
+#define STR_SHOTDOWN_PELLETRON               (5011) // Внимание. Сбой в системе. Аварийная остановка ускорителя.
+#define STR_PELLETRON_DAMAGE                 (5012) // Вы чувствуете излучение, исходящее от катушек ускорителя.
+#define STR_PELLERON_NOISE                   (5013)
+#define PDOOR_X                              (50)   // координаты двери ускорителя по оси Х
+#define PDOOR_Y                              (85)
+#define PDOOR_PID                            (2143) // прототип двери
+#define COUNTDOWN_TICK                       (REAL_SECOND(3))
+#define DMG_RADIUS                           (15)
+
+#define PID_PELLERON                         (4686) // прототип элемента сценери "ускоритель"
+#define SECONDS_TO_START                     (10) // число секунд, через которое начнется работа ускорителя
+
+import bool GetFreeHex(Map&map,uint radius,uint16&hx,uint16&hy) from "caravan";
+import void QuakeScreen(Map& map) from "effects";
+
+// Функция для использования в диалоге с компутором на втором уровне
+// открывает или закрывает дверь к ускорителю
+// если open>0 - дверь закрывается
+void r_PelletronDoor(Critter & player, Critter @ npc, int open)
+{
+	Map @ map=GetMapByPid(MAP_tech_bunker3, 0);
+	if(!valid(map)) return;
+
+	Item @ door=map.GetItem(PDOOR_X, PDOOR_Y, PDOOR_PID);
+	if(!valid(door)) return;
+
+	if(open==0)
+	{
+		if(door.LockerOpen())
+		{
+			GameVar @ status=GetGlobalVar(GVAR_tbu_pelletron_door_open);
+			if(valid(status)) status=1;
+		}
+
+	}else{
+		ClosePelleronDoor(map, door);
+	}
+}
+
+// наступание на триггер - закрытие двери, запуск ускорителя, отображение мистера джи
+void t_StartPelletron(Critter& player, Scenery& trigger, bool entered, uint8 dir)
+{
+	Map @ map=player.GetMap();
+	if(!valid(map)) return;
+
+
+	Item @ door=map.GetItem(PDOOR_X, PDOOR_Y, PDOOR_PID);
+	if(!valid(door)) return;
+
+	GameVar @ status=GetGlobalVar(GVAR_tbu_pelletron_door_open);
+	if(!valid(status)) return;
+	if(status.GetValue()==0) return;
+
+	ClosePelleronDoor(map, door);
+
+	map.SetTextMsg(trigger.HexX, trigger.HexY, COLOR_RED, TEXTMSG_TEXT, STR_CLOSE_PELLETRON_DOORS);
+
+	uint[] values={map.Id, trigger.HexX, trigger.HexY, 10};
+	CreateTimeEvent(__FullSecond+COUNTDOWN_TICK, "e_CountDown", values, true);
+
+}
+
+void ClosePelleronDoor(Map & map, Item & door)
+{
+	Critter @ cr= map.GetCritter(door.HexX, door.HexY);
+	if(valid(cr))
+	{
+		uint16 x=cr.HexX;
+		uint16 y=cr.HexY;
+
+		if(GetFreeHex(map,2,x,y))
+		{
+			cr.TransitToHex(x,y,0);
+		}
+
+	}
+	if(door.LockerClose())
+	{
+		GameVar @ status=GetGlobalVar(GVAR_tbu_pelletron_door_open);
+		if(valid(status)) status=0;
+	}
+}
+
+uint e_CountDown(uint[]@ values)
+{
+	Map @ map=GetMap(values[0]);
+	if(!valid(map)) return 0;
+	uint x=values[1];
+	uint y=values[2];
+	values[3]=values[3]-1;
+	uint seconds=values[3];
+
+	if(seconds>0)
+	{
+		map.SetTextMsg(x, y, COLOR_RED, TEXTMSG_TEXT, STR_COUNTDOWN,"$time " + seconds);
+
+	}else{
+
+		map.SetTextMsg(x, y, COLOR_RED, TEXTMSG_TEXT, STR_START_PELLETRON);
+		uint[] vals={map.Id, 1};
+		CreateTimeEvent(__FullSecond+COUNTDOWN_TICK, "e_DamagePlayers", vals, true);
+		return 0;
+	}
+
+	CreateTimeEvent(__FullSecond+COUNTDOWN_TICK, "e_CountDown", values, true);
+	return 0;
+}
+
+uint e_DamagePlayers(uint[]@ values)
+{
+	Map @ map=GetMap(values[0]);
+	if(!valid(map)) return 0;
+
+	uint multiplier=values[1];
+
+	Scenery @[] sceneries;
+	if(map.GetSceneries(PID_PELLERON, sceneries)==0) return 0;
+	Critter @[] players;
+	uint i=Random(0, sceneries.length()-1);
+	QuakeScreen(map);
+	map.SetTextMsg(sceneries[i].HexX, sceneries[i].HexY, COLOR_RED, TEXTMSG_TEXT, STR_PELLERON_NOISE);
+	if(map.GetCrittersHex (sceneries[i].HexX, sceneries[i].HexY, DMG_RADIUS, FIND_LIFE_AND_KO|FIND_ONLY_PLAYERS, players)>0)
+	{
+		for(uint j=0, pl=players.length(); j<pl; j++)
+		{
+			if(players[j].IsPlayer())
+			{
+				InjureCritter(players[j], Random(40,80)*multiplier, DAMAGE_UNCALLED, GetDirection(sceneries[i].HexX,sceneries[i].HexY,players[j].HexX,players[j].HexY), 0);
+				players[j].SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_PELLETRON_DAMAGE);
+			}
+		}
+	}
+
+	if(multiplier<15)
+	{
+		multiplier++;
+		uint[] vals= {map.Id, multiplier};
+		CreateTimeEvent(__FullSecond+COUNTDOWN_TICK, "e_DamagePlayers",vals, true);
+	}else{
+		map.SetTextMsg(sceneries[i].HexX, sceneries[i].HexY, COLOR_RED, TEXTMSG_TEXT, STR_SHOTDOWN_PELLETRON);
+
+	}
+	return 0;
+}
+
+// Компьютер
+bool s_CompLvl2Use(Critter& player, Scenery& scenery, int skill, Item@ item)
+{
+	if(skill==SK_SCIENCE&&player.Skill[SK_SCIENCE]>50)
+	{
+		RunDialog(player,DIALOG_tbu_lvl2computer, scenery.HexX, scenery.HexY, false);
+	}
+	return true;
+}
+
+//* *********************************************** DEBUG STUFF ************************************************ */
+// debug
+//~run loc_tech_bunker testZone 0 113 118
+//~run debug ToMapEntire 94 0 0
+// ~run test SetStat 1 72 10000
+//~loadscript loc_tech_bunker
+void testZone(Critter& cr, int dir, int firstEnt, int lastEnt)
+{
+
+	Map @ map=cr.GetMap();
+	if(IsCritterInDeadZone(cr, map, dir, firstEnt, lastEnt))
+	{
+		cr.Say(SAY_NETMSG, "в мертвой зоне");
+	}else{
+		cr.Say(SAY_NETMSG, "не в мертвой зоне");
+	}
+}
+
+// мертвая зона
+
+bool IsCritterInDeadZone(Critter & cr, Map & map, uint8 dir, uint8 hexFirst, uint8 hexEnd)
+{
+	uint crossNum=0; // число пересечений луча и ломанных, ограничивающих многоугольник мертвой зоны
+	for(uint i=hexFirst; i<=hexEnd; i++)
+	{
+		if(Intersect(map, i, (i==hexEnd?hexFirst:i+1), cr.HexX, cr.HexY))
+		{
+			crossNum++;
+		}
+	}
+	return(crossNum>0&&(crossNum%2==1));
+}
+
+// Первый отрезок АВ (A{x1;y1}, B{x2;y2})
+// второй - CD (С{x3;y3}, D{x4;y4})
+bool RectanglesIntersect(int16 x1, int16 y1, int16 x2, int16 y2, int16 x3, int16 y3, int16 x4, int16 y4)
+{
+	// Если не пересекаются прямоугольники, ограничивающие отрезки АА1BB1(A1{x1,y2}, B1{x2,y1}, отрезки не пересекаются
+	if ((x3 - x2)*(x4 - x1) > 0) return false;
+	if ((y3 - y2)*(y4 - y1) > 0) return false;
+	return true;
+}
+
+bool Intersect(Map& map, uint entireFrom, uint entireTo, uint16 hX, uint16 hY)
+{
+	uint16 x1=0, x2=0, y1=0, y2=0, y3=0, x3=0, x4=hX, y4=hY;
+	if (!map.GetEntireCoords(entireFrom, 0, x1, y1)) return false;	
+	if (!map.GetEntireCoords(entireTo, 0, x2, y2)) return false;
+	if (!RectanglesIntersect(MIN(x1, x2), MIN(y1, y2), MAX(x1, x2), MAX(y1, y2), x3, y3, x4, y4))
+		return false;
+	int ABx, ABy, ACx, ACy, ADx, ADy;
+    int CAx, CAy, CBx, CBy, CDx, CDy;
+    int ACxAB, ADxAB, CAxCD, CBxCD;
+	ACx=x3 - x1; ACy=y3 - y1;
+	ABx=x2 - x1; ABy=y2 - y1;
+	ADx=x4 - x1; ADy=y4 - y1;
+	CAx=x1 - x3; CAy=y1 - y3;
+	CBx=x2 - x3; CBy=y2 - y3;
+	CDx=x4 - x3; CDy=y4 - y3;
+	ACxAB=ACx * ABy - ACy * ABx;
+	ADxAB=ADx * ABy - ADy * ABx;
+	CAxCD=CAx * CDy - CAy * CDx;
+	CBxCD=CBx * CDy - CBy * CDx;
+
+	return ACxAB * ADxAB<=0 && CAxCD * CBxCD<=0;
+}
+
+// ~run loc_tech_bunker AddNpc 0 0 0
+// ~run debug ToMapEntire 45 0 0
+void AddNpc(Critter& cr, int, int, int)
+{
+	cr.GetMap().AddNpc(222, cr.HexX-5, cr.HexY-5, 0, null, null, "_DebugInit");
+}
+
+void _DebugInit(Critter& cr, bool ft)
+{
+	cr.SetEvent(CRITTER_EVENT_SMTH_USE_ITEM,"_UseI");
+}
+
+void _UseI(Critter& cr, Critter& fromCr, Item& item, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+	Location @loc=GetLocationByPid(LOCATION_TechBunker, 0);
+	if(valid(loc))
+	{
+		fromCr.SetKnownLoc  (true,loc.Id);
+		fromCr.Say(SAY_NETMSG, "Вы узнали расположение бункера");
+	}
+}

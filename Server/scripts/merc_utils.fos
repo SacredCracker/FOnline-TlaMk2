@@ -1,0 +1,525 @@
+// Merc Utils
+// For use with rifleman17's mercs.fos module.
+// Author: kamex
+
+#include "_msgstr.fos"
+
+uint16 GetLength(uint16 hX, uint16 hY, uint16 HX, uint16 HY) 	
+{ 
+		return uint16(sqrt(POW2(hX-HX)+POW2(hY-HY)));
+}
+
+
+
+#include "_npc_pids.fos"
+#include "_ai.fos"
+#define DLG_ID		(21002)
+#define  ITEM_WEAPON   (3) 
+#include "combat_h.fos"
+
+uint[] unallowed_locations={1,2,3,4,5,6,7,9,10,13,14,16,17,22};	// Локации на которых мерки не будут атаковать.
+
+
+
+const uint16[] slave_list={202,203,204,205,206,207,208,210,63,64,67,68,53,54,65,66,114,219,17, 22,27,
+						  28,217,218,19,20,50,51,63,64,65,66,236,237,508,509,510,511,512,513,514,515};
+		  
+bool _CanBeEnslaved(Critter & crit)  // check if crit pid is correct
+{	
+	
+	if (!valid(crit) || !crit.IsNpc() || IsMerc(crit) || crit.IsDead() || !crit.IsKnockout()) return false;
+	
+	Map@ map=crit.GetMap();
+	if (!valid(map)) return false;
+	Location@ loc=map.GetLocation();
+	if (!valid(loc)) return false;
+	if (!loc.AutoGarbage) return false;
+	uint locPid=loc.GetProtoId();
+	if(locPid<LOCATION_DesertEncounter1 ||locPid>LOCATION_CoastEncounter11)	
+	{
+	Log("wrong loc");
+	return false;
+	
+	}
+	for(uint i=0, iMax=slave_list.length(); i<iMax ;i++)
+		if(crit.GetProtoId()==slave_list[i]) return true;
+		
+	//Log("wrong pid:"+crit.GetProtoId());
+	return false;
+}
+
+int count_mercs (Critter& player)
+{
+
+	Critter@[] mercs;
+	uint count=0;
+	
+	if (!valid(player)) return 11;
+	GetPlayerMercs(player,mercs);
+	for(int i=0, iMax=mercs.length(); i<iMax;i++)
+		if(valid(mercs[i]) && !mercs[i].IsDead())
+			count++;
+
+//	Log("Mercs count:"+count);
+	return count;
+
+}
+
+
+void _RopeInit(Item& item, bool firstTime)
+{
+	item.SetEvent(ITEM_EVENT_USE ,"_UsedOnSlave");  /// register use event
+}
+
+
+void drop_events(Critter@ npc)
+{
+		npc.SetScript("");
+		npc.SetEvent(CRITTER_EVENT_MESSAGE       , ""    );
+		npc.SetEvent(CRITTER_EVENT_DEAD          , ""       );
+		npc.SetEvent(CRITTER_EVENT_SMTH_DEAD     , ""   );
+		npc.SetEvent(CRITTER_EVENT_SMTH_USE_SKILL, "");
+		npc.SetEvent(CRITTER_EVENT_PLANE_END     , ""   );
+		npc.SetEvent(CRITTER_EVENT_STEALING      , ""   );
+		npc.SetEvent(CRITTER_EVENT_HIDE_CRITTER,"");
+		npc.SetEvent(CRITTER_EVENT_SMTH_USE_ITEM , "");
+		npc.SetEvent(CRITTER_EVENT_SMTH_DROP_ITEM, "");
+}
+
+
+bool _UsedOnSlave(Item& item, Critter& crit, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+	if (!valid(item) || !valid(crit) || !valid(onCritter)) return false;
+	
+	
+	if(_CanBeEnslaved(onCritter) && (crit.Stat[ST_STRENGTH]/2+1)>count_mercs(crit))
+		{
+		drop_events(onCritter);
+		crit.DeleteItem (PID_ROPE, 1);
+		crit.SayMsg(SAY_NETMSG,TEXTMSG_TEXT,STR_ENSLAVED);
+		
+		Merc2Player(crit,onCritter, MERC_FOLLOWER_HARMLESS);
+		onCritter.DropPlanes(); 
+		onCritter.ClearEnemyStack(); 
+		onCritter.ModeBase[MODE_NO_ENEMY_STACK]=1;
+		onCritter.ModeBase[MODE_NO_BARTER]  =1;
+		onCritter.StatBase[ST_TEAM_ID]=crit.StatBase[ST_TEAM_ID];
+		onCritter.StatBase[ST_DIALOG_ID] 		 =DLG_ID; 
+		onCritter.StatBase[ST_AI_ID]=AIPACKET_GENERIC_GUARDS;
+		onCritter.ModeBase[MODE_NO_HOME]=1;
+		onCritter.ParamBase[ST_FRACTION]=crit.ParamBase[ST_FRACTION];
+		onCritter.StatBase[ST_REPLICATION_TIME]=-1;
+		onCritter.SetEvent(CRITTER_EVENT_PLANE_BEGIN,"merc@_PlaneBegin");
+		onCritter.ModeBase[MODE_NO_FAVORITE_ITEM]=1;
+		onCritter.MercBase[MERC_WAIT_FOR_MASTER]=0;
+		onCritter.MercBase[MERC_GIVEN]=0;
+		onCritter.MercBase[MERC_ALWAYS_RUN]=1;
+		onCritter.MercBase[MERC_IS_SLAVE]=1;
+		EraseAnyData("mob_in_enc"+onCritter.Id);
+		return true;
+		}
+	//	Log("cant be enslaved cus stats or other stuf");
+	return false;
+}
+
+
+
+void get_best_weapon(Critter@ cr)
+{
+		cr.ModeBase[MODE_NO_FAVORITE_ITEM]=0;
+		Item@[] items;
+				
+		cr.GetItemsByType (ITEM_WEAPON,items);
+			
+		for(uint i=0, iMax=items.length(); i<iMax ;i++)
+		  if(valid(items[i]) && cr.IsAnim1(items[i].Proto.Weapon_Anim1))	// animation check thnx 2 Cracker :3 
+				{
+					cr.MoveItem(items[i].Id,1, SLOT_HAND1);
+					reload_weapon(cr,items[i]);
+					cr.SetFavoriteItem(SLOT_HAND1, items[i].GetProtoId());
+					cr.StatBase[ST_LAST_WEAPON_ID]=items[i].Id;
+					return;
+				}
+
+}
+
+bool reload_weapon(Critter@ cr, Item@ weapon)
+{
+	Item@[] items;
+	cr.GetItemsByType (ITEM_TYPE_AMMO,items);
+	if (!valid(weapon)) return false;
+	
+	
+	
+	for(uint i=0, iMax=items.length(); i<iMax; i++)
+	if(valid(items[i]) && weapon.Proto.Weapon_Caliber==items[i].Proto.Ammo_Caliber)
+	{
+		uint count=MIN(items[i].GetCount(),weapon.Proto.Weapon_MaxAmmoCount-weapon.WeaponAmmoCount);
+		weapon.WeaponAmmoCount+=count;
+		weapon.WeaponAmmoPid=items[i].GetProtoId();
+		_SubItem(items[i],count);
+		//Log("reloaded weapon!");
+		weapon.Update();
+		cr.Action(ACTION_RELOAD_WEAPON,0,weapon);
+		return true;
+	}
+	
+	return false;
+
+	
+}
+
+void put_down_weapon(Critter@ cr)
+{
+	
+		Item@[] items;
+		cr.GetItems(SLOT_HAND1, items);
+			
+			for(uint i=0, iMax=items.length(); i<iMax; i++)
+				if(valid(items[i])) cr.MoveItem (items[i].Id, items[i].GetCount(), SLOT_INV); 
+					cr.StatBase[ST_LAST_WEAPON_ID]=-1;
+							
+		cr.ModeBase[MODE_NO_FAVORITE_ITEM]=1;
+}
+
+void check_doorDist(Critter& cr)
+{
+		
+		Map@ map=cr.GetMap();
+		if (!valid(map)) return;
+		
+		
+		Item@[] doors;
+		map.GetItemsByType(ITEM_TYPE_DOOR,doors);
+		
+				
+		
+		uint16 mindist=4;
+		
+		uint16 mhexX;
+		uint16 mhexY;
+
+		for(uint i=0, iMax=doors.length(); i<iMax; i++)
+		if(valid(doors[i]))
+		{
+			if(mindist>GetLength(doors[i].HexX, doors[i].HexY,cr.HexX, cr.HexY))
+			{
+					mindist=GetLength(doors[i].HexX, doors[i].HexY,cr.HexX, cr.HexY);
+					mhexX=doors[i].HexX;
+					mhexY=doors[i].HexY;
+			}
+		}
+		
+		if(mindist>0 && mindist<2) 
+		{
+			cr.MercBase[MERC_WAIT_FOR_MASTER]==0;
+			//cr.SayMsg(SAY_NORM_ON_HEAD,TEXTMSG_COMBAT,STR_PROTEST);
+			
+		}
+		
+		
+}
+ int _PlaneBegin(Critter& cr, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem)	// обработчкик планов.
+ {
+	
+	if(plane.Type==AI_PLANE_ATTACK || plane.Type==AI_PLANE_WALK)
+	{
+		
+		Map@ map=cr.GetMap();
+		if (!valid(map)) return PLANE_DISCARD;
+		Location@ loc=map.GetLocation();
+		if (!valid(loc)) return PLANE_DISCARD;
+		uint locPid=loc.GetProtoId();
+
+		
+	
+	//Log("Обрабатываем план:"+plane.Type);
+	
+	if(plane.Type==AI_PLANE_ATTACK)
+	{	
+		
+		Critter @[] Group;
+		Critter@ Leader=GetCritter (cr.MasterId);
+		Critter@ Attacked=GetCritter (plane.Attack_TargId);
+		
+		if (!valid(Attacked))  return PLANE_RUN_GLOBAL;
+		
+		// не атакуем если запрещено.
+	//	if	(cr.MercBase[MERC_ASSIST_MASTER]<1 && cr.MercBase[MERC_DEFEND_MASTER]<1) return PLANE_DISCARD;
+	
+		if(d_NpcIsPlayerMerc(Attacked, cr))		// не атакуем хозяина.
+					return PLANE_DISCARD;
+	
+		for(uint i=0, iMax=unallowed_locations.length(); i<iMax; i++)
+			if(locPid==unallowed_locations[i])
+				return PLANE_DISCARD;		// не атакуем в городах.
+			
+
+		if(valid(Leader)) 
+		{
+			Leader.GetFollowGroup(FIND_LIFE,Group);
+			for(uint i=0, iMax=Group.length(); i<iMax; i++)		// не атакуем группу хозяина.
+				if(Attacked.Id==Group[i].Id)	
+					return PLANE_DISCARD;
+		}
+	}
+	}
+	return PLANE_RUN_GLOBAL;
+}
+
+void unsafe_cmd (Critter& player, int param0, int param1, int param2, string@ param3, int[]@ param4)
+{
+	Critter@[] mercs;
+	Map@ map=player.GetMap();
+	Critter@ crt=map.GetCritter(param0,param1);
+	bool hasmerc=false;
+	if (!valid(player) || !valid(map)) return;
+	
+	GetPlayerMercs(player,mercs);
+	for(int i=0, iMax=mercs.length(); i<iMax; i++)
+	if(valid(mercs[i]) && !mercs[i].IsDead())
+	{
+		hasmerc=true;
+		break;
+	}
+	if(hasmerc && !player.IsDead()) player.RunClientScript("client_main@ShowMercScreen", 0,0,0,null,null);
+}
+
+
+void unsafe_MercCmd(Critter& player, int param0, int param1, int param2, string@ param3, int[]@ param4)
+{
+	Critter@[] mercs;
+	Map@ map=player.GetMap();
+	Critter@ crt=map.GetCritter(param0,param1);
+	
+	NpcPlane@[] planes; 
+	
+	if (!valid(player) || !valid(map)) return;
+	
+	GetPlayerMercs(player,mercs);
+	for(int i=0, iMax=mercs.length(); i<iMax; i++)
+	if(valid(mercs[i]))
+	 switch(param2)
+		{
+		case 0: 
+			
+			if(valid(crt))  
+			{
+				AddAttackPlane(mercs[i], AI_PLANE_ATTACK_PRIORITY, crt);
+				player.EventAttack (crt);
+				mercs[i].EventAttack (crt);
+			}
+		break;
+		case 1: 
+			mercs[i].DropPlanes(); 
+			mercs[i].MercBase[MERC_WAIT_FOR_MASTER]=2;
+			AddWalkPlane(mercs[i], AI_PLANE_WALK_PRIORITY,param0,param1, GetDir(mercs[i],player),true, 1);
+		break;
+		case 2: 
+			mercs[i].DropPlanes(); 
+			mercs[i].MercBase[MERC_WAIT_FOR_MASTER]=0;
+			mercs[i].ClearEnemyStack(); 
+		break;
+		default: break;
+		}
+
+}
+
+/* For use in dialogs / Для диалогов */
+// результаты / results
+
+void r_DoNotHelp(Critter& master, Critter@ slave)	
+{
+	slave.MercBase[MERC_ASSIST_MASTER]=0;
+	slave.MercBase[MERC_DEFEND_MASTER]=0;
+}
+
+
+void r_AssistMaster(Critter& master, Critter@ slave)	
+{
+	slave.MercBase[MERC_ASSIST_MASTER]=1;
+}
+
+void r_DefendMaster(Critter& master, Critter@ slave)	
+{
+	slave.MercBase[MERC_DEFEND_MASTER]=1;
+}
+
+void r_EnableBarter(Critter & player, Critter @ slave)
+{
+	slave.ModeBase[MODE_NO_BARTER]=0;
+}
+
+void r_DisableBarter(Critter & player, Critter @ slave)
+{
+	slave.ModeBase[MODE_NO_BARTER]=1;
+}
+
+void r_IncBSkill(Critter& master, Critter@ slave)
+{
+	if(slave.SkillBase[SK_BARTER]<300)
+	slave.SkillBase[SK_BARTER]+=50;
+}
+
+void r_DecBSkill(Critter& master, Critter@ slave)
+{
+	if(slave.SkillBase[SK_BARTER]>50)
+	slave.SkillBase[SK_BARTER]-=50;
+}
+
+
+void r_ShowInv(Critter& player, Critter@ npc)
+{
+	if(valid(npc))
+		player.ShowContainer (npc,null, TRANSFER_FAR_CRIT);	
+}
+
+void r_HideWeapon(Critter& player, Critter@ npc)
+{
+	put_down_weapon(npc);
+}
+
+void r_DrawWeapon(Critter& player, Critter@ npc)
+{
+	get_best_weapon(npc);
+}
+
+void r_GiveMerc(Critter& player, Critter@ npc)
+{
+	player.ShowScreen(SCREEN_SAY, 0, "give_merc");
+	player.Say(SAY_SAY_TITLE, "Введите ник игрока:");
+	npc.MercBase[MERC_GIVEN]=1;
+}
+
+// условия // demand
+bool d_Armed(Critter& crit, Critter@ slave) // inversion // инверсия
+{
+	Item@[] items;
+	if(slave.GetItems(SLOT_HAND1, items)>0) return true;
+	else return false;
+}
+
+bool d_UnArmed(Critter& crit, Critter@ slave) // inversion // инверсия
+{
+	Item@[] items;
+	if(slave.GetItems(SLOT_HAND1, items)<1) return true;
+	else return false;
+}
+
+bool d_NotFollowing(Critter& crit, Critter@ slave) // inversion // инверсия
+{
+	if(slave.MercBase[MERC_WAIT_FOR_MASTER]==1) return true;
+	return false;
+}
+
+bool d_Following(Critter& crit, Critter@ slave) // inversion // инверсия
+{
+	if(slave.MercBase[MERC_WAIT_FOR_MASTER]==0 || slave.MercBase[MERC_WAIT_FOR_MASTER]==2) return true;
+	return false;
+}
+
+bool d_NotDefendingMasted(Critter& crit, Critter@ slave) // inversion // инверсия
+{
+	if (!(slave.MercBase[MERC_DEFEND_MASTER]>0)) return true;
+	return false;
+}
+
+bool d_NotAssistingMasted(Critter& crit, Critter@ slave) // inversion // инверсия
+{
+	if (!(slave.MercBase[MERC_ASSIST_MASTER]>0)) return true;
+	return false;
+}
+
+bool d_DefendingorAssisting(Critter& crit, Critter@ slave) // inversion // инверсия
+{
+	if(slave.MercBase[MERC_DEFEND_MASTER]==1 || slave.Merc[MERC_ASSIST_MASTER]==1) return true;
+	return false;
+}
+
+bool d_CanTrade(Critter& crit, Critter@ slave) // check if container spawned // проверка создан ли контейнер
+{
+	if (!valid(crit)) return false;
+	if(slave.ModeBase[MODE_NO_BARTER]==0) return true;
+	return false;
+}
+
+bool d_CanNotTrade(Critter& crit, Critter@ slave) // inversion // инверсия
+{
+	if (!valid(crit)) return false;
+	if(slave.ModeBase[MODE_NO_BARTER]==1) return true;
+	return false;
+}
+
+void give_merc(Critter& cr, uint answerI, string& answerS)
+{	
+	Critter@[] mercs;
+	GetPlayerMercs(cr,mercs);
+	Critter@ crit=GetPlayer(answerS);
+	uint give_count=0;
+
+	if(answerS.length()>2 && answerS.length()<20 && valid(crit) && valid(cr) && !crit.IsDead() && crit.IsPlayer() && (crit.Stat[ST_STRENGTH]/2+1)>count_mercs(crit)) 
+	{
+		for(int i=0, iMax=mercs.length(); i<iMax; i++)
+			if (!valid(mercs[i]) || mercs[i].GetMapId()!=crit.GetMapId() || mercs[i].IsDead()) 
+					mercs[i].MercBase[MERC_GIVEN]=0;
+						else give_count++;
+	} 	else 
+			{
+				cr.Say(SAY_NETMSG,"Нельзя отдать раба этому игроку.");
+				for(int i=0, iMax=mercs.length(); i<iMax;i++) 
+					if(valid(mercs[i])) mercs[i].MercBase[MERC_GIVEN]=0;
+				return;				
+			}
+	
+	if(give_count<1) return;
+
+	for(int i=0, iMax=mercs.length(); i<iMax; i++)
+		if(valid(mercs[i]) && !mercs[i].IsDead() && mercs[i].MercBase[MERC_GIVEN]==1 && (crit.Stat[ST_STRENGTH]/2+1)>count_mercs(crit))
+		{
+			merc2plr(crit,mercs[i]);	
+			mercs[i].MercBase[MERC_GIVEN]=0;
+		}
+}
+
+bool merc2plr(Critter & crit, Critter@ onCritter)
+{
+	drop_events(onCritter);
+	crit.SayMsg(SAY_NETMSG,TEXTMSG_TEXT,STR_SLAVE_GIVEN);
+	//crit.Say(SAY_NETMSG,"Вы получили раба.");	// to do: добавить текст 
+	Merc2Player(crit,onCritter, MERC_FOLLOWER_HARMLESS);
+		
+	onCritter.DropPlanes(); 
+	onCritter.ClearEnemyStack(); 
+	onCritter.ModeBase[MODE_NO_ENEMY_STACK]=1;
+	onCritter.ModeBase[MODE_NO_BARTER]  =1;
+	onCritter.ModeBase[MODE_NO_HOME]=1;
+	onCritter.ModeBase[MODE_NO_FAVORITE_ITEM]=1;
+	onCritter.StatBase[ST_TEAM_ID]=crit.StatBase[ST_TEAM_ID];
+	onCritter.ParamBase[ST_FRACTION]=crit.ParamBase[ST_FRACTION];
+	onCritter.StatBase[ST_DIALOG_ID] 		 =DLG_ID; 
+	//onCritter.StatBase[ST_AI_ID]=AIPACKET_GENERIC_GUARDS;
+	onCritter.StatBase[ST_REPLICATION_TIME]=-1;
+	onCritter.MercBase[MERC_WAIT_FOR_MASTER]=0;
+	onCritter.MercBase[MERC_GIVEN]=0;
+	onCritter.MercBase[MERC_ALWAYS_RUN]=1;
+	onCritter.MercBase[MERC_IS_SLAVE]=1;
+	onCritter.SetEvent(CRITTER_EVENT_PLANE_BEGIN, "merc@_PlaneBegin");
+	return true;
+}
+
+/*  Debug */
+void Merc2(Critter & cr, int mercId, int ld,int)
+{
+	Critter @ merc=GetCritter(mercId);
+	if(valid(merc))
+		merc2plr(cr,merc);
+}
+/* debug end */
+
+/*
+void SetName(Critter& cr,int id,int, int)
+{
+
+	cr.NameStr="ЛОЛОЧКА!!";
+
+}*/

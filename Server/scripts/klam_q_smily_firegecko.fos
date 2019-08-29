@@ -1,0 +1,237 @@
+// Author: Team MK2 на основе: Охота на Гекко. Author: heX
+// Квест на поиск винтовки Смайли
+// Выдает Смайли в Кламате
+//V 0.9
+
+#include "_macros.fos"
+#include "_npc_pids.fos"
+#include "_vars.fos"
+#include "_teams.fos"
+#include "_bags.fos"
+#include "_itempid.fos"
+#include "entire.fos"
+
+#define MIN_GECKO	(6) //Минимальное количество гекко.
+
+//Координаты Кламата.
+#define KLAMATH_POS_X (375)
+#define KLAMATH_POS_Y (125)
+#define ENTIRE_SUPPLY_WEAPON_SMILY (16)
+
+import bool AddAttackPlane(Critter& npc, uint priority, Critter& target) from "npc_planes";
+import void SetLex(Item& item, string prefix, string sufix, string des) from "random_parameters_items";
+
+uint[] GlobalGroups;
+uint GlobalMapId;
+
+void SetQuestState(Critter& player, int Status)
+{
+	GameVar@ quest=GetLocalVar(LVAR_q_klam_smily_firegecko, player.Id);
+	if(not valid(quest)) return;
+	quest=Status;
+}
+
+int GetQuestState(Critter& player)
+{
+	GameVar@ quest=GetLocalVar(LVAR_q_klam_smily_firegecko, player.Id);
+	if(not valid(quest)) return 0;
+	return quest.GetValue();
+}
+
+//Удаляем локацию
+void DeleteFireGeckoMap()
+{
+	GameVar@ game_map=GetGlobalVar(GVAR_klam_smily_firegecko_location);
+	if(not valid(game_map)) return;
+
+	if(game_map.GetValue() !=0) 
+	{
+		Location@ loc=GetLocation(game_map.GetValue());
+		if(not valid(loc)) 
+		{
+			game_map=0;
+			return;
+		}
+		
+		DeleteLocation(loc.Id); // но всетаки мы ее добьем
+		// возможно это плохое решение - тамже могут быть люди...
+		game_map=0;// зануляем
+	}
+}
+
+// проверка: квест уже выполняют?
+bool r_CheckQuestIsRun(Critter& player, Critter@ npc, int val)
+{
+	GameVar@ game_map=GetGlobalVar(GVAR_klam_smily_firegecko_location);
+	GameVar@ timeout=GetGlobalVar(GVAR_klam_smily_firegecko_timeout);
+
+	// убиваем карту если квест устарел.
+	// Цитата из мануала:
+	// "Не рекомендуется выполнять какие-либо конкретные действия в функции-условии, она для этого не предназначена."
+	// Ну да фиг с ним, ничего плохого не должно произойти... (heX посмотрел взглядом налево, затем направо, и продолжил писать...)
+	if(
+		(uint(timeout.GetValue()) > __FullSecond) or
+		(timeout.GetValue()==0) or
+		(game_map.GetValue()==0)
+		)
+	{ // Если прошло больше суток но квест невыполнен то
+		DeleteFireGeckoMap(); // удаляем карту
+		timeout=0;
+	}
+
+	if(game_map.GetValue()==0)
+		return val==0; // true
+	else
+		return val!=0; // false
+}
+
+//Игрок отправляется за винтовкой
+void r_StartSearch(Critter& player, Critter@ npc, int val)
+{
+	//Масив криттеров, состоящий с одного игрока. В дальнейшем можно переделать под груповой квест.
+	Critter@[] players;
+	players.insertLast(@player); //Добавляем игрока в конец масива.
+
+	//Анализ количества гекконов
+	int gecko=0;
+	gecko=players[0].Stat[ST_LEVEL]/6+MIN_GECKO;
+
+	// Позиция 
+	uint16 x,y;
+	x=Random(2,3);
+	y=Random(-1,-2);
+
+	//GameVar - Класс GameVar - игровая переменная.
+	//GetGlobalVar - возвращает значение глобальной переменной
+	GameVar@ game_map=GetGlobalVar(GVAR_klam_smily_firegecko_location);
+	GameVar@ game_time=GetGlobalVar(GVAR_klam_smily_firegecko_timeout);
+	game_time=__FullSecond + (60 * 60 * 24);
+
+	// удаляем старую карту если она есть
+	DeleteFireGeckoMap();
+
+	// Создали карту. Она будет видима для масива криттеров players.
+	GlobalMapId=CreateLocation(LOCATION_QuestSmilyFiregecko,
+		KLAMATH_POS_X + x*__GlobalMapZoneLength + Random(-(__GlobalMapZoneLength/2),(__GlobalMapZoneLength/2)),
+		KLAMATH_POS_Y + y*__GlobalMapZoneLength + Random(-(__GlobalMapZoneLength/2),(__GlobalMapZoneLength/2)),
+		players);
+		
+	// записали в глобальную игровую переменную
+	game_map=GlobalMapId;
+
+	Location@ loc=GetLocation(GlobalMapId);
+	loc.Visible=false;		 //Локация невидима
+	loc.AutoGarbage=false;	 //Локация не удалится сама, если на ней не останется НПЦ и людей.
+	loc.Radius=6; 			 //Радиус локации.
+
+	if(not valid(loc)) return;
+	Map@ map=loc.GetMapByIndex(0);
+	
+	map.SetEvent(MAP_EVENT_IN_CRITTER, "map_incoming"); //Пришол.
+	map.SetEvent(MAP_EVENT_OUT_CRITTER, "map_leave"); //Прерывание, на случай покидания карты игроком.
+	
+	uint16 hx,hy;
+	Entire[] entires;
+	ParseEntires(map,entires,ENTIRE_SUPPLY_WEAPON_SMILY);
+	
+	if(entires.length()>0)
+	{
+		Entire@ ent=entires[Random(0,entires.length()-1)];
+		hx=ent.HexX;
+		hy=ent.HexY;
+		Item@ weaponSmily=map.AddItem(hx,hy,PID_HUNTING_RIFLE,1);
+		SetLex(weaponSmily, "", " @msg obj "+1004+"@", " @msg obj "+1005+"@");
+		weaponSmily.Val8=25;
+		weaponSmily.Val9=25;
+		weaponSmily.Val6=3;
+		weaponSmily.Val7=5;
+		weaponSmily.Val5=player.Id;
+		weaponSmily.SetEvent(ITEM_EVENT_MOVE,"_MoveRifle");	
+	}
+
+/////////////////////////////
+
+	//Координаты для респа гекконов
+	if(not map.GetEntireCoords(0, 0, x, y))
+	{
+		x=80;
+		y=80;
+	}
+
+	// Создание мобов
+	Critter@ cr;
+	for(int i=0;i<gecko;i++)
+	{
+			int[] params={ST_DIALOG_ID,DIALOG_mob_silver_gecko,ST_TEAM_ID,TEAM_Mob0,ST_BAG_ID,BAG_Fire_Gecko_Weapon,ST_REPLICATION_TIME,-1};
+			//@cr=map.AddNpc(NPC_PID_ToughFireGecko, x+Random(0,10), y+Random(0,10), Random(0,5), params, null, "mob@_MobInit");
+	}
+}
+
+///////////////////////////////
+//Обработка прерываний
+
+// игрок уходит с карты
+void map_leave(Map& map, Critter& crit)
+{
+	if(GetQuestState(crit)==2)
+	{
+		SetQuestState(crit,3); //Статус квеста - игрок ушол с локации
+		DeleteFireGeckoMap();
+	}
+}
+
+// игрок пришол на карту
+void map_incoming(Map& map, Critter& player)
+{
+	if(GetQuestState(player)==1) SetQuestState(player,2);//Пришол.
+	player.SetEvent(CRITTER_EVENT_DEAD, "player_dead");
+
+	Critter@[] npcs,players;
+	if(map.GetCritters(0,FIND_LIFE_AND_KO|FIND_ONLY_PLAYERS,players)>0 && map.GetCritters(0,FIND_LIFE_AND_KO|FIND_ONLY_NPC,npcs)>0)
+	{
+		for(uint i=0, iMax=npcs.length(); i<iMax; i++)
+		{
+			Critter@ npc=npcs[i];
+			if(npc.GetProtoId()==NPC_PID_ToughFireGecko)
+				for(uint j=0, jMax=players.length(); j<jMax; j++) 
+					AddAttackPlane(npc,0,players[j]);
+		}
+	}
+}
+
+void player_dead(Critter& player, Critter@ killer)
+{
+	SetQuestState(player,4); // умер
+}
+
+bool d_CheckRifle(Critter& cr, Critter@ npc)
+{
+	Item@[] weaponSmily;
+	cr.GetItemsByType(ITEM_TYPE_WEAPON, weaponSmily);
+	if(weaponSmily.length()>0)
+	for(uint i=0, iMax=weaponSmily.length(); i<iMax; i++)
+		if(valid(weaponSmily[i]))
+			if(weaponSmily[i].GetProtoId()==PID_HUNTING_RIFLE && weaponSmily[i].Val8==25 && weaponSmily[i].Val9==25 && weaponSmily[i].Val6==3 && weaponSmily[i].Val7==5)
+				return true;
+	return false;
+}
+
+void r_DellRifle(Critter& cr, Critter@ npc)
+{
+	Item@[] weaponSmily;
+	cr.GetItemsByType(ITEM_TYPE_WEAPON, weaponSmily);
+	if(weaponSmily.length()>0)
+	for(uint i=0, iMax=weaponSmily.length(); i<iMax; i++)
+		if(valid(weaponSmily[i]))
+			if(weaponSmily[i].GetProtoId()==PID_HUNTING_RIFLE && weaponSmily[i].Val8==25 && weaponSmily[i].Val9==25 && weaponSmily[i].Val6==3 && weaponSmily[i].Val7==5)
+			{
+				DeleteItem(weaponSmily[i]);
+				return;
+			}
+}
+
+void _MoveRifle(Item& item, Critter& crit, uint8 fromSlot)
+{
+	SetQuestState(crit,7);
+	item.SetEvent(ITEM_EVENT_MOVE,"");
+}

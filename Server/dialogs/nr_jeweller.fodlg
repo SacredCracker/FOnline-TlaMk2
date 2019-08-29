@@ -1,0 +1,172 @@
+[comment]
+
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 D _var p name_mem_player_npc = 0 D _param p ST_CHARISMA > 3 #
+3 1020 D _var p name_mem_player_npc = 1 D _param p ST_CHARISMA > 3 #
+12 1030 D _param p ST_CHARISMA < 4 @
+2 2000 None 0 #
+4 2010 D _param p ST_INTELLECT > 3 R _var p name_mem_player_npc = 1 #
+0 2020 D _param p ST_INTELLECT > 3 #
+13 2030 D _param p ST_INTELLECT < 4 #
+13 2040 D _param p ST_INTELLECT < 4 @
+3 3000 None 0 #
+65506 3010 #
+11 3020 #
+5 3030 D _var p name_mem_npc_player = 0 #
+9 3040 D _var p name_mem_npc_player = 1 D _item p PID_GOLD_NUGGET > 0 D _var n click_counter < 20 #
+14 3050 D _var n click_counter } 20 D _script dialog@d_NotTimeoutCheck 0  #
+9 3060 D _var n click_counter } 20 D _script dialog@d_TimeoutCheck 0  R _var n click_counter = 0 #
+0 3070 @
+4 4000 None 0 #
+65506 4010 #
+5 4020 #
+0 4030 @
+5 5000 None 0 #
+6 5010 #
+65506 5020 #
+0 5030 @
+6 6000 None 0 #
+65506 6010 #
+7 6020 R _var p name_mem_npc_player = 1 #
+0 6030 #
+0 6040 @
+7 7000 None 0 #
+65506 7010 #
+0 7020 @
+8 8000 None 0 @
+9 9000 None 1 #
+10 9010 D _item p PID_GOLD_NUGGET > 0 D _var n click_counter < 19 R _item p PID_GOLD_NUGGET - 1 R _item p PID_BOTTLE_CAPS + 200 R _param p ST_EXPERIENCE + 250 R _var n click_counter + 1 #
+10 9020 D _item p PID_GOLD_NUGGET > 0 D _var n click_counter } 19 R _item p PID_GOLD_NUGGET - 1 R _item p PID_BOTTLE_CAPS + 200 R _param p ST_EXPERIENCE + 250 R _script dialog@r_TimeoutSet 1 24 R _var n click_counter + 1 #
+0 9030 @
+10 10000 None 1 #
+10 10010 D _item p PID_GOLD_NUGGET > 0 D _var n click_counter < 20 R _item p PID_GOLD_NUGGET - 1 R _item p PID_BOTTLE_CAPS + 200 R _param p ST_EXPERIENCE + 250 R _var n click_counter + 1 #
+15 10020 D _item p PID_GOLD_NUGGET > 0 D _var n click_counter } 20 R _script dialog@r_TimeoutSet 1 24 #
+0 10030 @
+11 11000 None 0 #
+65506 11010 #
+0 11020 @
+12 12000 None 0 @
+13 13000 None 0 @
+14 14000 None 0 #
+0 14010 #
+0 14020 @
+15 15000 None 0 &
+
+[russ]
+{100}{}{Ювелир}
+{200}{}{Вы видите: немолодой мужчина.}
+{210}{}{Немолодой мужчина с животиком. Вы не понимаете, почему, но он производит на вас очень хорошее впечатление.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{Первый раз.}
+{1020}{}{Знакомы.}
+{1030}{}{Низкая харизма.}
+{2000}{}{Привет! Чем я могу помогать? Хотите положить заказ?}
+{2010}{}{Эээ... А вы кто? Какой заказ?}
+{2020}{}{Кажется, я не туда попал@sex@|||а|.}
+{2030}{}{Ыгыгы!}
+{2040}{}{Бугабуга!}
+{3000}{}{Добрый день, что Кристофер может сделать для вас сегодня?@@Добрый день, что Александер может сделать для вас сегодня?@@Добрый день, что Эриберто может сделать для вас сегодня?@@Добрый день, что Фредерико может сделать для вас сегодня?@@Добрый день, что Мистер Гарсиа может сделать для вас сегодня?}
+{3010}{}{Давайте посмотрим, что у вас есть на продажу...}
+{3020}{}{Эй, а почему у вас такой странный акцент? Вы откуда?}
+{3030}{}{Я бы хотел@sex@|||а| что-то купить, но не пытайтесь мне всучить краденые драгоценности.}
+{3040}{}{У меня есть золото на продажу.}
+{3050}{}{У меня есть золото на продажу.}
+{3060}{}{У меня есть золото на продажу.}
+{3070}{}{Ничем, простите, что помешал@sex@|||а|.}
+{4000}{}{Ооо, вы что, совсем не знать людей Нуэво Рено? Меня зовут Кристофер Александер Эриберто Фредерико Гарсиа, я арендую помещение у Мистера Бишопа и занимаюсь ювелирное дело. Моя работа - лучший во вся Калифорния.}
+{4010}{}{Давайте посмотрим, что у вас есть...}
+{4020}{}{Ювелир? Ха, знаем мы таких. Скупаете краденое золото, чистите, а потом продаёте.}
+{4030}{}{Очень приятно, мистер... эээ... очень приятно, мистер. Мне уже пора идти.}
+{5000}{}{Эй, что ты знать обо мне?! Да я самый честный человек тут! Вы подумайте, приходят и говорят, что Эриберто - нечесный и покупает золото у воров! Ооо, сумасшедшие, очень сумасшедшие люди. Я не покупал ничего с рук даже после моих проблем с торговцы из Реддинг!}
+{5010}{}{Что за проблемы?}
+{5020}{}{Ладно-ладно. Давайте посмотрим, что вы продаёте...}
+{5030}{}{Мне пора идти.}
+{6000}{}{О, эти маленькие хитрецы из Сан-Франциско зачем-то покупают много золото! И они дают очень хорошую цену, я почти не могу ничего покупать против них. Большие караваны идут мимо нас, а так мало, как мне надо, никто не продаёт. Я не могу просто плавить доллары, это ужасно невыгодно для меня.}
+{6010}{}{Да, это беда. Ладно, покажите, что вы продаёте.}
+{6020}{}{И сколько вы готовы платить за один самородок из Реддинга?.}
+{6030}{}{Вам стоит начать покупать краденое. Пока.}
+{6040}{}{Да, это ужасно. Мне пора идти, до свидания.}
+{7000}{}{200 монет наличными, и это отличная цена.}
+{7010}{}{Буду иметь ввиду, а пока давайте посмотрим, что у вас есть у наличии...}
+{7020}{}{Буду иметь ввиду, до свидания.}
+{8000}{}{Иди из мой кабинет! Пута мадре...}
+{9000}{}{О, буэно, буэно. Я дам 200 доллары, как и обещал.}
+{9010}{}{[Передать самородок]}
+{9020}{}{[Передать самородок]}
+{9030}{}{Я передумал@sex@|||а|.}
+{10000}{}{О, очень хорошо, хороший качество. Вот ваши деньги.}
+{10010}{}{[Передать ещё один]}
+{10020}{}{[Передать ещё один]}
+{10030}{}{Это всё.}
+{11000}{}{О, мой папа и мама родиться так далеко, что я даже не знать этого места. Потом папа умирать, мама ехать в Лос-Анжелес к своей тётя, мама тоже умирать, я ехать в Хаб, где учиться моему делу. Потом я ехать столица, но там совсем нет работа. И я с дос амигос приехать сюда, и тут очень хорошо продавать свой товар. Миссис Бишоп нравиться мой труд и она предлагать мне своё покровительство. Я не мог отказывать такой мухэр.}
+{11010}{}{Сомневаюсь, что всё понял@sex@|||а|, но спасибо за историю. Теперь давайте поторгуем.}
+{11020}{}{Сомневаюсь, что всё понял@sex@|||а|, но спасибо за историю.}
+{12000}{}{От вас воняет, покиньте моя мастерская!@@Из какой дыры вы вылезли? Уходите!@@Тут не место для немытых нищих!@@Валите вон!}
+{13000}{}{Убирайтесь!}
+{14000}{}{Вижу, что материал отличного качества, но я только что купил партию у другого курьера, я пока не могу оплатить. Зайдите через пару дней, с удовольствием приобрету.}
+{14010}{}{Нууу, это не дело...}
+{14020}{}{По рукам.}
+{15000}{}{Спасибо, но мне не уже не надо так много.}
+
+[engl]
+{100}{}{the Jeweller}
+{200}{}{you see: the elderly man.}
+{210}{}{the Elderly man with a tummy. You do not understand, why, but it makes upon you very good impression.}
+{1000}{}{Predialogue installations}
+{1010}{}{the First time.}
+{1020}{}{Are familiar.}
+{1030}{}{Low charisma.}
+{2000}{}{Greetings! Than I can help? Want to put the order?}
+{2010}{}{Eee... And you who? What order?}
+{2020}{}{It seems, I not there попал@sex ||| and |.}
+{2030}{}{Ygygy!}
+{2040}{}{Bugabuga!}
+{3000}{}{Good afternoon, what Christopher can make for you today? @@ Good afternoon, what Alexander can make for you today? @@ Good afternoon, what Eriberto can make for you today? @@ Good afternoon, what Frederiko can make for you today? @@ Good afternoon, what Mr. Garcia can make for you today?}
+{3010}{}{Let's look that at you is on sale...}
+{3020}{}{Hey, and why at you such strange accent? You whence?}
+{3030}{}{I хотел@sex ||| and | something to buy, but do not try to me vsuchit stolen jewelry.}
+{3040}{}{I have a gold on sale.}
+{3050}{}{У меня есть золото на продажу.}
+{3060}{}{У меня есть золото на продажу.}
+{3070}{}{Anything, forgive that помешал@sex ||| and |.}
+{4000}{}{Ooo, you that not to know at all people of Nuevo Reno? My name is Christopher Alexander Heriberto Frederiko Garcia, I rent a premise at Mr. Bishop and I am engaged jewellery. My work - the best in all California.}
+{4010}{}{Let's look that at you is...}
+{4020}{}{the Jeweller? Ha, we know such. Buy up stolen gold, clean, and then sell.}
+{4030}{}{it is very pleasant, Mr... eee... Very pleasantly, Mr. Already it is time to me to go.}
+{5000}{}{Hey, what you to know about me?! Yes I the most fair person here! You think, come and say that Eriberto - unfair and buys gold from thieves! Ooo, mad, very mad people. I did not buy anything privately even after my problems with dealers from Redding!}
+{5010}{}{That for problems?}
+{5020}{}{All right-all right. Let's look that you sell...}
+{5030}{}{it is time To me to go.}
+{6000}{}{About, these small sly fellows from San Francisco what for buy many gold! And they give very good price, I cannot buy anything against them almost. The big caravans go by us and so it is not enough as it is necessary to me, nobody sells. I cannot is simple plavit dollars, it is awfully unprofitable for me.}
+{6010}{}{Yes, it is a trouble. All right, show that you sell.}
+{6020}{}{And how many you are ready to pay for one nugget from Reddinga?.}
+{6030}{}{you should to start buy the stolen. While.}
+{6040}{}{Yes, it is awful. It is time to me to go, good-bye.}
+{7000}{}{200 coins cash, also are the excellent price.}
+{7010}{}{I Will mean, for now let's look that at you is at presence...}
+{7020}{}{I Will mean, good-bye.}
+{8000}{}{Go from my office! Puta madre...}
+{9000}{}{About, bueno, bueno. I will give 200 dollars, as well as promised.}
+{9010}{}{[to Transfer a nugget]}
+{9020}{}{[Передать самородок]}
+{9030}{}{I передумал@sex ||| and |.}
+{10000}{}{About, very well, good quality. Here your money.}
+{10010}{}{[to Transfer one more]}
+{10020}{}{[Передать ещё один]}
+{10030}{}{It is all.}
+{11000}{}{About, my father and mum to be born so it is far that I not to know at all this place. Then the father to die, mum to go in Los-Anjeles to the the aunt, mum too to die, I to go to the Hub where to study in my business. Then I to go capital, but there absolutely there is no work. And I with dos amigos to arrive here, and here it is very good to sell the goods. Mrs. Bishop to be pleasant my work and it to offer me the protection. I could not refuse such mujer.}
+{11010}{}{I Doubt that all понял@sex ||| and |, but thanks for history. Now let's trade.}
+{11020}{}{I Doubt that all понял@sex ||| and |, but thanks for history.}
+{12000}{}{From you stinks, leave my workshop! @@ you have got out of what hole? Leave! @@ here not a place for dirty beggars! @@ bring down!}
+{13000}{}{Be cleaned!}
+{14000}{}{Вижу, что материал отличного качества, но я только что купил партию у другого курьера, я пока не могу оплатить. Зайдите через пару дней, с удовольствием приобрету.}
+{14010}{}{Нууу, это не дело...}
+{14020}{}{По рукам.}
+{15000}{}{Спасибо, но мне не уже не надо так много.}
+

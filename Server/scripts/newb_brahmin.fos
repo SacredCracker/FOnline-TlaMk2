@@ -1,0 +1,92 @@
+#include "_macros.fos"
+#include "_defines.fos"
+#include "_msgstr.fos"
+#define NPC_PID_WeakBrahmin                 (114)
+#define MERC_FOLLOWER_HARMLESS         (2)
+
+
+import bool GetFreeHex(Map& map, uint radius, uint16& hx, uint16& hy) from "caravan";
+import void CancelMerc(Critter & merc) from "merc";
+import uint GetPlayerMercs(Critter & player, Critter@ []& mercs) from "merc";
+import bool Merc2Player(Critter & player, Critter & merc, uint16 type) from "merc";
+import bool needHelpWindow(uint playerId) from "q_newbie_scripts";
+
+
+void r_addBrahmin(Critter& master, Critter@ slave)	
+{
+		Map@ map=master.GetMap();
+		if (!valid(map)) return;
+		
+		uint16 hxX=master.HexX;
+		uint16 hxY=master.HexY;
+
+		GetFreeHex(map,12,hxX,hxY);
+		Critter@ crit=map.AddNpc(NPC_PID_WeakBrahmin,hxX, hxY, 0,null,null,null);
+		Merc2Player(master,crit, MERC_FOLLOWER_HARMLESS);
+		
+		crit.ModeBase[MODE_NO_ENEMY_STACK]=1;
+		crit.StatBase[ST_TEAM_ID]=crit.StatBase[ST_TEAM_ID];
+		crit.ModeBase[MODE_NO_HOME]=1;
+		crit.StatBase[ST_REPLICATION_TIME]=-1;
+		crit.MercBase[MERC_WAIT_FOR_MASTER]=1;
+		crit.MercBase[MERC_CANCEL_TIME]=__FullSecond + (60*60*24*10);
+		
+		crit.SetEvent(CRITTER_EVENT_PLANE_BEGIN,"newb_brahmin@_PlaneBegin");
+		
+		
+		if (!needHelpWindow(master.Id)) return;	
+		master.ShowScreen(SCREEN_DIALOGBOX, 0, "");
+		master.SayMsg(SAY_DIALOGBOX_TEXT,TEXTMSG_TEXT,STR_MERCS);
+			
+		
+}
+
+
+
+int _PlaneBegin(Critter& cr, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem)	// обработчкик планов.
+ {
+	
+	if(plane.Type==AI_PLANE_ATTACK)
+			return PLANE_DISCARD;
+			return PLANE_KEEP;
+		
+}
+
+
+
+
+import Critter@ GetMaster(Critter& merc) from "merc";
+
+
+void r_DelBrahmin(Critter& master, Critter@ slave)	
+{
+	Critter@[] mercs;
+		
+	GetPlayerMercs(master,mercs);
+	for(int i=0, iMax=mercs.length(); i<iMax; i++)
+		if(valid(mercs[i]) && !mercs[i].IsDead() && mercs[i].StatBase[ST_BODY_TYPE]==BT_BRAHMIN)
+		{
+			CancelMerc(mercs[i]);
+			DeleteNpc(mercs[i]);
+		}
+
+}
+
+bool d_CheckBrahmin(Critter & player, Critter @npc)
+{
+	Critter@[] mercs;
+		
+	GetPlayerMercs(player,mercs);
+	for(int i=0, iMax=mercs.length(); i<iMax; i++)
+		if(valid(mercs[i]) && !mercs[i].IsDead() && mercs[i].StatBase[ST_BODY_TYPE]==BT_BRAHMIN)
+		{
+			if(GetCrittersDistantion(mercs[i],player)<=12) return true;
+		}
+	return false;
+
+}
+
+bool d_CheckBrahminInv(Critter & player, Critter @npc)
+{
+	return !d_CheckBrahmin(player,npc);
+}

@@ -1,0 +1,1593 @@
+/// Server
+#ifndef __CLIENT
+// Author: cvet, rifleman17
+#include "_macros.fos"
+#include "_defines.fos"
+#include "craft_table.fos"
+
+#define FIX_SUCCESS         (FIXBOY_DEFAULT^FIXBOY_CHECK_TIMEOUT^FIXBOY_SET_TIMEOUT)
+#define FIX_FAIL            (FIX_SUCCESS^FIXBOY_ALLOW_CRAFT)
+
+int fix_PowerArmor(Critter& player, int state, CraftItem& craft)
+{
+	GameVar@ canPA=GetLocalVar(LVAR_fixboy_power_armor,player.Id);
+	if(not valid(canPA) || canPA==0) return FIX_FAIL;
+	if(state==FIXBOY_CRAFT) canPA=0;
+	return FIX_SUCCESS;
+}
+
+import bool IsHellMap(int mapPid) from "replication_hell";
+
+int fix_Bag(Critter& player, int state, CraftItem& craft)
+{
+	Map@ currentMap=player.GetMap();
+	bool currentMapIsHell = ( valid( currentMap ) && IsHellMap( currentMap.GetProtoId() ) );
+	if (currentMapIsHell)
+	{
+		return FIX_FAIL;
+	}
+	else return FIX_SUCCESS;
+}
+
+// Усложненный крафт
+// - для отображения в пипбое требуется знание рецепта
+// - для производства необходимо находиться рядом со специальным станком
+// - у станка может задаваться таймаут на последующее использование. Таймаут сохраняется в AnyData. Создается также тайм эвент на очистку AnyData
+// - если на карте несколько одинаковых станков и у них указан таймаут - у него будет общее значение.
+
+/* У прессов для производства аммуниции и токарных станков есть по несколько изображений, но используется один прототип,
+   чтобы не добавлять лишние проверки в скрипт - просто переключайтесь между изображениями через параметр PicMap
+   в маппере, название кадра будет то же самое, меняется только цифра в конце.
+   Сейчас доступно по два варианта для станков:
+   art\scenery\manufact_ammo1.fofrm
+   art\scenery\manufact_ammo2.fofrm
+   art\scenery\manufact_lathe1.fofrm
+   art\scenery\manufact_lathe2.fofrm
+   art\scenery\ProdPlant1.png
+   art\scenery\ProdPlant2.png
+*/
+
+#define _WorkBenchTimeoutKey #(pid, map) ("WorkbenchTO_pid_"+pid+"_map_id"+map.Id) // Таймаут на крафт для станка. Если равен=0, значит истек.
+#define _WorkBenchChargesKey #(pid, map) ("WorkbenchCH_pid_"+pid+"_map_id"+map.Id) // Число зарядов станка, если=0, запускается таймаут на обновление.
+#define DEFAULT_RADIUS                   (5)    // Радиус поиска станка в гексах, по умолчанию.
+#define DEFAULT_CHARGES                  (250)    // Число зарядов в станке по умолчанию.
+#define DEFAULT_TIMEOUT_MINUTES #(cr)    ((60*18*1*1)+(2*60*(10-cr.Stat[ST_LUCK])))// Таймаут станка по умолчанию. Одни игровые сутки + влияние удачи (до +18 часов).
+#define SCENERY_NONE                     (0) 
+#define SCENERY_HUB_WORKBENCH            (4277) // Код прототипа сценери для крафта плазменных гранат (Хабологи)
+#define SCENERY_SHOE_WORKBENCH           (4278) // Код прототипа сценери для крафта Ши
+#define SCENERY_AMMO_PRESS               (4279) // Пресс для производства аммуниции (2 вида, различаются изображением терминала)
+#define SCENERY_LATHE                    (4281) // Токарный станок (второй вариант - станок на не-ржавом столе)
+#define SCENERY_WORKBENCH                (4282) // Верстак по-умолчанию.
+#define SCENERY_STOVE                    (3200) // Печь для плавки хитина
+#define SCENERY_AMMO_PRESS_MID           (4290) // Пресс для производства аммуниции среднего уровня
+#define SCENERY_AMMO_PRESS_HIGH          (4292) // Пресс для производства аммуниции высокого уровня
+#define SCENERY_MULTICRAFT               (4293) // Установка для производства ядерных батареек, взрывчатки, топ ингредиентов...
+#define SCENERY_PRODUCTION_PLANT1        (4294) // Установка для производства вещей высокого уровня
+#define SCENERY_PRODUCTION_PLANT2        (4295) // Установка для производства вещей высокого уровня
+#define SCENERY_SAMOGON			         (4296) // Самогонный аппарат
+#define SCENERY_PWRARMOR                 (2906) // Детали силовой брони для крафта ПА/ЗПА.
+#define STR_NO_WORKBENCH                 (300)  // Для производства требуется находиться рядом со cпециальным станком или верстаком.
+#define STR_TIMEOUT                      (301)  // Станок или верстак в неработоспособном состоянии. Производство невозможно. Попробуйте позже.
+#define STR_NO_CHARGES                   (302)  // Станок или верстак в неработоспособном состоянии. Произведен максимум возможных предметов. Производство невозможно.
+
+/*                РЕЦЕПТЫ                 */
+
+int fix_AnyStuff1(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, LVAR_fixboy_default, state, craft, 1,1);
+}
+
+int fix_AnyStuff2(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, LVAR_fixboy_default, state, craft, 2,2);
+}
+
+int fix_AnyStuff3(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, LVAR_fixboy_default, state, craft, 3,3);
+}
+
+int fix_SuperSledge(Critter& player, int state, CraftItem& craft)  // Рецепт на изготовление суперкувалды. Ши.
+{
+	return fix_Something(player, SCENERY_SHOE_WORKBENCH, DEFAULT_RADIUS, LVAR_sf_recipe_supersledge, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 7,7);
+}
+
+int fix_ChitinArmor(Critter& player, int state, CraftItem& craft) // Хитиновая броня
+{
+	if(state==FIXBOY_LIST)
+	{
+		if(fix_ByRecipe(player, PID_CHITIN_ARMOR_RECIPE, state)==FIX_SUCCESS)
+			return FIX_SUCCESS;
+		return fix_Something(player, SCENERY_STOVE, 10, LVAR_sf_chitin_armor_recipe_known, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 5,5);
+	}
+	if(state==FIXBOY_BUTTON)
+	{
+		return fix_Something(player, SCENERY_STOVE, 10, LVAR_sf_chitin_armor_recipe_known, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 5,5);
+	}
+	if(state==FIXBOY_CRAFT)
+	{
+		fix_ByRecipe(player, PID_CHITIN_ARMOR_RECIPE, state);
+		fix_Something(player, SCENERY_STOVE, 10, LVAR_sf_chitin_armor_recipe_known, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 5,5);
+		if(_CritCountItem(player, PID_METAL_TRASH) > 3)
+		{
+			int chance=0, luck=player.Stat[ST_LUCK];
+			if(luck > 9) chance=75;
+			if(luck > 7 && luck<10)  chance=50;
+			if(luck > 5 && luck<8)  chance=25;
+
+			if(fix_AdvancedCraft(player, PID_CHITIN_ARMOR, PID_CHITIN_ARMOR_MK_II, chance, true, 2, state))
+				_CritDeleteItem(player, PID_METAL_TRASH, 2);
+		}
+	}
+	return FIX_SUCCESS;
+}
+
+int fix_PlasmaGrenade(Critter& player, int state, CraftItem& craft) // Рецепт на изготовление плазменных гранат. Хабологи.
+{
+	return fix_Something(player, SCENERY_HUB_WORKBENCH, DEFAULT_RADIUS, LVAR_sf_recipe_plasmagrenades, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 1,1);
+}
+
+int fix_NitroExpress(Critter& player, int state, CraftItem& craft) // Рецепт на изготовление винтовки .700 калибра, включен по-умолчанию.
+{
+	return fix_Something(player, SCENERY_LATHE, DEFAULT_RADIUS, LVAR_fixboy_700_nitro_express, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 12,12);
+}
+
+int fix_NitroExpressRounds(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_LATHE, DEFAULT_RADIUS, LVAR_fixboy_ammo_press_operator, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 2,2);
+}
+
+int fix_AnyRounds1(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_AMMO_PRESS, DEFAULT_RADIUS, LVAR_fixboy_ammo_press_operator, state, craft, 30, 10, 1,1);
+}
+
+int fix_AnyRounds2(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_AMMO_PRESS_MID, DEFAULT_RADIUS, LVAR_fixboy_ammo_press_operator, state, craft, 30, 10, 2,2);
+}
+
+int fix_AnyRounds3(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_AMMO_PRESS_HIGH, DEFAULT_RADIUS, LVAR_fixboy_ammo_press_operator, state, craft, 30, 10, 3,3);
+}
+
+int fix_MantisArmor(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_STOVE, DEFAULT_RADIUS, LVAR_fixboy_combat_armor, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 6,6);
+}
+
+int fix_CombatArmor(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_WORKBENCH, DEFAULT_RADIUS, LVAR_fixboy_combat_armor, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 6,6);
+}
+
+int fix_CombatArmorMK2(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_WORKBENCH, DEFAULT_RADIUS, LVAR_fixboy_combat_armor_mk2, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 4,4);
+}
+
+int fix_TeslaArmor(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_WORKBENCH, DEFAULT_RADIUS, LVAR_fixboy_tesla_armor, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 4,4);
+}
+
+int fix_PoweredArmor(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_PWRARMOR, DEFAULT_RADIUS, LVAR_fixboy_powered_armor, state, craft, 1200, 0, 20,20);
+}
+
+int fix_HardenedPowerArmor(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_PWRARMOR, DEFAULT_RADIUS, LVAR_fixboy_hardened_power_armor, state, craft, 900, 0, 15,15);
+}
+
+int fix_AdvancedPowerArmor(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_PRODUCTION_PLANT2, DEFAULT_RADIUS, LVAR_fixboy_advanced_power_armor, state, craft, 1200, 0, 25,25);
+}
+
+int fix_AdvancedPowerArmorMK2(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_PRODUCTION_PLANT2, DEFAULT_RADIUS, LVAR_fixboy_advanced_power_armor_mk2, state, craft, 900, 0, 20,20);
+}
+
+int fix_DesertEagle(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_LATHE, DEFAULT_RADIUS, LVAR_fixboy_desert_eagle, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 2,2);
+}
+
+int fix_ExplosiveRocket(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_WORKBENCH, DEFAULT_RADIUS, LVAR_fixboy_explosive_rocket, state, craft, 30, 6, 3,3);
+}
+
+int fix_RocketAP(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_LATHE, DEFAULT_RADIUS, LVAR_fixboy_rocket_ap, state, craft, 30, DEFAULT_CHARGES, 1,1);
+}
+
+int fix_14mmPistol(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_WORKBENCH, DEFAULT_RADIUS, LVAR_fixboy_14mm_pistol, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 2,2);
+}
+
+int fix_44MagnumRevolver(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_LATHE, DEFAULT_RADIUS, LVAR_fixboy_44_magnum_revolver, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 2,2);
+}
+
+int fix_HuntingRifle(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_WORKBENCH, DEFAULT_RADIUS, LVAR_fixboy_hunting_rifle, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 3,3);
+}
+
+int fix_MultiBarrelGun(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_WORKBENCH, DEFAULT_RADIUS, LVAR_fixboy_MultiBarrelGun, state, craft, 30, 10, 3,3);
+}
+
+int fix_AssaultRifle(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_LATHE, DEFAULT_RADIUS, LVAR_fixboy_assault_rifle, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 2,2);
+}
+
+int fix_FNFal(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_LATHE, DEFAULT_RADIUS, LVAR_fixboy_fn_fal, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 3,3);
+}
+
+int fix_HKCaws(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_LATHE, DEFAULT_RADIUS, LVAR_fixboy_hk_caws, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 5,5);
+}
+
+int fix_PancorJackhammer(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_PRODUCTION_PLANT1, DEFAULT_RADIUS, LVAR_fixboy_pancor_jackhammer, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 7,7);
+}
+
+int fix_CombatShotgun(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_WORKBENCH, DEFAULT_RADIUS, LVAR_fixboy_combat_shotgun, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 3,3);
+}
+
+int fix_9mmMauser(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_WORKBENCH, DEFAULT_RADIUS, LVAR_fixboy_9mm_mauser, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 1,1);
+}
+
+int fix_SniperRifle(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_LATHE, DEFAULT_RADIUS, LVAR_fixboy_sniper_rifle, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 7,7);
+}
+
+int fix_TommyGun(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_WORKBENCH, DEFAULT_RADIUS, LVAR_fixboy_tommy_gun, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 2,2);
+}
+
+int fix_GreaseGun(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_LATHE, DEFAULT_RADIUS, LVAR_fixboy_grease_gun, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 3,3);
+}
+
+int fix_223Pistol(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_LATHE, DEFAULT_RADIUS, LVAR_fixboy_223_pistol, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 6,6);
+}
+
+int fix_HKG11(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_PRODUCTION_PLANT1, DEFAULT_RADIUS, LVAR_fixboy_hk_g11, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 4,4);
+}
+
+int fix_HKG11e(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_PRODUCTION_PLANT1, DEFAULT_RADIUS, LVAR_fixboy_hk_g11e, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 2,2);
+}
+
+int fix_NeedlerPistol(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_WORKBENCH, DEFAULT_RADIUS, LVAR_fixboy_needler_pistol, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 2,2);
+}
+
+int fix_PK12GaussPistol(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_PRODUCTION_PLANT1, DEFAULT_RADIUS, LVAR_fixboy_pk12_gauss_pistol, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 8,8);
+}
+
+int fix_M72GaussRifle(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_PRODUCTION_PLANT2, DEFAULT_RADIUS, LVAR_fixboy_m72_gauss_rifle, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 10,10);
+}
+
+int fix_ImprovedFlamer(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_WORKBENCH, DEFAULT_RADIUS, LVAR_fixboy_improved_flamer, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 2,2);
+}
+
+int fix_Minigun(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_WORKBENCH, DEFAULT_RADIUS, LVAR_fixboy_minigun, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 3,3);
+}
+
+int fix_AvengerMinigun(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_LATHE, DEFAULT_RADIUS, LVAR_fixboy_avenger_minigun, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 4,4);
+}
+
+int fix_VindicatorMinigun(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_PRODUCTION_PLANT2, DEFAULT_RADIUS, LVAR_fixboy_vindicator_minigun, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 8,8);
+}
+
+int fix_M60(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_WORKBENCH, DEFAULT_RADIUS, LVAR_fixboy_m60, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 3,3);
+}
+
+int fix_LightSupportWeapon(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_LATHE, DEFAULT_RADIUS, LVAR_fixboy_light_support_weapon, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 4,4);
+}
+
+int fix_Bozar(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_PRODUCTION_PLANT1, DEFAULT_RADIUS, LVAR_fixboy_bozar, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 8,8);
+}
+
+int fix_GranadeRevolvI(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_NONE, DEFAULT_RADIUS, LVAR_fixboy_rocket_launcher, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 3,3);
+}
+
+int fix_RocketLauncher(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_LATHE, DEFAULT_RADIUS, LVAR_fixboy_rocket_launcher, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 3,3);
+}
+
+int fix_LaserPistol(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_WORKBENCH, DEFAULT_RADIUS, LVAR_fixboy_laser_pistol, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 3,3);
+}
+
+int fix_MagnetoLaserPistol(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_WORKBENCH, DEFAULT_RADIUS, LVAR_fixboy_magneto_laser_pistol, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 2,2);
+}
+
+int fix_LaserRifle(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_LATHE, DEFAULT_RADIUS, LVAR_fixboy_laser_rifle, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 4,4);
+}
+
+int fix_LaserRifleExtCap(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_WORKBENCH, DEFAULT_RADIUS, LVAR_fixboy_laser_rifle_ext_cap, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 2,2);
+}
+
+int fix_PlasmaPistol(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_LATHE, DEFAULT_RADIUS, LVAR_fixboy_plasma_pistol, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 3,3);
+}
+
+int fix_PlasmaPistolExtCart(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_WORKBENCH, DEFAULT_RADIUS, LVAR_fixboy_plasma_pistol_ext_cart, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 2,2);
+}
+
+int fix_PlasmaRifle(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_PRODUCTION_PLANT1, DEFAULT_RADIUS, LVAR_fixboy_plasma_rifle, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 5,5);
+}
+
+int fix_TurboPlasmaRifle(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_WORKBENCH, DEFAULT_RADIUS, LVAR_fixboy_turbo_plasma_rifle, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 3,3);
+}
+
+int fix_YK32PulsePistol(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_PRODUCTION_PLANT1, DEFAULT_RADIUS, LVAR_fixboy_yk32_pulse_pistol, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 5,5);
+}
+
+int fix_YK42BPulseRifle(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_PRODUCTION_PLANT1, DEFAULT_RADIUS, LVAR_fixboy_yk42b_pulse_rifle, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 8,8);
+}
+
+int fix_GatlingLaser(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_PRODUCTION_PLANT2, DEFAULT_RADIUS, LVAR_fixboy_gatling_laser, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 8,8);
+}
+
+int fix_Polymer(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_MULTICRAFT, DEFAULT_RADIUS, LVAR_fixboy_polymer, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 2,2);
+}
+
+int fix_Carbon(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_MULTICRAFT, DEFAULT_RADIUS, LVAR_fixboy_carbon, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 3,3);
+}
+
+int fix_MetalCeramics(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_MULTICRAFT, DEFAULT_RADIUS, LVAR_fixboy_metal_ceramics, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 4,4);
+}
+
+int fix_Uran(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_MULTICRAFT, DEFAULT_RADIUS, LVAR_fixboy_uran, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 1,1);
+}
+
+int fix_CattleProd(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_WORKBENCH, DEFAULT_RADIUS, LVAR_fixboy_cattle_prod, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 2,2);
+}
+
+int fix_SuperCattleProd(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_PRODUCTION_PLANT1, DEFAULT_RADIUS, LVAR_fixboy_super_cattle_prod, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 5,5);
+}
+
+int fix_TouchSensor(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_NONE, DEFAULT_RADIUS, LVAR_fixboy_power_fist, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 3,3);
+}
+
+int fix_PowerFist(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_WORKBENCH, DEFAULT_RADIUS, LVAR_fixboy_power_fist, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 3,3);
+}
+
+int fix_MegaPowerFist(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_PRODUCTION_PLANT1, DEFAULT_RADIUS, LVAR_fixboy_mega_power_fist, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 5,5);
+}
+
+int fix_ExpCollar(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_WORKBENCH, DEFAULT_RADIUS, LVAR_q_newbie_collar, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 1,1);
+}
+
+int fix_Independent(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_PRODUCTION_PLANT1, DEFAULT_RADIUS, LVAR_fixboy_independent, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 6,6);
+}
+
+int fix_G36(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_PRODUCTION_PLANT1, DEFAULT_RADIUS, LVAR_fixboy_g36, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 8,8);
+}
+
+int fix_Hyppo(Critter& player, int state, CraftItem& craft)
+{
+	if(state==FIXBOY_LIST)
+	{
+		Location@ loc=GetLocationByPid(250,0);
+		if(valid(loc) && player.IsPlayer())
+		{
+			int phoenixOwner=loc.GetMapByIndex(0).GetData(0);
+			if(phoenixOwner==player.Param[ST_FRACTION] && phoenixOwner>0)
+			{
+				return FIX_SUCCESS;
+			}
+		}		
+		return FIX_FAIL;
+	}
+	if(state==FIXBOY_BUTTON)
+	{
+		return fix_Something(player, SCENERY_SAMOGON, DEFAULT_RADIUS, LVAR_fixboy_hyppo, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 4,4);
+	}
+	return FIX_SUCCESS;
+}
+
+int fix_Buffout(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_SAMOGON, DEFAULT_RADIUS, LVAR_fixboy_buffout, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 2,2);
+}
+
+int fix_Mentats(Critter& player, int state, CraftItem& craft)
+{
+	return fix_Something(player, SCENERY_SAMOGON, DEFAULT_RADIUS, LVAR_fixboy_mentats, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 2,2);
+}
+
+/*
+int fix_TestArmor(Critter& player, int state)
+{
+	return fix_Something(player, SCENERY_WORKBENCH, DEFAULT_RADIUS, LVAR_fixboy_mega_power_fist, state, craft, DEFAULT_TIMEOUT_MINUTES(player), DEFAULT_CHARGES, 5,5);
+}*/
+
+
+
+/*                РЕЦЕПТЫ                */
+
+// player - крафтящий игрок
+// pidWorkbench - код прототипа элемента сценери, служащего станком
+// radius - радиус поиска станка
+// varNum - номер проверяемой переменной
+// state - Fix boy function call state
+// timeOut - время в игровых минутах, сколько станок будет простаивать
+// charges - максимальное число предметов, которые может изготовить игрок за один таймаут
+uint fix_Something(Critter & player, int varNum, int state, CraftItem& craft, int timeOutScience, int timeOutRepair)
+{
+	return fix_Something(player, 0, 0, varNum, state, craft, 0, 0, timeOutScience,timeOutRepair);
+}
+
+uint fix_Something(Critter & player, int pidWorkbench, int radius, int varNum, int state, CraftItem& craft, int timeOut, int charges, int timeOutScience, int timeOutRepair)
+{
+	if(state==FIXBOY_LIST)
+	{
+		if (!CheckRecipeKnown(player, varNum)) return FIX_FAIL;
+	}
+	if(state==FIXBOY_BUTTON)
+	{
+		if(player.Timeout[TO_SK_REPAIR]+REAL_MINUTE(timeOutRepair)>int(REAL_MINUTE(30)) ||
+		   player.Timeout[TO_SK_SCIENCE]+REAL_MINUTE(timeOutScience)>int(REAL_MINUTE(30))) 
+			return FIX_FAIL;
+	
+		if(pidWorkbench!=SCENERY_NONE && !CheckWorkbenchNearPlayer(player, pidWorkbench, 30))
+		{
+			player.SayMsg(SAY_NETMSG,TEXTMSG_TEXT, STR_NO_WORKBENCH);
+			
+			Item@[] items;			
+			player.GetItems(-1, items);
+			for(uint j=0, jMax=items.length(); j<jMax; j++)
+			for(uint i=PID_WORKBENCH_INV; i<=PID_WORKBENCH_INV_HUB; i++)
+			if(items[j].GetProtoId()==i) DeleteItem(items[j]);	
+			
+			return FIX_FAIL;
+		}
+		/*if (!CheckWorkbenchTimeOut(player, pidWorkbench, charges))
+		{
+			player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_TIMEOUT);
+			return FIX_FAIL;
+		}
+		if (!CheckWorkbenchCharges(player, pidWorkbench))
+		{
+			player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_NO_CHARGES);
+			return FIX_FAIL;
+		}*/
+	}
+	if(state==FIXBOY_CRAFT)
+	{
+		player.TimeoutBase[TO_SK_REPAIR]=player.Timeout[TO_SK_REPAIR]+__FullSecond+REAL_MINUTE(timeOutRepair);
+		player.TimeoutBase[TO_SK_SCIENCE]=player.Timeout[TO_SK_SCIENCE]+__FullSecond+REAL_MINUTE(timeOutScience);
+		/*SetWorkbenchCharges(player, pidWorkbench, charges);
+		if (!CheckWorkbenchCharges(player, pidWorkbench))
+		{
+			SetWorkbenchTimeout(player, pidWorkbench, timeOut);
+		}*/
+	}
+	return FIX_SUCCESS;
+}
+
+// Проверка, что игроку известен рецепт
+// varNum - номер переменной, в которой хранится признак известности рецепта
+bool CheckRecipeKnown(Critter & player, int varNum)
+{
+	GameVar @ access=GetLocalVar(varNum, player.Id);
+	if (!valid(access)) return false;
+	return (access.GetValue()>=1);
+}
+
+// Проверка, истек ли таймаут на производство для заданного типа станка на данной карте
+// true  - таймаут прошел, или не назначался
+// false - таймаут установлен, и еще не истек
+// Если таймаут истек в момент обращения, очищает запись в AnyData и обновляет счетчик зарядов
+bool CheckWorkbenchTimeOut(Critter & player, int pidWorkbench, int maxCharges)
+{
+	Map @ map=player.GetMap();
+	if (!valid(map)) return false;
+	string key=_WorkBenchTimeoutKey(pidWorkbench, map);
+	if(IsAnyData(key))
+	{
+		uint[] data;
+		GetAnyData(key, data);
+		if(data.length()!=1) return true;
+		uint time=data[0];
+		if(time==0) return true;
+		if(time>__FullSecond)
+		{
+			return false;
+		}else{
+			EraseAnyData(key);
+			SetWorkbenchCharges(player, pidWorkbench, maxCharges);
+		}
+	}
+	return true;
+}
+
+// Проверяет, есть ли заряды в станке
+bool CheckWorkbenchCharges(Critter & player, int pidWorkbench)
+{
+	Map @ map=player.GetMap();
+	if (!valid(map)) return false;
+	string key=_WorkBenchChargesKey(pidWorkbench, map);
+	if(IsAnyData(key))
+	{
+		uint[] data;
+		GetAnyData(key, data);
+		if(data.length()!=1) return true;
+		uint charges=data[0];
+		return (charges>0);
+	}
+	// Hет записей в AnyData, считаем, что заряды есть
+	return true;
+}
+
+// Проверка, что рядом с игроком находится станок для производства того или иного итема
+// pidWorkbench - код прототипа элемента Scenery, который играет роль станка
+// radius - максимальное расстояние до станка, в котором должен находиться игрок
+bool CheckWorkbenchNearPlayer(Critter & player, int pidWorkbench, int radius)
+{
+	Map @ map=player.GetMap();
+	if (!valid(map)) return false;
+	return (map.GetSceneries(player.HexX, player.HexY, radius, pidWorkbench, null)>0);
+}
+
+// Установка таймаута на работу станка
+// timeout=время, в течении которого станок недоступен, в игровых минутах
+void SetWorkbenchTimeout(Critter & player, int pidWorkbench, int timeout)
+{
+	Map @ map=player.GetMap();
+	if (!valid(map)) return;
+	if(timeout==0) return;
+	string key=_WorkBenchTimeoutKey(pidWorkbench, map);
+	uint[] data={__FullSecond+timeout*60};
+	SetAnyData(key, data);
+}
+
+// Изменение числа зарядов станка
+// chargesMax - максимальное число зарядов в станке
+void SetWorkbenchCharges(Critter & player, int pidWorkbench, int chargesMax)
+{
+	Map @ map=player.GetMap();
+	if (!valid(map)) return;
+	if(chargesMax==0) return;
+	string key=_WorkBenchChargesKey(pidWorkbench, map);
+	uint charges=chargesMax;
+	uint[] data;
+	if(IsAnyData(key))
+	{
+		GetAnyData(key, data);
+		if(data.length()==1)
+		{
+			uint curCharges=data[0];
+			if(curCharges>0) // Если зарядов больше 0, уменьшаем число на 1. Иначе, назначается максимально число зарядов.
+			{
+				charges=curCharges-1;
+			}else{
+				EraseAnyData(key);
+			}
+		}
+		data.resize(0);
+	}
+	data.insertLast(charges);
+	SetAnyData(key, data);
+}
+
+
+/* Крафт с бумажным рецептом, рецепт исчезает после крафта */
+uint fix_ByRecipe(Critter& player, int recipePid, int state)
+{
+	if(state==FIXBOY_LIST)
+	{
+		if(_CritCountItem(player, recipePid)<1) // Нет рецепта в инвентаре
+			return FIX_FAIL;
+	}
+	if(state==FIXBOY_CRAFT)
+	{
+		_CritDeleteItem(player, recipePid, 1); // Удаляем рецепт после крафта
+	}
+	return FIX_SUCCESS;
+}
+
+/* В результате крафта может появиться более продвинутый экземпляр предмета */
+/*
+ basePid=код предмета, который производит игрок
+ advancedPid=код предмета, который получится при проке
+ signed=признак, подписывать предмет или нет.
+ info - инфо предмета, на которое нужно переключиться
+ Подписываются только предметы ARMOR, WEAPON
+*/
+bool fix_AdvancedCraft(Critter& player, int basePid, int advancedPid, int chance, bool signed, int info, int state)
+{
+	if(state==FIXBOY_CRAFT && Random(0, 100)<chance)
+	{
+		uint[] values={player.Id, basePid, advancedPid};
+		if(signed)
+		{
+			ProtoItem@ proto=GetProtoItem(advancedPid);
+			if(valid(proto))
+			{
+				uint type=proto.Type;
+				if(type==ITEM_TYPE_WEAPON || type==ITEM_TYPE_ARMOR)
+				{
+					values.insertLast(info);
+				}
+			}
+		}
+		CreateTimeEvent(__FullSecond, "e_AdvancedCraft", values, false);
+		return true;
+	}
+	return false;
+}
+
+// Временное событие, убираем скрафченый базовый предмет, заменяем усовершенствованным
+uint e_AdvancedCraft(uint[]@ values)
+{
+	if(values.length()<3)
+		return 0;
+	Critter@ cr=GetCritter(values[0]);
+	if(valid(cr))
+	{
+		Item@ baseItem=_CritGetItem(cr, values[1]);
+		if(valid(baseItem))
+		{
+			_SubItem(baseItem, 1);
+			Item@ advItem=_CritAddItem(cr, values[2], 1);
+			if(valid(advItem) and values.length() > 3)
+			{
+				advItem.Info=values[3];
+				advItem.SetLexems("$craftername" + GetPlayerName(cr.Id));
+				advItem.Update();
+			}
+		}
+	}
+	return 0;
+}
+
+//uint16[] workbenchsItem=	 {PID_WORKBENCH_INV, PID_MANUFACT_LATHE_INV, PID_MANUFACT_AMMO1_INV, PID_MANUFACT_AMMO2_INV, PID_MANUFACT_AMMO3_INV, PID_MULTICRAFT_INV, PID_PROD_PLANT1_INV, 		PID_PROD_PLANT2_INV,	  PID_PWRARMOR_PARTS, PID_FIREPIT_INV, PID_WORKBENCH_INV_SHOE, PID_WORKBENCH_INV_HUB};
+//uint16[] workbenchsScenery={SCENERY_WORKBENCH, SCENERY_LATHE,			 SCENERY_AMMO_PRESS,	 SCENERY_AMMO_PRESS_MID, SCENERY_AMMO_PRESS_HIGH,SCENERY_MULTICRAFT, SCENERY_PRODUCTION_PLANT1, SCENERY_PRODUCTION_PLANT2,SCENERY_PWRARMOR,	  SCENERY_STOVE,   SCENERY_SHOE_WORKBENCH, SCENERY_HUB_WORKBENCH};
+
+
+bool s_FixBoy(Critter& player, Scenery& scenery, int skill, Item@ item)
+{
+	if(skill==-1 && not valid(item))
+	{
+		AddWorkbench(player, scenery);
+		player.ShowScreen(SCREEN_FIXBOY, 0, "");
+		return true;
+	}
+	return false;
+}
+
+void AddWorkbench(Critter& player, Scenery& scenery)
+{	
+	uint16 pid=0;
+	switch(scenery.ProtoId)
+	{
+	case SCENERY_WORKBENCH:
+		pid=PID_WORKBENCH_INV;
+		break;
+	case SCENERY_LATHE:
+		pid=PID_MANUFACT_LATHE_INV;
+		break;
+	case SCENERY_AMMO_PRESS:
+		pid=PID_MANUFACT_AMMO1_INV;
+		break;
+	case SCENERY_AMMO_PRESS_MID:
+		pid=PID_MANUFACT_AMMO2_INV;
+		break;	
+	case SCENERY_AMMO_PRESS_HIGH:
+		pid=PID_MANUFACT_AMMO3_INV;
+		break;	
+	case SCENERY_MULTICRAFT:
+		pid=PID_MULTICRAFT_INV;
+		break;	
+	case SCENERY_PRODUCTION_PLANT1:
+		pid=PID_PROD_PLANT1_INV;
+		break;			
+	case SCENERY_PRODUCTION_PLANT2:
+		pid=PID_PROD_PLANT2_INV;			
+		break;	
+	case SCENERY_PWRARMOR:
+		pid=PID_PWRARMOR_PARTS;			
+		break;	
+	case SCENERY_STOVE:
+		pid=PID_FIREPIT_INV;			
+		break;
+	case SCENERY_SHOE_WORKBENCH:
+		pid=PID_WORKBENCH_INV_SHOE;			
+		break;				
+	case SCENERY_HUB_WORKBENCH:
+		pid=PID_WORKBENCH_INV_HUB;			
+		break;
+	case SCENERY_SAMOGON:
+		pid=PID_SAMOGON_INV;			
+		break;			
+	default:
+		return;
+	}
+	
+	if(_CritCountItem(player, pid) > 0)
+		return;
+	
+    Item@ workbench=player.AddItem(pid, 1);
+	if(not valid(workbench)) return;
+	player.MoveItem (workbench.Id,1,SLOT_WORKBENCH);
+    workbench.SetScript("workbench_init");
+	workbench.Info=uint8(-1);
+	workbench.SortValue=uint16(-1);
+	workbench.PicInv=uint16(-1);
+    workbench.Update();
+}
+
+void t_DellWorkbench(Critter& cr, Scenery& trigger, bool entered, uint8 dir)
+{
+	Item@[] items;
+	cr.GetItems(-1, items);
+	for(uint j=0, jMax=items.length(); j<jMax; j++)
+		for(uint i=PID_WORKBENCH_INV; i<=PID_SAMOGON_INV; i++)
+			if(items[j].GetProtoId()==i) DeleteItem(items[j]);	
+}
+
+void workbench_init(Item& item, bool firstTime)
+{
+    item.SetEvent(ITEM_EVENT_DROP, "_Drop");
+	item.SetEvent(ITEM_EVENT_MOVE, "_Move");
+}
+
+void _Move(Item& item, Critter& crit, uint8 fromSlot)
+{
+	DeleteItem(item); 
+	Log("_Move DeleteItem");
+}
+
+void _Drop(Item& item, Critter& crit)
+{
+	DeleteItem(item);
+	Log("_Drop DeleteItem");
+}
+
+// нтерфейс нового фиксбоя.
+// Author: TabaK, Ra
+
+// ~run fix_boy RunFixBoy 0 0 0
+void RunFixBoy(Critter& cr, int param0, int param1, int param2) // Export
+{
+	cr.RunClientScript("fix_boy@ShowFixBoyScreen",cr.Id,0,0,null,null);	
+}
+
+// Заполнение листбокса крафта на сервере
+void unsafe_FillCL(Critter& player, int, int, int, string@, int[]@)
+{
+	int[]@  indexs;
+	Log("Заполнение листбокса");
+	// Отправляем результат на сервер
+	player.RunClientScript("fix_boy@__FillCL", 0, 0, 0,	null, indexs);
+}
+
+#endif // !__CLIENT
+
+/// Client
+#ifdef __CLIENT
+
+#include "_client_defines.fos"
+#include "client_gui_h.fos"
+#include "_colors.fos"
+#include "_msgstr.fos"
+#include "_defines.fos"
+
+IGUIElementOpt@ han_fixbox; // Глобально обьявляем указатель на листбокс. Пока пустой, но будет назначен при инициализации элемента.
+IGUIElementOpt@ han_scrollbar; //То же самое для скроллбара
+IGUIElementOpt@ han_scrollup; //Кнопка листания списка вверх
+IGUIElementOpt@ han_scrolldown; //и вниз
+IGUIElementOpt@ han_DecraftItem; // Изображение разбираемого предмета
+IGUIElementOpt@ han_FixComponentsDecraft; // Изображение компонентов разбираемого предмета
+
+//Фильтры
+IGUIElementOpt@ han_filtrWeapon;
+IGUIElementOpt@ han_filtrArmor;
+IGUIElementOpt@ han_filtrAmmo;
+IGUIElementOpt@ han_filtrMisc;
+IGUIElementOpt@ han_filtrCustom;
+
+bool fWeapon=true;
+bool fArmor=true;
+bool fAmmo=true;
+bool fMisc=true;
+bool fCustom=true;
+
+#define SC_FIX_LIST_FIX (0)
+#define SC_FIX_ITEM_FIX (1)
+#define SC_FIX_DECRAFT	(2)
+#define SC_FIX_REPAIR	(3)
+#define SC_FIX_UPGRADE	(4)
+#define SC_FIX_STAT		(5)
+
+// Возвращает значения цветности RGB каналов в виде массива с трех элементов.
+import uint8[] GetIfaceColor(string Key) from "client_main";
+import uint16[][] elementaryComponentPids(uint16 pid) from "decraft";
+int fontNumber=FONT_FALLOUT;
+uint8 screenStat=0;
+
+string filtrDown;
+string filtrUp;
+
+uint[] itemsId;
+
+uint8[] FixTextColor;
+uint8[] FixTextActiveColor;
+uint8[] FixTextDownColor;
+uint8[] FixTextFixNotValid;
+
+void ShowFixBoyScreen(int, int, int, string@, int[]@)
+{
+	StrToInt(GetIfaceIniStr("FixFont"), fontNumber);
+	ShowScreen(CLIENT_SCREEN_NEW_FIX_BOY,0,0,0);
+}
+
+void FillListbox(string listText)	// Функция заполнения листбокса
+{
+	han_fixbox.Text(listText, fontNumber, COLOR_RGB(FixTextColor[0], FixTextColor[1], FixTextColor[2]), COLOR_RGB(FixTextActiveColor[0], FixTextActiveColor[1], FixTextActiveColor[2]),FT_NOBREAK);
+	
+    han_fixbox.SetScroll(false, 0); // Устанавливаем нулевое смещение
+    bool hideScroll=(han_fixbox.GetTextScroll()<1); // Проверяем, вмещается ли список в листбокс, или требуется скроллбар
+    han_scrollbar.ToHide(hideScroll); //Устанавливаем видимость сроллбара и кнопок прокрутки
+    han_scrollup.ToHide(hideScroll);
+    han_scrolldown.ToHide(hideScroll);
+    han_scrollbar.SBSetRange(han_fixbox.GetTextScroll()); // Устанавливаем диапазон значений для скроллбара
+}
+
+// Функции заполнения листбокса крафта
+void FillCraftListbox() // Функция заполнения листбокса крафта
+{
+	RunServerScriptUnsafe("fix_boy@unsafe_FillCL",0,0,0,"",null);	
+}
+
+void __FillCL(int, int, int, string@, int[]@ indexs)
+{	
+	string listText="";
+	FillListbox(listText);
+}
+
+void FillDecraftListbox() // Функция заполнения листбокса декрафта
+{
+	CritterCl@ chosen=GetChosen();
+	ItemCl@[] items;
+	string listText="";
+	
+	if(fWeapon)
+		chosen.GetItemsByType(ITEM_TYPE_WEAPON, items);
+	if(fArmor)
+		chosen.GetItemsByType(ITEM_TYPE_ARMOR, items);
+	if(fAmmo)
+		chosen.GetItemsByType(ITEM_TYPE_AMMO, items);
+	if(fMisc)
+		chosen.GetItemsByType(ITEM_TYPE_MISC, items);
+	uint16 itemsLength=items.length();
+	itemsId.resize(itemsLength);
+	for(uint16 i=0; i<itemsLength; i++)
+	{
+		if(not isItPossibleToDecraft(items[i]))	continue;	
+
+		itemsId[i]=items[i].Id;
+		listText +=FormatTags(GetMsgStr(TEXTMSG_ITEM, items[i].GetProtoId()*100+items[i].Info), items[i].Lexems) + "\n";
+	}	
+	FillListbox(listText);
+}
+
+// Инициализация окна списка крафта
+void InitFixListFix()
+{
+	han_FixComponentsDecraft.ToHide(true);
+	han_DecraftItem.ToHide(true);
+	
+	FillCraftListbox();
+	
+	screenStat=SC_FIX_LIST_FIX;
+}
+
+// Инициализация окна крафта предмета
+void InitFixItemFix()
+{
+	han_FixComponentsDecraft.ToHide(true);
+	han_DecraftItem.ToHide(true);
+	
+	screenStat=SC_FIX_ITEM_FIX;
+}
+
+// Инициализация окна декрафта
+void InitFixDecraft()
+{
+	han_fixbox.ToHide(false);
+	han_FixComponentsDecraft.ToHide(false);
+	han_DecraftItem.ToHide(false);
+
+	FillDecraftListbox();
+	
+	screenStat=SC_FIX_DECRAFT;
+}
+
+// Инициализация окна ремонта
+void InitFixRepair()
+{
+	han_FixComponentsDecraft.ToHide(true);
+	han_DecraftItem.ToHide(true);
+	
+	screenStat=SC_FIX_REPAIR;	
+}
+
+// Инициализация окна апгрейда
+void InitFixUpgrade()
+{
+	han_FixComponentsDecraft.ToHide(true);	
+	han_DecraftItem.ToHide(true);
+	
+	screenStat=SC_FIX_UPGRADE;
+}
+
+// Инициализация окна статистики
+void InitFixStat()
+{
+	han_FixComponentsDecraft.ToHide(true);
+	han_DecraftItem.ToHide(true);	
+	
+	screenStat=SC_FIX_STAT;
+}
+
+// Чтение информации о состоянии интерфейса
+void ReadFixBoyScreenInfo()
+{
+	file f;
+	uint8[] fixBoyScreenInfo;
+	if(f.open("data/fix.ini", "r")<0) 
+	{
+		f.close();
+		return;
+	}
+	f.readData(0, fixBoyScreenInfo);
+	f.close();
+	if(fixBoyScreenInfo.length()<5) return;
+	
+	fWeapon=fixBoyScreenInfo[0]>0;
+	fArmor=fixBoyScreenInfo[1]>0;
+	fAmmo=fixBoyScreenInfo[2]>0;
+	fMisc=fixBoyScreenInfo[3]>0;
+	fCustom=fixBoyScreenInfo[4]>0;
+}
+
+// Запись информации о состоянии интерфейса
+void WriteFixBoyScreenInfo()
+{
+	uint8[] fixBoyScreenInfo;
+	fixBoyScreenInfo.insertLast(fWeapon?1:0);
+	fixBoyScreenInfo.insertLast(fArmor?1:0);
+	fixBoyScreenInfo.insertLast(fAmmo?1:0);
+	fixBoyScreenInfo.insertLast(fMisc?1:0);
+	fixBoyScreenInfo.insertLast(fCustom?1:0);
+	
+	file f;
+	f.open("data/fix.ini", "w");
+	f.writeData(fixBoyScreenInfo, 0);
+	f.close();
+}
+
+
+void InitFixBoyMainScreen() // Export
+{		
+	FixTextColor 		=GetIfaceColor("FixTextColor");		// Цвет текста по умолчанию
+	FixTextActiveColor =GetIfaceColor("FixTextActiveColor");	// Цвет активного текста
+	FixTextDownColor  	=GetIfaceColor("FixTextDownColor");	// Цвет текста при нажатии
+	FixTextFixNotValid = GetIfaceColor("FixTextFixNotValid");	// Цвет текста, если действие невозможно или маловозможно
+	
+	filtrDown=GetIfaceIniStr("FixFiltrPicDn");
+	filtrUp=GetIfaceIniStr("FixFiltrPic");
+
+    ScrollBarInstance scrollBar();
+    ScrollUpInstance scrollUp();
+    ScrollDownInstance scrollDown();
+	ScreenMain screenMain();
+	ButtonFix buttonFix();
+
+	// Главное окно фиксбоя
+	GUI_CreateScreen(CLIENT_SCREEN_NEW_FIX_BOY, GetIfaceIniStr("FixMainPic"))
+		.CallbackShow(screenMain)
+		.CloseOnMiss(true)
+		.AutoCursor(true,CURSOR_DEFAULT);
+		
+	// Фильтры
+	ReadFixBoyScreenInfo();
+
+	FiltrWeapon filtrWeapon;
+	FiltrArmor filtrArmor;
+	FiltrAmmo filtrAmmo;
+	FiltrMisc filtrMisc;
+	FiltrCustom filtrCustom;
+	GUI_AddScreenElement(CLIENT_SCREEN_NEW_FIX_BOY, null, 0, 0) // Фильтр оружия
+		.Position("FixFiltrWeapon")
+		.CallbackDraw(filtrWeapon)
+        .CallbackInit(filtrWeapon)
+		.ClickSound("BUTIN2.ACM")
+        .CallbackMouseClick(filtrWeapon);
+	GUI_AddScreenElement(CLIENT_SCREEN_NEW_FIX_BOY, null, 0, 0) // Фильтр брони
+		.Position("FixFiltrArmor")
+		.CallbackDraw(filtrArmor)
+        .CallbackInit(filtrArmor)
+		.ClickSound("BUTIN2.ACM")
+        .CallbackMouseClick(filtrArmor);
+	GUI_AddScreenElement(CLIENT_SCREEN_NEW_FIX_BOY, null, 0, 0) // Фильтр патронов
+		.Position("FixFiltrAmmo")
+		.CallbackDraw(filtrAmmo)
+		.ClickSound("BUTIN2.ACM")		
+        .CallbackInit(filtrAmmo)
+        .CallbackMouseClick(filtrAmmo);
+	GUI_AddScreenElement(CLIENT_SCREEN_NEW_FIX_BOY, null, 0, 0) // Фильтр остального
+		.Position("FixFiltrMisc")
+		.CallbackDraw(filtrMisc)
+		.ClickSound("BUTIN2.ACM")		
+        .CallbackInit(filtrMisc)
+        .CallbackMouseClick(filtrMisc);
+	GUI_AddScreenElement(CLIENT_SCREEN_NEW_FIX_BOY, null, 0, 0) // Фильтр избраного
+		.Position("FixFiltrCustom")
+		.CallbackDraw(filtrCustom)
+		.ClickSound("BUTIN2.ACM")		
+        .CallbackInit(filtrCustom)
+        .CallbackMouseClick(filtrCustom);	
+
+	// Листбокс
+    GUI_AddScreenElement(CLIENT_SCREEN_NEW_FIX_BOY, GetIfaceIniStr("FixScrollBarPic"), 430, 100)
+		.Position("FixScrollBar")
+        .CallbackInit(scrollBar)
+        .CallbackMouseClick(scrollBar)
+        .IsScrollBar(true)         // Указываем, что элемент - скроллбар
+        .ToHide(true)              // Скрываем элемент. отобразим при необходимости
+        .SBScrollPic(GetIfaceIniStr("FixScrollBarPicDn")); // Назначаем картинку ползунка сроллбара.
+
+    GUI_AddScreenElement(CLIENT_SCREEN_NEW_FIX_BOY, GetIfaceIniStr("FixScrUpPic"), 0, 0) // кнопка "вверх"
+		.Position("FixScrUp")
+        .CallbackInit(scrollUp)
+        .CallbackMouseClick(scrollUp)
+        .ToHide(true)
+        .DownPic(GetIfaceIniStr("FixScrUpPicDn")); // картинка нажатой кнопки
+
+    GUI_AddScreenElement(CLIENT_SCREEN_NEW_FIX_BOY, GetIfaceIniStr("FixScrDnPic"), 0, 0) // кнопка "вниз"
+		.Position("FixScrDn")
+        .CallbackInit(scrollDown)
+        .CallbackMouseClick(scrollDown)
+        .ToHide(true)
+        .DownPic(GetIfaceIniStr("FixScrDnPicDn"));	
+
+	ListBoxInstance listBox(); // Создаем экземпляр класса
+    GUI_AddScreenElement(CLIENT_SCREEN_NEW_FIX_BOY, null, 0, 0) //Помещаем элемент на окно. параметры: индекс окна, имя картинки, х,у. Никаких точек с запятой, пока не опишем полностью элемент
+		.Position("FixWin")
+		.ToHide(true)
+		.CallbackMouseMove(listBox)
+		.CallbackInit(listBox) // Назначаем элементу поведение при инициализации(описаное в классе ListBox)
+        .CallbackMouseClick(listBox) // Ну и при клике на него.
+        .ScrollableText(true) // Указываем, что текст на элементе можно листать. Обязательный параметр для листбокса.
+        .IsListBox(true, COLOR_RGB(FixTextActiveColor[0], FixTextActiveColor[1], FixTextActiveColor[2]), COLOR_RGB(FixTextDownColor[0], FixTextDownColor[1], FixTextDownColor[2])); // Указываем, что элемент - листбокс. вторый и третий параметр - цвет текста при наедении на элемент и при нажатии на него.
+
+	// Кнопка "Крафт"
+	ButtonChangeWindow buttonFixFix(SC_FIX_LIST_FIX);
+	GUI_AddScreenElement(CLIENT_SCREEN_NEW_FIX_BOY,null,0,0)
+		.ClickSound("BUTOUT1.ACM")
+		.Position("FixButtonFix")
+		.CallbackMouseClick(buttonFixFix)
+		.Text("Крафт", FONT_FALLOUT, COLOR_RGB(FixTextActiveColor[0], FixTextActiveColor[1], FixTextActiveColor[2]), COLOR_RGB(FixTextDownColor[0], FixTextDownColor[1], FixTextDownColor[2]), FT_CENTERX|FT_ALIGN)
+		.TextFrame(-30, -65)
+		.DownPic(GetIfaceIniStr("FixButtonChangeScreenPicDn"));
+
+	// Кнопка "Декрафт"
+	ButtonChangeWindow buttonFixDecraft(SC_FIX_DECRAFT);
+	GUI_AddScreenElement(CLIENT_SCREEN_NEW_FIX_BOY,null,0,0)
+		.ClickSound("BUTOUT1.ACM")
+		.Position("FixButtonDecraft")
+		.CallbackMouseClick(buttonFixDecraft)
+		.Text("Декрафт", FONT_FALLOUT, COLOR_RGB(FixTextActiveColor[0], FixTextActiveColor[1], FixTextActiveColor[2]), COLOR_RGB(FixTextDownColor[0], FixTextDownColor[1], FixTextDownColor[2]), FT_CENTERX|FT_ALIGN)
+		.TextFrame(-30, -65)		
+		.DownPic(GetIfaceIniStr("FixButtonChangeScreenPicDn"));
+
+	// Кнопка "Ремонт"
+	ButtonChangeWindow buttonFixRepair(SC_FIX_REPAIR);
+	GUI_AddScreenElement(CLIENT_SCREEN_NEW_FIX_BOY,null,0,0)
+		.ClickSound("BUTOUT1.ACM")
+		.Position("FixButtonRepair")
+		.CallbackMouseClick(buttonFixRepair)
+		.Text("Ремонт", FONT_FALLOUT, COLOR_RGB(FixTextActiveColor[0], FixTextActiveColor[1], FixTextActiveColor[2]), COLOR_RGB(FixTextDownColor[0], FixTextDownColor[1], FixTextDownColor[2]), FT_CENTERX|FT_ALIGN)
+		.TextFrame(-30, -65)		
+		.DownPic(GetIfaceIniStr("FixButtonChangeScreenPicDn"));
+
+	// Кнопка "Апгрейд"
+	ButtonChangeWindow buttonFixUpgrade(SC_FIX_UPGRADE);
+	GUI_AddScreenElement(CLIENT_SCREEN_NEW_FIX_BOY,null,0,0)
+		.ClickSound("BUTOUT1.ACM")
+		.Position("FixButtonUpgrade")
+		.CallbackMouseClick(buttonFixUpgrade)
+		.Text("Апгрейд", FONT_FALLOUT, COLOR_RGB(FixTextActiveColor[0], FixTextActiveColor[1], FixTextActiveColor[2]), COLOR_RGB(FixTextDownColor[0], FixTextDownColor[1], FixTextDownColor[2]), FT_CENTERX|FT_ALIGN)
+		.TextFrame(-30, -65)		
+		.DownPic(GetIfaceIniStr("FixButtonChangeScreenPicDn"));
+
+	// Кнопка "Статистика"
+	ButtonChangeWindow buttonFixStat(SC_FIX_STAT);
+	GUI_AddScreenElement(CLIENT_SCREEN_NEW_FIX_BOY,null,0,0)
+		.ClickSound("BUTOUT1.ACM")
+		.Position("FixButtonStat")
+		.CallbackMouseClick(buttonFixStat)
+		.Text("Статистика", FONT_FALLOUT, COLOR_RGB(FixTextActiveColor[0], FixTextActiveColor[1], FixTextActiveColor[2]), COLOR_RGB(FixTextDownColor[0], FixTextDownColor[1], FixTextDownColor[2]), FT_CENTERX|FT_ALIGN)
+		.TextFrame(-30, -65)
+		.DownPic(GetIfaceIniStr("FixButtonChangeScreenPicDn"));
+
+	// Кнопка "Назад"
+	ButtonDone buttonDone();
+	GUI_AddScreenElement(CLIENT_SCREEN_NEW_FIX_BOY,null,0,0)
+		.ClickSound("BUTOUT3.ACM")
+		.Position("FixDone")
+		.CallbackMouseClick(buttonDone)
+		.DownPic(GetIfaceIniStr("FixDonePicDn"));
+		
+	// ДЕКРАФТ		
+	// Изображение компонентов декрафта
+	FixComponentsDecraft fixComponentsDecraft();
+	GUI_AddScreenElement(CLIENT_SCREEN_NEW_FIX_BOY,null,0,0)
+		.Position("FixComponentsDecraft")
+		.CallbackInit(fixComponentsDecraft)
+		.ToHide(true);
+		
+	// Изображение разбираемого предмета	
+	FixDecraftItem fixItemDecraft();
+	GUI_AddScreenElement(CLIENT_SCREEN_NEW_FIX_BOY,null,0,0)
+		.Position("FixItemDecraft")
+		.CallbackInit(fixItemDecraft)
+		.ToHide(true);
+}
+
+// Главное окно
+class ScreenMain : IGUIScreenCallbackShow
+{
+	void OnShow(int radioId, int radioChannel, int radioData)
+	{
+
+	}	
+}
+
+// Проверка способности игрока декрафтить предмет
+bool isItPossibleToDecraft(ItemCl@ item)
+{
+	if(item.Proto.CraftInfo !=1) return false;
+	return true;
+}
+
+// ~run fix_boy RunFixBoy 0 0 0
+// ~getaccess admin 1111
+class ListBoxInstance: IGUIElementCallbackInit, IGUIElementCallbackMouseClick, IGUIElementCallbackMouseMove // Описываем класс нашего листбокса, чтоб задать его поведение
+{
+   	uint16 componentIndex;
+
+    void OnInit()
+    {
+		@han_fixbox=GUI_GetElementOptions();
+		FillDecraftListbox();
+	}
+	
+	void OnMouseMove(bool clicked)
+	{
+		if(han_fixbox.IsHidden()) return;
+		componentIndex=uint16(han_fixbox.GetListElement());
+		
+		// Декрафт
+		if(screenStat==SC_FIX_DECRAFT)
+		{
+			if(componentIndex>(itemsId.length()-1) || itemsId.length()<1) return;
+			decraftComponentPic(itemsId[componentIndex]);
+		}
+	}
+    
+	void OnMouseClick(int click)
+    {		
+		//if(GUI_GetElementOptions().IsHidden()) return;
+		//Здесь мы описываем поведение скроллбара при прокручивания списка колесиком мыши
+		if(click==MOUSE_CLICK_WHEEL_UP||click==MOUSE_CLICK_WHEEL_DOWN) 
+		{
+			han_scrollbar.SBSetValue(han_fixbox.GetTextOffset());
+		}
+		
+		if(click==MOUSE_CLICK_LEFT)
+		{			
+			// Декрафт
+			if(screenStat==SC_FIX_DECRAFT)
+			{
+				if(componentIndex>(itemsId.length()-1) || itemsId.length()<1) return;
+				PlaySound("IB2LU1X1.ACM");
+				RunServerScriptUnsafe("decraft@unsafe_DecraftItem", itemsId[han_fixbox.GetListElement()], 0, 0, null, null);
+				FillDecraftListbox();
+			}
+		}
+    }
+}
+
+// Отрисовать иконку предмеда через конский зад
+// Отрисовать предметы и их количества
+void decraftComponentPic(uint id)
+{
+	ItemCl@[] items;
+	uint16 pid;
+	CritterCl@ chosen=GetChosen();
+	chosen.GetItemsByType(ITEM_TYPE_ARMOR, items);
+	chosen.GetItemsByType(ITEM_TYPE_WEAPON, items);
+	chosen.GetItemsByType(ITEM_TYPE_AMMO, items);
+	
+	// Отрисовка данного предмета
+	for(uint i=0; i<items.length(); i++)
+	if(items[i].Id==id)
+	{
+		pid=items[i].GetProtoId();
+		han_DecraftItem.Picture(items[i].Proto.PicInv, 0);	
+		break;
+	}
+	
+	uint[] hashs;
+	string[] texts;
+	uint16[][] components=elementaryComponentPids(pid);
+	if(components.length()==0) return;
+	uint16 count=components[0].length();
+	hashs.resize(count);
+	texts.resize(count);
+
+	for(uint i=0; i<count; i++)
+	{
+		ProtoItem@ protoComponent=GetProtoItem(components[0][i]);
+		hashs[i]=protoComponent.PicInv;
+		texts[i]=components[1][i]+"-"+components[1][i];
+	}
+	
+	han_FixComponentsDecraft.TextFrame(-5, -22);
+	han_FixComponentsDecraft.Text("Предполагаемые компоненты:", FONT_FALLOUT, COLOR_DGREEN, COLOR_DGREEN, FT_CENTERX|FT_ALIGN);
+	han_FixComponentsDecraft.MultiPicture(hashs, 0, 40, 40, 25, 15, 3, 0);
+	han_FixComponentsDecraft.MultiText(texts, fontNumber, 40, 65, 55, 3, 5, COLOR_RGB(FixTextColor[0], FixTextColor[1], FixTextColor[2]), FT_NOBREAK);
+}
+
+class ScrollBarInstance: IGUIElementCallbackInit, IGUIElementCallbackMouseClick, IGUIElementCallbackMouseMove //Описываем класс скроллбара
+{
+    void OnInit()
+    {
+		@han_scrollbar=GUI_GetElementOptions(); // Назначаем глобальный указатель на скроллбар, для управления им из листбокса.
+    }
+    
+	void OnMouseClick(int click)
+    {
+		//Первый параметр указывает на то, что мы задаем точное значени, а не меняем текущее.
+		han_fixbox.SetScroll(false, han_scrollbar.GetSBScrollValue()); // Устанавливаем смещение для списка в соответствии с положением скроллбара.
+    }
+    void OnMouseMove(bool clicked)
+    {
+        if(clicked)
+        {
+            han_fixbox.SetScroll(false, han_scrollbar.GetSBScrollValue());
+        }
+    }
+}
+
+class ScrollUpInstance: IGUIElementCallbackInit, IGUIElementCallbackMouseClick // Кнопка прокручивания списка вверх
+{
+    void OnInit()
+    {
+        @han_scrollup=GUI_GetElementOptions();
+    }
+    void OnMouseClick(int click)
+    {
+        if(click==MOUSE_CLICK_LEFT)
+        {
+            han_fixbox.SetScroll(true, -3); // Меняем текущее смещение текста на -1
+            han_scrollbar.SBSetValue(han_fixbox.GetTextOffset()); // Устанавливаем положение ползунка скроллбара в соответствии со смещением списка.
+        }
+    }
+}
+     
+class ScrollDownInstance: IGUIElementCallbackInit, IGUIElementCallbackMouseClick // Кнопка прокручивания списка вниз
+{
+    void OnInit()
+    {
+        @han_scrolldown=GUI_GetElementOptions();
+    }
+    void OnMouseClick(int click)
+    {
+        if(click==MOUSE_CLICK_LEFT)
+        {
+            han_fixbox.SetScroll(true, 3); // Меняем текущее смещение текста на +1
+            han_scrollbar.SBSetValue(han_fixbox.GetTextOffset()); // Устанавливаем положение ползунка скроллбара в соответствии со смещением списка.
+        }
+    }
+}
+	
+class ButtonFix : IGUIElementCallbackMouseClick
+{
+	void OnMouseClick(int click)
+	{
+
+	}
+}
+
+// Кнопка перехода между окнами
+
+class ButtonChangeWindow : IGUIElementCallbackMouseClick
+{
+	uint8 screen;
+	ButtonChangeWindow(uint8 nextScreen)
+	{
+		screen=nextScreen;
+	}
+	
+	void OnMouseClick(int click)
+	{
+		if(screenStat==screen) return; // Если это и есть данное окно, то что-либо делать нет смысла
+		if(click !=MOUSE_CLICK_LEFT) return;
+		han_fixbox.Text("", 0, 0, 0, FT_NOBREAK);
+		han_scrollbar.ToHide(true);
+		han_scrollup.ToHide(true);
+		han_scrolldown.ToHide(true);
+		
+		switch(screen)
+		{
+		case SC_FIX_LIST_FIX:
+			InitFixListFix();
+			break;
+		case SC_FIX_DECRAFT:
+			InitFixDecraft();
+			break;
+		case SC_FIX_REPAIR:
+			InitFixRepair();
+			break;
+		case SC_FIX_UPGRADE:
+			InitFixUpgrade();
+			break;	
+		case SC_FIX_STAT:
+			InitFixStat();
+			break;			
+		default:
+			break;		
+		}
+	}
+}
+
+// Кнопка закрытия окна или "назад"
+class ButtonDone : IGUIElementCallbackMouseClick
+{
+	void OnMouseClick(int click)
+	{
+		if(screenStat==SC_FIX_LIST_FIX) 
+		{	
+			::HideScreen(CLIENT_SCREEN_NEW_FIX_BOY, 3,3,3);
+			return;
+		}
+		
+		if(screenStat==SC_FIX_DECRAFT)
+		{
+			WriteFixBoyScreenInfo();
+		}	
+		InitFixListFix();
+	}
+}
+
+// Изображение разбираемого предмета
+class FixDecraftItem :  IGUIElementCallbackInit
+{
+	void OnInit()
+    {
+        @han_DecraftItem=GUI_GetElementOptions();
+    }
+}
+
+// Изображение компонентов крафта/декрафта
+class FixComponentsDecraft :  IGUIElementCallbackInit
+{
+	void OnInit()
+    {
+        @han_FixComponentsDecraft=GUI_GetElementOptions();
+    }
+}
+
+// ФИЛЬТРЫ
+class FiltrWeapon : IGUIElementCallbackInit, IGUIElementCallbackMouseClick, IGUIElementCallbackDraw
+{
+	void OnInit()
+    {
+		 @han_filtrWeapon=GUI_GetElementOptions();
+    }
+	
+	void OnMouseClick(int click)
+	{
+		if(fWeapon)	fWeapon=false;
+		else		fWeapon=true;
+		FillDecraftListbox();
+	}
+	
+	void OnDraw()
+	{
+		han_filtrWeapon.Picture(fWeapon?filtrDown:filtrUp);
+	}
+}
+
+class FiltrArmor : IGUIElementCallbackInit, IGUIElementCallbackMouseClick, IGUIElementCallbackDraw
+{
+	void OnInit()
+    {
+		 @han_filtrArmor=GUI_GetElementOptions();
+    }
+	
+	void OnMouseClick(int click)
+	{
+		if(fArmor)
+			fArmor=false;
+		else
+			fArmor=true;
+		FillDecraftListbox();		
+	}
+
+	void OnDraw()
+	{
+		han_filtrArmor.Picture(fArmor?filtrDown:filtrUp);
+	}
+}
+
+class FiltrAmmo : IGUIElementCallbackInit, IGUIElementCallbackMouseClick, IGUIElementCallbackDraw
+{
+	void OnInit()
+    {
+		 @han_filtrAmmo=GUI_GetElementOptions();
+    }
+	
+	void OnMouseClick(int click)
+	{
+		if(fAmmo)
+			fAmmo=false;
+		else
+			fAmmo=true;	
+		FillDecraftListbox();
+	}
+	
+	void OnDraw()
+	{
+		han_filtrAmmo.Picture(fAmmo?filtrDown:filtrUp);	
+	}
+}
+
+class FiltrMisc : IGUIElementCallbackInit, IGUIElementCallbackMouseClick, IGUIElementCallbackDraw
+{
+	void OnInit()
+    {
+		@han_filtrMisc=GUI_GetElementOptions();
+    }
+	
+	void OnMouseClick(int click)
+	{
+		if(fMisc)
+			fMisc=false;
+		else
+			fMisc=true;	
+		FillDecraftListbox();
+	}
+	
+	void OnDraw()
+	{
+		han_filtrMisc.Picture(fMisc?filtrDown:filtrUp);	
+	}
+}
+
+class FiltrCustom : IGUIElementCallbackInit, IGUIElementCallbackMouseClick, IGUIElementCallbackDraw
+{
+	void OnInit()
+    {
+		@han_filtrCustom=GUI_GetElementOptions();
+    }
+	
+	void OnMouseClick(int click)
+	{
+		if(fCustom)
+			fCustom=false;
+		else
+			fCustom=true;	
+		FillDecraftListbox();
+	}
+	
+	void OnDraw()
+	{
+		han_filtrCustom.Picture(fCustom?filtrDown:filtrUp);		
+	}
+}
+
+#endif // __CLIENT

@@ -1,0 +1,180 @@
+[comment]
+
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 R _script v13_0_guard@r_GuardDialog 0  @
+2 2000 None 0 #
+0 2010 D _param p ST_INTELLECT > 3 #
+5 2020 D _param p ST_INTELLECT > 3 #
+3 2030 D _script v13_0_guard@d_ArmorCheck 0  D _param p SK_SPEECH < 91 D _param p ST_INTELLECT > 3 #
+4 2040 D _script v13_0_guard@d_ArmorCheck 0  D _param p SK_SPEECH > 90 D _param p ST_INTELLECT > 3 R _script v13_0_guard@r_AllowAccess 0  #
+5 2050 D _param p ST_INTELLECT < 4 #
+0 2060 D _param p ST_INTELLECT < 4 #
+120 2070 D _param p ST_INTELLECT > 3 D _script v13_0_guard@d_QuestDone 0  #
+14 2080 D _param p ST_INTELLECT > 3 D _script v13_0_guard@d_CollarLost 0  D _script v13_0_guard@d_GroupCheck 0  #
+13 2090 D _script v13_0_guard@d_GroupNotCheck 0  D _param p ST_INTELLECT > 3 D _script v13_0_guard@d_CollarLost 0  @
+100 3000 None 0 #
+0 3010 #
+110 3020 @
+101 4000 None 0 @
+110 5000 Attack 0 @
+3 6000 None 0 @
+4 7000 None 0 @
+5 8000 None 0 #
+0 8010 D _param p ST_INTELLECT > 3 #
+0 8020 D _param p ST_INTELLECT < 4 #
+7 8030 D _param p ST_INTELLECT > 3 D _script v13_0_guard@d_GroupCheck 0  D _script v13_0_guard@d_QuestCheck 0  #
+6 8040 D _param p ST_INTELLECT > 3 D _script v13_0_guard@d_GroupNotCheck 0  D _script v13_0_guard@d_QuestCheck 0  @
+6 9000 None 0 #
+0 9010 @
+7 10000 None 0 #
+9 10010 @
+9 11000 None 0 #
+11 11010 #
+10 11020 @
+10 12000 None 0 #
+11 12010 @
+11 13000 None 0 #
+12 13010 #
+0 13020 @
+12 14000 None 0 #
+0 14010 R _script v13_0_guard@r_StartQuest 0  @
+120 15000 None 0 #
+121 15010 R _item p PID_BOTTLE_CAPS + 15000 R _script v13_0_guard@r_QuestDone 0  @
+121 16000 None 0 #
+122 16010 D _param p ST_INTELLECT > 3 D _param p SK_SPEECH < 36 D _param p SK_SPEECH > 20 #
+123 16020 D _param p ST_INTELLECT > 3 D _param p SK_SPEECH > 35 R _item p PID_MICRO_FUSION_CELL + 1500 R _item p PID_SUPER_STIMPAK + 15 R _item p PID_TURBO_PLASMA_RIFLE + 1 R _item p PID_MEGA_POWER_FIST + 1 R _item p PID_PLASMA_GRENADE + 10 R _item p PID_PULSE_GRENADE + 10 R _param p ST_EXPERIENCE + 400 #
+0 16030 @
+122 17000 None 0 @
+123 18000 None 0 @
+13 19000 None 0 #
+0 19010 @
+14 20000 None 0 #
+0 20010 R _script v13_0_guard@r_StartQuest 0  &
+
+[russ]
+{100}{}{Охранник прохода}
+{200}{}{Вы видите: охранник прохода.}
+{210}{}{Этот солдат охраняет вход. Чтобы абы кто, вроде тебя, не попал в убежище.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{-}
+{2000}{}{Кто так@sex@|ой||ая|? Цель визита?!}
+{2010}{}{Я ухожу. [Уходите]}
+{2020}{}{Я @pname@. Хочу поройти в убежище.}
+{2030}{}{Смирно, сержант! Я капитан @pname@! Прибыл@sex@|||а| с инспекцией. В сторону сержант! Пропустите меня...}
+{2040}{}{Смирно, сержант! Я капитан @pname@! Прибыл@sex@|||а| с инспекцией. В сторону сержант! Пропустите меня...}
+{2050}{}{Моя хотеть внутрь!}
+{2060}{}{Моя уйтить! [Уходите]}
+{2070}{}{Мы самку притащили... Берёте или нет?}
+{2080}{}{Мы это... ошейник потеряли.}
+{2090}{}{Мы это... ошейник потеряли.}
+{3000}{}{Чего тут крадёшься?.. Стой, стрелять буду!@@Куда собрался?.. Стой, стрелять буду!@@Куда крадёшься?.. Стой, стрелять буду!}
+{3010}{}{Извините, я случайно. [Уходите]}
+{3020}{}{Стою!}
+{4000}{}{Убери оружие!@@Спрячь оружие!@@Убери оружие, иначе пристрелю!@@Спрячь оружие или стреляю!@@Не доставай тут оружие!}
+{5000}{}{Стреляю!}
+{6000}{}{Да, капитан Ошибка! Так точно, капитан Ошибка! @sex@|Пшёл вон идиот||Пошла вон идиотка|!!! Иначе пристрелю к чёртовой матери!}
+{7000}{}{Так точно, капитан! Добро пожаловать на аванпост Анклава, капитан!}
+{8000}{}{Это закрытая территория. И зачем же тебе в убежище?}
+{8010}{}{Да собственно и незачем... [Уходите]}
+{8020}{}{Моя ни знаит... [Уходите]}
+{8030}{}{Да мы с ребятами работу ищем. В пустоши так туго с работой стало. Настоящий кризис.}
+{8040}{}{Да мы с ребятами работу ищем. В пустоши так туго с работой стало. Настоящий кризис.}
+{9000}{}{Каую работ?! Ты что глух@sex@|ой||ая|, я же сказал: ТЕРРИТОРИЯ ЗАКРЫТАЯ.}
+{9010}{}{Я ухожу. [Уходите]}
+{10000}{}{Наш@sex@|ел||ла| место... Вообще-то... Вы, я смотрю, ребята крепкие.}
+{10010}{}{[Далее]}
+{11000}{}{Вобщем мне приказали добыть самку Когтя Смерти.}
+{11010}{}{[Далее]}
+{11020}{}{Зачем вам Коготь Смерти?}
+{12000}{}{Ну, хрен их знает зачем, эксперименты они проводят. Спаривать чтоли с кем-то... Мне не объясняли. Моё дело маленькое.}
+{12010}{}{[Далее]}
+{13000}{}{Значит так. Мне своими людьми и снаряжением казённым рисковать не резон. Сможете добыть мне самку - хорошо заплачу, да ещё кое-что из снаряжения подкину.}
+{13010}{}{Самку Когтя Смерти говоришь? Да мы этих Когтей Смерти пачками ловили...}
+{13020}{}{Ну-у-у... Тоже мне работа. Штукатуры мы. Покрасить там, плитку положить - это работа. Когтей Смерти ловить - нет уж спасибо.}
+{14000}{}{Вот, держи ошейник. Мне яйцеголовые выдали, вроде должен подавлять агрессию и сделать чертову зверюгу покорной как брамин... Только чтоб надеть ошейник, надо Когтя Смерти сначала вырубить как-то. Но это уже ваши проблемы.}
+{14010}{}{[Берёте ошейник и уходите]}
+{15000}{}{Мать... Ну, и жуткая тварь. Ну, давайте её сюда.}
+{15010}{}{Эй, а как насчет наших денег? Ты обещал заплатить!}
+{16000}{}{Да, да... Вот, держите свои деньги. [В сторону Когтя Смерти] Пошла! Пошла глупая тварь!}
+{16010}{}{Может подкинешь ещё что-то из снаряжения? Это было не легко, знаешь ли...}
+{16020}{}{Может подкинешь ещё что-то из снаряжения? Это было не легко, знаешь ли...}
+{16030}{}{Спасибо за сотрудничество. [Уходите]}
+{17000}{}{Обалдел@sex@|||а| что ли? Да меня за казённое снаряжение этой же твари и скормят. Никакого снаряжения тебе не будет!}
+{18000}{}{Хорошо. Вот держи пару гранат и плазменную винтовку и ещё кое-что по мелочи...}
+{19000}{}{Чёртов болван! Это ж казённое снаряжение! Экс-пе-ре-мен-таль-но-е! Понимашь?.. Чёрт с вами, возвращайся со своей группой, а я попробую ещё один намордник добыть.}
+{19010}{}{Ладно, мы скоро вернемся.}
+{20000}{}{Казённое снаряжение потеряли болваны! Ладно, вот вам ещё один намордник, и чтоб через сутки самка была у меня!!!}
+{20010}{}{Да, ладно, мы скоро вернемся.}
+{100000000}{}{0}
+{100000001}{}{Нарушитель на территории! В атаку!@@Нарушитель на территории! К оружию!@@Задержать нарушителя!@@Внимание! Нарушитель на территории!}
+{100000002}{}{Убери оружие!@@Спрячь оружие!@@Убери оружие, иначе пристрелю!@@Спрячь оружие или стреляю!@@Не доставай тут оружие!}
+{100000003}{}{На территории Убежища запрещено ношение оружия!@@Не доставай оружие на территории Убежища!}
+{100000004}{}{Бросте это!@@Хватит!@@Пусть живёт!}
+{100000005}{}{Внимание! Диверсия!@@Тревога! Диверсант!@@Задержать диверсанта!}
+
+[engl]
+{100}{}{the Security guard of pass}
+{200}{}{you see: the security guard of pass.}
+{210}{}{This soldier protects an input. That aby who, like you, has not got to a refuge.}
+{1000}{}{Predialogue installations}
+{1010}{}{-}
+{2000}{}{Who так@sex | oh || aja |? The visit purpose?!}
+{2010}{}{I leave. [Leave]}
+{2020}{}{I @pname. I want porojti in a refuge.}
+{2030}{}{it is quiet, the sergeant! I the captain @pname! Прибыл@sex ||| and | with inspection. Aside the sergeant! Pass me...}
+{2040}{}{it is quiet, the sergeant! I the captain @pname! Прибыл@sex ||| and | with inspection. Aside the sergeant! Pass me...}
+{2050}{}{Washing to want inside!}
+{2060}{}{Mine ujtit! [Leave]}
+{2070}{}{We have dragged a female... The Beret or not?}
+{2080}{}{We it... A collar have lost.}
+{2090}{}{We it... A collar have lost.}
+{3000}{}{That here you are stolen?. Stand, I will shoot! @@ where has gathered?. Stand, I will shoot! @@ where you are stolen?. Stand, I will shoot!}
+{3010}{}{Excuse, I am casual. [Leave]}
+{3020}{}{I Stand!}
+{4000}{}{Clean the weapon! @@ hide the weapon! @@ clean the weapon, differently I will shoot down! @@ hide the weapon or I shoot! @@ do not get here the weapon!}
+{5000}{}{I Shoot!}
+{6000}{}{Yes, the captain the Error! So it is exact, the captain the Error! @sex | Pshyol the idiot || Has gone the idiot |!!! Otherwise I will shoot down to hell!}
+{7000}{}{So it is exact, the captain! Welcome to Enclave outpost, the captain!}
+{8000}{}{It is the closed territory. And what for to you in a refuge?}
+{8010}{}{Yes actually also there is no need... [Leave]}
+{8020}{}{Mine znait... [Leave]}
+{8030}{}{Yes we with children search for work. In a heathland so hardly with work became. The present crisis.}
+{8040}{}{Yes we with children search for work. In a heathland so hardly with work became. The present crisis.}
+{9000}{}{Kauju of works?! You that глух@sex | oh || aja |, I have told: TERRITORY CLOSED.}
+{9010}{}{I leave. [Leave]}
+{10000}{}{Nash@sex | ate || la | a place... Generally... You, I look, children strong.}
+{10010}{}{[Further]}
+{11000}{}{Vobshchem to me have ordered to extract a female of the Claw of Death.}
+{11010}{}{[Further]}
+{11020}{}{What for to you the Death Claw?}
+{12000}{}{Well, their horse-radish knows what for, they spend experiments. To couple chtoli to someone... To me did not explain. My business small.}
+{12010}{}{[Further]}
+{13000}{}{Means so. To me state to risk the people and equipment not the reason. Can extract to me a female - I will well begin to cry, moreover something from equipment I will throw.}
+{13010}{}{the Female of the Claw of Death you tell? Yes we of these Claws of Death packs caught...}
+{13020}{}{Well-u-u... Too to me work. SHtukatury we. To paint there, a tile to put is a work. Death claws to catch - there are no thanks.}
+{14000}{}{Here, hold a collar. To me jajtsegolovye have given out, like should suppress aggression and make chertovu a beast obedient as bramin... Only to put on a collar, it is necessary to cut down at first the Death Claw somehow. But it already your problems.}
+{14010}{}{[Take a collar and leave]}
+{15000}{}{Mother... Well, and a terrible creature. Well, give it here.}
+{15010}{}{Hey, and how about our money? You promised to pay!}
+{16000}{}{Yes, yes... Here, hold the money. [Towards the Death Claw] Has gone! The silly creature has gone!}
+{16010}{}{Can you will throw still something from equipment? It was not easy, whether know...}
+{16020}{}{Can you will throw still something from equipment? It was not easy, whether know...}
+{16030}{}{Thanks for cooperation. [Leave]}
+{17000}{}{whether Obaldel@sex ||| and | that? Yes me for state equipment of the same creature also will feed. No equipment to you will exist!}
+{18000}{}{it is good. Here hold pair of grenades and a plasma rifle and still something on a trifle...}
+{19000}{}{the Devil's blockhead! This state equipment! eks-pe-re-men-tal-no-e! ponimash?. Lines with you, come back with the group, and I will try to extract one more muzzle.}
+{19010}{}{it is fine, we will soon return.}
+{20000}{}{the State equipment was lost by blockheads! All right, here to you one more muzzle and that in a day the female was at me!!!}
+{20010}{}{Yes, all right, we will soon return.}
+{100000000}{}{0}
+{100000001}{}{the Infringer in territory! In attack! @@ the infringer in territory! To the weapon! @@ to detain the infringer! @@ attention! The infringer in territory!}
+{100000002}{}{Clean the weapon! @@ hide the weapon! @@ clean the weapon, differently I will shoot down! @@ hide the weapon or I shoot! @@ do not get here the weapon!}
+{100000003}{}{In Refuge territory weapon carrying is forbidden! @@ do not get the weapon in Refuge territory!}
+{100000004}{}{Broste it! @@ will suffice! @@ let lives!}
+{100000005}{}{Attention! Diversion! @@ alarm! The saboteur! @@ to detain the saboteur!}

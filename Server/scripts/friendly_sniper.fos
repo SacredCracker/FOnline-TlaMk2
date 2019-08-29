@@ -1,0 +1,26 @@
+#define _NoBaseInstance
+#include "pattern_sniper.fos"
+
+
+import void _NpcDead(Critter& npc, Critter@ killer) from "encounter_npc";
+
+class FriendlySniper: SniperPattern
+{
+void _Idle(Critter& sniper)
+{
+
+}
+
+void _ShowCritter(Critter& cr, Critter& showCrit)
+{
+
+}
+
+void _Dead(Critter& cr, Critter@ killer)
+{
+_NpcDead(cr, killer);
+SniperPattern::_Dead(cr,killer);
+}
+}
+
+FriendlySniper pattern; 

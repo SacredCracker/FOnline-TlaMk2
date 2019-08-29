@@ -1,0 +1,750 @@
+// Author: heX
+// Групповой квест: Охота на ванаминго!
+// Выдает Марион(шериф) в Реддинге
+// ver 1.0
+/*
+Групповой квест: Охота на ванаминго!
+Выдает Марион(шериф) в Реддинге.
+На карте появляется локация с пещерой ванаминго.
+
+Ограничения (покачто сняты):
+5..10 человек.
+сумма уровней группы не меньше 50.
+выдается раз в две недели.
+
+Фичи (покачто не реализованны):
+если сильно отрицательная карма то
+Марион может выдать квест одному игроку,
+причем будет убеждать его что там всего пара ванаминго и ничего опастного.
+
+БАГИ:
+Неправильное название яйца. нужно юзать mob_egg.fodlg
+Алиен вываливается за стенку. (вверху по центру) OK?
+Затыкание проходов.
+Переключение автомата квеста в обратные состояния.
+рандомное начало атаки если долго не атакуют.
+убрать вождение по кругу.
+учитывать лечения стимами.
+больше опыта и денег
+повесить скрипт в maps.txt и map_init тут
+*/
+
+#include "_macros.fos"
+#include "_npc_pids.fos"
+#include "_vars.fos"
+#include "_teams.fos"
+#include "_bags.fos"
+#include "pids_groups.fos"
+#include "utils_for_array.fos"
+
+import bool AddAttackPlane(Critter& npc, uint priority, Critter& target) from "npc_planes";
+import bool AddWalkPlane(Critter& npc, uint priority, uint16 hexX, uint16 hexY, uint8 dir, bool run, uint cut) from "npc_planes";
+import bool AddMiscPlane(Critter& npc, uint priority, uint waitSecond, string@ funcName) from "npc_planes";
+import void ActivateMobScript(Map& map) from "mob";
+
+//#define debag
+
+#ifdef debag
+#define MIN_PLAYERS (1)
+#endif
+#ifndef debag
+#define MIN_PLAYERS (5)
+#endif
+#define MAX_PLAYERS (10)
+
+// макс тварей
+#define MAX_CRIT	(32)
+
+// позиция
+#define REDD_POS_X (13 * __GlobalMapZoneLength - __GlobalMapZoneLength/2)
+#define REDD_POS_Y (10 * __GlobalMapZoneLength - __GlobalMapZoneLength/2)
+
+// VarX
+#define VarKills StatBase[ST_VAR1]
+#define VarAids StatBase[ST_VAR2]
+
+//<--- r17
+#define NPC_ROLE_COW 		(13) // брамины
+#define NPC_ROLE_EGG		(5) // яйца ванаминго
+#define NPC_ROLE_WAN1		(1) // первые три ванаминго на карте
+//---> r17
+
+// надо часть этих данных хранить в базе - на случай перезагрузки.
+uint[] GlobalGroupsIds;
+uint GlobalMapId;
+int GlobalWanMax;
+int GlobalWanCount;
+int GlobalWanSpawn;
+int GlobalHumanCount;
+int GlobalWanCountLow;
+
+void SetQuestState(Critter& player, int Status)
+{
+	GameVar@ quest=GetLocalVar(LVAR_q_redd_marion_wan, player.Id);
+	if(valid(quest)) quest=Status;
+}
+
+int GetQuestState(Critter& player)
+{
+	GameVar@ quest=GetLocalVar(LVAR_q_redd_marion_wan, player.Id);
+	if(not valid(quest)) return 0;
+	return quest.GetValue();
+}
+
+// log r17
+void DL(string @ s)
+{
+
+//	Log("\n"+ s +"\n");
+}
+
+// удаляем локацию с выводком гекко
+/* старый вариант - Hexor
+void DeleteWanMap()
+{
+	GameVar@ game_map=GetGlobalVar(GVAR_redd_marion_wan_location);
+	if(not valid(game_map)) return;
+
+	if(game_map.GetValue() !=0) {
+		Location@ loc=GetLocation(game_map.GetValue());
+		//if(loc.GeckCount>0) loc.GeckCount--;
+		if(not valid(loc)) {
+			//Log("GetLocation fail. Error in GVAR_klam_smily_wan_mapid?");
+			game_map=0;
+			return;
+		}
+
+		DeleteLocation(loc.Id); // но всетаки мы ее добьем
+		// возможно это плохое решение - тамже могут быть люди...
+		game_map=0;// зануляем
+	}
+
+
+
+}
+*/
+//<----- r17
+void DeleteWanMap()
+{
+	DL("Delete Wanamingo Location started");
+	// поиск локации
+	GameVar@ game_map=GetGlobalVar(GVAR_redd_marion_wan_location);
+	if(valid(game_map))
+	{
+		if(game_map.GetValue() !=0)
+		{
+			Location @ loc=GetLocation(game_map.GetValue());
+			if(not valid(loc))
+			{
+				game_map=0;
+				DL("Invalid Wanamingo location");
+			}else{
+				// ищем игроков из списка, которые все еще могут находиться на локации
+				for(uint i=0, iMax=GlobalGroupsIds.length(); i<iMax; i++)
+				{
+					Critter @player=GetCritter(GlobalGroupsIds[i]);
+					if (!valid(player)){continue;}
+					Map @ player_map=player.GetMap();
+					if(valid(player_map))
+					{
+						Location @ player_loc=player_map.GetLocation();
+						if (!valid(player_loc)){continue;}
+						if(player_loc.GetProtoId()==loc.GetProtoId())
+						{
+							// найден игрок в локации "пещера ванаминго"
+							// переносим игрока на глобальную карту
+							player.Say(SAY_NETMSG,"Вы услышали далекий шум, который нарастал и приближался. Задрожали стены пещеры, и с потолка посыпались камни. Только чудом вам удалось выбраться из пещеры Ванаминго.");
+							player.TransitToGlobal(false);
+						}
+					}
+					// забываем где оно
+					if(player.IsKnownLoc (true, loc.Id)){player.UnsetKnownLoc(true,loc.Id);DL("Player id "+player.Id + "UnsetKnownLoc");}
+				}
+				// удаление локации
+				DeleteLocation(loc.Id);
+				game_map=0;
+			}
+		}
+	}
+
+	//однозначная очистка и инициализация переменных
+	GlobalGroupsIds.resize(0);
+	GlobalMapId=0;
+	GlobalWanMax=0;
+	GlobalWanCount=0;
+	GlobalWanSpawn=0;
+	GlobalHumanCount=0;
+	GlobalWanCountLow=0;
+	GameVar@ game_time=GetGlobalVar(GVAR_redd_marion_wan_timeout);
+	if(valid(game_time)){game_time=0;}
+	DL("Delete Wanamingo Location Succesfull");
+	// ~settime 20 2246 11 08 00 00
+
+}
+//--------->r17
+// собрать нпц по номеру роли
+uint GetCrittersByRole(Map& map, uint x, uint y, uint radius, int role, Critter@[]@ critters) //lib
+{
+	Critter@[] cTmp;
+	uint count=map.GetCrittersHex(x, y, radius, FIND_LIFE|FIND_ONLY_NPC, cTmp);
+	for(uint i=0; i<count; i++)
+		if(cTmp[i].Stat[ST_NPC_ROLE]==role)
+			critters.insertLast(cTmp[i]);
+	return critters.length();
+}
+
+Location @ _GetNewWanLoc(Critter@[] grp)
+{
+
+	int x,y;
+	x=-1; y=1;
+	uint locId=CreateLocation(
+		LOCATION_Wanamingo_Cavern,
+		REDD_POS_X + x*__GlobalMapZoneLength + Random(-(__GlobalMapZoneLength/2),(__GlobalMapZoneLength/2)),
+		REDD_POS_Y + y*__GlobalMapZoneLength + Random(-(__GlobalMapZoneLength/2),(__GlobalMapZoneLength/2)),
+		grp);
+	if(locId==0){DL("Wan Location create fail 1. ERROR:" + GetLastError()); return null;}
+
+	Location @ loc=GetLocation(locId);
+	if (!valid(loc)){DL("Wan Location create fail 2. ERROR:" + GetLastError()); return null;}
+
+	loc.Visible=false;
+	loc.AutoGarbage=false;// чтобы сборщик не убил локацию до того, как там не побывали игроки
+	loc.Radius=8;
+
+	return loc;
+}
+
+void r_GotoHunter(Critter& player, Critter@ npc, int val)
+{
+
+	if (!_TimeOutIsFree())
+	{
+		// по идее сюда игрок никогда не должен попасть
+		DL("Wanamingo quest: TIMEOUT is not free ");
+		return;
+	}
+
+	// удаляем старую карту если она есть
+	DeleteWanMap();
+
+	Critter@[] groups;
+	groups.insertLast(@player);
+	Critter@[] realGrp;
+	player.GetFollowGroup(FIND_ALL,realGrp);
+	for(uint i=0, iMax=realGrp.length(); i<iMax; i++)
+	{
+		if(GetQuestState(realGrp[i])==0)
+		{
+			groups.insertLast(@realGrp[i]);
+		}
+	}
+
+	// инициализирует квест!
+	for(uint i=0, iMax=groups.length(); i<iMax; i++)
+	{
+		if(GetQuestState(groups[i])==0)
+		{
+			SetQuestState(groups[i],1); // квест взят
+		}
+	}
+
+	////////////////////////////////////
+	// создали позицию
+
+	GameVar@ game_map=GetGlobalVar(GVAR_redd_marion_wan_location);
+	GameVar@ game_time=GetGlobalVar(GVAR_redd_marion_wan_timeout);
+
+	game_time=__FullSecond + (60 * 60 * 24);
+
+	Location@ loc=_GetNewWanLoc(groups);
+
+	if(not valid(loc)) return;
+	GlobalMapId=loc.Id;
+	// записали в глобальную игровую переменную
+	game_map=GlobalMapId;
+
+	Map@ map=loc.GetMapByIndex(0);
+	map.SetScript("redd_q_wanamingo@_WanMapInit");
+
+	if(CreateTimeEvent(game_time.GetValue(), "e_TimeExpired", 0, false)==0){DL("Time event create fail, "+GetLastError());} // эвент не создался, но оставим все как есть, поскольку удаление произойдет при следующей активации квеста кем-то
+
+	uint16 x=0,y=0;
+	int c;
+
+	map.GetEntireCoords(1, 0, x, y);
+
+	Critter@[] critters;
+
+	c=GetCrittersByRole(map,x,y,20,NPC_ROLE_COW,critters);// убитые брамины на карте
+
+	for(uint i=0, iMax=critters.length(); i<iMax; i++)
+	{
+		critters[i].ToDead(ANIM2_DEAD_BLOODY_SINGLE, null);
+		critters[i].StatBase[ST_REPLICATION_TIME]=60 * 24 * 365;
+	}
+	critters.resize(0);
+	c=GetCrittersByRole(map,x,y,20,NPC_ROLE_EGG,critters);
+
+	for(uint i=0, iMax=critters.length(); i<iMax; i++)
+		critters[i].StatBase[ST_DIALOG_ID]=DIALOG_mob_egg_wan;
+	critters.resize(0);
+
+	c=GetCrittersByRole(map,x,y,20,1,critters);
+
+	GlobalWanCountLow=c;
+
+	for(uint i=0, iMax=critters.length(); i<iMax; i++)
+		critters[i].SetEvent(CRITTER_EVENT_DEAD, "wan_dead_low");
+
+	int wan;
+	wan=groups.length()*5;
+	wan=CLAMP(wan,16,64);
+
+	// глобалы
+	GlobalWanCount=wan;
+	GlobalWanMax=wan;
+	GlobalWanSpawn=wan;
+	GlobalHumanCount=0;
+	GlobalGroupsIds.resize(groups.length());
+	for(uint i=0, iMax=groups.length(); i<iMax; i++) GlobalGroupsIds[i]=groups[i].Id;
+
+	DL("Quest started successful. Location added");
+}
+
+// r 17 - инициализация карты с ванаминго
+void _WanMapInit(Map& map, bool firstTime)
+{
+	DL("Begin Wan Map init");
+	// это было в map_activate_mob_script.fos
+	ActivateMobScript(map);
+
+	map.SetEvent(MAP_EVENT_IN_CRITTER, "map_incoming_r17");
+	map.SetEvent(MAP_EVENT_OUT_CRITTER, "map_leave_r17");
+	//map.SetEvent(MAP_EVENT_FINISH, "map_deleting_r17"); удаление можно не обрабатывать, иначе при рестарте сервера карта не сохранится
+
+	DL("Wan Map init success");
+}
+// на зачистку шахты даются только одни сутки
+uint e_TimeExpired(uint[]@ values)
+{
+	DeleteWanMap();
+	return 0;
+}
+
+///////////////////////////////////////////////////////
+// механику на карте не трогал r17
+// спавнить ванаминго
+Critter@ SpawnWan(Map& map, uint8 EntSpawn, uint8 level)
+{
+	uint16 x=0,y=0;
+	if(not map.GetEntireCoords(EntSpawn, 0, x, y)) {
+		Log("ERROR GetEntireCoords "+EntSpawn);
+		return null;
+	}
+
+	int[] params={ST_DIALOG_ID, DIALOG_mob_wanamingo, ST_BAG_ID, BAG_Empty, ST_TEAM_ID, TEAM_Mob0, ST_REPLICATION_TIME, -1, ST_LEVEL, level};
+	Critter@ cr=map.AddNpc(NPC_PID_ToughAlien, x, y, Random(0,5), params, null, "mob@_MobInit");
+	if(valid(cr)) {
+		// прерывания
+		cr.SetEvent(CRITTER_EVENT_DEAD, "wan_dead");
+	}
+	if(not valid(cr)) {
+		Log("Critter creation error");
+		return null;
+	}
+	return cr;
+}
+
+// спавнить ванаминго из нор
+bool SpawnWan2()
+{
+	//uint8 ent=Random(1,5);
+	GameVar@ game_map=GetGlobalVar(GVAR_redd_marion_wan_location);
+	Location@ loc=GetLocation(game_map.GetValue());
+	if(not valid(loc)) return false;
+	Map@ map=loc.GetMapByIndex(0);
+	if(not valid(map)) return false;
+	for(int i=1; i<=5; i++)
+	{
+		Critter@ globalCr=GetCritter(GlobalGroupsIds[Random(0,GlobalGroupsIds.length()-1)]);
+		if(not valid(globalCr)) continue;
+		Critter@ cr=SpawnWan(map, i+10, CLAMP(globalCr.Stat[ST_LEVEL],10,20));
+		if(not valid(cr)) continue;
+		uint16 x=0,y=0;
+		bool r=map.GetEntireCoords(i+20, 0, x, y);
+		if(not r) continue;
+		cr.SetHomePos(x,y,Random(0,5));
+		AddWalkPlane(cr, AI_PLANE_ATTACK_PRIORITY+20, x,y, Random(0,5), false, 0);
+		AddAttackPlane(cr, AI_PLANE_ATTACK_PRIORITY+10, globalCr);
+		GlobalWanSpawn--;
+		//BREAK!!!
+		// все игроки враги
+		for(uint j=0, jMax=GlobalGroupsIds.length(); j<jMax; j++)
+			cr.AddEnemyInStack(GlobalGroupsIds[j]);
+	}
+	return true;
+}
+
+// Time event
+uint e_Spawn(uint[]@ values)
+{
+	if(not SpawnWan2()) return 0;
+	if(GlobalWanSpawn<=0)
+		return 0; else
+		return 5*60;
+}
+
+// Алерт
+uint e_Alert(uint[]@ values)
+{
+	for(uint i=0, iMax=GlobalGroupsIds.length(); i<iMax; i++)
+	{
+		Critter@ cr=GetCritter(GlobalGroupsIds[i]);
+		if(valid(cr)) cr.Say(SAY_NETMSG, "Вы слышите шорох...");
+	}
+	return 0;
+}
+
+// Алерт
+uint e_Alert2(uint[]@ values)
+{
+	for(uint i=0, iMax=GlobalGroupsIds.length(); i<iMax; i++)
+	{
+		Critter@ cr=GetCritter(GlobalGroupsIds[i]);
+		if(valid(cr)) cr.Say(SAY_NETMSG, "Кажется у вас проблемы!");
+	}
+	return 0;
+}
+
+// начать спавн ванаминго!
+void BeginSpawn()
+{
+	if(CreateTimeEvent(__FullSecond+3*60, "e_Spawn", false)==0)
+		Log("Time event create fail, "+GetLastError());
+	if(CreateTimeEvent(__FullSecond+1*60, "e_Alert", false)==0)
+		Log("Time event create fail, "+GetLastError());
+	if(CreateTimeEvent(__FullSecond+5*60, "e_Alert2", false)==0)
+		Log("Time event create fail, "+GetLastError());
+}
+
+#ifdef debag
+// ~runscript redd_q_wanamingo spawn 0 0 0
+void spawn(Critter& player, int param0, int param1, int param2)
+{
+	BeginSpawn();
+}
+#endif
+
+// выдача опыта в зависимости от счетчиков
+int GetExpa(Critter& player)
+{
+	int kls=player.VarKills;// килсы
+	int aid=player.VarAids;// хиляние
+	if(kls==0 and aid==0) return 0; // фиг вам халявщики, а не опыт!
+	int expa=500;
+	if(kls>=10 or aid>=2)
+		expa+=1500;
+	return expa;
+}
+
+// квест выполнен! поздравляем игрока!
+void QuestCompleteNotify(Critter& player)
+{
+	if(GetQuestState(player)==2) { // пришол и
+		SetQuestState(player, 3); // победил!
+		#ifdef debag
+		player.Say(SAY_NETMSG, "Квест выполнен!");
+		player.Say(SAY_NETMSG, "Убито ванаминго: "+player.VarKills);
+		player.Say(SAY_NETMSG, "Лечений: "+player.VarAids);
+		#endif
+		player.StatBase[ST_EXPERIENCE]+=GetExpa(player); // УРА!!!
+	} else
+		if(GetQuestState(player)==1) // не заходил на локацию
+			SetQuestState(player, 5); else // не пришол
+			SetQuestState(player, 0); // сбрасываем нафиг
+}
+
+/////////////////////////////////////////////////
+// обработчики прерываний
+
+// игрок уходит с карты
+void map_leave(Map& map, Critter& player)
+{
+	DL("Map leave begin");//r17
+	if(player.IsPlayer())
+	{
+		GlobalHumanCount--;
+		DL("GlobalHuman "+ GlobalHumanCount);//r17
+		if(GlobalHumanCount==0) // если больше нет никого
+			DeleteWanMap();
+
+		remove_events(player);
+		DL ("Player events has been removed");
+#ifdef debag
+		//player.ModeBase[MODE_NO_KNOCK]=0;
+#endif
+
+		if(not player.IsDead()) { // если еще жив
+			if(GlobalWanCount>0) { // если гекко еще остались
+				if(GetQuestState(player)==2) {
+					SetQuestState(player,6);// сбежал
+				}
+			}
+		}
+		player.VarKills=0;
+		player.VarAids=0;
+	}
+		DL("Map leave end");//r17
+}
+//r17
+void map_leave_r17(Map& map, Critter& player)
+{
+	if(player.IsPlayer())
+	{
+		// игрок покидает локацию, но другие игроки могли там остаться
+		// отменяем запоминание локации для игрока
+		// удалять локацию не нужно, она сама удалится при срабатывании эвента или при окончании таймаута
+		// в принципе, имеет смысл включить автосбор локации мусорщиком при первом выходе игрока с локации, но нужно убедиться, что не будет проблем при последующих попытках удаления по расписанию
+		GlobalHumanCount--;
+
+		Location @loc=map.GetLocation();
+
+		if (!valid(loc)) {DL("Wan Loc can't find error");return;}
+		if(player.IsKnownLoc(true, loc.Id)){player.UnsetKnownLoc(true,loc.Id);DL("Player id "+player.Id + " UnsetKnownLoc succsess ");}
+
+		remove_events(player);
+#ifdef debag
+		//player.ModeBase[MODE_NO_KNOCK]=0;
+#endif
+		if (!player.IsDead()) { // если еще жив
+			if(GlobalWanCount>0) { // если гекко еще остались
+				if(GetQuestState(player)==2) {
+					SetQuestState(player,6);// сбежал
+				}
+			}
+		}
+
+	}
+
+	DL("Player has left wan map. Player ID "+ player.Id);
+	// на карте никого не осталось, можно сразу удалять
+	if(_MapHasPlayers(map)){DeleteWanMap();}
+}
+void map_incoming_r17(Map& map, Critter& player)
+{
+	if(not map.IsTurnBased() && map.IsTurnBasedAvailability()) map.BeginTurnBased(player);
+
+	Location @ loc=map.GetLocation();
+	if(valid(loc))
+	{
+		// все таки добавил автосборщик, иначе где-то залипало и карта не удалялась
+		loc.AutoGarbage=true;
+	}
+
+	if(player.IsPlayer()) {
+
+		SetQuestState(player,2);//пришли
+		GlobalHumanCount++;
+
+		remove_events(player);
+
+		player.SetEvent(CRITTER_EVENT_USE_SKILL, "player_doctor");
+		player.SetEvent(CRITTER_EVENT_DEAD, "player_dead_r_17");
+#ifdef debag
+		// выдаем имунитет к падениям (пока не поправят баг к шансом падения)
+		//player.ModeBase[MODE_NO_KNOCK]=0;//=1 режим сохраняется надолго, поэтому отключил r17
+#endif
+	}
+}
+
+// игрок умер во время квеста
+void player_dead_r_17(Critter& player, Critter@ killer)
+{
+	SetQuestState(player,4); // умер
+	if(player.VarKills*2 > GlobalWanMax) { // убил больше половины
+		player.StatBase[ST_EXPERIENCE]+=8000;
+	} else {
+		player.StatBase[ST_EXPERIENCE]+=1500;
+	}
+	remove_events(player);
+}
+bool _MapHasPlayers(Map & map)
+{
+	for(uint i=0, iMax=GlobalGroupsIds.length(); i<iMax; i++)
+	{
+		Critter@ cr=GetCritter(GlobalGroupsIds[i]);
+		if(valid(cr))
+		{
+			if(valid(map.GetCritter(cr.Id)))
+			{
+				return true;
+			}
+		}
+	}
+	return false;
+}
+// удаление карты
+void map_deleting_r17(Map& map, bool deleted)
+{
+	DL("Map finish started");
+	Location@ loc=map.GetLocation();
+	for(uint i=0, iMax=GlobalGroupsIds.length(); i<iMax; i++)
+	{
+		Critter@ cr=GetCritter(GlobalGroupsIds[i]);
+		if(valid(cr)) cr.UnsetKnownLoc(true, loc.Id);
+	}
+
+	// чтобы без проблем можно было взять новый квест
+	GameVar@ mapid=GetGlobalVar(GVAR_redd_marion_wan_location);
+	mapid=0;
+	DL("Map finish ended");
+}
+
+
+// игрок пришол на карту
+void map_incoming(Map& map, Critter& player)
+{
+	// Begin turn based combat
+	if(not map.IsTurnBased() && map.IsTurnBasedAvailability()) map.BeginTurnBased(player);
+
+	if(player.IsPlayer()) {
+		if(GlobalHumanCount > 0) { // есть ктото уже есть то
+			Location@ loc=GetLocation(map.Id);
+			//if(loc.GeckCount>0) loc.GeckCount--;
+		}
+
+		SetQuestState(player,2);//пришли
+		GlobalHumanCount++;
+		player.VarKills=0;// килсы
+		player.VarAids=0;// хиляние
+		player.SetEvent(CRITTER_EVENT_USE_SKILL, "player_doctor");
+		player.SetEvent(CRITTER_EVENT_DEAD, "player_dead");
+#ifdef debag
+		// выдаем имунитет к падениям (пока не поправят баг к шансом падения)
+		//player.ModeBase[MODE_NO_KNOCK]=1;
+#endif
+	}
+}
+
+// удаляем прерывания у игрока
+void remove_events(Critter& player)
+{
+	player.SetEvent(CRITTER_EVENT_USE_SKILL, "");
+	player.SetEvent(CRITTER_EVENT_DEAD, "");
+	player.VarKills=0;// килсы
+	player.VarAids=0;// хиляние
+}
+
+// игрок умер во время квеста
+void player_dead(Critter& player, Critter@ killer)
+{
+	remove_events(player);
+	SetQuestState(player,4); // умер
+	if(player.VarKills > GlobalWanMax/2) { // убил больше половины
+		player.StatBase[ST_EXPERIENCE]+=8000;
+	} else {
+		player.StatBase[ST_EXPERIENCE]+=1500;
+	}
+	player.VarKills=0;// килсы
+	player.VarAids=0;// хиляние
+}
+
+// AHTUNG - карта сворачиваеться нафиг
+void map_deleting(Map& map, bool deleted)
+{
+	Location@ loc=map.GetLocation();
+	for(uint i=0, iMax=GlobalGroupsIds.length(); i<iMax; i++)
+	{
+		Critter@ cr=GetCritter(GlobalGroupsIds[i]);
+		if(valid(cr)) cr.UnsetKnownLoc(true, loc.Id);
+	}
+
+	GameVar@ mapid=GetGlobalVar(GVAR_redd_marion_wan_location);
+	mapid=0;
+}
+
+bool player_doctor(Critter& crit, int skill, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+	// цепочка if
+	if(skill==SK_FIRST_AID)
+	if(valid(onCritter))
+	if(onCritter.IsPlayer()) // игрока
+	if(crit.Id !=onCritter.Id) // не сам себя
+	if(crit.Timeout[TO_SK_FIRST_AID]<=0) // уже можно
+		crit.VarAids++ ; // и всетаки он вылечил его (ну или пытался, что тоже важно)
+	return false;// вызываем глобальный обработчик
+}
+
+// смерть трех ванаминго которые стоят в начале
+void wan_dead_low(Critter& crit, Critter@ killer)
+{
+	GlobalWanCountLow--;
+	//Log("Dead detect "+GlobalWanCountLow);
+	if(GlobalWanCountLow<=0)
+		BeginSpawn();
+}
+
+void wan_dead(Critter& crit, Critter@ killer)
+{
+	if(killer.IsPlayer())
+		killer.VarKills++;
+	GlobalWanCount--;
+	// если гекко кончились
+	if(GlobalWanCount==0)
+	{
+		// квест выполнен!
+		// нужно уведомить участников
+		for(uint i=0, iMax=GlobalGroupsIds.length(); i<iMax; i++)
+		{
+			Critter@ cr=GetCritter(GlobalGroupsIds[i]);
+			if(valid(cr)) QuestCompleteNotify(cr);
+		}
+
+		GameVar@ mapid=GetGlobalVar(GVAR_redd_marion_wan_location);
+		if(valid(mapid) && mapid.GetValue() !=0)
+		{
+			Location@ loc=GetLocation(mapid.GetValue());
+			loc.AutoGarbage=true; // разрешаем сбор карты мусорщиком (на всякий случай)
+			mapid=0; // снимаем метку
+		}
+	}
+}
+/*-----Вспомогательные функции(r17)------>-->-->*/
+// проверка, что таймаут не закончен
+// true  - таймаут завершен, либо не назначался раньше
+// false - таймер тикает, нельзя ничего делать
+bool _TimeOutIsFree()
+{
+	GameVar@ game_time=GetGlobalVar(GVAR_redd_marion_wan_timeout);
+	if (!valid(game_time)){DL("ошибка: не найдена переменная GVAR_redd_marion_wan_timeout");return false;}
+
+	if(game_time.GetValue()==0){return true;} // с таймаутом все нормально, он сброшен
+
+	if(__FullSecond >=uint(game_time.GetValue()))	{
+		DL("Время на квест истекло");
+		return true;
+	}else{
+		return false;
+	}
+}
+// проверка - квест выполняется или нет
+bool _QuestAlreadyRun()
+{
+	return GlobalMapId!=0;
+}
+/*---------------Диалоги (r17) ---------->-->-->*/
+// проверка доступности квеста
+bool d_CheckQAccess(Critter& player, Critter@ npc)
+{
+	// квест доступен, если никто его не выполняет в данный момент
+	// проверка, суток должно было хватить, чтобы игроки прошли эту шахту
+	// квест не выполняется, можно брать
+	if (!_QuestAlreadyRun()) return true;
+	// квест выполняется, проверяем таймаут квеста
+	return (_TimeOutIsFree());
+
+}
+
+
+/*-<--<--<--------Диалоги (r17) -----------------*/

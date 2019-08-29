@@ -1,0 +1,288 @@
+[comment]
+
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 NOT_ANSWER_CLOSE_DIALOG 1#
+2 1010d*_param p ST_STRENGTH < 4 *_var p q_newbie_hilario_chico = 0 #
+3 1020d*_var p q_newbie_chico_rate = 0 *_param p ST_STRENGTH > 3 *_param p ST_STRENGTH < 10 *_var p q_newbie_hilario_chico = 0 #
+2 1030d*_var p q_newbie_chico_rate = 5 *_var p q_newbie_hilario_chico = 0 #
+13 1040d*_param p ST_STRENGTH > 9 *_var p q_newbie_hilario_chico = 0 #
+13 1050d*_var p q_newbie_chico_rate > 0 *_var p q_newbie_chico_rate < 5 *_param p ST_STRENGTH < 10 *_var p q_newbie_hilario_chico = 0 #
+20 1060d*_var p q_newbie_hilario_chico = 1 *_param p ST_INTELLECT > 3 #
+2 1070d*_param p ST_STRENGTH < 4 *_var p q_newbie_hilario_chico > 1 #
+3 1080d*_var p q_newbie_hilario_chico > 1 *_param p ST_STRENGTH > 3 *_param p ST_STRENGTH < 10 *_var p q_newbie_chico_rate = 0 #
+2 1090d*_var p q_newbie_hilario_chico > 1 *_var p q_newbie_chico_rate = 0 #
+13 1100d*_var p q_newbie_hilario_chico > 1 *_param p ST_STRENGTH > 9 #
+13 1110d*_var p q_newbie_hilario_chico > 1 *_var p q_newbie_chico_rate > 0 *_var p q_newbie_chico_rate < 5 *_param p ST_STRENGTH < 10 @
+2 2000 NOT_ANSWER_CLOSE_DIALOG 0@
+3 3000 NOT_ANSWER_CLOSE_DIALOG 0#
+4 3010d*_param p ST_INTELLECT > 3 #
+4 3020d*_param p ST_INTELLECT < 4 @
+4 4000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 4010d*_param p ST_INTELLECT > 3 #
+7 4020d*_param p ST_INTELLECT > 3 #
+6 4030d*_param p ST_INTELLECT > 3 #
+0 4040d*_param p ST_INTELLECT < 4 #
+7 4050d*_param p ST_INTELLECT < 4 #
+6 4060d*_param p ST_INTELLECT < 4 @
+6 5000 NOT_ANSWER_CLOSE_DIALOG 0#
+4 5010d*_param p ST_INTELLECT > 3 #
+7 5020d*_param p ST_INTELLECT > 3 #
+7 5030d*_param p ST_INTELLECT < 4 #
+4 5040d*_param p ST_INTELLECT < 4 @
+7 6000 NOT_ANSWER_CLOSE_DIALOG 0#
+9 6010d*_item p PID_BOTTLE_CAPS > 0 r*_var p q_newbie_chico_rate = 0 #
+9 6020d*_item p PID_BOTTLE_CAPS > 19 r*_var p q_newbie_chico_rate = 1 *_item p PID_BOTTLE_CAPS - 20 #
+9 6030d*_item p PID_BOTTLE_CAPS > 49 r*_var p q_newbie_chico_rate = 2 *_item p PID_BOTTLE_CAPS - 50 #
+9 6040d*_item p PID_BOTTLE_CAPS > 99 r*_var p q_newbie_chico_rate = 3 *_item p PID_BOTTLE_CAPS - 100 #
+9 6050d*_item p PID_BOTTLE_CAPS > 499 r*_var p q_newbie_chico_rate = 4 *_item p PID_BOTTLE_CAPS - 500 #
+0 6060d*_item p PID_BOTTLE_CAPS < 1 *_param p ST_INTELLECT > 3 #
+2 6070d*_param p ST_INTELLECT < 4 *_item p PID_BOTTLE_CAPS < 1 @
+9 7000 NOT_ANSWER_CLOSE_DIALOG 0#
+9 7010d*_param p ST_STRENGTH > 3 *_param p ST_STRENGTH < 6 *_var p q_newbie_chico_strength > 0 *_var p q_newbie_chico_counter < 2 r*_var p q_newbie_chico_strength - 1 *_var p q_newbie_chico_counter + 1 #
+9 7020d*_param p ST_STRENGTH > 5 *_param p ST_STRENGTH < 8 *_var p q_newbie_chico_strength > 0 *_var p q_newbie_chico_counter < 3 r*_var p q_newbie_chico_strength - 1 *_var p q_newbie_chico_counter + 1 #
+9 7030d*_param p ST_STRENGTH > 7 *_param p ST_STRENGTH < 10 *_var p q_newbie_chico_strength > 0 *_var p q_newbie_chico_counter < 4 r*_var p q_newbie_chico_strength - 1 *_var p q_newbie_chico_counter + 1 #
+10 7040d*_var p q_newbie_chico_strength > 0 r*_param p DAMAGE_RIGHT_ARM = 1 *_script dialog@r_InfoMessage 1 1 *_param p ST_EXPERIENCE + 150 #
+14 7050d*_param p ST_STRENGTH > 7 *_param p SK_UNARMED > 129 *_var p q_newbie_chico_counter = 0 #
+14 7060d*_var p q_newbie_chico_strength = 0 @
+10 8000 NOT_ANSWER_CLOSE_DIALOG 0#
+11 8010d*_param p ST_INTELLECT > 3 *_var p q_newbie_chico_rate > 0 r*_param p ST_CURRENT_HP / 3 *_script dialog@r_InfoMessage 1 2 *_param p ST_CURRENT_AP - 10 *_var p q_newbie_chico_rate = 5 #
+0 8020d*_param p ST_INTELLECT > 3 r*_var p q_newbie_chico_rate = 5 #
+65507 8030d*_param p ST_INTELLECT > 3 r*_var p q_newbie_chico_rate = 5 #
+11 8040d*_param p ST_INTELLECT < 4 *_var p q_newbie_chico_rate > 0 r*_param p ST_CURRENT_HP / 3 *_script dialog@r_InfoMessage 1 2 *_param p ST_CURRENT_AP - 10 *_var p q_newbie_chico_rate = 5 #
+0 8050d*_param p ST_INTELLECT < 4 r*_var p q_newbie_chico_rate = 5 #
+65507 8060d*_param p ST_INTELLECT < 4 r*_var p q_newbie_chico_rate = 5 #
+12 8070d*_var p q_newbie_chico_rate = 0 *_param p ST_INTELLECT > 3 r*_var p q_newbie_chico_rate = 4 #
+12 8080d*_var p q_newbie_chico_rate = 0 *_param p ST_INTELLECT < 4 r*_var p q_newbie_chico_rate = 4 @
+11 9000 NOT_ANSWER_CLOSE_DIALOG 0@
+12 10000 NOT_ANSWER_CLOSE_DIALOG 0#
+11 10010r*_script dialog@r_InfoMessage 1 2 *_param p ST_CURRENT_HP / 3 *_param p ST_CURRENT_AP - 10 *_item p PID_BOTTLE_CAPS - 100 #
+11 10020r*_item p PID_BOTTLE_CAPS - 100 *_script dialog@r_InfoMessage 1 3 @
+13 11000 NOT_ANSWER_CLOSE_DIALOG 0@
+14 12000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 12010d*_var p q_newbie_chico_rate = 0 *_param p ST_INTELLECT > 3 r*_param p ST_EXPERIENCE + 300 *_var p q_newbie_chico_rate = 4 #
+15 12020d*_var p q_newbie_chico_rate = 1 *_param p ST_INTELLECT > 3 r*_param p ST_EXPERIENCE + 300 *_item p PID_BOTTLE_CAPS + 40 #
+15 12030d*_var p q_newbie_chico_rate = 2 *_param p ST_INTELLECT > 3 r*_param p ST_EXPERIENCE + 300 *_item p PID_BOTTLE_CAPS + 100 #
+15 12040d*_var p q_newbie_chico_rate = 3 *_param p ST_INTELLECT > 3 r*_param p ST_EXPERIENCE + 300 *_item p PID_BOTTLE_CAPS + 200 #
+16 12050d*_var p q_newbie_chico_rate = 4 *_param p ST_INTELLECT > 3 r*_param p ST_EXPERIENCE + 300 #
+0 12060d*_var p q_newbie_chico_rate = 0 *_param p ST_INTELLECT < 4 r*_param p ST_EXPERIENCE + 300 *_var p q_newbie_chico_rate = 4 #
+15 12070d*_var p q_newbie_chico_rate = 1 *_param p ST_INTELLECT < 4 r*_param p ST_EXPERIENCE + 300 *_item p PID_BOTTLE_CAPS + 40 #
+15 12080d*_var p q_newbie_chico_rate = 2 *_param p ST_INTELLECT < 4 r*_param p ST_EXPERIENCE + 300 *_item p PID_BOTTLE_CAPS + 100 #
+15 12090d*_var p q_newbie_chico_rate = 3 *_param p ST_INTELLECT < 4 r*_param p ST_EXPERIENCE + 300 *_item p PID_BOTTLE_CAPS + 200 #
+16 12100d*_var p q_newbie_chico_rate = 4 *_param p ST_INTELLECT < 4 r*_param p ST_EXPERIENCE + 300 @
+15 13000 NOT_ANSWER_CLOSE_DIALOG 0@
+16 14000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 14010d*_param p ST_INTELLECT > 3 r*_item p PID_POWER_FIST + 1 *_item p PID_BOTTLE_CAPS + 500 #
+0 14020d*_param p ST_INTELLECT < 4 r*_item p PID_POWER_FIST + 1 *_item p PID_BOTTLE_CAPS + 500 @
+20 15000 NOT_ANSWER_CLOSE_DIALOG 0#
+21 15010d*_param p ST_STRENGTH < 8 r*_var p q_newbie_hilario_chico = 7 #
+22 15020d*_param p ST_STRENGTH > 7 r*_var p q_newbie_hilario_chico = 2 #
+21 15030d*_var p q_newbie_hilario_chico = 7 *_param p SK_SPEECH < 40 #
+23 15040d*_param p SK_SPEECH > 39 r*_var p q_newbie_hilario_chico = 4 *_item p PID_BOTTLE_CAPS + 200 *_param p ST_EXPERIENCE + 200 @
+21 16000 NOT_ANSWER_CLOSE_DIALOG 0#
+65507 16010#
+0 16020@
+22 17000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 17010@
+23 18000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 18010&
+
+[russ]
+{100}{}{Чико}
+{200}{}{Вы видите Чико.}
+{210}{}{Вы видите парня средних лет, крепкого телосложения. Его зовут Чико.}
+{220}{}{Вы видите Чико. Он в отключке.}
+{230}{}{Вы видите парня средних лет, крепкого телосложения. Его зовут Чико. Он в отключке.}
+{240}{}{Вы видите труп Чико.}
+{250}{}{Вы видите труп парня средних лет, крепкого телосложения.}
+{260}{}{Вы видите останки Чико.}
+{270}{}{Вы видите останки парня средних лет, крепкого телосложения. Кто-то жестоко убил его.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{Сила < 4}
+{1020}{}{Сила > 3 но < 10, ещё не боролись}
+{1030}{}{Уже боролись, игрок проиграл}
+{1040}{}{Сила > 9}
+{1050}{}{Уже боролись, игрок выиграл}
+{1060}{}{Взят квест бармена на возврат долга, перс с интеллектом >3}
+{1070}{}{Сила < 4}
+{1080}{}{Сила > 3 но < 10, ещё не боролись}
+{1090}{}{Уже боролись, игрок проиграл}
+{1100}{}{Сила > 9}
+{1110}{}{Уже боролись, игрок выиграл}
+{2000}{}{Здоров, @sex@|хлюпик||хилая|!@@Чё хотел, @sex@|слабак||слабачка|?@@Ну, что, дохл@sex@|ый||ая|?}
+{3000}{}{Здоров!@@Привет!@@Здорово@sex@|, мужик|||!}
+{3010}{}{Привет!@@И тебе привет.@@Здравствуй.}
+{3020}{}{Моя приветсвовать!@@[Машете рукой]}
+{4000}{}{Ну, что готов свою силушку проверить?@@Ну, что думаешь справишься со мной?@@Ну, как готов победить старину Чико?@@Как на счёт армрестлинга?}
+{4010}{}{Ну, уж нет...@@Я что похож@sex@|||а| на идиот@sex@|а||ку|?@@Не, я пош@sex@|ёл||ла|...}
+{4020}{}{А почему нет? Давай!@@Уж я-то знаю толк в армрестлинге, поверь!}
+{4030}{}{Ты о чём вообще?}
+{4040}{}{Неа! Моя нехатеть...@@У-у-у!..}
+{4050}{}{Моя сильный воин!..@@Моя сейчас побеждать!..}
+{4060}{}{А-а?.. [Открываете рот пошире]@@А-а?.. [Округляете глаза]@@Чё?..}
+{5000}{}{О чём? Об армрестлинге, @sex@|болван||идиотка|!}
+{5010}{}{А-а... Понятно...}
+{5020}{}{Пфи... Да я тебя как грелку порву!}
+{5030}{}{Ага!... Моя бороть тебя!}
+{5040}{}{Ага... И чо?}
+{6000}{}{На что спор?}
+{6010}{}{Ни на что.}
+{6020}{}{Ставлю 20 монет.}
+{6030}{}{Полтинник.}
+{6040}{}{Давай на сотку!}
+{6050}{}{Пятихат! Я в себе уверен!}
+{6060}{}{Да у меня денег нет, зайду позже...}
+{6070}{}{Нету деньгов...}
+{7000}{}{[Ставите руки на стол. Один из фермеров объявляет о начале поединка. Вы начинаете борьбу]}
+{7010}{}{[Боретесь]@@[Боретесь из последних сил]@@[Пот катится градом, но вы не сдаётесь]@@[Боретесь изо всех сил]@@[Вены на ваших висках вздуваются. Боретесь]}
+{7020}{}{[Боретесь]@@[Боретесь из последних сил]@@[Пот катится градом, но вы не сдаётесь]@@[Боретесь изо всех сил]@@[Вены на ваших висках вздуваются. Боретесь]}
+{7030}{}{[Боретесь]@@[Боретесь из последних сил]@@[Пот катится градом, но вы не сдаётесь]@@[Боретесь изо всех сил]@@[Вены на ваших висках вздуваются. Боретесь]}
+{7040}{}{[Сдаться. Вы боролись как могли, но Чико оказался явно сильнее]@@[Сдаться. Противник явно более силён чем вы]}
+{7050}{}{[Умело проведённым прямым движением вы опускаете руку Чико на стол]}
+{7060}{}{[Вы хорошо боролись. Вы опускаете руку противника на стол и побеждаете]}
+{8000}{}{Я забираю денежки, а ты пош@sex@|ёл||ла| вон от сюда, @sex@|доходяга||хилая|!}
+{8010}{}{Верни мои деньги, гад!@@Да пошёл ты! Отдай деньги!}
+{8020}{}{Ладно, твоя взяла...}
+{8030}{}{Ах ты сволочь... [Атаковать]}
+{8040}{}{Твоя плохой! Отдавай моё!!!}
+{8050}{}{Мф-ф-ф!!!}
+{8060}{}{Агр-р-р!!! [Атаковать]}
+{8070}{}{Какие деньги, мы же "ни на что" боролись?!}
+{8080}{}{Агрх!!! Мои деньги?! "Ни на чо" боролися! Ни давать деньги!}
+{9000}{}{Пош@sex@|ёл||ла| вон, кусок браминьей лепёшки!!!}
+{10000}{}{А для меня сотня это ничто! Гони деньги!!!}
+{10010}{}{Нет!!!}
+{10020}{}{[Отдаёте 100 монет]}
+{11000}{}{Здорово!@@Привет!@@Сил@sex@|ён||на| ты!@@Здоров!!!}
+{12000}{}{Чёрт! Ну и сил@sex@|ён||на| ты! Не многим удавалось победить старину Чико!}
+{12010}{}{Да, Чико! Ну, счастливо оставаться...}
+{12020}{}{Давай-ка мои денежки, Чико!}
+{12030}{}{Давай-ка мои денежки, Чико!}
+{12040}{}{Давай-ка мои денежки, Чико!}
+{12050}{}{Давай-ка мои денежки, Чико!}
+{12060}{}{Ага! Моя силный!!!}
+{12070}{}{Моя силный!!! Чико платить!}
+{12080}{}{Моя силный!!! Чико платить!}
+{12090}{}{Моя силный!!! Чико платить!}
+{12100}{}{Моя силный!!! Чико платить!}
+{13000}{}{Вот держи свои деньги, чемпион@sex@|||ка|!}
+{14000}{}{Ты знаешь, у меня нет такой суммы... Но у меня есть одна вещица. Последнее что я унёс с базы. Он стоит гораздо дороже. Думаю тебе пригодится. [Протягивает вам силовой кастет]}
+{14010}{}{До встречи, Чико. [Забираете силовой кастет]}
+{14020}{}{Агум-м-м. [Забираете силовой кастет]}
+{15000}{}{Здорово! Возмешь мне выпить?@@Привет! Купи-ка мне выпить!}
+{15010}{}{Выпить не куплю, а морду начищу! Ты не забыл, что должен Хиларио две сотни?}
+{15020}{}{Выпить не куплю, а морду начищу! Ты не забыл, что должен Хиларио две сотни?}
+{15030}{}{Обязательно. Только давай-ка ты денежки вернёшь, которые Хиларио задолжал.}
+{15040}{}{Обязательно. Только давай-ка ты денежки вернёшь, которые Хиларио задолжал. Иначе он больше не сможет выпивкой торговать. Ты ж не хочешь, чтоб твой любимый бар закрылся?}
+{16000}{}{А не пош@sex@|ёл||ла| бы ты в браминью задницу?! Вместе со своим Хиларио!!!}
+{16010}{}{Отдавай деньги, скотина! [Атака]}
+{16020}{}{Ну ладно, я пош@sex@|ёл||ла| [Выход]}
+{17000}{}{Да ладно, так бы сразу и сказал, верну я ему деньги! Вечером принесу.}
+{17010}{}{Вот так бы сразу. Вечером зайду проверю.}
+{18000}{}{Да ладно, я как раз собирался сегодня отдать долг. Вот держи. Ровно две сотни.}
+{18010}{}{Хорошо, пойду отдам деньги Хиларио. До встречи.}
+{100000001}{}{Кажется Чико повредил вам руку во время борьбы. Ну, что ж, отрицательный опыт - тоже опыт.}
+{100000002}{}{Вы получаете сокрушительный удар между глаз. Зато теперь вы ближе к пониманию сути пустоши.}
+{100000003}{}{Вы потеряли несколько монет. Зато теперь вы ближе к пониманию сути пустоши.}
+
+[engl]
+{100}{}{Chiko}
+{200}{}{you see Chiko.}
+{210}{}{you see the guy of average years, a strong constitution. His name is Chiko.}
+{220}{}{you see Chiko. It in otkljuchke.}
+{230}{}{you see the guy of average years, a strong constitution. His name is Chiko. It in otkljuchke.}
+{240}{}{you see a corpse of Chiko.}
+{250}{}{you see a corpse of the guy of average years, a strong constitution.}
+{260}{}{you see remains of Chiko.}
+{270}{}{you see remains of the guy of average years, a strong constitution. Someone has cruelly killed him.}
+{1000}{}{Predialogue installations}
+{1010}{}{Force <4}
+{1020}{}{Force> 3 but <10, did not struggle yet}
+{1030}{}{Already struggled, the player has lost}
+{1040}{}{Force> 9}
+{1050}{}{Already struggled, the player has won}
+{1060}{}{Is taken the quest of the barman on debt return, the Persian with intelligence> 3}
+{1070}{}{Force <4}
+{1080}{}{Force> 3 but <10, did not struggle yet}
+{1090}{}{Already struggled, the player has lost}
+{1100}{}{Force> 9}
+{1110}{}{Already struggled, the player has won}
+{2000}{}{It is healthy, @sex | the ninny || sickly |! @@ Chyo wanted, @sex | the weakling || slabachka |? @@ Well, what, дохл@sex | yj || aja |?}
+{3000}{}{It is healthy! @@ greetings! @@ Zdorovo@sex |, the muzhik |||!}
+{3010}{}{Greetings! @@ and you greetings. @@ hi.}
+{3020}{}{Mine privetsvovat! @@ [Wave a hand]}
+{4000}{}{Well, what is ready silushku to check up the? @@ well, what you think you will consult with me? @@ well how it is ready to win olden time of Chiko? @@ As into the armwrestling account?}
+{4010}{}{Well, is not present... @@ I that похож@sex ||| and | on идиот@sex | and || ku |? @@ Not, I пош@sex | ate || la |...}
+{4020}{}{And why is not present? Give! @@ I am a good judge of an armwrestling, believe!}
+{4030}{}{You about what in general?}
+{4040}{}{Nea! Mine nehatet... @@ U-u-u!.}
+{4050}{}{Washing the strong soldier!. @@ mine now to win!.}
+{4060}{}{A-a?. [Open a mouth more widely] @@ A-a?. [Approximate eyes] @@ Chyo?.}
+{5000}{}{About what? About an armwrestling, @sex | the blockhead || the idiot |!}
+{5010}{}{A-a... Clearly...}
+{5020}{}{Pfi... Yes I as a hot-water bottle will tear you!}
+{5030}{}{Aha!... Mine borot you!}
+{5040}{}{Aha... And cho?}
+{6000}{}{On what dispute?}
+{6010}{}{on what.}
+{6020}{}{I Put 20 coins.}
+{6030}{}{the Fifty-kopeck piece.}
+{6040}{}{Give on a hundred part!}
+{6050}{}{Five-huts! I am assured of myself!}
+{6060}{}{Yes at me money is not present, I will come later...}
+{6070}{}{Is not present dengov...}
+{7000}{}{[Put hands on a table. One of farmers declares the duel beginning. You begin struggle]}
+{7010}{}{[Struggle] @@ [Struggle with the last bit of strength] @@ [Sweat slides hailstones, but you do not surrender] @@ [Struggle very much] @@ [Vienna on your temples are blown up. Struggle]}
+{7020}{}{[Struggle] @@ [Struggle with the last bit of strength] @@ [Sweat slides hailstones, but you do not surrender] @@ [Struggle very much] @@ [Vienna on your temples are blown up. Struggle]}
+{7030}{}{[Struggle] @@ [Struggle with the last bit of strength] @@ [Sweat slides hailstones, but you do not surrender] @@ [Struggle very much] @@ [Vienna on your temples are blown up. Struggle]}
+{7040}{}{[to Surrender. You struggled as could, but Chiko has appeared obviously more strongly] @@ [to Surrender. The opponent is obviously stronger than you]}
+{7050}{}{[skilfully spent direct movement you lower a hand of Chiko on a table]}
+{7060}{}{[you well struggled. You lower a hand of the opponent on a table and win]}
+{8000}{}{I take away money, and you пош@sex | ate || la | from here, @sex | dohodjaga || sickly |!}
+{8010}{}{Return my money, a reptile! @@ yes you have gone! Give money!}
+{8020}{}{it is fine, you took...}
+{8030}{}{Ah you the swine... [To Attack]}
+{8040}{}{Yours bad! Give mine!!!}
+{8050}{}{Mf-f-f!!!}
+{8060}{}{Agr-r-r!!! [To Attack]}
+{8070}{}{What money, we "on what" struggled?!}
+{8080}{}{Agrh!!! My money?! "On cho" struggled! To give money!}
+{9000}{}{Posh@sex | ate || la |, a piece braminej flat cakes!!!}
+{10000}{}{And for me one hundred it anything! Drive money!!!}
+{10010}{}{No!!!}
+{10020}{}{[Give 100 coins]}
+{11000}{}{it is healthy! @@ greetings! @@ Sil@sex | yon || on | you! @@ it is healthy!!!}
+{12000}{}{Lines! Well and сил@sex | yon || on | you! Not it was possible to much to win olden time of Chiko!}
+{12010}{}{Yes, Chiko! Well, keep well...}
+{12020}{}{Give ive my money, Chiko!}
+{12030}{}{Give ive my money, Chiko!}
+{12040}{}{Give ive my money, Chiko!}
+{12050}{}{Give ive my money, Chiko!}
+{12060}{}{Aha! Mine silnyj!!!}
+{12070}{}{Mine silnyj!!! CHiko to pay!}
+{12080}{}{Mine silnyj!!! CHiko to pay!}
+{12090}{}{Mine silnyj!!! CHiko to pay!}
+{12100}{}{Mine silnyj!!! CHiko to pay!}
+{13000}{}{Here hold the money, чемпион@sex ||| ka |!}
+{14000}{}{You know, I do not have such sum... But I have one bagatelle. That I have carried away the last from base. It costs much more expensively. I think to you it is useful. [Stretches to you power kastet]}
+{14010}{}{To a meeting, Chiko. [Take away power kastet]}
+{14020}{}{Agum-m-m. [Take away power kastet]}
+{15000}{}{it is healthy! Vozmesh to me to drink? @@ greetings! Buy to me to drink!}
+{15010}{}{to Drink not the purchase, and a muzzle I will polish! You have not forgotten, what owe Hilario of two hundred?}
+{15020}{}{to Drink not the purchase, and a muzzle I will polish! You have not forgotten, what owe Hilario of two hundred?}
+{15030}{}{it is obligatory. Only give ive you money you will return, which Hilario has run into debt.}
+{15040}{}{it is obligatory. Only give ive you money you will return, which Hilario has run into debt. Otherwise it cannot trade in binge any more. You do not want, that your favourite bar was closed?}
+{16000}{}{Instead of пош@sex | you in braminju would eat || la | a bum?! Together with Hilario!!!}
+{16010}{}{Give money, cattle! [Attack]}
+{16020}{}{Well it is fine, I пош@sex | ate || la | [the Exit]}
+{17000}{}{Yes it is fine, so at once and has told, I will return it money! I will bring in the evening.}
+{17010}{}{Here so at once. I will come I will check up in the evening.}
+{18000}{}{Yes it is fine, I just was going to repay a debt today. Here hold. Exactly two hundreds.}
+{18010}{}{it is good, I will go I will give money of Hilario. To a meeting.}
+{100000001}{}{Chiko Seems has damaged to you a hand during struggle. Well, well, negative experience - too experience.}
+{100000002}{}{you receive a crushing blow between an eye. But now you are closer to understanding of an essence of a heathland.}
+{100000003}{}{you have lost some coins. But now you are closer to understanding of an essence of a heathland.}

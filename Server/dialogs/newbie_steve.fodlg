@@ -1,0 +1,180 @@
+[comment]
+
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 D _var p name_mem_npc_player = 0 #
+9 1020 D _var p name_mem_npc_player = 1 D _var p q_newbie_lubricant_deliver = 0 D _var p q_newbie_gen_repair = 0 D or D _var p q_newbie_gen_repair = 3 D _var p q_newbie_lubricant_deliver = 0 D _var p name_mem_npc_player = 1 D or D _var p q_newbie_lubricant_deliver = 2 D _var p q_newbie_gen_repair = 0 D _var p name_mem_npc_player = 1 #
+12 1030 D _var p q_newbie_lubricant_deliver > 0 D _var p q_newbie_lubricant_deliver ! 2 D or D _var p q_newbie_gen_repair ! 3 D _var p q_newbie_gen_repair ! 0 @
+2 2000 None 0 #
+3 2010 #
+4 2020 #
+5 2030 #
+6 2040 R _var p name_mem_npc_player = 1 @
+3 3000 Attack 0 @
+4 4000 Attack 0 @
+5 5000 None 0 @
+6 6000 None 0 #
+7 6010 D _param p SK_REPAIR > 39 #
+11 6020 D _param p SK_REPAIR < 40 @
+7 7000 None 0 #
+0 7010 #
+8 7020 #
+11 7030 D _var p q_newbie_lubricant_deliver = 0 @
+8 8000 None 0 #
+0 8010 R _var p q_newbie_gen_repair = 1 R _item p PID_WRENCH + 1 @
+9 9000 None 0 #
+4 9010 #
+10 9020 D _var p q_newbie_gen_repair = 0 D _var p q_newbie_lubricant_deliver = 0 #
+0 9030 #
+18 9040 D _var p q_newbie_lubricant_deliver = 0 D _var p q_newbie_gen_repair = 3 #
+7 9050 D _var p q_newbie_gen_repair = 0 D _param p SK_REPAIR > 39 D _var p q_newbie_lubricant_deliver = 2 @
+10 10000 None 0 #
+7 10010 D _param p SK_REPAIR > 39 #
+11 10020 D _param p SK_REPAIR < 40 #
+11 10030 D _param p SK_REPAIR > 39 @
+11 11000 None 0 #
+0 11010 R _var p q_newbie_lubricant_deliver = 1 #
+0 11020 @
+12 12000 None 0 #
+13 12010 D _var p q_newbie_gen_repair = 2 R _item p PID_MEAT_JERKY + 2 R _param p ST_EXPERIENCE + 500 R _var p q_newbie_gen_repair = 3 R _item p PID_WRENCH - 1 R _param p SK_REPAIR + 10 #
+14 12020 D _var p q_newbie_lubricant_deliver = 1 #
+17 12030 D _var p q_newbie_gen_repair = 5 R _var p q_newbie_gen_repair = 3 R _param p ST_EXPERIENCE + 300 #
+0 12040 @
+13 13000 None 0 #
+0 13010 @
+14 14000 None 0 #
+15 14010 D _item p PID_MEAT_JERKY > 5 D _item p PID_LUBRICANT > 0 R _item p PID_MEAT_JERKY - 6 R _param p ST_EXPERIENCE + 350 R _var p q_newbie_lubricant_deliver = 2 R _item p PID_MEAT_JERKY + 2 R _item p PID_LUBRICANT - 1 #
+16 14020 D _item p PID_MEAT_JERKY < 6 D _item p PID_LUBRICANT > 0 R _item p PID_MEAT_JERKY - 6 R _param p ST_EXPERIENCE + 250 R _item p PID_LUBRICANT - 1 R _var p q_newbie_lubricant_deliver = 2 #
+0 14030 @
+15 15000 None 0 #
+0 15010 @
+16 16000 Attack 0 #
+65507 16010 #
+65507 16020 #
+65507 16030 @
+17 17000 Attack 0 @
+18 18000 None 0 #
+0 18010 R _var p q_newbie_lubricant_deliver = 1 #
+0 18020 &
+
+[russ]
+{100}{}{Старый фермер}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{не знаком}
+{1020}{}{знаком, нет активного задания}
+{1030}{}{есть активное задание}
+{2000}{}{[Старик уставился на вас подслеповатыми глазами] У меня нет еды! Проваливай!}
+{2010}{}{Нет еды?! Сейчас я пожру твои внутренности, старикашка!}
+{2020}{}{А если найду? Открывай буфет, доставай хлеб и соль, старый козел!}
+{2030}{}{Что-то ты не очень гостеприимен, старик. Зайду, когда научишься манерам.}
+{2040}{}{Ух, спокойно, старче. Я не ищу еды, меня зовут @pname@. Может, я могу вам помочь?}
+{3000}{}{Мои внутренности останутся при мне! А вот твои я отдам повару Рори...}
+{4000}{}{Подойди поближе. Думаю, у меня кое-что найдется для тебя...}
+{5000}{}{ПРОВАЛИВАЙ}
+{6000}{}{[Смотрит на вас несколько секунд немигающим взглядом, что-то обдумывая] Меня зовут Стив, хотя я уже и привык откликаться на старого козла. Да, ты можешь мне помочь. Руками умеешь работать?}
+{6010}{}{Да, вроде, не из жопы растут. Починить чего надо?}
+{6020}{}{Не, напортачить боюсь. Может, на что попроще сгожусь?}
+{7000}{}{Наша насосная установка всё чаще барахлит. Гайки развинчиваются сами по себе, да масло жрет немерянно. Раньше я сам обслуживал её, но с годами руки стали трястить и видеть стал плоховато. Так что от тебя потребуется лишь провести некоторую профилактику.}
+{7010}{}{Не хочу руки пачкать. Найди кого нибудь еще.}
+{7020}{}{Я справлюсь, и не таким заниматься приходилось. Давай инструменты, да смазку, и будет как новенькая.}
+{7030}{}{Извини, старик, не хочу сейчас руки пачкать. Есть что попроще?}
+{8000}{}{Вот тебе гаечный ключ. Смазку из браминьего жира мне Сунь поставляет со своей скотобойни, но давно уже не присылал никого. Похоже, вконец грибов обожрался, чмо косоглазое. Возьми у Суня смазку и залей в масляный бак.}
+{8010}{}{Будет сделано в лучшем виде! [Берете гаечный ключ и уходите]}
+{9000}{}{Что привело тебя к старому Стиву? Помочь хочешь или жратву клянчить будешь?}
+{9010}{}{Ха! На этот раз тебе придется меня накормить, пень трухлявый!}
+{9020}{}{Чем могу помочь, старик?}
+{9030}{}{Просто поздороваться зашел. Счастливо.}
+{9040}{}{Чем могу помочь, старик?}
+{9050}{}{Чем могу помочь, старик?}
+{10000}{}{Руками умеешь работать, али попроще задание дать?}
+{10010}{}{Да, вроде не из жопы растут. Починить чего надо?}
+{10020}{}{Не, напортачить боюсь. Может, на чего попроще сгожусь?}
+{10030}{}{Давай попроще, неохота напрягаться.}
+{11000}{}{Ладно, придется поработать тебе ногами. Двигай на ферму к желторожему Суню, он там, похоже, совсем грибов обожрался, давно уже не присылает смазку из браминьего жира для насосной станции. Заберешь у него смазку и у раба Карта, что браминов пасет, да лесным хозяйством ведает, мяса вяленого возьмешь, запасы пополнять пора.}
+{11010}{}{Все понял, скоро буду!}
+{11020}{}{Думаю, тебе и самому полезно будет прогуляться, старикашка!}
+{12000}{}{[Сверлит вас взглядом]}
+{12010}{}{Водокачка как новенькая! Смазку долил, болтики подкрутил, систему охлаждения прочистил.}
+{12020}{}{Вот провизия и смазка, легкая прогулка!}
+{12030}{}{Понимаете, я старался, как мог! Но что-то пошло не так...}
+{12040}{}{[Предпочитаете не встречаться с ним взглядом]}
+{13000}{}{Как новенькая... Ненадолго это. Голоден? Возьми часть, перекуси. И не вздумай кого либо присылать сюда за едой! А теперь, проваливай.}
+{13010}{}{Понял. Проваливаю.}
+{14000}{}{Давай сюда. Ты ничего не сожрал пока нес? Узнаю, достану из желудка.}
+{14010}{}{Ничего не трогал, забирай.}
+{14020}{}{Э-эм, нет-нет, ничего не ел! Всё так и было!}
+{14030}{}{Кажется, я что-то обронил. Погодите минутку, сейчас вернусь...}
+{15000}{}{Всё на месте, хорошо. Возьми часть, перекуси. И не вздумай кого либо присылать сюда за едой! А теперь, проваливай.}
+{15010}{}{Понял. Проваливаю.}
+{16000}{}{Тут мало мяса. Ничего, не волнуйся. Я отрежу от тебя недостающее.}
+{16010}{}{Попробуй догони, черномазый!}
+{16020}{}{Я ничего не ел, у меня брамин отнял!}
+{16030}{}{Кажется, у меня карман прохудился, я не виноват!}
+{17000}{}{Сломал, значит? Ничего, найду кого нибудь еще. А ты пойдешь на корм червям.}
+{18000}{}{Придется поработать тебе ногами. Двигай на ферму к желторожему Суню, он там, похоже, совсем грибов обожрался, давно уже не присылает смазку из браминьего жира для насосной станции. Заберешь у него смазку и у раба Карта, что браминов пасет, да лесным хозяйством ведает, мяса вяленого возьмешь, запасы пополнять пора.}
+{18010}{}{Все понял, скоро буду!}
+{18020}{}{Думаю, тебе и самому полезно будет прогуляться, старикашка!}
+
+[engl]
+{100}{}{Old farmer}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{не знаком}
+{1020}{}{знаком, нет активного задания}
+{1030}{}{есть активное задание}
+{2000}{}{[The old man stares at you with his weak eyes] I don't have any food! Get out!}
+{2010}{}{No food?! You'll be my food then!}
+{2020}{}{Well, what if I find some? Open up your cupboard, take out the snacks, you old scumbag!}
+{2030}{}{You're not too hospitable, are you. I'll come back when you're in a better mood.}
+{2040}{}{Easy, man. I'm not looking for food. My name's @pname@. Maybe I can help you with something?}
+{3000}{}{I'll give your insides to the cook!}
+{4000}{}{Come closer. I think I got something for you...}
+{5000}{}{GET OUT}
+{6000}{}{[Gazes at you with unblinking eyes thinking something over] My name's Steve. I'm starting to get usd to "old scumbag", though. Indeed you can help me. Can you work with your hands?}
+{6010}{}{My hands are all right. You need to fix something?}
+{6020}{}{No, I'm no good at this kind of things. Got anything else?}
+{7000}{}{Our pumping station fails more and more often. Nuts unscrew by themselves, and it eats up shit loads of oil. I used to service it myself, bu now my hands are shaking and I can't see that well no more. So I need you to do some routine maintenance.}
+{7010}{}{I don't want to get my ands dirty. Find someone else.}
+{7020}{}{Sounds easy enough. Give me the tools, oil and it will be good as new.}
+{7030}{}{Sorry, old man, I don't really want to screw nuts at the moment. Got anything easier?}
+{8000}{}{Take this wrench. Sung supplies me with brahmin grease, we use it as oil. But he hasn't sent anyone in a while. Must be completely wasted on mushrooms, chink faggot. Take the grease from him and fill the oil tank.}
+{8010}{}{Will do! [Take the wrench and leave]}
+{9000}{}{What brings you to old Steve? Want to help me or will you beg for food?}
+{9010}{}{Hah! You'll have to feed me this time, old wreck!}
+{9020}{}{How can I help you, old man?}
+{9030}{}{Just came to say hello. Bye.}
+{9040}{}{How can I help you, old man?}
+{9050}{}{How can I help you, old man?}
+{10000}{}{Can you work with your hands or need something easier?}
+{10010}{}{My hands are all right. You need to fix something?}
+{10020}{}{No, I'm no good at this kind of things. Got anything else?}
+{10030}{}{Something easier, I'm not in the mood for hard labor.}
+{11000}{}{All right, you'll have to work with your feet then. Go to the farm to that yellow bastard Sung. He hasn't sent me any brahmin grease for the pumping station for a long time. Take the grease from him, and some smoked meat from that slave Cart that pastures brahmins. I'm almost out.}
+{11010}{}{All right, I'll come back soon!}
+{11020}{}{You could use a walk yourself, old fart!}
+{12000}{}{[Penetrates you with his eyes]}
+{12010}{}{The pump is good as new! I poured in more oil, screwed the nuts and cleaned the cooling system.}
+{12020}{}{Here are provisions and grease. Piece of cake!}
+{12030}{}{I did my best, but something went terribly wrong...}
+{12040}{}{[Try to avoid his eyes]}
+{13000}{}{Good as new, you say... That's not for long. Are you hungry? Here, have a bite. And don't even think of sending somebody here for food! Now get lost.}
+{13010}{}{I'm already gone.}
+{14000}{}{Give me that. Have you eaten anything on the way? If I find out I'll cut you open and take it back.}
+{14010}{}{No, I didn't. Here, take it.}
+{14020}{}{Err... No, I didn't! That's all I was given!}
+{14030}{}{I must have dropped something. I'll be right back...}
+{15000}{}{Fine, it's all here. Take some, have a bite. And don't even think of sending somebody here for food! Now get lost.}
+{15010}{}{I'm already gone.}
+{16000}{}{There's not enough meat. But don't worry. I'll cut the rest off your butt.}
+{16010}{}{Good luck catching me, nigger!}
+{16020}{}{I didn't eat anything, a brahmin stole it!}
+{16030}{}{I got a hole in my pocket, it's not my fault!}
+{17000}{}{So you broke it down, huh? Fine, I'll find someone else. And you'll be food for worms.}
+{18000}{}{All right, you'll have to work with your feet then. Go to the farm to that yellow bastard Sung. He hasn't sent me any brahmin grease for the pumping station for a long time. Take the grease from him, and some smoked meat from that slave Cart that pastures brahmins. I'm almost out.}
+{18010}{}{All right, I'll come back soon!}
+{18020}{}{You could use a walk yourself, old fart!}
+

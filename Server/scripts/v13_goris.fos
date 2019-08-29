@@ -1,0 +1,155 @@
+// Name: v13_goris
+// Author: Sufir
+// Edited by:
+
+// Uses
+#include "_macros.fos"
+#include "_npc_pids.fos"
+#include "_bags.fos"
+
+// Defines
+#define QUEST_TIMEOUT (1)		// Переодичность, в игровых сутках, с которой квест "Яйцо" дается игрокам.
+uint QuestAllowTime=0;
+
+
+/*===================Диалоги===================*/
+
+
+bool d_QuestCheck(Critter& player, Critter@ npc)
+{
+
+	// Проверяем как давно квест брался другими игроками
+	if(QuestAllowTime<__FullSecond) return true;
+	return false;
+
+}
+
+
+bool d_QuestNotCheck(Critter& player, Critter@ npc)
+{
+
+	// Проверяем как давно квест брался другими игроками
+	if(!d_QuestCheck(player, npc)) return true;
+	return false;
+
+}
+
+
+// Проверяем в броне ли игрок.
+bool d_ArmorCheck(Critter& player, Critter@ npc)
+{
+
+	Item@[] PlayerArmor;
+	if(player.GetItems(SLOT_ARMOR, PlayerArmor)<=0) return false;
+	if(PlayerArmor.length()==1) {
+		if(!valid(PlayerArmor[0])) return false;
+		if(PlayerArmor[0].GetProtoId()==PID_ADVANCED_POWER_ARMOR || PlayerArmor[0].GetProtoId()==PID_ADVANCED_POWER_ARMOR_MK2) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	return false;
+
+}
+
+
+// Проверяем в броне ли игрок.
+bool d_ArmorNotCheck(Critter& player, Critter@ npc)
+{
+
+	if(!d_ArmorCheck(player, npc)) return true;
+	return false;
+
+}
+
+
+//
+void r_AddEgg(Critter& player, Critter@ npc)
+{
+
+	Item@ Egg=player.AddItem(PID_EASTER_EGG, 1);
+	if(!valid(Egg)) return;
+	Egg.SetScript("q_item_v13_egg@_EggInit");
+	Egg.Val4=player.Id;
+	Egg.Update();
+
+	/*int[] ChangeStages={ 0, 3, 5 };
+	SetGroupQuestStage(player, ChangeStages, 1);*/
+
+	// Устанавливаем таймаут для квеста. Квест не может быть взят другими игроками ранее чем через QUEST_TIMEOUT суток.
+	QuestAllowTime=__FullSecond + (60 * 60 * 24 * QUEST_TIMEOUT);
+
+}
+
+
+void r_StartDclawRebirth(Critter& player, Critter@ prof)
+{
+
+	if(!valid(prof)) return;
+	Map@ map=prof.GetMap();
+	uint[] args={ map.Id, 0 };
+
+	GameVar@ DclawKids=GetGlobalVar(GVAR_ending_v13_dclaw_saved);
+	if(valid(DclawKids)) {
+		switch(DclawKids.GetValue()){
+			case 0: DclawKids=1; args[1]=251; CreateTimeEvent(__FullSecond + (60 * 60 * 24 * Random(7, 9)), "e_DclawKidBorn", args, true); break;
+			case 1: DclawKids=2; args[1]=252; CreateTimeEvent(__FullSecond + (60 * 60 * 24 * Random(7, 9)), "e_DclawKidBorn", args, true); break;
+			case 2: DclawKids=3; args[1]=253; CreateTimeEvent(__FullSecond + (60 * 60 * 24 * Random(7, 9)), "e_DclawKidBorn", args, true); break;
+			//case 3: DclawKids=4; args[1]=254; CreateTimeEvent(__FullSecond + (60 * 60 * 24 * Random(3, 9)), "e_DclawKidBorn", args, true); break;
+			default: break;
+		}
+	}
+	return;
+
+}
+
+
+uint e_DclawKidBorn(uint[]@ values)
+{
+
+	if(!valid(values)) return 0;
+	if(values.length()<2) return 0;
+	//Log(" MapID=" + values[0] + " Entire " + values[1]);
+	Map@ map=GetMap(values[0]);
+	if(!valid(map)) return 0;
+	DclawKid(map, values[1]);
+	return 0;
+
+}
+
+
+Critter@ DclawKid(Map& map, uint EntSpawn)
+{
+
+	uint16 x=0,y=0;
+
+	if(!map.GetEntireCoords(EntSpawn, 0, x, y)) {
+		return null;
+	}
+
+	int[] params={ST_DIALOG_ID, DIALOG_mob_int_deathclaw, ST_BAG_ID, BAG_Empty, ST_REPLICATION_TIME, 60 * 24 * 7 /*репликация раз в неделю*/,
+		ST_MAX_LIFE, 180, ST_ACTION_POINTS, 8, ST_INTELLECT, 8, ST_KILL_EXPERIENCE, 100};
+	//Critter@ cr=map.AddNpc(NPC_PID_SmToughDeathclaw, x, y, Random(0,5));
+	Critter@ cr=map.AddNpc(NPC_PID_SmToughDeathclaw, x, y, Random(1,4), params, null, null);
+
+	/*if(not valid(cr)) {
+		Log("Critter creation error");
+		return null;
+	}*/
+	return cr;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+

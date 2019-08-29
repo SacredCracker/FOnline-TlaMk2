@@ -1,0 +1,395 @@
+// Author: rifleman17
+// Нашествие болотников на Сан-Франциско.
+#include "_macros.fos"
+#include "_teams.fos"
+#include "_npc_pids.fos"
+#include "_animation.fos"
+#include "_colors.fos"
+#include "_bags.fos"
+#include "_ai.fos"
+#include "time.fos"
+
+#define BOLO_PID                   (Random(NPC_PID_MirelurkWeak, NPC_PID_MirelurkTough)) // прототип криттера Болотник.
+#define BOLO_TEAM                  (TEAM_Slaver) // команда болотников.
+
+#define ENTIRE_BARRICADES          (154) // Обязательные баррикады
+#define ENTIRE_DEAD_BOS            (155) // Мертвые члены BOS
+#define ENTIRE_INVASION            (126) // СФ доки, начало вторжения болотников
+#define ENTIRE_SPAWN_PRIVATE       (157) // Место спавна бойцов BOS
+#define ENTIRE_SPAWN_CORPORAL      (158) // Место спавна руководителей обороны (выдают мешки)
+#define ENTIRE_PATROLINVASION      (159) // Если нельзя достать ни одну цель, болотники буду перемещаться между этими гексами
+#define ENTIRE_EXIT_SF             (160) // Гекс выхода из доков. Все болотники будут стремиться добраться до него. Если добираются - переключается счетчик, и болотники удаляются.
+#define NPC_PID_BOS_PRIVATE        (132) // Рядовой боец БС
+#define BAG_PRIVATE                (BAG_NCR_Caravan_NCRRangerMale) // Сумка рядового
+#define DIALOG_PRIVATE             (DIALOG_sf_bro_private) // Диалог рядового
+#define NPC_PID_BOS_CORPORAL       (NPC_PID_BountyHunter_10) // Один из лидеров БС
+#define BAG_CORPORAL               (BAG_VaultCity_Military) // Сумка лидера
+#define DIALOG_CORPORAL            (DIALOG_sf_bro_paladin) // Диалог лидера
+#define MAX_BOLO_ON_MAP            (15) // Максимальное число болотников на карте
+
+// Debug Log
+//#define DL#(s) (Log(s))
+#define DL#(s)
+
+const uint[] Num_BoloInvaders={3, 4, 5, 6, 7, 8, 10, 12, 13, 15}; // Возрастающее число атакующих болотников. В момент начала вторжения=3, каждые сутки добавляется +1..3 болотник.
+uint CurrentInvasionStage=0; // Текущее состояние процесса нападения
+
+import bool GetFreeHex(Map&map,uint radius,uint16&hx,uint16&hy) from "caravan";
+import bool GetNearEntire(Map& map, int number, uint16& hx, uint16& hy) from "entire";
+import bool AddAttackPlane(Critter& npc, uint priority, Critter& target) from "npc_planes";
+import bool AddMiscPlane(Critter& npc, uint priority, uint waitSecond, string@ funcName) from "npc_planes";
+import bool AddWalkPlane(Critter& npc, uint priority, int identifier, uint identifierExt, uint16 hexX, uint16 hexY, uint8 dir, bool run, uint cut) from "npc_planes";
+import bool IsSandBag(uint pid) from "sandbag";
+import bool _SandBagSkill(Item& item, Critter& cr, int skill) from "sandbag";
+
+#include "mirelurk_combat.fos"
+
+// Добавление болотника на нужную карту
+Critter @ GetBoloInvader(Map & map)
+{
+	uint16 x=0;
+	uint16 y=0;
+
+	DL("get near entire");
+	if (!GetNearEntire(map,ENTIRE_INVASION,x,y)) return null;
+
+	DL("get free hex");
+	if (!GetFreeHex(map,3,x,y)) return null;
+	int[] params={ST_TEAM_ID, TEAM_Mob2};
+	Critter @ bolo=map.AddNpc(BOLO_PID, x, y, Random(0,5), null, null, "sf_invasion@_MirelurkInit");
+	if (!valid(bolo)) return null;
+
+	DL("bolo ok");
+	return bolo;
+}
+
+// Число болотников, которое можно добавить
+// stage - текущее состояние процесса вторжения
+uint _Num(Map & map, uint stage)
+{
+	uint num=Num_BoloInvaders[stage];
+	uint realNum=map.GetCritters(BOLO_PID, FIND_LIFE_AND_KO|FIND_ONLY_NPC, null);
+
+	return ((num+realNum)>MAX_BOLO_ON_MAP?(MAX_BOLO_ON_MAP>realNum?MAX_BOLO_ON_MAP-realNum:0):num);
+}
+
+// Добавление болотников на карту
+void SpawnBolos(Map & map, uint stage)
+{
+	DL("Begin spawn");
+	uint max=_Num(map, stage);
+	for(uint i=0; i<max; i++)
+	{
+		GetBoloInvader(map);
+	}
+}
+
+/* Мертвый паладин на случайных энкаунтерах. У первых трех счастливчиков есть шанс найти ПА */
+void _DeadPaladinInit(Critter& cr, bool firstTime)
+{
+	if(firstTime)
+	{
+		GameVar @ counter=GetGlobalVar(GVAR_sf_bos_armour_counter);
+		if (!valid(counter)) return;
+
+		if(counter.GetValue()>0)
+		{
+			counter=counter.GetValue()-1;
+			DL("Added PA");
+			cr.AddItem(PID_POWERED_ARMOR, 1);
+			Item @ tag=cr.AddItem(PID_TUCO_DOG_TAG, 1);
+			if(valid(tag))
+			{
+				tag.Info=2;
+				tag.Update();
+			}
+		}
+	}
+	if(not cr.IsDead())
+	{
+		cr.ToDead(Random(ANIM2_DEAD_BURST,ANIM2_DEAD_EXPLODE), null);
+	}
+	cr.StatBase[ST_REPLICATION_TIME]=-1;
+}
+
+void SpawnSandBags(Map & map)
+{
+	uint entires=map.CountEntire(ENTIRE_BARRICADES);
+	uint16 x=0;
+	uint16 y=0;
+	for(uint i=0;i<entires;i++)
+	{
+		if(map.GetEntireCoords(ENTIRE_BARRICADES, i, x, y))
+		{
+			if(map.IsHexPassed(x,y))
+			{
+				map.AddItem(x,y,PID_SANDBAG_3,1);
+			}
+		}
+	}
+}
+
+void SpawnBos(Map & map)
+{
+	uint16 x=0;
+	uint16 y=0;
+	uint entires=map.CountEntire(ENTIRE_SPAWN_PRIVATE);
+	if(map.GetCritters(NPC_PID_BOS_PRIVATE, FIND_LIFE_AND_KO|FIND_ONLY_NPC, null)<1)
+	{
+		for(uint i=0;i<entires;i++)
+		{
+			if(map.GetEntireCoords(ENTIRE_SPAWN_PRIVATE, i, x, y))
+			{
+				if(GetFreeHex(map,2,x,y))
+				{
+					int[] params={ST_DIALOG_ID,DIALOG_PRIVATE,ST_BAG_ID,BAG_PRIVATE,ST_TEAM_ID,TEAM_BoSTrooper};
+					map.AddNpc(NPC_PID_BOS_PRIVATE, x,y, Random(0,5),params, null, "sf_invasion@_BosInit");
+				}
+			}
+		}
+	}
+	entires=map.CountEntire(ENTIRE_SPAWN_CORPORAL);
+	if(map.GetCritters(NPC_PID_BOS_CORPORAL, FIND_LIFE_AND_KO|FIND_ONLY_NPC, null)<1)
+	{
+		for(uint i=0;i<entires;i++)
+		{
+			if(map.GetEntireCoords(ENTIRE_SPAWN_CORPORAL, i, x, y))
+			{
+				if(GetFreeHex(map,2,x,y))
+				{
+					int[] params={ST_DIALOG_ID,DIALOG_CORPORAL, ST_BAG_ID,BAG_CORPORAL,ST_TEAM_ID,TEAM_BoSTrooper, ST_AI_ID, AIPACKET_BOUNTY_HUNTER};
+					map.AddNpc(NPC_PID_BOS_CORPORAL, x,y, Random(0,5),params, null, "sf_invasion@_BosInit");
+				}
+			}
+		}
+	}
+}
+// invasion critter OnDead
+void _Dead(Critter& cr, Critter@ killer)
+{
+	CreateTimeEvent(__FullSecond+REAL_MINUTE(10),"e_DeleteCritter", cr.Id, true);
+	if(valid(killer))
+	{
+		if(killer.IsNpc()) return;
+		uint pid=cr.GetProtoId();
+		if(pid==NPC_PID_MirelurkWeak || pid==NPC_PID_MirelurkTough)
+		{
+			GameVar @ qVar=GetLocalVar(LVAR_q_sf_invasion_mirelurk_kills,killer.Id);
+			if(valid(qVar) && qVar>0 && qVar<6) qVar=qVar+1;
+		}
+	}
+}
+
+uint e_DeleteCritter(uint[]@ values)
+{
+	Critter @ cr=GetCritter(values[0]);
+	if(valid(cr)) DeleteNpc(cr);
+	return 0;
+
+}
+void _BosInit(Critter & cr, bool firstTime)
+{
+	cr.SetEvent(CRITTER_EVENT_DEAD,"_Dead");
+	cr.SetEvent(CRITTER_EVENT_PLANE_END, "_BosPlaneEnd");
+
+}
+
+int _BosPlaneEnd(Critter& cr, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem)
+{
+	if(reason==REASON_GAG_ITEM)// бойцы братства не должны ломать баррикады
+	{
+		return PLANE_DISCARD;
+	}
+	return PLANE_RUN_GLOBAL;
+}
+
+// * Расписание глобальных эвентов и нападения на Доки ******************************** //
+
+#define FIRST_SIEGE_TIME         (GetNearFullSecond(0, 1, 1, 0, 0, 0))
+#define NEXT_SIEGE_TIME          (GetNearFullSecond(0, 1, 1, 0, 0, 0) - __FullSecond)
+
+#define SECOND_STAGE_TIME        (__FullSecond+1*30*24*60*60) // начало второго этапа через 30 дней
+#define NEXT_SECOND_STAGE_TIME   (1*30*24*60*60) // повторение нападений каждые 30 дней
+#define END_STAGE_TIME           (__FullSecond+4*30*24*60*60) // завершение всех этапов через 120 дней
+#define FIRST_DOCKS_TIME         (GetNearFullSecond(0, 0, 0, 1, 0, 0)) // время первой волны атак на доки
+#define NEXT_DOCKS_TIME          (GetNearFullSecond(0, 0, 0, 1, 0, 0) - __FullSecond) // время последующей волны атак на доки
+#define THIRD_STAGE_TIME         (__FullSecond+1*30*24*60*60) // начало третьего этапа через 30 дней после начала второго// obsolete
+
+#define LAIR_GLOBAL_X             (496)
+#define LAIR_GLOBAL_Y             (1232)
+
+void SheduleSFInvasion()
+{
+	CreateTimeEvent(FIRST_SIEGE_TIME, "e_FirstStage", true);
+
+	//CreateTimeEvent(END_STAGE_TIME, "e_EndInvasion", true);
+	GameVar @ counter=GetGlobalVar(GVAR_sf_bos_armour_counter);
+	counter=3; // 3 случайных встречи с мертвым паладином БС с ПА
+}
+
+// Первый этап - простое переключение переменной
+uint e_FirstStage(uint[]@ values)
+{
+	DL("Mirelurk invasion first stage begin");
+	GameVar @ stage=GetGlobalVar(GVAR_sf_invasion_status);
+	if(valid(stage))
+	{
+		stage=1;
+	}
+	CreateTimeEvent(SECOND_STAGE_TIME, "e_SecondStage", true);
+	CreateTimeEvent(END_STAGE_TIME, "e_EndInvasion", true);
+	return NEXT_SIEGE_TIME; // Следующее нашествие будет через год
+}
+
+
+// Второй этап - нападение на Доки в несколько стадий
+uint e_SecondStage(uint[]@ values)
+{
+	DL("Second stage!");
+	GameVar @ stage =GetGlobalVar(GVAR_sf_invasion_status);
+	if (!valid(stage)) return 0;
+	if(stage.GetValue()==0) return 0;
+	if(stage.GetValue()==1)  //Первое событие второго этапа
+	{
+		stage=2;
+		CreateTimeEvent(THIRD_STAGE_TIME, "e_ThirdStageBegin", true);
+	}
+	CreateTimeEvent(FIRST_DOCKS_TIME, "e_DockInvasion", true);
+
+	return NEXT_SECOND_STAGE_TIME;
+}
+
+// Втрожение болотников в район Доков СФ
+uint e_DockInvasion(uint[]@ values)
+{
+	DL("Docks invasion, Previous Wave="+CurrentInvasionStage);
+	if(CurrentInvasionStage>=Num_BoloInvaders.length())
+	{
+		CurrentInvasionStage=0;
+		return 0;
+	}
+	Map @ map=GetMapByPid(MAP_sf_dock, 0);
+	if (!valid(map)) return 0;
+
+	// Паладины БС и мешки
+	SpawnSandBags(map);
+	SpawnBos(map);
+	// Болотники
+	SpawnBolos(map, CurrentInvasionStage);
+	// Проигрывание сирены на карте доков
+	map.PlaySound("AIRSIREN.OGG");
+	// То же, в Чайна Тауне
+	@map=GetMapByPid(MAP_sf_china, 0);
+	map.PlaySound("AIRSIREN.OGG");
+	CurrentInvasionStage++;
+	return NEXT_DOCKS_TIME;
+}
+
+
+// Третий этап - открытие локации Логово Болотников для игроков, выполнивших квест на убийство болотников
+uint e_ThirdStageBegin(uint[]@ values)
+{
+	DL("Third stage!");
+	GameVar @ stage =GetGlobalVar(GVAR_sf_invasion_status);
+	if(!valid(stage)) return 0;
+	if(stage.GetValue()==0) return 0;
+	if(stage.GetValue()==2)// Переключение статуса
+	{
+		stage=3;
+	}
+	// Добавление локации
+	uint locId=CreateLocation(LOCATION_Quest_MirelurksLair, LAIR_GLOBAL_X, LAIR_GLOBAL_Y, null);
+	Location @lair=GetLocation(locId);
+	if(!valid(lair)) return 0;
+	lair.Visible=false;
+	lair.AutoGarbage=false;
+	lair.Update();
+	return 0;
+}
+
+// Отображение логова через диалог
+void r_ShowLair(Critter & player, Critter @ npc)
+{
+	Location @ loc=GetLocationByPid(LOCATION_Quest_MirelurksLair,0);
+	if(!valid(loc)) return;
+	if(!player.IsKnownLoc(true, loc.Id))
+		player.SetKnownLoc(true, loc.Id);
+
+}
+// Завершение всех этапов - истекло время
+uint e_EndInvasion(uint[]@ values)
+{
+	DL("mirelurk Invasion ended");
+	StopInvasion();
+	GameVar @ status=GetGlobalVar(GVAR_sf_invasion_status);
+	if(status.GetValue()!=0)
+	{
+		status=0;
+	}
+	Location @ loc=GetLocationByPid(LOCATION_Quest_MirelurksLair,0);
+	if(valid(loc))
+	{
+		loc.AutoGarbage=true;
+	}
+	return 0;
+}
+// DEBUG
+void r_Start(Critter & player, Critter @ npc)
+{
+	Map @ map=player.GetMap();
+	if(valid(map))
+	{
+		map.PlaySound("AIRSIREN.OGG");
+	}
+	BeginInvasion();
+}
+void r_End(Critter & player, Critter @ npc)
+{
+	StopInvasion();
+}
+
+void BeginInvasion()
+{
+	Map @ map=GetMapByPid(MAP_sf_dock,0);
+	if (!valid(map)) return;
+	map.PlaySound("AIRSIREN.OGG");
+	SpawnSandBags(map);
+	SpawnBos(map);
+	SpawnBolos(map, 4);
+}
+
+void StopInvasion()
+{
+
+	Map @ map=GetMapByPid(MAP_sf_dock,0);
+	if (!valid(map)) return;
+
+	Critter @[] crits;
+
+	map.GetCritters (NPC_PID_MirelurkWeak, FIND_ALL|FIND_ONLY_NPC, crits);
+	map.GetCritters (NPC_PID_MirelurkTough, FIND_ALL|FIND_ONLY_NPC, crits);
+	map.GetCritters (NPC_PID_BOS_CORPORAL, FIND_ALL|FIND_ONLY_NPC, crits);
+	map.GetCritters (NPC_PID_BOS_PRIVATE, FIND_ALL|FIND_ONLY_NPC, crits);
+
+	for(uint i=0, iMax=crits.length(); i<iMax; i++)
+	{
+		Critter @npc=crits[i];
+		if(valid(npc))
+		{
+			DeleteNpc(npc);
+		}
+	}
+	Item @[] items;
+	for(uint i=PID_SANDBAG_1;i<=PID_SANDBAG_5;i++)
+	{
+		map.GetItems(i, items);
+	}
+	for(uint i=0, iMax=items.length(); i<iMax; i++)
+	{
+		Item @ item=items[i];
+		if(valid(item))
+		{
+			DeleteItem(item);
+		}
+	}
+}

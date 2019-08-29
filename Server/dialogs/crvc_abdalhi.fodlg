@@ -1,0 +1,139 @@
+[comment]
+
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 NOT_ANSWER_CLOSE_DIALOG 1#
+2 1010d*_script caravan@d_HasNotCaravanEnded 0  #
+3 1020d*_script caravan@d_HasCaravanEnded 0  @
+2 2000 NOT_ANSWER_CLOSE_DIALOG 0#
+2 2010#
+0 2020#
+5 2030d*_var p q_ncr_redding_caravan_escort = 1 *_script caravan@d_NotHasPlayerRequest 0  #
+11 2040d*_param p SK_SPEECH < 71 *_var p ncr_caravan_abdalhi_radio_status = 0 *_item p PID_RADIO < 1 *_script caravan@d_IsCaravanOnEnc 0  #
+12 2050d*_var p ncr_caravan_abdalhi_radio_status = 0 *_param p SK_SPEECH > 70 *_item p PID_RADIO < 1 *_script caravan@d_IsCaravanOnEnc 0  r*_var p ncr_caravan_abdalhi_radio_status = 1 *_item p PID_RADIO + 1 #
+13 2060d*_script caravan@d_HasPlayerRequest 0  *_script caravan@d_NotIsCaravanOnEnc 0  #
+14 2070d*_script caravan@d_HasPlayerRequest 0  *_script caravan@d_IsCaravanOnEnc 0  r*_script caravan@r_ContinueCaravan 0  @
+3 3000 NOT_ANSWER_CLOSE_DIALOG 0#
+4 3010@
+4 4000 NOT_ANSWER_CLOSE_DIALOG 0@
+5 5000 NOT_ANSWER_CLOSE_DIALOG 0#
+6 5010#
+7 5020d*_script caravan@d_NotHasPlayerRequest 0  *_script caravan@d_NotIsFullParty 0  *_script caravan@d_NotIsCaravanOnEnc 0  #
+8 5030d*_script caravan@d_NotHasPlayerRequest 0  *_script caravan@d_IsFullParty 0  *_script caravan@d_NotIsCaravanOnEnc 0  @
+6 6000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 6010@
+7 7000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 7010#
+0 7020r*_script caravan@r_PutPlayerRequest2Info 0  @
+8 8000 NOT_ANSWER_CLOSE_DIALOG 0#
+9 8010@
+9 9000 NOT_ANSWER_CLOSE_DIALOG 0#
+10 9010@
+10 10000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 10010r*_script caravan@r_PutPlayerRequest2Info 0  #
+0 10020@
+11 11000 NOT_ANSWER_CLOSE_DIALOG 0@
+12 12000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 12010r*_param p ST_EXPERIENCE + 1500 @
+13 13000 NOT_ANSWER_CLOSE_DIALOG 0@
+14 14000 NOT_ANSWER_CLOSE_DIALOG 0&
+
+[russ]
+{100}{}{Абдалхи}
+{200}{}{Вы видите проводника караванов Абдалхи.}
+{210}{}{Абдалхи - опытный проводник караванов. Говорят, что он немного "не в себе". Но дело свое знает.}
+{210}{}{Никто не верит, что Абдалхи может довести караван до точки назначения. До тех пор, пока сам не побывает с ним в одной команде.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{по умолчанию}
+{1020}{}{Караван закончен}
+{2000}{}{[Абдалхи старательно отводит взгляд и молчит]}
+{2010}{}{Что ты тут делаешь?}
+{2020}{}{Увидимся. [Уйти]}
+{2030}{}{Я от Даппо, для охраны каравана в Реддинг.}
+{2040}{}{Эй, Абдалхи, а у тебя есть еще рации?}
+{2050}{}{Эй, Абдалхи, а у тебя есть еще рации?}
+{2060}{}{Когда отправляемся?}
+{2070}{}{Мы можем продолжить путь?}
+{3000}{}{Моя миссия выполнена.  В этот раз нам повезло, и духи кяфиров позволили нам пройти. Я ухожу. Скоро.}
+{3010}{}{Кто мне заплатит за работу?}
+{4000}{}{Ищи Джеймса Хоффи.}
+{5000}{}{Духи умерших уже сообщили о тебе. Вот, через этот талисман. [Показывает рацию]}
+{5010}{}{Псих, ты не знаешь, что такое радио?}
+{5020}{}{Когда отправляемся?}
+{5030}{}{Когда отправляемся?}
+{6000}{}{Я не знаю, что такое псих. Духи не говорят о псих.}
+{6010}{}{С таким проводником караван не уйдет далеко. [Уйти]}
+{7000}{}{Выходим в течение часа. Ты готов@sex@|||а| бросить вызов Пустоши?}
+{7010}{}{Нет, я передумал@sex@|||а|. Идите без меня. [Уйти]}
+{7020}{}{Я готов@sex@|||а|. Надеюсь, обойдется без происшествий. [Уйти] }
+{8000}{}{Выходим в течение часа. Только для тебя нет места в караване.}
+{8010}{}{Это еще почему?}
+{9000}{}{Духи привели уже много охранников. Больше охранников нельзя.}
+{9010}{}{Что-то я никого не вижу здесь из охраны.}
+{10000}{}{Они рядом. Но, если ты хочешь, жди отправления. Может, кого-то из них уже убили духи кяфиров...}
+{10010}{}{Да, возможно, кто-то не придет. Записывай меня. [Уйти]}
+{10020}{}{Если нет места, мне тут делать нечего. Прощай. [Уйти]}
+{11000}{}{Талисман у меня только один.}
+{12000}{}{Ты выглядишь достойн@sex@|ым||ой| того, чтобы я дал тебе талисман. Держи и помни, духи очень опасны.}
+{12010}{}{Я учту, спасибо, Абдалхи. [Уйти]}
+{13000}{}{Скоро. Будь наготове.}
+{14000}{}{Да. Время пришло. }
+{100000001}{}{Духи, знайте, Абдалхи вышел на тропу. Оградите нас от злых кяфиров.}
+{100000002}{}{Духи, Абдалхи снова ведет караван. Наши координаты:@@Абдалхи все еще жив! Мы здесь:@@Абдалхи в пути. Духи, мы здесь:}
+{100000003}{}{Здесь нет злых кяфиров. Вернемся к повозкам.@@Идем!@@Нужно вернуться к повозкам.}
+{100000004}{}{Духи, простите несчастного Абдалхи. Никто не пришел чтобы проводить караван. Абдалхи уходит.}
+{100000005}{}{Караван начал движение. Во что бы то ни стало, необходимо сохранить жизнь проводнику.}
+{100000006}{}{Все охранники каравана уничтожены. Груз потерян. Проводник Абдалхи.}
+{100000007}{}{Отойди от повозок!@@Не трогай!@@Это не твое. Проваливай!}
+
+[engl]
+{100}{}{Abdalhi}
+{200}{}{you see a conductor of caravans of Abdalhi.}
+{210}{}{Abdalhi - a skilled conductor of caravans. It is said that it a little "not in itself". But the business knows.}
+{210}{}{Nobody believes that Abdalhi can finish a caravan to an appointment point. Until itself will not visit with it one command.}
+{1000}{}{Predialogue installations}
+{1010}{}{by default}
+{1020}{}{the Caravan is finished}
+{2000}{}{[Abdalhi diligently looks away and is silent]}
+{2010}{}{That you here do?}
+{2020}{}{we Will meet. [To leave]}
+{2030}{}{I from Dappo, for caravan protection in Redding.}
+{2040}{}{Hey, Abdalhi, and at you is still portable radio sets?}
+{2050}{}{Hey, Abdalhi, and at you is still portable radio sets?}
+{2060}{}{When we go?}
+{2070}{}{We can continue a way?}
+{3000}{}{My mission is executed. This time to us has carried, and spirits кяфиров have allowed us to pass. I leave. Soon.}
+{3010}{}{Who to me will pay for work?}
+{4000}{}{Search for James Hoffi.}
+{5000}{}{Spirits died already have informed on you. Here, through this talisman. [Shows a portable radio set]}
+{5010}{}{the Loony, you do not know, what such radio?}
+{5020}{}{When we go?}
+{5030}{}{When we go?}
+{6000}{}{I do not know that such the loony. Spirits do not speak about the loony.}
+{6010}{}{With such conductor the caravan will not leave far. [To leave]}
+{7000}{}{we Leave within an hour. You готов@sex ||| and | to throw down the Heathland challenge?}
+{7010}{}{No, I передумал@sex ||| and |. Go without me. [To leave]}
+{7020}{}{I готов@sex ||| and |. Hope, will do without incidents. [To leave]}
+{8000}{}{we Leave within an hour. Only for you there is no place in a caravan.}
+{8010}{}{It still why?}
+{9000}{}{Spirits have resulted already many security guards. More security guards it is impossible.}
+{9010}{}{Something I see nobody here from protection.}
+{10000}{}{They nearby. But, if you want, wait for departure. Perhaps someone from them was already killed by spirits кяфиров...}
+{10010}{}{Yes, probably, someone will not come. Write down me. [To leave]}
+{10020}{}{If there is no place, here it nothing me. Farewell. [To leave]}
+{11000}{}{the Talisman at me only one.}
+{12000}{}{You look достойн@sex | ым || oh | that I have given you a talisman. Hold and remember, spirits are very dangerous.}
+{12010}{}{I will consider, thanks, Abdalhi. [To Leave]}
+{13000}{}{it is fast. Be on call.}
+{14000}{}{Yes. Time has come.}
+{100000001}{}{Spirits, know, Abdalhi left on a track. Protect us from malicious кяфиров.}
+{100000002}{}{Spirits, Abdalhi again conducts a caravan. Our co-ordinates: @@ Abdalhi is still live! We here: @@ Abdalhi in a way. Spirits, we here:}
+{100000003}{}{Here is not present malicious кяфиров. We will return to vehicles. @@ we go! @@ it is necessary to return to vehicles.}
+{100000004}{}{Spirits, forgive unfortunate Abdalhi. Nobody has come to spend a caravan. Абдалхи leaves.}
+{100000005}{}{the Caravan has begun movement. By all means, it is necessary to keep life to a conductor.}
+{100000006}{}{All security guards of a caravan are destroyed. Cargo is lost. A conductor of Abdalhi.}
+{100000007}{}{Depart from vehicles! @@ do not touch! @@ it not yours. Ruin!}

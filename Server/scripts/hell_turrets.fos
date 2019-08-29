@@ -1,0 +1,41 @@
+//Настройки fighter pattern и guard lib для турелей Ада.
+
+#include "fighter_pattern.fos"
+#include "guard_lib.fos"
+#include "guard_lib_events.fos"
+#include "_dialogs.fos"
+#include "_animation.fos"
+
+class CGuardsManagerForHellTurrets : CGuardsManager
+{
+	CGuardsManagerForHellTurrets()
+	{
+		super();
+		Dialog = DIALOG_hell_turret;
+	}
+}
+
+CGuardsManagerForHellTurrets Grd;
+
+bool GuardItemTest(Item@ item) // export
+{
+	return Grd.GuardItemTest(item);
+}
+
+void _TurretInit(Critter & cr, bool firstTime)
+{
+	FighterPattern @ fp = FighterPattern();
+	fp.ForceArmourLvl = 5;
+	fp.MustHealLvl = 60;
+	fp.ForceCritterArmour(cr);
+	fp._SetOnAttackedEvents(cr);
+	//cr.PerkBase[PE_TERMINATOR] = 1;
+	cr.SetEvent(CRITTER_EVENT_SHOW_CRITTER,"_GuardOnAddCritter");
+	cr.SetEvent(CRITTER_EVENT_HIDE_CRITTER,"_GuardOnRemoveCritter");
+	cr.SetEvent(CRITTER_EVENT_PLANE_END,"_GuardEndPlane");
+	cr.SetEvent(CRITTER_EVENT_SMTH_MOVE_ITEM,"_GuardOnMoveItem");
+	cr.SetEvent(CRITTER_EVENT_SMTH_ATTACK,"_GuardOnSmthAttack");
+
+	if(not firstTime && cr.GetTimeEvents(CTE_OBSERVING,null,null,null)==0)
+		cr.AddTimeEvent("cte_Observing", OBSERV_PERIOD, CTE_OBSERVING);
+}

@@ -1,0 +1,53 @@
+// Autor: Cracker
+// Tin Woodsman special encounter scripts
+
+#include "_macros.fos"
+
+import bool AddWalkPlane(Critter& npc, uint priority, uint16 hexX, uint16 hexY, uint8 dir, bool run, uint cut) from "npc_planes";
+
+#define STR_SAY_OIL (70050)
+
+void r_Move(Critter& player, Critter@ wood)
+{
+	AddWalkPlane(wood, 0, 75, 33, Random(0,5), true, 0);
+} 
+
+void t_End(Critter& wood, Scenery& trigger, bool entered, uint8 dir)
+{
+	if(wood.IsNpc()) DeleteNpc(wood);
+}
+
+void _WoodsmanInit(Critter& wood, bool firstTime)
+{
+	wood.SetEvent(CRITTER_EVENT_IDLE,"_Oil");
+	wood.SetEvent(CRITTER_EVENT_SMTH_USE_ITEM,"_HaveGreased");
+	wood.SetEvent(CRITTER_EVENT_ATTACKED,"_HaveAttacked");
+}
+
+bool _HaveAttacked(Critter& cr, Critter& attacker)
+{
+	if(cr.Stat[ST_VAR0]!=9) return false;
+	return true;
+}
+
+void _HaveGreased(Critter& cr, Critter& fromCr, Item& item, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+	if(onCritter.Id==cr.Id && item.GetProtoId()==PID_OIL_CAN)
+	{
+		cr.StatBase[ST_VAR0]=9;
+		RunDialog(fromCr, cr,DIALOG_se_woodsman, false);
+	}
+}
+
+void _Oil(Critter& wood)
+{
+	wood.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_TEXT, STR_SAY_OIL);
+}
+
+void Test(Critter& cr, int p0, int p1, int p2)
+{
+	uint locId=CreateLocation (LOCATION_SpecialWoodsmanEncounter, cr.WorldX , cr.WorldY, null);
+	Location @ loc=GetLocation(locId);
+	Map @ map=loc.GetMapByIndex(0);
+	cr.TransitToMap(map.Id,0);
+} 

@@ -1,0 +1,167 @@
+// Author: Team MK2
+#include "_macros.fos"
+#include "_items_generate_table.fos"
+
+import void SetDeterioration(Item& item, int deteriorationProcent) from "repair";
+import void InitRandomisationItem(Item& item, bool isCrafted, Critter& cr, string sufix) from "random_parameters_items";
+
+#define TABLE_MAP_COUNT                             (MapCount)
+#define TABLE_ITEMS_COUNT                           (ItemsCount)
+#define TABLE_MAP_PID      #(mapIndex)              (MapsPids[(mapIndex)])
+#define TABLE_REFRESH_HOUR #(mapIndex)              (REAL_MINUTE(RespTime[(mapIndex)]))
+
+#define TABLE_ITEM_PID     #(itemIndex)             (ItemPids[(itemIndex)])
+#define TABLE_ITEM_COUNT   #(mapIndex,itemIndex)    (ItemCountsforMaps[(itemIndex+mapIndex*TABLE_ITEMS_COUNT)])
+#define TABLE_ITEM_CHANCE  #(mapIndex,itemIndex)    (ChanceData[(itemIndex+mapIndex*TABLE_ITEMS_COUNT)])
+
+#define REFRESH_TIME_RANGE                    (60) // Разброс времени каждого респа, в процентах.
+
+void _MapRespawnItemInContainers(Map& map, bool firstTime)
+{
+	CreateTimeEvent(__FullSecond+TABLE_REFRESH_HOUR(getMapIndex(map))*(Random(100-REFRESH_TIME_RANGE, REFRESH_TIME_RANGE+100) / 100), "e_RespawnItem", map.Id, true);
+}
+
+void _MapRespawnItemInEntire(Map& map, bool firstTime, int entire)
+{
+	int[] values={map.Id, entire};
+	CreateTimeEvent(__FullSecond+TABLE_REFRESH_HOUR(getMapIndex(map))*(Random(100-REFRESH_TIME_RANGE, REFRESH_TIME_RANGE+100) / 100), "e_RespawnItem", values, true);
+}
+
+uint e_RespawnItem(uint[]@ values)
+{
+	Map@ map=GetMap(values[0]);
+	if(not valid(map)) return 0;
+	Item@[] containers=getAllContainer(map);
+	uint mapIndex=getMapIndex(map);
+	respItem(map, containers, values[1], false);	
+	Log("TIME="+(TABLE_REFRESH_HOUR(mapIndex)*(Random(100-REFRESH_TIME_RANGE, REFRESH_TIME_RANGE+100) / 100)));
+	return 	TABLE_REFRESH_HOUR(mapIndex)*(Random(100-REFRESH_TIME_RANGE, REFRESH_TIME_RANGE+100) / 100);
+}
+
+
+// Респавн предметов
+// mapIndex - индекс карты, на которой респятся предметы
+// containers - ящики, в которых возможно отреспятся предметы
+// deleteOldItems - удалять ли старые предметы
+void respItem(Map& map, Item@[] containers, int entire, bool deleteOldItems)
+{
+	uint mapIndex=getMapIndex(map);
+	uint countContainers=containers.length();	// Количество контейнеров на карте
+	if(entire==0)
+	{
+		if(countContainers<1) return;
+
+		// Если нужно очистить контейнеры от старых предметов, то удаляем их
+		if(deleteOldItems)
+		{
+			for(uint i=0; i<countContainers; i++)
+			{
+				Item@[] oldItems;
+				containers[i].GetItems(0, oldItems);
+				for(uint j=0, jMax=oldItems.length(); j<jMax; j++)
+					DeleteItem(oldItems[j]);
+			}
+		}
+	}
+
+	// Респим предметы
+	for(uint i=0; i<TABLE_ITEMS_COUNT; i++)
+	{
+		int pid=TABLE_ITEM_PID(i);
+		if(pid<1)	continue;
+		
+		int needCount=TABLE_ITEM_COUNT(mapIndex, i);
+			
+		if(needCount<1)	continue;
+			
+		for(uint j=0; j<uint(needCount); j++)
+		{
+			if(Random(0, 1000)<TABLE_ITEM_CHANCE(mapIndex, i))
+			{
+				
+				// Обработка особо редких крафтерских предметов. Быдлокод привязанный к пидам и дублируется в trader.fos
+				// В дальнейшем необходимо универсализировать данную хуйню и отвязать от проверки на пиды.
+				// bydloCode on
+				if(pid==PID_MOTIVATOR)
+				{
+				GameVar@ timeout_motivator=GetGlobalVar(GVAR_timeout_motivator);
+				if(valid(timeout_motivator))
+					if(uint(timeout_motivator.GetValue())<__FullSecond)
+					{
+						timeout_motivator=__FullSecond+REAL_HOUR(Random(22,32));
+					}
+					else continue;
+				}
+				else if(pid==PID_K9_MOTIVATOR)
+				{
+					GameVar@ timeout_motivator_k9=GetGlobalVar(GVAR_timeout_motivator_k9);
+					if(valid(timeout_motivator_k9))
+						if(uint(timeout_motivator_k9.GetValue())<__FullSecond)
+						{
+							timeout_motivator_k9=__FullSecond+REAL_HOUR(Random(24,30));	
+						}
+						else continue;
+				}
+				else if(pid==PID_OIL_CAN_TRUE)
+				{
+					GameVar@ timeout_oil_can=GetGlobalVar(GVAR_timeout_oil_can);
+					if(valid(timeout_oil_can))
+						if(uint(timeout_oil_can.GetValue())<__FullSecond)
+						{
+							timeout_oil_can=__FullSecond+REAL_HOUR(Random(8,10));
+						}
+						else continue;
+				}
+				// bydloCode off
+						
+				Item@ item;
+				if(entire==0)						
+				{
+					@item=containers[Random(0, countContainers-1)].AddItem(pid, 1, 0); 	 // Добавляем предмет
+				}
+				else
+				{							
+					uint16 XSpawn=0;
+					uint16 YSpawn=0;
+					uint entNum=map.CountEntire(entire);
+					if(map.GetEntireCoords(entire, Random(0,entNum-1), XSpawn, YSpawn))
+							map.AddItem(XSpawn, YSpawn, pid, 1);
+				}
+				if(valid(item) && item.IsDeteriorable()) SetDeterioration(item, Random(5, 25)); 	 //Устанавливаем износ
+			}
+		}
+	}
+}
+
+//Получить все контейнеры с карты
+Item@[] getAllContainer(Map& map) 
+{
+	Item@[] containers;
+	map.GetItemsByType(ITEM_TYPE_CONTAINER, containers);
+	return containers;
+}
+
+// Получает индекс карты
+int getMapIndex(Map& map)
+{
+	int mapPid=map.GetProtoId();
+	if(mapPid > 0)
+	{
+		for(uint i=0, iMax=TABLE_MAP_COUNT; i<iMax; i++)
+		{
+			if(TABLE_MAP_PID(i)==mapPid) return i;
+		}
+	}
+	return -1;
+}
+
+// Отладка. Респит предметы на текущеё карте, но по параметру заданной любой другой карты
+// ~run farm_lacation addItemInContainers 1 0 0
+void addItemInContainers(Critter& cr, int entire, int param1, int param2)
+{
+	Map@ map=cr.GetMap();
+	if(not valid(map)) return;
+	Item@[] containers;
+	map.GetItemsByType(ITEM_TYPE_CONTAINER, containers);	
+	respItem(map, containers, entire, false);
+}

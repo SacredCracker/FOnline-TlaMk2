@@ -1,0 +1,964 @@
+// Debug functions
+
+#pragma bindfunc "bool FileDelete(string@ filename) -> fonline_tla.dll FileDelete"
+
+#include "_macros.fos"
+#include "_maps.fos"
+#include "_colors.fos"
+
+//import void SetTracker(Critter& cr, int trackId) from "main";
+import void SetTracker(Critter& cr, int trackId) from "globalmap_group";
+import bool ChangeOrgStat(uint orgId, uint8 stat, int val) from "main";
+import bool Merc2Player(Critter & player, Critter & merc, uint16 type)  from "merc";
+import string@[] GetOrgList() from "main";
+import void InitRandomisationItem(Item& item, bool isCrafted, Critter& cr, string sufix) from "random_parameters_items";
+import void DeleteOrg(uint orgId) from "main";
+import uint GetOrgId(string name) from "main";
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Trinitro
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#define FIND_DIST    (16)
+
+void BreakItem(Critter& cr, int percent, int tobreak, int notresc)
+{
+	Item@[] items;
+	cr.GetItems(SLOT_HAND1, items);
+	if(valid(items[0]))
+	{
+		items[0].Deterioration=percent;
+		if(notresc==1) SETFLAG(items[0].BrokenFlags,BI_NOTRESC);
+		else if(notresc==2) SETFLAG(items[0].BrokenFlags,BI_ETERNAL);
+		if(tobreak>0) SETFLAG(items[0].BrokenFlags,BI_BROKEN);
+		items[0].Update();
+	}
+}
+
+void GetGroup(Critter& cr, int param0, int param1, int param2)
+{
+	Critter@[] crits;
+	cr.GetFollowGroup(FIND_ALL, crits);
+	for(uint n=0, nMax=crits.length(); n<nMax; n++)
+	{
+		cr.Say(SAY_NETMSG, "Член #"+(n+1)+": "+crits[n].Id);
+	}
+}
+
+void GetGrid(Critter& cr, int param0, int param1, int param2)
+{
+	uint16 x=0;	uint16 y=0; uint16 MapPid=0; uint EntireId=0;
+	cr.GetMap().GetExitGrid(cr,x,y,MapPid,EntireId);
+	cr.Say(SAY_NETMSG, "X="+x+"\n Y="+y+"\n MapPid="+MapPid+"\n EntireId="+EntireId);
+	cr.GetMap().SetText(x,y,COLOR_RED,"ТУТ!");
+}
+
+void GetGridGlobal(Critter& cr, int param0, int param1, int param2)
+{
+	uint16 x=0;	uint16 y=0;
+	cr.GetMap().GetExitGlobalGrid(cr,x,y);
+	cr.Say(SAY_NETMSG, "X="+x+"\n Y="+y);
+	cr.GetMap().SetText(x,y,COLOR_RED,"ТУТ!");
+}
+
+void AddMerc(Critter& cr, int param0, int param1, int param2)
+{
+	uint16 XSpawn=cr.HexX+2;
+	uint16 YSpawn=cr.HexY+2;
+	Map @ map=cr.GetMap();
+	if (!valid(map)) return;
+	Critter@ npc;
+	@npc=map.AddNpc(param2, XSpawn, YSpawn, 5, null, null, null);
+	npc.MercBase[MERC_MASTER_DIST]=6;
+	Merc2Player(cr, npc, 4); // Охранник по умолчанию. Защищает хозяина
+}
+
+void DeleteOrg(Critter& cr, int param0, int param1, int param2)
+{
+	cr.ShowScreen(SCREEN_SAY, 0, "delete_org");
+	cr.Say(SAY_SAY_TITLE, "Введите имя орги");
+}
+
+void delete_org(Critter& cr, uint answerI, string& answerS)
+{
+	DeleteOrg(GetOrgId(answerS));
+}
+
+void DeleteFile(Critter& cr, int param0, int param1, int param2)
+{
+	cr.ShowScreen(SCREEN_SAY, 0, "delete_file");
+	cr.Say(SAY_SAY_TITLE, "Введите имя файла");
+}
+
+void delete_file(Critter& cr, uint answerI, string& answerS)
+{
+	/*if(FileDelete(answerS)) cr.Say(SAY_NETMSG, "Файл удален");
+	else cr.Say(SAY_NETMSG, "хуй там - файл не удален");*/
+}
+
+void RateOrg(Critter& player, int frId, int stat,int val)
+{
+	ChangeOrgStat(uint(frId), uint(stat), val);
+}
+
+void GetOrgRating(Critter& player,  int param0, int param1, int param2)
+{
+	string@[]@ list=GetOrgList();
+	for(uint n=0, nMax=list.length(); n<nMax; n++)
+	{
+		player.Say(SAY_NETMSG, (n+1)+") "+ list[n]);
+	}
+}
+
+void Track(Critter& player,  int id, int param1, int param2)
+{
+	SetTracker(player, id);
+}
+
+void BSW(Critter& player,  int param0, int param1, int param2)
+{
+	uint8 x=0;
+	uint8 y=0;
+	while(x!=28)
+	{
+		while(y!=30)
+		{
+			player.SetFog(x,y,FOG_NONE);
+			y++;
+		}
+		y=0;
+		x++;
+	}
+}
+
+void ViewPlanes(Critter& player, int param0, int param1, int param2)
+{
+	if(param0==0) param0=20;
+
+	Map@ map=player.GetMap();
+	if(not valid(map)) return;
+
+	Critter@[] critters;
+	uint count=0;
+	if(param1==0) count=map.GetCrittersHex(player.HexX, player.HexY, param0, FIND_ALL|FIND_ONLY_NPC, critters);
+	else
+	{
+		Critter@ cr=GetCritter(param1);
+		if(not valid(cr)) return;
+		critters.resize(1);
+		@critters[0]=cr;
+	}
+
+	for(uint i=0; i<count; i++)
+	{
+		NpcPlane@[] p;
+		uint pcount=critters[i].GetPlanes(p);
+		for(uint j=0; j<pcount; j++)
+		{
+			uint[] param={critters[i].Id, p[j].Type, p[j].Priority};
+			switch(p[j].Type)
+			{
+				case AI_PLANE_MISC:
+					param.resize(5);
+					param[3]=p[j].Misc_WaitSecond; param[4]=p[j].Misc_ScriptId;
+					break;
+				case AI_PLANE_ATTACK:
+					param.resize(5);
+					param[3]=p[j].Attack_TargId; param[4]=p[j].Attack_MinHp;
+					break;
+				case AI_PLANE_WALK:
+					param.resize(8);
+					param[3]=p[j].Walk_HexX; param[4]=p[j].Walk_HexY; param[5]=p[j].Walk_Dir;
+					if(p[j].Run) param[6]=1; else param[6]=0; param[7]=p[j].Walk_Cut;
+					break;
+				case AI_PLANE_PICK:
+					param.resize(6);
+					param[3]=p[j].Pick_HexX; param[4]=p[j].Pick_HexY; param[5]=p[j].Pick_Pid;
+					break;
+			}
+			CreateTimeEvent(__FullSecond + 60 + j, "e_ViewPlanes", param, false);
+		}
+	}
+}
+
+uint e_ViewPlanes(uint[]@ values)
+{
+	Critter@ crit=GetCritter(values[0]);
+	if(not valid(crit)) return 0;
+
+	string msg="error";
+	switch(values[1])
+	{
+		case AI_PLANE_MISC:
+			msg="<<MISC>> Prior=" + values[2];
+			msg +=" WaitMinute=" + values[3] + " ScriptId=" + values[4];
+			break;
+		case AI_PLANE_ATTACK:
+			msg="<<ATTACK>> Prior=" + values[2];
+			msg +=" TargId=" + values[3] + " MinHp=" + values[4];
+			break;
+		case AI_PLANE_WALK:
+			msg="<<WALK>> Prior=" + values[2];
+			msg +=" HexX=" + values[3] + " HexY=" + values[4] + " Dir=" + values[5];
+			msg +=" Run=" + values[6] + " Cut=" + values[7];
+			break;
+		case AI_PLANE_PICK:
+			msg="<<PICK>> Prior=" + values[2];
+			msg +=" HexX=" + values[3] + " HexY=" + values[4] + " Pid=" + values[5];
+			break;
+	}
+
+	crit.Say(SAY_NORM_ON_HEAD, msg);
+	return 0;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// heX
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+import void InjureCritter(Critter& cr, uint dmg, uint dmgType, uint8 dir, uint attackerId) from "combat";
+
+#define def #(X,DEF) (X==0?DEF:X)
+
+void lvl(Critter& player, int param0, int param1, int param2)
+{
+	Critter@[] critters;
+	uint count=player.GetMap().GetCrittersHex(player.HexX, player.HexY, FIND_DIST, FIND_LIFE|FIND_ALL, critters);
+	for(uint i=0; i<count; i++)
+		critters[i].Say(SAY_NORM_ON_HEAD, ""+(critters[i].Stat[ST_LEVEL]));
+}
+
+void team(Critter& player, int param0, int param1, int param2)
+{
+	Critter@[] critters;
+	uint count=player.GetMap().GetCrittersHex(player.HexX, player.HexY, FIND_DIST, FIND_LIFE|FIND_ALL, critters);
+	for(uint i=0; i<count; i++)
+		critters[i].Say(SAY_NORM_ON_HEAD, ""+(critters[i].Stat[ST_TEAM_ID]));
+}
+
+void role(Critter& player, int param0, int param1, int param2)
+{
+	Critter@[] critters;
+	uint count=player.GetMap().GetCrittersHex(player.HexX, player.HexY, FIND_DIST, FIND_LIFE|FIND_ALL, critters);
+	for(uint i=0; i<count; i++)
+		critters[i].Say(SAY_NORM_ON_HEAD, ""+(critters[i].Stat[ST_NPC_ROLE]));
+}
+
+void info(Critter& player, int param0, int param1, int param2)
+{
+	Critter@[] critters;
+	uint count=player.GetMap().GetCrittersHex(player.HexX, player.HexY, FIND_DIST, FIND_LIFE|FIND_ALL, critters);
+	for(uint i=0; i<count; i++)
+		critters[i].Say(SAY_NORM_ON_HEAD, ""+(critters[i].Stat[param0]));
+}
+
+void hp(Critter& player, int param0, int param1, int param2)
+{
+	Critter@[] critters;
+	uint count=player.GetMap().GetCrittersHex(player.HexX, player.HexY, FIND_DIST, FIND_LIFE|FIND_ALL, critters);
+	for(uint i=0; i<count; i++)
+		critters[i].Say(SAY_NORM_ON_HEAD, ""+(critters[i].Stat[ST_CURRENT_HP])+"/"+""+(critters[i].Stat[ST_MAX_LIFE]));
+}
+
+// plan count
+void planc(Critter& player, int param0, int param1, int param2)
+{
+	Critter@[] critters;
+	uint count=player.GetMap().GetCrittersHex(player.HexX, player.HexY, FIND_DIST, FIND_LIFE|FIND_ALL, critters);
+	for(uint i=0; i<count; i++)
+		critters[i].Say(SAY_NORM_ON_HEAD, ""+(critters[i].GetPlanes(null)));
+}
+
+// show plans list
+void plans(Critter& player, int param0, int param1, int param2)
+{
+	NpcPlane@[] planes;
+	string str;
+	Critter@[] critters;
+	uint count=player.GetMap().GetCrittersHex(player.HexX, player.HexY, FIND_DIST, FIND_LIFE|FIND_ALL, critters);
+	for(uint i=0; i<count; i++)
+	{
+		str="";
+		uint count=critters[i].GetPlanes(planes);
+		for(uint j=0; j<count; j++)
+		{
+			switch(planes[j].Type) {
+			case AI_PLANE_MISC: str=str+"M "; break;
+			case AI_PLANE_ATTACK: str=str+"A ";break;
+			case AI_PLANE_WALK: str=str+"W ";break;
+			case AI_PLANE_PICK: str=str+"P ";break;
+			case AI_PLANE_PATROL: str=str+"P ";break;
+			case AI_PLANE_COURIER: str=str+"C ";break;
+			}
+		}
+		critters[i].Say(SAY_NORM_ON_HEAD, str);
+	}
+}
+
+// player level info
+void lvli(Critter& player, int param0, int param1, int param2)
+{
+	Critter@[] critters;
+	uint count=player.GetMap().GetCrittersHex(player.HexX, player.HexY, FIND_DIST*2, FIND_LIFE|FIND_ONLY_PLAYERS, critters);
+	for(uint i=0; i<count; i++)
+		player.Say(SAY_NETMSG, GetPlayerName(critters[i].Id)+": "+""+(critters[i].Stat[ST_LEVEL]));
+}
+
+void dmg(Critter& player, int param0, int param1, int param2)
+{
+	Critter@ target=GetCritter(param0);
+	if(not valid(target)) return;
+	InjureCritter(target, param1, param2, 0, player.Id);
+}
+
+void kill(Critter& player, int param0, int param1, int param2)
+{
+	Critter@ target=GetCritter(param0);
+	if(not valid(target)) return;
+	target.Say(SAY_NETMSG,"Кара небесная поразила вас!");
+	target.ToDead(def(param1,ANIM2_DEAD_PULSE_DUST),player);
+	//target.SetTimeout(TO_REPLICATION, 3);
+}
+
+void body(Critter& player, int param0, int param1, int param2)
+{
+	Critter@ target=GetCritter(def(param0,player.Id));
+	if(not valid(target)) return;
+	target.ChangeCrType(param1);
+}
+
+void anim(Critter& player, int param0, int param1, int param2)
+{
+	Critter@ target=GetCritter(def(param0,player.Id));
+	if(not valid(target)) return;
+	target.Animate(param1, param2, null, true, true);
+}
+
+void testmap(Critter& player, int param0, int param1, int param2)
+{
+	Critter@[] groups;
+	groups.insertLast(@player);
+	uint locid=CreateLocation(
+		def(param1,400),player.WorldX,player.WorldY,groups);
+	Location@ loc=GetLocation(locid);
+	//if(not valid(loc)) GetMapByPid(mapProtoId, skipCount);
+	if(not valid(loc)) {player.Say(SAY_NETMSG,"Location not found"); return;}
+	Map@ map;
+	if(param0!=0)
+		@map=loc.GetMap(param0); else
+		@map=loc.GetMapByIndex(0);
+	if(not valid(map)) return;
+	player.TransitToMap(map.Id, 0);
+}
+
+// Come To Daddy
+void ctd(Critter& player, int param0, int toDaddy, int param2)
+{
+	Critter@ target=GetCritter(param0);
+	if(not valid(target)) return;
+	if(toDaddy==0)
+	{
+		Map@ map=player.GetMap();
+		if(not valid(map)) return;
+		if(not map.IsHexPassed(player.HexX+1, player.HexY)) return;
+		target.TransitToMap(map.Id, player.HexX+1, player.HexY, 0);
+	}
+	else
+	{
+		Map@ map=target.GetMap();
+		if(not valid(map)) return;
+		if(map.IsHexPassed(target.HexX+1, target.HexY)) player.TransitToMap(map.Id, target.HexX+1, target.HexY, 0);
+		else if(map.IsHexPassed(target.HexX, target.HexY+1)) player.TransitToMap(map.Id, target.HexX, target.HexY+1, 0);
+		else if(map.IsHexPassed(target.HexX+1, target.HexY+1)) player.TransitToMap(map.Id, target.HexX+1, target.HexY+1, 0);
+	}
+}
+
+void god(Critter& player, int, int, int)
+{
+	for(uint i=ST_STRENGTH;i<=ST_LUCK;i++) player.StatBase[i]=10;
+	for(uint i=ST_NORMAL_ABSORB;i<=ST_EXPLODE_ABSORB;i++) player.StatBase[i]=100;
+	for(uint i=ST_NORMAL_RESIST;i<=ST_POISON_RESISTANCE;i++) player.StatBase[i]=100;
+	for(uint i=SK_SMALL_GUNS;i<=SK_OUTDOORSMAN;i++) player.SkillBase[i]=300;
+	player.StatBase[ST_MELEE_DAMAGE]=999;
+	player.StatBase[ST_ARMOR_CLASS]=100;
+	player.StatBase[ST_CURRENT_HP]=9999;
+	player.StatBase[ST_MAX_LIFE]=9999;
+}
+
+void mapid(Critter& player, int, int, int)
+{
+	Map@ map=player.GetMap();
+	player.Say(SAY_NETMSG, ""+(map.GetProtoId()));
+}
+
+void tele(Critter& player, int param0, int param1, int param2)
+{
+	Critter@ target=GetCritter(def(param0,player.Id));
+	if(not valid(target)) return;
+	Location @ loc=GetLocationByPid(def(param1,player.GetMap().Id), 0);
+	if(not valid(loc)) {player.Say(SAY_NETMSG,"Location not found"); return;}
+	Map @ map=loc.GetMapByIndex(param2);
+	if(not valid(map)) {
+		player.Say(SAY_NETMSG,"Map index not found");
+		@map=loc.GetMapByIndex(0);
+		if(not valid(map)) return;
+	}
+	target.TransitToMap(map.Id, 0);
+}
+
+void items(Critter& player, int param0, int param1, int param2)
+{
+	Item@[] items;
+	uint count=player.GetMap().GetItems(player.HexX, player.HexY, items);
+	for(uint i=0; i<count; i++)
+		player.Say(SAY_NETMSG, ""+items[i].GetProtoId());
+}
+
+void id(Critter& player, int param0, int param1, int param2)
+{
+	Critter@[] critters;
+	uint count=player.GetMap().GetCrittersHex(player.HexX, player.HexY, FIND_DIST, FIND_LIFE|FIND_ALL, critters);
+	for(uint i=0; i<count; i++)
+		critters[i].Say(SAY_NORM_ON_HEAD, ""+(critters[i].Id));
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ...
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// ~run debug ToMapEntire 42 0 0
+void ToMapEntire(Critter& player, int mapPid, int entire, int skip)
+{
+	Map@ map=::GetMapByPid(mapPid,skip);
+	if(valid(map))
+	{
+		player.TransitToMap(map.Id, entire);
+	}
+	else
+	{
+		player.Say(SAY_NETMSG,"Карта с pid="+mapPid+" не найдена");
+	}
+}
+
+//ищет нпц по диалогу на карте указанного прототипа
+void NpcByDialog(Critter& player, int mapPid, int dialog, int)
+{
+	Map@ map=::GetMapByPid(mapPid,0);
+	if(valid(map))
+	{
+		Critter @[] npc;
+
+		if(map.GetCritters(0, FIND_ALL|FIND_ONLY_NPC, npc)==0)
+		{
+
+			player.Say(SAY_NETMSG, "не найдено нпц с таким диалогом");
+
+		}else{
+			uint idF=0;
+			uint l=0;
+			for(uint i=0, iMax=npc.length(); i<iMax;i++)
+			{
+				if(npc[i].Stat[ST_DIALOG_ID]==dialog)
+				{
+					l++;
+					idF=(idF==0?npc[i].Id:idF);
+				}
+			}
+			player.Say(SAY_NETMSG, "Найдено нпц, в штуках:"+l+" Id первого:"+idF);
+		}
+	}
+
+}
+
+void SetReputation(Critter& cr, int crId, int num, int val)
+{
+	Critter@ toCr=GetCritter(crId);
+	if(valid(toCr)) toCr.ReputationBase[num]=val;
+}
+
+void Siren(Critter & cr, int,int,int)
+{
+	Map @ map=cr.GetMap();
+	if (!valid(map))
+	{
+		cr.Say(SAY_NETMSG, "Невозможно проиграть звук на глобальной карте");
+		return;
+	}
+	map.PlaySound("AIRSIREN.OGG");
+}
+
+void Mirelurk(Critter & cr, int,int,int)
+{
+	cr.GetMap().AddNpc(487, cr.HexX-3, cr.HexY-3, 0, null, null, null);
+}
+
+/*
+~run debug ToMapEntire 137 0 0
+~run debug Siren 0 0 0
+~run debug Mirelurk 0 0 0
+~loadscript debug
+~run debug SetMode 1 527 1
+~run test SetStat
+
+*/
+void SetMode(Critter & cr, int id, int mode, int value)
+{
+	Critter @ crit=GetCritter(id);
+	crit.ModeBase[mode]=value;
+}
+import void AddWave(int waveNum, int mapId, int type) from "mob_wave";
+import void AddSpawnStep(int waveNum, uint8 radius, uint timeNext, uint x, uint y) from "mob_wave";
+import void AddMob(int waveNum, int pid, int team) from "mob_wave";
+import void AddMoveStep(int waveNum, uint8 radius, uint timeNext, uint x, uint y) from "mob_wave";
+import void AddAttackStep(int waveNum, uint8 radius, uint timeNext, uint timeRepeat, uint x, uint y) from "mob_wave";
+import void AddDeleteStep(int waveNum, uint8 radius, uint timeNext) from "mob_wave";
+import void _StartWave(int waveNum) from "mob_wave";
+import void AddTransitStep(int waveNum, uint8 radius, uint timeNext, uint x, uint y, uint mapId) from "mob_wave";
+
+
+void NewWave(Critter& cr, int num, int type, int)
+{
+	AddWave(num, cr.GetMap().Id, type);
+}
+
+void AddStepSpawn(Critter & cr, int num, int radius, int timeNext)
+{
+	AddSpawnStep(num, radius, timeNext, cr.HexX, cr.HexY);
+}
+
+void AddStepMove(Critter & cr, int num, int radius, int timeNext)
+{
+	AddMoveStep(num, radius, timeNext, cr.HexX, cr.HexY);
+}
+
+void AddStepAttack(Critter & cr, int num, int radius, int timeNext)
+{
+	AddAttackStep(num, radius, timeNext, 10, cr.HexX, cr.HexY);
+}
+
+void AddStepDelete(Critter & cr, int num, int radius, int timeNext)
+{
+	AddDeleteStep(num, radius, timeNext);
+}
+
+void AddMob(Critter& cr, int num, int pid, int team)
+{
+	AddMob(num, pid, team);
+}
+
+void AddStepTransit(Critter& cr, int num, int radius, int timeNext)
+{
+	AddTransitStep(num, radius, timeNext, cr.HexX, cr.HexY, cr.GetMap().Id);
+}
+
+void BeginWave(Critter& cr, int num, int,int)
+{
+	_StartWave(num);
+}
+
+/*
+~run debug NewWave 1 3 0
+~run debug AddStepSpawn 1 10 10
+~run debug AddStepMove 1 10 10
+~run debug AddStepAttack 1 10 10
+
+~run debug AddMob 1 111 27~run debug AddStepDelete 1 10 10
+~run debug BeginWave 1
+*/
+
+void NetId(Critter & player, int searchRadius, int, int)
+{
+	Critter @[] crits;
+	player.GetMap().GetCrittersHex(player.HexX, player.HexY, searchRadius, FIND_ALL, crits);
+	player.Say(SAY_NETMSG, "my info: HexX="+player.HexX+"; HexY="+player.HexY+"; SearchRadius="+searchRadius);
+	for(uint i=0, iMax=crits.length(); i<iMax; i++)
+	{
+		player.Say(SAY_NETMSG,"Critter Pid:"+crits[i].GetProtoId()+"; Dialog:"+crits[i].Stat[ST_DIALOG_ID]+"; Id:"+ crits[i].Id);
+	}
+	player.Say(SAY_NETMSG,"Total: "+crits.length());
+}
+
+void SetCritParam(Critter & player, int id, int param, int value)
+{
+	Critter @ cr=GetCritter(id);
+	if(valid(cr))
+	{
+		cr.ParamBase[param]=value;
+	}
+}
+
+void GetCritParam(Critter & player, int id, int param, int value)
+{
+	Critter @ cr=GetCritter(id);
+	if(valid(cr))
+	{
+		player.Say(SAY_NETMSG,"Param #" + param+" val="+cr.Param[param]);
+	}
+}
+
+void ShowLocation(Critter & player, int, int, int)
+{
+	Map @ map=player.GetMap();
+	if(valid(map))
+	{
+		Location @ loc=map.GetLocation();
+		if(valid(loc) && !loc.Visible)
+			loc.Visible=true;
+	}
+}
+
+void AddMine(Critter& cr, int, int, int)
+{
+	Item@ item=cr.GetMap().AddItem(cr.HexX+1, cr.HexY+1,PID_ACTIVE_MINE,1);
+	item.SetScript("_MineInit");
+}
+
+void _MineInit(Item& item, bool firstTime)
+{
+item.TrapValue=150;
+SETFLAG(item.Flags,ITEM_TRAP);
+	item.SetEvent(ITEM_EVENT_WALK,"explode@_MineWalk");
+		item.Update();
+}
+
+import void SkillUp(Critter& player, int skill) from "stdlib";
+
+void UpSkill(Critter& cr, int crId, int skill, int)
+{
+	SkillUp(GetCritter(uint(crId)), skill);
+}
+
+void CancelInvul(Critter& player, int,int,int)
+{
+	Map@ map=player.GetMap();
+	if(valid(map))
+	{
+		Critter@[] critters;
+		if(map.GetCritters(0, FIND_ALL|FIND_ONLY_NPC, critters) > 0)
+		{
+			for(uint i=0, iMax=critters.length(); i<iMax; i++)
+			{
+				Critter@ cr=critters[i];
+				if(valid(cr))
+					cr.ModeBase[MODE_INVULNERABLE]=0;
+			}
+		}
+	}
+	player.Say(SAY_NETMSG,"Success");
+}
+
+void PatchBAX(Critter& cr, int, int, int)
+{
+	Map@[] maps;
+	Item@[] items;
+	GetAllMaps (MAP_bax_underground, maps);
+	for(uint i=0, l=maps.length(); i<l;i++)
+	{
+		Map@ map=maps[i];
+		if(valid(map))
+			map.GetItems(PID_POWERED_ARMOR, items);
+	}
+	for(uint i=0, l=items.length(); i<l;i++)
+	{
+		Item@ item=items[i];
+		if(valid(item))
+			DeleteItem(item);
+	}
+}
+	
+import void RunGameEvent(uint idx) from "game_event";
+//import void RunGameEvent(uint idx, uint time) from "game_event";
+import void StopGameEvent(uint idx) from "game_event";
+	
+	void RunGameEvent(Critter& cr, int idx, int, int)
+		{
+RunGameEvent(idx);
+	}
+	
+	void RunGameEventTime(Critter& cr, int idx, int time, int)
+	{
+		//RunGameEvent(idx, uint(time));
+	}
+	
+	void StopGameEvent(Critter& cr, int idx, int, int)
+	{
+		StopGameEvent(idx);
+	}
+
+void PatchBar(Critter& cr, int, int, int)
+{
+	Map@ map=GetMapByPid(MAP_newr1,0);
+	if(valid(map))
+	{
+		int[] params={ST_DIALOG_ID, 782, ST_TEAM_ID, 2, ST_BAG_ID, 96};
+		map.AddNpc(499, 56, 29, 1, params, null, null);
+	}
+}
+
+void GetParam (Critter& cr, int val0, int, int)
+{
+	Log("Param="+cr.Param[val0]);
+}
+
+//~run debug damd 5000000 6000000 0
+void damd(Critter& player, int param0, int param1, int param2)
+{
+	for(int i=param0; i<param1; i++)
+		if(not valid(GetCritter(i)))
+			EraseAnyData("mob_in_enc"+i);
+}
+
+void dtl(Critter& cr, int param0, int param1, int param2)
+{
+	DelThisLoc(cr, param0, param1, param2);
+}
+
+//~run debug DelThisLoc 2 0 0
+void DelThisLoc(Critter& cr, int param0, int param1, int param2)
+{
+	Map@ map=cr.GetMap();
+	if(not valid(map)) 
+	{
+		Log("Карта не найдена");
+		return;
+	}
+	Location@ loc=map.GetLocation();
+	if(not valid(loc))
+	{
+		Log("Локация не найдена");
+		return;
+	}
+	
+	loc.AutoGarbage=true;
+	Log("Установлено автоудаление для локации Id="+loc.Id);
+	
+	if(param0>0)
+	{		
+		Item@[] items;
+		for(uint i=ITEM_TYPE_ARMOR; i<ITEM_TYPE_KEY+1; i++)
+			map.GetItemsByType(i,items);
+		for(uint i=0, iMax=items.length(); i<iMax; i++)
+		if(FLAG(items[i].Flags, ITEM_GECK))
+		{
+			UNSETFLAG(items[i].Flags,ITEM_GECK);
+			Log("Убран флаг ГЕКК для предмета PID="+loc.Id);
+		}
+	}
+	
+	if(param0>1)
+	{
+		Critter@[] critters;
+			if(map.GetCritters(0,FIND_ALL, critters)>0) 
+				for(uint i=0, iMax=critters.length(); i<iMax; i++)
+					if(critters[i].ModeBase[MODE_GECK]!=0)
+					{
+						critters[i].ModeBase[MODE_GECK]==0;
+						Log("Убран модификатор ГЕКК для криттера с Id="+critters[i].Id);
+					}
+	}
+}
+
+void SetAutoGarbage(Critter& cr, int param0, int param1, int param2)
+{
+	Location@ loc;
+	if(param0==0)
+	{
+		Map@ map=cr.GetMap();
+		if(not valid(map)) 
+		{
+			Log("Карта не найдена");
+			return;
+		}
+		@loc=map.GetLocation();
+	}
+	else  @loc=GetLocation(param0);
+	
+	if(not valid(loc))
+	{
+		Log("Локация не найдена");
+		return;
+	}
+	
+	loc.AutoGarbage=(param1==1?true:false);
+	
+	if(param1==1) Log("Установлено автоудаление для локации Id="+loc.Id);
+	else Log("Отменено автоудаление для локации Id="+loc.Id);
+}
+
+// Статистика по перкам на сервере
+//~run debug perkStat 1 0 0
+void perkStat(Critter& cr, int param0, int param1, int param2)
+{	
+	Log("=====================================");
+	uint[] perkGlobalStat;
+	GetAnyData("perk_global_stat", perkGlobalStat);
+
+	uint16 index=0;
+	if(param0==0)
+	{
+		for(uint i=0, iMax=perkGlobalStat.length()/2; i<iMax; i++)
+		{
+			Log("| Перк "+perkGlobalStat[index]+": "+perkGlobalStat[index+1] + " |");
+			index+=2;
+		}
+		return;
+	}
+
+	uint bufer=0;
+	uint[] perkConsts;
+	uint[] perkCounts;
+
+	perkConsts.resize(perkGlobalStat.length()/2);
+	perkCounts.resize(perkGlobalStat.length()/2);
+
+	for(uint i=0, iMax=perkConsts.length(); i<iMax; i++)
+	{
+		perkConsts[i]=perkGlobalStat[i*2];
+		perkCounts[i]=perkGlobalStat[(i*2)+1];
+	}
+
+	for(uint j=0; j<2; j++)
+		for(uint i=1, iMax=perkCounts.length(); i<iMax; i++)
+		{
+			bufer=perkCounts[i];
+			if(bufer>perkCounts[i-1])
+			{
+				perkCounts[i]=perkCounts[i-1];
+				perkCounts[i-1]=bufer;
+
+				bufer=perkConsts[i];
+				perkConsts[i]=perkConsts[i-1];
+				perkConsts[i-1]=bufer;
+				i=1;
+			}
+		}
+
+	for(uint i=0, iMax=perkCounts.length(); i<iMax; i++)
+	{
+		Log("| Перк "+perkConsts[i]+": "+perkCounts[i] + " |");
+	}
+	Log("=====================================");
+}
+
+// Увидеть все локации на сервере
+//~run debug sal 0 0 0
+void sal(Critter& cr, int npcId, int val, int entnum)
+{
+	Location@[] locs;
+	for(uint i=LOCATION_Den; i<LOCATION_NewbieLocation+1; i++)
+	{
+		GetAllLocations(i, locs);
+		for(uint j=0, jMax=locs.length(); j<jMax; j++)
+			if (!cr.IsKnownLoc(true, locs[j].Id)) cr.SetKnownLoc(true, locs[j].Id);
+	}
+}
+
+// Создать предмет и применить на него рандомизацию
+//~run debug rpi 0 0 0
+void rpi(Critter& cr, int val0, int val1, int val2)
+{
+	Item@ item=cr.AddItem(val0,1);
+	InitRandomisationItem(item, true, cr, "");
+}
+
+void ChengeLocalVar(Critter& cr, int id, int number, int value)
+{
+	Critter@ player=GetCritter(id);
+	if (!valid(player)) return;
+	GameVar@ gv=GetLocalVar(number, player.Id);
+	if (!valid(gv)) return;
+	gv=value;	
+}
+
+void ValueLocalVar(Critter& cr, int id, int number, int value)
+{
+	Critter@ player=GetCritter(id);
+	if (!valid(player)) return;
+	GameVar@ gv=GetLocalVar(number, player.Id);
+	if (!valid(gv)) return;
+	Log("Val="+gv.GetValue());
+}
+
+//~getaccess admin hh
+//~run debug MarkCritter2 1 41 0
+void MarkCritter2(Critter& cr, int crId, int pid, int color)
+{
+	Item@ item=cr.AddItem(pid, 1);
+	AllowSlot(17,"noini");
+	cr.MoveItem(item.Id, 1, 17);
+	item.LightIntensity=Random(30,80);
+	item.LightColor=(color!=0?color:Random(0,0xFFFFFF));
+	item.LightDistance=5;
+	SETFLAG(item.Flags,ITEM_LIGHT);
+	item.Update();
+}
+
+void MarkCritter(Critter& cr, int crId, int pid, int color)
+{
+	
+	Item@ item=cr.AddItem(pid, 1);
+	AllowSlot(17,"");
+	cr.MoveItem(item.Id, 1, 17);
+	item.LightIntensity=Random(30,80);
+	item.LightColor=(color!=0?color:Random(0,0xFFFFFF));
+	item.LightDistance=5;
+	SETFLAG(item.Flags,ITEM_LIGHT);
+	SETFLAG(item.Flags,ITEM_HIDDEN);
+	item.Update();
+}
+
+// ~run debug AddNpc 32 10121 0
+void AddNpc(Critter& cr, int pid, int dialog, int)
+{
+	if(pid<=0 || dialog<=0)
+		return;
+	cr.GetMap().AddNpc(pid, cr.HexX - 3, cr.HexY - 2, 0, null, null, null).StatBase[ST_DIALOG_ID]=dialog;	
+}
+
+void AddTG(Critter& cr, int param0, int param1, int param2)
+{
+	#define TEAM_Bandit                  			   (8)
+	#define BAG_Sniper1                                (270)
+	#define BAG_Term1                                  (276)
+	
+	Map @ map=cr.GetMap();
+	if (!valid(map)) return;
+	int bag = BAG_Sniper1;
+	int[] params={ST_TEAM_ID, TEAM_Bandit, ST_NPC_ROLE, 17, ST_BAG_ID, ((Random(1,3)>2)? BAG_Sniper1:BAG_Term1)};
+	for(int i=0, j=0, dy=0; i<param0; i++)
+	{
+		map.AddNpc(222, cr.HexX+j, cr.HexY+dy, Random(0,5), params, null, "encounter_npc@_NpcInit");
+		j++;
+		if(j==param1)
+		{
+			dy+=param2;
+			j=0;
+		}
+	}
+	Critter@[] npcs;
+	uint count = map.GetCritters(0,FIND_ALL|FIND_ONLY_NPC,npcs);
+	Log("Count="+count);
+}
+
+void startTest(Critter& cr, int param0, int param1, int param2)
+{
+	Map @ map=cr.GetMap();
+	Critter@[] npcs;
+	map.GetCritters(0,FIND_ALL|FIND_LIFE_AND_DEAD,npcs);
+	for(uint i=0; i<npcs.length(); i++)
+	{
+		npcs[i].ModeBase[527]=1;
+		npcs[i].ModeBase[522]=1;
+		npcs[i].ModeBase[MODE_HIDE]=1;
+		if(npcs[i].IsNpc())
+			npcs[i].AddTimeEvent("cte_Go",REAL_SECOND(Random(3,6)),0);
+	}
+		
+}
+
+import bool AddWalkPlane(Critter& npc, uint priority, uint16 hexX, uint16 hexY, uint8 dir, bool run, uint cut) from "npc_planes";
+uint cte_Go(Critter& cr, int a, uint& rate)
+{
+	AddWalkPlane(cr, 100, cr.HexX+Random(-5,5), cr.HexY+Random(-5,5), Random(0,5), false, 1);
+	uint res = Random(4,7);
+	return res;
+}

@@ -1,0 +1,469 @@
+[comment]
+Ваши комментарии / Your comments.
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 0 #
+11 1010 D _param p ST_INTELLECT < 4 #
+2 1020 D _var n name_mem_npc_player = 0 D _var p vc_lynet_or_maclure = 0 R _var n name_mem_npc_player = 1 #
+10 1030 D _var n name_mem_npc_player = 1 D _var p vc_lynet_or_maclure = 0 #
+17 1040 D _var p vc_lynet_or_maclure = 1 D _script dialog@d_TimeoutOk 0  D _var p q_vc_lynett_scare_newcomers = 0 #
+21 1050 D _var p vc_lynet_or_maclure = 1 D _var p q_vc_lynett_scare_newcomers > 0 D _var p q_vc_lynett_scare_newcomers < 5 #
+23 1060 D _var p vc_lynet_or_maclure = 1 D _script dialog@d_TimeoutOk 0  D _var p vc_lynett_prisoner_id = 0 D _var p q_vc_lynett_arest = 0 D _var p q_vc_lynett_scare_newcomers = 5 R _script vc_lynnet@r_TrySelectPrisoner 0  #
+23 1070 D _var p vc_lynet_or_maclure = 1 D _script dialog@d_TimeoutOk 0  D _var p vc_lynett_prisoner_id > 0 D _var p q_vc_lynett_arest = 0 D _var p q_vc_lynett_scare_newcomers = 5 #
+27 1080 D _var p vc_lynet_or_maclure = 1 D _var p q_vc_lynett_arest < 5 D _var p q_vc_lynett_arest > 0 #
+29 1090 D _var p vc_lynet_or_maclure = 1 D _var p q_vc_lynett_arest = 5 D _script dialog@d_TimeoutOk 0  D _var p q_vc_lynett_forgery = 0 #
+36 1100 D _var p vc_lynet_or_maclure = 1 D _var p q_vc_lynett_forgery > 0 D _var p q_vc_lynett_forgery < 5 #
+38 1110 D _var p vc_lynet_or_maclure = 1 D _var p q_vc_lynett_forgery = 5 #
+44 1120 D _script dialog@d_NotTimeoutOk 0  D _var p vc_lynet_or_maclure = 1 #
+45 1130 D _var p vc_lynet_or_maclure = 2 @
+2 2000 None 0 #
+47 2010 D _var p q_arroyo_letter_to_linnett = 1 D _item p PID_LETTER_TO_LIN > 0 #
+3 2020 #
+4 2030 #
+0 2040 @
+3 3000 None 0 #
+4 3010 #
+5 3020 #
+6 3030 #
+0 3040 @
+4 4000 None 0 #
+3 4010 #
+0 4020 @
+5 5000 None 0 #
+3 5010 #
+0 5020 @
+6 6000 None 0 #
+7 6010 #
+0 6020 @
+7 7000 None 0 #
+8 7010 #
+3 7020 #
+0 7030 @
+8 8000 None 0 #
+9 8010 #
+0 8020 @
+9 9000 None 0 #
+0 9010 @
+10 10000 None 0 #
+47 10010 D _var p q_arroyo_letter_to_linnett = 1 D _item p PID_LETTER_TO_LIN > 0 #
+3 10020 #
+4 10030 #
+0 10040 #
+12 10050 D _param p ST_INTELLECT > 5 D _param p REPUTATION_VAULT_CITY > 9 D _param p SK_SPEECH > 79 D _param p SK_OUTDOORSMAN > 99 D _param p KILL_MEN > 59 D _var p vc_lynet_or_maclure = 0 #
+48 10060 D _param p REPUTATION_VAULT_CITY < 9 #
+50 10070 D _param p REPUTATION_VAULT_CITY > 8 @
+11 11000 None 0 @
+12 12000 None 0 #
+13 12010 R _var p vc_lynett_talk = 1 #
+0 12020 @
+13 13000 None 0 #
+14 13010 #
+0 13020 @
+14 14000 None 0 #
+0 14010 #
+15 14020 R _var p vc_lynet_or_maclure = 2 R _var p vc_lynett_refuse = 1 #
+16 14030 R _var p vc_lynet_or_maclure = 1 R _script dialog@r_SetUniqTO 1 1440 @
+15 15000 None 0 @
+16 16000 None 0 #
+0 16010 @
+17 17000 None 0 #
+18 17010 #
+0 17020 @
+18 18000 None 0 #
+19 18010 @
+19 19000 None 0 #
+20 19010 #
+0 19020 @
+20 20000 None 0 #
+0 20010 R _var p q_vc_lynett_scare_newcomers = 1 @
+21 21000 None 0 #
+0 21010 #
+22 21020 D _var p q_vc_lynett_scare_newcomers = 4 @
+22 22000 None 0 #
+0 22010 D _var p q_vc_lynett_scare_newcomers = 4 R _item p PID_COMBAT_SHOTGUN + 1 R _item p PID_BOTTLE_CAPS + 750 R _param p ST_EXPERIENCE + 2150 R _var p q_vc_lynett_scare_newcomers = 5 R _script dialog@r_SetUniqTO 1 2880 @
+23 23000 None 0 #
+24 23010 #
+0 23020 @
+24 24000 None 0 #
+25 24010 @
+25 25000 vc_lynnet@dlg_PrisonerName 0 #
+26 25010 R _var p q_vc_lynett_arest = 1 #
+0 25020 R _var p vc_lynett_prisoner_id = 0 @
+26 26000 None 0 #
+0 26010 @
+27 27000 vc_lynnet@dlg_PrisonerName 0 #
+0 27010 #
+28 27020 D _var p q_vc_lynett_arest = 4 #
+46 27030 D _var p q_vc_lynett_arest = 1 R _var p vc_lynett_prisoner_id = 0 R _var p q_vc_lynett_arest = 0 @
+28 28000 None 0 #
+0 28010 D _var p q_vc_lynett_arest = 4 R _param p ST_EXPERIENCE + 3000 R _item p PID_BOTTLE_CAPS + 1000 R _item p PID_SUPER_SLEDGE + 1 R _item p PID_PANCOR_JACKHAMMER + 1 R _var p q_vc_lynett_arest = 5 R _script dialog@r_SetUniqTO 1 2880 @
+29 29000 None 0 #
+30 29010 #
+0 29020 @
+30 30000 None 0 #
+31 30010 #
+32 30020 @
+31 31000 None 0 #
+33 31010 @
+32 32000 None 0 #
+33 32010 @
+33 33000 None 0 #
+34 33010 #
+35 33020 @
+34 34000 None 0 #
+0 34010 R _var p q_vc_lynett_forgery = 1 R _script vc_lynnet@r_AddDocs 0  @
+35 35000 None 0 #
+0 35010 R _var p q_vc_lynett_forgery = 1 R _script vc_lynnet@r_AddDocs 0  @
+36 36000 None 0 #
+0 36010 #
+37 36020 D _var p q_vc_lynett_forgery = 2 R _var p q_vc_lynett_forgery = 4 R _script vc_lynnet@r_AddGuards 0  #
+35 36030 D _var p q_vc_lynett_forgery = 1 D _item p PID_FAKE_LETTER = 0 D _script dialog@d_TimeoutOk 0  R _script dialog@r_SetUniqTO 1 7200 @
+37 37000 None 0 #
+0 37010 @
+38 38000 None 0 #
+0 38010 #
+39 38020 D _var p q_vc_lynett_forgery = 5 @
+39 39000 None 0 #
+40 39010 D _item p PID_FAKE_LETTER > 0 #
+51 39020 D _item p PID_FAKE_LETTER = 0 @
+40 40000 None 0 #
+41 40010 @
+41 41000 None 0 #
+43 41010 D _var p vc_citizenship = 1 #
+42 41020 D _var p vc_citizenship = 0 @
+42 42000 None 0 #
+0 42010 D _var p q_vc_lynett_forgery = 5 R _param p ST_EXPERIENCE + 4000 R _param p REPUTATION_VAULT_CITY + 3 R _item p PID_BOTTLE_CAPS + 5000 R _item p PID_MEGA_POWER_FIST + 1 R _item p PID_SUPER_SLEDGE + 1 R _var p vc_citizenship + 1 R _var p q_vc_lynett_forgery = 6 R _item p PID_FAKE_LETTER = 0 @
+43 43000 None 0 #
+0 43010 D _var p q_vc_lynett_forgery = 5 R _param p ST_EXPERIENCE + 4000 R _param p REPUTATION_VAULT_CITY + 3 R _item p PID_BOTTLE_CAPS + 5000 R _item p PID_MEGA_POWER_FIST + 1 R _item p PID_SUPER_SLEDGE + 1 R _var p q_vc_lynett_forgery = 6 R _item p PID_FAKE_LETTER = 0 @
+44 44000 None 0 #
+0 44010 @
+45 45000 None 0 #
+0 45010 @
+46 46000 None 0 #
+0 46010 R _script dialog@r_SetUniqTO 1 20 @
+47 47000 None 0 #
+0 47010 @
+48 48000 None 0 #
+49 48010 @
+49 49000 None 0 @
+50 50000 None 0 @
+51 51000 None 0 #
+40 51010 &
+
+[russ]
+{100}{}{Линетт}
+{200}{}{Вы видите строгую женщину в очках с толстыми стеклами, одетую в спортивный костюм Города Убежища. Судя по ее манерам, она кажется важной персоной.}
+{210}{}{Вы видите Первую Гражданку Линетту. Она выглядит чрезвычайно занятой.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{дурак}
+{1020}{}{не знаком}
+{1030}{}{знаком}
+{1040}{}{Согласен помогать, то есть после диалога 16}
+{1050}{}{получил квест Гнёт, тоесть после диалога 20}
+{1060}{}{Выполнил квест Гнёт. Цель ареста пока неизвестна}
+{1070}{}{Выполнил квест Гнёт. Цель ареста известна}
+{1080}{}{Получил квест Арест}
+{1090}{}{Выполнил квест Арест}
+{1100}{}{Получил задание Подстава}
+{1110}{}{Провел подставу}
+{1120}{}{таймаут после одного из заданий}
+{1130}{}{Помогает Макклюру}
+{2000}{}{Добрый день, незнакомец. Я Первая Гражданка Линетт. Могу я узнать, что вас сюда привело?}
+{2010}{}{У меня для вас письмо. Тодд Стьюард, Арройо.}
+{2020}{}{У меня есть к вам несколько вопросов.}
+{2030}{}{Как можно стать гражданином?}
+{2040}{}{Да так просто. Приношу свои извинения за беспокойство, Первая Гражданка. Счастливо.}
+{3000}{}{Для не-гражданина вы очень многого от меня требуете.}
+{3010}{}{А как можно получить гражданство?}
+{3020}{}{Это Город Убежища? Почему вы не живете в Убежище?}
+{3030}{}{Почему вы поощряете рабство?}
+{3040}{}{Ладно, забудем. До свидания.}
+{4000}{}{Вы можете поговорить с проконсулом Грегори. Это он проводит экзамены на гражданство. Вы найдете его в конференц-зале, дальше по коридору.}
+{4010}{}{Ясно. Можно задать еще несколько вопросов?}
+{4020}{}{Думаю, я пойду поговорю с проконсулом. До свидания.}
+{5000}{}{Нет, нет, мы не живем в Убежище. Это была временная мера, чтобы защитить во время войты немногих избранных и помочь им в строительстве нового мира.}
+{5010}{}{Оу. Ясно. Позвольте задать еще один вопрос?}
+{5020}{}{Все ясно. До свидания.}
+{6000}{}{Почему мы поощряем рабство? Система существует много лет и прекрасно работает. Обе стороны от этого выигрывают.}
+{6010}{}{Но... вы же покупаете и продаете людей, словно браминов. Неужели вас это не смущает?}
+{6020}{}{Я услышал достаточно. До свидания.}
+{7000}{}{Они не рабы, они наши "слуги". Мы даем им еду, одежду, кров и назначение. Мы даем им жизнь.}
+{7010}{}{Послушайте, рабство есть рабство, и оно дурно пахнет, какими благостными словами его ни прикрывай.}
+{7020}{}{Э... конечно. У меня есть еще вопросы.}
+{7030}{}{Хмм. Как скажете. Я пожалуй пойду.}
+{8000}{}{Думаю, вам пора уходить. Советую не особенно задерживаться в Городе Убежища.}
+{8010}{}{Прежде чем я уйду, я хочу задать еще несколько вопросов...}
+{8020}{}{Хорошо. Я ухожу.}
+{9000}{}{Вы хоть представляете себе, как я занята? Я управляю этим городом, мое время расписано по минутам, и я не намерена его тратить на вас.}
+{9010}{}{Что ж, ладно, Первая Гражданка. Счастливо вам.}
+{10000}{}{Да? Чем я могу вам помочь?}
+{10010}{}{У меня для вас письмо. Тодд Стьюард, Арройо.}
+{10020}{}{У меня есть к вам несколько вопросов.}
+{10030}{}{Как можно стать гражданином?}
+{10040}{}{Да так просто. Приношу свои извинения за беспокойство, Первая Гражданка. Счастливо.}
+{10050}{}{Мне очень интересно узнать о ситуации в городе.}
+{10060}{}{У вас нет никакой работы? Ну, чтобы с кровь... Для путешественников по Пустоши, я хочу сказать.}
+{10070}{}{У вас нет никакой работы? Ну, чтобы с кровь... Для путешественников по Пустоши, я хочу сказать.}
+{11000}{}{Боже, тебя кто сюда пустил?@@Вон от сюда!@@Кыш!@@А ну иди от сюда!}
+{12000}{}{Ну хорошо. Я поясню  тебе ситуацию в городе и мою позицию. К нам поналезло выше крыши всякой пидорасни. Город скоро треснет от всякого сброда. Эти пришлые засранцы не хотят нормально работать, зато постоянно чего-то требуют. Прав каких-то, толерантности,  повышенного внимания… Кроме того, ещё эти сраные мертвяки из Гекко со своей монополией на энергию …}
+{12010}{}{Ого, ничего себе. Это всё?}
+{12020}{}{Достаточно. Мне хватило. [Выход]}
+{13000}{}{Это даже не половина. Есть ещё этот  МакКлюр! Вечно суёт нос не в своё дело, пытается всё повернуть на свой лад. Старый мерзавец! Я давно бы всех недовольных поставила раком, если б не он. Ты @sex@|говорил||говорила| с ним? С этим  червяком? Поговори.}
+{13010}{}{- Да, уже @sex@|говорил||говорила|.}
+{13020}{}{Непременно поговорю. Вот, прямо сейчас. [Выход]}
+{14000}{}{Вот как? И? Кто прав, по-твоему?}
+{14010}{}{Мне нужно ещё подумать. [Выход]}
+{14020}{}{Извините, но его позиция мне кажется правильной. Я поддержу его.}
+{14030}{}{Я хочу помочь вам переставить всех недовольных раком! Давно @sex@|хотел||хотела| чем-нибудь таким заняться!}
+{15000}{}{Ты поддержишь этого хорька? Ну, ты пожалеешь об этом, сволочь! Вон!}
+{16000}{}{Ну что ж, твоя помощь пригодится. Приходи  через  день, поговорим.}
+{16010}{}{Как скажете.}
+{17000}{}{Ты  @sex@|готов||готова|  помогать мне?}
+{17010}{}{Канечна! Кого тут первого мочить?}
+{17020}{}{Не, я краше пойду...}
+{18000}{}{Так, мочить пока никого не надо. Мочишь будешь, когда  я прикажу, не раньше. А вот прижопить пару-тройку  оборзевших надо бы.}
+{18010}{}{Продолжайте.}
+{19000}{}{В пригороде у нас полный бардак. Понаехавшие права качают. Мало им того, что мы им разрешаем там жить, вместо того, чтоб продать на рудники. Скоты неблагодарные….}
+{19010}{}{Угу, скоты, точно. Чё сделать-то надо?}
+{19020}{}{Что-то не то я делаю. [Выход]}
+{20000}{}{Чё сделать? Да пояснить им политику партии, да так, чтоб обосрались от страха. И поняли, где их место, и кто они такие здесь есть. Гм. Бить никого нельзя. Ну это пока. Короче, выберешь троих понаехавших и проведешь внушение, чтоб они забыли как свой поганый рот открывать. Потом  доложишь. Всё ясно?}
+{20010}{}{Яснее некуда.}
+{21000}{}{Как там моё поручение?}
+{21010}{}{Я ещё работаю. [Выход]}
+{21020}{}{Всё в лучшем виде. Они больше рта не откроют. }
+{22000}{}{Ну что ж, хорошо. Вот возьми. Загляни ко мне позже, через пару дней, будет новая работа.}
+{22010}{}{Благодарю. [Выход]}
+{23000}{}{У меня есть для тебя ещё задание.}
+{23010}{}{Слушаю вас }
+{23020}{}{Сейчас мне некогда, я попозже подойду. [Выход]}
+{24000}{}{У этого старого козла МакКлюра  есть поддержка в городе. Иначе  я давно бы с ним разобралась. Мы должны лишить его этой поддержки.}
+{24010}{}{Как именно?}
+{25000}{}{Есть такой гражданин - @lex name@. Так вот - нужно отправить его в тюрьму. На время. За что - потом придумаем, когда он будет  сидеть.}
+{25010}{}{Нужно в тюрьму - отправим в тюрьму.}
+{25020}{}{Эй, мы так не договаривались!}
+{26000}{}{Мне всё равно, как ты это сделаешь. Не пойдет добром - заставь силой. Только не убивать.}
+{26010}{}{С  удовольствием. [Выход]}
+{27000}{}{Как  там моё задание? До каких пор @lex name@ будет разгуливать на свободе?}
+{27010}{}{Я ещё работаю. [Выход]}
+{27020}{}{Как заказывали. Товарищ отправлен на нары. }
+{27030}{}{А других кандидатов нет? К этому подобраться не могу...}
+{28000}{}{Замечательно. Возьми это.}
+{28010}{}{Благодарю. [Выход]}
+{29000}{}{Ты @sex@|готов||готова|  к работе?}
+{29010}{}{Да, конечно. Затем  я здесь.}
+{29020}{}{У меня пока нет времени на это. [Выход]}
+{30000}{}{[В раздумье бурчит себе под нос] А не пора  ли нам замахнуться на Вильяма нашего Шекспира…}
+{30010}{}{Чего? Не @sex@|понял||поняла|… }
+{30020}{}{- …И замахнёмся!}
+{31000}{}{Ладно, неважно. Это я так. Слушай…}
+{31010}{}{Слушаю.}
+{32000}{}{Хе, всё верно. Молодец. Задание такое.}
+{32010}{}{Слушаю.}
+{33000}{}{Я тут подготовила кое-какие бумаги. Эти бумаги могут здорово скомпрометировать МакКлюра, если их найдут у него. Например в шкафу . Если б эти бумаги туда попали незаметно для него…}
+{33010}{}{В шкафу? Хорошо, их найдут в шкафу. Я смогу пройти туда незаметно.}
+{33020}{}{Как это - попали к нему в шкаф незаметно?}
+{34000}{}{Люблю понятливых. Бери бумаги. Отнесешь - немедленно ко мне.}
+{34010}{}{Я @sex@|понял||поняла|. Как сделаю - зайду к вам.}
+{35000}{}{Не тупи.  Господи, с какими ослами приходится работать. Так, твоё задание - взять бумаги, скрытно попасть в дом МакКлюра, подложить бумаги ему в шкаф. Вернуться и доложить мне.}
+{35010}{}{Я @sex@|понял||поняла|. Как сделаю - зайду к вам.}
+{36000}{}{Ну как?}
+{36010}{}{Пока не сделано...}
+{36020}{}{Всё готово.}
+{36030}{}{Я... Я потерял@sex@|||а| письмо...}
+{37000}{}{Ну хорошо. Теперь нельзя терять времени. Там ждут двое гвардейцев. Пойдут как свидетели. Вот ордер на обыск. Предьявишь его МакКлюру. Найдешь документы, хехе. Гвардейцы должны засвидетельствовать. Собственно все. Потом ко мне.}
+{37010}{}{Ясно. Выполняю.}
+{38000}{}{Ну  что?}
+{38010}{}{Работаю над этим...}
+{38020}{}{Всё получилось, как вы и хотели. Бумаги найдены, свидетели имеются.}
+{39000}{}{Отлично, отлично. Давай сюда бумаги.  Теперь у меня есть все основания обойтись с ним круто. Даже в тюрьму отправить. Ладно, это я обдумаю. В любом случае, число его сторонников теперь значительно сократится. И они уже не будут серьёзным препятствием для меня.
+}
+{39010}{}{Это конечно всё хорошо и даже замечательно. Политика. А что я с этого буду иметь?}
+{39020}{}{Ээээ... Дело в том... Что это письмо, оно как бы... Того... В общем, у меня его нет!}
+{40000}{}{[Бурчит под  нос] …пулю в голову. Весьма способствует…
+}
+{40010}{}{Что-что?}
+{41000}{}{А, ничего . Это я так. Обдумываю варианты. Вдруг, к примеру, ты захочешь кому-то рассказать о наших делах.
+}
+{41010}{}{Да что вы! Я - могила!}
+{41020}{}{Да что вы! Я - могила!}
+{42000}{}{Угу. Лучше молчать, как могила, чем в ней лежать. Помни об этом. Ну а в награду - вот возьми. Больше не задерживаю. Будешь проходить мимо - проходи. И да, теперь у тебя есть гражданство города.
+}
+{42010}{}{Непременно[выход]}
+{43000}{}{Угу. Лучше молчать, как могила, чем в ней лежать. Помни об этом. Ну а в награду - вот возьми. Больше не задерживаю. Будешь проходить мимо - проходи.}
+{43010}{}{Непременно.}
+{44000}{}{Не сейчас. Позже приходи.@@Ты слишком рано. Увидимся завтра.@@Потом. Все дела потом.}
+{44010}{}{Загляну позже.@@Поня@sex@|л||ла|. Ухожу.@@Так и сделаю.@@Прошу прощения. }
+{45000}{}{[Глаза Линетт горят откровенной ненавистью] Еще один жополиз Мак Клюра. А ну, прочь отсюда! Охрана!}
+{45010}{}{Вы меня не правильно поняли, Первый Гражданин...}
+{46000}{}{Увидимся позже. Мои люди сейчас разрабатывают одного предателя, вероятно, понадобится и твоя помощь. Но, потом.}
+{46010}{}{Хорошо, я вернусь.}
+{47000}{}{Передайте его проконсулу Грегори, он занимается моей почтой. А теперь уйдите не мешайте мне работать.}
+{47010}{}{Хммм...}
+{48000}{}{Иногда нужны курьеры для доставки деловой корреспонденции. Но это работа только для людей, про которых мы знаем, что можем им доверять.}
+{48010}{}{Как я могу себя проявить?}
+{49000}{}{Просто проявите себя.}
+{50000}{}{Иногда нужны курьеры для доставки деловой корреспонденции. Этим занимается проконсул Грегори. Я оставляла несколько писем у него - проверьте, может, их ещё никто не забрал.}
+{51000}{}{Ладно, черт с ним, с письмом. Это не важно, обыск произведен, свидетели имеются. Напишем еще одно, если потребуется.}
+{51010}{}{Это конечно всё хорошо и даже замечательно. Политика. А что я с этого буду иметь?}
+{100000001}{}{Стоп! Кто это здесь?@@Нас подслушивают! Охрана! На помощь!@@Боже, шпион! Нас подслуживают шпионы!@@Эй! Ты что здесь делаешь?!}
+
+[engl]
+{100}{}{Lynette}
+{200}{}{You see a woman wearing glasses with thick lenses, dressed in the Vault City jumpsuit. Her manners show that she is an important person.}
+{210}{}{You see the Head Citizen Lynette. She seems to be very busy.}
+{1000}{}{Predialogue installations}
+{1010}{}{the fool}
+{1020}{}{it is not familiar}
+{1030}{}{a sign}
+{1040}{}{Agree to help, that is after dialogue 16}
+{1050}{}{has received a quest Bends, toest after dialogue 20}
+{1060}{}{Has executed a quest Bends. The arrest purpose while is unknown}
+{1070}{}{Has executed a quest Bends. The arrest purpose is known}
+{1080}{}{Has received a quest Arrest}
+{1090}{}{Has executed a quest Arrest}
+{1100}{}{Has received the task the Setup}
+{1110}{}{Has spent a setup}
+{1120}{}{tajmaut after one of tasks}
+{1130}{}{Makkljuru} Helps
+{2000}{}{Good afternoon, the stranger. I the First Citizen Linett. I can learn, what you here have resulted?}
+{2010}{}{At me for you the letter. Todd Stjuard, Arrojo.}
+{2020}{}{I have to you some questions.}
+{2030}{}{As it is possible to become the citizen?}
+{2040}{}{Yes so it is simple. I apologise for the anxiety, the First Citizen. Happily.}
+{3000}{}{For not-citizen you very many from me demand.}
+{3010}{}{And how it is possible to obtain citizenship?}
+{3020}{}{It is the Refuge City? Why you do not live in the Refuge?}
+{3030}{}{Why you encourage slavery?}
+{3040}{}{it is fine, we will forget. Good-bye.}
+{4000}{}{you can talk to proconsul Gregory. It he spends examinations on citizenship. You will find it in a conference hall, further on a corridor.}
+{4010}{}{it is clear. It is possible to set some more questions?}
+{4020}{}{I Think, I will go I will talk to the proconsul. Good-bye.}
+{5000}{}{No, no, we do not live in the Refuge. It was the provisional measure to protect during time vojty few elite and to help them with building of the new world.}
+{5010}{}{Ou. Clearly. Allow to ask one more question?}
+{5020}{}{All is clear. Good-bye.}
+{6000}{}{Why we encourage slavery? The system exists many years and perfectly works. Both parties from it win.}
+{6010}{}{But... You buy and sell people, as if braminov. Really it does not confuse you?}
+{6020}{}{I have heard enough. Good-bye.}
+{7000}{}{They not slaves, they our "servants". We give them meal, clothes, a shelter and appointment. We give them life.}
+{7010}{}{Listen, the slavery is slavery, and it badly smells, with its what kind words cover.}
+{7020}{}{E. Certainly. I have still questions.}
+{7030}{}{Hmm. As will tell. I perhaps will go.}
+{8000}{}{I Think, it is time to you to leave. I advise not especially to be late in the Refuge City.}
+{8010}{}{Before I will leave, I want to set some more questions...}
+{8020}{}{it is good. I leave.}
+{9000}{}{you though imagine, how I am occupied? I operate this city, my time is painted on minutes, and I do not intend to spend it for you.}
+{9010}{}{it is Well, fine, the First Citizen. To happily you.}
+{10000}{}{Yes? Than I can help you?}
+{10010}{}{At me for you the letter. Todd Stjuard, Arrojo.}
+{10020}{}{I have to you some questions.}
+{10030}{}{As it is possible to become the citizen?}
+{10040}{}{Yes so it is simple. I apologise for the anxiety, the First Citizen. Happily.}
+{10050}{}{it is very interesting To me to learn about a situation in a city.}
+{10060}{}{you do not have any work? Well, that about blood... For travellers on the Heathland, I want to tell.}
+{10070}{}{you do not have any work? Well, that about blood... For travellers on the Heathland, I want to tell.}
+{11000}{}{My God, who here has started up you? @@ from here! @@ Kysh! @@ And well go from here!}
+{12000}{}{Well. I will explain you a situation in a city and my position. To us ponalezlo above a roof of everyone pidorasni. The city will soon burst from any crowd. These alien assholes do not want to work normally, but constantly something demand. The rights any, tolerances, special attention … Besides, still these sranye mertvjaki from Gekko with the monopoly for energy …}
+{12010}{}{Ogo, anything to itself. It is all?}
+{12020}{}{it is Enough. To me has sufficed. [An exit]}
+{13000}{}{It at all half. There is still this MakKljur! Eternally puts in oar, tries to turn all after the own fashion. The old bastard! I would put for a long time all dissatisfied a cancer, if not it. You @sex | spoke || spoke | with it? With this worm? Talk.}
+{13010}{}{- Yes, already @sex | spoke || spoke |.}
+{13020}{}{I will by all means talk. Here, right now. [An exit]}
+{14000}{}{Here is how? And? Who is right, your way?}
+{14010}{}{I need to think still. [An exit]}
+{14020}{}{Excuse, but its position seems to me correct. I will support it.}
+{14030}{}{I want to help to rearrange to you all dissatisfied with a cancer! For a long time @sex | wanted || wanted | such to be engaged in something!}
+{15000}{}{You will support this polecat? Well, you will regret about it, the swine!!}
+{16000}{}{Well, your help is useful. Come every other day, we will talk.}
+{16010}{}{As will tell.}
+{17000}{}{You @sex | are ready || is ready | to help me?}
+{17010}{}{Kanechna! Whom here the first to wet?}
+{17020}{}{Not, I krashe will go...}
+{18000}{}{So to wet while it is necessary nobody. You wet you will be, when I will order, not earlier. And here prizhopit pair-three oborzevshih it would be necessary.}
+{18010}{}{Continue.}
+{19000}{}{In suburb at us a full brothel. The come in large numbers rights swing. A little it of that we it allow to live there, selling on mines. Cattle ungrateful ….}
+{19010}{}{Ugu, cattle, precisely. CHyo it is necessary to make?}
+{19020}{}{not that I do Something. [An exit]}
+{20000}{}{Chyo to make? Yes to explain them a policy of the party, yes so, that obosralis for fear. Also have understood, where their place and who they such here are. H'm. To beat anybody it is impossible. Well it while. More shortly, you will choose a three come in large numbers and you will spend suggestion that they have forgotten to open as the nasty mouth. Then you will report. All is clear?}
+{20010}{}{there is no place More clearly.}
+{21000}{}{As there my commission?}
+{21010}{}{I still work. [An exit]}
+{21020}{}{All in the best possible way. They will not open more mouth.}
+{22000}{}{Well, well. Here take. Glance to me later, in couple of days, there will be a new work.}
+{22010}{}{I Thank. [An exit]}
+{23000}{}{I have for you still a task.}
+{23010}{}{I Listen to you}
+{23020}{}{I have no time now, I will approach later. [An exit]}
+{24000}{}{this old goat of MakKljura has a support in a city. Otherwise I with it would understand for a long time. We should deprive of its this support.}
+{24010}{}{How?}
+{25000}{}{There is such citizen - @lex name. And so - it is necessary to send it in prison. For a while. For what - then we will think up, when he will sit.}
+{25010}{}{It is necessary in prison - we will send in prison.}
+{25020}{}{Hey, we so did not agree!}
+{26000}{}{To me all the same as you will make it. Will not go good - force force. Only not to kill.}
+{26010}{}{With pleasure. [An exit]}
+{27000}{}{As there my task? Till what time @lex name will walk about on freedom?}
+{27010}{}{I still work. [An exit]}
+{27020}{}{As ordered. A companion is sent on plank beds.}
+{27030}{}{And other candidates are not present? To it I can not steal up...}
+{28000}{}{it is remarkable. Take it.}
+{28010}{}{I Thank. [An exit]}
+{29000}{}{You @sex | are ready || is ready | to work?}
+{29010}{}{Yes, certainly. Then I here.}
+{29020}{}{I while do not have time for it. [An exit]}
+{30000}{}{[In meditation mutters to itself under a nose] Instead of whether it is time to us to threaten on William of our Shakespeare …}
+{30010}{}{That? Not @sex | has understood || поняла| …}
+{30020}{}{- … Also we will threaten!}
+{31000}{}{it is fine, unimportant. It I so. Listen …}
+{31010}{}{I Listen.}
+{32000}{}{He, all is true. The good fellow. The task such.}
+{32010}{}{I Listen.}
+{33000}{}{I here have prepared some papers. These papers can fine compromise MakKljura if them will find at it. For example in a case. If these papers there get imperceptibly for it …}
+{33010}{}{In a case? Well, them will find in a case. I can pass there imperceptibly.}
+{33020}{}{As it - have got to it to a case imperceptibly?}
+{34000}{}{I Love the quick-witted. Take papers. You will carry - immediately to me.}
+{34010}{}{I @sex | have understood || have understood |. As I will make - I will come to you.}
+{35000}{}{Not tupi. My God, with what donkeys it is necessary to work. So, your task - to take a paper, is reserved to get to the house of MakKljura, to enclose papers to it in a case. To return and report on me.}
+{35010}{}{I @sex | have understood || have understood |. As I will make - I will come to you.}
+{36000}{}{Well as?}
+{36010}{}{it is not made Yet...}
+{36020}{}{All is ready.}
+{36030}{}{JA. I потерял@sex ||| and | the letter...}
+{37000}{}{Well. Now it is impossible to lose time. Two guardsmen there wait. Will go as witnesses. Here the warrant on a search. You will show its MakKljuru. You will find documents, hehe. Guardsmen should testify. Actually all. Then to me.}
+{37010}{}{it is clear. I carry out.}
+{38000}{}{Well?}
+{38010}{}{I Work over it...}
+{38020}{}{All has turned out, as you and wanted. Papers are found, witnesses are available.}
+{39000}{}{it is excellent, excellent. Give here papers. Now I have all bases to manage with it abruptly. Even in prison to send. All right, I will consider it. Anyway, the number of its supporters will considerably be reduced now. And they any more will not be a serious obstacle for me.
+}
+{39010}{}{It certainly all is good and even is remarkable. A policy. And what I from it will have?}
+{39020}{}{Eeee... Business in that... What is the letter, it as though... That... In general, at me it is not present!}
+{40000}{}{[Mutters under a nose] … a bullet in a head. Rather promotes …
+}
+{40010}{}{That-that?}
+{41000}{}{And, anything. It I so. I consider variants. Suddenly, for example, you will want to tell to someone about our affairs.
+}
+{41010}{}{Yes that you! I - a tomb!}
+{41020}{}{Yes that you! I - a tomb!}
+{42000}{}{Ugu. It is better to be silent, as a tomb, than in it to lie. Remember it. Well and in an award - here take. Any more I do not detain. You will pass by - pass. And yes, now you have a citizenship of a city.
+}
+{42010}{}{it is indispensable [an exit]}
+{43000}{}{Ugu. It is better to be silent, as a tomb, than in it to lie. Remember it. Well and in an award - here take. Any more I do not detain. You will pass by - pass.}
+{43010}{}{it is indispensable.}
+{44000}{}{Not now. Come Later. @@ you too early. We will meet tomorrow. @@ Then. All affairs then.}
+{44010}{}{I Will glance later. @@ Ponja@sex | l || la |. I leave. @@ and I will make. @@ I am sorry.}
+{45000}{}{[Glaza Linett burn with frank hatred] One more zhopoliz the Poppy of Kljura. And well, away from here! Protection!}
+{45010}{}{you have not correctly understood me, the First Citizen...}
+{46000}{}{we Will meet later. My people now develop one traitor, possibly, your help is required also. But, then.}
+{46010}{}{it is good, I will return.}
+{47000}{}{Transfer to its proconsul Gregory, he is engaged in my mail. And now leave do not prevent to work to me.}
+{47010}{}{Hmmm...}
+{48000}{}{couriers for delivery of business correspondence are Sometimes necessary. But it is work only for people about whom we know that we can trust them.}
+{48010}{}{As I can show myself?}
+{49000}{}{Simply prove.}
+{50000}{}{couriers for delivery of business correspondence are Sometimes necessary. Proconsul Gregory is engaged in it. I left some letters at it - check up, can, still nobody has taken away them.}
+{51000}{}{it is fine, the hell with him, with the letter. It is not important, the search is made, witnesses are available. We will write one more if it is required.}
+{51010}{}{It certainly all is good and even is remarkable. A policy. And what I from it will have?}
+{100000001}{}{Stop! Who it here? @@ Us overhear! Protection! To the aid! @@ my God, the spy! Us podsluzhivajut spies! @@ hey! You that here do?!}

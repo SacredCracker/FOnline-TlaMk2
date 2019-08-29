@@ -1,0 +1,461 @@
+// Author: Ra
+#include "_macros.fos"
+#include "_vars.fos"
+#include "_msgstr.fos"
+#include "_defines.fos"
+#include "npc_menege_lib.fos"
+#include "map_radiation.fos"
+
+#define ROLE_QUEST_ROBOBRAIN (1)
+#define ROLE_SILOS_QUARD     (1)
+#define ENTRANCE_CRATER      (3)
+
+
+import void respItem(Map& map, Item@[] containers, int entire, bool deleteOldItems) from "farm_location";
+import void InjureCritter(Critter& cr, uint dmg, uint dmgType, uint8 dir, uint attackerId) from "combat";
+import bool AddAttackPlane(Critter& npc, uint priority, uint critId, bool run) from "npc_planes";
+import string GetOrgName(uint num) from "main";
+import uint[] GetPlayersByFraction(uint orgId) from "main";
+import uint[] GetOrgStats(uint orgId) from "main";
+import bool SetOrgStats(uint orgId, uint[] stats) from "main";
+import bool ChangeOrgStat(uint orgId, uint8 stat, int val) from "main";
+import bool AddFactionLoc(uint frId, uint16 locId) from "main";
+import void RemoveFactionLoc(uint frId, uint16 locId) from "main";
+
+// Игрок наступил на решетку с гарячим паром
+void t_steam_damage(Critter& cr, Scenery& trigger, bool entered, uint8 dir)
+{
+	if(entered)
+	{
+		cr.AddTimeEvent("cte_SteamDamage", 1, CTE_STEAM_DAMAGE);
+	}
+	else cr.EraseTimeEvents(CTE_STEAM_DAMAGE);
+}
+
+uint cte_SteamDamage(Critter& cr, int identifier, uint& rate)
+{
+	if(cr.Cond==COND_DEAD) return 0;
+	if(cr.Cond!=COND_KNOCKOUT) cr.SayMsg(SAY_SHOUT_ON_HEAD, TEXTMSG_TEXT, Random(102050, 102053));
+	InjureCritter(cr, Random(10, 15), DAMAGE_UNCALLED, 0, 0);
+	cr.GetMap().PlaySound("HMXXXXBN.ACM", cr.HexX, cr.HexY, 25);	
+	return REAL_SECOND(3);
+}
+
+//Квест "Охотник за головами"
+
+void _lvl10Init(Map& map, bool firstTime)
+{
+	map.SetEvent(MAP_EVENT_IN_CRITTER, "_lvl10CritterIn");
+	_HighRadiation(map, firstTime);
+}
+
+void _lvl10CritterIn(Map& map, Critter& cr)
+{
+	if(cr.IsPlayer())
+	{
+		GameVar@ roboquest=GetLocalVar(LVAR_q_nov_robobrain, cr.Id);
+		Critter@ robobrain=map.GetNpc(ROLE_QUEST_ROBOBRAIN, FIND_LIFE_AND_KO , 0);
+		if(!valid(robobrain) && roboquest.GetValue()>0 && roboquest.GetValue()<2)
+		{
+			uint16[] coords={0,0};
+			for(uint n=0, nMax=map.CountEntire(80); n<nMax; n++)
+			{
+				map.GetEntireCoords(80, n, coords[0], coords[1]);
+				if(map.IsHexPassed(coords[0], coords[1]))
+				{
+					int[] params={ST_NPC_ROLE, ROLE_QUEST_ROBOBRAIN};
+					@robobrain=map.AddNpc(79, coords[0], coords[1], Random(0,5), params, null, null);
+					robobrain.SetScript("maps_novato@_qRoboInit");
+					roboquest=2;
+					break;
+				}
+			}
+		}
+	}
+}
+
+void _qRoboInit(Critter& cr, bool firstTime)
+{
+	cr.ShowCritterDist1=25;
+	cr.ShowCritterDist2=10;
+	cr.AddItem(PID_M72_GAUSS_RIFLE, 1);
+	cr.SetFavoriteItem(SLOT_HAND1, PID_M72_GAUSS_RIFLE);
+	cr.SetEvent(CRITTER_EVENT_SHOW_CRITTER_1, "_qRoboWarning");
+	cr.SetEvent(CRITTER_EVENT_SHOW_CRITTER_2, "_qRoboAttack");
+	cr.SetEvent(CRITTER_EVENT_IDLE, "_qRoboIdle");
+	cr.SetEvent(CRITTER_EVENT_DEAD, "_qRoboDead");
+}
+
+void _qRoboWarning(Critter& cr, Critter& showCr)
+{
+	if(showCr.IsPlayer()) cr.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_TEXT, 1571);
+}
+
+void _qRoboAttack(Critter& cr, Critter& showCr)
+{
+	if(showCr.IsPlayer()) AddAttackPlane(cr, 1, showCr.Id, false);
+}
+
+void _qRoboIdle(Critter& cr)
+{
+	if(Random(0,2)==2) cr.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_TEXT, 1570);
+}
+
+void _qRoboDead(Critter& cr, Critter@ killer)
+{
+	if(valid(killer))
+	{
+		if(killer.IsPlayer())
+		{
+			GameVar@ quest=GetLocalVar(LVAR_q_nov_robobrain, killer.Id);
+			if(quest.GetValue()>0&&quest.GetValue()<3)
+			{
+				quest=3;
+				killer.StatBase[ST_EXPERIENCE]+=5000;
+			}
+		}
+	}
+	cr.AddItem(PID_CYBERNETIC_BRAIN, 1);
+	cr.AddTimeEvent("cte_DeleteSelf", REAL_MINUTE(5), CTE_STEAM_DAMAGE);
+}
+
+uint cte_DeleteSelf(Critter& cr, int identifier, uint& rate)
+{
+	DeleteNpc(cr);
+	return 0;
+}
+
+//Диалог с Бартом(включая ремонт)
+
+uint r_AskFix(Critter& master, Critter@ slave)
+{
+	Item@[] items;
+	master.GetItems(SLOT_HAND1, items);
+	if(items.length()>0)
+	{
+		if(items[0].IsDeteriorable())
+		{
+			if(FLAG(items[0].BrokenFlags, BI_ETERNAL) || FLAG(items[0].BrokenFlags, BI_NOTRESC)) return 15;
+			if(items[0].Deterioration<100) return 16;
+			return 8;
+		}
+	}
+	return 9;
+}
+
+void dlg_GetFixCost(Critter& player, Critter@ npc, string@ lexems)
+{
+	if(not IS_DIALOG_GENERATED(lexems)) return; 
+	lexems="$cost"+GetFixCost(player);
+	Item@[] items;
+	player.GetItems(SLOT_HAND1, items);
+	if(valid(items)) lexems+="$itemname@msg ITEM "+items[0].GetProtoId()*100+"@";
+}
+
+bool d_FixEnoughMoney(Critter& master, Critter@ slave)
+{
+	Item@ money=master.GetItem(PID_BOTTLE_CAPS, SLOT_INV);
+	if(valid(money))
+	{
+		if(money.GetCount()>=GetFixCost(master)) return true;
+	}
+	return false;
+}
+
+uint GetFixCost(Critter& cr)
+{
+	Item@[] items;
+	cr.GetItems(SLOT_HAND1, items);
+	uint cost=0;
+	if(items.length()>0)
+	{
+		GameVar@ quest=GetLocalVar(LVAR_q_nov_robobrain, cr.Id);
+		cost=items[0].Proto.Cost*items[0].Deterioration/10000;
+		if(FLAG(items[0].BrokenFlags,BI_BROKEN)) cost*=2;
+		if(quest.GetValue()==4 && cost>0) cost/=2;
+	}
+	return cost;
+}
+
+void r_Fix(Critter& master, Critter@ slave)
+{
+	master.DeleteItem(PID_BOTTLE_CAPS, GetFixCost(master));
+	Item@[] items;
+	master.GetItems(SLOT_HAND1, items);
+	if(valid(items[0]))
+	{
+		items[0].Deterioration=0;
+		UNSETFLAG(items[0].BrokenFlags,BI_BROKEN);
+		SETFLAG(items[0].BrokenFlags,BI_SERVICE);
+		items[0].Update();
+	}
+}
+
+// Скрипт карты "воронка". Делаем локу видимой с глобала, если игрок хотя бы однажды на нее зашел.
+
+void _CraterInit(Map& map, bool firstTime)
+{
+	map.SetEvent(MAP_EVENT_IN_CRITTER, "_CraterCritterIn");
+}
+
+void _CraterCritterIn(Map& map, Critter& cr)
+{
+	if(!cr.IsPlayer()) return;
+	GameVar@ known=GetLocalVar(LVAR_map_nov2_known, cr.Id);
+	if(known.GetValue()==0) known=1;
+}
+
+bool entrance_Novato(Location& novato, Critter@[]& critters, uint8 entrance)
+{
+	GameVar@ knownCrater=GetLocalVar(LVAR_map_nov2_known, critters[0].Id);
+	if(entrance==ENTRANCE_CRATER) return knownCrater.GetValue()==1;
+	return true;
+}
+
+void t_crater_trigger(Critter& cr, Scenery& trigger, bool entered, uint8 dir)
+{
+	if(not entered) return;
+	Map@ map=cr.GetMap();
+	Map@ targetMap=GetMapByPid(map.GetProtoId()==MAP_lfo_lvl_g4?Random(MAP_lfo_lvl9, MAP_lfo_lvl10):MAP_lfo_lvl10, 0);
+	if(valid(targetMap))
+	{
+		InjureCritter(cr, Random(10, 100), DAMAGE_UNCALLED, 0, 0);
+		cr.TransitToMap(targetMap.Id, 180);
+		cr.ToKnockout(KNOCKOUT_ANIM2_DEFAULT(Random(0,1)==1), cr.Stat[ST_ACTION_POINTS]*3, cr.HexX, cr.HexY);
+		for(uint n=0; n<4; n++)
+		{
+			if(Random(1, 100)>74)
+			{
+				cr.DamageBase[DAMAGE_RIGHT_ARM+n]=1;
+				cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 1575+n);
+			}
+		}
+	}
+}
+
+//Квест "Крутые разборки"
+
+bool d_OrgRatingFits(Critter& master, Critter@ slave)
+{
+	if(master.Param[ST_FRACTION]>0)
+	{
+		uint[] stats=GetOrgStats(master.Param[ST_FRACTION]);
+		if(stats[FR_RATING]>6000) return true;
+	}
+	return false;
+}
+
+void dlg_GetOrgName(Critter& player, Critter@ npc, string@ lexems)
+{
+	if(not IS_DIALOG_GENERATED(lexems)) return; 
+	lexems="$frname"+GetOrgName(player.Param[ST_FRACTION]);
+}
+
+void r_SetMutQuest(Critter& master, Critter@ slave, int val)
+{
+	uint[] stats=GetOrgStats(master.Param[ST_FRACTION]);
+	stats[FR_QUEST_MUTANTS]=val;
+	SetOrgStats(master.Param[ST_FRACTION], stats);
+	uint[] orgPlayers=GetPlayersByFraction(master.Param[ST_FRACTION]);
+	if(val==1)
+	{
+		Critter@[] crits;
+		for(uint n=0, nMax=orgPlayers.length(); n<nMax; n++)
+		{
+			Critter@ cr=GetCritter(orgPlayers[n]);
+			if(valid(cr)) crits.insertLast(cr);
+		}
+		uint locId=CreateLocation(231, 425-Random(50, 150), 1075-Random(50, 250), crits);
+		GameVar@ frId=GetLocalVar(LLVAR_questloc_frid, locId);
+		AddFactionLoc(uint(master.Param[ST_FRACTION]), locId);
+		frId=master.Param[ST_FRACTION];
+	}
+	for(uint n=0, nMax=orgPlayers.length(); n<nMax; n++)
+	{
+		Critter@ cr=GetCritter(orgPlayers[n]);
+		if(valid(cr))
+		{
+			GameVar@ quest=GetLocalVar(LVAR_q_nov_mutants, orgPlayers[n]);
+			quest=val;
+			if(val==5)
+			{
+				cr.StatBase[ST_EXPERIENCE]+=10000;
+				ChangeOrgStat(cr.Param[ST_FRACTION], FR_MONEY, 200000);
+			}
+		}
+	}
+}
+
+void t_approach_cave(Critter& cr, Scenery& trigger, bool entered, uint8 dir)
+{
+	Map@ map=cr.GetMap();
+	if(map.GetData(0)==0)
+	{
+		Critter@ npc=map.GetNpc(ROLE_SILOS_QUARD, FIND_LIFE, 0);
+		if(valid(npc)) npc.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_TEXT, 1572);
+		map.SetData(0,1);
+	}
+}
+
+void t_try_enter_cave(Critter& cr, Scenery& trigger, bool entered, uint8 dir)
+{
+	if(!cr.IsPlayer()) return;
+	Map@ map=cr.GetMap();
+	if(map.GetData(0)!=2)
+	{
+		for(uint n=0, nMax=map.GetNpcCount(ROLE_SILOS_QUARD, FIND_LIFE); n<nMax; n++)
+		{
+			Critter@ npc=map.GetNpc(ROLE_SILOS_QUARD, FIND_LIFE, n);
+			if(valid(npc)) AddAttackPlane(npc, 1, cr.Id, false);
+		}
+	}
+}
+
+void t_enter_cave(Critter& cr, Scenery& trigger, bool entered, uint8 dir)
+{
+	Map@ map=cr.GetMap();
+	if(map.GetLocation().GetMapByIndex(0).GetData(0)!=2)
+	{
+		map.GetLocation().GetMapByIndex(0).SetData(0,3);
+		for(uint n=0, nMax=map.GetNpcCount(ROLE_SILOS_QUARD, FIND_LIFE); n<nMax; n++)
+		{
+			Critter@ npc=map.GetNpc(ROLE_SILOS_QUARD, FIND_LIFE, n);
+			if(valid(npc)) AddAttackPlane(npc, 1, cr.Id, false);
+		}
+	}
+}
+
+void _SilosGuardInit(Critter& cr, bool firstTime)
+{
+	uint[] weaponList={PID_VINDICATOR_MINIGUN, PID_TURBO_PLASMA_RIFLE, PID_BOZAR, PID_ROCKET_LAUNCHER};
+	cr.SetEvent(CRITTER_EVENT_SHOW_CRITTER, "_SGSeeMeat");
+	cr.SetEvent(CRITTER_EVENT_SMTH_ATTACK, "_SGAssist");
+	if(firstTime)
+	{
+		uint pid=weaponList[Random(0, weaponList.length()-1)];
+		Item@ weapon=cr.AddItem(pid,1);
+		cr.SetFavoriteItem(SLOT_HAND1, pid);
+		Item@ ammo=cr.AddItem(weapon.Proto.Weapon_DefaultAmmoPid, weapon.Proto.Weapon_MaxAmmoCount*Random(3,6));
+		cr.SetFavoriteItem(SLOT_HAND2, ammo.GetProtoId());
+		cr.SkillBase[weapon.Proto.Weapon_Skill_0]=300;
+		weapon.Deterioration=Random(0, 9500);
+		weapon.Update();
+		cr.StatBase[ST_MAX_LIFE]+=Random(800, 2400);
+		cr.StatBase[ST_CURRENT_HP]=cr.Stat[ST_MAX_LIFE];
+		cr.StatBase[ST_ACTION_POINTS]+=15;
+		cr.MoveItem(ammo.Id, ammo.GetCount(), SLOT_HAND2);
+	}
+}
+
+void _SGAssist(Critter& cr, Critter& fromCr, Critter& target)
+{
+	if(target.IsPlayer() && fromCr.Stat[ST_TEAM_ID]==cr.Stat[ST_TEAM_ID]) AddAttackPlane(cr,1, target.Id, false);
+	else if(fromCr.IsPlayer() && target.Stat[ST_TEAM_ID]==cr.Stat[ST_TEAM_ID]) AddAttackPlane(cr,1, fromCr.Id, false);
+}
+
+
+void _SilosInit(Critter& cr, bool firstTime)
+{
+	uint[] weaponList={PID_PLASMA_CANNON, PID_TESLA_RIFLE};
+	cr.SetEvent(CRITTER_EVENT_SMTH_ATTACK, "_SGAssist");
+	cr.SetEvent(CRITTER_EVENT_DEAD, "_SilosDead");
+	if(firstTime)
+	{
+		uint pid=weaponList[Random(0, weaponList.length()-1)];
+		Item@ weapon=cr.AddItem(pid,1);
+		cr.SetFavoriteItem(SLOT_HAND1, pid);
+		Item@ ammo=cr.AddItem(weapon.Proto.Weapon_DefaultAmmoPid, weapon.Proto.Weapon_MaxAmmoCount*Random(1,3));
+		cr.SetFavoriteItem(SLOT_HAND2, ammo.GetProtoId());
+		cr.StatBase[ST_MAX_LIFE]+=Random(1000, 2500);
+		cr.StatBase[ST_CURRENT_HP]=cr.Stat[ST_MAX_LIFE];
+		cr.StatBase[ST_ACTION_POINTS]+=15;
+		cr.SkillBase[weapon.Proto.Weapon_Skill_0]=300;
+	}
+}
+
+void _SilosDead(Critter& cr, Critter@ killer)
+{
+	GameVar@ frId=GetLocalVar(LLVAR_questloc_frid, cr.GetMap().GetLocation().Id);
+	uint[] stats=GetOrgStats(frId.GetValue());
+	stats[FR_QUEST_MUTANTS]=4;
+	SetOrgStats(frId.GetValue(), stats);
+	uint[] orgPlayers=GetPlayersByFraction(frId.GetValue());
+	for(uint n=0, nMax=orgPlayers.length(); n<nMax; n++)
+	{
+		Critter@ cr=GetCritter(orgPlayers[n]);
+		if(valid(cr))
+		{
+			GameVar@ quest=GetLocalVar(LVAR_q_nov_mutants, orgPlayers[n]);
+			quest=4;
+		}
+	}
+	CreateTimeEvent(__FullSecond+REAL_MINUTE(5), "e_DeleteLoc", cr.GetMap().GetLocation().Id, false);
+}
+
+
+void _SGSeeMeat(Critter& cr, Critter& showCr)
+{
+	if(showCr.IsPlayer())
+	{
+		if(cr.GetMap().GetLocation().GetMapByIndex(0).GetData(0)==3) AddAttackPlane(cr, 1, showCr.Id, false);
+	}
+}
+
+//Диалог с охраной на входе в пещеру Сайлоса.
+uint r_AskAudience(Critter& master, Critter@ slave)
+{
+	if(master.Skill[SK_SPEECH]+master.Stat[ST_LUCK]*Random(1,10)>150)
+	{
+		master.GetMap().SetData(0,2);
+		return 5;
+	}
+	return 3;
+}
+
+bool d_SilosOkGo(Critter& master, Critter@ slave)
+{
+	return master.GetMap().GetLocation().GetMapByIndex(0).GetData(0)==2;
+}
+
+bool d_SilosFuckOff(Critter& master, Critter@ slave)
+{
+	return master.GetMap().GetLocation().GetMapByIndex(0).GetData(0)!=2;
+}
+
+bool d_SilosEnoughMoney(Critter& master, Critter@ slave)
+{
+	if(master.Param[ST_FRACTION]<1) return false;
+	uint[] stats=GetOrgStats(master.Param[ST_FRACTION]);
+	if(stats[FR_MONEY]>=50000) return true;
+	return false;
+}
+
+void r_SilosGiveMoney(Critter& master, Critter@ slave)
+{
+	ChangeOrgStat(master.Param[ST_FRACTION], FR_MONEY, -50000);
+	CreateTimeEvent(__FullSecond+REAL_MINUTE(5), "e_DeleteLoc", master.GetMap().GetLocation().Id, false);
+}
+
+uint e_DeleteLoc(uint[]@ values)
+{
+	DeleteLocation(values[0]);
+	GameVar@ frId=GetLocalVar(LLVAR_questloc_frid, values[0]);
+	if(frId.GetValue()>0)
+	{
+		RemoveFactionLoc(uint(frId.GetValue()), values[0]);
+	}
+	return 0;
+}
+
+
+uint r_SilosGiveBribe(Critter& master, Critter@ slave)
+{
+	if(master.Skill[SK_SPEECH]+master.Stat[ST_LUCK]*Random(1,10)>150) return 5;
+	return 4;
+}
+
+void dlg_SilosAttack(Critter& player, Critter@ npc, string@ lexems)
+{
+	player.GetMap().GetLocation().GetMapByIndex(0).SetData(0,3);
+	AddAttackPlane(npc,1, player.Id, false);
+}

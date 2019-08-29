@@ -1,0 +1,559 @@
+[comment]
+
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 D _var p player_is_in_hell = 0 R _var p hell_atonement_childkiller = 0 R _var p hell_atonement_negative_balance = 0 R _var p hell_atonement_bad_karma = 0 R _var p hell_atonement_bad_karma2 = 0 R _var p hell_atonement_bad_karma3 = 0 R _var p hell_atonement_enc_hubologists = 0 R _var p hell_atonement_enc_ncr = 0 R _var p hell_atonement_enc_vcity = 0 R _var p hell_atonement_enc_redding = 0 R _var p hell_atonement_enc_bh = 0 R _var p hell_atonement_enc_gecko = 0 R _var p hell_atonement_enc_arroyo = 0 R _var p hell_atonement_enc_klamath = 0 R _var p hell_atonement_enc_modoc = 0 R _var p hell_atonement_enc_den = 0 R _var p hell_atonement_enc_reno = 0 R _var p hell_atonement_enc_sf_caravans = 0 #
+40 1020 D _var p player_is_in_hell = 1 D _param p ST_REPLICATION_MONEY } 0 R _script replication_hell@r_ClearSins 0  #
+41 1030 D _var p player_is_in_hell = 1 D _param p ST_REPLICATION_MONEY < 0 @
+2 2000 None 0 #
+5 2010 D _var p hell_atonement = 0 #
+5 2020 D _param p SK_SPEECH > 49 D _var p hell_atonement = 0 #
+17 2030 D _var p hell_atonement = 1 #
+4 2040 D _var p hell_atonement = 1 #
+3 2050 @
+3 3000 None 1 @
+4 4000 None 1 #
+5 4010 #
+14 4020 #
+16 4030 #
+17 4040 #
+0 4050 @
+5 5000 None 1 #
+6 5010 @
+6 6000 None 1 #
+7 6010 @
+7 7000 None 1 #
+8 7010 @
+8 8000 None 1 #
+9 8010 @
+9 9000 None 1 #
+10 9010 @
+10 10000 None 1 #
+11 10010 @
+11 11000 None 1 #
+12 11010 R _var p hell_atonement = 1 @
+12 12000 None 1 #
+13 12010 #
+14 12020 #
+15 12030 #
+16 12040 #
+17 12050 #
+0 12060 @
+13 13000 None 1 #
+4 13010 #
+17 13020 #
+0 13030 @
+14 14000 None 1 #
+4 14010 #
+17 14020 #
+0 14030 @
+15 15000 None 1 #
+4 15010 #
+17 15020 #
+0 15030 @
+16 16000 None 1 #
+4 16010 #
+17 16020 #
+0 16030 @
+17 17000 None 1 #
+45 17010 #
+18 17020 D _param p ST_REPLICATION_MONEY > 0 #
+19 17030 D _param p ST_REPLICATION_MONEY { 0 #
+0 17040 @
+18 18000 None 1 #
+0 18010 #
+19 18020 #
+0 18030 @
+19 19000 None 1 #
+21 19010 D _param p KARMA_CHILDKILLER > 0 #
+22 19020 D _param p ST_REPLICATION_MONEY < 0 #
+23 19030 D _param p ST_KARMA < 0 D _param p ST_KARMA } -250 #
+24 19040 D _param p ST_KARMA < -250 D _param p ST_KARMA } -500 #
+25 19050 D _param p ST_KARMA < -500 #
+26 19060 D _var p enc_loyality_hubologists > 15 #
+27 19070 D _var p enc_loyality_ncr > 11 #
+28 19080 D _var p enc_loyality_vcity > 11 #
+29 19090 D _var p enc_loyality_redding > 11 #
+30 19100 D _var p enc_loyality_broken > 11 #
+31 19110 D _var p enc_loyality_gecko > 11 #
+32 19120 D _var p enc_loyality_arroyo > 7 #
+33 19130 D _var p enc_loyality_klamath > 9 #
+34 19140 D _var p enc_loyality_modoc > 11 #
+35 19150 D _var p enc_loyality_den > 14 #
+36 19160 D _var p enc_loyality_reno > 11 #
+37 19170 D _var p enc_loyality_sf > 11 #
+0 19180 @
+20 20000 None 1 #
+38 20010 D _var p hell_atonement_childkiller = 1 D or D _var p hell_atonement_negative_balance = 1 D or D _var p hell_atonement_bad_karma = 1 D or D _var p hell_atonement_bad_karma2 = 1 D or D _var p hell_atonement_bad_karma3 = 1 D or D _var p hell_atonement_enc_hubologists = 1 D or D _var p hell_atonement_enc_ncr = 1 D or D _var p hell_atonement_enc_vcity = 1 D or D _var p hell_atonement_enc_redding = 1 D or D _var p hell_atonement_enc_bh = 1 D or D _var p hell_atonement_enc_gecko = 1 D or D _var p hell_atonement_enc_arroyo = 1 D or D _var p hell_atonement_enc_klamath = 1 D or D _var p hell_atonement_enc_modoc = 1 D or D _var p hell_atonement_enc_den = 1 D or D _var p hell_atonement_enc_reno = 1 D or D _var p hell_atonement_enc_sf_caravans = 1 #
+21 20020 D _param p KARMA_CHILDKILLER > 0 D _var p hell_atonement_childkiller = 0 D _var p hell_atonement_bad_karma2 = 0 #
+22 20030 D _param p ST_REPLICATION_MONEY < 0 D _var p hell_atonement_negative_balance = 0 #
+23 20040 D _param p ST_KARMA < 0 D _var p hell_atonement_bad_karma = 0 D _param p ST_KARMA } -250 #
+24 20050 D _param p ST_KARMA < -250 D _var p hell_atonement_bad_karma2 = 0 D _param p ST_KARMA } -500 #
+25 20060 D _param p ST_KARMA < -500 D _var p hell_atonement_bad_karma3 = 0 #
+26 20070 D _var p enc_loyality_hubologists > 15 D _var p hell_atonement_enc_hubologists = 0 #
+27 20080 D _var p enc_loyality_ncr > 11 D _var p hell_atonement_enc_ncr = 0 #
+28 20090 D _var p enc_loyality_vcity > 11 D _var p hell_atonement_enc_vcity = 0 #
+29 20100 D _var p enc_loyality_redding > 11 D _var p hell_atonement_enc_redding = 0 #
+30 20110 D _var p enc_loyality_broken > 11 D _var p hell_atonement_enc_bh = 0 #
+31 20120 D _var p enc_loyality_gecko > 11 D _var p hell_atonement_enc_gecko = 0 #
+32 20130 D _var p enc_loyality_arroyo > 7 D _var p hell_atonement_enc_arroyo = 0 #
+33 20140 D _var p enc_loyality_klamath > 9 D _var p hell_atonement_enc_klamath = 0 #
+34 20150 D _var p enc_loyality_modoc > 11 D _var p hell_atonement_enc_modoc = 0 #
+35 20160 D _var p enc_loyality_den > 14 D _var p hell_atonement_enc_den = 0 #
+36 20170 D _var p enc_loyality_reno > 11 D _var p hell_atonement_enc_reno = 0 #
+37 20180 D _var p enc_loyality_sf > 11 D _var p hell_atonement_enc_sf_caravans = 0 #
+0 20190 @
+21 21000 None 1 #
+20 21010 R _var p hell_atonement_childkiller = 1 #
+20 21020 #
+0 21030 @
+22 22000 None 1 #
+20 22010 R _var p hell_atonement_negative_balance = 1 @
+23 23000 None 1 #
+20 23010 R _var p hell_atonement_bad_karma = 1 #
+20 23020 #
+0 23030 @
+24 24000 None 1 #
+20 24010 R _var p hell_atonement_bad_karma2 = 1 #
+20 24020 #
+0 24030 @
+25 25000 None 1 #
+20 25010 R _var p hell_atonement_bad_karma3 = 1 #
+20 25020 #
+0 25030 @
+26 26000 None 1 #
+20 26010 R _var p hell_atonement_enc_hubologists = 1 #
+20 26020 #
+0 26030 @
+27 27000 None 1 #
+20 27010 R _var p hell_atonement_enc_ncr = 1 #
+20 27020 #
+0 27030 @
+28 28000 None 1 #
+20 28010 R _var p hell_atonement_enc_vcity = 1 #
+20 28020 #
+0 28030 @
+29 29000 None 1 #
+20 29010 R _var p hell_atonement_enc_redding = 1 #
+20 29020 #
+0 29030 @
+30 30000 None 1 #
+20 30010 R _var p hell_atonement_enc_bh = 1 #
+20 30020 #
+0 30030 @
+31 31000 None 1 #
+20 31010 R _var p hell_atonement_enc_gecko = 1 #
+20 31020 #
+0 31030 @
+32 32000 None 1 #
+20 32010 R _var p hell_atonement_enc_arroyo = 1 @
+33 33000 None 1 #
+20 33010 R _var p hell_atonement_enc_klamath = 1 #
+20 33020 #
+0 33030 @
+34 34000 None 1 #
+20 34010 R _var p hell_atonement_enc_modoc = 1 #
+20 34020 #
+0 34030 @
+35 35000 None 1 #
+20 35010 R _var p hell_atonement_enc_den = 1 #
+20 35020 #
+0 35030 @
+36 36000 None 1 #
+20 36010 R _var p hell_atonement_enc_reno = 1 #
+20 36020 #
+0 36030 @
+37 37000 None 1 #
+20 37010 R _var p hell_atonement_enc_sf_caravans = 1 #
+20 37020 #
+0 37030 @
+38 38000 None 1 #
+20 38010 #
+0 38020 #
+39 38030 R _script replication_hell@r_SendToHell 0  R _script dialog@r_Kill 1 115 R _var p player_is_in_hell = 1 @
+39 39000 None 1 @
+40 40000 None 1 @
+41 41000 None 1 #
+42 41010 #
+43 41020 D _param p SK_SPEECH < 90 #
+44 41030 D _param p SK_SPEECH } 90 R _script replication_hell@r_ClearSins 0  @
+42 42000 Attack 1 @
+43 43000 None 1 @
+44 44000 None 1 @
+45 45000 None 0 &
+
+[russ]
+{100}{}{Хаболог}
+{200}{}{Вы видите: Хаболог.}
+{210}{}{Вы видите хаболога с пухлыми щёками в очках в толстой роговой оправе. У него вид дельца. Похоже, он специалист по впариванию непонятно чего по высоким ценам.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{Ответ.}
+{1020}{}{Пришёл после отправления в Ад с положительным счётом}
+{1030}{}{Пришёл после отправления в Ад с отрицательным счётом}
+{2000}{}{Привет, путни@sex@|к||ца|. Ты жаждешь Очищения?}
+{2010}{}{Это что ещё за нахрен?}
+{2020}{}{Простите, но я не очень понимаю, о чём вы.}
+{2030}{}{Да!}
+{2040}{}{Сначала есть вопрос.}
+{2050}{}{Нет.}
+{3000}{}{Тогда освободи дорогу идущим.}
+{4000}{}{Слушаю.}
+{4010}{}{Напомни, как это работает.}
+{4020}{}{Мне надо что-то заранее платить?}
+{4030}{}{Мне придётся умирать?}
+{4040}{}{Неважно, хочу пройти очищение прямо сейчас.}
+{4050}{}{На самом деле мне пора уходить.}
+{5000}{}{Часто нам приходится сбиваться с праведного пути и совершать дела, открывающие нашу душу загрязнению негативными энергиями, которые извращают её ещё больше и толкают на новые нелицеприятные поступки.}
+{5010}{}{[Далее]}
+{6000}{}{И даже если нам хочется исправиться, мы иногда уже настолько погрязли в злых делах, что творение зла становится для нас естественным состоянием, и выйти из него самостоятельно уже почти невозможно.}
+{6010}{}{[Далее]}
+{7000}{}{Но для хабологии нет ничего невозможного. Если человек приходит к нам с покаянием, то мы помогаем ему снова стать на праведный путь. Мы реплицируем его, проводя при этом зета-сканирование, которое очищает новый клон, и человек перерождается уже очищенным. У него снижается склонность ко злым поступкам и он может начать жизнь с чистого листа. Но всё равно остаются проблемы с социумом...}
+{7010}{}{[Далее]}
+{8000}{}{Умы серой толпы, "мяса с обода", как мы из зовём, загрязнены нейродинами и они не в состоянии восприять то, что наш клиент перерождается уже чистым человеком. Они продолжают его преследовать за старые поступки, иногда за его голову назначена награда. Кто-то просто хочет отомстить.}
+{8010}{}{[Далее]}
+{9000}{}{Но страсть к деньгам почти всегда оказывается сильней в их алчных умах, и мы помогаем нашему клиенту откупиться от преследователей. Выплачиваем цену, которая была назначена за его голову тем, кто за ним охотился. Платим компенсации пострадавшим. Возмещаем моральный ущерб.}
+{9010}{}{[Далее]}
+{10000}{}{Конечно, это выкладывается в огромную сумму, и поэтому прошедшему очищение надо остаться на этой станции и отработать сумму, которую нам пришлось за него внести. Для него это становится второй фазой Очищения: физический труд умиротворяет и облагораживает. Также у него появляется время осмыслить свои поступки и взглянуть на своё прошлое уже из своего нового, изменённого состояния.}
+{10010}{}{[Далее]}
+{11000}{}{Вкратце, как это работает: вы приходите к нам, описываете, от чего вы хотите очиститься. Вы обнуляете свой репликационный счёт, и мы снимаем с него сумму, которую вы должны отработать. Таким образом, ваш баланс становится отрицательным. Затем мы разрушаем вашу текущую оболочку и реплицируем вас на Специальной Станции, проводя при этом зета-сканирование новой. Используя информационные терминалы, вы находите зоны отработки и работаете, пока ваш баланс не становится положительным. Наши служащие на станции помогут разобраться с тем, что надо делать. Когда ваш баланс становится положительным, вы можете выйти. После этого вы возвращаетесь ко мне, и я подтверждаю Очищение.}
+{11010}{}{[Далее]}
+{12000}{}{Вы не можете выйти, пока ваш баланс остаётся отрицательным, вас не выпустят охранные системы. Если ваш баланс уже был отрицательным, то вам надо отработать и ваш долг за репликацию, и сумму выплаты за Очищение. Вы не можете ничего пронести внутрь, все вещи надо оставить в ближайшем банке или отдать кому-нибудь. Также перед очищением надо обналичить деньги со своего репликационного счёта и тоже сохранить в банке, чтобы ничего не потерять. Так устроена система.}
+{12010}{}{Зачем обнулять счёт?}
+{12020}{}{Надо что-то заранее платить?}
+{12030}{}{Почему вы не можете меня просто реплицировать с очищением и снять сумму выплаты со счёта, если она у меня уже есть?}
+{12040}{}{Мне придётся умирать?}
+{12050}{}{Хочу пройти очищение прямо сейчас.}
+{12060}{}{Спасибо за рассказ, буду иметь ввиду.}
+{13000}{}{Охранные системы настроены на то, чтобы не выпускать людей с отрицательным счётом. Это когда-то была станция репликация для должников, где они должны были отработать долг перед выходом. Но потом мы изменили систему. Возможно, со временем это исправится. А пока так.}
+{13010}{}{Есть ещё вопрос.}
+{13020}{}{Хочу пройти очищение прямо сейчас.}
+{13030}{}{Спасибо, это всё, что я хотел@sex@|||а| узнать.}
+{14000}{}{Нет, мы просто спишем нужную сумму со счёта. Вам надо только позаботиться о том, чтобы перед началом процедуры на вашем счету было ноль долларов, иначе вы потеряете все деньги, что там есть.}
+{14010}{}{Есть ещё вопрос.}
+{14020}{}{Хочу пройти очищение прямо сейчас.}
+{14030}{}{Спасибо, это всё, что я хотел@sex@|||а| узнать.}
+{15000}{}{Это было бы слишком просто. Человек должен отплатить за свои грехи тяжёлым трудом, а не только пройти процедуру. Он как бы работает на восстановление жизней тех, кто от него пострадал. А мы им уже возвращаем это денежным эквивалентом. Одно дополняет другое. Что сканирование, что каторга не были бы так эффективны поодиночке.}
+{15010}{}{Есть ещё вопрос.}
+{15020}{}{Вы гении. Хочу пройти очищение прямо сейчас.}
+{15030}{}{Спасибо, это всё, что я хотел@sex@|||а| узнать.}
+{16000}{}{Да, нам придётся разрушить текущую оболочку. Придётся немного потерпеть.}
+{16010}{}{Есть ещё вопрос.}
+{16020}{}{Я не боюсь. Хочу пройти очищение прямо сейчас.}
+{16030}{}{Спасибо, это всё, что я хотел@sex@|||а| узнать.}
+{17000}{}{Вы не забыли оставить свои вещи где-нибудь в банке? Помните, что вы ничего не можете пронести внутрь. Всё, что у вас есть сейчас с собой, останется тут.}
+{17010}{}{О, чёрт. Совсем не подумал@sex@|||а|.}
+{17020}{}{Да!}
+{17030}{}{Да!}
+{17040}{}{Я вообще передумал@sex@|||а| с очищением.}
+{18000}{}{У вас сейчас положительный счёт. Все деньги, что у вас там сейчас есть, будут потеряны. Вы можете обналичить их пока в банке на этой станции и оставить  их там в хранилище. Или перевести другу на счёт, если не хотите иметь дело со слишком большими суммами наличности.}
+{18010}{}{Совсем забыл@sex@|||а|. Зайду, как разберусь с этим.}
+{18020}{}{Ерунда, у меня там совсем мало. Давайте продолжим.}
+{18030}{}{Что-то у вас много сложностей. Я передумал@sex@|||а| вообще проходить эту процедуру.}
+{19000}{}{От чего желаете очиститься?}
+{19010}{}{Я убил@sex@|||а| ребёнка. Случайно, не со зла.@sex@||| Вот такая я овца.|}
+{19020}{}{Хочу просто спуститься вниз, отработать свой долг на репликационном счёте. Там это проще.}
+{19030}{}{Да просто хочу карму почистить. Что-то всего накопилось, как камень на душе.}
+{19040}{}{Да просто хочу карму почистить. Что-то всего накопилось, как камень на душе.}
+{19050}{}{Да просто хочу карму почистить. Больше так не могу!}
+{19060}{}{Да вот ваших коллег, хабологов разозлил@sex@|||а| чем-то, они меня теперь атакуют.}
+{19070}{}{У меня проблемы с НКР. Рейнджеры думают, что я грабил@sex@|||а| их караваны.}
+{19080}{}{Досадил Городу-Убежищу. Я принял@sex@|||а| их караван за рейдеров и шмальнул@sex@|||а| по ним из базуки.}
+{19090}{}{Я тут недавно неподелил@sex@|||а| кое-что с ребятами из Реддинга... Пришлось их всех расстрелять.}
+{19100}{}{Виноват@sex@|||а| в многочисленных актах расизма, теперь меня не любят в Брокен Хиллс.}
+{19110}{}{Под@sex@|жёг||ожгла| как-то караван из Гекко. Принял@sex@|||а| их за зомби.}
+{19120}{}{Перцы из Арройо не желают меня видеть.}
+{19130}{}{Знаете, один раз на меня что-то нашло, и я убил@sex@|||а| нескольких трапперов из Кламата, защищая гекко. Перед этим меня укусил геккон.}
+{19140}{}{Я доставил@sex@|||а| много неприятностей фермерам из Модока. Хочу очиститься сам@sex@|||а| и отплатить им деньгами.}
+{19150}{}{Убил пару торговцев из Дэна... Показалось, что они их тех, кто сам грабит караваны, а они были мирными.}
+{19160}{}{У меня проблемы с мафией из Рено... Ограбил@sex@|||а| как-то их караван, теперь меня ищут... Мне уже один раз бетонировали ноги в тазике.}
+{19170}{}{Один раз на меня с друзьями напала жадность, и мы ограбили караван из Сан-Франциско. Убили всех. Меня теперь мучает совесть.}
+{19180}{}{Да вроде у меня всё в порядке, чего это я вообще сюда приш@sex@|ёл||ла|. Извините.}
+{20000}{}{От чего ещё желаете очиститься?}
+{20010}{}{Это всё. Отправляйте меня вниз.}
+{20020}{}{Я убил@sex@|||а| ребёнка. Случайно, не со зла.@sex@||| Вот такая я овца.|}
+{20030}{}{Хочу просто спуститься вниз, отработать свой долг на репликационном счёте. Там это проще.}
+{20040}{}{Да просто хочу карму почистить. Что-то всего накопилось, как камень на душе.}
+{20050}{}{Да просто хочу карму почистить. Что-то всего накопилось, как камень на душе.}
+{20060}{}{Да просто хочу карму почистить. Больше так не могу!}
+{20070}{}{Да вот ваших коллег, хабологов разозлил@sex@|||а| чем-то, они меня теперь атакуют.}
+{20080}{}{У меня проблемы с НКР. Рейнджеры думают, что я грабил@sex@|||а| их караваны.}
+{20090}{}{Досадил Городу-Убежищу. Я принял@sex@|||а| их караван за рейдеров и шмальнул@sex@|||а| по ним из базуки.}
+{20100}{}{Я тут недавно неподелил@sex@|||а| кое-что с ребятами из Реддинга... Пришлось их всех расстрелять.}
+{20110}{}{Виноват@sex@|||а| в многочисленных актах расизма, теперь меня не любят в Брокен Хиллс.}
+{20120}{}{Под@sex@|жёг||ожгла| как-то караван из Гекко. Принял@sex@|||а| их за зомби.}
+{20130}{}{Перцы из Арройо не желают меня видеть.}
+{20140}{}{Знаете, один раз на меня что-то нашло, и я убил@sex@|||а| нескольких трапперов из Кламата, защищая гекко. Перед этим меня укусил геккон.}
+{20150}{}{Я доставил@sex@|||а| много неприятностей фермерам из Модока. Хочу очиститься сам@sex@|||а| и отплатить им деньгами.}
+{20160}{}{Убил пару торговцев из Дэна... Показалось, что они их тех, кто сам грабит караваны, а они были мирными.}
+{20170}{}{У меня проблемы с мафией из Рено... Ограбил@sex@|||а| как-то их караван, теперь меня ищут... Мне уже один раз бетонировали ноги в тазике.}
+{20180}{}{Один раз на меня с друзьями напала жадность, и мы ограбили караван из Сан-Франциско. Убили всех. Меня теперь мучает совесть.}
+{20190}{}{Да вроде у меня всё в порядке, чего это я вообще сюда приш@sex@|ёл||ла|. Извините.}
+{21000}{}{О ужас. Конечно, нет ничего, от чего человека не могло бы спасти зета-сканирование, но придётся заплатить довольно большой откуп охотникам за головами. Это обойдётся вам в $20,000.}
+{21010}{}{Хорошо, я соглас@sex@|ен||на|.}
+{21020}{}{Это слишком дорого для меня, но меня всё ещё интересует кое-что другое.}
+{21030}{}{Ну и цены. Лучше я пойду отсюда.}
+{22000}{}{Отлично, мы только приветствуем такую инициативу.}
+{22010}{}{[Далее]}
+{23000}{}{[Пристально смотрит вам в глаза, как будто ищет в них что-то] Не всё так плохо, на самом деле. Очищение обойдётся вам в $2000.}
+{23010}{}{Хорошо, я соглас@sex@|ен||на|.}
+{23020}{}{Это слишком дорого для меня, но меня всё ещё интересует кое-что другое.}
+{23030}{}{Ну и цены. Лучше я пойду отсюда.}
+{24000}{}{[Пристально смотрит вам в глаза, как будто ищет в них что-то] Да, есть над чем поработать. Очищение обойдётся вам в $4000.}
+{24010}{}{Хорошо, я соглас@sex@|ен||на|.}
+{24020}{}{Это слишком дорого для меня, но меня всё ещё интересует кое-что другое.}
+{24030}{}{Ну и цены. Лучше я пойду отсюда.}
+{25000}{}{[Пристально смотрит вам в глаза, как будто ищет в них что-то] Вам надо серьёзно себя менять, но мы вам поможем. Очищение обойдётся вам в $8000.}
+{25010}{}{Хорошо, я соглас@sex@|ен||на|.}
+{25020}{}{Это слишком дорого для меня, но меня всё ещё интересует кое-что другое.}
+{25030}{}{Ну и цены. Лучше я пойду отсюда.}
+{26000}{}{Обычно мы не прощаем такого, но раз вы сами пришли к нам с покаянием... $8,000.}
+{26010}{}{Хорошо, я соглас@sex@|ен||на|.}
+{26020}{}{Это слишком дорого для меня, но меня всё ещё интересует кое-что другое.}
+{26030}{}{Ну и цены. Лучше я пойду отсюда.}
+{27000}{}{Не удивлюсь, если это на самом деле так. От НКР просто так не откупиться. Это обойдётся вам в $12,000.}
+{27010}{}{Хорошо, я соглас@sex@|ен||на|.}
+{27020}{}{Это слишком дорого для меня, но меня всё ещё интересует кое-что другое.}
+{27030}{}{Ну и цены. Лучше я пойду отсюда.}
+{28000}{}{Последнее время дела у них идут плохо, поэтому они согласятся забыть инцидент и за не очень большую сумму. Это будет стоить для вас $7,500.}
+{28010}{}{Хорошо, я соглас@sex@|ен||на|.}
+{28020}{}{Это слишком дорого для меня, но меня всё ещё интересует кое-что другое.}
+{28030}{}{Ну и цены. Лучше я пойду отсюда.}
+{29000}{}{Эти золотари не любят посягательств на свой бизнес. Но мы уладим это дело за $8,600.}
+{29010}{}{Хорошо, я соглас@sex@|ен||на|.}
+{29020}{}{Это слишком дорого для меня, но меня всё ещё интересует кое-что другое.}
+{29030}{}{Ну и цены. Лучше я пойду отсюда.}
+{30000}{}{Они отвяжутся от вас за $7,000. Город в плохом положении, у них заканчивается уран.}
+{30010}{}{Хорошо, я соглас@sex@|ен||на|.}
+{30020}{}{Это слишком дорого для меня, но меня всё ещё интересует кое-что другое.}
+{30030}{}{Ну и цены. Лучше я пойду отсюда.}
+{31000}{}{Так им и надо, ха. Упс, извините. Я думал о чём-то другом, и озвучил случайно мысли вслух. Гекко, да? $5,000.}
+{31010}{}{Хорошо, я соглас@sex@|ен||на|.}
+{31020}{}{Это слишком дорого для меня, но меня всё ещё интересует кое-что другое.}
+{31030}{}{Ну и цены. Лучше я пойду отсюда.}
+{32000}{}{[Внезапно огорчился] Извините, с ними у нас нет контракта. Попробуйте уладить это с ними самими.}
+{32010}{}{Жалко. Но меня пока интересует что-то ещё.}
+{33000}{}{Ерунда, мы можем уладить это за $4,000.}
+{33010}{}{Хорошо, я соглас@sex@|ен||на|.}
+{33020}{}{Это слишком дорого для меня, но меня всё ещё интересует кое-что другое.}
+{33030}{}{Ну и цены. Лучше я пойду отсюда.}
+{34000}{}{Фермеров легко уговорить на мировую. Это обойдётся вам в $5,500.}
+{34010}{}{Хорошо, я соглас@sex@|ен||на|.}
+{34020}{}{Это слишком дорого для меня, но меня всё ещё интересует кое-что другое.}
+{34030}{}{Ну и цены. Лучше я пойду отсюда.}
+{35000}{}{Там один другого хуже. Мы решим этот вопрос за вас, но вам придётся отработать $6,000.}
+{35010}{}{Хорошо, я соглас@sex@|ен||на|.}
+{35020}{}{Это слишком дорого для меня, но меня всё ещё интересует кое-что другое.}
+{35030}{}{Ну и цены. Лучше я пойду отсюда.}
+{36000}{}{Они *очень* не любят, когда их караваны пропадают. Придётся вернуть с процентами. Это будет стоить $12,000.}
+{36010}{}{Хорошо, я соглас@sex@|ен||на|.}
+{36020}{}{Это слишком дорого для меня, но меня всё ещё интересует кое-что другое.}
+{36030}{}{Ну и цены. Лучше я пойду отсюда.}
+{37000}{}{Жадность лечится добровольным расставанием с крупными суммами. Чистота совести обойдётся вам в этом случае в $12,000.}
+{37010}{}{Хорошо, я соглас@sex@|ен||на|.}
+{37020}{}{Это слишком дорого для меня, но меня всё ещё интересует кое-что другое.}
+{37030}{}{Ну и цены. Лучше я пойду отсюда.}
+{38000}{}{Вы уверены? У вас может ещё долго не быть возможности вернуться оттуда.}
+{38010}{}{Вообще хочу очиститься от кое-чего ещё.}
+{38020}{}{На самом деле мне хочется пока ещё погулять на свободе, пусть и с не очень чистой совестью. Зайду через какое-нибудь время.}
+{38030}{}{Да, отправляйте меня вниз.}
+{39000}{}{Как отработаете - зайдите ко мне для подтверждения. Удачи там снизу.}
+{40000}{}{Поздравляю! Вы очищены!}
+{41000}{}{У вас отрицательный счёт. Вы что, умудрились сбежать со станции, не отрабатывая долг?}
+{41010}{}{Да.}
+{41020}{}{Меня... эээ... убили прямо на выходе со станции!}
+{41030}{}{Меня убил какой-то псих на самом выходе из станции. О, это было ужасно. Так обидно, знаете ли, столько отрабатывать свой долг, а потом это...}
+{42000}{}{Иди отрабатывать.@@У нас это не приветствуется.@@Извини.@@Придётся вернуть тебя обратно.}
+{43000}{}{Что-то мне не верится. Вернитесь, когда у вас будет положительный баланс.}
+{44000}{}{Да, досадный случай. Но ничего, мы всё понимаем. Ступайте, вы очищены.}
+{45000}{}{В углу площади есть спуск под землю. Там расположен банк.}
+
+[engl]
+100} {} {Hubologist}
+{200} {} {You see a hubologist.}
+{210} {} {You see habologa with chubby cheeks with glasses in a thick horn-rimmed. He kind of businessman. He seems to specialist vparivaniyu unclear why at high prices.}
+{1000} {} {} set Preddialogovye
+{1010} {A} {.}
+{1020} {} {came after the departure of Hell with a positive score}
+{1030} {} {came after the departure of Hell with a negative score}
+{2000} {} {Hello, Putney @ sex @ | k | | sample |. Do you crave Atonement?}
+{2010} {} {What kind of fuck?}
+{2020} {} {I'm sorry, but I do not really understand what you mean.}
+{2030} {} {Yeah!}
+{2040} {} {First, there is the question.}
+{2050} {} {no.}
+{3000} {} {Then clear the road walking.}
+{4000} {} {Yes, sir.}
+{4010} {} {Remind me how it works.}
+{4020} {} {I have to pay anything in advance?}
+{4030} {} {I have to die?}
+{4040} {} {It does not matter, I want to get clearance right now.}
+{4050} {} {Actually, I must go.}
+{5000} {} {Often we have to stray from the righteous path and do things that open our soul pollution negative energies that distort it even further and push for new unflattering things.}
+{5010} {} {[More]}
+{6000} {} {And if we want to improve, we sometimes become so mired in evil deeds, evil creature that becomes our natural state and leave it alone it is almost impossible.}
+{6010} {} {[More]}
+{7000} {} {habologii But nothing is impossible. If a person comes to us with repentance, then we can help him again to take the right path. We replicate it, while holding the zeta scan, which clears the new clone, and the man is reborn purified. He has reduced propensity to evil deeds, and he can start life anew. But still there are problems with society ...}
+{7010} {} {[More]}
+{8000} {} {Uma gray crowd, "the meat from the rim," as we call out to be contaminated with neyrodinami and they are not able to vospriyat that our client has a clean man reborn. They continue to pursue him for old things, sometimes for a reward on his head. Someone just wants revenge.}
+{8010} {} {[More]}
+{9000} {} {But the passion for money is almost always stronger in their greedy minds, and we help our clients pay off their pursuers. Pay a price that was set on his head to those who hunted him. Pay compensation to the victims. Compensate for damages.}
+{9010} {} {[More]}
+{10000} {} {Of course, it is laid out in a huge amount, and therefore passed the necessary clearance to stay on the station and work out the amount that we had to make for him. For him, this is the second phase of purification: the physical labor of appeasing and ennobles. Also, he has the time to understand their actions and look at his past is out of his new, altered state.}
+{10010} {} {[More]}
+{11000} {} {nutshell, is how it works: you come to us, describe, from which you want to clear. You clears replicative your account and we will remove from him the amount that you must complete. Thus, your balance becomes negative. Then we will destroy your current shell and you replicate at special stations, carrying with it a new zeta scan. Using the information terminals, you will find areas of processing and working until your balance becomes positive. Our employees at the plant will help to understand to what to do. When your balance is positive, you can get. Then you come back to me, and I confirm purification.}
+{11010} {} {[More]}
+{12000} {} {You can not leave until your balance is negative, you will not let security systems. If your balance has been negative, you need to work off your debt, and for replication, and the amount paid for the purification. You can not carry anything inside, all things should be left to the nearest bank or give it to someone. Also, before removing the need to cash out money from your account replication and also to keep in the bank, so nothing to lose. That's the way the system.}
+{12010} {} {why reset account?}
+{12020} {} {Something must be paid in advance?}
+{12030} {} {Why can not you just replicate me cleaning up and remove the amount of payments from the account, if I already have?}
+{12040} {} {I have to die?}
+{12050} {} {I want to get clearance right now.}
+{12060} {} {Thanks for the story, I will keep in mind.}
+{13000} {} {Security systems are configured to not to let people with a negative score. It was once a station for the replication of the debtors, where they were supposed to work off the debt before exiting. But then we changed the system. Perhaps, in time to fix it. And yet the case.}
+{13010} {} {There is still a question.}
+{13020} {} {I want to get clearance right now.}
+{13030} {} {Thanks, that's all I wanted @ sex @ | | | a | find out.}
+{14000} {} {No, we just write off the required amount from the account. You only need to take care of that before you start your account was zero dollars, otherwise you will lose all the money that is there.}
+{14010} {} {There is still a question.}
+{14020} {} {I want to get clearance right now.}
+{14030} {} {Thanks, that's all I wanted @ sex @ | | | a | find out.}
+{15000} {} {It would be too easy. Man must repay for his sins through hard work, not only to undergo the procedure. He seems to be working to restore the lives of those who suffer from it. And we have them return a cash equivalent. One complements the other. That scanning that hard labor would not be as effective alone.}
+{15010} {} {There is still a question.}
+{15020} {} {You are geniuses. I want to get clearance right now.}
+{15030} {} {Thanks, that's all I wanted @ sex @ | | | a | find out.}
+{16000} {} {Yes, we have to destroy the current shell. We'll have to wait a little.}
+{16010} {} {There is still a question.}
+{16020} {} {I'm not afraid. I want to get clearance right now.}
+{16030} {} {Thanks, that's all I wanted @ sex @ | | | a | find out.}
+{17000} {} {Do not forget to leave your stuff somewhere in the bank? Remember that nothing you can carry inside. All that you have now with me, stay here.}
+{17010} {} {Oh, shit. It is not thought @ sex @ | | | a |.}
+{17020} {} {Yeah!}
+{17030} {} {Yeah!}
+{17040} {} {I changed my mind at all @ sex @ | | | a | with the purification.}
+{18000} {} {You have now a positive effect. All the money that you have there now is, will be lost. You can cash them until the bank at this station and leave them there in the store. Or transfer to another account if you do not want to deal with very large sums of cash.}
+{18010} {} {I forgot @ sex @ | | | a |. I will come, as will deal with it.}
+{18020} {} {Nonsense, I have very little out there. Let's go on.}
+{18030} {} {Something you have a lot of difficulties. I changed my mind @ sex @ | | | a | general undergo this procedure.}
+{19000} {} {What you want to clear}
+{19010} {} {I killed @ sex @ | | | a | child. By chance, not with evil. @ Sex @ | | | Here I am such a sheep. |}
+{19020} {} {I want to just go down and work out their duty in the replication analysis. It is simpler.}
+{19030} {} {Oh, just want to clean up the karma. Something just piled up like a stone in my soul.}
+{19040} {} {Oh, just want to clean up the karma. Something just piled up like a stone in my soul.}
+{19050} {} {Oh, just want to clean up the karma. More so I can not!}
+{19060} {} {Yes, that's your co-workers, angered habologov @ sex @ | | | a | something, they are attacking me now.}
+{19070} {} {I have a problem with the PRC. Rangers think I robbed @ sex @ | | | a | of their caravans.}
+{19080} {} {molested Vault City. I took @ sex @ | | | a | for their caravan raiders and shmalnul @ sex @ | | | a | a bazooka at him.}
+{19090} {} {I recently nepodelil @ sex @ | | | a | things with the guys from Redding ... I had them all shot.}
+{19100} {} {I'm sorry @ sex @ | | | a | in numerous acts of racism, now I do not like in Broken Hills.}
+{19110} {} {By @ sex @ | burning | | ozhgla | such as a caravan of Gekko. Took @ sex @ | | | a | of a zombie.}
+{19120} {} {Peppers from Arroyo does not want to see me.}
+{19130} {} {You know, once I found something, and I killed the @ sex @ | | | a | few trappers from the Klamath, protecting geckos. Before that I was bitten by the gecko.}
+{19140} {} {I delivered @ sex @ | | | a | a lot of trouble farmers in Modoc. I want to cleanse myself @ sex @ | | | a |, and pay them money.}
+{19150} {} {I killed a couple of traders from Dan ... It seemed that they were of those who he robs caravans, but they were peaceful.}
+{19160} {} {I'm having trouble with the mafia of the Renault ... Rob @ sex @ | | | a | once their caravan, now I'm looking for ... I have once concrete feet in a basin.}
+{19170} {} {One time I was with friends attacked greed, and we robbed the caravan from San Francisco. They killed everyone. I am now tormented conscience.}
+{19180} {} {Yeah like I have everything in order, which is what I do here sewn @ sex @ | el | | la |. I'm sorry.}
+{20000} {} {What else you want to clear}
+{20010} {} {That's all. Send me down.}
+{20020} {} {I killed @ sex @ | | | a | child. By chance, not with evil. @ Sex @ | | | Here I am such a sheep. |}
+{20030} {} {I want to just go down and work out their duty in the replication analysis. It is simpler.}
+{20040} {} {Oh, just want to clean up the karma. Something just piled up like a stone in my soul.}
+{20050} {} {Oh, just want to clean up the karma. Something just piled up like a stone in my soul.}
+{20060} {} {Oh, just want to clean up the karma. More so I can not!}
+{20070} {} {Yes, that's your co-workers, angered habologov @ sex @ | | | a | something, they are attacking me now.}
+{20080} {} {I have a problem with the PRC. Rangers think I robbed @ sex @ | | | a | of their caravans.}
+{20090} {} {molested Vault City. I took @ sex @ | | | a | for their caravan raiders and shmalnul @ sex @ | | | a | a bazooka at him.}
+{20100} {} {I recently nepodelil @ sex @ | | | a | things with the guys from Redding ... I had them all shot.}
+{20110} {} {I'm sorry @ sex @ | | | a | in numerous acts of racism, now I do not like in Broken Hills.}
+{20120} {} {By @ sex @ | burning | | ozhgla | such as a caravan of Gekko. Took @ sex @ | | | a | of a zombie.}
+{20130} {} {Peppers from Arroyo does not want to see me.}
+{20140} {} {You know, once I found something, and I killed the @ sex @ | | | a | few trappers from the Klamath, protecting geckos. Before that I was bitten by the gecko.}
+{20150} {} {I delivered @ sex @ | | | a | a lot of trouble farmers in Modoc. I want to cleanse myself @ sex @ | | | a |, and pay them money.}
+{20160} {} {I killed a couple of traders from Dan ... It seemed that they were of those who he robs caravans, but they were peaceful.}
+{20170} {} {I'm having trouble with the mafia of the Renault ... Rob @ sex @ | | | a | once their caravan, now I'm looking for ... I have once concrete feet in a basin.}
+{20180} {} {One time I was with friends attacked greed, and we robbed the caravan from San Francisco. They killed everyone. I am now tormented conscience.}
+{20190} {} {Yeah like I have everything in order, which is what I do here sewn @ sex @ | el | | la |. I'm sorry.}
+{21000} {O} {horror. Of course, there is nothing from which man could not save the zeta scan, but will have to pay a rather large bounty hunters mercy. It will cost you $ 20,000.}
+{21010} {} {Well, I agree with @ sex @ | en | | on |.}
+{21020} {} {It's too expensive for me, but I'm still interested in something else.}
+{21030} {} {Well, and prices. I'd rather go here.}
+{22000} {} {Well, we only welcome such an initiative.}
+{22010} {} {[More]}
+{23000} {} {[stares into your eyes, as if looking for something in them] is not so bad, actually. Cleaning cost you $ 2000.}
+{23010} {} {Well, I agree with @ sex @ | en | | on |.}
+{23020} {} {It's too expensive for me, but I'm still interested in something else.}
+{23030} {} {Well, and prices. I'd rather go here.}
+{24000} {} {[stares into your eyes, as if looking for something in them] Yes, there is work to do. Cleaning cost you $ 4000.}
+{24010} {} {Well, I agree with @ sex @ | en | | on |.}
+{24020} {} {It's too expensive for me, but I'm still interested in something else.}
+{24030} {} {Well, and prices. I'd rather go here.}
+{25000} {} {[stares into your eyes, as if looking for something in them], you need a serious change, but we will help you. Cleaning cost you $ 8000.}
+{25010} {} {Well, I agree with @ sex @ | en | | on |.}
+{25020} {} {It's too expensive for me, but I'm still interested in something else.}
+{25030} {} {Well, and prices. I'd rather go here.}
+{26000} {} {Usually we do not forgive this, but since you came to us with repentance ... $ 8,000.}
+{26010} {} {Well, I agree with @ sex @ | en | | on |.}
+{26020} {} {It's too expensive for me, but I'm still interested in something else.}
+{26030} {} {Well, and prices. I'd rather go here.}
+{27000} {} {Do not be surprised if this is actually true. From the NKR just does not pay off. It will cost you $ 12,000.}
+{27010} {} {Well, I agree with @ sex @ | en | | on |.}
+{27020} {} {It's too expensive for me, but I'm still interested in something else.}
+{27030} {} {Well, and prices. I'd rather go here.}
+{28000} {} {The last time the case they go bad, so they will agree to forget the incident and for not very large sum. It will cost you $ 7,500.}
+{28010} {} {Well, I agree with @ sex @ | en | | on |.}
+{28020} {} {It's too expensive for me, but I'm still interested in something else.}
+{28030} {} {Well, and prices. I'd rather go here.}
+{29000} {} {This Zolotar do not like attacks on their business. But we'll settle this thing for $ 8,600.}
+{29010} {} {Well, I agree with @ sex @ | en | | on |.}
+{29020} {} {It's too expensive for me, but I'm still interested in something else.}
+{29030} {} {Well, and prices. I'd rather go here.}
+{30000} {} {They otvyazhutsya from you for $ 7,000. City in a bad situation, they end uranium.}
+{30010} {} {Well, I agree with @ sex @ | en | | on |.}
+{30020} {} {It's too expensive for me, but I'm still interested in something else.}
+{30030} {} {Well, and prices. I'd rather go here.}
+{31000} {} {So they want, huh. Oops, sorry. I was thinking about something else, and announced casually thinking aloud. Gekko, right? $ 5.000.}
+{31010} {} {Well, I agree with @ sex @ | en | | on |.}
+{31020} {} {It's too expensive for me, but I'm still interested in something else.}
+{31030} {} {Well, and prices. I'd rather go here.}
+{32000} {} {[suddenly angry] I'm sorry, with them we have no contract. Try to sort it out with themselves.}
+{32010} {} {It's a pity. But I was still interested in something else.}
+{33000} {} {Nonsense, we can settle it for $ 4,000.}
+{33010} {} {Well, I agree with @ sex @ | en | | on |.}
+{33020} {} {It's too expensive for me, but I'm still interested in something else.}
+{33030} {} {Well, and prices. I'd rather go here.}
+{34000} {} {easy to persuade farmers to the world. It will cost you $ 5,500.}
+{34010} {} {Well, I agree with @ sex @ | en | | on |.}
+{34020} {} {It's too expensive for me, but I'm still interested in something else.}
+{34030} {} {Well, and prices. I'd rather go here.}
+{35000} {} {There's another one worse. We will solve this issue for you, but you have to work out the $ 6,000.}
+{35010} {} {Well, I agree with @ sex @ | en | | on |.}
+{35020} {} {It's too expensive for me, but I'm still interested in something else.}
+{35030} {} {Well, and prices. I'd rather go here.}
+{36000} {} {* very * They do not like it when their caravans disappear. We'll have to return with interest. It will cost $ 12,000.}
+{36010} {} {Well, I agree with @ sex @ | en | | on |.}
+{36020} {} {It's too expensive for me, but I'm still interested in something else.}
+{36030} {} {Well, and prices. I'd rather go here.}
+{37000} {} {Greed is treated with the voluntary parting with large sums. Clean conscience will cost you in this case $ 12,000.}
+{37010} {} {Well, I agree with @ sex @ | en | | on |.}
+{37020} {} {It's too expensive for me, but I'm still interested in something else.}
+{37030} {} {Well, and prices. I'd rather go here.}
+{38000} {} {Are you sure? You may not long be able to return there.}
+{38010} {} {Actually I want to be cleansed of something else.}
+{38020} {} {Actually, I want to still walk free, albeit with not very clear conscience. I will come through any time.}
+{38030} {} {Yes, send me down.}
+{39000} {} {as waste - go with me to confirm. Good luck out there from the bottom.}
+{40000} {} {Congratulations! You cleaned up!}
+{41000} {} {Do you have a negative effect. Are you managed to escape from the station, not practicing debt?}
+{41010} {} {Yeah.}
+{41020} {} {I ... uh ... killed right at the exit from the station!}
+{41030} {} {I killed a madman at the exit of the station. Oh, it was awful. So sad, you know, as much work off your debt, then this is ...}
+{42000} {} {Go to practice. @ @ We are not welcome. @ @ I'm sorry. @ @'ll Have you back again.}
+{43000} {} {Something I do not believe it. Come back when you have a positive balance.}
+{44000} {} {Yes, an unfortunate incident. But never mind, we all understand. Go, you cleaned up.}
+{45000} {} {In the corner of the square is the descent into the earth. It is the bank.}
+

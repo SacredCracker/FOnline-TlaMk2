@@ -1,0 +1,467 @@
+[comment]
+Ваши комментарии / Your comments.
+
+20 - сдача хлама Ретчу (rifleman17)
+30 - багги (rifleman17)
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 @
+2 2000 None 0 #
+65506 2010 D _param p ST_INTELLECT < 4 #
+0 2020 D _param p ST_INTELLECT < 4 #
+65506 2030 D _param p ST_INTELLECT > 3 #
+0 2040 D _param p ST_INTELLECT > 3 #
+3 2050 D _var p ncr_alex_quest_status > 0 D _param p ST_INTELLECT > 3 #
+20 2060 D _param p ST_INTELLECT > 3 D _var p ncr_ratch_player_points = 0 #
+23 2070 D _param p ST_INTELLECT > 3 D _item p PID_PUMP_PARTS > 2 D _script ncr_ratch@d_RatchTimeOutCheck 1 4241 R _script ncr_ratch@r_RatchTimeOutSet 2 4241 60 #
+23 2080 D _param p ST_INTELLECT > 3 D _item p PID_PUMP_PARTS < 3 D _item p PID_TUBE > 0 D _script ncr_ratch@d_RatchTimeOutCheck 1 4241 R _script ncr_ratch@r_RatchTimeOutSet 2 4241 60 #
+23 2090 D _param p ST_INTELLECT > 3 D _item p PID_PUMP_PARTS < 3 D _item p PID_TUBE = 0 D _item p PID_STEEL > 0 D _script ncr_ratch@d_RatchTimeOutCheck 1 4241 R _script ncr_ratch@r_RatchTimeOutSet 2 4241 60 #
+56 2100 D _item p PID_PUMP_PARTS > 2 D _script ncr_ratch@d_NotRatchTimeOutCheck 1 4241 #
+56 2110 D _item p PID_PUMP_PARTS < 3 D _item p PID_TUBE > 0 D _script ncr_ratch@d_NotRatchTimeOutCheck 1 4241 #
+56 2120 D _item p PID_PUMP_PARTS < 3 D _item p PID_TUBE = 0 D _item p PID_STEEL > 0 D _script ncr_ratch@d_NotRatchTimeOutCheck 1 4241 #
+26 2130 D _var p ncr_ratch_player_points < 5 #
+27 2140 D _var p ncr_ratch_player_points > 4 #
+30 2150 D _param p ST_INTELLECT > 3 D _var p ncr_ratch_player_points > 10 D _var p q_ncr_ratch_buggy = 0 #
+45 2160 D _var p q_ncr_ratch_buggy = 1 #
+38 2170 D _var p q_ncr_ratch_buggy = 1 D _item p PID_MOTOR > 0 D _item p PID_SUPER_TOOL_KIT > 0 D _item p PID_OIL_CAN > 0 D _item p PID_BOTTLE_CAPS > 9999 #
+46 2180 D _var p q_ncr_ratch_buggy = 2 #
+47 2190 D _var p q_ncr_ratch_buggy = 3 D _script q_dappo_lost_c_robot@d_HasHolodisk 1 53 R _var p q_ncr_ratch_buggy = 4 R _script q_dappo_lost_c_robot@r_RemoveHolodisk 1 53 #
+48 2200 D _var p q_ncr_ratch_buggy = 4 #
+52 2210 D _var p q_ncr_ratch_buggy = 5 D _script ncr_ratch@d_RatchTimeOutCheck 1 4243 #
+53 2220 D _var p q_ncr_ratch_buggy = 5 D _script ncr_ratch@d_NotRatchTimeOutCheck 1 4243 @
+3 3000 None 0 #
+4 3010 @
+4 4000 None 0 #
+5 4010 @
+5 5000 None 0 #
+6 5010 @
+6 6000 None 0 #
+0 6010 #
+7 6020 @
+7 7000 None 0 #
+8 7010 @
+8 8000 None 0 #
+8 8010 #
+0 8020 #
+9 8030 @
+9 9000 None 0 #
+9 9010 #
+0 9020 #
+10 9030 @
+10 10000 None 0 #
+10 10010 #
+0 10020 #
+11 10030 @
+11 11000 None 0 #
+7 11010 #
+0 11020 D _var p ncr_alex_quest_status < 2 R _var p ncr_alex_quest_status = 2 #
+0 11030 D _var p ncr_alex_quest_status } 2 @
+20 12000 None 0 #
+21 12010 @
+21 13000 None 0 #
+22 13010 @
+22 14000 None 0 #
+2 14010 @
+23 15000 None 0 #
+24 15010 D _var p ncr_ratch_player_points < 15 D _item p PID_PUMP_PARTS > 2 R _var p ncr_ratch_player_points + 1 R _item p PID_BOTTLE_CAPS + 30 R _param p ST_EXPERIENCE + 350 R _item p PID_PUMP_PARTS - 3 #
+25 15020 D _var p ncr_ratch_player_points > 14 D _item p PID_PUMP_PARTS > 2 R _var p ncr_ratch_player_points + 1 R _item p PID_BOTTLE_CAPS + 30 R _param p ST_EXPERIENCE + 350 R _item p PID_PUMP_PARTS - 3 R _script ncr_ratch@r_RatchTimeOutSet 2 4241 4320 #
+24 15030 D _var p ncr_ratch_player_points < 15 D _item p PID_TUBE > 0 R _var p ncr_ratch_player_points + 1 R _item p PID_BOTTLE_CAPS + 20 R _param p ST_EXPERIENCE + 275 R _item p PID_TUBE - 1 #
+25 15040 D _var p ncr_ratch_player_points > 14 D _item p PID_TUBE > 0 R _var p ncr_ratch_player_points + 1 R _item p PID_BOTTLE_CAPS + 20 R _param p ST_EXPERIENCE + 275 R _item p PID_TUBE - 1 R _script ncr_ratch@r_RatchTimeOutSet 2 4241 4320 #
+24 15050 D _var p ncr_ratch_player_points < 15 D _item p PID_STEEL > 0 R _var p ncr_ratch_player_points + 2 R _item p PID_BOTTLE_CAPS + 25 R _param p ST_EXPERIENCE + 325 R _item p PID_STEEL - 1 #
+25 15060 D _var p ncr_ratch_player_points > 14 D _item p PID_STEEL > 0 R _var p ncr_ratch_player_points + 2 R _item p PID_BOTTLE_CAPS + 25 R _param p ST_EXPERIENCE + 325 R _item p PID_STEEL - 1 R _script ncr_ratch@r_RatchTimeOutSet 2 4241 4320 #
+0 15070 @
+24 16000 None 0 #
+24 16010 D _var p ncr_ratch_player_points < 15 D _item p PID_PUMP_PARTS > 2 R _var p ncr_ratch_player_points + 1 R _item p PID_BOTTLE_CAPS + 30 R _param p ST_EXPERIENCE + 120 R _item p PID_PUMP_PARTS - 3 #
+25 16020 D _var p ncr_ratch_player_points > 14 D _item p PID_PUMP_PARTS > 2 R _var p ncr_ratch_player_points + 1 R _item p PID_BOTTLE_CAPS + 30 R _param p ST_EXPERIENCE + 120 R _item p PID_PUMP_PARTS - 3 R _script ncr_ratch@r_RatchTimeOutSet 2 4241 4320 #
+24 16030 D _var p ncr_ratch_player_points < 15 D _item p PID_TUBE > 0 R _var p ncr_ratch_player_points + 1 R _item p PID_BOTTLE_CAPS + 20 R _param p ST_EXPERIENCE + 75 R _item p PID_TUBE - 1 #
+25 16040 D _var p ncr_ratch_player_points > 14 D _item p PID_TUBE > 0 R _var p ncr_ratch_player_points + 1 R _item p PID_BOTTLE_CAPS + 20 R _param p ST_EXPERIENCE + 75 R _item p PID_TUBE - 1 R _script ncr_ratch@r_RatchTimeOutSet 2 4241 4320 #
+24 16050 D _var p ncr_ratch_player_points < 15 D _item p PID_STEEL > 0 R _var p ncr_ratch_player_points + 2 R _item p PID_BOTTLE_CAPS + 25 R _param p ST_EXPERIENCE + 125 R _item p PID_STEEL - 1 #
+25 16060 D _var p ncr_ratch_player_points > 14 D _item p PID_STEEL > 0 R _var p ncr_ratch_player_points + 2 R _item p PID_BOTTLE_CAPS + 25 R _param p ST_EXPERIENCE + 125 R _item p PID_STEEL - 1 R _script ncr_ratch@r_RatchTimeOutSet 2 4241 4320 #
+0 16070 @
+25 17000 None 0 #
+0 17010 @
+26 18000 None 0 #
+0 18010 @
+27 19000 None 0 #
+0 19010 #
+2 19020 R _var p ncr_ratch_player_points - 2 R _item p PID_GUNPOWDER + 1 #
+2 19030 R _var p ncr_ratch_player_points - 5 R _item p PID_V15_COMPUTER_PART + 1 @
+30 20000 None 0 #
+31 20010 D _param p ST_LEVEL > 15 #
+55 20020 D _param p ST_LEVEL < 16 @
+31 21000 None 0 #
+0 21010 #
+32 21020 @
+32 22000 None 0 #
+0 22010 #
+33 22020 @
+33 23000 None 0 #
+34 23010 @
+34 24000 None 0 #
+35 24010 @
+35 25000 None 0 #
+36 25010 #
+37 25020 @
+36 26000 None 0 #
+0 26010 @
+37 27000 None 0 #
+0 27010 #
+0 27020 R _var p q_ncr_ratch_buggy = 1 @
+38 28000 None 0 #
+39 28010 @
+39 29000 None 0 #
+40 29010 #
+0 29020 @
+40 30000 None 0 #
+0 30010 #
+41 30020 @
+41 31000 None 0 #
+42 31010 @
+42 32000 None 0 #
+43 32010 @
+43 33000 None 0 #
+44 33010 @
+44 34000 None 0 #
+0 34010 D _var p q_ncr_ratch_buggy = 1 R _var p q_ncr_ratch_buggy = 2 @
+45 35000 None 0 #
+0 35010 @
+46 36000 None 0 #
+0 36010 @
+47 37000 None 0 #
+0 37010 @
+48 38000 None 0 #
+49 38010 D _param p SK_BARTER > 99 #
+54 38020 D _param p SK_BARTER < 100 #
+50 38030 D _item p PID_BOTTLE_CAPS > 9999 D _item p PID_OIL_CAN > 0 D _item p PID_SUPER_TOOL_KIT > 0 D _item p PID_MOTOR > 0 D _var p q_ncr_ratch_buggy = 4 R _var p q_ncr_ratch_buggy = 5 R _item p PID_BOTTLE_CAPS - 10000 R _item p PID_OIL_CAN - 1 R _item p PID_MOTOR - 1 R _item p PID_SUPER_TOOL_KIT - 1 R _script ncr_ratch@r_RatchTimeOutSet 2 4243 10080 #
+0 38040 @
+49 39000 None 0 #
+50 39010 D _var p q_ncr_ratch_buggy = 4 D _item p PID_MOTOR > 0 D _item p PID_OIL_CAN > 0 D _item p PID_SUPER_TOOL_KIT > 0 D _item p PID_BOTTLE_CAPS > 7999 R _var p q_ncr_ratch_buggy = 5 R _item p PID_SUPER_TOOL_KIT - 1 R _item p PID_OIL_CAN - 1 R _item p PID_MOTOR - 1 R _item p PID_BOTTLE_CAPS - 7000 R _param p ST_EXPERIENCE + 2800 R _script ncr_ratch@r_RatchTimeOutSet 2 4243 10080 @
+50 40000 None 0 #
+51 40010 #
+0 40020 @
+51 41000 None 0 #
+0 41010 @
+52 42000 None 0 #
+0 42010 D _var p q_ncr_ratch_buggy = 5 R _script ncr_ratch@r_GiveBuggyToPlayer 0  @
+53 43000 None 0 #
+0 43010 @
+54 44000 None 0 #
+48 44010 @
+55 45000 None 0 #
+0 45010 @
+56 46000 None 0 #
+2 46010 #
+0 46020 &
+
+[russ]
+{100}{}{Ретч}
+{200}{}{Вы видите гору тряпья. Должно быть, под ней кто-то есть.}
+{210}{}{Вы видите Ретча, возможно он что-то пьет там.}
+{210}{}{Это могло бы быть человеком. И мутантом тоже. Все, что вы можете сказать точно, так это что он пахнет очень, очень плохо.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{2}
+{2000}{}{Всякая всячина на продажу! Посмотрите, делайте предложения.}
+{2010}{}{Менять. Моя искать деньги.}
+{2020}{}{Уххх! [Уйти]}
+{2030}{}{Так что у вас есть?}
+{2040}{}{Я позже приду. [Выход]}
+{2050}{}{А ты знаком с интендантом Алексом?}
+{2060}{}{Ну у тебя и видок, Ретч. Может быть, стоит задуматься о своем образе жизни?@@Брр, Ретч, на тебя смотреть противно. Приведи себя в порядок.@@Неужели каждый механик выглядит, как последний бомж?}
+{2070}{}{Ретч. Я тебе мусора притаранил@sex@|||а|.@@Танцуй, Ретч. Срочная доставка хлама и железных труб.@@Черт, этот хлам весит очень некисло. Тебе еще нужно это барахло?}
+{2080}{}{Ретч. Я тебе мусора притаранил@sex@|||а|.@@Танцуй, Ретч. Срочная доставка хлама и железных труб.@@Черт, этот хлам весит очень некисло. Тебе еще нужно это барахло?}
+{2090}{}{Ретч. Я тебе мусора притаранил@sex@|||а|.@@Танцуй, Ретч. Срочная доставка хлама и железных труб.@@Черт, этот хлам весит очень некисло. Тебе еще нужно это барахло?}
+{2100}{}{Ретч. Я тебе мусора притаранил@sex@|||а|.@@Танцуй, Ретч. Срочная доставка хлама и железных труб.@@Черт, этот хлам весит очень некисло. Тебе еще нужно это барахло?}
+{2110}{}{Ретч. Я тебе мусора притаранил@sex@|||а|.@@Танцуй, Ретч. Срочная доставка хлама и железных труб.@@Черт, этот хлам весит очень некисло. Тебе еще нужно это барахло?}
+{2120}{}{Ретч. Я тебе мусора притаранил@sex@|||а|.@@Танцуй, Ретч. Срочная доставка хлама и железных труб.@@Черт, этот хлам весит очень некисло. Тебе еще нужно это барахло?}
+{2130}{}{Ретч, ну как, нашел что-нибудь интересное в этом хламе?@@Как успехи. Достал что-то новенькое?@@Много "сокровищ" в мусоре уже откопал, колись?}
+{2140}{}{Ретч, ну как, нашел что-нибудь интересное в этом хламе?@@Как успехи. Достал что-то новенькое?@@Много "сокровищ" в мусоре уже откопал, колись?}
+{2150}{}{Ну у тебя и видок, Ретч. Может быть, стоит задуматься о своем образе жизни?@@Брр, Ретч, на тебя смотреть противно. Приведи себя в порядок.@@Неужели каждый механик выглядит, как последний бомж?}
+{2160}{}{Эй, Ретч, напомни, что тебе нужно для того чтобы багги собрать?}
+{2170}{}{Ретч, я все принес@sex@|||ла|. Мотор, масленка, суперинструменты, деньги. Где обещанный багги?}
+{2180}{}{Ретч, расскажи мне еще о этих схемах.}
+{2190}{}{Ретч, диск у меня. [Отдать голодиск]}
+{2200}{}{Когда ты тачку соберешь?}
+{2210}{}{Где моя тачка, чувак?!}
+{2220}{}{Где моя тачка, чувак?!}
+{3000}{}{Немного.}
+{3010}{}{Меня возмутил его надменный тон. Он считает себя безусловным знатоком в автомобилях...}
+{4000}{}{Есть такое дело. Знает он много чего, но и его можно удивить.}
+{4010}{}{А как его удивить?}
+{5000}{}{Расскажи ему про тачку с водородным двигателем.}
+{5010}{}{Тачка с каким двигателем?}
+{6000}{}{Водородным. Недавно нашли ребята из Фриско. Толком неизвестно ничего, но говорят, что она даже ездит! Только топлива негде взять...}
+{6010}{}{Ерунда полная. Не верю. Пока. [Уйти]}
+{6020}{}{Ты можешь рассказать о принципах работы двигателя на водородном топливе? }
+{7000}{}{Это скучно. Ты правда хочешь это знать?}
+{7010}{}{Ага.}
+{8000}{}{Ладно, слушай. Топливный элемент водородного двигателя состоит из топливного электрода (анод), кислородного электрода(катод) и электролита. Анод и катод набраны из электропроводящих пластин, внутренние каналы их разделены полимерной мембраной (она и есть электролит).}
+{8010}{}{Повтори?}
+{8020}{}{Нет, с меня хватит. [Уйти]}
+{8030}{}{Дальше.}
+{9000}{}{Окружив анод водородом, мы отделим электроны от катализатора. В результате образуются положительно заряженные атомы, которые пройдут через электролит к катоду. Возникнет разница в электрическом заряде и появится электрическое напряжение.}
+{9010}{}{Повтори?}
+{9020}{}{Нет, с меня хватит. [Уйти]}
+{9030}{}{Дальше.}
+{10000}{}{Положительно заряженные ионы водорода (протоны) соединятся с отрицательными ионами кислорода и образуется вода! Водород и кислород вступят в химическую реакцию и образуют воду при температуре 80 градусов по Цельсию.}
+{10010}{}{Повтори?}
+{10020}{}{Нет, с меня хватит. [Уйти]}
+{10030}{}{Дальше.}
+{11000}{}{В результате химической реакции, в батарее вырабатывается электроэнергия. Собственно, это все. Водород для реакции хранится в сжиженном состоянии в специальном топливном баке при температуре минус 253 градуса по Цельсию.}
+{11010}{}{А можно еще раз, но помедленнее?}
+{11020}{}{Уф, бред какой. Ну ладно, попробую поговорить с Алексом. Спасибо. [Уйти]}
+{11030}{}{Это все очень интересно, но мне пора.}
+{12000}{}{Отстань. Не видишь, я работаю. Когда копаешься в таком хламе...@@Этот мусор - золотое дно! Там ТАКОЕ найти можно. Приходится жертвовать внешним видом.@@Отвали, не нравится, дуй к Рондо. А я найду сокровище в этой куче мелочей.}
+{12010}{}{Я тебе могу еще мусора притащить.@@А если я принесу тебе хлам, возьмешь?@@А что тебе нужно? Могу достать.}
+{13000}{}{Давай. Куплю трубы, сталь. Да и просто хлам приноси.@@Правильно. Неси дяде Ретчу все, что увидишь. Трубу, сталь, мусор, все возьму!@@А че. Неплохо придумано. Мусор, трубы, сталь мне пригодятся.}
+{13010}{}{Незадаром, сам понимаешь.@@Сколько заплатишь?@@Почем принимаешь хлам?}
+{14000}{}{За 3 кучи всякой всячины дам 5 монет. За трубу - 10. За сталь 15 монет заплачу.@@Мусор по 5 монет за три кучи, труба по 10, сталь - 20.@@Мусор 5 за 3 штуки, сталь 15, труба 10 монет. Договоримся.}
+{14010}{}{Ясно.@@Годится. Скоро притащу тебе уйму мусора.@@Я стану твоим лучши поставщиком хлама, вот увидишь. }
+{15000}{}{Что там у тебя?@@Хм. А чего принес@sex@|||ла|?@@Мусор? Давай сюда.}
+{15010}{}{[Отдать 3 кучи мусора за 5 монет]}
+{15020}{}{[Отдать 3 кучи мусора за 5 монет]}
+{15030}{}{[Отдать трубу за 10 монет]}
+{15040}{}{[Отдать трубу за 10 монет]}
+{15050}{}{[Отдать кусок стали за 20 монет]}
+{15060}{}{[Отдать кусок стали за 20 монет]}
+{15070}{}{Не, Ретч, такие богатства нужны само@sex@|му||й|. [Уйти]@@Передумал@sex@|||а| я. Мне это может пригодиться. [Уйти]@@Знаешь, пожалуй я позже загляну. [Уйти]}
+{16000}{}{Еще есть чо?@@Нормально! Будешь еще сдавать чего-нибудь?@@[У Ретча горят глаза от свалившегося на него "богатства"] Еще давай!}
+{16010}{}{[Отдать 3 кучи мусора за 5 монет]}
+{16020}{}{[Отдать 3 кучи мусора за 5 монет]}
+{16030}{}{[Отдать трубу за 10 монет]}
+{16040}{}{[Отдать трубу за 10 монет]}
+{16050}{}{[Отдать кусок стали за 20 монет]}
+{16060}{}{[Отдать кусок стали за 20 монет]}
+{16070}{}{Не, Ретч, такие богатства нужны само@sex@|му||й|. [Уйти]@@Передумал@sex@|||а| я. Мне это может пригодиться. [Уйти]@@Знаешь, пожалуй я позже загляну. [Уйти]}
+{17000}{}{Уфф, на сегодня хватит. Мне с этим еще разбираться надо.@@Бабло кончилось. Завтра заходи.@@Ну, спасибо! Больше мне пока ничего не нужно.}
+{17010}{}{Пока, Ретч. [Уйти]@@Надеюсь, тебе это барахло пригодится.  [Уйти]@@Ладно, я на днях загляну еще. [Уйти]}
+{18000}{}{Непруха. Ничего не нашел...@@Голяк полный! Мусор и есть мусор.@@Раздал уже все. Все разобрали.}
+{18010}{}{Ну ладно, в другой раз. [Уйти]@@Понятно. В следующий раз и для меня чего-нибудь оставь. [Уйти]@@Я так и думал@sex@|||а|. [Уйти]}
+{19000}{}{Угу. Во, гляди, проводки какие то, и порошок. Забирай, что надо. @@ Порох нашел, кажись... И еще какую то хрень непонятную...@@Во! Смотри штука какая!@@Ну! Я же говорил - золотое дно! Если нужно, бери себе.}
+{19010}{}{Не, мне из этого ничего не нужно. [Уйти]}
+{19020}{}{[Взять порох]}
+{19030}{}{[Взять микросхему]}
+{20000}{}{Ну и что. Зато я могу собрать тачку!}
+{20010}{}{О! Это что-то новенькое. И какую тачку ты можешь сделать?}
+{20020}{}{О! Это что-то новенькое. И какую тачку ты можешь сделать?}
+{21000}{}{Не веришь? Любую.}
+{21010}{}{Ха. Ха. Ха. Очень смешно, Ретч. Продолжай ковырять свой мусор. [Уйти]}
+{21020}{}{Готов@sex@|||а| поспорить, что ты гонишь!}
+{22000}{}{[Смотрит на вас с явным презрением] Если бы только у меня были инструменты и необходимые детали... Да я даже винтокрыл склепать могу!}
+{22010}{}{Если бы... Как бы... Врешь ты все! [Уйти]}
+{22020}{}{Каких деталей тебе не хватает?}
+{23000}{}{Ну... Мне нужны суперинструменты, мотор и масленка, с моими запасами прочих деталей... Багги точно соберу!}
+{23010}{}{А если я тебе принесу все это, соберешь машинку для меня?}
+{24000}{}{Для тебя? Если ты заплатишь.}
+{24010}{}{Сколько?}
+{25000}{}{Скажем, 10 косых.}
+{25010}{}{10 тысяч?? Да ты спятил!}
+{25020}{}{Допустим, 10 тысяч я принесу. А ты хоть знаешь, что с ними делать? C такими деньгами?}
+{26000}{}{На нет, и суда нет.}
+{26010}{}{Я подумаю. [Уйти]}
+{27000}{}{Что-нибудь придумаю. Может, гильзы для патронов начну делать.}
+{27010}{}{Бред несешь какой-то. Ладно, я ухожу. [Уйти]}
+{27020}{}{По рукам. Суперинструменты, мотор и масленку я принесу. Бабки тоже. [Уйти]}
+{28000}{}{Давай сюда. Только есть одно "но".}
+{28010}{}{Стоп. Что это за "но"?}
+{29000}{}{В общем, мне нужны схемы подвески...}
+{29010}{}{Подвески? Какой, к дьяволу, подвески?}
+{29020}{}{Я так и знал@sex@|||а|, что ты ни на что дельное не способен. [Уйти]}
+{30000}{}{Двигатель то нужно на что-то крепить. Нужны чертежи.}
+{30010}{}{Ну нет, я на это не пойду. Ищи другого. [Уйти]}
+{30020}{}{Где искать?}
+{31000}{}{Давай сюда мотор и остальное сначала.}
+{31010}{}{Ну нет, сначала достанем схемы.}
+{32000}{}{Ну ладно. Я точно знаю, на военной базе Сьерра служил один кекс, механик. У него свой багги был. Нужно пробраться на базу и пошарить в сети. Там точно есть эта инфа!}
+{32010}{}{И потом тебе рассказать?}
+{33000}{}{Запиши на голодиск и тащи сюда.}
+{33010}{}{Ого! Ты и этим умеешь пользоваться?}
+{34000}{}{Обижаешь. Я все умею.}
+{34010}{}{Ок. Скоро вернусь. [Уйти]}
+{35000}{}{Мотор, масленку, суперинструменты и 10 тыщ монет для тебя...}
+{35010}{}{Ясно. Как найду, вернусь. [Уйти]}
+{36000}{}{Тебе нужно пробраться в Сьерру и подключиться к местной компьютерной сети. Найди архивы ремонтной службы и запиши на голодиск данные о подвеске двигателя багги.}
+{36010}{}{Думаешь это так просто?! Эх! [Уйти]}
+{37000}{}{Отлично. Сейчас посмотрим, как это делается... Загляни сюда позже...}
+{37010}{}{Договорились. [Уйти]}
+{38000}{}{Ну теперь давай то барахло, о котором шла речь, включая мои бабки. Мотор и остальное...}
+{38010}{}{Слушай, Ретч. Это наглость, трясти с меня такую кучу денег. Я готов@sex@|||а| заплатить 5 тысяч, но никак не 10.}
+{38020}{}{Слушай, Ретч. Это наглость, трясти с меня такую кучу денег. Я готов@sex@|||а| заплатить 5 тысяч, но никак не 10.}
+{38030}{}{Хорошо, как договаривались. [Отдать мотор, масленку, деньги и суперинструменты]}
+{38040}{}{Что? Деньги вперед? После того, как я чуть не отдал@sex@|||а| концы на этой гребаной военной базе? [Уйти]}
+{39000}{}{Ты и мертвого уговоришь. 8 тысяч и ни монетой меньше.}
+{39010}{}{Годится, забирай детали и деньги.}
+{40000}{}{Ну вот. Мне понадобится время чтобы все закончить. Приходи... Через неделю...}
+{40010}{}{А чего так долго, побыстрее нельзя?}
+{40020}{}{Увидимся. [Уйти]}
+{41000}{}{Не, быстрее никак, извини.}
+{41010}{}{Хорошо. Я буду через неделю. [Уйти] }
+{42000}{}{Вон стоит, прямо за тобой. Можешь забирать. Это ключи от нее. [Ретч передает вам связку ключей]}
+{42010}{}{Спасибо! [Уйти]}
+{43000}{}{Пока еще не готова, приходи позже.}
+{43010}{}{Спасибо! [Уйти]}
+{44000}{}{10 кусков и точка...}
+{44010}{}{Ладно, черт тебя подери...}
+{45000}{}{[Смотрит на вас свысока] Ха! Если я и расскажу кому-то об этом, то не тебе. Не люблю болтать попусту. Все равно помочь не сможешь. Наберись опыта, потом приходи. Тогда и поговорим.}
+{45010}{}{Не очень то и хотелось.}
+{46000}{}{Спасибо, но пока не надо! С прошлого раза много осталось.@@Спасибо, но сейчас мне ничего не надо. Но может понадобиться потом.}
+{46010}{}{Хочу спросить ещё кое о чём...}
+{46020}{}{Понятно, пока!@@Ну я пош@sex@|ёл||ла|!}
+
+[engl]
+{100}{}{Retch}
+{200}{}{you see rags mountain. Should be, under it someone is.}
+{210}{}{you see Retcha, something is possible it drinks there.}
+{210}{}{It could be the person. And a mutant too. Everything that you can tell precisely so it that it smells very much, very badly.}
+{1000}{}{Predialogue installations}
+{1010}{}{2}
+{2000}{}{Stuff on sale! Look, do offers.}
+{2010}{}{to Change. Washing to search for money.}
+{2020}{}{Uhhh! [To Leave]}
+{2030}{}{So at you is?}
+{2040}{}{I will come later. [An exit]}
+{2050}{}{And you are familiar with quartermaster Alex?}
+{2060}{}{Well at you and vidok, Retch. Perhaps, it is necessary to reflect on the way of life? @@ Brr, Retch, at you to look oppositely. Make toilet. @@ really each mechanic looks, how last vagabond?}
+{2070}{}{Retch. I to you of garbage притаранил@sex ||| and |. @@ Dance, Retch. Urgent delivery of stuff and iron pipes. @@ lines, this stuff weighs very much nekislo. You still need it barahlo?}
+{2080}{}{Retch. I to you of garbage притаранил@sex ||| and |. @@ Dance, Retch. Urgent delivery of stuff and iron pipes. @@ lines, this stuff weighs very much nekislo. You still need it barahlo?}
+{2090}{}{Retch. I to you of garbage притаранил@sex ||| and |. @@ Dance, Retch. Urgent delivery of stuff and iron pipes. @@ lines, this stuff weighs very much nekislo. You still need it barahlo?}
+{2100}{}{Retch. I to you of garbage притаранил@sex ||| and |. @@ Dance, Retch. Urgent delivery of stuff and iron pipes. @@ lines, this stuff weighs very much nekislo. You still need it barahlo?}
+{2110}{}{Retch. I to you of garbage притаранил@sex ||| and |. @@ Dance, Retch. Urgent delivery of stuff and iron pipes. @@ lines, this stuff weighs very much nekislo. You still need it barahlo?}
+{2120}{}{Retch. I to you of garbage притаранил@sex ||| and |. @@ Dance, Retch. Urgent delivery of stuff and iron pipes. @@ lines, this stuff weighs very much nekislo. You still need it barahlo?}
+{2130}{}{Retch, well as, has found something interesting in this stuff? @@ as successes. Has got something brand new? @@ it is a lot of "treasures" in garbage has already dug out, be pricked?}
+{2140}{}{Retch, well as, has found something interesting in this stuff? @@ as successes. Has got something brand new? @@ it is a lot of "treasures" in garbage has already dug out, be pricked?}
+{2150}{}{Well at you and vidok, Retch. Perhaps, it is necessary to reflect on the way of life? @@ Brr, Retch, at you to look oppositely. Make toilet. @@ really each mechanic looks, how last vagabond?}
+{2160}{}{Hey, Retch, remind, what to you it is necessary that baggi to collect?}
+{2170}{}{Retch, I all принес@sex ||| la |. The motor, a butterdish, supertools, money. Where promised baggi?}
+{2180}{}{Retch, tell to me about these schemes.}
+{2190}{}{Retch, a disk at me. [To give golodisk]}
+{2200}{}{When you will collect a wheelbarrow?}
+{2210}{}{Where my wheelbarrow, the dude?!}
+{2220}{}{Where my wheelbarrow, the dude?!}
+{3000}{}{it is a little.}
+{3010}{}{I was revolted with its haughty tone. He considers itself(himself) as the unconditional expert in cars...}
+{4000}{}{There is such business. He knows much that, but also it is possible to surprise him.}
+{4010}{}{And how it to surprise?}
+{5000}{}{Tell to it about a wheelbarrow with the hydrogen engine.}
+{5010}{}{the Wheelbarrow with what engine?}
+{6000}{}{Hydrogen. Children from Frisko recently have found. Plainly it is not known anything, but say that it even goes! Only fuel there is no place to take...}
+{6010}{}{Nonsense full. I do not trust. While. [To Leave]}
+{6020}{}{You can tell about principles of work of the engine on hydrogen fuel?}
+{7000}{}{It is boring. You truth want it the nobility?}
+{7010}{}{Aha.}
+{8000}{}{it is fine, listen. The fuel element of the hydrogen engine consists of a fuel electrode (the anode), an oxygen electrode (the cathode) both electrolits. The anode and the cathode are typed from electrospending plates, their internal channels are divided by a polymeric membrane (it and is electrolit).}
+{8010}{}{Repeat?}
+{8020}{}{No, I have had enough. [To leave]}
+{8030}{}{Further.}
+{9000}{}{Having surrounded the anode with hydrogen, we will separate elektrony from the catalyst. Positively charged atoms which will pass through electrolit to the cathode are as a result formed. There will be a difference in an electric charge and there will be an electric pressure.}
+{9010}{}{Repeat?}
+{9020}{}{No, I have had enough. [To leave]}
+{9030}{}{Further.}
+{10000}{}{positively charged ions of hydrogen (protons) will incorporate to negative ions of oxygen and water is formed! Hydrogen and oxygen will enter chemical reaction and form water at temperature of 80 degrees on Celsius.}
+{10010}{}{Repeat?}
+{10020}{}{No, I have had enough. [To leave]}
+{10030}{}{Further.}
+{11000}{}{As a result of chemical reaction, in the battery the electric power is developed. Actually, it is all. Hydrogen for reaction is stored in szhizhennom a condition in a special fuel tank at temperature a minus of 253 degrees on Celsius.}
+{11010}{}{And it is possible once again, but more slowly?}
+{11020}{}{Uf, delirium what. Well it is fine, I will try to talk to Alex. Thanks. [To leave]}
+{11030}{}{It is all very interesting, but it is time to me.}
+{12000}{}{Lag behind. You do not see, I work. When you dig in such stuff... @@ This garbage - a gold mine! There SUCH it is possible to find. It is necessary to endow appearance. @@ Otvali, is not pleasant, blow to the Rondo. And I will find treasure in this heap of trifles.}
+{12010}{}{I to you can drag still garbage. @@ and if I bring to you stuff, you will take? @@ and what is necessary for you? I can get.}
+{13000}{}{Give. The pipe purchase, a steel. And simply stuff bring. @@ it is correct. Bear to uncle Retchu everything that you will see. A pipe, a steel, garbage, all I will take! @@ and che. It is thought not bad up. Garbage, pipes, a steel will be useful to me.}
+{13010}{}{Nezadarom, itself you understand. @@ how many you will pay? @@ how much you accept stuff?}
+{14000}{}{For 3 heaps of stuff of ladies of 5 coins. For a pipe - 10. For a steel of 15 coins I will begin to cry. @@ garbage on 5 coins for three heaps, a pipe on 10, a steel - 20. @@ Garbage 5 for 3 pieces, a steel 15, a pipe of 10 coins. We will agree.}
+{14010}{}{it is clear. @@ Suits. I will soon drag to you garbage a great lot. @@ I will become yours luchshi the supplier of stuff, here will see.}
+{15000}{}{That there at you? @@ Hm. And that принес@sex ||| la |? @@ Garbage? Give here.}
+{15010}{}{[to Give 3 heaps of garbage for 5 coins]}
+{15020}{}{[to Give 3 heaps of garbage for 5 coins]}
+{15030}{}{[to Give a pipe for 10 coins]}
+{15040}{}{[to Give a pipe for 10 coins]}
+{15050}{}{[to Give a steel piece for 20 coins]}
+{15060}{}{[to Give a steel piece for 20 coins]}
+{15070}{}{Not, Retch, such riches are necessary само@sex | mu || j |. [To Leave] @@ Peredumal@sex ||| and | I. It can be useful to me. [To leave] @@ you Know, perhaps I will glance later. [To leave]}
+{16000}{}{Still is cho? @@ it is normal! You will hand over still something? @@ [at Retcha eyes from "riches" which have fallen down it] Still burn give!}
+{16010}{}{[to Give 3 heaps of garbage for 5 coins]}
+{16020}{}{[to Give 3 heaps of garbage for 5 coins]}
+{16030}{}{[to Give a pipe for 10 coins]}
+{16040}{}{[to Give a pipe for 10 coins]}
+{16050}{}{[to Give a steel piece for 20 coins]}
+{16060}{}{[to Give a steel piece for 20 coins]}
+{16070}{}{Not, Retch, such riches are necessary само@sex | mu || j |. [To Leave] @@ Peredumal@sex ||| and | I. It can be useful to me. [To leave] @@ you Know, perhaps I will glance later. [To leave]}
+{17000}{}{Uff, will suffice for today. To me with it still it is necessary to understand. @@ Bablo has come to an end. Tomorrow come. @@ well, thanks! It is more to me while it is necessary nothing.}
+{17010}{}{While, Retch. [To Leave] @@ I Hope, it barahlo is useful to you. [To Leave] @@ it is fine, I will glance one of these days still. [To Leave]}
+{18000}{}{Nepruha. Has found Nothing... @@ Goljak full! The garbage also is garbage. @@ has distributed already all. All have disassembled.}
+{18010}{}{Well it is fine, another time. [To leave] @@ it is clear. Next time and for me something leave. [To leave] @@ I and думал@sex ||| and |. [To Leave]}
+{19000}{}{Ugu. In, look, conductings what that, and a powder. Take away that is necessary. @@ Gunpowder has found, seem... And still what that hren not clear... @@ In! Look a piece what! @@ well! I spoke - a gold mine! If it is necessary, take to itself.}
+{19010}{}{Not, from this it is necessary nothing for me. [To Leave]}
+{19020}{}{[to Take gunpowder]}
+{19030}{}{[to Take a microcircuit]}
+{20000}{}{Well also that. But I can collect a wheelbarrow!}
+{20010}{}{About! It something brand new. And you can make what wheelbarrow?}
+{20020}{}{About! It something brand new. And you can make what wheelbarrow?}
+{21000}{}{you do not trust? Any.}
+{21010}{}{Ha. Ha. Ha. Very ridiculously, Retch. Continue to pick the garbage. [To leave]}
+{21020}{}{Gotov@sex ||| and | to argue that you drive!}
+{22000}{}{[Looks at you with obvious contempt] If only I had tools and necessary details... Yes I even vintokryl can rivet!}
+{22010}{}{If... As though... You Say lies all! [To leave]}
+{22020}{}{What details do not suffice you?}
+{23000}{}{Well... Supertools, the motor and a butterdish, with my stocks of other details are necessary To me... Baggi I will precisely collect!}
+{23010}{}{And if I to you bring all it, you will collect the machine for me?}
+{24000}{}{For you? If you pay.}
+{24010}{}{How many?}
+{25000}{}{we Will tell, 10 slanting.}
+{25010}{}{10 thousand?? Yes you have gone balmy!}
+{25020}{}{It is admissible, 10 thousand I will bring. And you though know, what with them to do? C such money?}
+{26000}{}{On is not present, and vessels are not present.}
+{26010}{}{I will think. [To leave]}
+{27000}{}{Something I will think up. Perhaps sleeves for cartridges I will start to do.}
+{27010}{}{Brad you bear any. All right, I leave. [To leave]}
+{27020}{}{On hands. I will bring supertools, the motor and a butterdish. Grandmas too. [To Leave]}
+{28000}{}{Give here. Only there is one "but".}
+{28010}{}{Stop. What it for "but"?}
+{29000}{}{in general, suspension bracket schemes are necessary to me...}
+{29010}{}{Suspension brackets? What, to a devil, suspension brackets?}
+{29020}{}{I and знал@sex ||| and | that you on what the efficient are not capable. [To leave]}
+{30000}{}{the Engine that it is necessary to fix on something. Drawings are necessary.}
+{30010}{}{Well is not present, I on it will not go. Search for another. [To leave]}
+{30020}{}{Where to search?}
+{31000}{}{Give here the motor and the rest at first.}
+{31010}{}{Well is not present, at first we will get schemes.}
+{32000}{}{Well it is fine. I precisely know, on military base Sierra one fruitcake, the mechanic served. At it the baggi was. It is necessary to make the way on base and to rummage around a network. There precisely there is this infa!}
+{32010}{}{And then to you to tell?}
+{33000}{}{Write down on golodisk and drag here.}
+{33010}{}{Ogo! You and to it are able to use?}
+{34000}{}{you Offend. I all am able.}
+{34010}{}{Apprx. I will soon return. [To leave]}
+{35000}{}{the Motor, a butterdish, supertools and 10 tyshch coins for you...}
+{35010}{}{it is clear. As I will find, I will return. [To leave]}
+{36000}{}{You need to make the way to Sierra and to be connected to a local computer network. Find archives of line fault service and write down on golodisk the data about an engine mount baggi.}
+{36010}{}{you Think it so simply?! Eh! [To leave]}
+{37000}{}{it is excellent. Now we will look, as it becomes... Glance here later...}
+{37010}{}{Have agreed. [To leave]}
+{38000}{}{Well now give that barahlo about which there was a speech, including my grandma. The motor and the rest...}
+{38010}{}{Listen, Retch. It is impudence, to shake from me such heap of money. I готов@sex ||| and | to pay 5 thousand, but in any way 10.}
+{38020}{}{Listen, Retch. It is impudence, to shake from me such heap of money. I готов@sex ||| and | to pay 5 thousand, but in any way 10.}
+{38030}{}{it is good, as agreed. [To give the motor, a butterdish, money and supertools]}
+{38040}{}{That? Money forward? After I nearly отдал@sex ||| and | the ends on this fucking military base? [To leave]}
+{39000}{}{You and dead will persuade. And a coin it is less than 8 thousand.}
+{39010}{}{Suits, take away details and money.}
+{40000}{}{Well here. Time that all to finish is required to me. Come... In a week...}
+{40010}{}{And that so long, it is impossible faster?}
+{40020}{}{we Will meet. [To leave]}
+{41000}{}{Not, faster in any way, excuse.}
+{41010}{}{it is good. I will be in a week. [To leave]}
+{42000}{}{costs, directly for you. You can take away. These are keys from it. [Retch transfers you a bunch of keys]}
+{42010}{}{Thanks! [To leave]}
+{43000}{}{For the present it is not ready, come later.}
+{43010}{}{Thanks! [To leave]}
+{44000}{}{10 pieces and a point...}
+{44010}{}{it is fine, lines you poderi...}
+{45000}{}{[Ha looks down on you]! If I also tell to someone about it, not to you. I do not like to waffle. All the same you can not help. Get hand in, then come. Then we will talk.}
+{45010}{}{Not so that also would be desirable.}
+{46000}{}{Thanks, but are not necessary yet! From last time remains much. @@ Thanks, but now are necessary nothing to me. But it can be necessary then.}
+{46010}{}{I Want to ask still which about what...}
+{46020}{}{it is clear, so long! @@ Well I пош@sex | ate || la |!}

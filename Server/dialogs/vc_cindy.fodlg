@@ -1,0 +1,192 @@
+[comment]
+
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 D _var p name_mem_player_npc = 0 D _var p q_vc_cindy_letter ! 6 R _var p name_mem_player_npc = 1 #
+3 1020 D _var p name_mem_player_npc = 1 D _var p q_vc_cindy_letter ! 6 #
+13 1030 D _var p q_vc_cindy_letter = 6 D _script dialog@d_NotTimeoutOk 0  #
+14 1040 D _var p q_vc_cindy_letter = 6 D _script dialog@d_TimeoutOk 0  #
+16 1050 D _var p q_vc_cindy_letter = 1 @
+2 2000 None 1 #
+6 2010 #
+4 2020 #
+0 2030 #
+7 2040 D _item p PID_LETTER_TO_SINDY > 0 D _var p q_arroyo_cassidy_letter = 1 @
+3 3000 None 1 #
+6 3010 #
+4 3020 #
+17 3030 D _var p q_vc_cindy_letter = 3 R _var p q_vc_cindy_letter = 4 R _item p PID_BOTTLE_CAPS + 600 R _param p ST_EXPERIENCE + 3000 #
+18 3040 D _var p q_vc_cindy_letter = 2 D _item p PID_LETTER_TO_CASSIDY = 0 R _var p q_vc_cindy_letter = 5 #
+0 3050 #
+7 3060 D _item p PID_LETTER_TO_SINDY > 0 D _var p q_arroyo_cassidy_letter = 1 @
+4 4000 None 1 #
+5 4010 D _item p PID_BOTTLE_CAPS > 4 R _item p PID_BEER + 1 R _item p PID_BOTTLE_CAPS - 5 #
+0 4020 @
+5 5000 None 1 #
+4 5010 #
+0 5020 @
+6 6000 None 1 #
+7 6010 D _var p q_arroyo_cassidy_letter = 1 D _item p PID_LETTER_TO_SINDY > 0 #
+4 6020 #
+0 6030 @
+7 7000 None 0 #
+8 7010 R _var p q_arroyo_cassidy_letter = 2 R _param p ST_EXPERIENCE + 1900 R _item p PID_LETTER_TO_SINDY - 1 #
+10 7020 R _var p q_arroyo_cassidy_letter = 2 R _param p ST_EXPERIENCE + 1900 R _item p PID_BOTTLE_CAPS + 500 R _param p ST_KARMA - 5 R _item p PID_LETTER_TO_SINDY - 1 @
+8 8000 None 0 #
+9 8010 R _var p q_vc_cindy_letter = 6 R _script dialog@r_SetUniqTO 1 200 #
+11 8020 #
+0 8030 @
+9 9000 None 0 @
+10 10000 None 0 #
+0 10010 #
+4 10020 @
+11 11000 None 0 #
+12 11010 #
+9 11020 R _var p q_vc_cindy_letter = 6 R _script dialog@r_SetUniqTO 1 200 #
+0 11030 @
+12 12000 None 0 #
+0 12010 R _param p ST_KARMA - 2 R _var p q_vc_cindy_letter = 1 R _item p PID_LETTER_TO_CASSIDY + 1 #
+0 12020 R _var p q_vc_cindy_letter = 1 R _item p PID_LETTER_TO_CASSIDY + 1 #
+0 12030 R _param p ST_KARMA - 2 R _var p q_vc_cindy_letter = 1 R _item p PID_LETTER_TO_CASSIDY + 1 @
+13 13000 None 0 #
+4 13010 #
+0 13020 @
+14 14000 None 0 #
+15 14010 @
+15 15000 None 0 #
+0 15010 R _item p PID_BOTTLE_CAPS + 300 R _var p q_vc_cindy_letter = 2 R _item p PID_LETTER_TO_CASSIDY + 1 @
+16 16000 None 0 #
+0 16010 @
+17 17000 None 0 @
+18 18000 None 0 &
+
+[russ]
+{100}{}{Синди}
+{200}{}{Вы видите: Синди}
+{210}{}{Симпатичная молодая женщина. Она очень ловко управляется с бутылками.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{Первый раз.}
+{1020}{}{Знаком.}
+{1030}{}{Хочет забрать письмо, не дописала.}
+{1040}{}{Хочет забрать письмо, дописала.}
+{1050}{}{Обидел.}
+{2000}{}{Привет. Я Синди. Добро пожаловать в мой бар. Чем могу помочь?}
+{2010}{}{Эй, а разве это не бар Кэссиди?}
+{2020}{}{Пива мне!}
+{2030}{}{Привет, Синди. Ничем, спасибо.}
+{2040}{}{Привет Синди. Тебе письмо от Кессиди.}
+{3000}{}{Чем могу помочь?}
+{3010}{}{Эй, Синди, а разве это не бар Кэссиди?}
+{3020}{}{Пива мне!}
+{3030}{}{Синди, я доставил@sex@|||а| твоё письмо.}
+{3040}{}{Синди, такое дело... Я потерял твоё письмо. Вступил в Пустоши в стычку, ну и...}
+{3050}{}{Просто заш@sex@|ёл||ла| поздороваться.}
+{3060}{}{Привет Синди. Тебе письмо от Кесседи...}
+{4000}{}{С вас 5 долларов.}
+{4010}{}{Вот, возьми.}
+{4020}{}{Чёрт, у меня не хватает денег.}
+{5000}{}{Вот ваше пиво. Что-нибудь ещё?}
+{5010}{}{Ещё пива!}
+{5020}{}{Нет, спасибо.}
+{6000}{}{Кэссиди оставил свой бар на меня, когда уходил с Избранным четыре года назад. С тех пор от него ничего не было слышно.}
+{6010}{}{А я тебе письмо от него принёс.}
+{6020}{}{Ну, с Избранным ходить - не шутки шутить. Налей-ка мне пива.}
+{6030}{}{Уже четыре года? Дааа...}
+{7000}{}{От Кэссиди?! Ооо! Какая радость! Я же столько времени от него ничего не слышала! Давай его скорей сюда!}
+{7010}{}{Вот оно, держи.}
+{7020}{}{Он сказал, что ты мне заплатишь за доставку... эм... 500 долларов. Да.}
+{8000}{}{Слушай, а ты же не уходишь сразу обратно, да? Если бы ты мог@sex@|||ла| подождать несколько часов, то я бы передала ответ.}
+{8010}{}{Давай. У меня как раз были дела в городе.}
+{8020}{}{На самом деле мне уже надо уходить. Караван ждёт.}
+{8030}{}{Я не буду таскаться с бабскими письмами.}
+{9000}{}{Я постараюсь не задерживать тебя, зайди через несколько часов!}
+{10000}{}{Хм. Странно. Не похоже на него. Избранный его испортил. Но я же не могу не взять его! Вот, держи. [Достаёт деньги из кассы] Если ты обратно в Арройо, то передай ему, что я пока почитаю его, а ответ пришлю попозже с кем-нибудь. Теперь иди, у меня клиенты.}
+{10010}{}{Как скажешь.}
+{10020}{}{Я тоже твой клиент. Налей мне пива.}
+{11000}{}{Ну... пожалуйста! Я так хотела бы провести некоторое время с этим письмом. И мне есть о чём рассказать в своём. Это не займёт больше нескольких часов, ты как раз успеешь пополнить свои припасы и перекусить.}
+{11010}{}{Нет, если ты хочешь что-то передать, то напишешь это сейчас.}
+{11020}{}{Ладно, давай.}
+{11030}{}{Знаешь, я вообще передумал@sex@|||а| таскаться с твоим письмом.}
+{12000}{}{[Синди молча вскрывает письмо и пробегается по нему глазами. Потом она берёт лист бумаги, пишет несколько предложений, сворачивает, не поднимая глаз кладёт на стол перед вами и отворачивается. Похоже, она сдерживается от того, чтобы не заплакать]}
+{12010}{}{Так-то лучше.}
+{12020}{}{[Молча взять письмо]}
+{12030}{}{Эй, пива мне!}
+{13000}{}{Извините, письмо пока не готово. Ещё чуть-чуть!}
+{13010}{}{Налей пока пива.}
+{13020}{}{Хорошо.}
+{14000}{}{[При виде вас Синди быстро начинает дописывать письмо]}
+{14010}{}{[Далее]}
+{15000}{}{[Закончила писать] Так, вот отчет о проделанной работе, ха. Передашь Кесседи с моими наилучшими пожеланиями. Вот кстати, немного денежек на дорогу.}
+{15010}{}{Денежек - это хорошо... В смысле, обязательно передам. Пока.}
+{16000}{}{[При виде вас Синди нарочно отворачивается и обслуживает других клиентов]}
+{16010}{}{Эй! Тут люди есть!}
+{17000}{}{Большое спасибо! Вот, возьмите денег.}
+{18000}{}{Ну, что ж, Пустошь сурова. Доставит кто-нибудь другой.}
+
+[engl]
+{100}{}{Cindy}
+{200}{}{You see: Cindy}
+{210}{}{A pretty young woman.}
+{1000}{}{Predialogue installations}
+{1010}{}{the First time.}
+{1020}{}{the Sign.}
+{1030}{}{Wants to take away the letter, has not added.}
+{1040}{}{Wants to take away the letter, has added.}
+{1050}{}{Has offended.}
+{2000}{}{Greetings. I Sindi. Welcome to my bar. Than I can help?}
+{2010}{}{Hey, and unless it not a bar of Kessidi?}
+{2020}{}{Beer to me!}
+{2030}{}{Greetings, Sindi. Anything, thanks.}
+{2040}{}{Privet Sindi. To you the letter from Kessidi.}
+{3000}{}{Than I can help?}
+{3010}{}{Hey, Sindi, and unless it not a bar of Kessidi?}
+{3020}{}{Beer to me!}
+{3030}{}{Sindi, I доставил@sex ||| and | your letter.}
+{3040}{}{Sindi, such business... I have lost your letter. Has entered Heathlands in skirmish, well and...}
+{3050}{}{it is simple заш@sex | ate || la | to greet.}
+{3060}{}{Privet Sindi. To you the letter from Kessedi...}
+{4000}{}{From you 5 dollars.}
+{4010}{}{Here, take.}
+{4020}{}{Lines, at me do not suffice money.}
+{5000}{}{Here your beer. Something else?}
+{5010}{}{Still beer!}
+{5020}{}{No, thanks.}
+{6000}{}{Kessidi has left the bar on me when left with the Selected works four years ago. Since then from it it was audible nothing.}
+{6010}{}{And I to you from it have brought the letter.}
+{6020}{}{Well, with the Selected works to go - not jokes to joke. Pour e to me of beer.}
+{6030}{}{four years? Daaa...}
+{7000}{}{From Kessidi?! Ooo! What pleasure! I from it heard nothing so much time! Give it more soon here!}
+{7010}{}{Here it, hold.}
+{7020}{}{He has told that you to me will pay for delivery... em... 500 dollars. Yes.}
+{8000}{}{Listen, and you do not leave at once back, yes? If you мог@sex ||| la | to wait some hours I would transfer the answer.}
+{8010}{}{Give. I just had affairs in a city.}
+{8020}{}{Actually I already should leave. The caravan waits.}
+{8030}{}{I will not be dragged with babskimi letters.}
+{9000}{}{I will try not to detain you, come in some hours!}
+{10000}{}{Hm. Strange. Not similar on it. The elite it has spoilt. But I should take it! Here, hold. [Gets money from cash desk] If you back in Arrojo tell to it that I while esteem him, and the answer I will send later with somebody. Now go, at me clients.}
+{10010}{}{As you will tell.}
+{10020}{}{I too your client. Pour to me of beer.}
+{11000}{}{Well... Please! I so would like to spend some time with this letter. And me is about what to tell in the. It will not occupy more than several hours, you will just have time to fill up the supplies and to have a bite.}
+{11010}{}{No if you want to transfer something you will write it now.}
+{11020}{}{it is fine, give.}
+{11030}{}{you Know, I in general передумал@sex ||| and | to be dragged with your letter.}
+{12000}{}{[Sindi silently opens the letter and it is run on it by eyes. Then it takes a sheet of paper, writes some offers, turns off, without lifting eyes puts on a table before you and turns away. It seems that it restrains to beginning to cry]}
+{12010}{}{So it is better.}
+{12020}{}{[Silently to take the letter]}
+{12030}{}{Hey, beer to me!}
+{13000}{}{Excuse, the letter is not ready yet. Still slightly!}
+{13010}{}{Pour while beer.}
+{13020}{}{it is good.}
+{14000}{}{[At the sight of you Sindi quickly starts to finish the letter]}
+{14010}{}{[Further]}
+{15000}{}{[Has stopped to write] So, here the report on the done work, ha. You will transfer Kessedi with my best regards. Here by the way, there are some money on road.}
+{15010}{}{Money it is good... In sense, I will necessarily transfer. While.}
+{16000}{}{[At the sight of you Sindi purposely turns away and serves other clients]}
+{16010}{}{Hey! Here people are!}
+{17000}{}{Many thanks! Here, take money.}
+{18000}{}{Well, well, the Heathland is severe. Delivers somebody another.}

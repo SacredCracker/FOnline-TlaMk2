@@ -1,0 +1,149 @@
+// city
+
+#include "_macros.fos"
+#include "_npc_pids.fos"
+#include "npc_ai.fos"
+
+import bool AddWalkPlane(Critter& npc, uint priority, uint16 hexX, uint16 hexY, uint8 dir, bool run, uint cut) from "npc_planes";
+import uint GetNearFullSecond(uint16 year, uint16 month, uint16 day, uint16 hour, uint16 minute, uint16 second) from "time";
+import bool AddAttackPlane(Critter& npc, uint priority, Critter& target) from "npc_planes";
+import bool AddPickPlane(Critter& npc, uint priority, Item@ item, uint useItemId, bool toOpen) from "npc_planes";
+import bool GetEntireFreeHex(Map& map, int number, uint16& hx, uint16& hy) from "entire";
+import void Patrol(Critter& cr,uint numberPatrol, int MinRandomDist, int MaxRandomDist , uint EntireNumberStart, uint EntireNumberEnd, int MinRandom, int MaxRandom, int NecessaryRandom, bool HouseMove, bool RandomDir) from "move";
+import uint EraseAttackPlane(Critter& npc, Critter& target) from "npc_planes";
+import void _CritInit(Critter& crit, bool firstTime) from "move";
+import void test_class_file(string msg) from "test_cracker";
+import void GetLength(uint16 hX, uint16 hY, uint16 HX, uint16 HY, uint16& len) from "combat"; 
+
+
+// Временое событие разрешения ношения оружия.
+
+// Определение зданий
+// Гекс находится на территории здания.
+bool CritterInHouse(Critter& cr)
+{
+	Scenery@[] scs;
+	if (!valid(cr)) return false;
+	if(cr.GetMap().GetSceneries(cr.HexX, cr.HexY, scs)==0) return false; 
+	for(uint i=0; i<=scs.length();i++)
+	{
+		if(ZONE_HOUSE_HEX(scs[i].ProtoId)) return true;
+	}
+	return false;
+}
+
+bool HexInHouse(Map& map,uint16 hexX, uint16 hexY)
+{
+	Scenery@[] scs;
+	if(valid(map))
+	{
+		if(map.GetSceneries(hexX, hexY, scs)!=0)
+		{
+			for(uint i=0; i<=scs.length();i++)
+			{
+				if(ZONE_HOUSE_HEX(scs[i].ProtoId)) 
+				{
+					return true;
+				}
+			}
+		}
+	}
+	return false;
+}
+
+// Гекс находится на территории определенного здания.
+bool CritterInHouse(Critter& cr, uint8& typeZone)
+{
+	Scenery@[] scs;
+	if (!valid(cr) || !valid(cr.GetMap())) return false;
+	if(cr.GetMap().GetSceneries(cr.HexX, cr.HexY, scs)==0) return false; 
+	for(uint i=0; i<=scs.length();i++)
+	{
+		if(ZONE_HOUSE_HEX(scs[i].ProtoId)) 
+		{
+			switch (scs[i].ProtoId)
+			{
+				case	HEX_PID_HOUSE_SHOP: typeZone=HEX_ZONE_HOUSE_SHOP;
+											break;
+				case	HEX_PID_HOUSE_BAR:	typeZone=HEX_ZONE_HOUSE_BAR;
+											break;
+				case	HEX_PID_HOUSE_BANK:	typeZone=HEX_ZONE_HOUSE_BANK;
+											break;
+				case	HEX_PID_HOUSE_RESIDENTIAL:	typeZone=HEX_ZONE_HOUSE_RESIDENTIAL;
+											break;
+				default: continue; 
+			}
+		return true;
+		}
+	}
+	return false;
+}
+
+void Test(Critter& c, int a, int, int)
+{
+	if(a==1)
+	{
+		CritterInHouse(c);
+	}
+	else if(a==2)
+	{
+		uint8 TZ=0;
+		CritterInHouse(c,TZ);
+		string message;
+		switch (TZ)
+		{
+			case 0: message="Нет";
+					break;
+			case 1: message="Магазин";
+					break;
+			case 2: message="Бар";
+					break;
+			case 3: message="Банк";
+					break;
+			case 4: message="Жилой";
+					break;
+			default: break;
+		}
+		Log(""+message);
+		//c.Message(""+message); 
+	}
+}
+
+bool CritterInProtectZone(Critter& guard, Critter& cr)
+{
+	uint8 typeZoneGuard=0;
+	uint8 typeZoneCr=0;
+	if (!valid(guard) || !valid(cr)) return false;
+	if(CritterInHouse(guard, typeZoneGuard) && CritterInHouse(cr, typeZoneCr)) 
+	{
+		if(typeZoneGuard==typeZoneCr)
+		{
+			if(cr.GetMap().Id==guard.GetMap().Id)
+			{
+				uint16 len=0; 
+				GetLength(guard.HexX, guard.HexY, cr.HexX, cr.HexY, len);
+				
+				for(uint i=0; i<=len; i++)
+				{
+					uint16 hexX=cr.HexX; uint16 hexY=cr.HexY;
+					cr.GetMap().MoveHexByDir(hexX, hexY, GetDirection(cr.HexX, cr.HexY, hexX, hexY), i+1);
+					if (!HexInHouse(cr.GetMap(),hexX, hexY)) return false;
+				}
+				return true;
+			}
+		}
+	}
+	return false;	
+	
+}
+
+void Test2(Critter& cr, int ID,int,int)
+{
+	if(CritterInProtectZone(cr, GetCritter(ID)))
+	{
+	Log("true");
+	}
+	else Log("false");
+}
+
+// ~run city Test2 id 0 0 

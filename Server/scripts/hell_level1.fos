@@ -1,0 +1,134 @@
+#include "_colors.fos"
+#include "_macros.fos"
+#include "hell_h.fos"
+
+// координаты на карте, в которых выводится крик падающего вниз
+#define SHAFT_CENTER_X         (139)
+#define SHAFT_CENTER_Y         (70)
+
+// сообщения при падении
+#define MSG_FALL               (3000)
+#define MSG_FALL_INJURE_BOTH   (3001)
+#define MSG_FALL_INJURE_LEFT   (3002)
+#define MSG_FALL_INJURE_RIGHT  (3003)
+#define MSG_FALL_LUCKY         (3004)
+#define MSG_FALL_DEAD          (3005)
+#define MSG_FALL_CRY           (3006)
+
+import bool TransitToMap(Critter& cr, int locPid, int mapIndex, int entranceNum) from "stdlib";
+import void InjureCritter(Critter& cr, uint dmg, uint dmgType, uint8 dir, uint attackerId) from "combat";
+
+
+bool s_UseRope(Critter& player, Scenery& scenery, int skill, Item@ item)
+{
+	if (skill >= 0 || valid(item))
+	{
+		return false;
+	}
+
+	Map@ firstLevelMap = player.GetMap();
+
+	if (TransitToMap(player, LOCATION_ReplicationHell, MAP_INDEX_hell_level3, ENTRANCE_level1_to_level3))
+	{
+		firstLevelMap.SetTextMsg(SHAFT_CENTER_X, SHAFT_CENTER_Y, COLOR_RED, TEXTMSG_TEXT, MSG_FALL_CRY);
+		CreateTimeEvent(__FullSecond + 1, "e_FallDown", player.Id, false);
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+uint e_FallDown(uint[]@ values)
+{
+	Critter@ player = GetCritter(values[0]);
+
+	if ((not valid(player)) || player.IsNotValid)
+	{
+		Log("Player isn't valid.");
+		return 0;
+	}
+
+	player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, MSG_FALL);
+
+	// повреждение от падения
+	int damage = Random(
+		50 / player.Stat[ST_LUCK],
+		200 / player.Stat[ST_AGILITY] + player.Stat[ST_STRENGTH]);
+
+	InjureCritter(player, damage, DAMAGE_UNCALLED, 0, 0);
+	if (player.StatBase[ST_CURRENT_HP]<0) player.ToDead(ANIM2_DEAD_BACK,null);//rifleman17
+	// приземление на ноги
+	if (!player.IsDead())
+	{
+		player.ToKnockout(KNOCKOUT_ANIM2_DEFAULT(true), player.Stat[ST_ACTION_POINTS] + 2, player.HexX + Random(0, 1), player.HexY + Random(0, 1));
+
+		// шанс повреждения ног
+		int injureLegChance = 200 / (player.Stat[ST_AGILITY] + player.Stat[ST_LUCK]);
+
+		// бросок для левой ноги
+		bool injureLeft = Random(1, 100) <= injureLegChance;
+		player.DamageBase[DAMAGE_LEFT_LEG] = injureLeft
+			? 1
+			: player.Damage[DAMAGE_LEFT_LEG];
+		// бросок для правой ноги
+		bool injureRight = Random(1, 100) <= injureLegChance;
+		player.DamageBase[DAMAGE_RIGHT_LEG] = injureRight
+			? 1
+			: player.Damage[DAMAGE_RIGHT_LEG];
+
+		if (injureLeft && injureRight)
+		{
+			// повреждены обе ноги
+			player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, MSG_FALL_INJURE_BOTH);
+		}
+		else if (injureLeft)
+		{
+			// повреждена левая нога
+			player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, MSG_FALL_INJURE_LEFT);
+		}
+		else if (injureRight)
+		{
+			// повреждена правая нога
+			player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, MSG_FALL_INJURE_RIGHT);
+		}
+		else
+		{
+			// пара синяков и ушибы
+			player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, MSG_FALL_LUCKY);
+		}
+	}
+	else // приземление на голову?
+	{
+		player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, MSG_FALL_DEAD);
+	}
+
+	return 0;
+}
+
+//Крутые гули
+
+void _GhoulInit(Critter& npc, bool firstTime)
+{
+	npc.StatBase[ST_MAX_LIFE] += 150;
+	npc.StatBase[ST_MELEE_DAMAGE] += 25;
+	npc.StatBase[ST_KILL_EXPERIENCE] += 150;
+	npc.StatBase[ST_ACTION_POINTS] = 12;
+	npc.PerkBase[PE_MORE_CRITICALS] = 3;
+	npc.PerkBase[PE_BETTER_CRITICALS] = 1;
+	npc.SkillBase[SK_UNARMED] += 150;
+}
+
+void _PunkInit(Critter& npc, bool firstTime)
+{
+	npc.StatBase[ST_MELEE_DAMAGE] += 5;
+	npc.StatBase[ST_KILL_EXPERIENCE] += 150;
+	npc.PerkBase[PE_MORE_CRITICALS] = 3;
+	npc.PerkBase[PE_BETTER_CRITICALS] = 1;
+	npc.StatBase[ST_ACTION_POINTS] = 12;
+	npc.StatBase[ST_MAX_LIFE] += 100;
+	npc.SkillBase[SK_UNARMED] += 150;
+}
+
+

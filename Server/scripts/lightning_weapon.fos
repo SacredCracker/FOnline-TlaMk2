@@ -1,0 +1,111 @@
+/* Автор: Cracker
+ Данный скрипт написан для тесла оружия.*/
+			
+#include "_macros.fos"
+
+import void InjureCritter(Critter& cr, uint dmg, uint dmgType, uint8 dir, uint attackerId) from "combat";
+import bool _MobDamage(Critter& target, Critter& attacker) from "events_in_encaunter";
+
+void lightning_attack(Critter& attacker, Critter& target, ProtoItem& weapon, uint8 weaponMode, ProtoItem@ ammo)
+{
+	Map@ map=attacker.GetMap();
+	if (!valid(map)) return;
+	Critter@[] critters;
+	uint Damag=0;
+	uint TotalDamag=0;
+	if(map.GetCrittersHex(target.HexX,target.HexY,weapon.Weapon_LightningRadius,FIND_LIFE_AND_KO,critters)!=0)
+	{
+		for(uint i=0, iMax=critters.length(); i<iMax && i<weapon.Weapon_LightningCountTarget;i++)
+		{
+			if(critters[i].IsDead()==false)
+			{			
+				Critter@ crit=critters[i];
+				uint16 len=GetDistantion(target.HexX, target.HexY, crit.HexX,crit.HexY);
+				for(uint i=0; i<len ; i++)
+				{
+					uint16 hexX=target.HexX; uint16 hexY=target.HexY;
+					target.GetMap().MoveHexByDir(hexX, hexY, GetDirection(target.HexX, target.HexY, crit.HexX,crit.HexY), i+1);
+					map.RunEffect(4008,hexX,hexY,0);
+				}
+				map.RunFlyEffect(4008,target,crit,target.HexX,target.HexY,crit.HexX,crit.HexY);
+				
+				Damag=(Random((_WeaponDmgMin(weapon,weaponMode)) ,(_WeaponDmgMax(weapon,weaponMode)))); //Высчитываем дэмаг для каждого отдельно.
+				Damag+=(attacker.PerkBase[PE_LIVING_ANATOMY]*5)+(attacker.PerkBase[PE_BONUS_RANGED_DAMAGE]*2);
+					
+				TotalDamag=Damag;
+				InjureCritter(crit, TotalDamag, (_WeaponDmgType(weapon,weaponMode)), crit.Dir, attacker.Id); //Наносим урон.
+				crit.EventAttacked(attacker);
+				attacker.EventAttack(crit);
+				_MobDamage(crit,attacker);
+			}
+		}
+	}	
+}
+
+void lightning_attack_armor(Critter& attacker, Item& armor)
+{
+	Map@ map=attacker.GetMap();
+	if(attacker.Stat[ST_CURRENT_AP]<2)
+	{
+		attacker.SayMsg(SAY_NETMSG, TEXTMSG_GAME, 14200);
+		return;
+	}
+	else attacker.StatBase[ST_CURRENT_AP]-=200;
+	if (!valid(map)) return;
+	Critter@[] critters;
+	uint Damag=0;
+	uint TotalDamag=0;
+	if(map.GetCrittersHex(attacker.HexX,attacker.HexY,10,FIND_LIFE_AND_KO,critters)!=0)
+	{
+		for(uint i=0, iMax=critters.length(); i<iMax && i<5;i++)
+		{
+			if(critters[i].IsDead()==false)
+			{			
+				Critter@ crit=critters[i];
+				uint16 len=GetDistantion(attacker.HexX, attacker.HexY, crit.HexX,crit.HexY);
+				for(uint i=0; i<len ; i++)
+				{
+					uint16 hexX=attacker.HexX; uint16 hexY=attacker.HexY;
+					attacker.GetMap().MoveHexByDir(hexX, hexY, GetDirection(attacker.HexX, attacker.HexY, crit.HexX,crit.HexY), i+1);
+					map.RunEffect(4008,hexX,hexY,0);
+				}
+				map.RunFlyEffect(4008,attacker,crit,attacker.HexX,attacker.HexY,crit.HexX,crit.HexY);
+				
+				Damag=(armor.Val9)*2; //Высчитываем дэмаг для каждого отдельно.
+				TotalDamag=Damag;
+				if(crit.Id!=attacker.Id)
+				{
+					InjureCritter(crit, TotalDamag, DAMAGE_ELECTR, crit.Dir, attacker.Id); //Наносим урон.
+					crit.EventAttacked(attacker);
+					attacker.EventAttack(crit);
+					_MobDamage(crit,attacker);
+				}
+			}
+		}
+	}
+	armor.Val9=0;
+	attacker.RunClientScript("client_main@SetTeslaCharge", 0,0,0,null,null);
+}
+
+// Разряд Теслы. Значение заряда хранится в поле Val9
+void unsafe_Tesla_Discharge(Critter& player, int param0, int param1, int param2, string@ param3, int[]@ param4)
+{
+	Item@[] tesla;
+	player.GetItems(SLOT_ARMOR, tesla);
+	if(player.IsDead())
+	{
+		player.SayMsg(SAY_NETMSG, TEXTMSG_GAME, 14201);
+		return;
+	}
+	if(valid(tesla[0]))
+	{
+		if(tesla[0].Val9>0) lightning_attack_armor(player, tesla[0]);
+		else player.SayMsg(SAY_NETMSG, TEXTMSG_GAME, 14202);
+	}
+}
+
+void unsafe_update_armor_info(Critter& player, int param0, int param1, int param2, string@ param3, int[]@ param4)
+{
+	Item@ item=player.GetItem(PID_TESLA_ARMOR, SLOT_ARMOR);
+	if(valid(item) && player.IsLife()) player.RunClientScript("client_main@SetTeslaCharge", 0,0,0,null,null);
+}

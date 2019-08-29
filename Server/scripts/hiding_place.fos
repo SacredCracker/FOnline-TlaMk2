@@ -1,0 +1,60 @@
+// Скрипт обробляє власні локації гравців.
+// Автор: Ra
+
+#include "_macros.fos"
+#include "_colors.fos"
+#include "_msgstr.fos"
+
+
+#define SetVisibleLoc	#(cr,loc)  {if(cr.IsPlayer() && cr.IsKnownLoc(true, loc.Id)) cr.SetKnownLoc(true, loc.Id);}
+#define NoVisibleLoc	#(cr,loc)	{if(cr.IsPlayer() && cr.IsKnownLoc(true, loc.Id)) cr.UnsetKnownLoc(true, loc.Id);}
+
+void PlayerLogin(Critter& cr)
+{
+	uint id=cr.Id;
+	file OffBase();
+	if(OffBase.open("save\\OffBase\\"+id, "r")==0 && OffBase.getSize()>0)
+	{
+		Log("Шлем ко всем йуху с базы.");
+		string IdBaseTxt;
+		uint IdBase;
+		while(!OffBase.isEndOfFile())
+		{
+			IdBase=OffBase.readNumber();
+			Location@ loc=GetLocation(IdBase);
+			if(valid(loc))	NoVisibleLoc(cr,loc);
+		}
+		OffBase.close();
+		if(OffBase.open("save\\OffBase\\"+GetPlayerName(id), "w")==0)
+		{
+			string@ old="";
+			OffBase.readString(OffBase.getSize(), old);
+			file Old();
+			if(Old.open("save\\OffBase\\old\\"+id, "w")==0)
+			{
+				Old.writeString(old);
+				Old.close();
+			}
+			OffBase.writeString("");
+			OffBase.close();
+		}
+	}
+}
+
+void OffCritterDischargeBase(uint crId, Location& loc)
+{
+	file OffBase();
+	if(OffBase.open("save\\OffBase\\"+crId, "a")==0 && OffBase.getSize()>0)
+	{
+		OffBase.writeString(" "+loc.Id);
+		OffBase.close();
+		return;
+	}
+	else if(OffBase.open("save\\OffBase\\"+crId, "w")==0)
+	{
+		OffBase.writeString(" "+loc.Id);
+		OffBase.close();
+		return;
+	}
+}
+

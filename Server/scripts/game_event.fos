@@ -1,0 +1,380 @@
+#ifndef __GAME_EVENT__
+#define __GAME_EVENT__
+
+#include "_macros.fos"
+#include "serializator.fos"
+
+#define STATUS_NEVER_OCCURED   (0)
+#define STATUS_RUNNING         (1)
+#define STATUS_OCCURED         (2)
+#define STATUS_ENDED           (3)
+
+#define _KeyEvent #(index) ("GE_" + index)
+#define _KeyManager ("GE_Manager")
+//#define DL #(s) (Log("GE: " + s))
+#define DL #(s)
+
+class GameEventOccurCondition
+{
+	uint GameEventIndex;
+	uint Status;	
+}
+
+class GameEvent
+{
+	uint   AnyDataIndex;           // Индекс события в таблице
+	uint   Status;                 // Текущее состояние события
+	GameEventOccurCondition[] OccurConditions; // Условия происхождения события
+	string HandlerFunction;        // Имя фукнции обработчика события 
+	uint   TimeOccur;              // Время, через которое произойдет событие после того, как все условия соблюдены
+	bool   TimeIsAbsolute;         // Признак, что время является абсолютным
+	bool   FirstEventNoConditions; // Признак, для первого события не требуется выполнение условий
+	uint   RunningEventId;         // Код тайм эвента, который уже запущен
+	uint   NextEventIndex;         // Код следующего события, если предусмотрен
+	uint   ServerTime;             // Время, когда произойдет событие
+	
+	GameEvent()
+	{
+	
+	}
+	
+	GameEvent(uint idx)
+	{
+		this.AnyDataIndex=idx;
+		this.Load();
+	}
+	
+	void AddCondition(uint eventIndex, uint status)
+	{
+		for(uint i=0, iMax=this.OccurConditions.length(); i<iMax; i++)
+			if(this.OccurConditions[i].GameEventIndex==eventIndex && this.OccurConditions[i].Status==status)
+				return;
+		GameEventOccurCondition condition;
+		condition.GameEventIndex=eventIndex;
+		condition.Status=status;
+		this.OccurConditions.insertLast(condition);
+	}
+	
+	void Save()
+	{
+		Serializator save;
+		save.Set(this.AnyDataIndex);	
+		save.Set(this.Status);
+		save.Set(this.HandlerFunction);
+		save.Set(this.ServerTime);
+		uint len=this.OccurConditions.length();
+		save.Set(len*2);
+		for(uint i=0; i<len; i++)
+		{
+			save.Set(this.OccurConditions[i].GameEventIndex);
+			save.Set(this.OccurConditions[i].Status);			
+		}
+		save.Set(this.TimeOccur);
+		save.Set(this.TimeIsAbsolute);
+		save.Set(this.FirstEventNoConditions);
+		save.Set(this.RunningEventId);
+		save.Set(this.NextEventIndex);
+		save.Save(_KeyEvent(this.AnyDataIndex));
+	}
+	
+	void Load()
+	{
+		Serializator load;
+		uint eId=0;
+		uint status=0;
+		if(load.Load(_KeyEvent(this.AnyDataIndex)))
+		{
+			load.Get(AnyDataIndex);
+			load.Get(Status);
+			load.Get(this.HandlerFunction);
+			load.Get(this.ServerTime);
+			uint len=0;
+			load.Get(len);
+			for(uint i=0;i<len;i++)
+			{
+				load.Get(eId);
+				load.Get(status);
+				i++;
+				this.AddCondition(eId, status);
+			}
+			load.Get(this.TimeOccur);
+			load.Get(this.TimeIsAbsolute);
+			load.Get(this.FirstEventNoConditions);
+			load.Get(this.RunningEventId);
+			load.Get(this.NextEventIndex);
+		}
+	}
+	
+	string ToString()
+	{
+		return "AnyDataIndex: " + AnyDataIndex + ";Status: " + Status+ ";HandlerFunction: " + 
+		HandlerFunction+ ";TimeOccur: " + TimeOccur+ ";TimeIsAbsolute: " + (TimeIsAbsolute? "yes" : "no")
+		+ ";FirstEventNoConditions: " + (FirstEventNoConditions?"YES":"NO")+ ";RunningEventId: " + RunningEventId;
+	}
+	
+	void Run()
+	{
+		uint time=TimeIsAbsolute ? TimeOccur : __FullSecond + TimeOccur;
+		Run(time);
+	}
+	
+	void Run(uint time)
+	{
+		this.ServerTime=time;
+		if(TimeOccur>0 and time<__FullSecond)
+		{
+			Log("Cannot run event (id=" + this.AnyDataIndex + "). Time is lost:" + time);
+			return;
+		}
+		this.RunningEventId=CreateTimeEvent(time, "e_GameEvent", this.AnyDataIndex, true);
+		DL("Event " + this.AnyDataIndex + " running. TimeEventId=" + this.RunningEventId);
+		DL("Tostring::::" + this.ToString());
+		this.Status=STATUS_RUNNING;
+		this.Save();
+	}
+	
+	void Stop()
+	{
+		if(this.Status !=STATUS_RUNNING)
+		{
+			return;
+		}
+		if(this.RunningEventId > 0)
+			EraseTimeEvent(this.RunningEventId);
+		this.RunningEventId=0;
+		this.Status=STATUS_ENDED;
+		this.Save();
+	}
+}
+
+class GameEventManager
+{
+
+	uint[] GameEventsIndexes;
+	
+	void Save()
+	{
+		Serializator save;
+		save.Set(this.GameEventsIndexes);
+		save.Save(_KeyManager);
+	}
+	
+	void Load()
+	{
+		Serializator load;
+		if(load.Load(_KeyManager))
+		{
+			this.GameEventsIndexes.resize(0);
+			load.Get(GameEventsIndexes);
+		}
+	}
+	
+	GameEvent@ GetGameEventByIndex(uint index)
+	{
+		GameEvent @event=GameEvent(index);
+		if(valid(event))
+		{
+			event.Load();
+			return event;
+		}
+		return null;
+	}
+	
+	// Проверяет, можно ли создать событие, если да, запускает его
+	void CheckEventsCanOccure()
+	{
+		for(uint i=0, iMax=this.GameEventsIndexes.length(); i<iMax; i++)
+		{
+			GameEvent@ event=GetGameEventByIndex(this.GameEventsIndexes[i]);
+			if(valid(event) && CanOccure(event))
+				event.Run();			
+		}
+	}
+	
+	bool CanOccure(GameEvent@ event)
+	{
+		if(valid(event))
+		{
+			if(event.Status==STATUS_RUNNING)
+				return false;
+			if(event.FirstEventNoConditions && event.Status==STATUS_NEVER_OCCURED)
+			{
+				DL("Can occured");
+				return true;
+			}
+			if(event.OccurConditions.length()==0)
+				return false; 
+			for(uint j=0, jMax=event.OccurConditions.length(); j<jMax; j++)
+			{
+				GameEvent@ condition=this.GetGameEventByIndex(event.OccurConditions[j].GameEventIndex);
+				DL("condition!" + "status:" +condition.Status + "Occer condirion:" + event.OccurConditions[j].Status);
+				if (!valid(condition) || condition.Status !=event.OccurConditions[j].Status)
+				{
+					// не найден эвент, либо не удовлетворяет условиям
+					return false;
+				}
+			}			
+			// все условия соблюдены
+			return true;
+		}
+		return false;
+	}
+	
+	void RunEvent(uint idx)
+	{
+		GameEvent @event=this.GetGameEventByIndex(idx);
+		if(valid(event))
+		{
+			event.Run();			
+		}
+	}
+	
+	void RunEvent(uint idx, uint time)
+	{
+		GameEvent @event=this.GetGameEventByIndex(idx);
+		if(valid(event))
+		{
+			event.Run(time);			
+		}
+	}
+	
+	void StopEvent(uint idx)
+	{
+		GameEvent @event=this.GetGameEventByIndex(idx);
+		if(valid(event))
+		{
+			event.Stop();
+			CheckEventsCanOccure();
+		}
+	}
+}
+
+uint e_GameEvent(uint[]@ values)
+{
+	DL("e_GameEvent");
+	uint key=values[0];
+	GameEventManager mng=GameEventManager();
+	mng.Load();
+	GameEvent@ event=mng.GetGameEventByIndex(key);
+	DL("valid event? status" + event.Status);
+	if(valid(event) && event.Status==STATUS_RUNNING)
+	{
+		event.Status=STATUS_OCCURED;
+		event.Save();
+		GameEvent@ nextEvent;
+		if(event.NextEventIndex > 0)
+		{
+			@ nextEvent=mng.GetGameEventByIndex(event.NextEventIndex);
+			if(valid(nextEvent) && mng.CanOccure(nextEvent))
+				nextEvent.Run();
+		}
+		else
+		{
+			mng.CheckEventsCanOccure();
+		}
+		CreateTimeEvent(0, event.HandlerFunction, false);
+		if(event.NextEventIndex==event.AnyDataIndex && valid(nextEvent))
+		{
+			event.Status=STATUS_RUNNING;		
+		}else{
+			event.Status=STATUS_ENDED;		
+		}
+		event.Save();
+	}
+	mng.Save();
+	return 0;
+}
+
+void DeclareEvents()
+{
+	#include "game_events_init.fos"
+}
+
+void DeclareCondition(uint idx, uint eventCondition, uint status)
+{
+	GameEventManager mng;
+	mng.Load();
+	GameEvent@ event=mng.GetGameEventByIndex(idx);
+	if(valid(event))
+	{
+		event.AddCondition(eventCondition, status);
+		event.Save();
+	}
+}
+
+void DeclareEvent(uint idx, string handler, uint timeOccure, bool timeAbsolute, bool defaultStart, uint nextEventIdx)
+{
+	GameEventManager mng;
+	mng.Load();
+	if(mng.GameEventsIndexes.find(idx) >=0)
+	{
+		return;
+	}
+	GameEvent event=GameEvent();	
+	event.AnyDataIndex=idx;
+	event.Status=STATUS_NEVER_OCCURED;
+	event.HandlerFunction=handler;
+	event.TimeOccur=timeOccure;
+	event.TimeIsAbsolute=timeAbsolute;
+	event.FirstEventNoConditions=defaultStart;
+	event.NextEventIndex=nextEventIdx;
+	mng.GameEventsIndexes.insertLast(idx);
+	event.Save();
+	mng.Save();
+}
+
+bool CheckEventStatus(uint idx, uint status)
+{
+	GameEventManager mng;
+	mng.Load();
+	GameEvent@ event=mng.GetGameEventByIndex(idx);
+	if(valid(event) && event.Status==status)
+		return true;
+	return false;	
+}
+
+uint GetEventOccurenceTime(uint idx)
+{
+	GameEventManager mng;
+	mng.Load();
+	GameEvent@ event=mng.GetGameEventByIndex(idx);
+	if(valid(event) && event.Status==STATUS_RUNNING)
+		return event.ServerTime;
+	return 0;
+}
+
+void CheckAllGameEvents() // export
+{
+	GameEventManager mng;
+	mng.Load();
+	mng.CheckEventsCanOccure();
+}
+
+void RunGameEvent(uint idx, uint time) // export
+{
+	GameEventManager mng;
+	mng.Load();
+	mng.RunEvent(idx, time);
+}
+
+void RunGameEvent(uint idx) // export
+{
+	GameEventManager mng;
+	mng.Load();
+	mng.RunEvent(idx);
+}
+
+void StopGameEvent(uint idx) //export
+{
+	GameEventManager mng;
+	mng.Load();
+	mng.StopEvent(idx);
+	
+}
+
+bool d_GameEventStatus(Critter& player, Critter@ npc, int idx, int status)
+{
+	return CheckEventStatus(uint(idx), uint(status));
+}
+
+#endif

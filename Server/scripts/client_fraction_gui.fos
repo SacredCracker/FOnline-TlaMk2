@@ -1,0 +1,2198 @@
+#include "_client_defines.fos"
+#include "client_gui_h.fos"
+#include "_colors.fos"
+#include "_macros.fos"
+
+#define MODE_SHOW_TEXT        (0)
+#define MODE_INCREASE_PLAYER  (1)
+#define MODE_LOWER_PLAYER     (2)
+#define MODE_DISMISS_PLAYER   (3)
+#define MODE_REQUEST_ALLIANCE (4)
+#define MODE_APPROVE_ALLIANCE (5)
+#define MODE_CANCEL_ALLIANCE  (6)
+#define MODE_ADD_ENEMY        (7)
+#define MODE_REMOVE_ENEMY     (8)
+
+import void get_active_screens(int[]& result) from "client_main";
+import int[] GetIfaceCoords(string Key) from "client_main";
+import uint8[] GetIfaceColor(string Key) from "client_main";
+import uint[] GetFrColors() from "client_main";
+import void ColorsArrayAdjust(uint newSize) from "client_main";
+import void SetFrColors(uint[] colors) from "client_main";
+
+IGUIElementOpt@ mainButton;
+
+IGUIElementOpt@ han_FrTextbox;
+IGUIElementOpt@ han_FrScrollbar;
+IGUIElementOpt@ han_FrArrowDown;
+IGUIElementOpt@ han_FrArrowUp;
+
+IGUIElementOpt@ han_FrStatList;
+IGUIElementOpt@ han_FrStatListArrowUp;
+IGUIElementOpt@ han_FrStatListArrowDown;
+IGUIElementOpt@ han_FrStatListScrollbar;
+
+IGUIElementOpt@ han_FrStatText;
+IGUIElementOpt@ han_FrStatTextArrowUp;
+IGUIElementOpt@ han_FrStatTextArrowDown;
+IGUIElementOpt@ han_FrStatTextScrollbar;
+
+IGUIElementOpt@ han_FrManageText;
+IGUIElementOpt@ han_FrManageTextArrowUp;
+IGUIElementOpt@ han_FrManageTextArrowDown;
+IGUIElementOpt@ han_FrManageTextScrollbar;
+IGUIElementOpt@ han_TextInput;
+IGUIElementOpt@ han_FrManageRequestFriend;
+IGUIElementOpt@ han_FrManageRequestFriendTitle;
+IGUIElementOpt@ han_FrManageApproveFriend;
+IGUIElementOpt@ han_FrManageApproveFriendTitle;
+IGUIElementOpt@ han_FrManageCancelFriend;
+IGUIElementOpt@ han_FrManageCancelFriendTitle;
+IGUIElementOpt@ han_FrManageAddEnemy;
+IGUIElementOpt@ han_FrManageAddEnemyTitle;
+IGUIElementOpt@ han_FrManageRemoveEnemy;
+IGUIElementOpt@ han_FrManageRemoveEnemyTitle;
+
+IGUIElementOpt@ han_FrManageFriends;
+IGUIElementOpt@ han_FrManageEnemies;
+IGUIElementOpt@ han_FrManageDeleteOrg;
+
+IGUIElementOpt@ han_RedAdjust;
+IGUIElementOpt@ han_GreenAdjust;
+IGUIElementOpt@ han_BlueAdjust;
+IGUIElementOpt@ han_RedInd;
+IGUIElementOpt@ han_GreenInd;
+IGUIElementOpt@ han_BlueInd;
+IGUIElementOpt@ han_ColorInd;
+IGUIElementOpt@ han_ColorList;
+IGUIElementOpt@ han_ColorTitle;
+IGUIElementOpt@ han_ColorListScrollbar;
+IGUIElementOpt@ han_ColorListScrollUp;
+IGUIElementOpt@ han_ColorListScrollDown;
+
+
+bool ifaceHidden=false;
+uint8 frManageTextMode=MODE_SHOW_TEXT;
+
+uint[] FractionColors;
+uint CurrentFraction=4294967295;
+
+class FrColorSendButton: IGUIElementCallbackMouseClick
+{
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT)
+		{
+			uint[] colors=GetFrColors();
+			int[] sendColors;
+			for(uint n=0, nMax=colors.length(); n<nMax; n++)
+			{
+				sendColors.insertLast(int(0|colors[n]));
+			}
+			RunServerScriptUnsafe("unsafe_fractions@unsafe_OrgColorizingSend",0,0,0,null,sendColors);
+		}
+	}
+}
+
+class FrColorRefreshButton: IGUIElementCallbackMouseClick
+{
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT) RunServerScriptUnsafe("unsafe_fractions@unsafe_OrgColorizingRefresh",0,0,0,null,null);
+	}
+}
+
+class FrColorListScrollUpArrow: IGUIElementCallbackMouseClick, IGUIElementCallbackInit
+{
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT)
+		{
+			han_ColorList.SetScroll(true, -1);
+			han_ColorListScrollbar.SBSetValue(han_ColorList.GetTextOffset());
+		}
+	}
+	void OnInit()
+	{
+		@han_ColorListScrollUp=GUI_GetElementOptions();
+	}
+}
+
+class FrColorListScrollDownArrow: IGUIElementCallbackMouseClick, IGUIElementCallbackInit
+{
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT)
+		{
+			han_ColorList.SetScroll(true, 1);
+			han_ColorListScrollbar.SBSetValue(han_ColorList.GetTextOffset());
+		}
+	}
+	void OnInit()
+	{
+		@han_ColorListScrollDown=GUI_GetElementOptions();
+	}
+}
+
+class FractionColorListScrollbar: IGUIElementCallbackMouseClick, IGUIElementCallbackInit, IGUIElementCallbackMouseMove
+{
+	void OnInit()
+	{
+		@han_ColorListScrollbar=GUI_GetElementOptions();
+	}
+	void OnMouseMove(bool clicked)
+	{
+		if(clicked)
+		{
+			han_ColorList.SetScroll(false, han_ColorListScrollbar.GetSBScrollValue());
+		}
+	}
+	
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT)
+		{
+			han_ColorList.SetScroll(false, han_ColorListScrollbar.GetSBScrollValue());
+		}
+	}
+	
+}
+
+class FractionColorSave: IGUIElementCallbackMouseClick
+{
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT)
+		{
+			SetFrColors(FractionColors);
+		}
+	}
+}
+
+class FractionColorCancel: IGUIElementCallbackMouseClick
+{
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT)
+		{
+			::HideScreen(CLIENT_SCREEN_FR_COLOR,3,3,3);
+		}
+	}
+}
+
+class FractionColorOk: IGUIElementCallbackMouseClick
+{
+	void OnMouseClick(int click)
+	{
+		if(CurrentFraction!=4294967295)
+		{
+			FractionColors[CurrentFraction]=COLOR_RGB(han_RedAdjust.GetSBScrollValue(), han_GreenAdjust.GetSBScrollValue(), han_BlueAdjust.GetSBScrollValue());
+			han_ColorTitle.Font(FONT_FALLOUT, FractionColors[CurrentFraction]);
+		}
+		else
+		{
+			han_RedInd.Text(""+127,FONT_FALLOUT,COLOR_RED,COLOR_FRACTION,FT_CENTERY|FT_CENTERX);
+			han_GreenInd.Text(""+127,FONT_FALLOUT,COLOR_GREEN,COLOR_FRACTION,FT_CENTERY|FT_CENTERX);
+			han_BlueInd.Text(""+127,FONT_FALLOUT,COLOR_BLUE,COLOR_FRACTION,FT_CENTERY|FT_CENTERX);
+			han_RedAdjust.SBSetValue(127);
+			han_GreenAdjust.SBSetValue(127);
+			han_BlueAdjust.SBSetValue(127);
+			han_ColorInd.Font(FONT_FAT, COLOR_GRAY);
+		}
+	}
+}
+
+class FrColorTitle: IGUIElementCallbackInit
+{
+	void OnInit()
+	{
+		@han_ColorTitle=GUI_GetElementOptions();
+	}
+}
+
+class FrColorScreen: IGUIScreenCallbackShow, IGUIScreenCallbackHide
+{
+	void OnShow(int p0, int p1, int p2)
+	{
+		FractionColors=GetFrColors();
+		RunServerScriptUnsafe("unsafe_fractions@unsafe_GetOrgsByOrder",0,0,0,null,null);
+	}
+	void OnHide(int p0, int p1, int p2)
+	{
+		CurrentFraction=4294967295;
+		han_ColorTitle.Text("",FONT_FALLOUT,COLOR_GRAY,COLOR_FRACTION,FT_CENTERY|FT_CENTERX);
+		::ShowScreen(CLIENT_SCREEN_FRACTIONS,3,3,3);
+	}
+}
+
+class FrColorList: IGUIElementCallbackInit, IGUIElementCallbackMouseClick, IGUIElementCallbackMouseDown
+{
+	void OnInit()
+	{
+		@han_ColorList=GUI_GetElementOptions();
+	}
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT)
+		{
+			CurrentFraction=han_ColorList.GetListElement();
+			han_ColorTitle.Text(han_ColorList.GetListElementStr(),FONT_FALLOUT,FractionColors[CurrentFraction],COLOR_FRACTION,FT_CENTERY|FT_CENTERX);
+			uint8 red=(FractionColors[CurrentFraction] >>16)&0xFF;
+			uint8 green=(FractionColors[CurrentFraction] >>8)&0xFF;
+			uint8 blue=(FractionColors[CurrentFraction])&0xFF;
+			han_RedInd.Text(""+red,FONT_FALLOUT,COLOR_RED,COLOR_FRACTION,FT_CENTERY|FT_CENTERX);
+			han_GreenInd.Text(""+green,FONT_FALLOUT,COLOR_GREEN,COLOR_FRACTION,FT_CENTERY|FT_CENTERX);
+			han_BlueInd.Text(""+blue,FONT_FALLOUT,COLOR_BLUE,COLOR_FRACTION,FT_CENTERY|FT_CENTERX);
+			han_RedAdjust.SBSetValue(red);
+			han_GreenAdjust.SBSetValue(green);
+			han_BlueAdjust.SBSetValue(blue);
+			han_ColorInd.Font(FONT_FAT, FractionColors[CurrentFraction]);
+		}
+	}
+	void OnMouseDown(int click)
+	{
+		if(click==MOUSE_CLICK_WHEEL_UP||click==MOUSE_CLICK_WHEEL_DOWN) han_ColorListScrollbar.SBSetValue(han_ColorList.GetTextOffset());
+	}
+}
+
+
+class FrRedIndicator: IGUIElementCallbackInit
+{
+	void OnInit()
+	{
+		@han_RedInd=GUI_GetElementOptions();
+	}
+	
+}
+
+class FrColorIndicator: IGUIElementCallbackInit
+{
+	void OnInit()
+	{
+		@han_ColorInd=GUI_GetElementOptions();
+	}
+	
+}
+
+class FrGreenIndicator: IGUIElementCallbackInit
+{
+	void OnInit()
+	{
+		@han_GreenInd=GUI_GetElementOptions();
+	}
+	
+}
+
+class FrBlueIndicator: IGUIElementCallbackInit
+{
+	void OnInit()
+	{
+		@han_BlueInd=GUI_GetElementOptions();
+	}
+	
+}
+
+class FrRedAdjustScrollbar: IGUIElementCallbackMouseClick, IGUIElementCallbackMouseMove, IGUIElementCallbackInit
+{
+	void OnInit()
+	{
+		@han_RedAdjust=GUI_GetElementOptions();
+	}
+	void OnMouseMove(bool clicked)
+	{
+		if(clicked)
+		{
+			han_RedInd.Text(""+han_RedAdjust.GetSBScrollValue(),FONT_FALLOUT,COLOR_RED,COLOR_FRACTION,FT_CENTERY|FT_CENTERX);
+			han_ColorInd.Text("SAMPLE",FONT_FAT,COLOR_RGB(han_RedAdjust.GetSBScrollValue(), han_GreenAdjust.GetSBScrollValue(), han_BlueAdjust.GetSBScrollValue()), COLOR_FRACTION,FT_CENTERY|FT_CENTERX);
+		}
+	}
+	
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT)
+		{
+			han_ColorInd.Text("SAMPLE",FONT_FAT,COLOR_RGB(han_RedAdjust.GetSBScrollValue(), han_GreenAdjust.GetSBScrollValue(), han_BlueAdjust.GetSBScrollValue()), COLOR_FRACTION,FT_CENTERY|FT_CENTERX);
+			han_RedInd.Text(""+han_RedAdjust.GetSBScrollValue(),FONT_FALLOUT,COLOR_RED,COLOR_FRACTION,FT_CENTERY|FT_CENTERX);
+		}
+	}
+	
+}
+
+class FrGreenAdjustScrollbar: IGUIElementCallbackMouseClick, IGUIElementCallbackMouseMove, IGUIElementCallbackInit
+{
+	void OnInit()
+	{
+		@han_GreenAdjust=GUI_GetElementOptions();
+	}
+	void OnMouseMove(bool clicked)
+	{
+		if(clicked)
+		{
+			han_GreenInd.Text(""+han_GreenAdjust.GetSBScrollValue(),FONT_FALLOUT,COLOR_GREEN,COLOR_FRACTION,FT_CENTERY|FT_CENTERX);
+			han_ColorInd.Text("SAMPLE",FONT_FAT,COLOR_RGB(han_RedAdjust.GetSBScrollValue(), han_GreenAdjust.GetSBScrollValue(), han_BlueAdjust.GetSBScrollValue()), COLOR_FRACTION,FT_CENTERY|FT_CENTERX);
+		}
+	}
+	
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT)
+		{
+			han_GreenInd.Text(""+han_GreenAdjust.GetSBScrollValue(),FONT_FALLOUT,COLOR_GREEN,COLOR_FRACTION,FT_CENTERY|FT_CENTERX);
+			han_ColorInd.Text("SAMPLE",FONT_FAT,COLOR_RGB(han_RedAdjust.GetSBScrollValue(), han_GreenAdjust.GetSBScrollValue(), han_BlueAdjust.GetSBScrollValue()), COLOR_FRACTION,FT_CENTERY|FT_CENTERX);
+		}
+	}
+	
+}
+
+class FrBlueAdjustScrollbar: IGUIElementCallbackMouseClick, IGUIElementCallbackMouseMove, IGUIElementCallbackInit
+{
+	void OnInit()
+	{
+		@han_BlueAdjust=GUI_GetElementOptions();
+	}
+	void OnMouseMove(bool clicked)
+	{
+		if(clicked)
+		{
+			han_BlueInd.Text(""+han_BlueAdjust.GetSBScrollValue(),FONT_FALLOUT,COLOR_BLUE,COLOR_FRACTION,FT_CENTERY|FT_CENTERX);
+			han_ColorInd.Text("SAMPLE",FONT_FAT,COLOR_RGB(han_RedAdjust.GetSBScrollValue(), han_GreenAdjust.GetSBScrollValue(), han_BlueAdjust.GetSBScrollValue()), COLOR_FRACTION,FT_CENTERY|FT_CENTERX);
+		}
+	}
+	
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT)
+		{
+			han_BlueInd.Text(""+han_BlueAdjust.GetSBScrollValue(),FONT_FALLOUT,COLOR_BLUE,COLOR_FRACTION,FT_CENTERY|FT_CENTERX);
+			han_ColorInd.Text("SAMPLE",FONT_FAT,COLOR_RGB(han_RedAdjust.GetSBScrollValue(), han_GreenAdjust.GetSBScrollValue(), han_BlueAdjust.GetSBScrollValue()), COLOR_FRACTION,FT_CENTERY|FT_CENTERX);
+		}
+	}
+	
+}
+
+class FrColorButton: IGUIElementCallbackMouseClick
+{
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT)
+		{
+			::HideScreen(CLIENT_SCREEN_FRACTIONS,3,3,3);
+			::ShowScreen(CLIENT_SCREEN_FR_COLOR, 3,3,3);
+		}
+	}
+}
+
+class FrManageDeleteOrg: IGUIElementCallbackMouseClick, IGUIElementCallbackInit
+{
+	void OnMouseClick(int click)
+	{
+		RunServerScriptUnsafe("unsafe_fractions@unsafe_DeleteOrg", 0,0,0,null,null);
+	}
+	void OnInit()
+	{
+		@han_FrManageDeleteOrg=GUI_GetElementOptions();
+	}
+}
+
+class FrManageEnemies: IGUIElementCallbackMouseClick, IGUIElementCallbackInit
+{
+	void OnMouseClick(int click)
+	{
+			han_FrManageEnemies.Push(true);
+			han_FrManageFriends.Push(false);
+			han_FrManageDeleteOrg.ToHide(true);
+			han_FrManageApproveFriendTitle.ToHide(true);
+			han_FrManageApproveFriend.ToHide(true);
+			han_FrManageRequestFriendTitle.ToHide(true);
+			han_FrManageRequestFriend.ToHide(true);
+			han_FrManageCancelFriend.ToHide(true);
+			han_FrManageCancelFriendTitle.ToHide(true);
+			han_FrManageAddEnemy.ToHide(false);
+			han_FrManageAddEnemyTitle.ToHide(false);
+			han_FrManageRemoveEnemy.ToHide(false);
+			han_FrManageRemoveEnemyTitle.ToHide(false);
+			RunServerScriptUnsafe("unsafe_fractions@unsafe_GetOrgEnemies", 1,0,0,null,null);
+	}
+	void OnInit()
+	{
+		@han_FrManageEnemies=GUI_GetElementOptions();
+	}
+}
+
+class FrManageAddEnemy: IGUIElementCallbackMouseClick, IGUIElementCallbackInit
+{
+	void OnMouseClick(int click)
+	{
+		RunServerScriptUnsafe("unsafe_fractions@unsafe_GetUnrelatedList",REASON_ADD_ENEMY,0,0,null,null);
+	}
+	void OnInit()
+	{
+		@han_FrManageAddEnemy=GUI_GetElementOptions();
+	}
+}
+
+class FrManageAddEnemyTitle: IGUIElementCallbackInit
+{
+	void OnInit()
+	{
+		@han_FrManageAddEnemyTitle=GUI_GetElementOptions();
+	}
+}
+
+class FrManageRemoveEnemy: IGUIElementCallbackMouseClick, IGUIElementCallbackInit
+{
+	void OnMouseClick(int click)
+	{
+		RunServerScriptUnsafe("unsafe_fractions@unsafe_GetOrgEnemies",2,0,0,null,null);
+	}
+	void OnInit()
+	{
+		@han_FrManageRemoveEnemy=GUI_GetElementOptions();
+	}
+}
+
+class FrManageRemoveEnemyTitle: IGUIElementCallbackInit
+{
+	void OnInit()
+	{
+		@han_FrManageRemoveEnemyTitle=GUI_GetElementOptions();
+	}
+}
+
+class FrManageCancelFriend: IGUIElementCallbackMouseClick, IGUIElementCallbackInit
+{
+	void OnMouseClick(int click)
+	{
+		RunServerScriptUnsafe("unsafe_fractions@unsafe_GetOrgFriends",2,0,0,null,null);
+	}
+	void OnInit()
+	{
+		@han_FrManageCancelFriend=GUI_GetElementOptions();
+	}
+}
+
+class FrManageCancelFriendTitle: IGUIElementCallbackInit
+{
+	void OnInit()
+	{
+		@han_FrManageCancelFriendTitle=GUI_GetElementOptions();
+	}
+}
+
+class FrManageRequestFriend: IGUIElementCallbackMouseClick, IGUIElementCallbackInit
+{
+	void OnMouseClick(int click)
+	{
+		RunServerScriptUnsafe("unsafe_fractions@unsafe_GetUnrelatedList",REASON_REQUEST_FRIENDSHIP,0,0,null,null);
+	}
+	void OnInit()
+	{
+		@han_FrManageRequestFriend=GUI_GetElementOptions();
+	}
+}
+
+class FrManageRequestFriendTitle: IGUIElementCallbackInit
+{
+	void OnInit()
+	{
+		@han_FrManageRequestFriendTitle=GUI_GetElementOptions();
+	}
+}
+
+class FrManageApproveFriend: IGUIElementCallbackMouseClick, IGUIElementCallbackInit
+{
+	void OnMouseClick(int click)
+	{
+		RunServerScriptUnsafe("unsafe_fractions@unsafe_GetAllianceRequests",0,0,0,null,null);
+	}
+	void OnInit()
+	{
+		@han_FrManageApproveFriend=GUI_GetElementOptions();
+	}
+}
+
+class FrManageApproveFriendTitle: IGUIElementCallbackInit
+{
+	void OnInit()
+	{
+		@han_FrManageApproveFriendTitle=GUI_GetElementOptions();
+	}
+}
+
+class FrManageFriends: IGUIElementCallbackMouseClick, IGUIElementCallbackInit
+{
+	void OnMouseClick(int click)
+	{
+		han_FrManageEnemies.Push(false);
+		han_FrManageFriends.Push(true);
+		han_FrManageDeleteOrg.ToHide(true);
+		han_FrManageApproveFriendTitle.ToHide(false);
+		han_FrManageApproveFriend.ToHide(false);
+		han_FrManageRequestFriendTitle.ToHide(false);
+		han_FrManageRequestFriend.ToHide(false);
+		han_FrManageCancelFriend.ToHide(false);
+		han_FrManageCancelFriendTitle.ToHide(false);
+		han_FrManageAddEnemy.ToHide(true);
+		han_FrManageAddEnemyTitle.ToHide(true);
+		han_FrManageRemoveEnemy.ToHide(true);
+		han_FrManageRemoveEnemyTitle.ToHide(true);
+		RunServerScriptUnsafe("unsafe_fractions@unsafe_GetOrgFriends",1,0,0,null,null);
+	}
+	void OnInit()
+	{
+		@han_FrManageFriends=GUI_GetElementOptions();
+	}
+}
+
+class TextInput: IGUIElementCallbackInit, IGUIElementCallbackKeyPress
+{
+	void OnInit()
+	{
+		@han_TextInput=GUI_GetElementOptions();
+	}
+	void OnKeyPress(uint8 key, uint8 letter)
+	{
+		if(key==DIK_RETURN)
+		{
+			string name=han_TextInput.GetText();
+			name=substring(name,0,name.length()-1);
+			::HideScreen(CLIENT_SCREEN_FR_SAY, 3,3,3);
+			if(name!="") RunServerScriptUnsafe("unsafe_fractions@unsafe_InvitePlayer",0,0,0,name,null);
+		}
+	}
+}
+
+class FrSayOk:IGUIElementCallbackMouseClick
+{
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT && han_TextInput.GetText() !="")
+		{
+			::HideScreen(CLIENT_SCREEN_FR_SAY, 3,3,3);
+			RunServerScriptUnsafe("unsafe_fractions@unsafe_InvitePlayer",0,0,0,han_TextInput.GetText(),null);
+		}
+	}
+}
+
+class FrSayCancel: IGUIElementCallbackMouseClick
+{
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT) ::HideScreen(CLIENT_SCREEN_FR_SAY, 3,3,3);
+	}
+}
+
+class FrManageAddPlayer: IGUIElementCallbackMouseClick
+{
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT)
+		{
+			if(GetChosen().Param[ST_FR_LEADERSHIP]==2)
+			{
+				han_FrManageEnemies.Push(false);
+				han_FrManageFriends.Push(false);
+				han_FrManageDeleteOrg.ToHide(false);
+				han_FrManageApproveFriendTitle.ToHide(true);
+				han_FrManageApproveFriend.ToHide(true);
+				han_FrManageRequestFriendTitle.ToHide(true);
+				han_FrManageRequestFriend.ToHide(true);
+				han_FrManageCancelFriend.ToHide(true);
+				han_FrManageCancelFriendTitle.ToHide(true);
+				han_FrManageAddEnemy.ToHide(true);
+				han_FrManageAddEnemyTitle.ToHide(true);
+				han_FrManageRemoveEnemy.ToHide(true);
+				han_FrManageRemoveEnemyTitle.ToHide(true);
+			}
+			::ShowScreen(CLIENT_SCREEN_FR_SAY, 3,3,3);
+		}
+	}
+}
+
+class FrManageDismissPlayer: IGUIElementCallbackMouseClick
+{
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT)
+		{
+			if(GetChosen().Param[ST_FR_LEADERSHIP]==2)
+			{
+				han_FrManageEnemies.Push(false);
+				han_FrManageFriends.Push(false);
+				han_FrManageDeleteOrg.ToHide(false);
+				han_FrManageApproveFriendTitle.ToHide(true);
+				han_FrManageApproveFriend.ToHide(true);
+				han_FrManageRequestFriendTitle.ToHide(true);
+				han_FrManageRequestFriend.ToHide(true);
+				han_FrManageCancelFriend.ToHide(true);
+				han_FrManageCancelFriendTitle.ToHide(true);
+				han_FrManageAddEnemy.ToHide(true);
+				han_FrManageAddEnemyTitle.ToHide(true);
+				han_FrManageRemoveEnemy.ToHide(true);
+				han_FrManageRemoveEnemyTitle.ToHide(true);
+			}
+			RunServerScriptUnsafe("unsafe_fractions@unsafe_GetDismissPlayers",0,0,0,null,null);
+		}
+	}
+}
+
+class FrManageIncreasePlayer: IGUIElementCallbackMouseClick
+{
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT)
+		{
+			han_FrManageEnemies.Push(false);
+			han_FrManageFriends.Push(false);
+			han_FrManageDeleteOrg.ToHide(false);
+			han_FrManageApproveFriendTitle.ToHide(true);
+			han_FrManageApproveFriend.ToHide(true);
+			han_FrManageRequestFriendTitle.ToHide(true);
+			han_FrManageRequestFriend.ToHide(true);
+			han_FrManageCancelFriend.ToHide(true);
+			han_FrManageCancelFriendTitle.ToHide(true);
+			han_FrManageAddEnemy.ToHide(true);
+			han_FrManageAddEnemyTitle.ToHide(true);
+			han_FrManageRemoveEnemy.ToHide(true);
+			han_FrManageRemoveEnemyTitle.ToHide(true);
+			RunServerScriptUnsafe("unsafe_fractions@unsafe_GetLowPlayersList",0,0,0,null,null);
+		}
+	}
+}
+
+class FrManageLowerPlayer: IGUIElementCallbackMouseClick
+{
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT)
+		{
+			han_FrManageEnemies.Push(false);
+			han_FrManageFriends.Push(false);
+			han_FrManageDeleteOrg.ToHide(false);
+			han_FrManageApproveFriendTitle.ToHide(true);
+			han_FrManageApproveFriend.ToHide(true);
+			han_FrManageRequestFriendTitle.ToHide(true);
+			han_FrManageRequestFriend.ToHide(true);
+			han_FrManageCancelFriend.ToHide(true);
+			han_FrManageCancelFriendTitle.ToHide(true);
+			han_FrManageAddEnemy.ToHide(true);
+			han_FrManageAddEnemyTitle.ToHide(true);
+			han_FrManageRemoveEnemy.ToHide(true);
+			han_FrManageRemoveEnemyTitle.ToHide(true);
+			RunServerScriptUnsafe("unsafe_fractions@unsafe_GetHighPlayersList",0,0,0,null,null);
+		}
+	}
+}
+
+class FrManageText: IGUIElementCallbackInit, IGUIElementCallbackMouseClick, IGUIElementCallbackMouseDown
+{
+	void OnInit()
+	{
+		@han_FrManageText=GUI_GetElementOptions();
+	}
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT)
+		{
+			if(frManageTextMode==MODE_INCREASE_PLAYER)
+			{
+				RunServerScriptUnsafe("unsafe_fractions@unsafe_ApproveIncreasing",0,0,0,han_FrManageText.GetListElementStr(),null);
+			}
+			else if(frManageTextMode==MODE_LOWER_PLAYER)
+			{
+				RunServerScriptUnsafe("unsafe_fractions@unsafe_ApproveLowing",0,0,0,han_FrManageText.GetListElementStr(),null);
+			}
+			else if(frManageTextMode==MODE_DISMISS_PLAYER)
+			{
+				RunServerScriptUnsafe("unsafe_fractions@unsafe_DismissPlayer",0,0,0,han_FrManageText.GetListElementStr(),null);
+			}
+			else if(frManageTextMode==MODE_REQUEST_ALLIANCE)
+			{
+				RunServerScriptUnsafe("unsafe_fractions@unsafe_RequestAlliance",0,0,0,han_FrManageText.GetListElementStr(),null);
+			}
+			else if(frManageTextMode==MODE_APPROVE_ALLIANCE)
+			{
+				RunServerScriptUnsafe("unsafe_fractions@unsafe_ApproveAlliance",0,0,0,han_FrManageText.GetListElementStr(),null);
+			}
+			else if(frManageTextMode==MODE_CANCEL_ALLIANCE)
+			{
+				RunServerScriptUnsafe("unsafe_fractions@unsafe_CancelAlliance",0,0,0,han_FrManageText.GetListElementStr(),null);
+			}
+			else if(frManageTextMode==MODE_ADD_ENEMY)
+			{
+				RunServerScriptUnsafe("unsafe_fractions@unsafe_AddEnemy",0,0,0,han_FrManageText.GetListElementStr(),null);
+			}
+			else if(frManageTextMode==MODE_REMOVE_ENEMY)
+			{
+				RunServerScriptUnsafe("unsafe_fractions@unsafe_RemoveEnemy",0,0,0,han_FrManageText.GetListElementStr(),null);
+			}
+		}
+	}
+	void OnMouseDown(int click)
+	{
+		if(click==MOUSE_CLICK_WHEEL_DOWN || click==MOUSE_CLICK_WHEEL_UP) han_FrManageTextScrollbar.SBSetValue(han_FrManageText.GetTextOffset());
+	}
+}
+
+class FrManageTextScrollbar: IGUIElementCallbackMouseClick, IGUIElementCallbackInit, IGUIElementCallbackMouseMove
+{
+	void OnInit()
+	{
+		@han_FrManageTextScrollbar=GUI_GetElementOptions();
+	}
+	void OnMouseMove(bool clicked)
+	{
+		if(clicked)
+		{
+			han_FrManageText.SetScroll(false, han_FrManageTextScrollbar.GetSBScrollValue());
+		}
+	}
+	
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT)
+		{
+			han_FrManageText.SetScroll(false, han_FrManageTextScrollbar.GetSBScrollValue());
+		}
+	}
+	
+}
+
+class FrManageTextScrollUpArrow: IGUIElementCallbackMouseClick, IGUIElementCallbackInit
+{
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT)
+		{
+			han_FrManageText.SetScroll(true, -1);
+			han_FrManageTextScrollbar.SBSetValue(han_FrManageText.GetTextOffset());
+		}
+	}
+	void OnInit()
+	{
+		@han_FrManageTextArrowUp=GUI_GetElementOptions();
+	}
+}
+
+class FrManageTextScrollDownArrow: IGUIElementCallbackMouseClick, IGUIElementCallbackInit
+{
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT)
+		{
+			han_FrManageText.SetScroll(true, 1);
+			han_FrManageTextScrollbar.SBSetValue(han_FrManageText.GetTextOffset());
+		}
+	}
+	void OnInit()
+	{
+		@han_FrManageTextArrowDown=GUI_GetElementOptions();
+	}
+}
+
+class FrManageClose: IGUIElementCallbackMouseClick
+{
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT) ::HideScreen(CLIENT_SCREEN_FR_MANAGE,3,3,3);
+	}
+}
+
+class FrManageScreen: IGUIScreenCallbackShow, IGUIScreenCallbackHide
+{
+	void OnShow(int p0, int p1, int p2)
+	{
+	}
+	void OnHide(int p0, int p1, int p2)
+	{
+		::ShowScreen(CLIENT_SCREEN_FRACTIONS,3,3,3);
+	}
+}
+
+class FrStatClose: IGUIElementCallbackMouseClick //Кнопка "закрыть"
+{
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT)
+		{
+			::HideScreen(CLIENT_SCREEN_FR_STAT,3,3,3);
+		}
+	}
+}
+
+class FrStatScreen: IGUIScreenCallbackShow, IGUIScreenCallbackHide
+{
+	void OnShow(int p0, int p1, int p2)
+	{
+		RunServerScriptUnsafe("unsafe_fractions@unsafe_GetOrgList",0,0,0,null,null);
+	}
+	void OnHide(int p0, int p1, int p2)
+	{
+		::ShowScreen(CLIENT_SCREEN_FRACTIONS,3,3,3);
+	}
+}
+
+class FrStatText:IGUIElementCallbackMouseClick, IGUIElementCallbackInit, IGUIElementCallbackMouseDown
+{
+	void OnMouseClick(int click)
+	{
+	}
+	void OnInit()
+	{
+	@han_FrStatText=GUI_GetElementOptions();
+	}
+	void OnMouseDown(int click)
+	{
+		if(click==MOUSE_CLICK_WHEEL_DOWN || click==MOUSE_CLICK_WHEEL_UP) han_FrStatTextScrollbar.SBSetValue(han_FrStatText.GetTextOffset());
+	}
+}
+
+class FrStatTextScrollUpArrow: IGUIElementCallbackMouseClick, IGUIElementCallbackInit
+{
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT)
+		{
+			han_FrStatText.SetScroll(true, -1);
+			han_FrStatTextScrollbar.SBSetValue(han_FrStatText.GetTextOffset());
+		}
+	}
+	void OnInit()
+	{
+		@han_FrStatTextArrowUp=GUI_GetElementOptions();
+	}
+}
+
+class FrStatTextScrollDownArrow: IGUIElementCallbackMouseClick, IGUIElementCallbackInit
+{
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT)
+		{
+			han_FrStatText.SetScroll(true, 1);
+			han_FrStatTextScrollbar.SBSetValue(han_FrStatText.GetTextOffset());
+		}
+	}
+	void OnInit()
+	{
+		@han_FrStatTextArrowDown=GUI_GetElementOptions();
+	}
+}
+
+class FrStatTextScrollbar: IGUIElementCallbackMouseClick, IGUIElementCallbackInit, IGUIElementCallbackMouseMove
+{
+	void OnInit()
+	{
+		@han_FrStatTextScrollbar=GUI_GetElementOptions();
+	}
+	void OnMouseMove(bool clicked)
+	{
+		if(clicked)
+		{
+			han_FrStatText.SetScroll(false, han_FrStatTextScrollbar.GetSBScrollValue());
+		}
+	}
+	
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT)
+		{
+			han_FrStatText.SetScroll(false, han_FrStatTextScrollbar.GetSBScrollValue());
+		}
+	}
+	
+}
+
+class FrStatList:IGUIElementCallbackMouseClick, IGUIElementCallbackInit, IGUIElementCallbackMouseDown
+{
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT) RunServerScriptUnsafe("unsafe_fractions@unsafe_GetOrgStatByName",0,0,0,han_FrStatList.GetListElementStr(),null);
+	}
+	void OnInit()
+	{
+	@han_FrStatList=GUI_GetElementOptions();
+	}
+	void OnMouseDown(int click)
+	{
+		if(click==MOUSE_CLICK_WHEEL_DOWN || click==MOUSE_CLICK_WHEEL_UP) han_FrStatListScrollbar.SBSetValue(han_FrStatList.GetTextOffset());
+	}
+}
+
+class FrStatListScrollUpArrow: IGUIElementCallbackMouseClick, IGUIElementCallbackInit
+{
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT)
+		{
+			han_FrStatList.SetScroll(true, -1);
+			han_FrStatListScrollbar.SBSetValue(han_FrStatList.GetTextOffset());
+		}
+	}
+	void OnInit()
+	{
+		@han_FrStatListArrowUp=GUI_GetElementOptions();
+	}
+}
+
+class FrStatListScrollDownArrow: IGUIElementCallbackMouseClick, IGUIElementCallbackInit
+{
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT)
+		{
+			han_FrStatList.SetScroll(true, 1);
+			han_FrStatListScrollbar.SBSetValue(han_FrStatList.GetTextOffset());
+		}
+	}
+	void OnInit()
+	{
+		@han_FrStatListArrowDown=GUI_GetElementOptions();
+	}
+}
+
+class FrStatListScrollbar: IGUIElementCallbackMouseClick, IGUIElementCallbackInit, IGUIElementCallbackMouseMove
+{
+	void OnInit()
+	{
+		@han_FrStatListScrollbar=GUI_GetElementOptions();
+	}
+	void OnMouseMove(bool clicked)
+	{
+		if(clicked)
+		{
+			han_FrStatList.SetScroll(false, han_FrStatListScrollbar.GetSBScrollValue());
+		}
+	}
+	
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT)
+		{
+			han_FrStatList.SetScroll(false, han_FrStatListScrollbar.GetSBScrollValue());
+		}
+	}
+	
+}
+
+class FrScrollUpArrow: IGUIElementCallbackMouseClick, IGUIElementCallbackInit
+{
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT)
+		{
+			han_FrTextbox.SetScroll(true, -1);
+			han_FrScrollbar.SBSetValue(han_FrTextbox.GetTextOffset());
+		}
+	}
+	void OnInit()
+	{
+		@han_FrArrowUp=GUI_GetElementOptions();
+	}
+}
+
+class FrScrollDownArrow: IGUIElementCallbackMouseClick, IGUIElementCallbackInit
+{
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT)
+		{
+			han_FrTextbox.SetScroll(true, 1);
+			han_FrScrollbar.SBSetValue(han_FrTextbox.GetTextOffset());
+		}
+	}
+	void OnInit()
+	{
+		@han_FrArrowDown=GUI_GetElementOptions();
+	}
+}
+
+class FrScreen: IGUIScreenCallbackShow
+{
+	void OnShow(int p0, int p1, int p2)
+	{
+		if(valid(han_FrTextbox)) RunServerScriptUnsafe("unsafe_fractions@unsafe_GetOrgStatistics",0,0,0,null,null);
+	}
+}
+
+class FrTextbox: IGUIElementCallbackMouseClick, IGUIElementCallbackInit, IGUIElementCallbackMouseDown
+{
+	void OnInit()
+	{
+		@han_FrTextbox=GUI_GetElementOptions();
+	}
+	void OnMouseClick(int click)
+	{
+		
+	}
+	void OnMouseDown(int click)
+	{
+		if(click==MOUSE_CLICK_WHEEL_DOWN || click==MOUSE_CLICK_WHEEL_UP) han_FrScrollbar.SBSetValue(han_FrTextbox.GetTextOffset());
+	}
+}
+
+class FrScrollbar: IGUIElementCallbackMouseClick, IGUIElementCallbackInit, IGUIElementCallbackMouseMove
+{
+	void OnInit()
+	{
+		@han_FrScrollbar=GUI_GetElementOptions();
+	}
+	void OnMouseMove(bool clicked)
+	{
+		if(clicked)
+		{
+			han_FrTextbox.SetScroll(false, han_FrScrollbar.GetSBScrollValue());
+		}
+	}
+	
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT)
+		{
+			han_FrTextbox.SetScroll(false, han_FrScrollbar.GetSBScrollValue());
+		}
+	}
+	
+}
+
+class FrScrShowButton: IGUIElementCallbackInit, IGUIElementCallbackMouseClick //Кнопка "Фракции" на интерфейсе.
+{
+	void OnInit()
+	{
+		@mainButton=GUI_GetElementOptions();
+		if(ifaceHidden) mainButton.ToHide(true);
+	}
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT) 
+		{
+			::ShowScreen(CLIENT_SCREEN_FRACTIONS,3,3,3);
+			ChangeCursor(CURSOR_DEFAULT); 
+		}
+	}
+}
+
+class FrScrClose: IGUIElementCallbackMouseClick //Кнопка "закрыть"
+{
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT) ::HideScreen(CLIENT_SCREEN_FRACTIONS,3,3,3);
+	}
+}
+
+class FrQuit: IGUIElementCallbackMouseClick //Кнопка "закрыть"
+{
+	void OnMouseClick(int click)
+	{
+		RunServerScriptUnsafe("unsafe_fractions@unsafe_quitOrg",0,0,0,null,null);
+	}
+}
+
+class CreateFrButton: IGUIElementCallbackMouseClick //Кнопка "создать организацию"
+{
+	void OnMouseClick(int click)
+	{
+		RunServerScriptUnsafe("unsafe_fractions@unsafe_CreateFraction",0,0,0,null,null);
+	}
+}
+
+class ShowFrStat: IGUIElementCallbackMouseClick //кнопка "статистика"
+{
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT) 
+		{
+			::HideScreen(CLIENT_SCREEN_FRACTIONS,3,3,3);
+			::ShowScreen(CLIENT_SCREEN_FR_STAT,3,3,3);
+		}
+	}
+}
+
+class ManageFrButton: IGUIElementCallbackMouseClick // Кнопка "управление"
+{
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT)
+		{
+			::HideScreen(CLIENT_SCREEN_FRACTIONS,3,3,3);
+			::ShowScreen(CLIENT_SCREEN_FR_MANAGE,3,3,3);
+		}
+	}
+}
+
+class ShowMemberList: IGUIElementCallbackMouseClick //кнопка "список"
+{
+	void OnMouseClick(int click)
+	{
+		RunServerScriptUnsafe("unsafe_fractions@unsafe_GetOrgMembers",0,0,0,null,null);
+	}
+}
+
+class ShowFriendList: IGUIElementCallbackMouseClick //кнопка "союзники"
+{
+	void OnMouseClick(int click)
+	{
+		RunServerScriptUnsafe("unsafe_fractions@unsafe_GetOrgFriends",0,0,0,null,null);
+	}
+}
+
+class ShowEnemyList: IGUIElementCallbackMouseClick //кнопка "враги"
+{
+	void OnMouseClick(int click)
+	{
+		RunServerScriptUnsafe("unsafe_fractions@unsafe_GetOrgEnemies",0,0,0,null,null);
+	}
+}
+
+class QuitFrButton:IGUIElementCallbackMouseClick //кнопка "уволиться"
+{
+	void OnMouseClick(int click)
+	{
+	
+	}
+}
+
+void InitFrButton()
+{
+	FrScrShowButton frshowbutton;
+	int[] coords=GetIfaceCoords("FractionButton");
+	GUI_AddScreenElement(CLIENT_MAIN_SCREEN_GAME,GetIfaceIniStr("FractionPic"),coords[0],coords[1])
+		.CallbackInit(frshowbutton)
+		.CallbackMouseClick(frshowbutton)
+		//.AutoCursor(CURSOR_DEFAULT)
+		.DownPic(GetIfaceIniStr("FractionPicDwn"));
+}
+
+void InitFrScreen(uint frId, uint leadership)
+{
+	int[] managementTextCoords 				=GetIfaceCoords("ManagementTextCoords");
+	int[] managementCloseButtonCoords 		=GetIfaceCoords("ManagementCloseButtonCoords");
+	int[] managementInviteButtonCoords 		=GetIfaceCoords("ManagementInviteButtonCoords");
+	int[] managementDismissButtonCoords 	=GetIfaceCoords("ManagementDismissButtonCoords");
+	int[] managementRaiseButtonCoords 		=GetIfaceCoords("ManagementRaiseButtonCoords");
+	int[] managementLowerButtonCoords 		=GetIfaceCoords("ManagementLowerButtonCoords");
+	int[] managementUnionsButtonCoords 		=GetIfaceCoords("ManagementUnionsButtonCoords");
+	int[] managementRequestButtonCoords 	=GetIfaceCoords("ManagementRequestButtonCoords");
+	int[] managementApproveButtonCoords 	=GetIfaceCoords("ManagementApproveButtonCoords");
+	int[] managementBreakingButtonCoords	=GetIfaceCoords("ManagementBreakingButtonCoords");
+	int[] managementAddButtonCoords 		=GetIfaceCoords("ManagementAddButtonCoords");
+	int[] managementRemoveButtonCoords 		=GetIfaceCoords("ManagementRemoveButtonCoords");
+	int[] managementEnemiesButtonCoords 	=GetIfaceCoords("ManagementEnemiesButtonCoords");
+	int[] managementTextboxCoords 			=GetIfaceCoords("ManagementTextboxCoords");
+	int[] managementScrollbarCoords 		=GetIfaceCoords("ManagementScrollbarCoords");
+	int[] managementUpArrowCoords 			=GetIfaceCoords("ManagementUpArrowCoords");
+	int[] managementDwnArrowCoords 			=GetIfaceCoords("ManagementDwnArrowCoords");
+	int[] coords={0,0};
+	string picName;
+	string picDownName;
+	int numFont=0;
+	uint8[] TitleTextColor=GetIfaceColor("ManagementTitleTextColor");
+	uint8[] ButtonTextColor=GetIfaceColor("ManagementButtonTextColor");
+	uint8[] ButtonTextColorDown=GetIfaceColor("ManagementButtonTextColorDown");
+	
+	FrScrClose closeButton;
+	CreateFrButton createFrButton;
+	ShowFrStat frStat;
+	ShowMemberList memberList;
+	ShowEnemyList enemyList;
+	ShowFriendList friendList;
+	ManageFrButton manageButton;
+	FrTextbox frTextbox;
+	FrScrollbar frScrollbar;
+	FrScrollDownArrow scrolldown;
+	FrScrollUpArrow scrollup;
+	FrScreen frScr;
+	FrQuit quitFr;
+	
+	FrStatList statList;
+	FrStatListScrollUpArrow statListScrollUp;
+	FrStatListScrollDownArrow statListScrollDown;
+	FrStatListScrollbar statListScrollBar;
+	FrStatScreen statScreen;
+	
+	FrStatText statText;
+	FrStatTextScrollUpArrow statTextScrollUp;
+	FrStatTextScrollDownArrow statTextScrollDown;
+	FrStatTextScrollbar statTextScrollBar;
+	FrStatClose statCloseButton;
+	
+	FrManageClose manageCloseButton;
+	FrManageScreen manageScreen;
+	FrManageAddPlayer manageAddPlayer;
+	FrManageText manageText;
+	FrManageTextScrollUpArrow manageTextScrollUp;
+	FrManageTextScrollDownArrow manageTextScrollDown;
+	FrManageTextScrollbar manageTextScrollBar;
+	FrManageIncreasePlayer manageIncrease;
+	FrManageLowerPlayer manageLower;
+	FrManageDismissPlayer manageDismiss;
+	FrManageFriends manageFriends;
+	FrManageRequestFriend manageRequestFriend;
+	FrManageRequestFriendTitle manageRequestFriendTitle;
+	FrManageApproveFriend manageApproveFriend;
+	FrManageApproveFriendTitle manageApproveFriendTitle;
+	FrManageCancelFriend manageCancelFriend;
+	FrManageCancelFriendTitle manageCancelFriendTitle;
+	FrManageAddEnemy manageAddEnemy;
+	FrManageAddEnemyTitle manageAddEnemyTitle;
+	FrManageRemoveEnemy manageRemoveEnemy;
+	FrManageRemoveEnemyTitle manageRemoveEnemyTitle;
+	FrManageEnemies manageEnemies;
+	FrManageDeleteOrg manageDeleteOrg;
+	
+	FrColorScreen colorScreen;
+	FrRedIndicator redInd;
+	FrGreenIndicator greenInd;
+	FrBlueIndicator blueInd;
+	FrColorButton colorButton;
+	FrRedAdjustScrollbar redAdjust;
+	FrGreenAdjustScrollbar greenAdjust;
+	FrBlueAdjustScrollbar blueAdjust;
+	FrColorIndicator colorInd;
+	FrColorList colorList;
+	FrColorTitle colorTitle;
+	FractionColorOk colorOk;
+	FractionColorSave colorSave;
+	FractionColorCancel colorCancel;
+	FractionColorListScrollbar colorListScrollbar;
+	FrColorListScrollUpArrow colorListScrollUp;
+	FrColorListScrollDownArrow colorListScrollDown;
+	FrColorSendButton colorSend;
+	FrColorRefreshButton colorRefresh;
+	
+	TextInput inputBox;
+	FrSayOk sayOk;
+	FrSayCancel sayCancel;
+	
+	//Окно SAY
+	picName=GetIfaceIniStr("FrSayPic");
+	GUI_CreateScreen(CLIENT_SCREEN_FR_SAY, picName)
+		.CanMove(true)
+		.Modal(false)
+		.CloseOnMiss(true)
+		.Multiinstance(true);
+	
+	
+	picName=GetIfaceIniStr("FrSayTextPic");
+	coords=GetIfaceCoords("FrSayTextCoords");
+	GUI_AddScreenElement(CLIENT_SCREEN_FR_SAY, picName, coords[0], coords[1])
+		.CallbackInit(inputBox)
+		.CallbackKeyPress(inputBox)
+		.TextInput(true, 30, COLOR_GREEN)
+		.Font(FONT_FALLOUT, COLOR_GREEN)
+		.Flags(FT_ALIGN|FT_CENTERY)
+		.SetFocus(true);
+	
+	picName=GetIfaceIniStr("FrSayTitlePic");
+	coords=GetIfaceCoords("FrSayTitleCoords");
+	
+	GUI_AddScreenElement(CLIENT_SCREEN_FR_SAY, picName, coords[0], coords[1])
+		.Text(GetMsgStr(TEXTMSG_GAME, 14000) ,FONT_FALLOUT,COLOR_BLACK,COLOR_FRACTION,FT_CENTERX|FT_CENTERY);
+	
+	picName=GetIfaceIniStr("FrSayOkPic");
+	picDownName=GetIfaceIniStr("FrSayOkDownPic");
+	coords=GetIfaceCoords("FrSayOkCoords");
+	
+	GUI_AddScreenElement(CLIENT_SCREEN_FR_SAY, picName, coords[0], coords[1])
+		.TextFrame(20,0)
+		.Text("ОК",FONT_FALLOUT,COLOR_BLACK,COLOR_FRACTION,FT_CENTERY|FT_ALIGN)
+		.CallbackMouseClick(sayOk)
+		.DownPic(picDownName);
+	
+	picName=GetIfaceIniStr("FrSayCancelPic");
+	picDownName=GetIfaceIniStr("FrSayCancelDownPic");
+	coords=GetIfaceCoords("FrSayCancelCoords");
+	
+	GUI_AddScreenElement(CLIENT_SCREEN_FR_SAY, picName, coords[0], coords[1])
+		.TextFrame(20,0)
+		.Text(GetMsgStr(TEXTMSG_GAME, 14001),FONT_FALLOUT,COLOR_BLACK,COLOR_FRACTION,FT_CENTERY|FT_ALIGN)
+		.CallbackMouseClick(sayCancel)
+		.DownPic("ButtonDown.PNG");
+	
+	//Окно управления
+	picName=GetIfaceIniStr("ManagementFrScreenPic");	
+	StrToInt(GetIfaceIniStr("ManagementTitleTextFont"), numFont);
+	GUI_CreateScreen(CLIENT_SCREEN_FR_MANAGE, picName)
+		.CallbackShow(manageScreen)
+		.CallbackHide(manageScreen)
+		.CanMove(true)
+		.Modal(false)
+		.Multiinstance(true);
+		
+	picName=GetIfaceIniStr("ManagementTitleTextPic");	
+	GUI_AddScreenElement(CLIENT_SCREEN_FR_MANAGE, picName, managementTextCoords[0], managementTextCoords[1])
+		.TextFrame(0,5)
+		.Text(GetMsgStr(TEXTMSG_GAME, 14002),numFont,COLOR_RGB(TitleTextColor[0], TitleTextColor[1], TitleTextColor[2]),COLOR_RGB(TitleTextColor[0], TitleTextColor[1], TitleTextColor[2]),FT_CENTERX|FT_CENTERY);
+		
+	StrToInt(GetIfaceIniStr("ManagementButtonTextFont"), numFont);
+
+	picName=GetIfaceIniStr("ManagementCloseButtonPic");
+	picDownName=GetIfaceIniStr("ManagementCloseButtonPicDown");
+	GUI_AddScreenElement(CLIENT_SCREEN_FR_MANAGE, picName, managementCloseButtonCoords[0], managementCloseButtonCoords[1])
+		//.TextFrame(20,0)
+		//GetMsgStr(TEXTMSG_GAME, 14003),numFont,COLOR_RED,COLOR_RGB(ButtonTextColor[0], ButtonTextColor[1], ButtonTextColor[2]),FT_CENTERY|FT_ALIGN)
+		.CallbackMouseClick(manageCloseButton)
+		.DownPic(picDownName);
+		
+	picName=GetIfaceIniStr("ManagementInviteButtonPic");
+	picDownName=GetIfaceIniStr("ManagementInviteButtonPicDown");
+	GUI_AddScreenElement(CLIENT_SCREEN_FR_MANAGE, picName, managementInviteButtonCoords[0], managementInviteButtonCoords[1])
+			.TextFrame(20,0)
+			.Text(GetMsgStr(TEXTMSG_GAME, 14004), numFont,COLOR_RGB(ButtonTextColor[0], ButtonTextColor[1], ButtonTextColor[2]),COLOR_RGB(ButtonTextColorDown[0], ButtonTextColorDown[1], ButtonTextColorDown[2]),FT_CENTERY|FT_ALIGN)
+			.CallbackMouseClick(manageAddPlayer)
+			.DownPic(picDownName);
+	
+	picName=GetIfaceIniStr("ManagementDismissButtonPic");
+	picDownName=GetIfaceIniStr("ManagementDismissButtonPicDown");
+	GUI_AddScreenElement(CLIENT_SCREEN_FR_MANAGE, picName , managementDismissButtonCoords[0], managementDismissButtonCoords[1])
+		.TextFrame(20, 0)
+		.Text(GetMsgStr(TEXTMSG_GAME, 14005),numFont,COLOR_RGB(ButtonTextColor[0], ButtonTextColor[1], ButtonTextColor[2]),COLOR_RGB(ButtonTextColorDown[0], ButtonTextColorDown[1], ButtonTextColorDown[2]),FT_CENTERY|FT_ALIGN)
+		.CallbackMouseClick(manageDismiss)
+		.DownPic(picDownName);
+	if(leadership==2)
+	{
+	
+		picName=GetIfaceIniStr("ManagementRaiseButtonPic");
+		picDownName=GetIfaceIniStr("ManagementRaiseButtonPicDown");	
+		
+		GUI_AddScreenElement(CLIENT_SCREEN_FR_MANAGE, picName , managementRaiseButtonCoords[0], managementRaiseButtonCoords[1])
+			.TextFrame(20, 0)
+			.Text(GetMsgStr(TEXTMSG_GAME, 14006),numFont,COLOR_RGB(ButtonTextColor[0], ButtonTextColor[1], ButtonTextColor[2]),COLOR_RGB(ButtonTextColorDown[0], ButtonTextColorDown[1], ButtonTextColorDown[2]),FT_CENTERY|FT_ALIGN)
+			.CallbackMouseClick(manageIncrease)
+			.DownPic(picDownName);
+		
+		picName=GetIfaceIniStr("ManagementLowerButtonPic");
+		picDownName=GetIfaceIniStr("ManagementLowerButtonPicDown");	
+		
+		GUI_AddScreenElement(CLIENT_SCREEN_FR_MANAGE, picName , managementLowerButtonCoords[0], managementLowerButtonCoords[1])
+			.TextFrame(20, 0)
+			.Text(GetMsgStr(TEXTMSG_GAME, 14007),numFont,COLOR_RGB(ButtonTextColor[0], ButtonTextColor[1], ButtonTextColor[2]),COLOR_RGB(ButtonTextColorDown[0], ButtonTextColorDown[1], ButtonTextColorDown[2]),FT_CENTERY|FT_ALIGN)
+			.CallbackMouseClick(manageLower)
+			.DownPic(picDownName);
+			
+		picName=GetIfaceIniStr("ManagementUnionsButtonPic");
+		picDownName=GetIfaceIniStr("ManagementUnionsButtonPicDown");
+		GUI_AddScreenElement(CLIENT_SCREEN_FR_MANAGE, picName , managementUnionsButtonCoords[0], managementUnionsButtonCoords[1])
+			.TextFrame(20, 0)
+			.Text(GetMsgStr(TEXTMSG_GAME, 14008),numFont,COLOR_RGB(ButtonTextColor[0], ButtonTextColor[1], ButtonTextColor[2]),COLOR_RGB(ButtonTextColorDown[0], ButtonTextColorDown[1], ButtonTextColorDown[2]),FT_CENTERY|FT_ALIGN)
+			.CallbackMouseClick(manageFriends)
+			.CallbackInit(manageFriends)
+			.DownPic(picDownName);
+
+		GUI_AddScreenElement(CLIENT_SCREEN_FR_MANAGE, "buttontext.PNG", managementRequestButtonCoords[0], managementRequestButtonCoords[1])
+			.CallbackInit(manageRequestFriendTitle)
+			.ToHide(true)
+			/*.TextFrame(20, 0)
+			.Text(GetMsgStr(TEXTMSG_GAME, 14009),numFont,COLOR_RGB(ButtonTextColor[0], ButtonTextColor[1], ButtonTextColor[2]),COLOR_RGB(ButtonTextColorDown[0], ButtonTextColorDown[1], ButtonTextColorDown[2]),FT_CENTERY|FT_ALIGN)*/;
+		
+		picName=GetIfaceIniStr("ManagementRequestButtonPic");
+		picDownName=GetIfaceIniStr("ManagementRequestButtonPicDown");
+		
+		GUI_AddScreenElement(CLIENT_SCREEN_FR_MANAGE, picName ,managementRequestButtonCoords[0], managementRequestButtonCoords[1])
+			.TextFrame(20, 0)
+			.Text(GetMsgStr(TEXTMSG_GAME, 14010),numFont,COLOR_RGB(ButtonTextColor[0], ButtonTextColor[1], ButtonTextColor[2]),COLOR_RGB(ButtonTextColorDown[0], ButtonTextColorDown[1], ButtonTextColorDown[2]),FT_CENTERY|FT_ALIGN)
+			.CallbackInit(manageDeleteOrg)
+			.CallbackMouseClick(manageDeleteOrg)
+			.DownPic(picDownName);
+			
+		GUI_AddScreenElement(CLIENT_SCREEN_FR_MANAGE, picName ,managementRequestButtonCoords[0], managementRequestButtonCoords[1])
+			.TextFrame(20, 0)
+			.Text(GetMsgStr(TEXTMSG_GAME, 14009),numFont,COLOR_RGB(ButtonTextColor[0], ButtonTextColor[1], ButtonTextColor[2]),COLOR_RGB(ButtonTextColorDown[0], ButtonTextColorDown[1], ButtonTextColorDown[2]),FT_CENTERY|FT_ALIGN)
+			.CallbackInit(manageRequestFriend)
+			.CallbackMouseClick(manageRequestFriend)
+			.ToHide(true)
+			.DownPic(picDownName);
+
+		GUI_AddScreenElement(CLIENT_SCREEN_FR_MANAGE, "buttontext.PNG", managementApproveButtonCoords[0], managementApproveButtonCoords[1])
+			.CallbackInit(manageApproveFriendTitle)
+			.ToHide(true)
+			/*.TextFrame(20, 0)
+			.Text(GetMsgStr(TEXTMSG_GAME, 14011),numFont,COLOR_RGB(ButtonTextColor[0], ButtonTextColor[1], ButtonTextColor[2]),COLOR_RGB(ButtonTextColorDown[0], ButtonTextColorDown[1], ButtonTextColorDown[2]),FT_CENTERY|FT_ALIGN)*/;
+
+		picName=GetIfaceIniStr("ManagementApproveButtonPic");
+		picDownName=GetIfaceIniStr("ManagementApproveButtonPicDown");
+		GUI_AddScreenElement(CLIENT_SCREEN_FR_MANAGE, picName ,managementApproveButtonCoords[0], managementApproveButtonCoords[1])
+			.TextFrame(20, 0)
+			.Text(GetMsgStr(TEXTMSG_GAME, 14011),numFont,COLOR_RGB(ButtonTextColor[0], ButtonTextColor[1], ButtonTextColor[2]),COLOR_RGB(ButtonTextColorDown[0], ButtonTextColorDown[1], ButtonTextColorDown[2]),FT_CENTERY|FT_ALIGN)
+			.CallbackInit(manageApproveFriend)
+			.CallbackMouseClick(manageApproveFriend)
+			.ToHide(true)
+			.DownPic(picDownName);
+
+		GUI_AddScreenElement(CLIENT_SCREEN_FR_MANAGE, "buttontext.PNG", managementBreakingButtonCoords[0], managementBreakingButtonCoords[1])
+			.CallbackInit(manageCancelFriendTitle)
+			.ToHide(true)
+			/*.TextFrame(20, 0)
+			.Text(GetMsgStr(TEXTMSG_GAME, 14012),numFont,COLOR_RGB(ButtonTextColor[0], ButtonTextColor[1], ButtonTextColor[2]),COLOR_RGB(ButtonTextColorDown[0], ButtonTextColorDown[1], ButtonTextColorDown[2]),FT_CENTERY|FT_ALIGN)*/;
+
+		picName=GetIfaceIniStr("ManagementBreakingButtonPic");
+		picDownName=GetIfaceIniStr("ManagementBreakingButtonPicDown");
+		GUI_AddScreenElement(CLIENT_SCREEN_FR_MANAGE, picName , managementBreakingButtonCoords[0], managementBreakingButtonCoords[1])
+			.TextFrame(20, 0)
+			.Text(GetMsgStr(TEXTMSG_GAME, 14012),numFont,COLOR_RGB(ButtonTextColor[0], ButtonTextColor[1], ButtonTextColor[2]),COLOR_RGB(ButtonTextColorDown[0], ButtonTextColorDown[1], ButtonTextColorDown[2]),FT_CENTERY|FT_ALIGN)
+			.CallbackInit(manageCancelFriend)
+			.CallbackMouseClick(manageCancelFriend)
+			.ToHide(true)
+			.DownPic(picDownName);
+
+		GUI_AddScreenElement(CLIENT_SCREEN_FR_MANAGE, "buttontext.PNG", managementAddButtonCoords[0], managementAddButtonCoords[1])
+			.CallbackInit(manageAddEnemyTitle)
+			.ToHide(true)
+			/*.TextFrame(20, 0)
+			.Text(GetMsgStr(TEXTMSG_GAME, 14013),numFont,COLOR_RGB(ButtonTextColor[0], ButtonTextColor[1], ButtonTextColor[2]),COLOR_RGB(ButtonTextColorDown[0], ButtonTextColorDown[1], ButtonTextColorDown[2]),FT_CENTERY|FT_ALIGN)*/;
+		
+		picName=GetIfaceIniStr("ManagementAddButtonPic");	
+		picDownName=GetIfaceIniStr("ManagementAddButtonPicDown");		
+		GUI_AddScreenElement(CLIENT_SCREEN_FR_MANAGE, picName , managementAddButtonCoords[0], managementAddButtonCoords[1])
+			.CallbackInit(manageAddEnemy)
+			.CallbackMouseClick(manageAddEnemy)
+			.ToHide(true)
+			.DownPic(picDownName)
+			.TextFrame(20, 0)
+			.Text(GetMsgStr(TEXTMSG_GAME, 14013),numFont,COLOR_RGB(ButtonTextColor[0], ButtonTextColor[1], ButtonTextColor[2]),COLOR_RGB(ButtonTextColorDown[0], ButtonTextColorDown[1], ButtonTextColorDown[2]),FT_CENTERY|FT_ALIGN);
+			
+		GUI_AddScreenElement(CLIENT_SCREEN_FR_MANAGE, "buttontext.PNG", managementRemoveButtonCoords[0], managementRemoveButtonCoords[1])
+			.CallbackInit(manageRemoveEnemyTitle)
+			.ToHide(true)
+			/*.TextFrame(20, 0)
+			.Text(GetMsgStr(TEXTMSG_GAME, 14014),numFont,COLOR_RGB(ButtonTextColor[0], ButtonTextColor[1], ButtonTextColor[2]),COLOR_RGB(ButtonTextColorDown[0], ButtonTextColorDown[1], ButtonTextColorDown[2]),FT_CENTERY|FT_ALIGN)*/;
+
+		picName=GetIfaceIniStr("ManagementRemoveButtonPic");
+		picDownName=GetIfaceIniStr("ManagementRemoveButtonPicDown");		
+		GUI_AddScreenElement(CLIENT_SCREEN_FR_MANAGE, picName,  managementRemoveButtonCoords[0], managementRemoveButtonCoords[1])
+			.TextFrame(20, 0)
+			.Text(GetMsgStr(TEXTMSG_GAME, 14014),numFont,COLOR_RGB(ButtonTextColor[0], ButtonTextColor[1], ButtonTextColor[2]),COLOR_RGB(ButtonTextColorDown[0], ButtonTextColorDown[1], ButtonTextColorDown[2]),FT_CENTERY|FT_ALIGN)
+			.CallbackInit(manageRemoveEnemy)
+			.CallbackMouseClick(manageRemoveEnemy)
+			.ToHide(true)
+			.DownPic(picDownName);
+			
+		/*GUI_AddScreenElement(CLIENT_SCREEN_FR_MANAGE, "buttontext.PNG", 47, 300)
+			.TextFrame(20, 0)
+			.Text(GetMsgStr(TEXTMSG_GAME, 14015),numFont,COLOR_RGB(ButtonTextColor[0], ButtonTextColor[1], ButtonTextColor[2]),COLOR_RGB(ButtonTextColorDown[0], ButtonTextColorDown[1], ButtonTextColorDown[2]),FT_CENTERY|FT_ALIGN);*/
+
+		picName=GetIfaceIniStr("ManagementEnemiesButtonPic");
+		picDownName=GetIfaceIniStr("ManagementEnemiesButtonPicDown");		
+		GUI_AddScreenElement(CLIENT_SCREEN_FR_MANAGE, picName , managementEnemiesButtonCoords[0], managementEnemiesButtonCoords[1])
+			.TextFrame(20, 0)
+			.Text(GetMsgStr(TEXTMSG_GAME, 14015),numFont,COLOR_RGB(ButtonTextColor[0], ButtonTextColor[1], ButtonTextColor[2]),COLOR_RGB(ButtonTextColorDown[0], ButtonTextColorDown[1], ButtonTextColorDown[2]),FT_CENTERY|FT_ALIGN)
+			.CallbackInit(manageEnemies)
+			.CallbackMouseClick(manageEnemies)
+			.DownPic(picDownName);
+	}
+
+	picName=GetIfaceIniStr("ManagementTextboxPic");	
+	GUI_AddScreenElement(CLIENT_SCREEN_FR_MANAGE, picName, managementTextboxCoords[0], managementTextboxCoords[1])
+			.CallbackInit(manageText)
+			.CallbackMouseClick(manageText)
+			.CallbackMouseDown(manageText)
+			.ScrollableText(true);
+
+	picName=GetIfaceIniStr("ManagementScrollbarPic");
+	picDownName=GetIfaceIniStr("ManagementScrollbarPicDown");		
+	GUI_AddScreenElement(CLIENT_SCREEN_FR_MANAGE, picName, managementScrollbarCoords[0], managementScrollbarCoords[1])
+			.CallbackInit(manageTextScrollBar)
+			.CallbackMouseClick(manageTextScrollBar)
+			.CallbackMouseMove(manageTextScrollBar)
+			.IsScrollBar(true)
+			.ToHide(true)
+			.SBScrollPic(picDownName);
+
+	picName=GetIfaceIniStr("ManagementUpArrowPic");
+	picDownName=GetIfaceIniStr("ManagementUpArrowPicDown");		
+	GUI_AddScreenElement(CLIENT_SCREEN_FR_MANAGE, picName, managementUpArrowCoords[0], managementUpArrowCoords[1])
+			.CallbackInit(manageTextScrollUp)
+			.CallbackMouseClick(manageTextScrollUp)
+			.ToHide(true)
+			.DownPic(picDownName);
+	
+	picName=GetIfaceIniStr("ManagementDwnArrowPic");
+	picDownName=GetIfaceIniStr("ManagementDwnArrowPicDown");
+	GUI_AddScreenElement(CLIENT_SCREEN_FR_MANAGE, picName, managementDwnArrowCoords[0], managementDwnArrowCoords[1])
+			.CallbackInit(manageTextScrollDown)
+			.CallbackMouseClick(manageTextScrollDown)
+			.ToHide(true)
+			.DownPic(picDownName);
+		
+	//Окно статистики
+	
+	picName=GetIfaceIniStr("FrStatScreenPic");
+
+	GUI_CreateScreen(CLIENT_SCREEN_FR_STAT,picName)
+		.CallbackShow(statScreen)
+		.CallbackHide(statScreen)
+		.CanMove(true)
+		.Modal(false)
+		.Multiinstance(true);
+		
+	picName=GetIfaceIniStr("FrStatTitlePic");
+	coords=GetIfaceCoords("FrStatTitleCoords");		
+	
+	GUI_AddScreenElement(CLIENT_SCREEN_FR_STAT, picName, coords[0], coords[1])
+		.TextFrame(0,5)
+		.Text(GetMsgStr(TEXTMSG_GAME, 14016),FONT_FAT,COLOR_DDGREEN,COLOR_DDGREEN,FT_CENTERX|FT_CENTERY);
+	
+	picName=GetIfaceIniStr("FrStatListPic");
+	coords=GetIfaceCoords("FrStatListCoords");	
+	
+	GUI_AddScreenElement(CLIENT_SCREEN_FR_STAT, picName, coords[0], coords[1])
+			.CallbackInit(statList)
+			.CallbackMouseClick(statList)
+			.CallbackMouseDown(statList)
+			.ScrollableText(true)
+			.IsListBox(true, COLOR_GAME_RGB(0x7C,0xFF,0) , COLOR_DDGREEN);
+			
+	picName=GetIfaceIniStr("FrStatTextPic");
+	coords=GetIfaceCoords("FrStatTextCoords");
+			
+	GUI_AddScreenElement(CLIENT_SCREEN_FR_STAT, picName, coords[0], coords[1])
+			.CallbackInit(statText)
+			.CallbackMouseClick(statText)
+			.CallbackMouseDown(statText)
+			.ScrollableText(true);
+
+	picName=GetIfaceIniStr("FrStatListScrollbarPic");
+	picDownName=GetIfaceIniStr("FrStatListScrollbarScrollPic");
+	coords=GetIfaceCoords("FrStatListScrollbarCoords");
+			
+	GUI_AddScreenElement(CLIENT_SCREEN_FR_STAT, picName, coords[0], coords[1])
+			.CallbackInit(statListScrollBar)
+			.CallbackMouseClick(statListScrollBar)
+			.CallbackMouseMove(statListScrollBar)
+			.IsScrollBar(true)
+			.ToHide(true)
+			.SBScrollPic(picDownName);
+	
+	picName=GetIfaceIniStr("FrStatListUpArrowUpPic");
+	picDownName=GetIfaceIniStr("FrStatListUpArrowDownPic");
+	coords=GetIfaceCoords("FrStatListUpArrowCoords");
+	
+	GUI_AddScreenElement(CLIENT_SCREEN_FR_STAT, picName, coords[0], coords[1])
+			.CallbackInit(statListScrollUp)
+			.CallbackMouseClick(statListScrollUp)
+			.ToHide(true)
+			.DownPic(picDownName);
+			
+	picName=GetIfaceIniStr("FrStatListDownArrowUpPic");
+	picDownName=GetIfaceIniStr("FrStatListDownArrowDownPic");
+	coords=GetIfaceCoords("FrStatListDownArrowCoords");
+	
+	GUI_AddScreenElement(CLIENT_SCREEN_FR_STAT, picName, coords[0], coords[1])
+			.CallbackInit(statListScrollDown)
+			.CallbackMouseClick(statListScrollDown)
+			.ToHide(true)
+			.DownPic(picDownName);
+	
+	picName=GetIfaceIniStr("FrStatTextScrollbarPic");
+	picDownName=GetIfaceIniStr("FrStatTextScrollbarScrollPic");
+	coords=GetIfaceCoords("FrStatScrollbarCoords");
+	
+	GUI_AddScreenElement(CLIENT_SCREEN_FR_STAT, picName, coords[0], coords[1])
+			.CallbackInit(statTextScrollBar)
+			.CallbackMouseClick(statTextScrollBar)
+			.CallbackMouseMove(statTextScrollBar)
+			.IsScrollBar(true)
+			.ToHide(true)
+			.SBScrollPic(picDownName);
+	
+	picName=GetIfaceIniStr("FrStatTextUpArrowUpPic");
+	picDownName=GetIfaceIniStr("FrStatTextUpArrowDownPic");
+	coords=GetIfaceCoords("FrStatTextUpArrowCoords");
+	
+	GUI_AddScreenElement(CLIENT_SCREEN_FR_STAT, picName, coords[0], coords[1])
+			.CallbackInit(statTextScrollUp)
+			.CallbackMouseClick(statTextScrollUp)
+			.ToHide(true)
+			.DownPic(picDownName);
+	
+	picName=GetIfaceIniStr("FrStatTextDownArrowUpPic");
+	picDownName=GetIfaceIniStr("FrStatTextDownArrowDownPic");
+	coords=GetIfaceCoords("FrStatTextDownArrowCoords");
+	
+	GUI_AddScreenElement(CLIENT_SCREEN_FR_STAT, picName, coords[0], coords[1])
+			.CallbackInit(statTextScrollDown)
+			.CallbackMouseClick(statTextScrollDown)
+			.ToHide(true)
+			.DownPic(picDownName);	
+			
+	/*GUI_AddScreenElement(CLIENT_SCREEN_FR_STAT, "buttontext.PNG", 476, 444)
+		.TextFrame(20,0)
+		.Text(GetMsgStr(TEXTMSG_GAME, 14003),FONT_FALLOUT,COLOR_BLACK,COLOR_FRACTION,FT_CENTERY|FT_ALIGN);*/
+		
+	picName=GetIfaceIniStr("FrStatTextCloseButtonUp");
+	picDownName=GetIfaceIniStr("FrStatTextCloseButtonDown");
+	coords=GetIfaceCoords("FrStatTextCloseButtonCoords");
+	
+	GUI_AddScreenElement(CLIENT_SCREEN_FR_STAT,picName, coords[0], coords[1])
+		//.TextFrame(15,0)
+		//.Text(GetMsgStr(TEXTMSG_GAME, 14003),FONT_FALLOUT,COLOR_SAND,COLOR_SAND,FT_CENTERY|FT_ALIGN)
+		.CallbackMouseClick(statCloseButton)
+		.DownPic(picDownName);
+
+
+	
+	////
+	
+	//Главное окно
+	
+	picName=GetIfaceIniStr("FrScreenPic");
+	
+	GUI_CreateScreen(CLIENT_SCREEN_FRACTIONS,picName)
+		.CallbackShow(frScr)
+		.CanMove(true)
+		.Modal(false)
+		.Multiinstance(true);
+	
+	
+	picName=GetIfaceIniStr("FrScreenTitlePic");
+	coords=GetIfaceCoords("FrScreenTitleCoords");
+	
+	GUI_AddScreenElement(CLIENT_SCREEN_FRACTIONS, picName, coords[0], coords[1])
+		.TextFrame(0,5)
+		.Text(GetMsgStr(TEXTMSG_GAME, 14017),FONT_FAT,COLOR_DDGREEN,COLOR_DDGREEN,FT_CENTERX|FT_CENTERY);
+		
+	picName=GetIfaceIniStr("FrStatButtonUpPic");
+	picDownName=GetIfaceIniStr("FrStatButtonDownPic");
+	coords=GetIfaceCoords("FrStatButtonCoords");
+	
+	GUI_AddScreenElement(CLIENT_SCREEN_FRACTIONS, picName, coords[0], coords[1])
+		.TextFrame(20, 0)
+		.Text(GetMsgStr(TEXTMSG_GAME, 14016),FONT_FALLOUT,COLOR_BLACK,COLOR_FRACTION,FT_CENTERY|FT_ALIGN)
+		.CallbackMouseClick(frStat)
+		.DownPic(picDownName);
+		
+	picName=GetIfaceIniStr("FrCloseButtonUpPic");
+	picDownName=GetIfaceIniStr("FrCloseButtonDownPic");
+	coords=GetIfaceCoords("FrCloseButtonCoords");
+		
+	GUI_AddScreenElement(CLIENT_SCREEN_FRACTIONS, picName, coords[0], coords[1])
+		//.TextFrame(20,0)
+		//.Text(GetMsgStr(TEXTMSG_GAME, 14003),FONT_FALLOUT,COLOR_BLACK,COLOR_FRACTION,FT_CENTERY|FT_ALIGN)
+		.CallbackMouseClick(closeButton)
+		.DownPic(picDownName);
+	
+	//Окно раскраски фракций
+	int[] redBarCoords=GetIfaceCoords("RedBarCoords");
+	int[] greenBarCoords=GetIfaceCoords("GreenBarCoords");
+	int[] blueBarCoords=GetIfaceCoords("BlueBarCoords");
+	int[] regDigitCoords=GetIfaceCoords("RedDigitCoords");
+	int[] greenDigitCoords=GetIfaceCoords("GreenDigitCoords");
+	int[] blueDigitCoords=GetIfaceCoords("BlueDigitCoords");
+	int[] colorSampleCoords=GetIfaceCoords("ColorSampleCoords");
+	int[] colorListCoords=GetIfaceCoords("ColorListCoords");
+	int[] colorListScrollCoords=GetIfaceCoords("ColorListScrollCoords");
+	int[] colorListUpArrowCoords=GetIfaceCoords("ColorListUpArrowCoords");
+	int[] colorListDownArrowCoords=GetIfaceCoords("ColorListDownArrowCoords");
+	int[] colorOkCoords=GetIfaceCoords("ColorOKCoords");
+	int[] colorTitleCoords=GetIfaceCoords("ColorTitleCoords");
+	int[] saveButtonCoords=GetIfaceCoords("SaveButtonCoords");
+	int[] cancelButtonCoords=GetIfaceCoords("CancelButtonCoords");
+	
+	picName=GetIfaceIniStr("ColorScreenPic");
+	
+	GUI_CreateScreen(CLIENT_SCREEN_FR_COLOR, picName)
+		.CallbackShow(colorScreen)
+		.CallbackHide(colorScreen)
+		.CanMove(true)
+		.Modal(false)
+		.Multiinstance(true);
+	
+	picName=GetIfaceIniStr("ColorBarsPic");
+	picDownName=GetIfaceIniStr("ColorBarsScroll");
+	
+	GUI_AddScreenElement(CLIENT_SCREEN_FR_COLOR, picName, redBarCoords[0], redBarCoords[1])
+			.IsScrollBar(true)
+			.CallbackInit(redAdjust)
+			.CallbackMouseClick(redAdjust)
+			.CallbackMouseMove(redAdjust)
+			.SBSetRange(255)
+			.SBSetValue(127)
+			.SBReversed(true)
+			.SBScrollPic(picDownName);
+		
+	GUI_AddScreenElement(CLIENT_SCREEN_FR_COLOR, picName, greenBarCoords[0], greenBarCoords[1])
+			.IsScrollBar(true)
+			.CallbackInit(greenAdjust)
+			.CallbackMouseClick(greenAdjust)
+			.CallbackMouseMove(greenAdjust)
+			.SBSetRange(255)
+			.SBSetValue(127)
+			.SBReversed(true)
+			.SBScrollPic(picDownName);
+		
+	GUI_AddScreenElement(CLIENT_SCREEN_FR_COLOR, picName, blueBarCoords[0], blueBarCoords[1])
+			.IsScrollBar(true)
+			.CallbackInit(blueAdjust)
+			.CallbackMouseClick(blueAdjust)
+			.CallbackMouseMove(blueAdjust)
+			.SBSetRange(255)
+			.SBSetValue(127)
+			.SBReversed(true)
+			.SBScrollPic(picDownName);
+	
+	picName=GetIfaceIniStr("ColorDigitsPic");
+	
+	GUI_AddScreenElement(CLIENT_SCREEN_FR_COLOR, picName, regDigitCoords[0],regDigitCoords[1])
+		.CallbackInit(redInd)
+		.Text("127",FONT_FALLOUT,COLOR_RED,COLOR_FRACTION,FT_CENTERY|FT_CENTERX);
+			
+	GUI_AddScreenElement(CLIENT_SCREEN_FR_COLOR, picName, greenDigitCoords[0], greenDigitCoords[1])
+		.CallbackInit(greenInd)
+		.Text("127",FONT_FALLOUT,COLOR_GREEN,COLOR_FRACTION,FT_CENTERY|FT_CENTERX);
+		
+	GUI_AddScreenElement(CLIENT_SCREEN_FR_COLOR, picName,blueDigitCoords[0], blueDigitCoords[1])
+		.CallbackInit(blueInd)
+		.Text("127",FONT_FALLOUT,COLOR_BLUE,COLOR_FRACTION,FT_CENTERY|FT_CENTERX);
+	
+	picName=GetIfaceIniStr("ColorSamplePic");
+	
+	GUI_AddScreenElement(CLIENT_SCREEN_FR_COLOR, picName, colorSampleCoords[0], colorSampleCoords[1])
+		.CallbackInit(colorInd)
+		.Text(GetMsgStr(TEXTMSG_GAME, 14018),FONT_FAT,COLOR_GRAY,COLOR_FRACTION,FT_CENTERY|FT_CENTERX);
+	
+	picName=GetIfaceIniStr("ColorListPic");
+	
+	GUI_AddScreenElement(CLIENT_SCREEN_FR_COLOR, picName, colorListCoords[0], colorListCoords[1])
+		.ScrollableText(true)
+		.IsListBox(true, COLOR_WHITE, COLOR_RED)
+		.CallbackInit(colorList)
+		.CallbackMouseClick(colorList)
+		.CallbackMouseDown(colorList);
+	
+	picName=GetIfaceIniStr("ColorListScrollbar");
+	picDownName=GetIfaceIniStr("ColorListScrollPic");
+	
+	GUI_AddScreenElement(CLIENT_SCREEN_FR_COLOR, picName, colorListScrollCoords[0], colorListScrollCoords[1])
+		.CallbackInit(colorListScrollbar)
+		.CallbackMouseClick(colorListScrollbar)
+		.CallbackMouseMove(colorListScrollbar)
+		.IsScrollBar(true)
+		.ToHide(true)
+		.SBScrollPic(picDownName);
+		
+	picName=GetIfaceIniStr("ColorListUpArrowUp");
+	picDownName=GetIfaceIniStr("ColorListUpArrowDown");
+	
+	GUI_AddScreenElement(CLIENT_SCREEN_FR_COLOR, picName, colorListUpArrowCoords[0], colorListUpArrowCoords[1])
+		.CallbackInit(colorListScrollUp)
+		.CallbackMouseClick(colorListScrollUp)
+		.ToHide(true)
+		.DownPic(picDownName);
+	
+	picName=GetIfaceIniStr("ColorListDwnArrowUp");
+	picDownName=GetIfaceIniStr("ColorListDwnArrowDown");
+	
+	GUI_AddScreenElement(CLIENT_SCREEN_FR_COLOR, picName, colorListDownArrowCoords[0], colorListDownArrowCoords[1])
+		.CallbackInit(colorListScrollDown)
+		.CallbackMouseClick(colorListScrollDown)
+		.ToHide(true)
+		.DownPic(picDownName);
+	
+	picName=GetIfaceIniStr("ColorOKButtonPicUp");
+	picDownName=GetIfaceIniStr("ColorOKButtonPicDown");
+	StrToInt(GetIfaceIniStr("ColorOKFont"), numFont);
+	uint8[] colors=GetIfaceColor("ColorOKColor");
+	
+	GUI_AddScreenElement(CLIENT_SCREEN_FR_COLOR, picName, colorOkCoords[0], colorOkCoords[1])
+		.Text(GetIfaceIniStr("ColorOkButtonTextOutput")=="true"?"OK":" ",numFont,COLOR_RGB(colors[0], colors[1], colors[2]),COLOR_FRACTION,FT_CENTERY|FT_CENTERX)
+		.CallbackMouseClick(colorOk)
+		.DownPic(picDownName);
+	
+	picName=GetIfaceIniStr("ColorTitlePic");
+	
+	GUI_AddScreenElement(CLIENT_SCREEN_FR_COLOR, picName, colorTitleCoords[0], colorTitleCoords[1])
+		.CallbackInit(colorTitle);
+	
+	picName=GetIfaceIniStr("SaveButtonPicUp");
+	picDownName=GetIfaceIniStr("SaveButtonPicDown");
+	
+	GUI_AddScreenElement(CLIENT_SCREEN_FR_COLOR, picName, saveButtonCoords[0], saveButtonCoords[1])
+		.DownPic(picDownName)
+		.CallbackMouseClick(colorSave)
+		.Text(GetIfaceIniStr("SaveButtonTextOutput")=="true"?GetMsgStr(TEXTMSG_GAME, 14019):" ",FONT_FALLOUT,COLOR_BLACK,COLOR_FRACTION,FT_CENTERY|FT_CENTERX);
+		
+	picName=GetIfaceIniStr("CancelButtonPicUp");
+	picDownName=GetIfaceIniStr("CancelButtonPicDown");	
+	
+	GUI_AddScreenElement(CLIENT_SCREEN_FR_COLOR, picName, cancelButtonCoords[0], cancelButtonCoords[1])
+		.DownPic(picDownName)
+		.CallbackMouseClick(colorCancel)
+		.Text(GetIfaceIniStr("CancelButtonTextOutput")=="true"?"Отмена":" ",FONT_FALLOUT,COLOR_BLACK,COLOR_FRACTION,FT_CENTERY|FT_CENTERX);
+		
+	picName=GetIfaceIniStr("FrColorsButtonUp");
+	picDownName=GetIfaceIniStr("FrColorsButtonDown");
+	coords=GetIfaceCoords("FrColorsCoords");
+	
+	GUI_AddScreenElement(CLIENT_SCREEN_FRACTIONS, picName, coords[0], coords[1])
+		.TextFrame(20, 0)
+		.Text(GetMsgStr(TEXTMSG_GAME, 14020),FONT_FALLOUT,COLOR_RGB(ButtonTextColor[0], ButtonTextColor[1], ButtonTextColor[2]),COLOR_RGB(ButtonTextColorDown[0], ButtonTextColorDown[1], ButtonTextColorDown[2]),FT_CENTERY|FT_ALIGN)
+		.CallbackMouseClick(colorButton)
+		.DownPic(picDownName);
+	
+	CritterCl@ cr=GetChosen();
+	if(frId==0)
+	{
+		picName=GetIfaceIniStr("FrCreateButtonUp");
+		picDownName=GetIfaceIniStr("FrCreateButtonDown");
+		coords=GetIfaceCoords("FrCreateButtonCoords");
+			
+		GUI_AddScreenElement(CLIENT_SCREEN_FRACTIONS, picName, coords[0], coords[1])
+			.TextFrame(20,0)
+			.Text(GetMsgStr(TEXTMSG_GAME, 14021), FONT_FALLOUT,COLOR_BLACK,COLOR_FRACTION,FT_CENTERY|FT_ALIGN)
+			.CallbackMouseClick(createFrButton)
+			.DownPic(picDownName);
+	}
+	else
+	{
+		
+		picName=GetIfaceIniStr("FrTextPic");
+		coords=GetIfaceCoords("FrTextCoords");
+		
+		GUI_AddScreenElement(CLIENT_SCREEN_FRACTIONS, picName, coords[0], coords[1])
+			.CallbackInit(frTextbox)
+			.CallbackMouseClick(frTextbox)
+			.CallbackMouseDown(frTextbox)
+			.ScrollableText(true)
+			.TextFrame(10,5);
+			
+		picName=GetIfaceIniStr("FrTextScrollbarPic");
+		picDownName=GetIfaceIniStr("FrTextScrollbarScrollPic");
+		coords=GetIfaceCoords("FrTextScrollbarCoords");
+		
+		GUI_AddScreenElement(CLIENT_SCREEN_FRACTIONS, picName, coords[0], coords[1])
+			.CallbackInit(frScrollbar)
+			.CallbackMouseClick(frScrollbar)
+			.CallbackMouseMove(frScrollbar)
+			.IsScrollBar(true)
+			.SBScrollPic(picDownName);
+		
+		picName=GetIfaceIniStr("FrTextUpArrowUpPic");
+		picDownName=GetIfaceIniStr("FrTextUpArrowDownPic");
+		coords=GetIfaceCoords("FrTextUpArrowCoords");
+		
+		GUI_AddScreenElement(CLIENT_SCREEN_FRACTIONS, picName, coords[0], coords[1])
+			.CallbackInit(scrollup)
+			.CallbackMouseClick(scrollup)
+			.DownPic(picDownName);
+			
+		picName=GetIfaceIniStr("FrTextDownArrowUpPic");
+		picDownName=GetIfaceIniStr("FrTextDownArrowDownPic");
+		coords=GetIfaceCoords("FrTextDownArrowCoords");
+		
+		GUI_AddScreenElement(CLIENT_SCREEN_FRACTIONS, picName, coords[0], coords[1])
+			.CallbackInit(scrolldown)
+			.CallbackMouseClick(scrolldown)
+			.DownPic(picDownName);
+		
+		picName=GetIfaceIniStr("FrListButtonUp");
+		picDownName=GetIfaceIniStr("FrListButtonDown");
+		coords=GetIfaceCoords("FrListButtonCoords");
+		
+		GUI_AddScreenElement(CLIENT_SCREEN_FRACTIONS, picName, coords[0], coords[1])
+		.TextFrame(20, 0)
+		.Text(GetMsgStr(TEXTMSG_GAME, 14022),FONT_FALLOUT,COLOR_BLACK,COLOR_FRACTION,FT_CENTERY|FT_ALIGN)
+		.CallbackMouseClick(memberList)
+		.DownPic(picDownName);
+		
+		picName=GetIfaceIniStr("FrFriendsButtonUp");
+		picDownName=GetIfaceIniStr("FrFriendsButtonDown");
+		coords=GetIfaceCoords("FrFriendsCoords");
+		
+		GUI_AddScreenElement(CLIENT_SCREEN_FRACTIONS, picName, coords[0], coords[1])
+		.TextFrame(20, 0)
+		.Text(GetMsgStr(TEXTMSG_GAME, 14008),FONT_FALLOUT,COLOR_BLACK,COLOR_FRACTION,FT_CENTERY|FT_ALIGN)
+		.CallbackMouseClick(friendList)
+		.DownPic(picDownName);
+		
+		picName=GetIfaceIniStr("FrEnemiesButtonUp");
+		picDownName=GetIfaceIniStr("FrEnemiesButtonDown");
+		coords=GetIfaceCoords("FrEnemiesCoords");
+		
+		GUI_AddScreenElement(CLIENT_SCREEN_FRACTIONS, picName, coords[0], coords[1])
+		.TextFrame(20, 0)
+		.Text(GetMsgStr(TEXTMSG_GAME, 14015),FONT_FALLOUT,COLOR_BLACK,COLOR_FRACTION,FT_CENTERY|FT_ALIGN)
+		.CallbackMouseClick(enemyList)
+		.DownPic(picDownName);
+		
+		picName=GetIfaceIniStr("FrColorsRefreshButtonUp");
+		picDownName=GetIfaceIniStr("FrColorsRefreshButtonDown");
+		coords=GetIfaceCoords("FrColorsRefreshCoords");
+		
+		GUI_AddScreenElement(CLIENT_SCREEN_FRACTIONS, picName, coords[0], coords[1])
+			.TextFrame(20,0)
+			.Text(GetMsgStr(TEXTMSG_GAME, 14063), FONT_FALLOUT,COLOR_BLACK,COLOR_FRACTION,FT_CENTERY|FT_ALIGN)
+			.CallbackMouseClick(colorRefresh)
+			.DownPic(picDownName);
+		
+		if(leadership>0)
+		{
+		
+			picName=GetIfaceIniStr("FrManageButtonUp");
+			picDownName=GetIfaceIniStr("FrManageButtonDown");
+			coords=GetIfaceCoords("FrManageCoords");
+			
+			GUI_AddScreenElement(CLIENT_SCREEN_FRACTIONS, picName, coords[0], coords[1])
+				.TextFrame(20,0)
+				.Text(GetMsgStr(TEXTMSG_GAME, 14002), FONT_FALLOUT,COLOR_BLACK,COLOR_FRACTION,FT_CENTERY|FT_ALIGN)
+				.CallbackMouseClick(manageButton)
+				.DownPic(picDownName);
+			
+			picName=GetIfaceIniStr("FrColorsSendButtonUp");
+			picDownName=GetIfaceIniStr("FrColorsSendButtonDown");
+			coords=GetIfaceCoords("FrColorsSendCoords");
+			
+			GUI_AddScreenElement(CLIENT_SCREEN_FRACTIONS, picName, coords[0], coords[1])
+				.TextFrame(20,0)
+				.CallbackMouseClick(colorSend)
+				.Text(GetMsgStr(TEXTMSG_GAME, 14064), FONT_FALLOUT,COLOR_BLACK,COLOR_FRACTION,FT_CENTERY|FT_ALIGN)
+				.DownPic(picDownName);
+				
+		}
+		if(leadership<2)
+		{
+			int spareY=0;
+			StrToInt(GetIfaceIniStr("FrQuitCoordY"), spareY);
+			picName=GetIfaceIniStr("FrQuitButtonUp");
+			picDownName=GetIfaceIniStr("FrQuitButtonDown");
+			coords=GetIfaceCoords("FrQuitCoords");
+		
+			GUI_AddScreenElement(CLIENT_SCREEN_FRACTIONS, picName, coords[0], leadership==0?coords[1]:spareY)
+				.TextFrame(20, 0)
+				.Text(GetMsgStr(TEXTMSG_GAME, 14023),FONT_FALLOUT,COLOR_BLACK,COLOR_FRACTION,FT_CENTERY|FT_ALIGN)
+				.CallbackMouseClick(quitFr)
+				.DownPic(picDownName);
+		}
+	}
+}
+
+void __Scr_ReInit(int frId, int leadership, int param, string@ param3, int[]@ param4)
+{
+	InitFrScreen(uint(frId), uint(leadership));
+}
+
+void __FrScr_ShowInfo(int param0, int param1, int param2, string@ newText, int[]@ param4)
+{
+	newText=ReplaceText(newText,"%nametag%", GetMsgStr(TEXTMSG_GAME, 14024));
+	newText=ReplaceText(newText,"%ratingtag%", GetMsgStr(TEXTMSG_GAME, 14025));
+	newText=ReplaceText(newText,"%killstag%", GetMsgStr(TEXTMSG_GAME, 14026));
+	newText=ReplaceText(newText,"%deathstag%", GetMsgStr(TEXTMSG_GAME, 14027));
+	newText=ReplaceText(newText,"%enkillstag%", GetMsgStr(TEXTMSG_GAME, 14028));
+	newText=ReplaceText(newText,"%frkillstag%", GetMsgStr(TEXTMSG_GAME, 14029));
+	newText=ReplaceText(newText,"%moneytag%", GetMsgStr(TEXTMSG_GAME, 14030));
+	newText=ReplaceText(newText,"%poptag%", GetMsgStr(TEXTMSG_GAME, 14031));
+	newText=ReplaceText(newText,"%noenemiestag%", GetMsgStr(TEXTMSG_GAME, 14035));
+	newText=ReplaceText(newText,"%nofriendstag%", GetMsgStr(TEXTMSG_GAME, 14033));
+	han_FrTextbox.Text(newText, FONT_FALLOUT,COLOR_GREEN,COLOR_FRACTION,FT_UPPER|FT_ALIGN);
+	han_FrTextbox.SetScroll(false, 0);
+	bool hideScroll=han_FrTextbox.GetTextScroll()<=0;
+	han_FrScrollbar.ToHide(hideScroll);
+	han_FrArrowUp.ToHide(hideScroll);
+	han_FrArrowDown.ToHide(hideScroll);
+	han_FrScrollbar.SBSetRange(han_FrTextbox.GetTextScroll());
+}
+
+void __StatScr_SetList(int param0, int param1, int param2, string@ list, int[]@ param4)
+{
+	han_FrStatList.Text(list, FONT_FALLOUT,COLOR_GREEN,COLOR_FRACTION,FT_UPPER|FT_ALIGN);
+	han_FrStatList.SetScroll(false, 0);
+	bool hideScroll=han_FrStatList.GetTextScroll()<=0;
+	han_FrStatListScrollbar.ToHide(hideScroll);
+	han_FrStatListArrowUp.ToHide(hideScroll);
+	han_FrStatListArrowDown.ToHide(hideScroll);
+	han_FrStatListScrollbar.SBSetRange(han_FrStatList.GetTextScroll());
+}
+
+
+
+void __FrStat_ShowInfo(int param0, int param1, int param2, string@ newText, int[]@ param4)	
+{
+	newText=ReplaceText(newText,"%nametag%", GetMsgStr(TEXTMSG_GAME, 14024));
+	newText=ReplaceText(newText,"%ratingtag%", GetMsgStr(TEXTMSG_GAME, 14025));
+	newText=ReplaceText(newText,"%killstag%", GetMsgStr(TEXTMSG_GAME, 14026));
+	newText=ReplaceText(newText,"%deathstag%", GetMsgStr(TEXTMSG_GAME, 14027));
+	newText=ReplaceText(newText,"%enkillstag%", GetMsgStr(TEXTMSG_GAME, 14028));
+	newText=ReplaceText(newText,"%frkillstag%", GetMsgStr(TEXTMSG_GAME, 14029));
+	newText=ReplaceText(newText,"%moneytag%", GetMsgStr(TEXTMSG_GAME, 14030));
+	newText=ReplaceText(newText,"%poptag%", GetMsgStr(TEXTMSG_GAME, 14031));
+	newText=ReplaceText(newText,"%alliancetag%", GetMsgStr(TEXTMSG_GAME, 14032));
+	newText=ReplaceText(newText,"%noalliancetag%", GetMsgStr(TEXTMSG_GAME, 14033));
+	newText=ReplaceText(newText,"%enemytag%", GetMsgStr(TEXTMSG_GAME, 14034));
+	newText=ReplaceText(newText,"%noenemytag%", GetMsgStr(TEXTMSG_GAME, 14035));
+	han_FrStatText.Text(newText, FONT_FALLOUT,COLOR_GREEN,COLOR_FRACTION,FT_UPPER|FT_ALIGN);
+	han_FrStatText.SetScroll(false, 0);
+	bool hideScroll=han_FrStatText.GetTextScroll()<=0;
+	han_FrStatTextScrollbar.ToHide(hideScroll);
+	han_FrStatTextArrowUp.ToHide(hideScroll);
+	han_FrStatTextArrowDown.ToHide(hideScroll);
+	han_FrStatTextScrollbar.SBSetRange(han_FrStatText.GetTextScroll());
+}
+
+void __ShowIncreaselist(int list, int param1, int param2, string@ newText, int[]@ param4)	
+{
+	if(list==1)
+	{
+		han_FrManageText.IsListBox(true, COLOR_WHITE, COLOR_RED);
+		frManageTextMode=MODE_INCREASE_PLAYER;
+	}
+	else
+	{
+		newText=ReplaceText(newText, "%nobodytag%", GetMsgStr(TEXTMSG_GAME, 14060));
+		han_FrManageText.IsListBox(false, 0, 0);
+		frManageTextMode=MODE_SHOW_TEXT;
+	}
+	han_FrManageText.Text(newText, FONT_FALLOUT,COLOR_GREEN,COLOR_FRACTION,FT_UPPER|FT_ALIGN);
+	han_FrManageText.SetScroll(false, 0);
+	bool hideScroll=han_FrManageText.GetTextScroll()<=0;
+	han_FrManageTextScrollbar.ToHide(hideScroll);
+	han_FrManageTextArrowUp.ToHide(hideScroll);
+	han_FrManageTextArrowDown.ToHide(hideScroll);
+	han_FrManageTextScrollbar.SBSetRange(han_FrManageText.GetTextScroll());
+}
+
+void __ShowLowerlist(int list, int param1, int param2, string@ newText, int[]@ param4)	
+{
+	if(list==1)
+	{
+		han_FrManageText.IsListBox(true, COLOR_WHITE, COLOR_RED);
+		frManageTextMode=MODE_LOWER_PLAYER;
+	}
+	else
+	{
+		newText=ReplaceText(newText, "%nobodytag%", GetMsgStr(TEXTMSG_GAME, 14059));
+		han_FrManageText.IsListBox(false, 0, 0);
+		frManageTextMode=MODE_SHOW_TEXT;
+	}
+	han_FrManageText.Text(newText, FONT_FALLOUT,COLOR_GREEN,COLOR_FRACTION,FT_UPPER|FT_ALIGN);
+	han_FrManageText.SetScroll(false, 0);
+	bool hideScroll=han_FrManageText.GetTextScroll()<=0;
+	han_FrManageTextScrollbar.ToHide(hideScroll);
+	han_FrManageTextArrowUp.ToHide(hideScroll);
+	han_FrManageTextArrowDown.ToHide(hideScroll);
+	han_FrManageTextScrollbar.SBSetRange(han_FrManageText.GetTextScroll());
+}
+
+void __ShowDismissList(int list, int param1, int param2, string@ newText, int[]@ param4)	
+{
+	if(list==1)
+	{
+		han_FrManageText.IsListBox(true, COLOR_WHITE, COLOR_RED);
+		frManageTextMode=MODE_DISMISS_PLAYER;
+	}
+	else
+	{
+		newText=ReplaceText(newText, "%nobodytag%", GetMsgStr(TEXTMSG_GAME, 14058));
+		han_FrManageText.IsListBox(false, 0, 0);
+		frManageTextMode=MODE_SHOW_TEXT;
+	}
+	han_FrManageText.Text(newText, FONT_FALLOUT,COLOR_GREEN,COLOR_FRACTION,FT_UPPER|FT_ALIGN);
+	han_FrManageText.SetScroll(false, 0);
+	bool hideScroll=han_FrManageText.GetTextScroll()<=0;
+	han_FrManageTextScrollbar.ToHide(hideScroll);
+	han_FrManageTextArrowUp.ToHide(hideScroll);
+	han_FrManageTextArrowDown.ToHide(hideScroll);
+	han_FrManageTextScrollbar.SBSetRange(han_FrManageText.GetTextScroll());
+}
+
+void __ManageShowFriends(int mode, int param1, int param2, string@ newText, int[]@ param4)	
+{
+	if(mode==0)
+	{
+		han_FrManageText.IsListBox(false, 0, 0);
+		frManageTextMode=MODE_SHOW_TEXT;
+	}
+	else
+	{
+		han_FrManageText.IsListBox(true, COLOR_WHITE, COLOR_RED);
+		frManageTextMode=MODE_CANCEL_ALLIANCE;
+	}
+	newText=ReplaceText(newText,"%nofriendstag%", GetMsgStr(TEXTMSG_GAME, 14033));
+	han_FrManageText.Text(newText, FONT_FALLOUT,COLOR_GREEN,COLOR_FRACTION,FT_UPPER|FT_ALIGN);
+	han_FrManageText.SetScroll(false, 0);
+	bool hideScroll=han_FrManageText.GetTextScroll()<=0;
+	han_FrManageTextScrollbar.ToHide(hideScroll);
+	han_FrManageTextArrowUp.ToHide(hideScroll);
+	han_FrManageTextArrowDown.ToHide(hideScroll);
+	han_FrManageTextScrollbar.SBSetRange(han_FrManageText.GetTextScroll());
+}
+
+void __ManageShowEnemy(int mode, int empty, int param2, string@ newText, int[]@ param4)	
+{
+	if(mode==0||empty==1)
+	{
+		han_FrManageText.IsListBox(false, 0,0);
+		frManageTextMode=MODE_SHOW_TEXT;
+	}
+	else
+	{
+		han_FrManageText.IsListBox(true, COLOR_WHITE, COLOR_RED);
+		frManageTextMode=MODE_REMOVE_ENEMY;
+	}
+	newText=ReplaceText(newText,"%noenemiestag%", GetMsgStr(TEXTMSG_GAME, 14035));
+	han_FrManageText.Text(newText, FONT_FALLOUT,COLOR_GREEN,COLOR_FRACTION,FT_UPPER|FT_ALIGN);
+	han_FrManageText.SetScroll(false, 0);
+	bool hideScroll=han_FrManageText.GetTextScroll()<=0;
+	han_FrManageTextScrollbar.ToHide(hideScroll);
+	han_FrManageTextArrowUp.ToHide(hideScroll);
+	han_FrManageTextArrowDown.ToHide(hideScroll);
+	han_FrManageTextScrollbar.SBSetRange(han_FrManageText.GetTextScroll());
+}
+
+void __ManageShowUnrelated(int reason, int empty, int param2, string@ newText, int[]@ param4)	
+{
+	newText=ReplaceText(newText, "%noneutraltag%", GetMsgStr(TEXTMSG_GAME, 14061));
+	newText=ReplaceText(newText, "%nofrrequeststag%", GetMsgStr(TEXTMSG_GAME, 14062));
+	if(empty==0)
+	{
+		han_FrManageText.IsListBox(true, COLOR_WHITE, COLOR_RED);
+		frManageTextMode=reason==REASON_REQUEST_FRIENDSHIP?MODE_REQUEST_ALLIANCE:MODE_ADD_ENEMY;
+	}
+	else
+	{
+		han_FrManageText.IsListBox(false, 0,0);
+		frManageTextMode=MODE_SHOW_TEXT;
+	}
+	han_FrManageText.Text(newText, FONT_FALLOUT,COLOR_GREEN,COLOR_FRACTION,FT_UPPER|FT_ALIGN);
+	han_FrManageText.SetScroll(false, 0);
+	bool hideScroll=han_FrManageText.GetTextScroll()<=0;
+	han_FrManageTextScrollbar.ToHide(hideScroll);
+	han_FrManageTextArrowUp.ToHide(hideScroll);
+	han_FrManageTextArrowDown.ToHide(hideScroll);
+	han_FrManageTextScrollbar.SBSetRange(han_FrManageText.GetTextScroll());
+}
+
+void __ManageShowRequests(int param0, int param1, int param2, string@ newText, int[]@ param4)
+{
+	han_FrManageText.IsListBox(true, COLOR_WHITE, COLOR_RED);
+	frManageTextMode=MODE_APPROVE_ALLIANCE;
+	han_FrManageText.Text(newText, FONT_FALLOUT,COLOR_GREEN,COLOR_FRACTION,FT_UPPER|FT_ALIGN);
+	han_FrManageText.SetScroll(false, 0);
+	bool hideScroll=han_FrManageText.GetTextScroll()<=0;
+	han_FrManageTextScrollbar.ToHide(hideScroll);
+	han_FrManageTextArrowUp.ToHide(hideScroll);
+	han_FrManageTextArrowDown.ToHide(hideScroll);
+	han_FrManageTextScrollbar.SBSetRange(han_FrManageText.GetTextScroll());
+}
+
+void __SetColorList(int param0, int param1, int param2, string@ newText, int[]@ param4)
+{
+	han_ColorList.Text(newText, FONT_FALLOUT,COLOR_GREEN,COLOR_FRACTION,FT_UPPER|FT_ALIGN);
+	han_ColorList.SetScroll(false, 0);
+	if(FractionColors.length()<han_ColorList.GetElementsNumber())
+	{
+		ColorsArrayAdjust(han_ColorList.GetElementsNumber());
+		FractionColors=GetFrColors();
+	}
+	bool hideScroll=han_ColorList.GetTextScroll()<=0;
+	han_ColorListScrollbar.ToHide(hideScroll);
+	han_ColorListScrollUp.ToHide(hideScroll);
+	han_ColorListScrollDown.ToHide(hideScroll);
+	han_ColorListScrollbar.SBSetRange(han_ColorList.GetTextScroll());
+}
+
+void HideFrButton()
+{
+	if(ifaceHidden) ifaceHidden=false;
+	else ifaceHidden=true;
+	mainButton.ToHide(ifaceHidden);
+}
+

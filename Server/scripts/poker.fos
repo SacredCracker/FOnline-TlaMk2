@@ -1,0 +1,1633 @@
+// Author: Tab10id
+
+#include "_macros.fos"
+#include "poker_h.fos"
+#include "poker_game_list_h.fos"
+
+uint NumOfNpc=0;
+
+uint64[] Koloda; //Колода, биты в числе указывают на наличие карты в калоде, всего используется 52 бита
+uint8[][] GameCards;//Карты непосредственно учавствующие в игре: 0-4 - карты игрока, 5-19 - карты противников
+uint8[][] ReplCards; // Карты для замены (5 бит указывают, заменять карту или нет), нулевой элемент в массиве - игрок
+uint8[] Stroy; // Порядок игроков во время ставок меняется от 0 до PLAYERS_COUNT-1
+uint8[] BetEnd; // Определяет окончание круга ставок.
+uint[] Bank; // Величина банка
+uint[] Bet; // Величина текущей ставки
+uint8[] GameStage; // Часть игры (раздача карт, ставки, обмен карт, второй круг ставок, вскрытие карт)
+bool[] FirstGame; // определяет первая ли игра идет
+uint8[] MHod; // Определяет очереднойсь ходов игроков (если MHod==0, значит очередь игрока.)
+uint8[][] PlState;
+uint[][] PlBet;
+bool[] InGame;
+bool[] PlayerCardsInDial;
+uint[] InGamePl;
+uint8[] WinKoef;
+string[] DlgTxt;
+string[] DlgTxtNet;
+string[] DlgTxt2;
+uint[][] GameAnyData;
+uint[][] AnyDataTemp;
+uint[] MoneyForStartGame;
+uint[] MinBet;
+uint[] Raise_1;
+uint[] Raise_2;
+uint[] Raise_3;
+uint[] MaxBet;
+uint8[] FraudMode;
+uint16[] OnCheat1;
+uint16[] OnCheat2;
+uint16[] OnCheat3;
+uint8[] PMLevel;
+uint8[] CardInSleeve;
+uint8[] Fraud2Succ;
+uint8[] VarRiseSucc;
+uint16[] GameNum;
+uint16[] ModChFr;
+uint[] StartGameMoney;
+uint[] StopGameMoney;
+uint16[] WaitForGame;
+
+bool[] App;
+
+string DialStrCards="@msg dlg "+DLGSTR(DID,STR_CARDS)+"@\n"; // Ваши карты:
+string DialStrCardsNet="@msg dlg "+DLGSTR(DID,STR_CARDS)+"@\n"; // Ваши карты:
+string DialStrCombo="@msg dlg "+DLGSTR(DID,STR_COMBO)+"@ "; // у вас
+string DialStrBank="@msg dlg "+DLGSTR(DID,STR_BANK)+"@ "; // В банке:
+string DialStrBet="@msg dlg "+DLGSTR(DID,STR_BET)+"@ "; // Текущая ставка:
+string DialStrMineBet="@msg dlg "+DLGSTR(DID,STR_MBET)+"@ "; // Ваша последняя ставка:
+string DialStrFold="@msg dlg "+DLGSTR(DID,STR_FOLD)+"@"; // спасовал
+string DialStrRaise="@msg dlg "+DLGSTR(DID,STR_RAISE)+"@"; // поднял ставку
+string DialStrWait="@msg dlg "+DLGSTR(DID,STR_WAIT)+"@"; // еще не делал ставку
+string DialStrCall="@msg dlg "+DLGSTR(DID,STR_CALL)+"@"; // ответил на ставку
+string DialStrAccept="@msg dlg "+DLGSTR(DID,STR_ACCEPT)+"@"; // принял ставку
+string DialStrPl="@msg dlg "+DLGSTR(DID,STR_PL)+"@ "; // Игрок
+
+void _PokermanInit(Critter& pokerMan, bool firstTime)
+{
+	Koloda.grow(1);
+	GameCards.grow(1);
+	GameCards[GameCards.length()-1].grow(PLAYERS_COUNT*CARD_COUNT);
+	ReplCards.grow(1);
+	ReplCards[ReplCards.length()-1].grow(PLAYERS_COUNT);
+	PlState.grow(1);
+	PlState[PlState.length()-1].grow(PLAYERS_COUNT);
+	PlBet.grow(1);
+	PlBet[PlBet.length()-1].grow(PLAYERS_COUNT);
+	InGamePl.grow(1);
+	GameAnyData.grow(1);
+	GameAnyData[GameAnyData.length()-1].grow(GAMEVAR_COUNT);
+	AnyDataTemp.grow(1);
+	AnyDataTemp[AnyDataTemp.length()-1].grow(GAMEVAR_COUNT);
+	MoneyForStartGame.grow(1);
+	MinBet.grow(1);
+	Raise_1.grow(1);
+	Raise_2.grow(1);
+	Raise_3.grow(1);
+	MaxBet.grow(1);
+	App.grow(1);
+	PMLevel.grow(1);
+	StartGameMoney.grow(1);
+	StopGameMoney.grow(1);
+	WaitForGame.grow(1);
+
+	Stroy.insertLast(0);
+	BetEnd.insertLast(0);
+	Bank.insertLast(0);
+	Bet.insertLast(0);
+	GameStage.insertLast(0);
+	FirstGame.insertLast(false);
+	MHod.insertLast(0);
+	InGame.insertLast(false);
+	PlayerCardsInDial.insertLast(false);
+	WinKoef.insertLast(100);
+	DlgTxt.insertLast("");
+	DlgTxtNet.insertLast("");
+	DlgTxt2.insertLast("");
+	FraudMode.insertLast(0);
+	OnCheat1.insertLast(0);
+	OnCheat2.insertLast(0);
+	OnCheat3.insertLast(0);
+	CardInSleeve.insertLast(0);
+	Fraud2Succ.insertLast(0);
+	VarRiseSucc.insertLast(0);
+	GameNum.insertLast(0);
+	ModChFr.insertLast(0);
+
+	pokerMan.StatBase[ST_VAR9]=NumOfNpc++;
+	if(IsAnyData("Poker_"+pokerMan.Id))
+	{
+		if(GetAnyData("Poker_"+pokerMan.Id,AnyDataTemp[pokerMan.StatBase[ST_VAR9]]))
+		{
+			for(uint8 i=0;i<GAMEVAR_COUNT;i++)
+			{
+				GameAnyData[pokerMan.StatBase[ST_VAR9]][i]=AnyDataTemp[pokerMan.StatBase[ST_VAR9]][i];
+			}
+			GetAData(pokerMan);
+			InGame[pokerMan.StatBase[ST_VAR9]]=true;
+			PrintCards(null,pokerMan,0);
+		}
+	}
+	LoadSettings(pokerMan.Stat[ST_NPC_ROLE],pokerMan);
+	pokerMan.SetEvent(CRITTER_EVENT_FINISH,"_SaveAD");
+#ifdef __DEBUG__
+	Log("\n<Poker> npcId - "+pokerMan.Id+", npcVar9 - "+pokerMan.StatBase[ST_VAR9]+"\n");
+#endif
+}
+
+void InitGame(Critter& pokerMan,Critter& master) // запуск игры
+{
+	GameVar@ gameTime=GetUnicumVar(UVAR_poker_manywins,pokerMan.Id,master.Id);
+	if (!valid(gameTime))
+	{
+		Log("<Poker> Error: gameTime UVAR not loaded");
+	}
+	gameTime=__FullSecond;
+	StartGameMoney[pokerMan.StatBase[ST_VAR9]]=master.CountItem(PID_BOTTLE_CAPS);
+	InGame[pokerMan.StatBase[ST_VAR9]]=true;
+	BetEnd[pokerMan.StatBase[ST_VAR9]]=0;
+	WinKoef[pokerMan.StatBase[ST_VAR9]]=100;
+	for(uint8 i=0; i<(PLAYERS_COUNT*CARD_COUNT); i++)
+	{
+		GameCards[pokerMan.StatBase[ST_VAR9]][i]=0;
+	}
+	Bank[pokerMan.StatBase[ST_VAR9]]=PLAYERS_COUNT*MinBet[pokerMan.StatBase[ST_VAR9]]; // Кладем в банк минимальную ставку
+	Bet[pokerMan.StatBase[ST_VAR9]]=MinBet[pokerMan.StatBase[ST_VAR9]];
+	for(uint8 l=0;l<PLAYERS_COUNT;l++)
+	{
+		ReplCards[pokerMan.StatBase[ST_VAR9]][l]=0;
+		PlBet[pokerMan.StatBase[ST_VAR9]][l]=MinBet[pokerMan.StatBase[ST_VAR9]];
+		PlState[pokerMan.StatBase[ST_VAR9]][l]=PLST_WAIT;
+	}
+	GameStage[pokerMan.StatBase[ST_VAR9]]=GAME_E_BETROUND1;
+	Koloda[pokerMan.StatBase[ST_VAR9]]=uint64(-1);// Все биты=1
+	uint8 m;
+	for(uint8 i=0;i<(PLAYERS_COUNT*CARD_COUNT);i++) // Раздача карт
+	{
+		do
+		{
+			m=Random(1,52);
+		}
+		while(GetBit(Koloda[pokerMan.StatBase[ST_VAR9]],m)!=1);
+		Koloda[pokerMan.StatBase[ST_VAR9]]=SetBit(Koloda[pokerMan.StatBase[ST_VAR9]],m,false);
+		GameCards[pokerMan.StatBase[ST_VAR9]][i]=m;
+	}
+#ifdef __DEBUG__
+	Log("\n<Poker>\nPlayer Cards:I "+GameCards[pokerMan.StatBase[ST_VAR9]][0]+";"+GameCards[pokerMan.StatBase[ST_VAR9]][1]+";"+GameCards[pokerMan.StatBase[ST_VAR9]][2]+";"+GameCards[pokerMan.StatBase[ST_VAR9]][3]+";"+GameCards[pokerMan.StatBase[ST_VAR9]][4]+"\n"+GetStrCombo(GetCombo(0,GameCards[pokerMan.StatBase[ST_VAR9]]))+"\n1:I "+GameCards[pokerMan.StatBase[ST_VAR9]][5]+";"+GameCards[pokerMan.StatBase[ST_VAR9]][6]+";"+GameCards[pokerMan.StatBase[ST_VAR9]][7]+";"+GameCards[pokerMan.StatBase[ST_VAR9]][8]+";"+GameCards[pokerMan.StatBase[ST_VAR9]][9]+"\n"+GetStrCombo(GetCombo(1,GameCards[pokerMan.StatBase[ST_VAR9]]))+"\n2:I "+GameCards[pokerMan.StatBase[ST_VAR9]][10]+";"+GameCards[pokerMan.StatBase[ST_VAR9]][11]+";"+GameCards[pokerMan.StatBase[ST_VAR9]][12]+";"+GameCards[pokerMan.StatBase[ST_VAR9]][13]+";"+GameCards[pokerMan.StatBase[ST_VAR9]][14]+"\n"+GetStrCombo(GetCombo(2,GameCards[pokerMan.StatBase[ST_VAR9]]))+"\n3:I "+GameCards[pokerMan.StatBase[ST_VAR9]][15]+";"+GameCards[pokerMan.StatBase[ST_VAR9]][16]+";"+GameCards[pokerMan.StatBase[ST_VAR9]][17]+";"+GameCards[pokerMan.StatBase[ST_VAR9]][18]+";"+GameCards[pokerMan.StatBase[ST_VAR9]][19]+"\n"+GetStrCombo(GetCombo(3,GameCards[pokerMan.StatBase[ST_VAR9]])));
+#endif
+	if (!FirstGame[pokerMan.StatBase[ST_VAR9]]) // Порядок игроков (определяет порядок ставок)
+	{
+		Stroy[pokerMan.StatBase[ST_VAR9]]=(Stroy[pokerMan.StatBase[ST_VAR9]]+1)%(PLAYERS_COUNT); // Если игра не первая, то порядок смещается на 1
+		GameNum[pokerMan.StatBase[ST_VAR9]]++;
+	}
+	else // если игра первая, то первый игрок выбирается случайно
+	{
+		Stroy[pokerMan.StatBase[ST_VAR9]]=Random(0,(PLAYERS_COUNT-1));
+		FirstGame[pokerMan.StatBase[ST_VAR9]]=false;
+		GameNum[pokerMan.StatBase[ST_VAR9]]=1;
+		ModChFr[pokerMan.StatBase[ST_VAR9]]=0;
+	}
+	MHod[pokerMan.StatBase[ST_VAR9]]=Stroy[pokerMan.StatBase[ST_VAR9]];
+	FraudMode[pokerMan.StatBase[ST_VAR9]]=0;
+	CardInSleeve[pokerMan.StatBase[ST_VAR9]]=0;
+	Fraud2Succ[pokerMan.StatBase[ST_VAR9]]=0;
+	VarRiseSucc[pokerMan.StatBase[ST_VAR9]]=0;
+}
+
+void _SaveAD(Critter& pokerMan, bool deleted)
+{
+	if(not deleted)
+	{
+		if(InGame[pokerMan.StatBase[ST_VAR9]])
+		{
+			SaveData(pokerMan);
+			if(not SetAnyData("Poker_"+pokerMan.Id,GameAnyData[pokerMan.StatBase[ST_VAR9]])) Log("AnyData not created");
+		}
+	}
+}
+
+void SaveData(Critter& pokerMan)
+{
+	uint k=0;
+	//Разделяем переменную uint64 на две переменные uint32 чтобы сохранить их в базе
+	GameAnyData[pokerMan.StatBase[ST_VAR9]][k++]=Koloda[pokerMan.StatBase[ST_VAR9]]>>32; // Первые 20 карт колоды
+	GameAnyData[pokerMan.StatBase[ST_VAR9]][k++]=(Koloda[pokerMan.StatBase[ST_VAR9]]<<32)>>32; // Последние 32 карты колоды
+	for(uint8 i=0;i<PLAYERS_COUNT*CARD_COUNT;i++)
+	{
+		GameAnyData[pokerMan.StatBase[ST_VAR9]][k++]=GameCards[pokerMan.StatBase[ST_VAR9]][i];
+	}
+	for(uint8 i=0;i<PLAYERS_COUNT;i++)
+	{
+		GameAnyData[pokerMan.StatBase[ST_VAR9]][k++]=ReplCards[pokerMan.StatBase[ST_VAR9]][i];
+	}
+	GameAnyData[pokerMan.StatBase[ST_VAR9]][k++]=Stroy[pokerMan.StatBase[ST_VAR9]];
+	GameAnyData[pokerMan.StatBase[ST_VAR9]][k++]=BetEnd[pokerMan.StatBase[ST_VAR9]];
+	GameAnyData[pokerMan.StatBase[ST_VAR9]][k++]=Bank[pokerMan.StatBase[ST_VAR9]];
+	GameAnyData[pokerMan.StatBase[ST_VAR9]][k++]=Bet[pokerMan.StatBase[ST_VAR9]];
+	GameAnyData[pokerMan.StatBase[ST_VAR9]][k++]=GameStage[pokerMan.StatBase[ST_VAR9]];
+	GameAnyData[pokerMan.StatBase[ST_VAR9]][k++]=MHod[pokerMan.StatBase[ST_VAR9]];
+	for(uint8 i=0;i<PLAYERS_COUNT;i++)
+	{
+		GameAnyData[pokerMan.StatBase[ST_VAR9]][k++]=PlState[pokerMan.StatBase[ST_VAR9]][i];
+	}
+	for(uint8 i=0;i<PLAYERS_COUNT;i++)
+	{
+		GameAnyData[pokerMan.StatBase[ST_VAR9]][k++]=PlBet[pokerMan.StatBase[ST_VAR9]][i];
+	}
+	GameAnyData[pokerMan.StatBase[ST_VAR9]][k++]=InGamePl[pokerMan.StatBase[ST_VAR9]];
+	GameAnyData[pokerMan.StatBase[ST_VAR9]][k++]=WinKoef[pokerMan.StatBase[ST_VAR9]];
+	GameAnyData[pokerMan.StatBase[ST_VAR9]][k++]=FraudMode[pokerMan.StatBase[ST_VAR9]];
+	GameAnyData[pokerMan.StatBase[ST_VAR9]][k++]=CardInSleeve[pokerMan.StatBase[ST_VAR9]];
+	GameAnyData[pokerMan.StatBase[ST_VAR9]][k++]=Fraud2Succ[pokerMan.StatBase[ST_VAR9]];
+	GameAnyData[pokerMan.StatBase[ST_VAR9]][k++]=GameNum[pokerMan.StatBase[ST_VAR9]];
+	GameAnyData[pokerMan.StatBase[ST_VAR9]][k++]=ModChFr[pokerMan.StatBase[ST_VAR9]];
+	GameAnyData[pokerMan.StatBase[ST_VAR9]][k]=StartGameMoney[pokerMan.StatBase[ST_VAR9]];
+}
+
+void GetAData(Critter& pokerMan)
+{
+	uint k=0;
+	uint64 temp;
+	//"Склеиваем" 2 uint32 в один uint64
+	Koloda[pokerMan.StatBase[ST_VAR9]]=GameAnyData[pokerMan.StatBase[ST_VAR9]][k++]; // Последние 32 карты колоды
+	temp=GameAnyData[pokerMan.StatBase[ST_VAR9]][k++]; // чтобы не потерять информацию при сдвиге
+	Koloda[pokerMan.StatBase[ST_VAR9]]+=temp<<32; // первые 20 карт колоды
+	for(uint8 i=0;i<PLAYERS_COUNT*CARD_COUNT;i++)
+	{
+		GameCards[pokerMan.StatBase[ST_VAR9]][i]=GameAnyData[pokerMan.StatBase[ST_VAR9]][k++];
+	}
+	for(uint8 i=0;i<PLAYERS_COUNT;i++)
+	{
+		ReplCards[pokerMan.StatBase[ST_VAR9]][i]=GameAnyData[pokerMan.StatBase[ST_VAR9]][k++];
+	}
+	Stroy[pokerMan.StatBase[ST_VAR9]]=GameAnyData[pokerMan.StatBase[ST_VAR9]][k++];
+	BetEnd[pokerMan.StatBase[ST_VAR9]]=GameAnyData[pokerMan.StatBase[ST_VAR9]][k++];
+	Bank[pokerMan.StatBase[ST_VAR9]]=GameAnyData[pokerMan.StatBase[ST_VAR9]][k++];
+	Bet[pokerMan.StatBase[ST_VAR9]]=GameAnyData[pokerMan.StatBase[ST_VAR9]][k++];
+	GameStage[pokerMan.StatBase[ST_VAR9]]=GameAnyData[pokerMan.StatBase[ST_VAR9]][k++];
+	MHod[pokerMan.StatBase[ST_VAR9]]=GameAnyData[pokerMan.StatBase[ST_VAR9]][k++];
+	for(uint8 i=0;i<PLAYERS_COUNT;i++)
+	{
+		PlState[pokerMan.StatBase[ST_VAR9]][i]=GameAnyData[pokerMan.StatBase[ST_VAR9]][k++];
+	}
+	for(uint8 i=0;i<PLAYERS_COUNT;i++)
+	{
+		PlBet[pokerMan.StatBase[ST_VAR9]][i]=GameAnyData[pokerMan.StatBase[ST_VAR9]][k++];
+	}
+	InGamePl[pokerMan.StatBase[ST_VAR9]]=GameAnyData[pokerMan.StatBase[ST_VAR9]][k++];
+	WinKoef[pokerMan.StatBase[ST_VAR9]]=GameAnyData[pokerMan.StatBase[ST_VAR9]][k++];
+	FraudMode[pokerMan.StatBase[ST_VAR9]]=GameAnyData[pokerMan.StatBase[ST_VAR9]][k++];
+	CardInSleeve[pokerMan.StatBase[ST_VAR9]]=GameAnyData[pokerMan.StatBase[ST_VAR9]][k++];
+	Fraud2Succ[pokerMan.StatBase[ST_VAR9]]=GameAnyData[pokerMan.StatBase[ST_VAR9]][k++];
+	GameNum[pokerMan.StatBase[ST_VAR9]]=GameAnyData[pokerMan.StatBase[ST_VAR9]][k++];
+	ModChFr[pokerMan.StatBase[ST_VAR9]]=GameAnyData[pokerMan.StatBase[ST_VAR9]][k++];
+	StartGameMoney[pokerMan.StatBase[ST_VAR9]]=GameAnyData[pokerMan.StatBase[ST_VAR9]][k];
+}
+
+void EraseData(Critter& npc)
+{
+	if(IsAnyData("Poker_"+npc.Id)) EraseAnyData("Poker_"+npc.Id);
+}
+
+void NpcAction(uint8 m, Critter& master, Critter& pokerMan)
+{
+	// Базовый шанс на ответ или повышение ставки 100-(Bet[pokerMan.StatBase[ST_VAR9]]*koef/10-5) {при Bet[pokerMan.StatBase[ST_VAR9]]*koef>100, в остальных случаях, шанс 95%}
+	// koef=1000/MaxBet[pokerMan.StatBase[ST_VAR9]]
+	// к базовому шансу прибавляется модификатор, зависящий от комбинации карт.
+
+	if(ChWinFold(pokerMan))
+	{
+		EndGame(master,pokerMan);
+		return;
+	}
+
+	while(PlState[pokerMan.StatBase[ST_VAR9]][m]==PLST_PASS)
+	{
+		m++;
+		BetEnd[pokerMan.StatBase[ST_VAR9]]++;
+		if(m==PLAYERS_COUNT)
+		{
+			return;
+		}
+	}
+	int8[] modCh={-20,0,10,20,35,50,60,70,80,90};
+	uint mB=Bet[pokerMan.StatBase[ST_VAR9]]*(1000/MaxBet[pokerMan.StatBase[ST_VAR9]]);
+	int8 chance;
+	if(mB>=100)
+	{
+		chance=100-((mB)/10-5);
+	}
+	else
+	{
+		chance=95;
+	}
+	chance+=modCh[GetCombo(m,GameCards[pokerMan.StatBase[ST_VAR9]])%10];
+
+	if ((ModChFr[pokerMan.StatBase[ST_VAR9]]/GameNum[pokerMan.StatBase[ST_VAR9]])>2)
+	{
+		chance+=ModChFr[pokerMan.StatBase[ST_VAR9]];
+	}
+	bool doBet=false;
+	if(chance<5)
+	{
+		chance=5;
+	}
+	else
+	{
+		if(chance>95)
+		{
+			chance=95;
+		}
+	}
+
+	if ((100-Random(0,99))<=chance)
+	{
+		doBet=true;
+	}
+
+	DlgTxt[pokerMan.StatBase[ST_VAR9]]=DialStrPl+" №"+m+" ";
+	PlayerCardsInDial[pokerMan.StatBase[ST_VAR9]]=false;
+	if(doBet)
+	{
+		if(Random(0,1)==1)
+		{
+			Bank[pokerMan.StatBase[ST_VAR9]]+=Bet[pokerMan.StatBase[ST_VAR9]]-PlBet[pokerMan.StatBase[ST_VAR9]][m];
+			PlState[pokerMan.StatBase[ST_VAR9]][m]=PLST_CALL;
+			if(Bet[pokerMan.StatBase[ST_VAR9]]==PlBet[pokerMan.StatBase[ST_VAR9]][m])
+			{
+				master.SayMsg(SAY_NETMSG,TEXTMSG_DLG,DLGSTR(DID,STR_DLGREPLY),"$gametext"+DlgTxt[pokerMan.StatBase[ST_VAR9]]+DialStrCall);
+				DlgTxt[pokerMan.StatBase[ST_VAR9]]+=DialStrAccept+"\n"+DialStrBank+Bank[pokerMan.StatBase[ST_VAR9]]+"\n"+DialStrBet+Bet[pokerMan.StatBase[ST_VAR9]];
+			}
+			else
+			{
+				master.SayMsg(SAY_NETMSG,TEXTMSG_DLG,DLGSTR(DID,STR_DLGREPLY),"$gametext"+DlgTxt[pokerMan.StatBase[ST_VAR9]]+DialStrCall);
+				DlgTxt[pokerMan.StatBase[ST_VAR9]]+=DialStrCall+"\n"+DialStrBank+Bank[pokerMan.StatBase[ST_VAR9]]+"\n"+DialStrBet+Bet[pokerMan.StatBase[ST_VAR9]];
+			}
+			PlBet[pokerMan.StatBase[ST_VAR9]][m]=Bet[pokerMan.StatBase[ST_VAR9]];
+		}
+		else
+		{
+			if (((PlBet[pokerMan.StatBase[ST_VAR9]][m]+Raise_1[pokerMan.StatBase[ST_VAR9]])>Bet[pokerMan.StatBase[ST_VAR9]]) and ((PlBet[pokerMan.StatBase[ST_VAR9]][m]+Raise_1[pokerMan.StatBase[ST_VAR9]])<=MaxBet[pokerMan.StatBase[ST_VAR9]]))
+			{
+				Bank[pokerMan.StatBase[ST_VAR9]]+=Raise_1[pokerMan.StatBase[ST_VAR9]];
+				PlState[pokerMan.StatBase[ST_VAR9]][m]=PLST_RAISE;
+				Bet[pokerMan.StatBase[ST_VAR9]]+=(Bet[pokerMan.StatBase[ST_VAR9]]-PlBet[pokerMan.StatBase[ST_VAR9]][m])+Raise_1[pokerMan.StatBase[ST_VAR9]];
+				PlBet[pokerMan.StatBase[ST_VAR9]][m]=Bet[pokerMan.StatBase[ST_VAR9]];
+				master.SayMsg(SAY_NETMSG,TEXTMSG_DLG,DLGSTR(DID,STR_DLGREPLY),"$gametext"+DlgTxt[pokerMan.StatBase[ST_VAR9]]+DialStrRaise);
+				DlgTxt[pokerMan.StatBase[ST_VAR9]]+=DialStrRaise+"\n"+DialStrBank+Bank[pokerMan.StatBase[ST_VAR9]]+"\n"+DialStrBet+Bet[pokerMan.StatBase[ST_VAR9]];
+				BetEnd[pokerMan.StatBase[ST_VAR9]]=0;
+			}
+			else
+			{
+				if (((PlBet[pokerMan.StatBase[ST_VAR9]][m]+Raise_2[pokerMan.StatBase[ST_VAR9]])>Bet[pokerMan.StatBase[ST_VAR9]]) and ((PlBet[pokerMan.StatBase[ST_VAR9]][m]+Raise_2[pokerMan.StatBase[ST_VAR9]])<=MaxBet[pokerMan.StatBase[ST_VAR9]]))
+				{
+					Bank[pokerMan.StatBase[ST_VAR9]]+=Raise_2[pokerMan.StatBase[ST_VAR9]];
+					PlState[pokerMan.StatBase[ST_VAR9]][m]=PLST_RAISE;
+					Bet[pokerMan.StatBase[ST_VAR9]]+=(Bet[pokerMan.StatBase[ST_VAR9]]-PlBet[pokerMan.StatBase[ST_VAR9]][m])+Raise_2[pokerMan.StatBase[ST_VAR9]];
+					PlBet[pokerMan.StatBase[ST_VAR9]][m]=Bet[pokerMan.StatBase[ST_VAR9]];
+					master.SayMsg(SAY_NETMSG,TEXTMSG_DLG,DLGSTR(DID,STR_DLGREPLY),"$gametext"+DlgTxt[pokerMan.StatBase[ST_VAR9]]+DialStrRaise);
+					DlgTxt[pokerMan.StatBase[ST_VAR9]]+=DialStrRaise+"\n"+DialStrBank+Bank[pokerMan.StatBase[ST_VAR9]]+"\n"+DialStrBet+Bet[pokerMan.StatBase[ST_VAR9]];
+					BetEnd[pokerMan.StatBase[ST_VAR9]]=0;
+				}
+				else
+				{
+					if (((PlBet[pokerMan.StatBase[ST_VAR9]][m]+Raise_3[pokerMan.StatBase[ST_VAR9]])>Bet[pokerMan.StatBase[ST_VAR9]]) and ((PlBet[pokerMan.StatBase[ST_VAR9]][m]+Raise_3[pokerMan.StatBase[ST_VAR9]])<=MaxBet[pokerMan.StatBase[ST_VAR9]]))
+					{
+						Bank[pokerMan.StatBase[ST_VAR9]]+=Raise_3[pokerMan.StatBase[ST_VAR9]];
+						PlState[pokerMan.StatBase[ST_VAR9]][m]=PLST_RAISE;
+						Bet[pokerMan.StatBase[ST_VAR9]]+=(Bet[pokerMan.StatBase[ST_VAR9]]-PlBet[pokerMan.StatBase[ST_VAR9]][m])+Raise_3[pokerMan.StatBase[ST_VAR9]];
+						PlBet[pokerMan.StatBase[ST_VAR9]][m]=Bet[pokerMan.StatBase[ST_VAR9]];
+						master.SayMsg(SAY_NETMSG,TEXTMSG_DLG,DLGSTR(DID,STR_DLGREPLY),"$gametext"+DlgTxt[pokerMan.StatBase[ST_VAR9]]+DialStrRaise);
+						DlgTxt[pokerMan.StatBase[ST_VAR9]]+=DialStrRaise+"\n"+DialStrBank+Bank[pokerMan.StatBase[ST_VAR9]]+"\n"+DialStrBet+Bet[pokerMan.StatBase[ST_VAR9]];
+						BetEnd[pokerMan.StatBase[ST_VAR9]]=0;
+					}
+					else
+					{
+						Bank[pokerMan.StatBase[ST_VAR9]]+=Bet[pokerMan.StatBase[ST_VAR9]]-PlBet[pokerMan.StatBase[ST_VAR9]][m];
+						PlState[pokerMan.StatBase[ST_VAR9]][m]=PLST_CALL;
+						if(Bet[pokerMan.StatBase[ST_VAR9]]==PlBet[pokerMan.StatBase[ST_VAR9]][m])
+						{
+							master.SayMsg(SAY_NETMSG,TEXTMSG_DLG,DLGSTR(DID,STR_DLGREPLY),"$gametext"+DlgTxt[pokerMan.StatBase[ST_VAR9]]+DialStrAccept);
+							DlgTxt[pokerMan.StatBase[ST_VAR9]]+=DialStrAccept+"\n"+DialStrBank+Bank[pokerMan.StatBase[ST_VAR9]]+"\n"+DialStrBet+Bet[pokerMan.StatBase[ST_VAR9]];
+						}
+						else
+						{
+							master.SayMsg(SAY_NETMSG,TEXTMSG_DLG,DLGSTR(DID,STR_DLGREPLY),"$gametext"+DlgTxt[pokerMan.StatBase[ST_VAR9]]+DialStrCall);
+							DlgTxt[pokerMan.StatBase[ST_VAR9]]+=DialStrCall+"\n"+DialStrBank+Bank[pokerMan.StatBase[ST_VAR9]]+"\n"+DialStrBet+Bet[pokerMan.StatBase[ST_VAR9]];
+						}
+						PlBet[pokerMan.StatBase[ST_VAR9]][m]=Bet[pokerMan.StatBase[ST_VAR9]];
+					}
+				}
+			}
+			master.SayMsg(SAY_NETMSG,TEXTMSG_DLG,DLGSTR(DID,STR_DLGREPLY),"$gametext"+DialStrBank+Bank[pokerMan.StatBase[ST_VAR9]]);
+			master.SayMsg(SAY_NETMSG,TEXTMSG_DLG,DLGSTR(DID,STR_DLGREPLY),"$gametext"+DialStrBet+Bet[pokerMan.StatBase[ST_VAR9]]);
+		}
+	}
+	else
+	{
+		if(Bet[pokerMan.StatBase[ST_VAR9]]==PlBet[pokerMan.StatBase[ST_VAR9]][m])
+		{
+			PlState[pokerMan.StatBase[ST_VAR9]][m]=PLST_CALL;
+			DlgTxt[pokerMan.StatBase[ST_VAR9]]+=DialStrAccept;
+			master.SayMsg(SAY_NETMSG,TEXTMSG_DLG,DLGSTR(DID,STR_DLGREPLY),"$gametext"+DlgTxt[pokerMan.StatBase[ST_VAR9]]);
+			master.SayMsg(SAY_NETMSG,TEXTMSG_DLG,DLGSTR(DID,STR_DLGREPLY),"$gametext"+DialStrBank+Bank[pokerMan.StatBase[ST_VAR9]]);
+			master.SayMsg(SAY_NETMSG,TEXTMSG_DLG,DLGSTR(DID,STR_DLGREPLY),"$gametext"+DialStrBet+Bet[pokerMan.StatBase[ST_VAR9]]);
+		}
+		else
+		{
+			PlState[pokerMan.StatBase[ST_VAR9]][m]=PLST_PASS;
+			DlgTxt[pokerMan.StatBase[ST_VAR9]]+=DialStrFold;
+			master.SayMsg(SAY_NETMSG,TEXTMSG_DLG,DLGSTR(DID,STR_DLGREPLY),"$gametext"+DlgTxt[pokerMan.StatBase[ST_VAR9]]);
+			master.SayMsg(SAY_NETMSG,TEXTMSG_DLG,DLGSTR(DID,STR_DLGREPLY),"$gametext"+DialStrBank+Bank[pokerMan.StatBase[ST_VAR9]]);
+			master.SayMsg(SAY_NETMSG,TEXTMSG_DLG,DLGSTR(DID,STR_DLGREPLY),"$gametext"+DialStrBet+Bet[pokerMan.StatBase[ST_VAR9]]);
+		}
+	}
+
+	if(ChWinFold(pokerMan))
+	{
+		EndGame(master,pokerMan);
+		return;
+	}
+	BetEnd[pokerMan.StatBase[ST_VAR9]]++;
+}
+
+void GetNpcBet(Critter& master, Critter& pokerMan)
+{
+	if ((GameStage[pokerMan.StatBase[ST_VAR9]]!=GAME_E_BETROUND1) and (GameStage[pokerMan.StatBase[ST_VAR9]]!=GAME_E_BETROUND2) and (GameStage[pokerMan.StatBase[ST_VAR9]]!=GAME_E_REPLACECARD))
+	{
+		return;
+	}
+	if(MHod[pokerMan.StatBase[ST_VAR9]]!=0)
+	{
+		NpcAction(MHod[pokerMan.StatBase[ST_VAR9]],master,pokerMan);
+		MHod[pokerMan.StatBase[ST_VAR9]]=(MHod[pokerMan.StatBase[ST_VAR9]]+1)%PLAYERS_COUNT;
+		if(BetEnd[pokerMan.StatBase[ST_VAR9]]==PLAYERS_COUNT)
+		{
+			BetEnd[pokerMan.StatBase[ST_VAR9]]=0;
+			if(GameStage[pokerMan.StatBase[ST_VAR9]]==GAME_E_BETROUND1)
+			{
+				GameStage[pokerMan.StatBase[ST_VAR9]]=GAME_E_REPLACECARD;
+			}
+			else
+			{
+				if(GameStage[pokerMan.StatBase[ST_VAR9]]==GAME_E_BETROUND2)
+				{
+					EraseData(pokerMan);
+					EndGame(master,pokerMan);
+				}
+			}
+		}
+	}
+}
+
+void EndGame(Critter& master, Critter& pokerMan) // Определение победителя, вывод результата на экран, распределение банка
+{
+	uint8 max=0;
+	uint8 maxHC=0;
+	uint8 wCount=0;
+	uint prize;
+	uint8[] winners={0,0,0,0};
+	uint8 wc=0;
+	string comb="";
+	GameVar@ wins;
+	GameVar@ winCash=GetUnicumVar(UVAR_poker_wincash,pokerMan.Id,master.Id);
+	if (!valid(winCash))
+	{
+		Log("<Poker> Error: winCash UVAR not loaded");
+	}
+	GameStage[pokerMan.StatBase[ST_VAR9]]=GAME_E_END;
+	for(uint8 i=0;i<PLAYERS_COUNT;i++)
+	{
+		if(PlState[pokerMan.StatBase[ST_VAR9]][i]!=PLST_PASS)
+		{
+			if(GetCombo(i,GameCards[pokerMan.StatBase[ST_VAR9]])%10>max)
+			{
+				max=GetCombo(i,GameCards[pokerMan.StatBase[ST_VAR9]])%10;
+			}
+		}
+	}
+	for(uint8 i=0;i<PLAYERS_COUNT;i++)
+	{
+		if(PlState[pokerMan.StatBase[ST_VAR9]][i]!=PLST_PASS)
+		{
+			if(GetCombo(i,GameCards[pokerMan.StatBase[ST_VAR9]])%10==max)
+			{
+				wCount++;
+			}
+		}
+	}
+	if(wCount==1)
+	{
+		for(uint8 i=0;i<PLAYERS_COUNT;i++)
+		{
+			if(PlState[pokerMan.StatBase[ST_VAR9]][i]!=PLST_PASS)
+			{
+				if(GetCombo(i,GameCards[pokerMan.StatBase[ST_VAR9]])%10==max)
+				{
+					winners[i]=1;
+				}
+			}
+		}
+	}
+	else
+	{
+		for(uint8 i=0;i<PLAYERS_COUNT;i++)
+		{
+			if(PlState[pokerMan.StatBase[ST_VAR9]][i]!=PLST_PASS)
+			{
+				if(GetCombo(i,GameCards[pokerMan.StatBase[ST_VAR9]])%10==max)
+				{
+					if(GetCombo(i,GameCards[pokerMan.StatBase[ST_VAR9]])/10>maxHC)
+					{
+						maxHC=GetCombo(i,GameCards[pokerMan.StatBase[ST_VAR9]])/10;
+					}
+				}
+			}
+		}
+		for(uint8 i=0;i<PLAYERS_COUNT;i++)
+		{
+			if(PlState[pokerMan.StatBase[ST_VAR9]][i]!=PLST_PASS)
+			{
+				if(GetCombo(i,GameCards[pokerMan.StatBase[ST_VAR9]])%10==max)
+				{
+					if(GetCombo(i,GameCards[pokerMan.StatBase[ST_VAR9]])/10==maxHC)
+					{
+						winners[i]=1;
+					}
+				}
+			}
+		}
+	}
+	uint8 t=0;
+	for(uint8 i=0;i<PLAYERS_COUNT;i++)
+	{
+		wc+=winners[i];
+		if(winners[i]==1)
+		{
+			t=i;
+		}
+	}
+	DlgTxt[pokerMan.StatBase[ST_VAR9]]="@msg dlg "+DLGSTR(DID,STR_WINCOMBO)+"@ "+GetStrCombo(GetCombo(t,GameCards[pokerMan.StatBase[ST_VAR9]]));
+	PlayerCardsInDial[pokerMan.StatBase[ST_VAR9]]=true;
+	//DlgTxt2[pokerMan.StatBase[ST_VAR9]]="@msg dlg "+DLGSTR(DID,STR_WINCOMBO)+"@ "+GetStrCombo(GetCombo(t,GameCards[pokerMan.StatBase[ST_VAR9]]));
+	master.SayMsg(SAY_NETMSG,TEXTMSG_DLG,DLGSTR(DID,STR_DLGREPLY),"$gametext"+"@msg dlg "+DLGSTR(DID,STR_WINCOMBO)+"@ "+GetStrCombo(GetCombo(t,GameCards[pokerMan.StatBase[ST_VAR9]])));
+	for(uint8 s=0;s<CARD_COUNT;s++)
+	{
+		//map.SetText(master.HexX+(i),master.HexY+(i),COLOR_RED,GetStrCard(GameCards[pokerMan.StatBase[ST_VAR9]][i]));
+		comb+=GetStrCard(GameCards[pokerMan.StatBase[ST_VAR9]][t*5+s]);
+		if(s!=CARD_COUNT-1)
+		{
+			comb+=", ";
+		}
+	}
+	master.SayMsg(SAY_NETMSG,TEXTMSG_DLG,DLGSTR(DID,STR_DLGREPLY),"$gametext"+comb);
+	DlgTxt[pokerMan.StatBase[ST_VAR9]]+="\n"+comb+"\n"+"@msg dlg "+DLGSTR(DID,STR_WINERS)+"@";
+	prize=Bank[pokerMan.StatBase[ST_VAR9]]/wc;
+	master.SayMsg(SAY_NETMSG,TEXTMSG_DLG,DLGSTR(DID,STR_DLGREPLY),"$gametext"+"@msg dlg "+DLGSTR(DID,STR_WINERS)+"@");
+	for(uint8 i=0;i<4;i++)
+	{
+		if(winners[i]==1)
+		{
+			if(i==0)
+			{
+				master.SayMsg(SAY_NETMSG,TEXTMSG_DLG,DLGSTR(DID,STR_DLGREPLY),"$gametext"+"@msg dlg "+DLGSTR(DID,STR_YOUWIN)+"@");
+				DlgTxt[pokerMan.StatBase[ST_VAR9]]+=" @msg dlg "+DLGSTR(DID,STR_YOUWIN)+"@"+"\n";
+				@wins=GetLocalVar(LVAR_poker_wins, master.Id);
+				if (!valid(wins))
+				{
+					Log("<Poker> Error: wins LVAR not loaded");
+				}
+				wins+=1;
+				master.AddItem(PID_BOTTLE_CAPS,prize*(WinKoef[pokerMan.StatBase[ST_VAR9]]/100));
+			}
+			else
+			{
+				master.SayMsg(SAY_NETMSG,TEXTMSG_DLG,DLGSTR(DID,STR_DLGREPLY),"$gametext"+"@msg dlg "+DLGSTR(DID,STR_WINPLNUM)+"@ "+i);
+				DlgTxt[pokerMan.StatBase[ST_VAR9]]+=" @msg dlg "+DLGSTR(DID,STR_WINPLNUM)+"@ "+i+"\n";
+			}
+		}
+	}
+	winCash+=master.CountItem(PID_BOTTLE_CAPS)-StartGameMoney[pokerMan.StatBase[ST_VAR9]];
+	InGame[pokerMan.StatBase[ST_VAR9]]=false;
+}
+
+///////////////////////////////////////////////////////////////////////
+//                                                                   //
+//                          Диалоги                                  //
+//                                                                   //
+///////////////////////////////////////////////////////////////////////
+
+
+
+
+/////////////////////Формирование диалога/////////////////////////////
+void dlg_GameText(Critter& player, Critter@ pokerMan, string@ lexems)
+{
+	if(not IS_DIALOG_GENERATED(lexems)) return;
+	lexems="$gametext"+DlgTxt[pokerMan.StatBase[ST_VAR9]];
+	lexems+="$gametext2"+DlgTxt2[pokerMan.StatBase[ST_VAR9]];
+	lexems+="$ra_one"+Raise_1[pokerMan.StatBase[ST_VAR9]];
+	lexems+="$ra_two"+Raise_2[pokerMan.StatBase[ST_VAR9]];
+	lexems+="$ra_three"+Raise_3[pokerMan.StatBase[ST_VAR9]];
+	lexems+="$replaceCardOne";
+	if(GetBit(ReplCards[pokerMan.StatBase[ST_VAR9]][0],1)==1)
+	{
+		lexems+="@msg dlg "+DLGSTR(DID,STR_UNSELECT)+"@";
+	}
+	else
+	{
+		lexems+="@msg dlg "+DLGSTR(DID,STR_SELECT)+"@";
+	}
+	lexems+="$replaceCardTwo";
+	if(GetBit(ReplCards[pokerMan.StatBase[ST_VAR9]][0],2)==1)
+	{
+		lexems+="@msg dlg "+DLGSTR(DID,STR_UNSELECT)+"@";
+	}
+	else
+	{
+		lexems+="@msg dlg "+DLGSTR(DID,STR_SELECT)+"@";
+	}
+	lexems+="$replaceCardThree";
+	if(GetBit(ReplCards[pokerMan.StatBase[ST_VAR9]][0],3)==1)
+	{
+		lexems+="@msg dlg "+DLGSTR(DID,STR_UNSELECT)+"@";
+	}
+	else
+	{
+		lexems+="@msg dlg "+DLGSTR(DID,STR_SELECT)+"@";
+	}
+	lexems+="$replaceCardFour";
+	if(GetBit(ReplCards[pokerMan.StatBase[ST_VAR9]][0],4)==1)
+	{
+		lexems+="@msg dlg "+DLGSTR(DID,STR_UNSELECT)+"@";
+	}
+	else
+	{
+		lexems+="@msg dlg "+DLGSTR(DID,STR_SELECT)+"@";
+	}
+	lexems+="$replaceCardFive";
+	if(GetBit(ReplCards[pokerMan.StatBase[ST_VAR9]][0],5)==1)
+	{
+		lexems+="@msg dlg "+DLGSTR(DID,STR_UNSELECT)+"@";
+	}
+	else
+	{
+		lexems+="@msg dlg "+DLGSTR(DID,STR_SELECT)+"@";
+	}
+}
+
+void dlg_StartGemeMoney(Critter& player, Critter@ pokerMan, string@ lexems)
+{
+	if(not IS_DIALOG_GENERATED(lexems)) return;
+	lexems="$game_cost"+MoneyForStartGame[pokerMan.StatBase[ST_VAR9]];
+}
+
+void dlg_VarRaise(Critter& master, Critter@ pokerMan, string@ str)
+{
+	uint min, max, bRaise=0;
+	int moneyString=0;
+	min=Bet[pokerMan.StatBase[ST_VAR9]]-PlBet[pokerMan.StatBase[ST_VAR9]][0];
+	max=master.CountItem(PID_BOTTLE_CAPS);
+	if ((PlBet[pokerMan.StatBase[ST_VAR9]][0]+max)>MaxBet[pokerMan.StatBase[ST_VAR9]])
+	{
+		max=MaxBet[pokerMan.StatBase[ST_VAR9]]-PlBet[pokerMan.StatBase[ST_VAR9]][0];
+	}
+	if(not IS_DIALOG_SAY_MODE(str))
+	{
+		if(not IS_DIALOG_GENERATED(str)) return;
+		App[pokerMan.StatBase[ST_VAR9]]=false;
+		str+="$min "+min+"$max "+max;
+	}
+	else
+	{
+		if(VarRiseSucc[pokerMan.StatBase[ST_VAR9]]==1)
+		{
+			return;
+		}
+		if(not SafeStrToInt(str,moneyString))
+		{
+			if(not App[pokerMan.StatBase[ST_VAR9]])
+			{
+				master.SayMsg(SAY_APPEND,TEXTMSG_DLG,STR_INVALID_MONEY_COUNT);
+				App[pokerMan.StatBase[ST_VAR9]]=true;
+			}
+		}
+		else
+		{
+			if(moneyString<0)
+			{
+				if(not App[pokerMan.StatBase[ST_VAR9]])
+				{
+					master.SayMsg(SAY_APPEND,TEXTMSG_DLG,STR_INVALID_MONEY_COUNT);
+					App[pokerMan.StatBase[ST_VAR9]]=true;
+				}
+			}
+			else
+			{
+				bRaise=moneyString;
+				if ((bRaise<min) or (bRaise>max))
+				{
+					if(not App[pokerMan.StatBase[ST_VAR9]])
+					{
+						master.SayMsg(SAY_APPEND,TEXTMSG_DLG,STR_INVALID_MONEY_COUNT);
+						App[pokerMan.StatBase[ST_VAR9]]=true;
+					}
+				}
+				else
+				{
+					master.SayMsg(SAY_DIALOG,TEXTMSG_DLG,STR_OPERATION_SUCCESS);
+					VarRiseSucc[pokerMan.StatBase[ST_VAR9]]=1;
+					PlBet[pokerMan.StatBase[ST_VAR9]][0]+=bRaise;
+					Bank[pokerMan.StatBase[ST_VAR9]]+=bRaise;
+					if(PlBet[pokerMan.StatBase[ST_VAR9]][0]>Bet[pokerMan.StatBase[ST_VAR9]])
+					{
+						Bet[pokerMan.StatBase[ST_VAR9]]=PlBet[pokerMan.StatBase[ST_VAR9]][0];
+						BetEnd[pokerMan.StatBase[ST_VAR9]]=1;
+						MHod[pokerMan.StatBase[ST_VAR9]]++;
+						PlState[pokerMan.StatBase[ST_VAR9]][0]=PLST_RAISE;
+					}
+					else
+					{
+						BetEnd[pokerMan.StatBase[ST_VAR9]]++;
+						MHod[pokerMan.StatBase[ST_VAR9]]++;
+						if(BetEnd[pokerMan.StatBase[ST_VAR9]]==PLAYERS_COUNT)
+						{
+							BetEnd[pokerMan.StatBase[ST_VAR9]]=0;
+							if(GameStage[pokerMan.StatBase[ST_VAR9]]==GAME_E_BETROUND1)
+							{
+								GameStage[pokerMan.StatBase[ST_VAR9]]=GAME_E_REPLACECARD;
+							}
+							else
+							{
+								if(GameStage[pokerMan.StatBase[ST_VAR9]]==GAME_E_BETROUND2)
+								{
+									EraseData(pokerMan);
+									EndGame(master,pokerMan);
+								}
+							}
+						}
+						PlState[pokerMan.StatBase[ST_VAR9]][0]=PLST_CALL;
+					}
+					if(master.CountItem(PID_BOTTLE_CAPS)>=bRaise)
+					{
+						master.DeleteItem(PID_BOTTLE_CAPS,bRaise);
+					}
+					else
+					{
+#ifdef __DEBUG__
+						Log("Player have not money");
+#endif
+					}
+					PrintCards(null,pokerMan,0);
+				}
+			}
+		}
+	}
+}
+
+void dlg_FraudCheck(Critter& player, Critter@ pokerMan, string@ lexems)
+{
+	if(not IS_DIALOG_GENERATED(lexems)) return;
+	GameVar@ var=GetUnicumVar(UVAR_poker_fraud, pokerMan.Id, player.Id);
+	if (!valid(var))
+	{
+		Log("<Poker> Error: fraud UVAR not loaded");
+	}
+	if(var.GetValue()!=1)
+	{
+		lexems="$fraud@msg dlg "+DLGSTR(DID,STR_FRAUD_ON)+"@";
+	}
+	else
+	{
+		lexems="$fraud@msg dlg "+DLGSTR(DID,STR_FRAUD_OFF)+"@";
+	}
+}
+
+void dlg_ManyWins(Critter& player, Critter@ pokerMan, string@ lexems)
+{
+	if(not IS_DIALOG_GENERATED(lexems)) return;
+	GameVar@ var=GetUnicumVar(UVAR_poker_manywins, pokerMan.Id, player.Id);
+	if (!valid(var))
+	{
+		Log("<Poker> Error: manywins UVAR not loaded");
+	}
+	if(uint(__FullSecond-var.GetValue())<(WaitForGame[pokerMan.StatBase[ST_VAR9]]*24*60*60))
+	{
+		lexems="$manywins@msg dlg "+DLGSTR(DID,STR_MANYWINS_ON)+"@";
+	}
+	else
+	{
+		lexems="$manywins@msg dlg "+DLGSTR(DID,STR_MANYWINS_OFF)+"@";
+	}
+}
+
+/////////////////////Результаты реплик////////////////////////////////
+void r_Replace(Critter& master, Critter@ pokerMan) // замена карт
+{
+	uint8 m;
+	uint8[] cardsInPack;
+	for(uint8 i=1;i<=52;i++)
+	{
+		if(GetBit(Koloda[pokerMan.StatBase[ST_VAR9]],i)==1)
+		{
+			cardsInPack.insertLast(i);
+		}
+	}
+	NpcReplaceCards(pokerMan);
+	for(uint8 t=0; t<PLAYERS_COUNT; t++)
+	{
+		for(uint8 i=0; i<CARD_COUNT; i++)
+		{
+			if(GetBit(ReplCards[pokerMan.StatBase[ST_VAR9]][t],i+1)==1)
+			{
+				if(cardsInPack.length()!=0)
+				{
+					m=Random(0,cardsInPack.length()-1);
+					Koloda[pokerMan.StatBase[ST_VAR9]]=SetBit(Koloda[pokerMan.StatBase[ST_VAR9]],cardsInPack[m],false);
+					GameCards[pokerMan.StatBase[ST_VAR9]][t*CARD_COUNT+i]=cardsInPack[m];
+				}
+				else
+				{
+					Log("Error: Pack of cards is empty");
+					return;
+				}
+			}
+		}
+//		Log("P"+t+" Repl="+ReplCards[pokerMan.StatBase[ST_VAR9]][t]+" ("+GetBit(ReplCards[pokerMan.StatBase[ST_VAR9]][t],1)+";"+GetBit(ReplCards[pokerMan.StatBase[ST_VAR9]][t],2)+";"+GetBit(ReplCards[pokerMan.StatBase[ST_VAR9]][t],3)+";"+GetBit(ReplCards[pokerMan.StatBase[ST_VAR9]][t],4)+";"+GetBit(ReplCards[pokerMan.StatBase[ST_VAR9]][t],5)+")");
+		ReplCards[pokerMan.StatBase[ST_VAR9]][t]=0;
+/*
+		Log("Player "+t+":R "+GameCards[pokerMan.StatBase[ST_VAR9]][t*CARD_COUNT]+";"+GameCards[pokerMan.StatBase[ST_VAR9]][t*CARD_COUNT+1]+";"+GameCards[pokerMan.StatBase[ST_VAR9]][t*CARD_COUNT+2]+";"+GameCards[pokerMan.StatBase[ST_VAR9]][t*CARD_COUNT+3]+";"+GameCards[pokerMan.StatBase[ST_VAR9]][t*CARD_COUNT+4]);
+		Log(GetStrCombo(GetCombo(t,GameCards[pokerMan.StatBase[ST_VAR9]])));
+*/
+	}
+	GameStage[pokerMan.StatBase[ST_VAR9]]=GAME_E_BETROUND2;
+	PrintCards(master,pokerMan,0);
+}
+
+void r_ReplSet(Critter& master, Critter@ pokerMan, int val)
+{
+	if(GetBit(ReplCards[pokerMan.StatBase[ST_VAR9]][0],val)==1)
+	{
+		ReplCards[pokerMan.StatBase[ST_VAR9]][0]=SetBit5(ReplCards[pokerMan.StatBase[ST_VAR9]][0],val,false); // отменить выбор карты для замены
+	}
+	else
+	{
+		ReplCards[pokerMan.StatBase[ST_VAR9]][0]=SetBit5(ReplCards[pokerMan.StatBase[ST_VAR9]][0],val,true); // выбор карты для замены
+	}
+}
+
+void r_BetRaise(Critter& master, Critter@ pokerMan, int val) // Повышение ставки
+{
+	switch(val)
+	{
+		case -1:
+			if(master.CountItem(PID_BOTTLE_CAPS)>0)
+			{
+				Bank[pokerMan.StatBase[ST_VAR9]]+=master.CountItem(PID_BOTTLE_CAPS);
+				PlBet[pokerMan.StatBase[ST_VAR9]][0]=PlBet[pokerMan.StatBase[ST_VAR9]][0]+master.CountItem(PID_BOTTLE_CAPS);
+				Bet[pokerMan.StatBase[ST_VAR9]]=PlBet[pokerMan.StatBase[ST_VAR9]][0];
+				master.DeleteItem(PID_BOTTLE_CAPS,master.CountItem(PID_BOTTLE_CAPS));
+			}
+			else
+			{
+#ifdef __DEBUG__
+				Log("Player have not money");
+#endif
+			}
+			break;
+		case 0:
+			if(master.CountItem(PID_BOTTLE_CAPS)>=Raise_1[pokerMan.StatBase[ST_VAR9]])
+			{
+				Bank[pokerMan.StatBase[ST_VAR9]]+=Raise_1[pokerMan.StatBase[ST_VAR9]];
+				PlBet[pokerMan.StatBase[ST_VAR9]][0]=PlBet[pokerMan.StatBase[ST_VAR9]][0]+Raise_1[pokerMan.StatBase[ST_VAR9]];
+				Bet[pokerMan.StatBase[ST_VAR9]]=PlBet[pokerMan.StatBase[ST_VAR9]][0];
+				master.DeleteItem(PID_BOTTLE_CAPS,Raise_1[pokerMan.StatBase[ST_VAR9]]);
+			}
+			else
+			{
+#ifdef __DEBUG__
+				Log("Player have not money");
+#endif
+			}
+			break;
+		case 1:
+			if(master.CountItem(PID_BOTTLE_CAPS)>=Raise_2[pokerMan.StatBase[ST_VAR9]])
+			{
+				Bank[pokerMan.StatBase[ST_VAR9]]+=Raise_2[pokerMan.StatBase[ST_VAR9]];
+				PlBet[pokerMan.StatBase[ST_VAR9]][0]=PlBet[pokerMan.StatBase[ST_VAR9]][0]+Raise_2[pokerMan.StatBase[ST_VAR9]];
+				Bet[pokerMan.StatBase[ST_VAR9]]=PlBet[pokerMan.StatBase[ST_VAR9]][0];
+				master.DeleteItem(PID_BOTTLE_CAPS,Raise_2[pokerMan.StatBase[ST_VAR9]]);
+			}
+			else
+			{
+#ifdef __DEBUG__
+				Log("Player have not money");
+#endif
+			}
+			break;
+		case 2:
+			if(master.CountItem(PID_BOTTLE_CAPS)>=Raise_3[pokerMan.StatBase[ST_VAR9]])
+			{
+				Bank[pokerMan.StatBase[ST_VAR9]]+=Raise_3[pokerMan.StatBase[ST_VAR9]];
+				PlBet[pokerMan.StatBase[ST_VAR9]][0]=PlBet[pokerMan.StatBase[ST_VAR9]][0]+Raise_3[pokerMan.StatBase[ST_VAR9]];
+				Bet[pokerMan.StatBase[ST_VAR9]]=PlBet[pokerMan.StatBase[ST_VAR9]][0];
+				master.DeleteItem(PID_BOTTLE_CAPS,Raise_3[pokerMan.StatBase[ST_VAR9]]);
+			}
+			else
+			{
+#ifdef __DEBUG__
+				Log("Player have not money");
+#endif
+			}
+			break;
+		default:
+			Log("ERROR");
+			break;
+	}
+	BetEnd[pokerMan.StatBase[ST_VAR9]]=1;
+	MHod[pokerMan.StatBase[ST_VAR9]]++;
+	PlState[pokerMan.StatBase[ST_VAR9]][0]=PLST_RAISE;
+	ModChFr[pokerMan.StatBase[ST_VAR9]]++;
+	PrintCards(master,pokerMan,0);
+}
+
+void r_BetCall(Critter& master, Critter@ pokerMan, int val) // Ответ на ставку
+{
+	if(val==D_VA_BANK)
+	{
+		WinKoef[pokerMan.StatBase[ST_VAR9]]=((PlBet[pokerMan.StatBase[ST_VAR9]][0]+master.CountItem(PID_BOTTLE_CAPS))/Bet[pokerMan.StatBase[ST_VAR9]])*100;
+		Log("Koef: "+WinKoef[pokerMan.StatBase[ST_VAR9]]);
+	}
+	if(Bet[pokerMan.StatBase[ST_VAR9]]-PlBet[pokerMan.StatBase[ST_VAR9]][0]!=0)
+	{
+		if(Bet[pokerMan.StatBase[ST_VAR9]]-PlBet[pokerMan.StatBase[ST_VAR9]][0]>master.CountItem(PID_BOTTLE_CAPS))
+		{
+			master.DeleteItem(PID_BOTTLE_CAPS,master.CountItem(PID_BOTTLE_CAPS));
+		}
+		else
+		{
+			master.DeleteItem(PID_BOTTLE_CAPS,Bet[pokerMan.StatBase[ST_VAR9]]-PlBet[pokerMan.StatBase[ST_VAR9]][0]);
+		}
+	}
+	PlBet[pokerMan.StatBase[ST_VAR9]][0]=Bet[pokerMan.StatBase[ST_VAR9]];
+	BetEnd[pokerMan.StatBase[ST_VAR9]]++;
+	MHod[pokerMan.StatBase[ST_VAR9]]++;
+	if(BetEnd[pokerMan.StatBase[ST_VAR9]]==PLAYERS_COUNT)
+	{
+		BetEnd[pokerMan.StatBase[ST_VAR9]]=0;
+		if(GameStage[pokerMan.StatBase[ST_VAR9]]==GAME_E_BETROUND1)
+		{
+			GameStage[pokerMan.StatBase[ST_VAR9]]=GAME_E_REPLACECARD;
+		}
+		else
+		{
+			if(GameStage[pokerMan.StatBase[ST_VAR9]]==GAME_E_BETROUND2)
+			{
+				EraseData(pokerMan);
+				EndGame(master,pokerMan);
+			}
+		}
+	}
+	PlState[pokerMan.StatBase[ST_VAR9]][0]=PLST_CALL;
+	PrintCards(master,pokerMan,0);
+}
+
+void r_BetPass(Critter& master, Critter@ pokerMan) // Игрок спасовал
+{
+	PlState[pokerMan.StatBase[ST_VAR9]][0]=PLST_PASS;
+	EndGame(master,pokerMan);
+}
+
+uint r_StartNewGame(Critter& master, Critter@ pokerMan) // Начало новой игры
+{
+	GameVar@ winCash=GetUnicumVar(UVAR_poker_wincash,pokerMan.Id,master.Id);
+	if (!valid(winCash))
+	{
+		Log("<Poker> Error: wincash UVAR not loaded");
+	}
+	if(winCash.GetValue()>int(StopGameMoney[pokerMan.StatBase[ST_VAR9]]))
+	{
+		return D_MANYWINS;
+	}
+	if(master.CountItem(PID_BOTTLE_CAPS)>=Raise_1[pokerMan.StatBase[ST_VAR9]])
+	{
+		master.DeleteItem(PID_BOTTLE_CAPS,Raise_1[pokerMan.StatBase[ST_VAR9]]);
+	}
+	else
+	{
+#ifdef __DEBUG__
+		Log("Player have not money");
+#endif
+	}
+	InitGame(pokerMan,master);
+	EraseData(pokerMan);
+	PrintCards(master,pokerMan,0);
+	return 0;
+}
+
+void r_TermGame(Critter& master, Critter@ pokerMan)
+{
+	InGame[pokerMan.StatBase[ST_VAR9]]=false;
+}
+
+void r_GetCards(Critter& master, Critter@ pokerMan) // Начало игры
+{
+	FirstGame[pokerMan.StatBase[ST_VAR9]]=true;
+	InitGame(pokerMan,master);
+	EraseData(pokerMan);
+	PrintCards(master,pokerMan,0);
+}
+
+void r_BetNext(Critter& master, Critter@ pokerMan)
+{
+	GetNpcBet(master,pokerMan);
+}
+
+void r_ViewCards(Critter& master, Critter@ pokerMan)
+{
+	PrintCards(master,pokerMan,0);
+}
+
+void r_GetStartMoney(Critter& master, Critter@ pokerMan)
+{
+	if(master.CountItem(PID_BOTTLE_CAPS)>=MoneyForStartGame[pokerMan.StatBase[ST_VAR9]])
+	{
+		master.DeleteItem(PID_BOTTLE_CAPS,MoneyForStartGame[pokerMan.StatBase[ST_VAR9]]);
+	}
+	else
+	{
+#ifdef __DEBUG__
+		Log("Player have not money");
+#endif
+	}
+}
+
+void r_Fraud(Critter& master, Critter@ pokerMan)
+{
+	FraudMode[pokerMan.StatBase[ST_VAR9]]=1;
+}
+
+uint r_Fraud1(Critter& master, Critter@ pokerMan, int val)
+{
+	bool fraudSucc=false;
+	uint diffic,rand;
+	int luckModif;
+	if ((val<=2) and (val>=0))
+	{
+		diffic=(3.3*master.Skill[SK_GAMBLING])/PMLevel[pokerMan.StatBase[ST_VAR9]];
+		luckModif=(master.Stat[ST_LUCK]-5.5)*4;
+		if(diffic+luckModif>0)
+		{
+			diffic+=luckModif;
+		}
+		else
+		{
+			diffic=0;
+		}
+		if(diffic>100)
+		{
+			diffic=100;
+		}
+		diffic*=0.95;
+		rand=Random(1,100);
+#ifdef __DEBUG__
+		Log("\n<Poker> PMLevel: "+PMLevel[pokerMan.StatBase[ST_VAR9]]+", player.Skill[SK_GAMBLING]: "+master.Skill[SK_GAMBLING]+", master.Luck: "+master.Luck+", Chance: "+diffic);
+#endif
+		if(rand<=diffic)
+		{
+			fraudSucc=true;
+		}
+		if(fraudSucc)
+		{
+			PrintCards(master,pokerMan,val+1);
+		}
+		else
+		{
+			RunCheatScript(OnCheat1[pokerMan.StatBase[ST_VAR9]],master,pokerMan);
+			return uint(-1);
+		}
+	}
+	return 0;
+}
+
+void r_Fraud2(Critter& master, Critter@ pokerMan)
+{
+	FraudMode[pokerMan.StatBase[ST_VAR9]]=2;
+	PrintFraud2Text(master,pokerMan);
+}
+
+uint r_Fraud2(Critter& master, Critter@ pokerMan, int val)
+{
+	bool fraudSucc=false;
+	uint diffic,rand;
+	if ((val<=4) and (val>=0))
+	{
+		diffic=(3.3*master.Skill[SK_GAMBLING])/PMLevel[pokerMan.StatBase[ST_VAR9]];
+		if(diffic>100)
+		{
+			diffic=100;
+		}
+		diffic*=0.95;
+		rand=Random(1,100);
+#ifdef __DEBUG__
+		Log("\n<Poker> PMLevel: "+PMLevel[pokerMan.StatBase[ST_VAR9]]+", player.Skill[SK_GAMBLING]: "+master.Skill[SK_GAMBLING]+", Chance: "+diffic);
+#endif
+		if(rand<=diffic)
+		{
+			fraudSucc=true;
+		}
+		if(fraudSucc)
+		{
+			if ((val>=0) and (val<=4))
+			{
+				GameCards[pokerMan.StatBase[ST_VAR9]][val]=CardInSleeve[pokerMan.StatBase[ST_VAR9]];
+				PrintCards(master,pokerMan,0);
+				Fraud2Succ[pokerMan.StatBase[ST_VAR9]]=1;
+				FraudMode[pokerMan.StatBase[ST_VAR9]]=1;
+			}
+		}
+		else
+		{
+			RunCheatScript(OnCheat2[pokerMan.StatBase[ST_VAR9]],master,pokerMan);
+			return uint(-1);
+		}
+	}
+	return 0;
+}
+
+void r_FraudCancel(Critter& master, Critter@ pokerMan)
+{
+	FraudMode[pokerMan.StatBase[ST_VAR9]]=0;
+}
+
+void r_FraudCheck(Critter& master, Critter@ pokerMan)
+{
+	GameVar@ var=GetUnicumVar(UVAR_poker_fraud, pokerMan.Id, master.Id);
+	if (!valid(var))
+	{
+		Log("<Poker> Error: fraud UVAR not loaded");
+	}
+	uint pf=var.GetValue();
+#ifdef __DEBUG__
+	Log("<poker> UVAR_poker_fraud: "+pf+" FM: "+__FullSecond);
+#endif
+	if(pf<=__FullSecond)
+	{
+		var=1;
+	}
+}
+
+void r_VarRise(Critter& master, Critter@ pokerMan)
+{
+	VarRiseSucc[pokerMan.StatBase[ST_VAR9]]=0;
+}
+
+void r_ManyWinsCheck(Critter& master, Critter@ pokerMan)
+{
+	GameVar@ manyWins=GetUnicumVar(UVAR_poker_manywins,pokerMan.Id,master.Id);
+	if (!valid(manyWins))
+	{
+		Log("<Poker> Error: manywins UVAR not loaded");
+	}
+	GameVar@ winCash=GetUnicumVar(UVAR_poker_wincash,pokerMan.Id,master.Id);
+	if (!valid(winCash))
+	{
+		Log("<Poker> Error: winCash UVAR not loaded");
+	}
+	if(uint((__FullSecond-manyWins.GetValue()))>(WaitForGame[pokerMan.StatBase[ST_VAR9]])*24*60*60)
+	{
+		winCash=0;
+	}
+}
+
+///////////////////////Условия для появления реплик/////////////////////////////////
+bool d_GameOver(Critter& master, Critter@ pokerMan)
+{
+	if(GameStage[pokerMan.StatBase[ST_VAR9]]==GAME_E_END)
+	{
+		return true;
+	}
+	return false;
+}
+
+bool d_TermGame(Critter& master, Critter@ pokerMan)
+{
+	if(FraudMode[pokerMan.StatBase[ST_VAR9]]!=0)
+	{
+		return false;
+	}
+	if(GameStage[pokerMan.StatBase[ST_VAR9]]!=GAME_E_END)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+bool d_Replaced(Critter& master, Critter@ pokerMan) // для отображения реплик игрока в диалоге
+{
+	if(GameStage[pokerMan.StatBase[ST_VAR9]]!=GAME_E_REPLACECARD)
+	{
+		return false;
+	}
+	if(FraudMode[pokerMan.StatBase[ST_VAR9]]!=0)
+	{
+		return false;
+	}
+	return true;
+}
+
+bool d_Replace(Critter& master, Critter@ pokerMan) // для вывода строки "заменить карты"
+{
+	if(FraudMode[pokerMan.StatBase[ST_VAR9]]!=0)
+	{
+		return false;
+	}
+	if(GameStage[pokerMan.StatBase[ST_VAR9]]==GAME_E_REPLACECARD)
+	{
+		return true;
+	}
+	return false;
+}
+
+bool d_InGame(Critter& master, Critter@ pokerMan, int val)
+{
+	if ((InGame[pokerMan.StatBase[ST_VAR9]]) and (master.Id==InGamePl[pokerMan.StatBase[ST_VAR9]]))
+	{
+		if(val==PL_RESUME_GAME)
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+	else
+	{
+		if(val==PL_START_GAME)
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+}
+
+bool d_BetCall(Critter& master, Critter@ pokerMan, int val) // Вывод строки "Ответить на ставку"
+{
+	if(FraudMode[pokerMan.StatBase[ST_VAR9]]!=0)
+	{
+		return false;
+	}
+	if ((GameStage[pokerMan.StatBase[ST_VAR9]]==GAME_E_BETROUND1) or (GameStage[pokerMan.StatBase[ST_VAR9]]==GAME_E_BETROUND2))
+	{
+		if(val!=D_VA_BANK)
+		{
+			if(Bet[pokerMan.StatBase[ST_VAR9]]<PlBet[pokerMan.StatBase[ST_VAR9]][0])
+			{
+				return false;
+			}
+			else
+			{
+				if ((Bet[pokerMan.StatBase[ST_VAR9]]-PlBet[pokerMan.StatBase[ST_VAR9]][0])<=master.CountItem(PID_BOTTLE_CAPS))
+				{
+					if(Bet[pokerMan.StatBase[ST_VAR9]]-PlBet[pokerMan.StatBase[ST_VAR9]][0]==0)
+					{
+						if(val==D_PRIN)
+						{
+							return true;
+						}
+						else
+						{
+							return false;
+						}
+					}
+					else
+					{
+						if(val==D_PRIN)
+						{
+							return false;
+						}
+						else
+						{
+							return true;
+						}
+					}
+				}
+				else
+				{
+					return false;
+				}
+			}
+		}
+		else
+		{
+			if(master.CountItem(PID_BOTTLE_CAPS)>0)
+			{
+				if ((Bet[pokerMan.StatBase[ST_VAR9]]-PlBet[pokerMan.StatBase[ST_VAR9]][0])>master.CountItem(PID_BOTTLE_CAPS))
+				{
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			}
+			else
+			{
+				return false;
+			}
+		}
+	}
+	return false;
+}
+
+bool d_BetRaise(Critter& master, Critter@ pokerMan, int val) // Вывод строк на повышение ставки
+{
+	uint betMoney;
+	uint min, max;
+	min=Bet[pokerMan.StatBase[ST_VAR9]]-PlBet[pokerMan.StatBase[ST_VAR9]][0];
+	max=master.CountItem(PID_BOTTLE_CAPS);
+	if ((PlBet[pokerMan.StatBase[ST_VAR9]][0]+max)>MaxBet[pokerMan.StatBase[ST_VAR9]])
+	{
+		max=MaxBet[pokerMan.StatBase[ST_VAR9]]-PlBet[pokerMan.StatBase[ST_VAR9]][0];
+	}
+	if(FraudMode[pokerMan.StatBase[ST_VAR9]]!=0)
+	{
+		return false;
+	}
+	if ((GameStage[pokerMan.StatBase[ST_VAR9]]==GAME_E_BETROUND1) or (GameStage[pokerMan.StatBase[ST_VAR9]]==GAME_E_BETROUND2))
+	{
+		switch(val)
+		{
+			case -1:
+				betMoney=master.CountItem(PID_BOTTLE_CAPS);
+				break;
+			case 0:
+				betMoney=Raise_1[pokerMan.StatBase[ST_VAR9]];
+				break;
+			case 1:
+				betMoney=Raise_2[pokerMan.StatBase[ST_VAR9]];
+				break;
+			case 2:
+				betMoney=Raise_3[pokerMan.StatBase[ST_VAR9]];
+				break;
+			case 3:
+				if(Bet[pokerMan.StatBase[ST_VAR9]]==MaxBet[pokerMan.StatBase[ST_VAR9]])
+				{
+					return false;
+				}
+				if(max>=min)
+				{
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			default:
+				Log("Error");
+				break;
+		}
+		if ((betMoney<=master.CountItem(PID_BOTTLE_CAPS)) and ((betMoney+PlBet[pokerMan.StatBase[ST_VAR9]][0])>Bet[pokerMan.StatBase[ST_VAR9]]) and ((betMoney+PlBet[pokerMan.StatBase[ST_VAR9]][0])<=MaxBet[pokerMan.StatBase[ST_VAR9]]))
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+bool d_BetNext(Critter& master, Critter@ pokerMan, int val)
+{
+	if(FraudMode[pokerMan.StatBase[ST_VAR9]]!=0)
+	{
+		return false;
+	}
+	if ((GameStage[pokerMan.StatBase[ST_VAR9]]==GAME_E_BETROUND1) or (GameStage[pokerMan.StatBase[ST_VAR9]]==GAME_E_BETROUND2))
+	{
+		if(val==0)
+		{
+			if(MHod[pokerMan.StatBase[ST_VAR9]]!=0)
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+		else
+		{
+			if(MHod[pokerMan.StatBase[ST_VAR9]]!=0)
+			{
+				return false;
+			}
+			else
+			{
+				return true;
+			}
+		}
+	}
+	else
+	{
+		return false;
+	}
+}
+
+bool d_ViewCards(Critter& master, Critter@ pokerMan)
+{
+	if(FraudMode[pokerMan.StatBase[ST_VAR9]]!=0)
+	{
+		return false;
+	}
+	if(GameStage[pokerMan.StatBase[ST_VAR9]]==GAME_E_BETROUND1)
+	{
+		if(MHod[pokerMan.StatBase[ST_VAR9]]==0)
+		{
+			if(not PlayerCardsInDial[pokerMan.StatBase[ST_VAR9]])
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+		else
+		{
+			return false;
+		}
+	}
+	else
+	{
+		if(GameStage[pokerMan.StatBase[ST_VAR9]]==GAME_E_REPLACECARD)
+		{
+			if(not PlayerCardsInDial[pokerMan.StatBase[ST_VAR9]])
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+		else
+		{
+			return false;
+		}
+	}
+}
+
+bool d_Fraud(Critter& master, Critter@ pokerMan)
+{
+	if(GameStage[pokerMan.StatBase[ST_VAR9]]!=GAME_E_END)
+	{
+		if(FraudMode[pokerMan.StatBase[ST_VAR9]]==0)
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+	else
+	{
+		return false;
+	}
+}
+bool d_Fraud1(Critter& master, Critter@ pokerMan, int val)
+{
+	if(GameStage[pokerMan.StatBase[ST_VAR9]]!=GAME_E_END)
+	{
+		if(FraudMode[pokerMan.StatBase[ST_VAR9]]==1)
+		{
+			if(PlState[pokerMan.StatBase[ST_VAR9]][val+1]==PLST_PASS)
+			{
+				return false;
+			}
+			else
+			{
+				return true;
+			}
+		}
+		else
+		{
+			return false;
+		}
+	}
+	else
+	{
+		return false;
+	}
+}
+bool d_Fraud2(Critter& master, Critter@ pokerMan)
+{
+	if ((GameStage[pokerMan.StatBase[ST_VAR9]]!=GAME_E_END) and (Fraud2Succ[pokerMan.StatBase[ST_VAR9]])==0)
+	{
+		if(FraudMode[pokerMan.StatBase[ST_VAR9]]==1)
+		{
+			if(master.CountItem(PID_DECK_OF_CARDS)>0)
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+		else
+		{
+			return false;
+		}
+	}
+	else
+	{
+		return false;
+	}
+}
+bool d_Fraud3(Critter& master, Critter@ pokerMan)
+{
+	if(GameStage[pokerMan.StatBase[ST_VAR9]]!=GAME_E_END)
+	{
+		if(FraudMode[pokerMan.StatBase[ST_VAR9]]==2)
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+	else
+	{
+		return false;
+	}
+}
+
+bool d_FraudCancel(Critter& master, Critter@ pokerMan)
+{
+	if(FraudMode[pokerMan.StatBase[ST_VAR9]]==1)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+bool d_Fraud2Cancel(Critter& master, Critter@ pokerMan)
+{
+	if(FraudMode[pokerMan.StatBase[ST_VAR9]]==2)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+bool d_ManyWinsCheck(Critter& master, Critter@ pokerMan, int val)
+{
+	GameVar@ winCash;
+	if(StopGameMoney[pokerMan.StatBase[ST_VAR9]]==0)
+	{
+		return false;
+	}
+	else
+	{
+		@winCash=GetUnicumVar(UVAR_poker_wincash,pokerMan.Id,master.Id);
+		if (!valid(winCash))
+		{
+			Log("<Poker> Error: winCash UVAR not loaded");
+		}
+		if(winCash.GetValue()<int(StopGameMoney[pokerMan.StatBase[ST_VAR9]]))
+		{
+			if(val==1)
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+		else
+		{
+			if(val==1)
+			{
+				return false;
+			}
+			else
+			{
+				return true;
+			}
+		}
+	}
+}

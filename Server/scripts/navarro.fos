@@ -1,0 +1,159 @@
+// Author: rifleman17
+// Navarro sub1 quests
+#include "_macros.fos"
+// Quest "Soft Job", Henry
+#define SCANER_INFO             (2)
+#define PID_SCANER              (PID_ELEC_LOCKPICK_MKII)
+#define STR_SCAN                (5150)
+#define STR_FULL                (5151)
+#define STR_EMPTY               (5152)
+void _ScanerInit(Item& item, bool firstTime)
+{
+	item.Info=SCANER_INFO;
+	SETFLAG(item.Flags, ITEM_CAN_USE_ON_SMTH);
+	item.SetLexems("$value" + item.Val1);
+	item.SetEvent(ITEM_EVENT_USE, "_ScanerUse");
+	item.Update();
+	if(firstTime)
+	{
+		// Создаем событие удаления предмета через 1 игровой месяц
+		CreateTimeEvent(__FullSecond + 60*60*24*30, "e_DeleteScaner", item.Id, true);
+	}
+}
+
+uint e_DeleteScaner(uint[]@ values)
+{
+	Item@ item=GetItem(values[0]);
+	if(valid(item))
+	{
+		DeleteItem(item);
+	}
+	return 0;
+}
+
+bool _ScanerUse(Item& item, Critter& cr, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+	if(valid(onCritter) && onCritter.IsDead() && onCritter.Stat[ST_BASE_CRTYPE]==CRTYPE_ROBOT)
+	{
+		Map@ map=onCritter.GetMap();
+		if (!valid(map))
+			return false;
+		Location@ loc=map.GetLocation();
+		if (!valid(loc) || (loc.GetProtoId() !=LOCATION_Sierra))
+			return false;
+		if(uint(onCritter.Stat[ST_VAR1]) > __FullSecond)
+		{
+			cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_EMPTY);
+			return true;
+		}
+		// Каждого робота можно сканировать только раз в два реальных часа
+		onCritter.StatBase[ST_VAR1]=__FullSecond + __TimeMultiplier*2*60*60;
+		uint value=1;
+		if(cr.Skill[SK_SCIENCE] > 50)
+			value=Random(5, 10);
+		if(cr.Skill[SK_SCIENCE] > 100)
+			value=Random(15, 20);
+		if(cr.Skill[SK_SCIENCE] > 150)
+			value=Random(20, 25);
+		item.Val1 +=value;
+		item.Val1=CLAMP(item.Val1, 0, 100);
+		item.SetLexems("$value" + item.Val1);
+		item.Update();
+		if(item.Val1 > 99)
+			cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_FULL);
+		else
+			cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_SCAN, "$value" + item.Val1);
+			
+		return true;
+	}
+	return false;
+}
+
+bool d_SoftJobComplete(Critter& player, Critter@ npc)
+{
+	Item@[] items;
+	if(player.GetItems(-1, items) >0)
+	{
+		for(uint i=0, iMax=items.length(); i<iMax; i++)
+		{
+			if(items[i].GetProtoId()==PID_SCANER && items[i].Info==SCANER_INFO && items[i].Val1==100)
+				return true;
+		}
+	}
+	return false;
+}
+
+void r_AddScaner(Critter& player, Critter@ npc)
+{
+	Item@ item=player.AddItem(PID_SCANER, 1);
+	if(valid(item))
+	{
+		item.SetScript("_ScanerInit");
+	}
+}
+
+// Чип для подчинения робота
+#define STR_CHIP_SET_UP            (5153)
+#define STR_CHIP_SET_FAIL          (5154)
+#define STR_ROBOT_CANT_REPAIR      (5155)
+#define STR_ROBOT_REPAIRED         (5156)
+
+import bool Merc2Player(Critter & player, Critter & merc, uint16 type)  from "merc";
+
+void r_AddChip(Critter& player, Critter@ npc)
+{
+	Item@ item=player.AddItem(PID_NAVCOM_PARTS, 1);
+	if(valid(item))
+		item.SetScript("_ChipInit");
+}
+
+void _ChipInit(Item& item, bool firstTime)
+{
+	item.Info=2;
+	SETFLAG(item.Flags, ITEM_CAN_USE_ON_SMTH);
+	item.SetEvent(ITEM_EVENT_USE, "_ChipUse");
+	item.Update();
+}
+
+bool _ChipUse(Item& item, Critter& cr, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+	if(valid(onCritter) && onCritter.IsDead() && onCritter.Stat[ST_BASE_CRTYPE]==CRTYPE_ROBOT)
+	{
+		Map@ map=onCritter.GetMap();
+		if (!valid(map))
+			return false;
+		Location@ loc=map.GetLocation();
+		if (!valid(loc) || (loc.GetProtoId() !=LOCATION_Sierra))
+			return false;
+		if(cr.Skill[SK_SCIENCE]<100)
+		{
+			cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_CHIP_SET_FAIL);
+		}else{		
+			cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_CHIP_SET_UP);
+			DeleteItem(item);
+			onCritter.SetEvent(CRITTER_EVENT_SMTH_USE_SKILL, "_RobotSmthUseSkill");
+			onCritter.StatBase[ST_VAR1]=cr.Id; // Запоминаем, кто установил чип
+		}			
+		return true;
+	}
+	return false;
+}
+
+void _RobotSmthUseSkill(Critter& cr, Critter& fromCr, int skill, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+	if(skill==SK_REPAIR && valid(onCritter) && onCritter.Id==cr.Id && uint(cr.Stat[ST_VAR1])==fromCr.Id)
+	{
+		if(fromCr.Skill[SK_REPAIR]<=100)
+		{
+			fromCr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_ROBOT_CANT_REPAIR);		
+		}else{
+			fromCr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_ROBOT_REPAIRED);
+			cr.ClearEnemyStack();
+			cr.ToLife();
+			cr.StatBase[ST_CURRENT_HP]=cr.Stat[ST_MAX_LIFE];
+			cr.MercBase[MERC_MASTER_DIST]=6;
+			cr.StatBase[ST_BAG_ID]=144; // Sentry robot bag
+			Merc2Player(fromCr, cr, 4); // Охранник по умолчанию. Защищает хозяина			
+		}
+	}
+}

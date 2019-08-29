@@ -1,0 +1,392 @@
+#include "_teams.fos"
+#include "_macros.fos"
+#include "_teams.fos"
+#include "_npc_pids.fos"
+#include "_bags.fos"
+
+#define ENTIRE_DEFENDERS       (161)
+#define ENTIRE_LEADERS         (162)
+#define ENTIRE_KINGS           (163) // Места появления болотников-королей (4 шт)
+#define ENTIRE_MIRELURKS       (164) // Места появления болотников обыкновенных
+#define ENTIRE_ANKLAV          (165)
+#define ENTIRE_BOLO_GUARDS     (166) // Места статичных болотников
+#define ENTIRE_DEADZONE_FRST   (170) // Первый энтайр гекс мертвой зоны
+#define ENTIRE_DEADZONE_LAST   (177) // Последний
+#define ENTIRE_PREPAWE_WAVE    (180) // Гекс, где собирается волна болотников перед атакой
+#define ENTIRE_ATTACK1         (181) // Первый гекс атаки
+#define ENTIRE_ATTACK2         (182) // Второй гекс атаки
+
+#define ENTIRE_SPAWN           (183) // Места генерации  болотников в составе волны
+
+#define COORD_VERTIBIRD_X      (40)  // Место появления вертиберда
+#define COORD_VERTIBIRD_Y      (45) 
+
+#define BRO_ATTACK_DIST        (10)
+
+#define MSG_KILLEM             (17)
+#define MSG_KILLME             (18)
+
+#define NPC_PID_PALADIN        (NPC_PID_BountyHunter_10)
+#define NPC_PID_PRIVATE        (132)
+#define BAG_PRIVATE            (BAG_SF_Caravan_VaultCityPatrolMale2) // Сумка рядового
+#define DIALOG_PRIVATE         (DIALOG_sf_lair_bro_private) // Диалог рядового
+#define BAG_PALADIN            (BAG_All_Unity_BigGunGuardFemale) // Сумка лидера
+#define DIALOG_PALADIN         (DIALOG_sf_lair_bro_paladin) // Диалог лидера
+
+
+#define BOLO_CRTYPE           (247)
+#define KING_CRTYPE           (248)
+#define PID_BOLO_POISON       (487)
+#define PID_BOLO              (488)
+#define PID_BOLO_DEADLY       (490)
+#define NEED_ATTACK_ENEMY #(cr) (cr.IsNpc()&&IsCritterInDeadZone(cr, cr.GetMap(), 0, ENTIRE_DEADZONE_FRST, ENTIRE_DEADZONE_LAST)&&cr.IsLife()&&(cr.Stat[ST_BASE_CRTYPE]==BOLO_CRTYPE||cr.Stat[ST_BASE_CRTYPE]==KING_CRTYPE))
+#define QUEST_VAR_NUM         (LVAR_q_sf_cruz_lair_clear) // Номер квестовой переменной на убийство всех болотников
+#define QUEST_COMPLETE_STATUS (2) // Значение переменной "квест выполнен"
+#define STR_EMOTE             (5100)
+import uint EraseAttackPlane(Critter& npc, Critter& target) from "npc_planes";
+import bool IsCritterInDeadZone(Critter & cr, Map & map, uint8 dir, uint8 hexFirst, uint8 hexEnd) from "loc_tech_bunker";
+import bool AddAttackPlane(Critter& npc, uint priority, Critter& target) from "npc_planes";
+import void _AddWave(int waveNum, uint mapId, bool attackNpc, bool attackPlayers, uint playerAttackPriority, uint npcAttackPriority) from "mob_wave";
+import void _AddStep(int waveNum, uint8 type, uint8 radius, uint timeNext, uint timeRepeat, bool search, bool clear, uint8 entire, uint16 x, uint16 y) from "mob_wave";
+import void _AddMob(int waveNum, uint mobId, int[]@ params, int[]@ items, string@ script, uint pid) from "mob_wave";
+import void _StartWave(int waveNum) from "mob_wave";
+import void StopInvasion() from "sf_invasion";
+/* Карта. */
+void _MapInit(Map& map, bool firstTime)
+{
+	map.SetLoopTime(1, 5000);
+	map.SetEvent(MAP_EVENT_LOOP_1, "_MapLoop1");
+	map.SetEvent(MAP_EVENT_IN_CRITTER, "_MapInCritter");
+	if(firstTime)
+	{
+		Critter @ cr;
+		uint entNum=map.CountEntire(ENTIRE_DEFENDERS);
+		uint16 x=0;
+		uint16 y=0;
+		for(uint i=0;i<entNum;i++)
+		{
+			if(!map.GetEntireCoords(ENTIRE_DEFENDERS,i,x,y)) continue;
+			int[] params={ST_BAG_ID, BAG_PRIVATE};
+			@cr=map.AddNpc(NPC_PID_PRIVATE, x, y, Random(0,5), params, null, "q_mirelurks_lair@_BroInit");
+			if(!valid(cr)) continue;
+			cr.StatBase[ST_TEAM_ID]=TEAM_BoSTrooper;
+			cr.StatBase[ST_DIALOG_ID]=DIALOG_PRIVATE;
+			cr.StatBase[ST_BAG_ID]=BAG_PRIVATE;
+		}
+		
+		entNum=map.CountEntire(ENTIRE_LEADERS);
+		for(uint i=0;i<entNum;i++)
+		{
+			int[] params={ST_BAG_ID, BAG_PALADIN};
+			if(!map.GetEntireCoords(ENTIRE_LEADERS,i,x,y)) continue;
+			@cr=map.AddNpc(NPC_PID_PALADIN, x, y, Random(0,5), params, null, "q_mirelurks_lair@_BroInit");
+			if(!valid(cr)) continue;
+			cr.StatBase[ST_TEAM_ID]=TEAM_BoSTrooper;
+			cr.StatBase[ST_DIALOG_ID]=DIALOG_PALADIN;
+			cr.StatBase[ST_BAG_ID]=BAG_PALADIN;
+		}
+		entNum=map.CountEntire(ENTIRE_MIRELURKS);
+		for(uint i=0;i<entNum;i++)
+		{
+			if(!map.GetEntireCoords(ENTIRE_MIRELURKS,i,x,y)) continue;
+			@ cr=map.AddNpc((Random(1,4)==1?PID_BOLO:PID_BOLO_POISON), x, y, Random(0,5), null, null, "q_mirelurks_lair@_BoloInit");			
+			if(!valid(cr)) continue;
+			cr.StatBase[ST_VAR1]=Random(10,13);
+			cr.StatBase[ST_TEAM_ID]=TEAM_Mob1;
+		}
+		entNum=map.CountEntire(ENTIRE_BOLO_GUARDS);
+		for(uint i=0;i<entNum;i++)
+		{
+			if(!map.GetEntireCoords(ENTIRE_BOLO_GUARDS,i,x,y)) continue;
+			@ cr=map.AddNpc(PID_BOLO_DEADLY, x, y, Random(0,5), null, null, "q_mirelurks_lair@_BoloInit");		
+			if(!valid(cr)) continue;
+			cr.StatBase[ST_VAR1]=Random(7,12);
+			cr.StatBase[ST_TEAM_ID]=TEAM_Mob1;
+			//cr.StatBase[ST_EXPLODE_RESIST]=500;
+		}
+		DeclareWave(map);
+	}
+}
+
+// Первый запуск волны
+void _MapInCritter(Map& map, Critter& cr)
+{
+	if(!cr.IsPlayer()) return;
+	if(map.GetData(1)!=0) return;
+	int wN=17+map.Id;
+	_StartWave(wN);
+	map.SetData(1,1);
+}
+
+// Очистка планов атаки мобов если они вылезли за границы мертвой зоны
+void _MapLoop1(Map& map)
+{
+	Critter @[] brothers;
+	map.GetCritters(NPC_PID_PALADIN, FIND_LIFE|FIND_ONLY_NPC, brothers);
+	map.GetCritters(NPC_PID_PRIVATE, FIND_LIFE|FIND_ONLY_NPC, brothers);
+	uint l=brothers.length();
+	if(l==0) return;
+	for(uint i=0;i<l;i++)
+	{
+		Critter @ bro=brothers[i];
+		if(!valid(bro)) return;
+		NpcPlane@[] planes;
+		uint k=bro.GetPlanes(planes);
+		if(k>0)
+		{
+			for(uint j=0;j<k;j++)
+			{
+				NpcPlane @ plane=planes[j];
+				if(plane.Type!=AI_PLANE_ATTACK) continue;
+				Critter @ target=GetCritter(plane.Attack_TargId);
+				if(!valid(target)) continue;
+				if(target.IsPlayer()) continue;
+				if(!IsCritterInDeadZone(target, map, 0, ENTIRE_DEADZONE_FRST, ENTIRE_DEADZONE_LAST))
+				{
+					EraseAttackPlane(bro, target);
+				}
+			}
+		}
+	}
+}
+
+/* Триггеры */
+void t_Attack(Critter& cr, Scenery& trigger, bool entered, uint8 dir)
+{
+	if(NEED_ATTACK_ENEMY(cr)&&!entered)
+	{
+		cr.SendMessage(MSG_KILLME, cr.Id, MESSAGE_TO_WHO_SEES_ME);
+	}
+	if(cr.Mode[MODE_HIDE]>0)
+	{
+		cr.ModeBase[MODE_HIDE]=1;
+	}
+}
+
+
+/* Бойцы и паладины БОС */
+void _BroInit(Critter & bro, bool firstTime)
+{
+	if(firstTime)
+	{
+		bro.StatBase[ST_LEVEL]=100;
+		bro.StatBase[ST_MAX_LIFE]=Random(500, 900);
+		bro.StatBase[ST_TEAM_ID]=TEAM_BoSTrooper;
+		for(uint i=ST_NORMAL_RESIST;i<=ST_POISON_RESISTANCE;i++)
+		{
+			bro.StatBase[i]=Random(100,150);
+		}
+		bro.StatBase[ST_EXPLODE_RESIST]=400;
+		for(uint i=ST_STRENGTH;i<=ST_LUCK;i++)
+		{
+			bro.StatBase[i]=10;
+		}
+		bro.StatBase[ST_ACTION_POINTS]=Random(10,20);
+		bro.StatBase[ST_MELEE_DAMAGE]=Random(50,90);
+		bro.PerkBase[PE_BONUS_HTH_DAMAGE]=1;
+		bro.PerkBase[PE_BONUS_RANGED_DAMAGE]=1;
+		bro.PerkBase[PE_BONUS_RATE_OF_FIRE]=1;
+		bro.PerkBase[PE_MORE_CRITICALS]=1;
+		bro.PerkBase[PE_SHARPSHOOTER]=1;
+		bro.PerkBase[PE_STRONG_BACK]=1;
+		bro.PerkBase[PE_MORE_CRITICALS]=1;
+		bro.PerkBase[PE_BETTER_CRITICALS]=1;
+		//bro.PerkBase[PE_TERMINATOR]=1;
+		bro.PerkBase[PE_SLAYER]=1;
+		bro.PerkBase[PE_SNIPER]=1;		
+		bro.ModeBase[MODE_UNLIMITED_AMMO]=1;
+		bro.ModeBase[MODE_NO_KNOCK]=1;
+		bro.ModeBase[MODE_NO_BARTER]=1;
+		bro.ModeBase[MODE_NO_STEAL]=1;
+		bro.StatBase[ST_CURRENT_HP]=bro.Stat[ST_MAX_LIFE];
+	}
+	bro.ShowCritterDist1=BRO_ATTACK_DIST;
+	bro.SetEvent(CRITTER_EVENT_MESSAGE,"_BroMessage");
+	bro.SetEvent(CRITTER_EVENT_ATTACK,"_BroAttack");
+	bro.SetEvent(CRITTER_EVENT_ATTACKED,"_BroAttacked");
+	bro.SetEvent(CRITTER_EVENT_SHOW_CRITTER_1,"_BroShowCritter1");
+}
+
+void _BroMessage(Critter& cr, Critter& fromCr, int message, int value)
+{
+	if(cr.IsDead()) return;
+	if((message==MSG_KILLEM)||(cr.IsNoPlanes()&&message==MSG_KILLME&&Random(1,3)==1))
+	{
+		Critter @ target=GetCritter(value);
+		if(valid(target))
+		{
+			AddAttackPlane(cr, (target.IsPlayer()?AI_PLANE_ATTACK_PRIORITY*2:0), target);
+		}
+	}
+}
+
+bool _BroAttack(Critter& cr, Critter& target)
+{
+	if(cr.IsDead()) return false;
+	if(cr.Stat[ST_TEAM_ID]==target.Stat[ST_TEAM_ID])
+	{
+		// Попытка бороться с задеваниями своих
+		uint[] vals={cr.Id, target.Id};
+		CreateTimeEvent(0, "e_CancelAttack", vals, false);
+		return true;
+	}	
+	if(target.IsNpc())
+	{
+		Map @ map=cr.GetMap();
+		if(valid(map))
+		{
+			if (!IsCritterInDeadZone(target, map, 0, ENTIRE_DEADZONE_FRST, ENTIRE_DEADZONE_LAST))
+			{
+				return true;
+			}
+		}
+	}	
+	return false;
+}
+
+uint e_CancelAttack(uint[]@ values)
+{
+	if(values.length()>1)
+	{
+		Critter @ cr1=GetCritter(values[0]);
+		Critter @ cr2=GetCritter(values[1]);
+		if(valid(cr1)&&valid(cr2))
+		{
+			EraseAttackPlane(cr1, cr2);
+			EraseAttackPlane(cr2, cr1);
+		}
+	}
+	return 0;
+}
+
+bool _BroAttacked(Critter& cr, Critter& attacker)
+{
+	if(cr.IsDead()) return false;
+	if(cr.Stat[ST_TEAM_ID]==attacker.Stat[ST_TEAM_ID])
+	{
+		// Попытка бороться с задеваниями своих
+		uint[] vals={cr.Id, attacker.Id};
+		CreateTimeEvent(0, "e_CancelAttack", vals, false);
+		return true;
+	}
+	if(attacker.IsPlayer())
+	{
+		cr.SendMessage(MSG_KILLEM, attacker.Id, MESSAGE_TO_ALL_ON_MAP);
+	}
+	if(attacker.IsNpc())
+	{
+		Map @ map=cr.GetMap();
+		if(valid(map))
+		{
+			if (!IsCritterInDeadZone(attacker, map, 0, ENTIRE_DEADZONE_FRST, ENTIRE_DEADZONE_LAST))
+			{
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+void _BroShowCritter1(Critter& cr, Critter& showCrit)
+{
+	if(cr.IsDead()) return;
+}
+
+
+/* Болотники */
+void _BoloInit(Critter & bolo, bool firstTime)
+{
+	if(bolo.GetProtoId()==PID_BOLO_DEADLY)
+	{
+		bolo.SetEvent(CRITTER_EVENT_IDLE,"_DeadlyIdle");
+	}else{
+		bolo.SetEvent(CRITTER_EVENT_IDLE,"_BoloIdle");
+	}
+	bolo.SetEvent(CRITTER_EVENT_DEAD,"_BoloDead");
+}
+
+void _BoloIdle(Critter& cr)
+{
+
+	if(cr.IsDead()) return;
+	Map @ map=cr.GetMap();
+	if(cr.Stat[ST_VAR1]==0) return;
+	if(!valid(map)) return;
+	if(map.GetCritters(0, FIND_LIFE|FIND_ONLY_PLAYERS, null)==0) return;
+	Critter @[] critters;
+	if(map.GetCrittersHex(cr.HexX,cr.HexY,cr.Stat[ST_VAR1],FIND_LIFE_AND_KO|FIND_ONLY_PLAYERS,critters)>0)
+	{
+		for(uint i=0,l=critters.length();i<l;i++)
+		{
+			AddAttackPlane(cr, 0, critters[i]);
+		}
+		return;
+	}
+	if(Random(1,3)==1) 
+	{
+		cr.MoveRandom();
+	}
+	if(Random(1,17)==1)
+	{
+		cr.SayMsg(SAY_EMOTE, TEXTMSG_TEXT, STR_EMOTE);
+	}	
+}
+
+void _DeadlyIdle(Critter& cr)
+{
+	if(cr.IsDead()) return;
+	if(cr.Mode[MODE_HIDE]==0&&cr.IsNoPlanes())cr.ModeBase[MODE_HIDE]=1;
+	_BoloIdle(cr);
+}
+
+// Квест считается выполненным, когда на карте кончились живые болотники. После этого завершается вся эпопея, связанная с ними
+void _BoloDead(Critter& cr, Critter@ killer) 
+{
+	Critter @[] critters;
+	Map @ map=cr.GetMap();
+	if(!valid(map)) return;
+	map.GetCritters(PID_BOLO_POISON, FIND_LIFE|FIND_ONLY_NPC, critters);
+	map.GetCritters(PID_BOLO, FIND_LIFE|FIND_ONLY_NPC, critters);
+	map.GetCritters(PID_BOLO_DEADLY, FIND_LIFE|FIND_ONLY_NPC, critters);
+	if(critters.length()>5) return;// Если осталось меньше 6 штук, считаем все удачно
+	critters.resize(0);
+	if(map.GetCritters(0, FIND_LIFE|FIND_ONLY_PLAYERS, critters)==0) return;
+	Location @ loc=map.GetLocation();
+	if(valid(loc)) loc.AutoGarbage=true;
+	for(uint i=0,l=critters.length();i<l;i++)
+	{
+		Critter @ player=critters[i];
+		if(!valid(player)) continue;
+		GameVar @ qVar=GetLocalVar(QUEST_VAR_NUM, player.Id);
+		if(!valid(qVar)) continue;
+		if(qVar.GetValue()>0&&qVar.GetValue()<QUEST_COMPLETE_STATUS)
+		{
+			qVar=QUEST_COMPLETE_STATUS;
+		}
+	}	
+	GameVar @ status=GetGlobalVar(GVAR_sf_invasion_status);
+	if(status.GetValue()!=0)
+	{
+		status=0;
+	}
+	StopInvasion();
+}
+
+// Периодические волновые нападения мобов
+void DeclareWave(Map & map)
+{
+	int wN=17+map.Id; //Волна мобов на энке с болотниками
+	_AddWave(wN, map.Id, true, true, 200, 100);
+	uint bolos=Random(10,12);
+	int[] params={ST_TEAM_ID, TEAM_Mob1};
+	for(uint i=0;i<bolos;i++)
+	{
+		_AddMob(wN, 0, params, null, null,PID_BOLO_POISON);
+	}
+	_AddStep(wN, 3, 3, 1, 0, false, false, ENTIRE_SPAWN, 0,0);
+	_AddStep(wN, 2, 10, 2, 5, false, false, ENTIRE_PREPAWE_WAVE, 0,0);
+	_AddStep(wN, 0, 12, 3, 0, false, false, ENTIRE_PREPAWE_WAVE, 0,0);
+	_AddStep(wN, 1, 15, 50, 2, true, true, ENTIRE_ATTACK1, 0,0);
+	_AddStep(wN, 1, 15, 20, 2, true, true, ENTIRE_ATTACK2, 0,0);
+	_AddStep(wN, 4, 10, 2000, 10, false, false, ENTIRE_ATTACK2, 0,0);	
+}

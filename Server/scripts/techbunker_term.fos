@@ -1,0 +1,26 @@
+// rifleman17 терминаторы дл€ первого уровн€ бункера
+// не атакует игроков в правом рукаве пещеры (с минами)
+#define _NoBaseInstance // свой экземпл€р шаблона
+
+#include "pattern_term.fos"
+
+import bool IsCritterInDeadZone(Critter & cr) from "loc_tech_bunker";
+
+class TechBunkerTermPattern : TermPattern
+{
+	void AttackPlayer(Critter & cr, uint priority, Critter & player)
+	{
+		if(!player.IsPlayer()) return;
+		if(IsCritterInDeadZone(player))	return;
+		AddAttackPlane(cr, priority, player);
+	}
+	
+	void SetEvents(Critter & cr)
+	{
+		TermPattern::SetTermStats(cr, 0);//cr.Stat[ST_NPC_ROLE]-30); TODO: fix
+		TermPattern::SetEvents(cr);
+	}
+
+}
+
+TechBunkerTermPattern pattern;

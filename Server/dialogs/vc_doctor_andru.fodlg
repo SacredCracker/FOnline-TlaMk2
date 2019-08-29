@@ -1,0 +1,187 @@
+[comment]
+Ваши комментарии / Your comments.
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 0 #
+5 1010 D _param p ST_INTELLECT < 4 #
+2 1020 D _var p npc_story = 0 D _param p ST_INTELLECT > 3 #
+14 1030 D _var p npc_story = 1 D _param p ST_INTELLECT > 3 D _var p q_vc_andrew_deliveries ! 1 D _var p click_counter < 5 #
+18 1040 D _param p ST_INTELLECT > 3 D _var p npc_story = 1 D _var p q_vc_andrew_deliveries = 1 #
+21 1050 D _param p ST_INTELLECT > 3 D _var p q_vc_andrew_deliveries = 3 D _var p npc_story = 1 @
+2 2000 None 0 #
+3 2010 #
+0 2020 #
+6 2030 @
+3 3000 None 0 #
+4 3010 #
+2 3020 #
+0 3030 @
+4 4000 None 0 #
+2 4010 @
+5 5000 None 0 @
+6 6000 None 0 #
+7 6010 @
+7 7000 None 0 #
+8 7010 @
+8 8000 None 0 #
+9 8010 #
+0 8020 @
+9 9000 None 0 #
+10 9010 @
+10 10000 None 0 #
+11 10010 @
+11 11000 None 0 #
+12 11010 @
+12 12000 None 0 #
+13 12010 D _var p npc_story = 0 R _param p ST_EXPERIENCE + 1200 R _param p REPUTATION_VAULT_CITY + 1 R _var p npc_story = 1 R _script dialog@r_InfoMessage 1 1 #
+0 12020 D _var p npc_story = 1 @
+13 13000 None 0 #
+0 13010 @
+14 14000 None 0 #
+0 14010 #
+15 14020 D _var p q_vc_andrew_deliveries = 0 D _script ncr_ratch@d_RatchTimeOutCheck 1 8804 #
+15 14030 D _var p q_vc_andrew_deliveries = 2 D _script ncr_ratch@d_RatchTimeOutCheck 1 8804 @
+15 15000 None 0 #
+16 15010 @
+16 16000 None 0 #
+17 16010 @
+17 17000 None 0 #
+0 17010 D _script ncr_ratch@d_RatchTimeOutCheck 1 8804 R _var p q_vc_andrew_deliveries = 1 R _script ncr_ratch@r_RatchTimeOutSet 2 8804 4320 #
+0 17020 @
+18 18000 None 0 #
+0 18010 #
+19 18020 D _item p PID_RADAWAY > 1 D _item p PID_DOCTORS_BAG > 0 D _item p PID_PARAMEDICS_BAG > 0 D _var p click_counter < 4 R _var p click_counter + 1 #
+20 18030 D _item p PID_RADAWAY > 1 D _item p PID_DOCTORS_BAG > 0 D _item p PID_PARAMEDICS_BAG > 0 D _var p click_counter = 4 R _var p click_counter + 1 @
+19 19000 None 0 #
+0 19010 D _item p PID_RADAWAY > 1 D _item p PID_DOCTORS_BAG > 0 D _item p PID_PARAMEDICS_BAG > 0 D _var p q_vc_andrew_deliveries = 1 R _param p REPUTATION_VAULT_CITY + 1 R _param p ST_EXPERIENCE + 1000 R _item p PID_BOTTLE_CAPS + 1500 R _item p PID_DOCTORS_BAG - 1 R _item p PID_PARAMEDICS_BAG - 1 R _item p PID_RADAWAY - 2 R _var p q_vc_andrew_deliveries = 2 @
+20 20000 None 0 #
+0 20010 D _item p PID_RADAWAY > 1 D _item p PID_DOCTORS_BAG > 0 D _item p PID_PARAMEDICS_BAG > 0 D _var p q_vc_andrew_deliveries = 1 R _item p PID_RADAWAY - 2 R _item p PID_DOCTORS_BAG - 1 R _item p PID_PARAMEDICS_BAG - 1 R _item p PID_BOTTLE_CAPS + 1500 R _param p ST_EXPERIENCE + 1000 R _param p REPUTATION_VAULT_CITY + 1 R _var p q_vc_andrew_deliveries = 3 @
+21 21000 None 0 &
+
+[russ]
+{100}{}{Доктор}
+{200}{}{Вы видите неряшливого человека в одежде доктора. }
+{210}{}{Вы видите "Доктора" Эндрю. Или то, что от него осталось.}
+{210}{}{Вы видите неряшливого человека в грязной коричневой рубахе. Его руки покрыты красной сыпью, которую он постоянно чешет.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{дурак}
+{1020}{}{Начало}
+{1030}{}{выслушали историю, теперь знакомы.}
+{1040}{}{взялись достать, что заказывал}
+{1050}{}{Квест выполнен}
+{2000}{}{Хотите, чтобы я вас залатал?}
+{2010}{}{Что это за место?}
+{2020}{}{Нет, все в порядке. Я просто проходил мимо.}
+{2030}{}{Здравствуйте, я @pname@. А вас как величать?}
+{3000}{}{Это обычный медпункт Города Убежища. Мы со Старым Доктором залатаем все, что нужно.}
+{3010}{}{"Старый Доктор?"}
+{3020}{}{Понятно. Послушайте, у меня есть еще вопросы...}
+{3030}{}{Хмм. Может, я еще вернусь, если мне понадобятся ваши услуги.}
+{4000}{}{Да-а. Авто-Доктор в задней комнате. Город ссудил его нам. Иногда в нем что-то барахлит, но по большей части он справляется с работой. По большей части.}
+{4010}{}{Понятно. Послушайте, у меня есть еще вопросы...}
+{5000}{}{А ты смешной.@@Пшел вон!}
+{6000}{}{Я доктор Хаус…эээ дьявол, доктор Эндрю. Черт! Чертов телевизор все мозги засрал.}
+{6010}{}{Не вам одному…}
+{7000}{}{Да, да…[вздыхает] Так вот, я сертифицированный доктор медицинских наук. Можете звать меня Док Эндрю, или просто Док. Хотя полное моё имя Эндрю Меровингер.}
+{7010}{}{Ого! Ничего себе фамилия! А вы имеете какое-то отношение к первой династии франкских королей?}
+{8000}{}{[Явно сильно удивлен] Надо же, впервые вижу здесь настолько образованного человека. Хм, имею отношение. Я их прямой, хотя и очень отдаленный потомок. Хотите послушать мою историю?}
+{8010}{}{Разумеется. Просто дрожу от нетерпения.}
+{8020}{}{Ой, у меня как раз сейчас встреча, так что не выйдет. [Выход]}
+{9000}{}{Чтобы было понятнее, я сначала расскажу об истории своей семьи. Так вот, мой великий предок, после восшествия на престол…[начинает вольный пересказ учебника истории Европы]}
+{9010}{}{[Молчите и киваете]}
+{10000}{}{А его внучка вышла замуж за испанского министра двора…[начинается полная отсебятина]}
+{10010}{}{[Терпеливо слушаете]}
+{11000}{}{[Выдаёт невероятную историю о перелете его троюродным дедом Атлантики на самолете братьев Райт]}
+{11010}{}{[Вы решили тренироваться в долготерпении]}
+{12000}{}{- и вот,  в результате интриг завистников, я и оказался в том положении, в каком вы меня видите.}
+{12010}{}{Воистину невероятная история. В жизни такого не @sex@|слышал||слышала|!}
+{12020}{}{Это удивительная история...}
+{13000}{}{Весьма рад знакомству. Приходите к нам ещё.}
+{13010}{}{Непременно.}
+{14000}{}{Рад видеть, @pname@. Что-то нужно?}
+{14010}{}{Нет, все в порядке. Я просто проходил мимо.}
+{14020}{}{У тебя работы не найдется?}
+{14030}{}{У тебя работы не найдется?}
+{15000}{}{Для хорошего человека найдется. Надо кое-что достать. Возьмешься?}
+{15010}{}{Что именно?}
+{16000}{}{Видишь ли, с тех пор как сменился главврач в городе, мою клинику держат на голодном пайке. С поставками медикаментов очень плохо. А мне ведь людей лечить.}
+{16010}{}{Так-так…}
+{17000}{}{Мне нужны: докторский чемоданчик, сумку парамедика, два рад-эвея. Плачу полторы тысячи. И буду очень признателен, если возьмешься.}
+{17010}{}{Хорошо, договорились.}
+{17020}{}{Некогда этим заниматься.}
+{18000}{}{Как мой заказ?. Готово?}
+{18010}{}{Ещё нет…}
+{18020}{}{Получи. Всё точно, как в аптеке.}
+{18030}{}{Получи. Всё точно, как в аптеке.}
+{19000}{}{Отлично, отлично. Это тебе, бери. Если денька через три подойдешь с таким же набором, я куплю.}
+{19010}{}{Договорились.}
+{20000}{}{Отлично. Это тебе, бери. Эээ… Сейчас у меня почти нет клиентуры, больше приносить ничего не надо.}
+{20010}{}{Хорошо, не буду.}
+{21000}{}{Я вас приветствую!@@Я занят пока.@@Я готовлюсь к сложной операции.@@У меня сегодня трудный день.@@Надеюсь, у тебя всё хорошо.}
+{100000001}{}{Вы выслушали историю доктора Эндрю. Удивительно, вы способны не перебивая слушать любую чушь. }
+
+[engl]
+{100}{}{the Doctor}
+{200}{}{you see the careless person in clothes of the doctor.}
+{210}{}{you see "Doctor" Andrew. Or that from it remains.}
+{210}{}{you see the careless person in a dirty brown shirt. His hands are covered by a red rash which it constantly scratches.}
+{1000}{}{Predialogue installations}
+{1010}{}{the fool}
+{1020}{}{the Beginning}
+{1030}{}{have listened to story, now are familiar.}
+{1040}{}{undertook to get that ordered}
+{1050}{}{the Quest is executed}
+{2000}{}{Want, that I have patched you?}
+{2010}{}{That it for a place?}
+{2020}{}{No, everything is all right. I simply passed by.}
+{2030}{}{Hello, I @pname. And you how to call?}
+{3000}{}{It is a usual first-aid post of the City of the Refuge. We with the Old Doctor will patch everything that is necessary.}
+{3010}{}{"the Old Doctor?"}
+{3020}{}{it is clear. Listen, I have still questions...}
+{3030}{}{Hmm. Perhaps I still will return, if your services are necessary for me.}
+{4000}{}{Yes ive. The Car-doctor in a back room. The city has lent it to us. Sometimes in it something knocks, but generally it copes with work. Generally.}
+{4010}{}{it is clear. Listen, I have still questions...}
+{5000}{}{And you ridiculous. @@ Pshel!}
+{6000}{}{I the doctor the House … eee a devil, doctor Andrew. Lines! The devil's TV all brains zasral.}
+{6010}{}{Not to you to one …}
+{7000}{}{Yes, yes … [I sigh] And so, the certificated doctor of medical sciences. Can call me Andrew's Dock, or simply Dock. Though Andrew Merovinger's full my name.}
+{7010}{}{Ogo! Anything to itself a surname! And you have any relation to the first dynasty frankskih kings?}
+{8000}{}{[it is obviously strongly surprised] It is necessary, for the first time I see here so formed person. Hm, I concern. I their direct, though also very remote descendant. Want to listen to my history?}
+{8010}{}{Certainly. Simply I shiver from impatience.}
+{8020}{}{Oh, at me just now a meeting so does not leave. [An exit]}
+{9000}{}{That it was more clear, I at first will tell about stories of the family. And so, my great ancestor, after accession to the throne … [begins free retelling of the textbook of history of Europe]}
+{9010}{}{[Be silent and nod]}
+{10000}{}{And its grand daughter has married the Spanish minister of a court yard … [begins full otsebjatina]}
+{10010}{}{[Patiently listen]}
+{11000}{}{[Right]} Gives out a tall story about flight by its three times removed grandfather of Atlantic by the plane of brothers
+{11010}{}{[you have decided to train in long-suffering]}
+{12000}{}{- and here, as a result of intrigues of envious persons, I also have appeared in that position in what you me see.}
+{12010}{}{Truly a tall story. In life such not @sex | heard || heard |!}
+{12020}{}{It is a strange story...}
+{13000}{}{it is rather glad to acquaintance. Come to us still.}
+{13010}{}{it is indispensable.}
+{14000}{}{Is glad to see, @pname. Something is necessary?}
+{14010}{}{No, everything is all right. I simply passed by.}
+{14020}{}{At you works will not be?}
+{14030}{}{At you works will not be?}
+{15000}{}{For the good person will be. It is necessary to get something. You will undertake?}
+{15010}{}{What exactly?}
+{16000}{}{You see since the head physician in a city was replaced, my clinic hold on short rations. With deliveries of medicines very badly. And me after all people to treat.}
+{16010}{}{So-so …}
+{17000}{}{To me are necessary: a doctor's small suitcase, a bag of the paraphysician, two it is glad-eveja. To one and a half thousand crying. Also I will be very grateful, if you will undertake.}
+{17010}{}{it is good, have agreed.}
+{17020}{}{there is no time these to be engaged.}
+{18000}{}{As my order?. It is ready?}
+{18010}{}{Still is not present …}
+{18020}{}{Receive. All is exact, as in a drugstore.}
+{18030}{}{Receive. All is exact, as in a drugstore.}
+{19000}{}{it is excellent, excellent. It to you, take. If day through three you will approach with the same set, I will buy.}
+{19010}{}{Have agreed.}
+{20000}{}{it is excellent. It to you, take. Eee … Now I have not enough clientele more to bring it is necessary nothing.}
+{20010}{}{it is good, I will not be.}
+{21000}{}{I welcome you! @@ I am occupied while. @@ I prepare for difficult operation. @@ at me today difficult day. @@ I Hope, at you all is good.}
+{100000001}{}{you have listened to story of doctor Andrew. Surprisingly, you are capable without interrupting to listen to any bosh.}

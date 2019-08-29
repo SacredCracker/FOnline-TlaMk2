@@ -1,0 +1,51 @@
+#include "_macros.fos"
+#include "hell_h.fos"
+
+#define ERROR_DIALOG_NODE    (100)
+
+import bool TransitToMap(Critter& cr, int locPid, int mapIndex, int entranceNum) from "stdlib";
+
+
+void r_SendToMines(Critter& player, Critter@ slave)
+{
+	// телепортируем игрока на карту урановых шахт
+	bool result = TransitToMap(
+		player, LOCATION_ReplicationHell, MAP_INDEX_hell_mines, ENTRANCE_out_to_mines);
+
+	// игрок не телепортировалс€
+	if (!result)
+	{
+		// __ForceDialog = ERROR_DIALOG_NODE;
+		return;
+	}
+
+	// TODO: необходимо как-то идентифицировать предмет,
+	//       чтобы при выходе игрока из шахт затем его гарантированно изъ€ть
+
+	// выдаем инструмент
+	Item@ tool = player.AddItem(PID_SLEDGEHAMMER, 1);
+	// проверка на вс€кий случай
+	if (tool is null)
+	{
+		// __ForceDialog = ERROR_DIALOG_NODE;
+		return;
+	}
+}
+
+
+void r_SendToMines2(Critter& player, Critter@ slave)
+{
+	bool result = TransitToMap(
+		player, LOCATION_ReplicationHell, MAP_INDEX_hell_mines, ENTRANCE_corridor_to_mines);
+	if (!result)
+	{
+		// __ForceDialog = ERROR_DIALOG_NODE;
+		return;
+	}
+	Item@ tool = player.AddItem(PID_SLEDGEHAMMER, 1);
+	if (tool is null)
+	{
+		// __ForceDialog = ERROR_DIALOG_NODE;
+		return;
+	}
+}

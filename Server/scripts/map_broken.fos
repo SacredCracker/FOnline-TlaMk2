@@ -1,0 +1,17 @@
+// Author Anall Ass
+
+#include "_macros.fos"
+#include "_npc_pids.fos"
+
+#define ENTRANCE_SOUTH     (1)
+#define ENTRANCE_EAST     (2)
+
+import bool GetEntireFreeHex(Map& map, int number, uint16& hx, uint16& hy) from "entire";
+
+bool entrance_Broken(Location& broken, Critter@[]& critters, uint8 entrance)
+{
+	Critter@ leader=critters[0];
+	if(entrance==ENTRANCE_SOUTH) return leader.Skill[SK_OUTDOORSMAN]>=100;
+	else if(entrance==ENTRANCE_EAST) return leader.Skill[SK_OUTDOORSMAN]>=50;
+        return true;
+}

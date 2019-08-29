@@ -1,0 +1,326 @@
+[comment]
+Ваши комментарии / Your comments.
+50+ квест "найти шпиона для сантьяго"
+70+  квест   "Бумаги доктора Генри"
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 0 #
+4 1010 D _param p ST_INTELLECT < 4 #
+2 1020 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 #
+3 1030 D _var n name_mem_npc_player = 1 @
+2 2000 None 0 #
+65506 2010 #
+65507 2020 #
+0 2030 @
+3 3000 None 0 #
+65506 3010 #
+0 3020 #
+20 3030 D _var p ncr_dorothy_gamma_status_char = 0 D _var p ncr_dusty_party_status_global = 1 D _var p ncr_dusty_party_status_char = 1 #
+30 3040 D _var p ncr_dorothy_gamma_status_char = 1 D _item p PID_MICRO_FUSION_CELL > 19 D _item p PID_BEER > 0 #
+40 3050 D _var p ncr_rondo_doroty_status = 1 D _var p ncr_buster_doroty_status < 2 #
+50 3060 D _var p q_ncr_santiaga_find_spy_status = 1 #
+70 3070 D _param p REPUTATION_NCR > 29 D _var p q_ncr_doroty_find_henry_papers = 0 #
+72 3080 D _var p q_ncr_doroty_find_henry_papers = 1 D _item p PID_DR_HENRY_PAPERS > 0 D _param p REPUTATION_NCR > 29 R _item p PID_DR_HENRY_PAPERS - 1 R _param p ST_EXPERIENCE + 15000 @
+4 4000 None 0 @
+20 5000 None 0 #
+21 5010 #
+22 5020 @
+21 6000 None 0 @
+22 7000 None 0 #
+23 7010 @
+23 8000 None 0 #
+24 8010 @
+24 9000 None 0 #
+25 9010 @
+25 10000 None 0 #
+26 10010 @
+26 11000 None 0 #
+27 11010 @
+27 12000 None 0 #
+28 12010 @
+28 13000 None 0 #
+29 13010 @
+29 14000 None 0 #
+0 14010 R _var p ncr_dorothy_gamma_status_char = 1 @
+30 15000 None 0 #
+31 15010 R _item p PID_MICRO_FUSION_CELL - 20 R _item p PID_BEER - 1 #
+0 15020 @
+31 16000 None 0 #
+32 16010 @
+32 17000 None 0 #
+33 17010 D _item p PID_GAMMA_GULP_BEER < 5 R _var p ncr_dorothy_gamma_status_char = 2 R _item p PID_GAMMA_GULP_BEER + 1 R _param p ST_EXPERIENCE + 400 #
+33 17020 D _item p PID_GAMMA_GULP_BEER = 5 R _var p ncr_dorothy_gamma_status_char = 2 R _item p PID_GAMMA_GULP_BEER + 1 R _param p ST_EXPERIENCE + 850 #
+33 17030 D _item p PID_GAMMA_GULP_BEER < 10 D _item p PID_GAMMA_GULP_BEER > 5 R _var p ncr_dorothy_gamma_status_char = 2 R _item p PID_GAMMA_GULP_BEER + 1 R _param p ST_EXPERIENCE + 275 #
+33 17040 D _item p PID_GAMMA_GULP_BEER > 9 R _var p ncr_dorothy_gamma_status_char = 2 R _item p PID_GAMMA_GULP_BEER + 1 R _param p ST_EXPERIENCE + 675 @
+33 18000 None 0 #
+0 18010 @
+40 19000 None 0 #
+41 19010 @
+41 20000 None 0 #
+42 20010 @
+42 21000 None 0 #
+43 21010 @
+43 22000 None 0 #
+44 22010 D _var p ncr_buster_doroty_status = 1 R _var p ncr_buster_doroty_status = 2 #
+47 22020 D _var p ncr_rondo_doroty_status = 1 R _var p ncr_rondo_doroty_status = 2 #
+0 22030 @
+44 23000 None 0 #
+45 23010 @
+45 24000 None 0 #
+46 24010 @
+46 25000 None 0 @
+47 26000 None 0 #
+48 26010 @
+48 27000 None 0 #
+49 27010 @
+49 28000 None 0 @
+50 29000 None 0 #
+51 29010 @
+51 30000 None 0 #
+52 30010 #
+53 30020 #
+54 30030 @
+52 31000 None 0 @
+53 32000 None 0 @
+54 33000 None 0 #
+55 33010 @
+55 34000 None 0 #
+56 34010 @
+56 35000 None 0 #
+0 35010 #
+57 35020 @
+57 36000 None 0 #
+58 36010 @
+58 37000 None 0 #
+59 37010 @
+59 38000 None 0 #
+60 38010 @
+60 39000 None 0 #
+0 39010 R _var p q_ncr_santiaga_find_spy_status = 2 R _param p ST_EXPERIENCE + 800 @
+70 40000 None 0 #
+71 40010 #
+0 40020 @
+71 41000 None 0 #
+0 41010 R _var p q_ncr_doroty_find_henry_papers = 1 #
+0 41020 @
+72 42000 None 0 #
+0 42010 D _param p PE_NCR_REPAIR = 0 R _param p PE_NCR_REPAIR = 1 R _script dialog@r_InfoMessage 1 1 &
+
+[russ]
+{100}{}{Дороти}
+{200}{}{Вы видите молодую женщину, похожую на мальчика, одетую в рабочий костюм.}
+{210}{}{Несмотря на всю грязь и пыль на ней, она выглядит очень профессионально, особенно если посмотреть на обслуживающего робота, что везде за ней ходит.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{тупой}
+{1020}{}{не знаком}
+{1030}{}{знаком}
+{2000}{}{Я Дороти, городской инженер.}
+{2010}{}{Говорят, что у вас много всякого хлама. Давайте поторгуем.}
+{2020}{}{Умри! Умрии! [Атаковать]}
+{2030}{}{Очень приятно. Мне пора идти.}
+{3000}{}{О,вы опять вернулись! Что вам нужно?}
+{3010}{}{Я хочу торговать с вами.}
+{3020}{}{Пока.}
+{3030}{}{Дороти, у вас случайно не найдется бутылки пива Гамма?}
+{3040}{}{Дороти, я принес@sex@|||ла| все, что вы просили.}
+{3050}{}{Тут такое дело, не знаю, с чего начать.}
+{3060}{}{Дороти, я к вам по делу.}
+{3070}{}{Дороти, ты можешь меня научить лучше обращаться с механизмами?}
+{3080}{}{Дороти, это те самые бумаги, что ты искала? [Протянуть Дороти бумаги доктора Генри]}
+{4000}{}{Подойдите позже, я занята.}
+{5000}{}{[Фыркает и с презрением смотрит на вас] Трубы горят? Меньше пить нужно. Нету у меня алкоголя!}
+{5010}{}{Обойдусь и без ваших советов, как-нибудь [Уйти]}
+{5020}{}{Это не для меня. Дасти устраивает вечеринку, нужно ОЧЕНЬ много выпивки.}
+{6000}{}{Иди-иди, напейся, подерись еще!}
+{7000}{}{Понятно. И ты, конечно же, тот самый, добрый самаритянин, который спасет мир от проклятия трезвости?}
+{7010}{}{Ну я пообещал@sex@|||а| ему помочь с поисками... }
+{8000}{}{Неважно, нету у меня пива! Не пью, и другим не советую. Хотя...}
+{8010}{}{Что значит "хотя"? Ты знаешь, у кого выпивку можно достать? }
+{9000}{}{Нет, конечно, зачем мне это знать? Есть другой вариант. Можно подделать пиво Гамма, да так, что никто не заметит. Это будет смешно, мне кажется.}
+{9010}{}{Каким же образом, интересно?}
+{10000}{}{[Дороти на мгновение задумывается, затем достает странное устройство, космический гибрид мясорубки и миксера] Вот! Мое последнее изобретение!}
+{10010}{}{Ага! Самогонный аппарат! А говоришь, что не пьешь!}
+{11000}{}{Тьфу ты! Никакой это не самогонный апарат. Это - вакуумный преобразователь.}
+{11010}{}{Хм. А что он преобразовывает? И что такое вакуум?}
+{12000}{}{Его основное назначение тебя не касается. Но, думаю, мы можем его использовать, чтобы порадовать старину Дасти [Хихикает]}
+{12010}{}{Что для этого нужно сделать?}
+{13000}{}{Принеси мне 20 ядерных батарей, несколько плазменных гранат, мертвого смертекогтя, голосовой модулятор и бутылку пива, и я покажу тебе!}
+{13010}{}{Ужас какой. Зачем тебе гранаты, смертокогт и все остальное? Ты собираешься сделать взрывчатку?}
+{14000}{}{Хм. Думаю, можно даже обойтись без смертокогтя. Тащи сюда пиво и батарейки, сварим Гамму, от настоящей не отличить!}
+{14010}{}{Надеюсь, ты знаешь, что делаешь. }
+{15000}{}{Все? А где смертокогт? Шутка. Давай сюда.}
+{15010}{}{[Отдать Дороти 20 батарей и бутылку пива]}
+{15020}{}{Нет, я передумал, прошу прощения [Уйти]}
+{16000}{}{[Дороти склоняется над своим преобразователем. Выливает в воронку пиво из бутылки, затем делает что-то странное с батареями. Устройство начинает вибрировать, идет белый дым и раздается негромкий хлопок]}
+{16010}{}{Ох! Что это было?}
+{17000}{}{Вот! [Дороти протягивает вам бутылку из-под пива, в которую слита некая светящаяся жидкость из преобразователя] Пиво Гамма. Версия Дороти. Ха!}
+{17010}{}{[С опаской взять бутылку] Никогда больше не попробую это пиво. Надеюсь, Дасти оно понравится, спасибо...}
+{17020}{}{[С опаской взять бутылку] Никогда больше не попробую это пиво. Надеюсь, Дасти оно понравится, спасибо...}
+{17030}{}{[С опаской взять бутылку] Никогда больше не попробую это пиво. Надеюсь, Дасти оно понравится, спасибо...}
+{17040}{}{[С опаской взять бутылку] Никогда больше не попробую это пиво. Надеюсь, Дасти оно понравится, спасибо...}
+{18000}{}{Да не за что. Если раздобудешь смертокогта, заходи. Приготовим анисовый ликер.}
+{18010}{}{ Тьфу, гадость какая. Пока. [Уйти]}
+{19000}{}{Не смущайтесь, говорите.}
+{19010}{}{Дороти, вы красивая и умная девушка...}
+{20000}{}{Да ну? А я вот все не могла понять, кто же я? Значит, девушка. И что дальше?}
+{20010}{}{Дороти, есть один человек, которому вы не безразличны.}
+{21000}{}{Ты что ли?}
+{21010}{}{Нет, не я...}
+{22000}{}{Ну так пусть этот "человек" придет, мы с ним поговорим. Как зовут то его?}
+{22010}{}{Это Бастер, торговец оружием.}
+{22020}{}{Это Рондо, механик. Красавец мужчина!}
+{22030}{}{Прошу прощения, Дороти. Я должен сначала еще раз поговорить с ним [Уйти]}
+{23000}{}{Тьфу. Как он меня достал, этот коротышка.}
+{23010}{}{Коротышка? }
+{24000}{}{Безмозглый коротышка, да. Передайте ему, что меня от него тошнит! И не беспокойте меня больше..}
+{24010}{}{Дороти! Вы даже не представляете, от чего отказываетесь! Бастер, не только привлекателен, он еще и богат!}
+{25000}{}{Если он, на ваш взгляд, привлекателен, почему бы вам не поцеловаться? Идите к своему "привлекательному" Бастеру и оставьте меня в покое!}
+{26000}{}{Рондо? Этот надутый индюк с завышенной самооценкой? Он мне противен. Как он мне надоел.}
+{26010}{}{Вы хотите сказать, что у него нет ни единого шанса?}
+{27000}{}{Именно. Если бы я оказалась запертой в Убежище, и кроме меня и Рондо в нем бы не было никого, я бы скорее придушила эту гадюку, чем позволила к себе прикоснуться.}
+{27010}{}{Но, возможно, вы просто плохо знаете Рондо!}
+{28000}{}{И знать не хочу. Все, разговор окончен.}
+{29000}{}{Никаких дел, у меня сегодня выходной. Ясно?}
+{29010}{}{ Я не отниму много вашего времени, просто ответьте на пару вопросов.}
+{30000}{}{Не больше двух! Что вам нужно?}
+{30010}{}{Можно тебя шлепнуть по попке?}
+{30020}{}{Что вы делаете сегодня вечером?}
+{30030}{}{По просьбе Сантьяго я пытаюсь установить источник неких слухов...}
+{31000}{}{Нет. Зато можно, чтобы мой робот тебя хорошенько отшлепал. }
+{32000}{}{[Смотрит на вас с недоверием] Неправильный вопрос!}
+{33000}{}{[Присвистывает] Сантьяго? ничего себе. Что нужно от меня начальнику конрразведки?}
+{33010}{}{Я всех жителей опрашиваю, не видели ли они последние дни кого-то подозрительного. Есть подозрение, что бандюки из Нью-Рено готовят провокацию против правительства НКР.}
+{34000}{}{Ух ты! Как в кино?}
+{34010}{}{Хочется, чтобы это оказалось всего лишь глупыми слухами... Но, тем не менее, что скажешь по этому поводу?}
+{35000}{}{Я никого не видела. }
+{35010}{}{Понятно. Ладно, мне пора, увидимся. [Уйти]}
+{35020}{}{Очень жаль. С другой стороны, отсутствие результата - тоже результат!}
+{36000}{}{Зато я кое-что слышала.}
+{36010}{}{Что именно?}
+{37000}{}{Может быть, это то, что ты ищешь... Уже который день, я перехватываю радиосигналы. Передатчик работает где-то в НКР.}
+{37010}{}{И что за радиосигналы?}
+{38000}{}{Какой-то шифр. Повторяется ночью около часа, ровно. Я пыталась разобрать, о чем там говорят, но ничего не поняла. Канал запомнила - ищи волну 17.}
+{38010}{}{А о чем говорили?}
+{39000}{}{Не знаю. Зоопарк какой-то. Брамины, муравьи, гекконы. Бред.}
+{39010}{}{Ровно в час ночи? Спасибо, Дороти, это интересно. [Уйти]}
+{40000}{}{Хм, о тебе многие говорят. Я думаю, что могла бы поделиться с тобой своими секретами. Только сначала выполни одну мою просьбу.}
+{40010}{}{Что за просьба?}
+{40020}{}{Не сейчас.}
+{41000}{}{Я давно хочу заполучить бумаги доктора Генри, доводилась слышать о нем?}
+{41010}{}{Да, имя знакомое. Хорошо, попробую их найти.}
+{41020}{}{Нет, я не буду этим заниматься.}
+{42000}{}{Ух ты! Невероятно! Инструкция по сбору механической собаки! Это очень интересно. Да, именно то, что мне нужно. Я расскажу тебе как можно, используя эти схемы, собрать механическую собаку.}
+{42010}{}{Внимательно слушать.}
+{100000001}{}{Дороти поделилась с вами секретами своего мастерства. Навык науки увелчен на 5 пунктов.}
+
+[engl]
+{100}{}{Dorothy.}
+{200}{}{You see a young woman, looking like a boy, wearing coverall.}
+{210}{}{Despite all of mud and dust on her, she looks very reliable, especially if take a look at service bot, following her.}
+{1000}{}{Predialogue installations}
+{1010}{}{stupid}
+{1020}{}{it is not familiar}
+{1030}{}{a sign}
+{2000}{}{I Doroti, the city engineer.}
+{2010}{}{It is said that at you a lot of any stuff. Let's trade.}
+{2020}{}{Die! Umrii! [To Attack]}
+{2030}{}{it is very pleasant. It is time to me to go.}
+{3000}{}{About, you have again returned! What it is necessary for you?}
+{3010}{}{I want to trade with you.}
+{3020}{}{While.}
+{3030}{}{Doroti, at you casually will not be bottles of beer Scale?}
+{3040}{}{Doroti, I принес@sex ||| la | everything that you asked.}
+{3050}{}{Here such business, I do not know, with what to begin.}
+{3060}{}{Doroti, I to you on business.}
+{3070}{}{Doroti, you can teach me is better to address with mechanisms?}
+{3080}{}{Doroti, is those papers, what you searched? [To stretch Doroti of a paper of doctor Henry]}
+{4000}{}{Approach later, I am occupied.}
+{5000}{}{[Sniffs and with contempt looks at you] Pipes burn? It is necessary to drink less. There is no at me an alcohol!}
+{5010}{}{I Will manage and without your councils, somehow [to Leave]}
+{5020}{}{It not for me. Dasti arranges a party, it is necessary A LOT OF binge.}
+{6000}{}{Go-go, get drunk, fight still!}
+{7000}{}{it is clear. And you, certainly, that, kind Samaritan who will save the world from a sobriety damnation?}
+{7010}{}{Well I пообещал@sex ||| and | to it to help with searches...}
+{8000}{}{it is unimportant, there is no at me a beer! I do not drink, and to another I do not advise. Though...}
+{8010}{}{That means "though"? You know, at whom binge can be got?}
+{9000}{}{Is not present, of course, what for to me it is the nobility? There is other variant. It is possible to forge beer Scale, yes so that nobody will notice. It will be ridiculous, it seems to me.}
+{9010}{}{in What image, interesting?}
+{10000}{}{[Doroti for an instant reflects, then gets the strange device, a space hybrid of a meat grinder and a mixer] Here! My last invention!}
+{10010}{}{Aha! The Samogonnyj device! And you say that you do not drink!}
+{11000}{}{Fie you! Any it not samogonnyj aparat. It is the vacuum converter.}
+{11010}{}{Hm. And what it transforms? Also what such vacuum?}
+{12000}{}{Its basic purpose you does not concern. But, I think, we can use it to please olden time of Dasti [Giggles]}
+{12010}{}{That for this purpose it is necessary to make?}
+{13000}{}{Bring to me 20 nuclear batteries, some plasma grenades, dead smertekogtja, the vocal modulator and a beer bottle, and I will show to you!}
+{13010}{}{Horror what. What for to you of grenade, smertokogt and all the rest? You are going to make an explosive?}
+{14000}{}{Hm. I think, it is possible even to do without smertokogtja. Drag here beer and batteries, we will weld Scale, from present not to distinguish!}
+{14010}{}{I Hope, you know that do.}
+{15000}{}{All? And where smertokogt? A joke. Give here.}
+{15010}{}{[to Give Doroti of 20 batteries and a beer bottle]}
+{15020}{}{No, I have changed the mind, I am sorry [to Leave]}
+{16000}{}{[Doroti is declined over the converter. Pours out in a funnel beer of a bottle, then does something strange with batteries. The device starts to vibrate, there is a white smoke and the quiet clap]} is distributed
+{16010}{}{Oh! What was it?}
+{17000}{}{Here! [Doroti stretches you a bottle from under beer in which a certain shone liquid from the converter] Beer Scale is merged. The version of Doroti. Ha!}
+{17010}{}{[Cautiously to take a bottle] Never I will not try any more this beer. I hope, Dasti it will be pleasant, thanks...}
+{17020}{}{[Cautiously to take a bottle] Never I will not try any more this beer. I hope, Dasti it will be pleasant, thanks...}
+{17030}{}{[Cautiously to take a bottle] Never I will not try any more this beer. I hope, Dasti it will be pleasant, thanks...}
+{17040}{}{[Cautiously to take a bottle] Never I will not try any more this beer. I hope, Dasti it will be pleasant, thanks...}
+{18000}{}{Yes there is nothing. If you will get smertokogta, come. We will prepare anisic liquor.}
+{18010}{}{Fie, muck what. While. [To Leave]}
+{19000}{}{be not confused, speak.}
+{19010}{}{Doroti, you the beautiful and clever girl...}
+{20000}{}{Yes well? And I here could not understand all, who I? Means, the girl. Also what further?}
+{20010}{}{Doroti, is one person to whom you are not indifferent.}
+{21000}{}{whether You that?}
+{21010}{}{No, not I...}
+{22000}{}{Well so let this "person" will come, we will talk to it. How call that it?}
+{22010}{}{It is Basseterre, the dealer the weapon}
+{22020}{}{This Rondo, the mechanic. A handsome man the man!}
+{22030}{}{I Am sorry, Doroti. I should talk once again at first to it [to Leave]}
+{23000}{}{Fie. As it has got me, this the pudge.}
+{23010}{}{the Pudge?}
+{24000}{}{Brainless the pudge, yes. Tell it that me from it toshnit! Also do not disturb me more.}
+{24010}{}{Doroti! You at all do not represent, what refuse! Basseterre, not only is attractive, it also is rich!}
+{25000}{}{If it, in your opinion, is attractive, why to you not to kiss? Go to the "attractive" Basseterre and leave me alone!}
+{26000}{}{the Rondo? This nadutyj a turkey-cock with the overestimated self-estimation? It is opposite to me. As it has bothered me.}
+{26010}{}{you want to tell, what at it are not present uniform chance?}
+{27000}{}{. If I have appeared locked in the Refuge, and except me and the Rondo in it would not be anybody, I would strangle this viper more likely, than have allowed to touch myself.}
+{27010}{}{But, probably, you simply badly know the Rondo!}
+{28000}{}{And the nobility I do not want. Everything, conversation is ended.}
+{29000}{}{Any affairs, at me today the day off. Clearly?}
+{29010}{}{I will not take away a lot of your time, simply answer pair questions.}
+{30000}{}{No more than two! What it is necessary for you?}
+{30010}{}{It is possible you shlepnut on a bottom?}
+{30020}{}{That you do tonight?}
+{30030}{}{At the desire of Santiago I try to establish a source of certain hearings...}
+{31000}{}{No. But it is possible, that my robot properly has spanked you.}
+{32000}{}{[the Wrong question Looks at you with mistrust]!}
+{33000}{}{[Santiago Whistles]? Anything to itself. What is necessary from me for the chief konrrazvedki?}
+{33010}{}{I interrogate all inhabitants, whether saw they last days someone suspicious. There is a suspicion that bandjuki from Nju-Reno prepare provocation against government NKR.}
+{34000}{}{Uh you! How at cinema?}
+{34010}{}{It would be desirable, that it has appeared only silly hearings... But, nevertheless, that you will tell about it?}
+{35000}{}{I saw nobody.}
+{35010}{}{it is clear. All right, it is time to me, we will meet. [To leave]}
+{35020}{}{It is a pity. On the other hand, absence of result - too result!}
+{36000}{}{But I something heard.}
+{36010}{}{What exactly?}
+{37000}{}{Perhaps, it that you search... Which day, I intercept radio signals. The transmitter works somewhere in NKR.}
+{37010}{}{Also what for radio signals?}
+{38000}{}{Any code number. Repeats at night about an hour, exactly. I tried to disassemble, about what there speak, but have understood nothing. The channel has remembered - search for a wave 17.}
+{38010}{}{And about what spoke?}
+{39000}{}{I do not know. A zoo any. Braminy, ants, geckoes. Brad.}
+{39010}{}{it is equal at o'clock in the morning? Thanks, Doroti, it are interesting. [To leave]}
+{40000}{}{Hm, many speak about you. I think that could share with you the secrets. Only at first satisfy one my request.}
+{40010}{}{That for the request?}
+{40020}{}{Not now.}
+{41000}{}{I want to catch for a long time papers of doctor Henry, was lead up to hear about it?}
+{41010}{}{Yes, a name familiar. Well, I will try to find them.}
+{41020}{}{No, I will not be engaged in it.}
+{42000}{}{Uh you! Improbably! The instruction on gathering of a mechanical dog! It is very interesting. Yes, that is necessary for me. I will tell to you as it is possible, using these schemes, to collect a mechanical dog.}
+{42010}{}{Attentively to listen.}
+{100000001}{}{Doroti has shared with you secrets of the skill. Skill of a science uvelchen on 5 points.}
+

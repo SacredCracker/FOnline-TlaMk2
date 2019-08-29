@@ -1,0 +1,177 @@
+[comment]
+Ваши комментарии / Your comments.
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 @
+2 2000 None 0 #
+0 2010 D _param p ST_INTELLECT > 3 #
+3 2020 D _param p ST_KARMA < 100 D _param p ST_INTELLECT > 3 #
+4 2030 D _param p ST_KARMA } 100 D _param p ST_INTELLECT > 3 #
+10 2040 D _item p PID_DAY_PASS > 0 #
+14 2050 D _var p redd_rooney_cemetery > 0 @
+3 3000 None 0 #
+9 3010 @
+4 4000 None 0 #
+0 4010 #
+5 4020 @
+5 5000 None 0 #
+6 5010 #
+7 5020 D _item p PID_BOTTLE_CAPS } 500 R _item p PID_BOTTLE_CAPS - 500 R _script redd_gates@r_SetPlayerAccess 3 2 2 60 @
+6 6000 None 0 #
+0 6010 @
+7 7000 None 0 #
+0 7010 R _script redd_gates@r_SetPlayerAccess 3 1 2 60 #
+8 7020 @
+8 8000 None 0 #
+65507 8010 #
+0 8020 @
+9 9000 None 0 #
+0 9010 R _script redd_gates@r_SetPlayerAccess 3 1 2 60 R _script redd_gates@r_SetPlayerAccess 3 2 2 60 @
+10 10000 None 0 #
+0 10010 #
+11 10020 D _item p PID_DAY_PASS > 0 @
+11 11000 None 0 #
+13 11010 D _item p PID_DAY_PASS > 0 D _item p PID_DAY_PASS < 50 R _item p PID_DAY_PASS - 1 #
+12 11020 D _item p PID_DAY_PASS > 0 D _param p SK_SPEECH > 50 R _script redd_gates@r_SetPlayerAccess 3 1 2 60 R _script redd_gates@r_SetPlayerAccess 3 2 2 60 #
+0 11030 @
+12 12000 None 0 #
+0 12010 @
+13 13000 Attack 0 @
+14 14000 None 0 #
+15 14010 D _script dialog@d_NotTimeoutOk 0  #
+17 14020 D _script dialog@d_TimeoutOk 0  @
+15 15000 None 0 #
+16 15010 @
+16 16000 None 0 @
+17 17000 None 0 #
+19 17010 D _item p PID_FLOWER < 2 #
+20 17020 D _item p PID_FLOWER > 1 #
+18 17030 @
+18 18000 None 0 @
+19 19000 None 0 @
+20 20000 None 0 #
+0 20010 D _var p redd_rooney_cemetery = 1 R _script dialog@r_InfoMessage 1 1 R _var p redd_rooney_cemetery = 2 R _param p ST_EXPERIENCE + 800 R _script redd_gates@r_SetPlayerAccess 3 2 2 60 R _script redd_gates@r_SetPlayerAccess 3 1 2 60 R _script dialog@r_SetUniqTO 1 1440 #
+0 20020 D _var p redd_rooney_cemetery > 1 R _script redd_gates@r_SetPlayerAccess 3 1 2 60 R _script redd_gates@r_SetPlayerAccess 3 2 2 60 R _script dialog@r_SetUniqTO 1 1440 &
+
+[russ]
+{100}{}{Таможенник}
+{200}{}{Человек в костюме жителя Города-Убежища.}
+{200}{}{Перед вами офицер местной таможни.}
+{210}{}{Вы видите таможенника, он занимается оформлением разрешений и пропусков во Внутренний Город.}
+{210}{}{Если вы хотите попасть за стены, придется договариваться с этим человеком.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{Answer text}
+{2000}{}{Чем могу помочь?}
+{2010}{}{Ничем, я ищу другого человека.}
+{2020}{}{Мне нужно пройти во Внутренний Город.}
+{2030}{}{Мне нужно пройти во Внутренний Город.}
+{2040}{}{У меня есть дневной пропуск Города-Убежища. Я хочу пройти во Внутренний Город.}
+{2050}{}{Как мне быть, я должен посетить могилу родственника...}
+{3000}{}{Я так не думаю. Мне о вас не докладывали, значит, я не могу вас пропустить.}
+{3010}{}{Неужели ничего нельзя сделать? Мне очень нужно пройти через ворота!}
+{4000}{}{Представьтесь.}
+{4010}{}{Нет, я не могу назвать свое имя.}
+{4020}{}{Меня зовут @pname@.}
+{5000}{}{[Листает бумаги] @pname@, @pname@... Ах, да, вашего имени нет в документах. Тем не менее, я слышал о вас. Вы сможете пройти, но только в дневное время. Оформление пропуска - платное. Вы должны внести в кассу Реддинга 500 монет.}
+{5010}{}{У меня нет таких денег...}
+{5020}{}{Да, пожалуйста. [Заплатить за пропуск]}
+{6000}{}{В таком случае, прошу меня извинить. Правила - общие для всех. Всего доброго.}
+{6010}{}{Я вернусь, когда достану деньги.}
+{7000}{}{Отлично, пропуск я вам оформил [Ухмыляется и хлопает по карману, в который утекли ваши денежки]. Охрана на воротах вас пропустит. Пропуск действует в течение одного часа. Так что не возитесь слишком долго.}
+{7010}{}{Благодарю. Прощайте.}
+{7020}{}{Э-э-э... А пропуск? Или чек, может товарную накладную... Я ничего не получу?}
+{8000}{}{Что? Вы чем-то недовольны? Провоцируете конфликт? Грубите представителю власти? Проявляете неуважение к стражу порядка?!!!}
+{8010}{}{Да! Ты, жалкий взяточник, все узнают о тебе правду!!!}
+{8020}{}{Нет-нет, я просто ошиб@sex@|ся||лась|. Мне пора.}
+{9000}{}{Ничего. Прошу вас, уходите, пока я не позвал регуляторов.}
+{9010}{}{Я ухожу...}
+{10000}{}{Очень интересно... Позвольте взглянуть?}
+{10010}{}{Еще чего. Вдруг отберешь? Ни за что!}
+{10020}{}{Пожалуйста. [Протянуть фальшивый пропуск]}
+{11000}{}{[Тщательно разглядывает пропуск и хмурится] Хммм... А знаете ли вы, @sex@|мой друг||милая|, что полагается тем, кто подделывает официальные документы Города-Убежища?}
+{11010}{}{Этот - настоящий, понял?}
+{11020}{}{Может быть и знаю, но ко мне это никак не относится. Мой пропуск подлинный.}
+{11030}{}{Нет, не знаю. Более того, не горю желанием это узнать. Прощайте.}
+{12000}{}{[Морщины на лице таможенника разгладились и он снова улыбается]  Вот и прекрасно. Вы можете пройти. Я дам знать охране на воротах. Держите пропуск при себе, предъявляйте по требованию регуляторов, чтобы патрульные не посчитали вас нарушителем. Помните, что должны покинуть город до захода солнца. Удачи!}
+{12010}{}{Благодарю. Всего доброго.}
+{13000}{}{Не пытайтесь меня обмануть. Вам не уйти от правосудия. Регуляторы! Сюда!}
+{14000}{}{Какого родственника?}
+{14010}{}{Мой дядюшка, мистер Руни, похоронен на старом кладбище за баром "Последний Вздох"...}
+{14020}{}{Мой дядюшка, мистер Руни, похоронен на старом кладбище за баром "Последний Вздох"...}
+{15000}{}{Черт подери! Буквально пару часов назад я вас уже пропустил на кладбище. Имейте совесть! У этого Руни слишком много родни. Вы сводите меня с ума, да, все вы, Руни!}
+{15010}{}{Вы не пропустите меня? Неужели?}
+{16000}{}{Именно так.}
+{17000}{}{Хм. [Таможенник просматривает какую-то папку с бумагами, исписанными мелким почерком] Не вижу никаких упоминаний о том, чтобы у вдовы Руни были какие-то родственники.}
+{17010}{}{Это естественно, ведь я - племянни@sex@|к||ца| мистера Руни... Только что вернул@sex@|ся||ась| из дальнего путешествия, и тут оказалось, что я не могу посетить моего любезного дядюшку, чтобы возложить пару цветов на его могилу... }
+{17020}{}{Это естественно, ведь я - племянни@sex@|к||ца| мистера Руни... Только что вернул@sex@|ся||ась| из дальнего путешествия, и тут оказалось, что я не могу посетить моего любезного дядюшку, чтобы возложить пару цветов на его могилу... }
+{17030}{}{Разве моего слова не достаточно?! Немедленно пропустите меня!}
+{18000}{}{Нет, недостаточно. Уходите.}
+{19000}{}{Ха! Да у вас же нет с собой цветов. Меня не обмануть такими глупыми шутками. Уходите.}
+{20000}{}{Хм, мы... То есть, я... Я уважаю семейные традиции и обычаи. Думаю, ничего страшного не произойдет, если вы повидаетесь с дорогим дядюшкой... Можете пройти, только не задерживайтесь.}
+{20010}{}{Благодарю вас, вы достойный человек!}
+{20020}{}{Благодарю вас, вы достойный человек!}
+{100000001}{}{Вы использовали историю о муже Руни, чтобы проникнуть через ворота Внутреннего города.}
+
+[engl]
+{100}{}{the Customs officer}
+{200}{}{the Person in a suit of the inhabitant of the City-refuge.}
+{200}{}{Before you the officer of local customs.}
+{210}{}{you see the customs officer, he is engaged in registration of permissions and admissions in the Internal City.}
+{210}{}{If you want to get for walls, it is necessary to agree with this person.}
+{1000}{}{Predialogue installations}
+{1010}{}{Answer text}
+{2000}{}{Than I can help?}
+{2010}{}{Anything, I search for other person.}
+{2020}{}{I need to pass in the Internal City.}
+{2030}{}{I need to pass in the Internal City.}
+{2040}{}{I have a day admission of the City-refuge. I want to pass in the Internal City.}
+{2050}{}{As to me to be, I should visit a tomb of the relative...}
+{3000}{}{I so do not think. On me on you did not report, means, I cannot pass you.}
+{3010}{}{Really nothing can be made? I need to pass through gate!}
+{4000}{}{Be presented.}
+{4010}{}{No, I cannot name the name.}
+{4020}{}{My name is @pname.}
+{5000}{}{[Thumbs through papers] @pname, @pname... Ah, yes, your name is not present in documents. Nevertheless, I heard about you. You can pass, but only in the afternoon. Admission registration - paid. You should bring in cash desk Reddinga of 500 coins.}
+{5010}{}{I do not have such money...}
+{5020}{}{Yes, please. [To Pay for the admission]}
+{6000}{}{In that case, I ask me to excuse. Rules - the general for all. All kind.}
+{6010}{}{I will return, when I will get money.}
+{7000}{}{it is excellent, I to you have issued the admission [Grins and claps on a pocket in which your money] have flowed away. Protection on collars will pass you. The admission operates within one hour. So do not potter too long.}
+{7010}{}{I Thank. Farewell.}
+{7020}{}{E-e-e... And the admission? Or the check, can the consignment note... I will receive nothing?}
+{8000}{}{That? You are dissatisfied with something? Provoke the conflict? Be rude to the representative of the power? Show disrespect for the guard?!!!}
+{8010}{}{Yes! You, the pity bribe taker, all learn about you truth!!!}
+{8020}{}{No, I am simple ошиб@sex | sja || las |. It is time to me.}
+{9000}{}{Anything. I ask you, leave, while I have not called regulators.}
+{9010}{}{I leave...}
+{10000}{}{it is very interesting... Allow to look?}
+{10010}{}{Still that. Suddenly you will select? For what!}
+{10020}{}{Please. [To Stretch the false admission]}
+{11000}{}{[Carefully examines the admission and Hmmm frowns]... And whether you know, @sex | my friend || the darling |, what it is necessary to those who forges official documents of the City-refuge?}
+{11010}{}{This - present, has understood?}
+{11020}{}{Can be and I know, but it does not concern me in any way. My admission original.}
+{11030}{}{No, I do not know. Moreover, I do not burn with the desire to learn it. Farewell.}
+{12000}{}{[Wrinkles on the face of the customs officer were smoothed also it again smiles] Here and perfectly. You can pass. I will let know to protection on collars. Keep the admission around, show on request of regulators that patrolmen have not counted you as the infringer. Remember that should leave a city to sunset. Good luck!}
+{12010}{}{I Thank. All kind.}
+{13000}{}{do not try to deceive me. To you not to leave from justice. Regulators! Here!}
+{14000}{}{What relative?}
+{14010}{}{My uncle, Mr. Runi, is buried on an old cemetery behind a bar "Last Sigh"...}
+{14020}{}{My uncle, Mr. Runi, is buried on an old cemetery behind a bar "Last Sigh"...}
+{15000}{}{Damn it! I am literally a pair of clocks back you have already passed on a cemetery. Have conscience! At this Runi it is too much relatives. You dement me, yes, all of you, Runi!}
+{15010}{}{you do not pass me? Really?}
+{16000}{}{so.}
+{17000}{}{Hm. [The Customs officer looks through any folder with the papers which have been used up by small handwriting] I do not see any mentions of that widow Runi had any relatives.}
+{17010}{}{It is natural, after all I - племянни@sex | to || tsa | Mr. Runi... Just вернул@sex | sja || as | from distant travel, and here it has appeared that I cannot visit my kind uncle to assign pair of colours to its tomb...}
+{17020}{}{It is natural, after all I - племянни@sex | to || tsa | Mr. Runi... Just вернул@sex | sja || as | from distant travel, and here it has appeared that I cannot visit my kind uncle to assign pair of colours to its tomb...}
+{17030}{}{Unless it is not enough my word?! Immediately pass me!}
+{18000}{}{No, insufficiently. Leave.}
+{19000}{}{Ha! Yes you do not have with themselves colours. Me not to deceive such silly jokes. Leave.}
+{20000}{}{Hm, we... That is, I... I respect family traditions and customs. I think, anything terrible will not occur, if you see expensive uncle... Can pass, only be not late.}
+{20010}{}{I Thank you, you the worthy person!}
+{20020}{}{I Thank you, you the worthy person!}
+{100000001}{}{you used history about husband Runi to get through gate of the Internal city.}

@@ -1,0 +1,818 @@
+#include "_macros.fos"
+#include "_animation.fos"
+#include "_msgstr.fos"
+#include "_npc_pids.fos"
+#include "_teams.fos"
+#include "_bags.fos"
+#include "_colors.fos"
+#include "npc_menege_lib.fos"
+
+#define INTRO_WORLD_X           		(410)  // Координаты расположения интро-локации на глобале, ось Х
+#define INTRO_WORLD_Y           		(208)  // Координаты расположения интро-локации на глобале, ось У
+#define ENTIRE_ENTRANCE1        		(240)  // Номер Entire-гекса, на котором начинает игрок
+#define ENTIRE_ENTRANCE2       			(242)  // Номер второго Entire-гекса, на который перемещается игрок
+
+#define NEWBIE_MIN_EXPERIENCE   		(6000) 
+#define NEWBIE_MAX_EXPERIENCE   		(15000) // Максимальное количество опыта, которое можно получить на начальной локации
+
+#define NEWBIE_REPLICATION_TIMEOUT		(REAL_SECOND(15))
+
+#define MIN_MONEY		(10)				// Минимальное количество монет, которое может появится после прохождения нуболокации одним персонажем
+#define MAX_MONEY		(59)				// Минимальное количество монет, которое может появится после прохождения нуболокации одним персонажем
+#define MONEY_CHANCE	(8)				    // Шанс на появление монет в каждом ящике нуболокации, после прохождения её одним персонажем
+
+import void SetDeterioration(Item& item, int deteriorationProcent) from "repair";
+import void InjureCritter(Critter& cr, uint dmg, uint dmgType, uint8 dir, uint attackerId) from "combat";
+import bool AddAttackPlane(Critter& npc, uint priority, Critter& target, int minHp) from "npc_planes";
+import void DropDrugEffects(Critter& cr) from "drugs";
+import void DropPoison(Critter& cr) from "poison";
+import void DropRadiation(Critter& cr) from "radiation";
+import void dropAllItem(Critter& cr) from "replication";
+import void FlushScreen(Critter& cr, uint fromColor, uint toColor, uint timeMs) from "effects";
+
+// Установить квестовую переменную (квеста на прохождение нуболоки)
+bool SetQuestStat(uint playerId, int value)
+{
+	GameVar @ qVar=GetLocalVar(LVAR_q_newbie_redemption, playerId);
+	if (!valid(qVar)) return false;
+	qVar=value;
+	return true;
+}
+
+// Получить квестовую переменную (квеста на прохождение нуболоки)
+int GetQuestStat(uint playerId)
+{
+	GameVar @ qVar=GetLocalVar(LVAR_q_newbie_redemption, playerId);
+	if (!valid(qVar)) return 0;
+	return qVar.GetValue();
+}
+
+// Расчет порога получения опыта на начальной локации
+void maxNewbieExperience(Critter & cr, int exp)
+{
+	if(cr.StatBase[ST_EXPERIENCE]<NEWBIE_MAX_EXPERIENCE) return;
+	if (!valid(cr)) return;
+	Map@ map=cr.GetMap();
+	if (!valid(map)) return;
+	Location@ loc=map.GetLocation();
+	if (!valid(loc)) return;
+	if(loc.GetProtoId()!=LOCATION_NewbieLocation) return;
+	
+	if(cr.StatBase[ST_VAR7]!=4)
+	{	
+		if(cr.StatBase[ST_EXPERIENCE]>=NEWBIE_MIN_EXPERIENCE && needHelpWindow(cr.Id))
+		{
+			cr.StatBase[ST_VAR7]=4;
+			cr.ShowScreen(SCREEN_DIALOGBOX, 0, "");
+			cr.SayMsg(SAY_DIALOGBOX_TEXT,TEXTMSG_TEXT,STR_COLLAR_DROP);			
+		}
+	}
+
+	if(cr.StatBase[ST_EXPERIENCE]-exp<NEWBIE_MAX_EXPERIENCE) 
+	{
+		cr.StatBase[ST_EXPERIENCE]=NEWBIE_MAX_EXPERIENCE;
+		return;
+	}
+	
+	cr.StatBase[ST_EXPERIENCE]-=exp;
+}
+
+// Установка стартовой локации и начальных условий
+bool SetPlayerToNewbieLocation(Critter & cr) // Export
+{
+	if(cr.IsNpc()) return false;
+	int questStat=GetQuestStat(cr.Id);
+	if(questStat>19) return false;
+	int locPid=0;
+	int entire=0;
+	if(questStat<2)
+	{
+		locPid=LOCATION_NewbieIntro;
+		// Смена скина при включенной репликации на локации для новичков
+		if(cr.Stat[ST_GENDER]==GENDER_FEMALE)
+		{
+			cr.ChangeCrType(61);
+			cr.StatBase[ST_BASE_CRTYPE]=61;
+		}
+		else
+		{
+			cr.ChangeCrType(64);
+			cr.StatBase[ST_BASE_CRTYPE]=64;
+		}
+		entire=ENTIRE_ENTRANCE1;
+
+		addCollar(cr);
+
+		// Установка параметров игрока
+		cr.SetEvent(CRITTER_EVENT_DEAD, "e_PlayerDead");
+	}
+	else if(questStat>16)
+	{
+		locPid=LOCATION_NewbieOutro;
+		entire=ENTIRE_ENTRANCE2;
+	}
+	else
+	{
+		if(cr.Stat[ST_GENDER]==GENDER_FEMALE)
+		{
+			cr.ChangeCrType(61);
+			cr.StatBase[ST_BASE_CRTYPE]=61;
+		}
+		else
+		{
+			cr.ChangeCrType(64);
+			cr.StatBase[ST_BASE_CRTYPE]=64;
+		}
+		return true;
+	}
+
+	uint locId=CreateLocation (locPid, INTRO_WORLD_X, INTRO_WORLD_Y, null);
+	if(locId==0) return false;
+	Location @ loc=GetLocation(locId);
+	if (!valid(loc)) return false;
+	Map @ map=loc.GetMapByIndex(0);
+	if (!valid(map)) return false;
+	cr.TransitToMap(map.Id,entire);
+	loc.AutoGarbage=true;
+
+	// Запуск начального диалога
+	if(questStat<2)
+		RunDialog(cr, DIALOG_newb_replication_sam, cr.HexX, cr.HexY, false);
+
+	return true;
+}
+
+// Інициализация ошейника
+void _CollarInit(Item& item, bool firstTime)
+{
+	item.SetEvent(ITEM_EVENT_DROP,"e_CollarDrop");
+	item.SetEvent(ITEM_EVENT_MOVE,"e_CollarMove");
+}
+
+// Попытка выкинуть ошейник
+void e_CollarDrop(Item& item, Critter& cr)
+{
+	Item@[] items;
+	cr.GetItems(-1, items);
+	
+	for(uint i=0, iMax=items.length(); i<iMax; i++)
+		if(items[i].GetProtoId()==PID_EXP_COLLAR && items[i].CritSlot==SLOT_ARMOR)
+			return;
+	
+	if(GetQuestStat(cr.Id)>16) return;						  // Если рабовладельческий лагерь пройден, то разрешить выбросить
+
+	Item@ collar=cr.AddItem(PID_EXP_COLLAR, 1);			  // В противном случае добавить новый ошейник в инвентарь
+	cr.MoveItem(collar.Id, 1, SLOT_ARMOR);					  // И пересместить его в слот брони
+	DeleteItem(item);										  // А старый ошейник удалить
+}
+
+// Попытка переместить ошейник в другой слот
+void e_CollarMove(Item& item, Critter& cr, uint8 fromSlot)
+{
+	if(fromSlot!=SLOT_ARMOR) return;						  // Если перемещали не с слота брони, то позволить переместить
+	cr.MoveItem(item.Id, 1, SLOT_ARMOR);					  // В противном случае переместить ошейник назад в слот брони
+}
+
+//Выходе с карты
+void t_ExitToGlobal(Critter& cr, Scenery& trigger, bool entered, uint8 dir)
+{
+	Item@ collar=cr.GetItem(PID_EXP_COLLAR, SLOT_ARMOR);
+	Map@ map =cr.GetMap();
+	if(not valid(map) || cr.IsNpc()) return;
+
+	if(GetQuestStat(cr.Id)<7)
+	{
+		if(valid(collar)) DeleteItem(collar);
+
+		map.RunEffect(PID_EXPLODE_FIRE_BIG,cr.HexX,cr.HexY,2); 		// Создать имитацию взрыва.
+		map.PlaySound("WHN1XXX1.ACM"); 						   		// Проиграть звук взрыва.
+
+		InjureCritter(cr, Random(216, 269), DAMAGE_EXPLODE, 0, 0);	// Убить игрока.
+
+		// Нанести несмертельный урон взрывом окружающим криттерам.
+		Critter@[] critters;
+		if(map.GetCrittersHex(cr.HexX,cr.HexY,2,FIND_LIFE_AND_KO,critters)>0)	
+			for(uint i=0, iMax=critters.length(); i<iMax; i++)			
+				if(critters[i].IsDead()==false)
+					InjureCritter(critters[i], Random(critters[i].StatBase[ST_MAX_LIFE]/4, critters[i].StatBase[ST_MAX_LIFE]/2), DAMAGE_EXPLODE, 0, 0);
+		return;
+	}
+	
+	FlushScreen(cr, COLOR_BLACK, COLOR_BLACK, 3000);
+	uint locId=CreateLocation(LOCATION_NewbieOutro, INTRO_WORLD_X, INTRO_WORLD_Y, null);
+	Location@ loc=GetLocation(locId);
+	if (!valid(loc)) return;
+	Map @ outroMap=loc.GetMap(MAP_newbie_habbol);
+	if (!valid(outroMap)) return;
+	cr.TransitToMap(outroMap.Id,ENTIRE_ENTRANCE2);
+	loc.AutoGarbage=true;
+
+	addRandomCountItemInContainer(PID_BOTTLE_CAPS, MIN_MONEY, MAX_MONEY, MONEY_CHANCE);
+	SetQuestStat(cr.Id, 17);						// Установки квестовой переменной в значение "Криттер на финальной локации"	
+}
+
+// Запуск диалогового окна с вопросом о выводе сообщений помощи
+void t_first_help(Critter& cr, Scenery& trigger, bool entered, uint8 dir)
+{
+	if(cr.StatBase[ST_VAR7]==1) return;
+	cr.StatBase[ST_VAR7]=1;
+	
+	cr.ShowScreen(SCREEN_DIALOGBOX, 0, "");
+	cr.SayMsg(SAY_DIALOGBOX_TEXT,TEXTMSG_TEXT, STR_START_NEWBIE_QUEST);		
+	
+	/*cr.ShowScreen(SCREEN_DIALOGBOX, 1, "answer_cancel_help_window");
+	cr.SayMsg(SAY_DIALOGBOX_TEXT, TEXTMSG_TEXT, STR_NEED_HELP_WINDOW);
+	cr.SayMsg(SAY_DIALOGBOX_BUTTON(0), TEXTMSG_TEXT, STR_NEED_HELP_WINDOW_COMFIRM);*/
+}
+
+void answer_cancel_help_window(Critter& cr, uint answerI, string& answerS)
+{
+	GameVar @ qVar=GetLocalVar(LVAR_newbie_need_window_help, cr.Id);
+	if (!valid(qVar)) return;
+	qVar=1;
+}
+
+// Выводить ли окно с подсказками
+bool needHelpWindow(uint playerId)
+{
+	/*GameVar @ qVar=GetLocalVar(LVAR_newbie_need_window_help, playerId);
+	if (!valid(qVar)) return false;
+	return qVar.GetValue()!=0;*/
+	return true;
+}
+
+void e_PlayerDead(Critter& cr, Critter@ killer)
+{
+	cr.TimeoutBase[TO_REPLICATION]=__FullSecond+NEWBIE_REPLICATION_TIMEOUT;
+}
+
+// Переместить игрока из первой комнаты в пещеру (завершен первый разговор)
+void r_TransitFromRoom1(Critter & player, Critter @ npc)
+{
+	Map@ map=GetMapByPid(MAP_newbie_replication, 0);
+	if (!player.TransitToMap(map.Id,ENTIRE_ENTRANCE2)) return;
+	
+	if(GetQuestStat(player.Id)<4)
+	{
+		player.StatBase[ST_EXPERIENCE]+=367;
+		player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_TALK_GUARDS); // "Вы поговорили с охранником."
+		SetQuestStat(player.Id, 4);
+	}
+}
+
+// Остановить и предупредить игрока при входе в опасную зону
+void t_Wait(Critter& cr, Scenery& trigger, bool entered, uint8 dir)
+{
+	if (!entered)  return;
+
+	Item@ collar=cr.GetItem(PID_EXP_COLLAR, SLOT_ARMOR);
+	if(not valid(collar)) return;
+
+	cr.Wait(0);
+
+	cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_WAIT);
+
+	if (!needHelpWindow(cr.Id)) return;	
+	cr.ShowScreen(SCREEN_DIALOGBOX, 0, "");
+	cr.SayMsg(SAY_DIALOGBOX_TEXT,TEXTMSG_TEXT,STR_WAIT);
+}
+
+// Выдача ошейника		
+void addCollar(Critter& cr)
+{
+	Item@ oldCollar=cr.GetItem(PID_EXP_COLLAR, SLOT_ARMOR);
+	if(not valid(oldCollar))
+	{
+		Item@ collar=cr.AddItem(PID_EXP_COLLAR, 1);
+		cr.MoveItem(collar.Id, 1, SLOT_ARMOR);
+	}
+}
+
+void r_UpReplMoney(Critter & player, Critter @ npc)
+{
+	if (!needHelpWindow(player.Id)) return;
+	
+	player.ShowScreen(SCREEN_DIALOGBOX, 0, "");
+	player.SayMsg(SAY_DIALOGBOX_TEXT,TEXTMSG_TEXT,STR_UP_REPL_MONEY);
+}
+
+void r_GetOut(Critter & player, Critter @ npc)
+{
+	Item@[] items;
+	player.GetItems(-1, items);
+	
+	for(uint i=0, iMax=items.length(); i<iMax; i++)
+		if(items[i].GetProtoId()==PID_EXP_COLLAR && items[i].CritSlot==SLOT_ARMOR)
+		{
+			DeleteItem(items[i]);
+			continue;
+		}
+	
+	if(!needHelpWindow(player.Id)) return;
+	
+	player.ShowScreen(SCREEN_DIALOGBOX, 0, "");
+	player.SayMsg(SAY_DIALOGBOX_TEXT,TEXTMSG_TEXT,STR_GET_OUT);
+}
+
+//==========================================
+//======Обработка финальной локации=======
+//==========================================
+// Инициализация финальной локации начальной зоны
+void initOutroLoc(Map & map, bool firstTime)
+{
+	map.SetEvent(MAP_EVENT_OUT_CRITTER,"e_OutroMapOutCritter");
+	map.SetEvent(MAP_EVENT_IN_CRITTER,"e_OutroMapInCritter");
+}
+
+// Игрок заходит на финальную локацию начального квеста 
+void e_OutroMapInCritter(Map& map, Critter& cr)
+{	
+	if(cr.IsPlayer())
+	{
+		if(GetQuestStat(cr.Id)<17)
+		{
+			// Покинул нуболокацию
+			cr.StatBase[ST_EXPERIENCE]+=2465;
+			EraseAnyData("KillFuckingRats_"+cr.Id);
+			cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_NEWBIE_OUT); // "Вам удалось сбежать с рабовладельческого лагеря."
+		}
+		/*// Опыт за побег с рабовладельческого лагеря
+		cr.StatBase[ST_EXPERIENCE]+=1865;*/
+		SetQuestStat(cr.Id, 17);
+		
+		Item@ collar=cr.GetItem(PID_EXP_COLLAR, SLOT_ARMOR); // Есть ли ошейник в слоте брони
+		if(valid(collar)) DeleteItem(collar);		// То удалить его
+
+		//Log("GetQuestStat(cr.Id)="+(GetQuestStat(cr.Id)));
+		// Восстановление начального скина
+		if(cr.Stat[ST_GENDER]==GENDER_FEMALE)
+		{
+			cr.ChangeCrType(4);
+			cr.StatBase[ST_BASE_CRTYPE]=4;
+		}
+		else
+		{
+			cr.ChangeCrType(11);
+			cr.StatBase[ST_BASE_CRTYPE]=11;
+		}
+	}
+}
+
+// Игрок выходит с финальной локацию начального квеста 
+void e_OutroMapOutCritter(Map& map, Critter& cr)
+{
+	// Обнуление репликации	
+	cr.SetEvent(CRITTER_EVENT_DEAD, "");	// Не обрабатывать смерть игрока своими методами
+	// Обнуление рецепта на крафт ошейника
+	GameVar@ q_newbie_collar=GetLocalVar(LVAR_q_newbie_collar, cr.Id);
+	if(valid(q_newbie_collar)) q_newbie_collar=0;
+}
+
+// Репликация игрока
+void newbieReplicateCritter(Critter& cr)
+{	
+	FlushScreen(cr, COLOR_BLACK, COLOR_BLACK, 2000);
+	int questStat=GetQuestStat(cr.Id);
+	
+	Item@ collar=cr.GetItem(PID_EXP_COLLAR, SLOT_ARMOR);
+	if(valid(collar)) DeleteItem(collar);
+
+	dropAllItem(cr);
+		
+	if(questStat<17)
+	{
+		if(cr.Stat[ST_GENDER]==GENDER_FEMALE) cr.ChangeCrType(61);
+		else cr.ChangeCrType(64);	
+		addCollar(cr);
+		SetQuestStat(cr.Id, 6);		
+	}
+	
+	cr.DamageBase[DAMAGE_EYE]=0;
+	cr.DamageBase[DAMAGE_RIGHT_ARM]=0;
+	cr.DamageBase[DAMAGE_LEFT_ARM]=0;
+	cr.DamageBase[DAMAGE_RIGHT_LEG]=0;
+	cr.DamageBase[DAMAGE_LEFT_LEG]=0;
+	cr.ToLife();
+	cr.StatBase[ST_CURRENT_HP]=cr.Stat[ST_MAX_LIFE];
+	cr.StatBase[ST_CURRENT_AP]=cr.Stat[ST_ACTION_POINTS]*100;
+
+	DropPoison(cr);
+	DropRadiation(cr);
+	DropDrugEffects(cr);
+	cr.DropTimers();
+
+	for(uint i=TIMEOUT_BEGIN;i<=TIMEOUT_END;i++) if(i!=TO_KARMA_VOTING) cr.TimeoutBase[i]=0;
+	
+	Location@ thisLoc=cr.GetMap().GetLocation();
+	if(thisLoc.GetProtoId()==LOCATION_NewbieIntro || thisLoc.GetProtoId()==LOCATION_NewbieOutro)
+	{
+		cr.TransitToMap(cr.GetMap().Id,ENTIRE_ENTRANCE2); // Переместить на точку репликации для данной карты
+		return;
+	}
+
+	Map@ map=GetMapByPid(MAP_newbie_replication, 0);
+	cr.TransitToMap(map.Id,ENTIRE_ENTRANCE2);
+}
+
+//=========================
+// Квест на перк скорняка	
+//=========================
+#define GECKO_ENTRANCE1       			(58)
+#define GECKO_ENTRANCE2       			(59)
+
+void r_RunGeckoSkinningQuest(Critter & player, Critter @ npc)
+{
+	Map@ map=GetMapByPid(MAP_newbie_farm, 0);
+	Critter@ cr;
+	int[] params={ST_DIALOG_ID,DIALOG_mob_silver_gecko,ST_TEAM_ID,TEAM_Mob0,ST_BAG_ID,BAG_Empty,ST_REPLICATION_TIME,-1};
+	
+	GroupInit(addGroupNpc(map, NPC_PID_SmallSilverGecko, params , 0, 0, GECKO_ENTRANCE1, Random(0,5), Random(1,3), "mob@_TempMobInit"));
+	
+	@map=GetMapByPid(MAP_newbie_workzone, 0);	
+	GroupInit(addGroupNpc(map, NPC_PID_SmallSilverGecko, params , 0, 0, GECKO_ENTRANCE2, Random(0,5), Random(1,3), "mob@_TempMobInit"));
+}
+
+//=========================
+// Квест на перк snakeater	
+//=========================
+import void AffectPoison(Critter& cr, int value) from "poison";
+#define RAD_SCORP_ENTRANCE1       	(60)
+#define RAD_SCORP_ENTRANCE2     	(61)
+#define Q_EXPERIENCE		     	(1250)
+
+void r_RunSnakeaterQuest(Critter & player, Critter @ npc)
+{
+	Map@ map=GetMapByPid(MAP_newbie_farm, 0);
+	Critter@ cr;
+	int[] params={ST_DIALOG_ID,DIALOG_mob_large_scorp,ST_TEAM_ID,TEAM_Mob0,ST_BAG_ID,BAG_Empty,ST_REPLICATION_TIME,-1};
+	
+	GroupInit(addGroupNpc(map, NPC_PID_LargeRadscorpion, params , 0, 0, RAD_SCORP_ENTRANCE1, Random(0,5), Random(2,4), "mob@_MobInit"));
+	
+	@map=GetMapByPid(MAP_newbie_workzone, 0);
+	GroupInit(addGroupNpc(map, NPC_PID_LargeRadscorpion, params , 0, 0, RAD_SCORP_ENTRANCE2, Random(0,5), Random(2,4), "mob@_MobInit"));
+}
+
+void r_RunSnakeaterQuestResult(Critter & player, Critter @ npc)
+{
+	AffectPoison(player,8);
+	player.StatBase[ST_EXPERIENCE]+=Q_EXPERIENCE;	
+}
+
+//=========================
+
+void r_Transit(Critter& player, Critter@ npc, int val)
+{
+	if (!valid(player.GetMap())) return;
+	player.TransitToMap (player.GetMapId(),val);
+}
+
+//=========================
+
+void r_KnockDown(Critter& player, Critter@ npc)
+{
+	AddAttackPlane(npc,0,player,-1);
+	return;
+}
+
+//=====================
+
+///q_newbie_scripts@r_AntStart
+///q_newbie_scripts@d_AntCheck
+void r_AntStart(Critter& player, Critter@ npc)
+{
+	GameVar@ count=GetLocalVar(LVAR_q_newbie_ants, player.Id);
+	if(not valid(count)) return;
+		count=2+player.Param[KILL_GIANT_ANT];
+	
+}
+
+
+bool d_AntCheck(Critter & player, Critter @npc)
+{
+	GameVar@ count=GetLocalVar(LVAR_q_newbie_ants, player.Id);
+	if(not valid(count)) return false;
+	if ((player.Param[KILL_GIANT_ANT]-count.GetValue())+2>=5) return true;
+	return false;
+}
+
+
+void r_PlantStart(Critter& player, Critter@ npc)
+{
+	GameVar@ count=GetLocalVar(LVAR_q_newbie_plants, player.Id);
+	if(not valid(count)) return;
+		count=2+player.Param[KILL_PLANT];
+	
+}
+
+
+bool d_PlantCheck(Critter & player, Critter @npc)
+{
+	GameVar@ count=GetLocalVar(LVAR_q_newbie_plants, player.Id);
+	if(not valid(count)) return false;
+	if ((player.Param[KILL_PLANT]-count.GetValue())+2>=5) return true;
+	return false;
+}
+
+uint16[][][] equipment={
+{
+	{SK_SMALL_GUNS,PID_14MM_PISTOL,PID_14MM_AP},
+	{0,1,75},
+},
+
+{
+	{SK_BIG_GUNS,PID_FLAMER,PID_FLAMETHROWER_FUEL},
+	{0,1,50},
+},
+
+{
+	{SK_ENERGY_WEAPONS,PID_MAGNETO_LASER_PISTOL,PID_SMALL_ENERGY_CELL},
+	{0,1,50},
+},
+
+{
+	{SK_UNARMED,PID_SPIKED_KNUCKLES,PID_STIMPAK},
+	{0,1,10},
+},
+
+{
+	{SK_MELEE_WEAPONS,PID_CROWBAR,PID_STIMPAK},
+	{0,1,10},
+},
+
+{
+	{SK_THROWING,PID_FRAG_GRENADE,PID_THROWING_KNIFE},
+	{0,5,10},
+},
+
+{
+	{SK_DOCTOR ,PID_NEEDLER_PISTOL,PID_HN_NEEDLER_CARTRIDGE},
+	{0,1,50},
+}
+
+};
+
+void r_AskForLoot(Critter & player, Critter @ npc)
+{
+	uint pos=0;
+
+	for(uint i=0; i<2; i++) // находим первый тагнутый оружейный скилл
+	{
+		int skill=equipment[i][0][0];
+		if(player.Param[TAG_SKILL1]==skill || player.Param[TAG_SKILL2]==skill || player.Param[TAG_SKILL3]==skill) 
+		{
+			pos=i;
+			break;
+		}
+	}
+	
+	if(pos==0 && player.Param[TAG_SKILL1]!=SK_SMALL_GUNS && player.Param[TAG_SKILL2]!=SK_SMALL_GUNS && player.Param[TAG_SKILL3]!=SK_SMALL_GUNS) 
+		
+	for(uint i=2, iMax=equipment.length(); i<iMax; i++) 
+	{
+		int skill=equipment[i][0][0];
+		if(player.Param[TAG_SKILL1]==skill || player.Param[TAG_SKILL2]==skill || player.Param[TAG_SKILL3]==skill) 
+		{
+			pos=i;
+			break;
+		}
+	}
+		
+	for(uint i=1, iMax=equipment[pos][0].length(); i<iMax; i++)
+	if(equipment[pos][0].length()==equipment[pos][1].length())
+		player.AddItem(equipment[pos][0][i], equipment[pos][1][i]);	
+	
+	player.AddItem(PID_LEATHER_JACKET,1);	
+	
+	 
+	Item@[] items;
+	player.GetItems(-1, items);
+	
+	for(uint i=0, iMax=items.length(); i<iMax; i++)
+		SetDeterioration(items[i], Random(20, 40));
+		
+	//Финал диалога
+	player.TransitToGlobal(false);
+}
+
+// debug
+void ask_loot(Critter& cr,int ,int,int)
+{
+	r_AskForLoot(cr,null);
+}
+
+// Получение уровня на тестовой сессии.
+void unsafe_lvl(Critter& player, int param0, int param1, int param2, string@ param3, int[]@ param4)
+{
+   /* if(GetQuestStat(player.Id)<20) return;
+	player.StatBase[ST_EXPERIENCE]=0;
+	for(uint i=1,j=player.Stat[ST_LEVEL];i<=j;i++)
+	player.StatBase[ST_EXPERIENCE]+=1000*i;*/
+
+	//	 player.StatBase[ST_EXPERIENCE]+=player.Stat[ST_LEVEL]*1000;
+}
+
+// Получение вещей на тестовой сессии.
+void unsafe_lut(Critter& player, int param0, int param1, int param2, string@ param3, int[]@ param4)
+{
+ /* if(GetQuestStat(player.Id)<20) return;
+  Map@ map=player.GetMap();
+  if (!valid(map)) return;
+  RunDialog(player, 13022, player.HexX, player.HexY, false);*/
+}
+
+// Добавить по контейнерам нуболокации предметы
+// pid - Пид
+// count - количество на один контейнер
+// chance - шанс появления для каждого контейнера
+
+void addRandomCountItemInContainer(uint16 pid, uint16 minCount, uint16 maxCount, uint16 chance)
+{
+	Item@[] containers;
+	Location@ loc=GetLocationByPid(LOCATION_NewbieLocation, 0);
+
+	Map@[] maps;
+	loc.GetMaps(maps);
+	for(uint i=0, iMax=maps.length(); i<iMax; i++)
+	{
+		Item@[] conts;
+		maps[i].GetItemsByType(ITEM_TYPE_CONTAINER, conts);
+		for(uint j=0, jMax=conts.length(); j<jMax; j++)
+		{
+			if(Random(1,100)<chance) conts[j].AddItem(pid, Random(minCount, maxCount), 0);
+		}
+	}
+	
+}
+
+void _SlaveInit(Critter& cr, bool firstTime)
+{
+	cr.SetEvent(CRITTER_EVENT_MESSAGE, "_SlaveMessage");
+	cr.StatBase[ST_TALK_DISTANCE]=12;
+}
+#define MSG_SEE (301)
+#define MSG_DLG (302)
+
+ void _SlaveMessage(Critter& cr, Critter& fromCr, int message, int value)
+ {
+	
+	if (!valid(cr) || !valid(fromCr)) return;
+	if(message!=MSG_SEE && message!=MSG_DLG) return;
+	
+	if (!cr.IsLife() || !fromCr.IsLife() || !fromCr.IsPlayer()) return;
+	
+	if(cr.Timeout[TO_SK_SCIENCE]>0) return;
+	
+	if(message==MSG_SEE)
+	{
+		if(cr.Timeout[TO_SK_SCIENCE]>0) return;
+		cr.Say(SAY_EMOTE_ON_HEAD, "Стонет");
+		return;
+	}
+	
+	if(message==MSG_DLG)
+	{		
+		RunDialog (fromCr,cr, false);
+		return;	
+	}
+
+ }
+void t_SightTrigger(Critter& cr, Scenery& trigger, bool entered, uint8 dir)
+{
+	if (!valid(cr) || !cr.IsPlayer()  || !cr.IsLife()) return;
+	cr.SendMessage(MSG_SEE, 0, MESSAGE_TO_I_SEE);
+}
+
+bool d_QTimeout(Critter & player, Critter @ npc)
+{
+	if(npc.Timeout[TO_SK_SCIENCE]>0) return true;
+	return false;
+}
+
+void r_QSetTimeout(Critter & player, Critter @ npc)
+{
+	npc.TimeoutBase[TO_SK_SCIENCE]=npc.Timeout[TO_SK_SCIENCE]+__FullSecond+REAL_MINUTE(1)*30;
+}
+
+void t_DlgTrigger(Critter& cr, Scenery& trigger, bool entered, uint8 dir)
+{
+	if (!valid(cr) || !cr.IsPlayer()  || !cr.IsLife()) return;
+		cr.SendMessage(MSG_DLG, 0, MESSAGE_TO_I_SEE);
+}
+
+void r_SpawnFood(Critter & player, Critter @ npc)
+{
+	if(npc.Timeout[TO_SK_REPAIR]>0) return;
+
+	addRandomCountItemInContainer(PID_BOX_OF_NOODLES, 1,2, 8);
+	addRandomCountItemInContainer(PID_FROZEN_DINNER, 1,3,5);
+	addRandomCountItemInContainer(PID_GAMMA_GULP_BEER, 1,2,2);
+
+	npc.TimeoutBase[TO_SK_REPAIR]=npc.Timeout[TO_SK_REPAIR]+__FullSecond+REAL_MINUTE(1)*10;
+}
+
+// ВИЛИКАЛЕПНИЙШИЙ КВЕСТ НА УБИЙСТВО 30 КРЫСОВ, ДА ЕЩЕ И С КОРОЛЕВОЙ БЛДЖАД!
+//(Который генерит кучу дерьма в виде неудаляемых массивов данных. Ra)
+
+bool d_EnoughPeople(Critter& master, Critter@ slave)  // Возвращает true, если игроков достаточно для прохождения квеста
+{
+	return(master.GetFollowGroup(FIND_LIFE|FIND_ONLY_PLAYERS, null) > 1);
+}
+
+bool d_NotEnoughPeople(Critter& master, Critter@ slave)  // Возвращает true, если игроков недостаточно для прохождения квеста
+{
+	return(master.GetFollowGroup(FIND_LIFE|FIND_ONLY_PLAYERS, null)<2);
+}
+
+void dlg_LetsKillSomeRats(Critter& player, Critter@ npc, string@ text) // Квест взят. Установка переменной для группы, выдача снаряги и.т.д.
+{
+	if(not IS_DIALOG_GENERATED(text)) return;
+	
+	Critter@[] crits;
+	player.GetFollowGroup(FIND_LIFE|FIND_ONLY_PLAYERS, crits);
+	uint[] stats={0,0};
+	for(uint m=0, mMax= crits.length(); m<mMax; m++)
+	{
+		stats.insertLast(crits[m].Id);
+	}
+	stats.insertLast(player.Id);
+	for(uint n=0, nMax=crits.length(); n<nMax; n++)
+	{
+		SetAnyData("KillFuckingRats_"+crits[n].Id, stats);
+		GameVar@ var=GetLocalVar(13025, crits[n].Id);
+		var=2;
+		if(crits[n].Skill[SK_UNARMED]<crits[n].Skill[SK_MELEE_WEAPONS])
+		{
+			crits[n].AddItem(PID_SHARP_SPEAR,1);
+			crits[n].SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 100028);
+		}
+		else
+		{
+			crits[n].AddItem(PID_SPIKED_KNUCKLES,1);
+			crits[n].SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 100027);
+		}
+	}
+}
+
+void __KillFuckingRatsInit(Map& map, bool firstTime)
+{
+	map.SetEvent(MAP_EVENT_CRITTER_DEAD, "__RatsBodyCount");
+}
+
+void __RatsBodyCount(Map& map, Critter& cr, Critter@ killer) // Собственно, обработка убийства. Адский быдлокод, на часах 5 утра и через час на работу,
+{															  // так что не ебите мне мозг.
+	if(cr.IsNpc() && valid(killer))
+	{
+		if(killer.IsPlayer())
+		{
+			uint[] stats;
+			if(GetAnyData("KillFuckingRats_"+killer.Id, stats))
+			{
+				if(cr.GetProtoId()==106) stats[1]=1;
+				else stats[0]++;
+				for(uint n=2, nMax=stats.length(); n<nMax; n++)
+				{
+					Critter@ player=GetCritter(stats[n]);
+					if(valid(player))
+					{
+						GameVar@ questvar=GetLocalVar(13025, player.Id);
+						if(stats[0]>29)
+						{
+							if(stats[1]==1 && questvar!=4)
+							{
+								questvar=4;
+							}
+							else if(questvar!=3) questvar=3;
+						}
+						if(cr.GetProtoId()==106) player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 100030);
+						else if(questvar.GetValue()<3) player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 100029,"$count"+stats[0]+"$countrest"+(30-stats[0]));
+						SetAnyData("KillFuckingRats_"+player.Id, stats);
+					}
+				}
+			}
+		}
+	}
+}
+
+void r_FinishQuest(Critter& master, Critter@ slave) // Сдача квеста
+{
+	uint[] stats;
+	if(GetAnyData("KillFuckingRats_"+master.Id, stats))
+	{
+		for(uint n=2, nMax=stats.length(); n<nMax; n++)
+		{
+			Critter@ cr=GetCritter(stats[n]);
+			if(valid(cr))
+			{
+				GameVar@ quest=GetLocalVar(13025, cr.Id);
+				if(quest.GetValue()==4)
+				{
+					cr.StatBase[PE_BONUS_HTH_DAMAGE]+=1;
+					 cr.StatBase[ST_EXPERIENCE]+=1500;
+				}
+				else cr.StatBase[ST_EXPERIENCE]+=1000;
+				quest=5;
+				EraseAnyData("KillFuckingRats_"+cr.Id);
+			}
+		}
+	}
+}

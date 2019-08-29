@@ -1,0 +1,183 @@
+#include "_macros.fos"
+#include "_dialogs.fos"
+#include "guard_lib.fos"
+#include "guard_lib_events.fos"
+
+#define STR_GRAVE              (5425)
+//#define DL#(s) (Log(s))
+#define DL#(s)
+// Скрипт охраны Hex'a
+
+class CGuardsManagerForNCR : CGuardsManager
+{
+	CGuardsManagerForNCR()
+	{
+		super();
+		Dialog=DIALOG_redd_regulator;
+	}
+}
+
+// класс с алгоритмом
+CGuardsManagerForNCR Grd;
+
+bool GuardItemTest(Item@ item) // export
+{
+	return Grd.GuardItemTest(item);
+}
+
+// Усиление нпц
+void PowerNpc(Critter & cr)
+{
+	cr.StatBase[ST_STRENGTH]=Random(8,10);
+	cr.StatBase[ST_PERCEPTION]=Random(8,10);
+	cr.StatBase[ST_ENDURANCE]=Random(8,10);
+	cr.StatBase[ST_AGILITY]=Random(8,10);
+	cr.StatBase[ST_LEVEL]=Random(24,30);
+	cr.StatBase[ST_ACTION_POINTS]=Random(10,12);
+	cr.StatBase[ST_CRITICAL_CHANCE]=Random(20,30);
+	for(uint i=ST_NORMAL_RESIST;i<=ST_EXPLODE_RESIST;i++)
+	{
+		if(i!=ST_EMP_RESIST)
+		{
+			cr.StatBase[i]=Random(40,70);
+		}
+	}
+	uint type=Random(0,4);
+	switch(type)
+	{
+		case 1:
+			cr.PerkBase[PE_SNIPER]=1;
+			cr.StatBase[ST_CRITICAL_RESISTANCE]=0;
+			cr.PerkBase[PE_SLAYER]=0;
+			break;
+		case 2:
+			cr.StatBase[ST_CRITICAL_RESISTANCE]=85;
+			cr.PerkBase[PE_SNIPER]=0;
+			cr.PerkBase[PE_SLAYER]=0;
+			break;
+		case 3:
+			cr.PerkBase[PE_SLAYER]=1;
+			cr.PerkBase[PE_SNIPER]=0;
+			cr.StatBase[ST_CRITICAL_RESISTANCE]=0;
+			break;
+		case 4:
+			cr.StatBase[ST_CRITICAL_RESISTANCE]=85;
+			cr.PerkBase[PE_SLAYER]=1;
+			cr.PerkBase[PE_SNIPER]=0;
+			break;
+		default:
+			cr.PerkBase[PE_SNIPER]=0;
+			cr.StatBase[ST_CRITICAL_RESISTANCE]=0;
+			cr.PerkBase[PE_SLAYER]=0;
+			break;
+	}
+	cr.PerkBase[PE_BETTER_CRITICALS]=(Random(1,10)==1?1:0);
+	cr.PerkBase[PE_BONUS_RANGED_DAMAGE]=1;
+	cr.PerkBase[PE_LIFEGIVER]=Random(1,3);
+	cr.PerkBase[PE_BONUS_RATE_OF_FIRE]=1;
+	cr.PerkBase[PE_BONUS_HTH_DAMAGE]=1;
+	for(uint i=SK_SMALL_GUNS;i<=SK_SNEAK;i++)
+	{
+		cr.SkillBase[i]=Random(150,250);
+	}
+	cr.StatBase[ST_MAX_LIFE]=Random(250,500);
+	cr.StatBase[ST_CURRENT_HP]=cr.Stat[ST_MAX_LIFE];
+
+}
+
+bool s_RooneyGrave(Critter& player, Scenery& scenery, int skill, Item@ item)
+{
+
+	if (!valid(item)) return true;
+	GameVar @ st=GetLocalVar(LVAR_redd_rooney_cemetery, player.Id);
+	if (!valid(st)) return true;
+	if(st<3&&st>0&&item.GetProtoId()==PID_FLOWER&&player.CountItem(PID_FLOWER)>1)
+	{
+		st=3;
+		_CritDeleteItem (player,PID_FLOWER,2);
+		player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_GRAVE);
+		player.StatBase[ST_EXPERIENCE]+=600;
+	}
+
+	return true;
+}
+
+#define STR_POISONED_NO_QUEST    (1)
+
+void _PoisonedInit(Critter &cr, bool firstTime)
+{
+	cr.ToKnockout(KNOCKOUT_ANIM2_DEFAULT(true), 1000, cr.HexX, cr.HexY);
+	cr.SetEvent(CRITTER_EVENT_USE_ITEM_ON_ME,"_SmthUseItem");
+}
+
+	// CRITTER_EVENT_USE_ITEM_ON_ME
+bool _SmthUseItem(Critter& cr, Critter& whoUse, Item& item)
+{
+	if(item.GetProtoId()==PID_ANTIDOTE)
+	{
+		GameVar@ qVar=GetLocalVar(LVAR_q_redd_doctor_poisoned, cr.Id);
+		if(valid(qVar) && qVar==1)
+		{		
+			RunDialog(whoUse, 1353, cr.HexX, cr.HexY, false);
+			return true;
+		}else{
+			cr.SayMsg(SAY_EMOTE, TEXTMSG_DLG, DLGSTR(cr.Stat[ST_DIALOG_ID], STR_POISONED_NO_QUEST));
+		}
+	}
+	return false;
+}
+
+// Квест "На Связи" Доктор Джонсон
+#define DOCTOR_CHANNEL            (1717)
+#define STR_FIRST                 (3300)
+#define STR_LAST                  (3340)
+#define STR_BREAK_FIRST           (3341)
+#define STR_BREAK_LAST            (3343)
+
+// Проверка, в инвентаре игрока есть радио с нужной волной
+bool d_CheckRadio(Critter& player, Critter@ npc)
+{
+	Item@[] items;
+	player.GetItems(-1, items);
+	for(uint i=0, iMax=items.length(); i<iMax; i++)
+	{
+		if(items[i].GetProtoId()==PID_RADIO && items[i].RadioChannel==DOCTOR_CHANNEL) // TODO: вставить проверку канала
+			return true;
+	}
+	return false;
+}
+
+void r_Broadcast(Critter& player, Critter@ npc)
+{
+	DL("broadcat result");
+	CreateTimeEvent(__FullSecond + __TimeMultiplier*8, "e_BeginBroadcast", false);
+}
+
+uint e_BeginBroadcast(uint[]@ values) 
+{
+	DL("Begin broadcast");
+	GameVar@ status=GetGlobalVar(GVAR_redd_johnson_broadcast);
+	if (!valid(status) || status==1)
+		return 0;
+	status=1;
+	CreateTimeEvent(__FullSecond, "e_Broadcast", STR_FIRST, true);
+	return 0;
+}
+
+uint e_Broadcast(uint[]@ values) 
+{
+	DL("broadcast " + values[0]);
+	GameVar@ status=GetGlobalVar(GVAR_redd_johnson_broadcast);
+	if (!valid(status) || status==0)
+		return 0;
+	if(values[0]>=STR_LAST)
+	{
+		status=0;
+		return 0;
+	}
+	RadioMessageMsg(DOCTOR_CHANNEL, TEXTMSG_TEXT, values[0]);
+	values[0]=values[0] + 1;
+	return __TimeMultiplier*8;
+}
+
+

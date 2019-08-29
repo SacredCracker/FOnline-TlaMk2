@@ -1,0 +1,16 @@
+#include "_macros.fos"
+
+import void _DeadlyRadiation(Map& map, bool firstTime) from "map_radiation";
+
+void _MapInit(Map &map, bool firstTime)
+{
+	_DeadlyRadiation(map, firstTime);
+    Critter @ [] critters;
+    map.GetCritters(0,FIND_LIFE|FIND_ONLY_NPC, critters);
+
+    for(uint i=0; i<critters.length();i++)
+    {
+			critters[i].ToDead(ANIM2_DEAD_FUSED, null);
+            critters[i].StatBase[ST_REPLICATION_TIME]=-1;
+    }
+}

@@ -1,0 +1,477 @@
+[comment]
+
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+3 1010 D _var p name_mem_npc_player = 1 #
+2 1020 D _var p name_mem_npc_player = 0 @
+2 2000 None 0 #
+3 2010 D _param p ST_INTELLECT > 4 R _var p name_mem_npc_player = 1 #
+3 2020 D _param p ST_INTELLECT < 5 R _var p name_mem_npc_player = 1 #
+0 2030 D _param p ST_INTELLECT > 4 #
+0 2040 D _param p ST_INTELLECT < 5 @
+3 3000 None 0 #
+4 3010 D _param p SK_BARTER < 71 D _param p ST_INTELLECT > 4 #
+5 3020 D _param p SK_BARTER > 70 D _param p SK_BARTER < 131 D _param p ST_INTELLECT > 4 D _param p ST_KARMA > 0 #
+6 3030 D _param p SK_BARTER > 130 D _param p ST_INTELLECT > 4 D _param p ST_KARMA > 0 #
+4 3040 D _param p SK_BARTER < 71 D _param p ST_INTELLECT < 5 #
+5 3050 D _param p SK_BARTER > 70 D _param p SK_BARTER < 131 D _param p ST_INTELLECT < 5 D _param p ST_KARMA > 0 #
+6 3060 D _param p SK_BARTER > 130 D _param p ST_INTELLECT < 5 D _param p ST_KARMA > 0 #
+0 3070 D _param p ST_INTELLECT > 4 #
+0 3080 D _param p ST_INTELLECT < 5 #
+20 3090 D _var p q_newbie_hilario_firewood = 0 D _param p ST_INTELLECT > 4 #
+7 3100 D _item p PID_JET < 2 D _param p ST_INTELLECT > 4 D _param p ADDICTION_JET > 0 #
+7 3110 D _item p PID_JET < 2 D _param p ST_INTELLECT < 5 D _param p ADDICTION_JET > 0 #
+20 3120 D _param p ST_INTELLECT < 5 D _var p q_newbie_hilario_firewood = 0 #
+25 3130 D _var p q_newbie_hilario_firewood = 1 D _param p ST_INTELLECT > 4 D _item p PID_FIREWOOD > 4 #
+25 3140 D _var p q_newbie_hilario_firewood = 1 D _param p ST_INTELLECT < 5 D _item p PID_FIREWOOD > 4 #
+3 3150 D _var p q_newbie_hilario_firewood = 1 D _param p ST_INTELLECT > 4 R _var p q_newbie_hilario_firewood = 4 #
+3 3160 D _var p q_newbie_hilario_firewood = 1 D _param p ST_INTELLECT < 5 R _var p q_newbie_hilario_firewood = 4 #
+11 3170 D _param p ST_INTELLECT > 4 D _item p PID_FIREWOOD > 0 D _var p q_newbie_hilario_firewood > 1 D _var p q_newbie_hilario_firewood < 4 D _var p q_newbie_hilario_firewood < 10 R _param p ST_EXPERIENCE + 40 R _item p PID_FIREWOOD - 1 R _item p PID_BOTTLE_CAPS + 30 R _var p q_newbie_hilario_firewood + 1 #
+12 3180 D _param p ST_INTELLECT > 4 D _item p PID_FIREWOOD > 0 D _var p q_newbie_hilario_firewood > 1 D _var p q_newbie_hilario_firewood < 4 D _var p q_newbie_hilario_firewood > 9 #
+11 3190 D _param p ST_INTELLECT < 5 D _item p PID_FIREWOOD > 0 D _var p q_newbie_hilario_firewood > 1 D _var p q_newbie_hilario_firewood < 4 D _var p q_newbie_hilario_firewood < 10 R _param p ST_EXPERIENCE + 40 R _item p PID_FIREWOOD - 1 R _item p PID_BOTTLE_CAPS + 30 R _var p q_newbie_hilario_firewood + 1 #
+12 3200 D _param p ST_INTELLECT < 5 D _item p PID_FIREWOOD > 0 D _var p q_newbie_hilario_firewood > 1 D _var p q_newbie_hilario_firewood < 4 D _var p q_newbie_hilario_firewood > 9 #
+65506 3210 D _param p ST_INTELLECT > 4 #
+65506 3220 D _param p ST_INTELLECT < 5 #
+7 3230 D _param p ST_INTELLECT > 3 D _param p SK_SPEECH > 40 D _var p q_newbie_cheech_chong = 1 D _item p PID_JET < 1 #
+31 3240 D _param p ST_INTELLECT > 3 D _param p SK_SPEECH < 41 D _var p q_newbie_cheech_chong = 1 D _item p PID_JET < 1 #
+7 3250 D _param p ST_INTELLECT < 4 D _param p SK_SPEECH > 40 D _var p q_newbie_cheech_chong = 1 D _item p PID_JET < 1 #
+31 3260 D _param p ST_INTELLECT < 4 D _param p SK_SPEECH < 41 D _var p q_newbie_cheech_chong = 1 D _item p PID_JET < 1 #
+32 3270 D _param p ST_INTELLECT > 3 D _var p q_newbie_hilario_chico = 0 #
+34 3280 D _param p ST_INTELLECT > 3 D _var p q_newbie_hilario_chico = 2 R _var p q_newbie_hilario_chico = 3 R _param p ST_EXPERIENCE + 400 R _item p PID_BOOZE + 5 R _param p ST_KARMA + 10 #
+35 3290 D _param p ST_INTELLECT > 3 D _item p PID_BOTTLE_CAPS > 199 D _var p q_newbie_hilario_chico = 4 R _var p q_newbie_hilario_chico = 5 R _param p ST_KARMA + 10 R _param p ST_EXPERIENCE + 400 R _item p PID_BOTTLE_CAPS - 100 #
+36 3300 D _var p q_newbie_hilario_chico = 4 D _param p ST_INTELLECT > 3 R _var p q_newbie_hilario_chico = 6 R _param p ST_EXPERIENCE + 400 R _param p ST_KARMA - 10 #
+8 3310 @
+4 4000 None 1 #
+4 4010 D _item p PID_BOTTLE_CAPS > 14 R _item p PID_BOTTLE_CAPS - 15 R _item n PID_BOTTLE_CAPS + 15 R _item p PID_BOOZE + 1 #
+4 4020 D _item p PID_BOTTLE_CAPS > 9 R _item p PID_BOTTLE_CAPS - 10 R _item n PID_BOTTLE_CAPS + 10 R _item p PID_BEER + 1 #
+4 4030 D _item p PID_BOTTLE_CAPS > 11 R _item n PID_BOTTLE_CAPS + 12 R _item p PID_BOTTLE_FULL - 12 R _item p PID_MUTATED_FRUIT + 1 #
+4 4040 D _item p PID_BOTTLE_CAPS > 99 R _item p PID_BOTTLE_CAPS - 100 R _item n PID_BOTTLE_CAPS + 100 R _item p PID_BOTTLE_FULL + 1 #
+4 4050 D _item p PID_BOTTLE_CAPS > 19 R _item p PID_BOTTLE_CAPS - 20 R _item n PID_BOTTLE_CAPS + 20 R _item p PID_CIGARETTES + 1 #
+3 4060 #
+3 4070 D _item p PID_BOTTLE_CAPS < 10 @
+5 5000 None 1 #
+5 5010 D _item p PID_BOTTLE_CAPS > 9 R _item p PID_BOTTLE_CAPS - 10 R _item n PID_BOTTLE_CAPS + 10 R _item p PID_BOOZE + 1 #
+5 5020 D _item p PID_BOTTLE_CAPS > 5 R _item p PID_BOTTLE_CAPS - 6 R _item n PID_BOTTLE_CAPS + 6 R _item p PID_BEER + 1 #
+5 5030 D _item p PID_BOTTLE_CAPS > 7 R _item n PID_BOTTLE_CAPS + 8 R _item p PID_BOTTLE_FULL - 8 R _item p PID_MUTATED_FRUIT + 1 #
+5 5040 D _item p PID_BOTTLE_CAPS > 69 R _item p PID_BOTTLE_CAPS - 70 R _item n PID_BOTTLE_CAPS + 70 R _item p PID_BOTTLE_FULL + 1 #
+5 5050 D _item p PID_BOTTLE_CAPS > 14 R _item p PID_BOTTLE_CAPS - 15 R _item n PID_BOTTLE_CAPS + 15 R _item p PID_CIGARETTES + 1 #
+3 5060 #
+3 5070 D _item p PID_BOTTLE_CAPS < 6 @
+6 6000 None 1 #
+6 6010 D _item p PID_BOTTLE_CAPS > 7 R _item p PID_BOTTLE_CAPS - 8 R _item n PID_BOTTLE_CAPS + 8 R _item p PID_BOOZE + 1 #
+6 6020 D _item p PID_BOTTLE_CAPS > 3 R _item p PID_BOTTLE_CAPS - 4 R _item n PID_BOTTLE_CAPS + 4 R _item p PID_BEER + 1 #
+6 6030 D _item p PID_BOTTLE_CAPS > 5 R _item n PID_BOTTLE_CAPS + 6 R _item p PID_BOTTLE_FULL - 6 R _item p PID_MUTATED_FRUIT + 1 #
+6 6040 D _item p PID_BOTTLE_CAPS > 49 R _item p PID_BOTTLE_CAPS - 50 R _item n PID_BOTTLE_CAPS + 50 R _item p PID_BOTTLE_FULL + 1 #
+6 6050 D _item p PID_BOTTLE_CAPS > 9 R _item p PID_BOTTLE_CAPS - 10 R _item n PID_BOTTLE_CAPS + 10 R _item p PID_CIGARETTES + 1 #
+3 6060 #
+3 6070 D _item p PID_BOTTLE_CAPS < 4 @
+7 7000 None 0 #
+3 7010 D _item p PID_BOTTLE_CAPS > 24 D _param p ST_INTELLECT > 3 R _item p PID_BOTTLE_CAPS - 25 R _item n PID_BOTTLE_CAPS + 25 R _item p PID_JET + 1 #
+3 7020 D _item p PID_BOTTLE_CAPS > 99 D _param p ST_INTELLECT > 3 R _item p PID_BOTTLE_CAPS - 100 R _item n PID_BOTTLE_CAPS + 100 R _item p PID_JET + 5 #
+0 7030 D _item p PID_BOTTLE_CAPS < 25 D _param p ST_INTELLECT > 3 #
+3 7040 D _param p ST_INTELLECT > 3 #
+3 7050 D _param p ST_INTELLECT < 4 D _item p PID_BOTTLE_CAPS > 24 R _item p PID_BOTTLE_CAPS - 25 R _item n PID_BOTTLE_CAPS + 25 R _item n PID_JET + 1 #
+3 7060 D _param p ST_INTELLECT < 4 D _item p PID_BOTTLE_CAPS > 99 R _item p PID_BOTTLE_CAPS - 100 R _item n PID_BOTTLE_CAPS + 100 R _item n PID_JET + 5 #
+3 7070 D _param p ST_INTELLECT < 4 @
+20 8000 None 0 #
+21 8010 @
+21 9000 None 0 #
+22 9010 D _param p ST_INTELLECT > 4 R _var p q_newbie_hilario_firewood = 1 #
+3 9020 D _param p ST_INTELLECT > 4 #
+25 9030 D _param p ST_INTELLECT > 4 D _item p PID_FIREWOOD > 4 #
+22 9040 D _param p ST_INTELLECT < 5 R _var p q_newbie_hilario_firewood = 1 #
+3 9050 D _param p ST_INTELLECT < 5 #
+25 9060 D _param p ST_INTELLECT < 5 D _item p PID_FIREWOOD > 4 #
+24 9070 D _item p PID_FIREWOOD > 0 D _param p ST_INTELLECT < 5 D _item p PID_FIREWOOD < 5 #
+24 9080 D _item p PID_FIREWOOD > 0 D _param p ST_INTELLECT > 4 D _item p PID_FIREWOOD < 5 @
+22 10000 None 0 #
+3 10010 D _param p ST_INTELLECT > 4 #
+0 10020 D _param p ST_INTELLECT > 4 #
+23 10030 D _param p ST_INTELLECT > 4 D _param p SK_SPEECH < 50 #
+30 10040 D _param p ST_INTELLECT > 4 D _param p SK_SPEECH > 49 R _param p ST_EXPERIENCE + 100 R _item p PID_AXE + 1 #
+3 10050 D _param p ST_INTELLECT < 5 #
+0 10060 D _param p ST_INTELLECT < 5 #
+23 10070 D _param p ST_INTELLECT < 5 @
+23 11000 None 0 #
+0 11010 D _param p ST_INTELLECT > 4 #
+0 11020 D _param p ST_INTELLECT < 5 @
+24 12000 None 0 #
+0 12010 #
+0 12020 @
+25 13000 None 0 #
+28 13010 D _param p ST_INTELLECT > 4 D _item p PID_FIREWOOD > 4 R _var p q_newbie_hilario_firewood = 2 R _param p ST_EXPERIENCE + 350 R _param p ST_KARMA + 10 R _item p PID_BOTTLE_CAPS + 200 R _item p PID_FIREWOOD - 5 #
+26 13020 D _param p ST_INTELLECT > 4 D _item p PID_FIREWOOD > 4 D _param p SK_SPEECH > 40 D _param p SK_SPEECH < 71 R _var p q_newbie_hilario_firewood = 2 R _param p ST_EXPERIENCE + 350 R _param p ST_KARMA + 10 R _item p PID_BOTTLE_CAPS + 200 R _item p PID_FIREWOOD - 5 #
+27 13030 D _param p ST_INTELLECT > 4 D _item p PID_FIREWOOD > 4 D _param p SK_SPEECH > 70 R _var p q_newbie_hilario_firewood = 2 R _param p ST_EXPERIENCE + 400 R _param p ST_KARMA + 10 R _item p PID_BOTTLE_CAPS + 250 R _item p PID_FIREWOOD - 5 #
+0 13040 D _param p ST_INTELLECT > 4 #
+29 13050 D _param p ST_INTELLECT > 4 D _item p PID_FIREWOOD > 4 D _param p SK_SPEECH > 74 R _var p q_newbie_hilario_firewood = 3 R _param p ST_EXPERIENCE + 400 R _param p ST_KARMA + 10 R _item p PID_BOTTLE_CAPS + 200 R _item p PID_FIREWOOD - 5 #
+28 13060 D _param p ST_INTELLECT < 3 D _item p PID_FIREWOOD > 4 R _var p q_newbie_hilario_firewood = 2 R _param p ST_EXPERIENCE + 350 R _param p ST_KARMA + 10 R _item p PID_BOTTLE_CAPS + 400 R _item p PID_FIREWOOD - 5 #
+0 13070 D _param p ST_INTELLECT < 5 #
+28 13080 D _param p ST_INTELLECT < 5 D _param p ST_INTELLECT > 2 D _item p PID_FIREWOOD > 4 R _var p q_newbie_hilario_firewood = 2 R _param p ST_EXPERIENCE + 350 R _param p ST_KARMA + 10 R _item p PID_BOTTLE_CAPS + 200 R _item p PID_FIREWOOD - 5 @
+26 14000 None 0 #
+3 14010 D _param p ST_INTELLECT > 4 #
+3 14020 D _param p ST_INTELLECT < 5 #
+0 14030 @
+27 15000 None 0 #
+3 15010 D _param p ST_INTELLECT > 4 #
+3 15020 D _param p ST_INTELLECT < 5 #
+0 15030 @
+28 16000 None 0 #
+3 16010 D _param p ST_INTELLECT > 4 #
+3 16020 D _param p ST_INTELLECT < 5 #
+0 16030 @
+29 17000 None 0 #
+3 17010 D _param p ST_INTELLECT > 4 #
+3 17020 D _param p ST_INTELLECT < 5 #
+0 17030 @
+11 18000 None 0 #
+3 18010 D _param p ST_INTELLECT > 4 #
+0 18020 D _param p ST_INTELLECT > 4 #
+3 18030 D _param p ST_INTELLECT < 5 #
+0 18040 D _param p ST_INTELLECT < 5 @
+12 19000 None 0 #
+0 19010 D _param p ST_INTELLECT > 4 #
+0 19020 D _param p ST_INTELLECT < 5 #
+65507 19030 D _param p ST_INTELLECT < 4 @
+30 20000 None 0 #
+0 20010 @
+31 21000 None 0 @
+32 22000 None 0 #
+4 22010 D _param p ST_INTELLECT > 3 #
+33 22020 D _param p ST_INTELLECT > 3 @
+33 23000 None 0 #
+3 23010 D _param p ST_INTELLECT > 3 #
+3 23020 D _param p ST_INTELLECT > 3 R _var p q_newbie_hilario_chico = 1 @
+34 24000 None 0 #
+3 24010 D _param p ST_INTELLECT > 3 @
+35 25000 None 0 #
+3 25010 D _param p ST_INTELLECT > 3 @
+36 26000 None 0 #
+3 26010 D _param p ST_INTELLECT > 3 @
+8 27000 None 0 #
+4 27010 #
+4 27020 D _item p PID_BOTTLE_CAPS > 9 R _item p PID_BOTTLE_CAPS - 10 R _item p PID_BEER + 1 &
+
+[russ]
+{100}{}{Хиларио}
+{200}{}{Вы видите бармена.}
+{210}{}{Вы видите Хиларио, местного бармена.}
+{220}{}{Вы видите бармена, он валяется без чувств.}
+{230}{}{Вы видите Хиларио, местного бармена, лежащего на полу.}
+{240}{}{Вы видите мёртвого бармена.}
+{250}{}{Вы видите Хиларио, местного бармена. Он мёртв.}
+{260}{}{Вы видите мёртвого бармена}
+{270}{}{Вы видите Хиларио. Бармен был жестоко убит негодяями.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{Бармен знает игрока}
+{1020}{}{Бармен не знает игрока}
+{2000}{}{Приветствую! Меня зовут Хиларио.@@Добро пожаловать, незнаком@sex@|ец||ка|. Зови меня Хиларио.@@Я - Хиларио.Чем могу помочь, незнаком@sex@|ец||ка|.@@Я - Хиларио, местный бармен! Что желаете?}
+{2010}{}{Привет, я - @pname@!@@Я - @pname@!@@Меня зовут, @pname@!}
+{2020}{}{Моя - @pname@!@@Моя называть @pname@!@@ @pname@!!! [Бьёте себя кулаком в грудь]@@ @pname@!!! [Тычете на себя пальцем]}
+{2030}{}{Я пойду!@@Не сейчас.}
+{2040}{}{Моя занятой!@@Моя спешить.}
+{3000}{}{Чем тебе может помочь старик Хиларио, @pname@?@@Чего тебе, @pname@.@@Чем могу помочь, @pname@?@@Что желаешь?}
+{3010}{}{Я бы выпил...@@Что у тебя есть?..@@Налей мне чего-нибудь.}
+{3020}{}{Я бы выпил...@@Что у тебя есть?..@@Налей мне чего-нибудь.}
+{3030}{}{Я бы выпил...@@Что у тебя есть?..@@Налей мне чего-нибудь.}
+{3040}{}{Пить!..@@Моя хотеть пить!..@@Моя хотеть огненная вода!..}
+{3050}{}{Пить!..@@Моя хотеть пить!..@@Моя хотеть огненная вода!..}
+{3060}{}{Пить!..@@Моя хотеть пить!..@@Моя хотеть огненная вода!..}
+{3070}{}{Я пойду!@@Не сейчас.}
+{3080}{}{Моя занятой!@@Моя спешить.@@Фррр!..}
+{3090}{}{Я ищу подработку. Есть что на примете?@@Работёнки не найдётся? Деньги нужны...@@Деньжат бы мне. Помощь не требуется?}
+{3100}{}{[Украдкой оглядываетесь и шепчите] Слушай, Хиларио, не найдется ли джета?..@@[Украдкой оглядываетесь и шепчите] Не найдется ли джета? Очень надо.}
+{3110}{}{Моя надо улетать! Давай джета!@@Моей надо джета.@@Твоя иметь джет?}
+{3120}{}{Моя хотеть работать?@@Моя помогоать. Твоя платить.@@Моя нужно деньгов!}
+{3130}{}{Я дрова принёс.@@Принёс я тебе дров, Хиларио.@@Вот твои дрова Хиларио, выкладывай денежки.}
+{3140}{}{Моя дрова приносить.@@Вота!!! [Протягиваете дрова бармену]@@Абубр-р-р!!! [Протягиваете дрова бармену]}
+{3150}{}{Знаешь, Хиларио, я передумал таскать дрова тебе.@@Я не буду добывать дрова для твоего самогонного аппарата.}
+{3160}{}{Моя совсем не хотеть добывать дрова.@@Моя ни искать дрова.}
+{3170}{}{Вот, ещё дрова для тебя.@@Я принёс ещё дров, Хилларио.@@Возьмешь ещё несколько поленьев?}
+{3180}{}{Вот, ещё дрова для тебя.@@Я принёс ещё дров, Хилларио.@@Возьмешь ещё несколько поленьев?}
+{3190}{}{Дрова!.. [Протягиваете полено]@@Моя ещё дров приносить! [Протягиваете полено]}
+{3200}{}{Дрова!.. [Протягиваете полено]@@Моя ещё дров приносить! [Протягиваете полено]}
+{3210}{}{Покажи что у тебя есть. [Бартер]@@Я хотел@sex@|||а| бы купить кое-что. [Бартер]}
+{3220}{}{Мая торговать. [Бартер]@@Меняться. Меняться. Угр-кх-х... [Бартер]}
+{3230}{}{Хиларио, мне дозу нужно. Не себе. Тут двое... Плохо им короче.}
+{3240}{}{Хиларио, мне дозу нужно. Не себе. Тут двое... Плохо им короче.}
+{3250}{}{Для моя джета! Твоя иметь джет?}
+{3260}{}{Для моя джета! Твоя иметь джет?}
+{3270}{}{Что за буйный тип там за столиком?}
+{3280}{}{Я успокоил Чико. И на него управа нашлась. Сейчас он принёсёт деньги.}
+{3290}{}{Я поговорил с Чико, он отдал деньги.}
+{3300}{}{Я поговорил с Чико... Ты знаешь, у меня ничего не вышло. Он не согласился вернуть долг.}
+{3310}{}{Старик, а что за буйный робот валяется у забора?}
+{4000}{}{Выбирай.@@Что тебе налить?@@Лучшие напитки для лучших людей.@@Пива? Почти не разбавленное...@@Самогончику? Собственного изготовления, забористый...}
+{4010}{}{Самогон [15 монет]}
+{4020}{}{Пиво [10 монет]}
+{4030}{}{Фрукт [12 монет]}
+{4040}{}{Бутылку воды [100 монет]}
+{4050}{}{Пачку сигарет [20 монет]}
+{4060}{}{Пока ничего.}
+{4070}{}{У меня нет денег.@@Денег не хватает.}
+{5000}{}{Выбирай. Для тебя со скидкой.@@Что тебе налить? Для тебя со скидкой.@@Лучшие напитки для лучших людей. Для тебя со скидкой.@@Пива? Почти не разбавленное... Для тебя со скидкой.@@Самогончику? Собственного изготовления, забористый... Для тебя со скидкой.}
+{5010}{}{Самогон [10 монет]}
+{5020}{}{Пиво [6 монет]}
+{5030}{}{Фрукт [8 монет]}
+{5040}{}{Бутылку воды [70 монет]}
+{5050}{}{Пачку сигарет [15 монет]}
+{5060}{}{Пока ничего.}
+{5070}{}{У меня нет денег.@@Денег не хватает.}
+{6000}{}{Выбирай. Тебе по лучшей цене.@@Что тебе налить? Тебе по лучшей цене.@@Лучшие напитки для лучших людей. Тебе по лучшей цене.@@Пива? Почти не разбавленное... Тебе по лучшей цене.@@Самогончику? Собственного изготовления, забористый... Тебе по лучшей цене.}
+{6010}{}{Самогон [8 монет]}
+{6020}{}{Пиво [4 монет]}
+{6030}{}{Фрукт [6 монет]}
+{6040}{}{Бутылку воды [50 монет]}
+{6050}{}{Пачку сигарет [10 монет]}
+{6060}{}{Пока ничего.}
+{6070}{}{У меня нет денег.@@Денег не хватает.}
+{7000}{}{Есть. 25 монет за дозу... Только не болтай об этом. Ничего такого... Просто рабовладельцы не слишком жалуют нариков. Если узнают, что я барыжу, у меня будут проблемы.}
+{7010}{}{Отлично, дай мне дозу! [25 монет]}
+{7020}{}{Давай пяток. [100 монет]}
+{7030}{}{Подожди, сейчас за деньгами сбегаю.}
+{7040}{}{Пока не нужно, спасибо.}
+{7050}{}{Моя брать! [25 монет]}
+{7060}{}{Моя брать многа сразу! [100 монет]}
+{7070}{}{Умх-х... Потома!}
+{8000}{}{Хочешь поработать? Отлично! Помощь как раз не помешает. Мне дрова нужны для моего самогонного аппарата. Рабов свободных не найдешь.}
+{8010}{}{[Далее]}
+{9000}{}{Рабов на ферме не хватает. А от бандюков помощи подавно не дождёшься. Они, кроме оружия, сроду в руках ничего не держали... Заплачу 200 за пять вязанок.}
+{9010}{}{Хорошо, я принесу тебе дрова.@@Ладно, дрова так дрова.}
+{9020}{}{Нет, такая работа не по мне.@@Ну, уж нет. Сам топором маши.@@Какие к чёрту дрова? Сам занимайся этой ерундой!}
+{9030}{}{Да у меня как раз есть с собой. Хватит?}
+{9040}{}{Угу! Угу!!!@@Моя согласнай!@@Моя быстро дрова приносить!}
+{9050}{}{Моя не хотеть дрова носить!@@Моя не дровосек! Моя воин!}
+{9060}{}{Моя есть дрова! Твоя платить деньга?!}
+{9070}{}{Моя есть дрова! Твоя платить деньга?!}
+{9080}{}{Да у меня как раз есть с собой. Хватит?}
+{10000}{}{Да пошустрее, @sex@|парень||детка|! У меня дров почти не осталось, а самогон прекращать гнать нельзя... Меня ж бандиты с говном сьедят.}
+{10010}{}{Ещё кое-что...}
+{10020}{}{Уже бегу, скоро всё будет. }
+{10030}{}{Дай топор, всё быстрее дров достану.}
+{10040}{}{Дай топор, всё быстрее дров достану.}
+{10050}{}{Моя ишо хотеть...}
+{10060}{}{Угу, угу!.. Дров!.. Бечь!.. [Убегаете]}
+{10070}{}{Твоя давать топор?}
+{11000}{}{Ишь разогнался. Топор ему... Я тебе топор дам и ищи ветра в поле. Ну, уж нет. Инструмент сам доставай.}
+{11010}{}{Ну, ладно, сам всё сделаю... }
+{11020}{}{Угр-р-р!!! }
+{12000}{}{Нет, ну это не серьёзно... Что за пара веток? Подсобери поболее, тогда и приходи.}
+{12010}{}{Ну, ладно, несу уже... }
+{12020}{}{Ы-ку! Ы-ку! Ы-ы-ы!.. }
+{13000}{}{Молодец, @sex@|парень||девица|! Ты просто спас@sex@|||ла| мой бизнес. Вот, как договаривались, две сотни...}
+{13010}{}{Вот твои дрова...}
+{13020}{}{Знаешь, лес рубить - работа не из лёгких. Может накинешь несколько монет сверху?}
+{13030}{}{Знаешь, лес рубить - работа не из лёгких. Может накинешь несколько монет сверху?}
+{13040}{}{Лучше-ка, я пойду отсюда... }
+{13050}{}{Хиларио, а может я вопользуюсь твоим аппаратом, что-бы выгнать несколько бутылочек для себя? Ты как, не против?}
+{13060}{}{У-у-у... [Протягиваете дрова, глядя умными глазами - как-будто всё понимаете]}
+{13070}{}{Агр-р-р... }
+{13080}{}{Моя хотеть много деньгов... Вота дрова! Давай!}
+{14000}{}{Ну, нет. Старый Хиларио честно работет. Уговор есть уговор. Вот двести, как договаривались.}
+{14010}{}{Приятно было с тобой работать, Хиларио. Ещё кое что...}
+{14020}{}{Ага! Ишо моя хотеть...}
+{14030}{}{[Молча уходите]}
+{15000}{}{Ну, хорошо. Вот тебе 250 монет. Ещё раз спасибо.}
+{15010}{}{Приятно было с тобой работать, Хиларио. Ещё кое что...}
+{15020}{}{Ага! Ишо моя хотеть...}
+{15030}{}{[Молча уходите]}
+{16000}{}{Твои денежки, @sex@|парень||детка|... Старик Хиларио не обманет...}
+{16010}{}{Приятно было с тобой работать, Хиларио. Ещё кое что...}
+{16020}{}{Ага! Ишо моя хотеть...}
+{16030}{}{[Молча уходите]}
+{17000}{}{Да без проблем, @sex@|мужик||бэйби|! Для тебя, ничего не жалко...}
+{17010}{}{Приятно было с тобой работать, Хиларио. Ещё кое что...}
+{17020}{}{Ага! Ишо моя хотеть...}
+{17030}{}{[Молча уходите]}
+{18000}{}{Отлично. Давай сюда.@@Хорошо, вот 30 монет. Как договаривались.}
+{18010}{}{Ещё кое-что, Хиларио...}
+{18020}{}{Ну, до встречи, Хиларио. }
+{18030}{}{Ишо хочу!..}
+{18040}{}{Моя богатый! Моя богатый!.. }
+{19000}{}{Спасибо, но мне больше не нужны дрова.@@Больше не нужно, у меня уже есть запас.@@Да, мне-то больше и не нужно. Уборка урожая закончилась, мне теперь рабы дрова рубят.}
+{19010}{}{Э-эх... Зря я значит старался...@@Как же так?..@@Эх, Хиларио!..}
+{19020}{}{Р-р-р-а!!!@@Ы-ы-ы. Уг!@@Мая злиться!}
+{19030}{}{Агрххх!!! Твая плохой! [Атаковать]}
+{20000}{}{И то правда. Вот. Держи. [Протягивает топор]}
+{20010}{}{Жди меня и я вернусь... @@Жди, скоро буду с дровами.  }
+{21000}{}{Какую дозу?.. Какой джет?.. Пошёл вон!}
+{22000}{}{А... Это чёртов Чико. Опять, скотина, платить не хочет. Он мне уже две сотни должен...}
+{22010}{}{Понятно. Налей ка мне выпить.}
+{22020}{}{Да, редкостная сволочь!}
+{23000}{}{Послушай, может поможешь мне долг вернуть? Заберёшь у него деньги - одну сотню мне, а сотня твоя.}
+{23010}{}{Ну, нет... Я не хочу с ним связываться.}
+{23020}{}{Да, запросто. Я с ним поговорю.}
+{24000}{}{Честно, не ожидал, что у тебя выйдет. Спасибо! Вот, угощайся. За счёт заведения.}
+{24010}{}{Это было не сложно. Этот задира на самом деле труслив как кролик.}
+{25000}{}{Честно, не ожидал, что у тебя выйдет. Вот, твоя сотня. Спасибо!}
+{25010}{}{Это было не сложно. Просто нужно уметь говорить с людьми.}
+{26000}{}{Если честно, я и не ожидал, что у тебя выйдет. Ладно, я попрошу Криса разобраться с ним.}
+{26010}{}{Извини что не смог помочь.}
+{27000}{}{О, это Бендер, он еще с войны сохранился. Похоже, он не в курсе, что война закончилась и до сих пор жаждет всех убить. Но его боевые системы давно демонтировали, так что он безопасен. Попробуй угостить его пивком, он это любит.}
+{27010}{}{Спасибо, буду иметь в виду.}
+{27020}{}{Ну чтож, давай сюда пиво, пойду поить старую жестянку!}
+
+[engl]
+{100}{}{Hilario}
+{200}{}{you see the barman.}
+{210}{}{you see Hilario, the local barman.}
+{220}{}{you see the barman, it rolls unconscious.}
+{230}{}{you see Hilario, the local barman lying on a floor.}
+{240}{}{you see the dead barman.}
+{250}{}{you see Hilario, the local barman. It is dead.}
+{260}{}{you see the dead barman}
+{270}{}{you see Hilario. The barman has been cruelly killed by villains.}
+{1000}{}{Predialogue installations}
+{1010}{}{the Barman knows the player}
+{1020}{}{the Barman does not know the player}
+{2000}{}{Privetsvuju! My name is Hilario. @@ Welcome, незнаком@sex | ets || ka |. Call me Hilario. @@ I am Hilario. Than I can help, незнаком@sex | ets || ka |. @@ I am Hilario, the local barman! What wish?}
+{2010}{}{Greetings, I - @pname! @@ I - @pname! @@ My name is, @pname!}
+{2020}{}{Mine - @pname! @@ Washing to name @pname! @@ @pname!!! [Punch itself in a breast] @@ @pname!!! [Tychite on itself a finger]}
+{2030}{}{I will go! @@ not now.}
+{2040}{}{Washing occupied! @@ washing to hasten.}
+{3000}{}{Than you old man Hilario, @pname can help? @@ That to you, @pname. @@ Than I can help, @pname? @@ That you wish?}
+{3010}{}{I would drink... @@ That at you is?. @@ pour to me something.}
+{3020}{}{I would drink... @@ That at you is?. @@ pour to me something.}
+{3030}{}{I would drink... @@ That at you is?. @@ pour to me something.}
+{3040}{}{to Drink!. @@ washing to want to drink!. @@ washing to want fire-water!.}
+{3050}{}{to Drink!. @@ washing to want to drink!. @@ washing to want fire-water!.}
+{3060}{}{to Drink!. @@ washing to want to drink!. @@ washing to want fire-water!.}
+{3070}{}{I will go! @@ not now.}
+{3080}{}{Washing occupied! @@ washing to hasten. @@ Frrr!.}
+{3090}{}{I search podrabotku. Is that on a sign? @@ Jobs will not be? Money is necessary... @@ the Money to me. The help is not required?}
+{3100}{}{[Furtively look back and whisper] Listen, Hilario, whether will be dzheta?. @@ [Furtively look back and whisper] whether will be dzheta? Very much it is necessary.}
+{3110}{}{Washing it is necessary to depart! Give dzheta! @@ it is necessary To mine dzheta. @@ Yours to have dzhet?}
+{3120}{}{Washing to want to work? @@ mine pomogoat. You to pay. @@ washing it is necessary dengov!}
+{3130}{}{I have brought fire wood. @@ I to you of fire wood Have brought, Hilario. @@ Here your fire wood of Hilario, spread money.}
+{3140}{}{Washing fire wood to bring. @@ Vota!!! [Stretch fire wood to the barman] @@ to Abubr-r-r!!! [Stretch fire wood to the barman]}
+{3150}{}{you Know, Hilario, I have decided not to drag fire wood to you. @@ I will not extract fire wood for yours samogonnogo the device.}
+{3160}{}{Washing not to want to extract at all fire wood. @@ mine to search for fire wood.}
+{3170}{}{Here, still fire wood for you. @@ I have brought still fire wood, Hillario. @@ you Will take some more logs?}
+{3180}{}{Here, still fire wood for you. @@ I have brought still fire wood, Hillario. @@ you Will take some more logs?}
+{3190}{}{Fire wood!. [Stretch a log] @@ Mine still fire wood to bring! [Stretch a log]}
+{3200}{}{Fire wood!. [Stretch a log] @@ Mine still fire wood to bring! [Stretch a log]}
+{3210}{}{Show that at you is. [Barter] @@ I хотел@sex ||| and | to buy something. [Barter]}
+{3220}{}{May to trade. [Barter] @@ to Change. To change. Ugr-kh... [Barter]}
+{3230}{}{Hilario, a dose is necessary for me. Not to itself. Here two... Badly it is shorter.}
+{3240}{}{Hilario, a dose is necessary for me. Not to itself. Here two... Badly it is shorter.}
+{3250}{}{For mine dzheta! You to have dzhet?}
+{3260}{}{For mine dzheta! You to have dzhet?}
+{3270}{}{That for violent type there behind a little table?}
+{3280}{}{I have calmed Chiko. And on it the justice was. Now it will bring money.}
+{3290}{}{I have talked to Chiko, it has given money.}
+{3300}{}{I have talked to Chiko... You know, at me left nothing. He has disagreed to repay a debt.}
+{3310}{}{the Old man, and what for the violent robot rolls at a fence?}
+{4000}{}{Choose. @@ that to you to pour? @@ the best drinks for the best people. @@ beer? Almost not diluted... @@ Samogonchiku? Own manufacturing, zaboristyj...}
+{4010}{}{Moonshine [15 coins]}
+{4020}{}{Beer [10 coins]}
+{4030}{}{Fruit [12 coins]}
+{4040}{}{a water Bottle [100 coins]}
+{4050}{}{the Pack of cigarettes [20 coins]}
+{4060}{}{While anything.}
+{4070}{}{I do not have money. @@ money does not suffice.}
+{5000}{}{Choose. For you at a discount. @@ that to you to pour? For you at a discount. @@ the best drinks for the best people. For you at a discount. @@ beer? Almost not diluted... For you at a discount. @@ Samogonchiku? Own manufacturing, zaboristyj... For you at a discount.}
+{5010}{}{Moonshine [10 coins]}
+{5020}{}{Beer [6 coins]}
+{5030}{}{Fruit [8 coins]}
+{5040}{}{a water Bottle [70 coins]}
+{5050}{}{the Pack of cigarettes [15 coins]}
+{5060}{}{While anything.}
+{5070}{}{I do not have money. @@ money does not suffice.}
+{6000}{}{Choose. To you at the best price. @@ that to you to pour? To you at the best price. @@ the best drinks for the best people. To you at the best price. @@ beer? Almost not diluted... To You at the best price. @@ Samogonchiku? Own manufacturing, zaboristyj... To You at the best price.}
+{6010}{}{Moonshine [8 coins]}
+{6020}{}{Beer [4 coins]}
+{6030}{}{Fruit [6 coins]}
+{6040}{}{a water Bottle [50 coins]}
+{6050}{}{the Pack of cigarettes [10 coins]}
+{6060}{}{While anything.}
+{6070}{}{I do not have money. @@ money does not suffice.}
+{7000}{}{Is. 25 coins for a dose... Only do not stir about it. Anything such... Simply rabovladltsy not too favour narikov. If learn that I baryzhu, I will have problems.}
+{7010}{}{it is excellent, give me a dose! [25 coins]}
+{7020}{}{Give heels. [100 coins]}
+{7030}{}{Wait, now behind money I will run.}
+{7040}{}{thanks are not necessary Yet.}
+{7050}{}{Washing to take! [25 coins]}
+{7060}{}{Washing to take mnoga at once! [100 coins]}
+{7070}{}{Umh... potoma!}
+{8000}{}{you Want to work? Perfectly! The help just will not prevent. Fire wood is necessary to me for mine samogonnogo the device. At farmers now works full.}
+{8010}{}{[Further]}
+{9000}{}{Hands on a farm do not suffice. And from bandjukov the help for a long time you will not wait. They, except the weapon, never in hands held nothing... I Will begin to cry 200 for five bundles.}
+{9010}{}{it is good, I will bring to you fire wood. @@ it is fine, fire wood so fire wood.}
+{9020}{}{No, such work not on me. @@ well, is not present. Itself an axe wave. @@ what to hell fire wood? Itself be engaged in this nonsense!}
+{9030}{}{Yes at me just is with itself. Will suffice?}
+{9040}{}{Ugu! Ugu!!! @@ Mine soglasnaj! @@ Mine quickly fire wood to bring!}
+{9050}{}{Washing not to want to carry fire wood! @@ mine not the woodcutter! Mine the soldier!}
+{9060}{}{Washing there is fire wood! You to pay denga?!}
+{9070}{}{Washing there is fire wood! You to pay denga?!}
+{9080}{}{Yes at me just is with itself. Will suffice?}
+{10000}{}{Yes is more bright, @sex | the guy || the child |! At me fire wood almost does not remain, and moonshine to stop to drive it is impossible... Me farmers with a shit sedjat.}
+{10010}{}{Still something...}
+{10020}{}{Already to run, all will be fast.}
+{10030}{}{Give an axe, all faster fire wood I will get.}
+{10040}{}{Give an axe, all faster fire wood I will get.}
+{10050}{}{Mine isho to want...}
+{10060}{}{Ugu, ugu!. Fire wood!. Bech!. [Escape]}
+{10070}{}{Yours to give an axe?}
+{11000}{}{it was see dispersed. An axe to it... I will give an axe to you and search a wind in the field. Well, is not present. The tool itself get.}
+{11010}{}{Well, all right, all I will make...}
+{11020}{}{Ugr-r-r!!!}
+{12000}{}{No, well it is not serious... What for steam of branches? podsoberi more then come.}
+{12010}{}{Well, all right, I bear already...}
+{12020}{}{Y-ku! Y-ku! Y-y-y!.}
+{13000}{}{the Good fellow, @sex | the guy || the maiden |! You are simple спас@sex ||| la | wash business. Here, as agreed, two hundreds...}
+{13010}{}{Here your fire wood...}
+{13020}{}{you Know, wood to cut - difficult work. Can you will throw with some coins from above?}
+{13030}{}{you Know, wood to cut - difficult work. Can you will throw with some coins from above?}
+{13040}{}{It is better, I will go from here...}
+{13050}{}{Hilario, and can I vopolzujus your device what to expel some small bottles for itself? You as, not against?}
+{13060}{}{U-u-u... [Stretch fire wood, looking clever eyes - as though all understand]}
+{13070}{}{Agr-r-r...}
+{13080}{}{Washing to want much dengov... Vota fire wood! Give!}
+{14000}{}{Well, no. Old Hilario it is fair rabotet. The arrangement is an arrangement. Here two hundred as agreed.}
+{14010}{}{Hilario was pleasant to work with you. Still which that...}
+{14020}{}{Aha! Isho washing to want...}
+{14030}{}{[Silently leave]}
+{15000}{}{Well, well. Here to you of 250 coins. Once again thanks.}
+{15010}{}{Hilario was pleasant to work with you. Still which that...}
+{15020}{}{Aha! Isho washing to want...}
+{15030}{}{[Silently leave]}
+{16000}{}{Your money, @sex | the guy || the child |... Old man Hilario will not deceive...}
+{16010}{}{Hilario was pleasant to work with you. Still which that...}
+{16020}{}{Aha! Isho washing to want...}
+{16030}{}{[Silently leave]}
+{17000}{}{Yes without problems, @sex | the muzhik || bejbi |! For you, it is a pity nothing...}
+{17010}{}{Hilario was pleasant to work with you. Still which that...}
+{17020}{}{Aha! Isho washing to want...}
+{17030}{}{[Silently leave]}
+{18000}{}{it is excellent. Give here. @@ it is good, here 30 coins. As agreed.}
+{18010}{}{Still something, Hilario...}
+{18020}{}{Well, to a meeting, Hilario.}
+{18030}{}{Isho I want!.}
+{18040}{}{Washing the rich! Washing the rich!.}
+{19000}{}{Thanks, but are not necessary to me any more fire wood. @@ it is not necessary any more, I already have a stock. @@ yes, more also it is not necessary for me. Harvesting has ended, to me now farmers fire wood cuts.}
+{19010}{}{E-eh... In vain I mean tried... @@ As so?. @@ Eh, Hilario!.}
+{19020}{}{R-r-r-a!!! @@ Y-y-y. Ug! @@ May to be angry!}
+{19030}{}{Agrhhh!!! Tvaja the bad! [To attack]}
+{20000}{}{And that truth. Here. Hold. [Stretches an axe]}
+{20010}{}{Wait for me and I will return... @@ Wait, soon I will with fire wood.}
+{21000}{}{What dose?. What dzhet?. Get out!}
+{22000}{}{A. It is devil's Chiko. Again, the cattle, does not want to pay. It already two hundreds should me...}
+{22010}{}{it is clear. Pour ka to me to drink.}
+{22020}{}{Yes, rare to drag!}
+{23000}{}{Listen, can you will help me to return a debt? You will take away from it money - one hundred to me, and your one hundred.}
+{23010}{}{Well, no... I do not want to communicate with it.}
+{23020}{}{Yes, easily. I will talk to it.}
+{24000}{}{it is fair, did not expect that at you leaves. Thanks! Here, be treated. For the institution account.}
+{24010}{}{It was not difficult. This tease actually is cowardly as a rabbit.}
+{25000}{}{it is fair, did not expect that at you leaves. Here, your one hundred. Thanks!}
+{25010}{}{It was not difficult. It is just necessary to be able to speak with people.}
+{26000}{}{If it is fair, I and did not expect that at you leaves. All right, I will ask Chris to understand with it.}
+{26010}{}{Excuse that could not help.}
+{27000}{}{About, it is Bendery, it even from war has remained. It seems that it not in a course that war has ended and till now thirsts for all to kill. But its fighting systems dismantled for a long time, so it is safe. Try to treat with its beer, he loves it.}
+{27010}{}{Thanks, I will mean.}
+{27020}{}{Well well, give here beer, I will go to give to drink to an old tin!}

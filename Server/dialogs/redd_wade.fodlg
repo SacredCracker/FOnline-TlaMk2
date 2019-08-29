@@ -1,0 +1,261 @@
+[comment]
+
+ВНИМАНИЕ! Используются временные имена скриптов. Необходимо в релизной версии все условия переделать с "_caravan"на "caravan"
+
+// статус каравана
+(0) // караван не начинался
+(1) // появился проводник, игроки могут подавать заявки на охрану каравана
+(2) // караван вышел из пункта А
+(3) // караван перемещается по глобалу
+(4) // караван на случайном энкаунтере
+(5) // караван добрался до точки назначения
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 0 #
+104 1010 D _param p ST_INTELLECT > 3 D _script caravan@d_IsCaravanStatus 1 5 D _var p q_redd_wade_caravan_escort = 8 #
+102 1020 D _var p q_redd_wade_caravan_escort = 3 #
+101 1030 D _var p q_redd_wade_caravan_escort = 4 #
+103 1040 D _var p q_redd_wade_caravan_escort = 5 #
+103 1050 D _var p q_redd_wade_caravan_escort = 6 #
+100 1060 D _var p q_redd_wade_caravan_escort = 7 #
+105 1070 D _param p ST_INTELLECT > 3 D _script caravan@d_IsCaravanStatus 1 5 D _var p q_redd_wade_caravan_escort = 10 #
+4 1080 D _var p name_mem_npc_player = 0 D _script caravan@d_IsCaravanStatus 1 1 D _param p ST_INTELLECT > 3 D _script caravan@d_NotHasPlayerRequest 0  R _var p name_mem_npc_player = 1 #
+5 1090 D _var p name_mem_npc_player = 0 D _script caravan@d_NotIsCaravanStatus 1 1 D _param p ST_INTELLECT > 3 D _script caravan@d_NotHasPlayerRequest 0  R _var p name_mem_npc_player = 1 #
+2 1100 D _param p ST_INTELLECT < 4 #
+98 1110 D _param p ST_INTELLECT > 3 D _script caravan@d_IsCaravanStatus 1 4 #
+3 1120 D _script caravan@d_IsCaravanStatus 1 0 D _var p name_mem_npc_player = 1 #
+3 1130 D _script caravan@d_IsCaravanStatus 1 1 D _script caravan@d_NotHasPlayerRequest 0  D _var p name_mem_npc_player = 1 #
+13 1140 D _script caravan@d_IsCaravanStatus 1 1 D _script caravan@d_HasPlayerRequest 0  #
+3 1150 D _var p name_mem_npc_player = 1 D _script caravan@d_IsCaravanStatus 1 5 @
+2 2000 None 0 #
+0 2010 @
+3 3000 None 0 #
+10 3010 D _script caravan@d_IsCaravanStatus 1 1 D _script caravan@d_NotHasPlayerRequest 0  #
+11 3020 D _script caravan@d_IsCaravanStatus 1 0 D _script caravan@d_NotHasPlayerRequest 0  #
+9 3030 #
+6 3040 D _script caravan@d_NotIsCaravanReversed 0  #
+7 3050 D _script caravan@d_IsCaravanReversed 0  #
+0 3060 @
+4 4000 None 0 #
+10 4010 D _script caravan@d_NotHasPlayerRequest 0  #
+9 4020 #
+0 4030 @
+5 5000 None 0 #
+11 5010 D _script caravan@d_NotHasPlayerRequest 0  #
+9 5020 #
+6 5030 D _script caravan@d_NotIsCaravanReversed 0  #
+7 5040 D _script caravan@d_IsCaravanReversed 0  #
+0 5050 @
+6 6000 None 0 #
+0 6010 @
+7 7000 None 0 #
+0 7010 @
+8 8000 None 0 #
+0 8010 @
+9 9000 None 0 #
+10 9010 D _script caravan@d_IsCaravanStatus 1 0 #
+11 9020 D _script caravan@d_IsCaravanStatus 1 1 #
+0 9030 @
+10 10000 None 0 #
+0 10010 #
+0 10020 D _script caravan@d_CanJoin 0  R _script caravan@r_PutPlayerRequest2Info 0  R _var p q_redd_wade_caravan_escort = 1 @
+11 11000 None 0 #
+9 11010 #
+6 11020 D _script caravan@d_NotIsCaravanReversed 0  #
+7 11030 D _script caravan@d_IsCaravanReversed 0  #
+0 11040 @
+12 12000 None 0 #
+0 12010 @
+13 13000 None 0 #
+14 13010 @
+14 14000 None 0 #
+0 14010 @
+98 15000 None 0 #
+99 15010 D _script caravan@d_HasPlayerRequest 0  #
+0 15020 @
+99 16000 None 0 #
+0 16010 R _script caravan@r_ContinueCaravan 0  @
+100 17000 None 0 #
+0 17010 D _param p ST_INTELLECT > 3 @
+101 18000 None 0 @
+102 19000 None 0 #
+0 19010 D _param p ST_INTELLECT > 3 @
+103 20000 None 0 #
+0 20010 D _param p ST_INTELLECT > 3 @
+104 21000 None 0 #
+0 21010 R _item p PID_BOTTLE_CAPS + 1000 R _var p q_redd_wade_caravan_escort = 11 R _script dialog@r_QuestReward1 0  #
+0 21020 R _item p PID_BOTTLE_CAPS + 1000 R _var p q_redd_wade_caravan_escort = 11 R _script dialog@r_QuestReward1 0  @
+105 22000 None 0 #
+0 22010 R _item p PID_BOTTLE_CAPS + 1000 R _item p PID_BOTTLE_CAPS + 200 R _var p q_redd_wade_caravan_escort = 11 R _script dialog@r_QuestReward1 0  &
+
+[russ]
+{100}{}{Бен Вэйд}
+{200}{}{Вы видите человека в комбинезоне.}
+{210}{}{Вы видите Бена Вэйда, начальника каравана Реддинг - Город Убежище.}
+{210}{}{Вы видите человека в костюме Города Убежища.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{караван дошел до точки назначения. Игрок делал квест впервые, норм инт}
+{1020}{}{игрок нападал на караванщиков, пытался убить или ограбить караван}
+{1030}{}{игрок бросил караван}
+{1040}{}{игрок погиб во время каравана}
+{1050}{}{проводника убили во время каравана, охраняемого игроком}
+{1060}{}{игрок убил караванщика во время каравана}
+{1070}{}{караван дошел до точки назначения. Игрок делал квест повторно, норм инт}
+{1080}{}{незнаком, караван доступен в данный момент времени, норм инт}
+{1090}{}{незнаком, караван недоступен, норм инт}
+{1100}{}{Низкий интелект}
+{1110}{}{Караван на энкаунтере. норм инт}
+{1120}{}{Знакомы. Караван недоступен}
+{1130}{}{Знакомы. Караван доступен}
+{1140}{}{Игрок в составе каравана, караван пока не отправился}
+{1150}{}{Знакомы. Караван только что закончен}
+{2000}{}{Что ты от меня хочешь?}
+{2010}{}{Ох. По-ка! [Уйти]}
+{3000}{}{Привет. Что привело тебя ко мне?}
+{3010}{}{Тебе нужны охранники, вроде?}
+{3020}{}{Тебе нужны охранники, вроде?}
+{3030}{}{Что перевозит твой караван?}
+{3040}{}{Почему вы ждете до первого числа?}
+{3050}{}{Почему вы ждете до первого числа?}
+{3060}{}{Увидимся позже. Пока.[Уйти]}
+{4000}{}{Привет тебе. Мое имя Бен. Бен Вейд. Я вожу торговые караваны из Реддинга в Город-Убежища и обратно. Лишний охранник моему каравану никогда не помешает. Отправляемся сегодня, в 12 часов.}
+{4010}{}{Охранники нужны?}
+{4020}{}{Что перевозит твой караван?}
+{4030}{}{Увидимся позже. Пока.[Уйти]}
+{5000}{}{Привет. Меня зовут Бен. Бен Вейд. Я вожу торговые караваны между Городом-Убежища и Реддингом. Я хорошу плачу за охрану своего каравана. Если захочешь заработать, найди меня до 12 часов дня.}
+{5010}{}{Охранники нужны?}
+{5020}{}{Что перевозит твой караван?}
+{5030}{}{Когда выходите?}
+{5040}{}{Когда выходите?}
+{5050}{}{Учту на будущее [Уйти]}
+{6000}{}{Сложно сказать, на самом деле. Думаю, это зависит от того, как быстро они смогут собрать груз. Я не шахтер, но мне кажется, к полудню все будет готово.}
+{6010}{}{Понятно. Я запомню твое предложение, возможно вернусь. [Уйти]}
+{7000}{}{Ну, я не совсем уверен, почему уходит так много времени на сбор медикаментов. Просто вернись ко мне позже, и мы будем готовы.}
+{7010}{}{Понятно. Удачи с караваном! [Уйти]}
+{8000}{}{Прости, @sex@|приятель||подруга|, у нас уже нет мест. Охраны полный комплект.}
+{8010}{}{Жаль... Ну, может быть в следующий раз успею. [Уйти]}
+{9000}{}{Ну мы забираем кучу медикаментов из Города-Убежища и обмениваем их на другую кучу золотой руды в Реддинге.}
+{9010}{}{Интересно. Ты говоришь, что ищешь охранника?}
+{9020}{}{Интересно. Ты говоришь, что ищешь охранника?}
+{9030}{}{Наверное, выгодное занятие... [Уйти]}
+{10000}{}{Ты приш@sex@|ел||ла| вовремя. Мы вскоре отправляемся. Я плачу 1000 монет, но плату ты получишь только в месте назначения. Готов@sex@|||а| присоединиться?}
+{10010}{}{Не думаю, что хочу охранять твой караван. Увидимся позже. Пока.[Уйти]}
+{10020}{}{Почему бы и нет? Я не прочь заработать.@@Договорились. Я с тобой.}
+{11000}{}{Ближайший караван будет первого числа. Если хочешь подработать охранником, обратись ко мне раньше 12 дня. В полдень мы отправляемся.}
+{11010}{}{Что перевозит твой караван?}
+{11020}{}{Почему вы ждете до первого числа?}
+{11030}{}{Почему вы ждете до первого числа?}
+{11040}{}{Ясно. Возможно, я еще вернусь. [Уйти]}
+{12000}{}{Отлично. Постарайся не опоздать. В 12 часов отправление. Тебе нужно быть здесь, иначе уйдем без тебя.}
+{12010}{}{Не волнуйся. Я буду здесь. [Уйти]}
+{13000}{}{Что-то случилось? Только не говори мне, что ты передумал@sex@|||а|.}
+{13010}{}{Когда отправляется наш караван?}
+{14000}{}{Ровно в 12 часов.}
+{14010}{}{Ясно. [Уйти]}
+{15000}{}{Ха! Неужели кто-то настолько глуп, что решил напасть на мой караван?@@Что за досада. Их не должно было здесь быть.@@В Пустоши всегда очень опасно. Эта встреча - доказательство.}
+{15010}{}{Вроде все спокойно. Мы можем продолжить путь?}
+{15020}{}{Я вернусь. [Уйти]}
+{16000}{}{Да, мы продолжаем путь. Останавливаться очень опасно.}
+{16010}{}{Кажется, все готовы.}
+{17000}{}{Не смей даже приближаться ко мне. Ты больше никогда не будешь работать на меня.@@Убирайся к черту с глаз моих!}
+{17010}{}{Жалкий подонок! Ты заплатишь за то, что отказал мне. Прощай. [Уйти]}
+{18000}{}{Ты не охранник, ты - мошенни@sex@|к||ца|! Убирайся отсюда@sex@|, трус|||.@@Ты бросил@sex@|||а| караван. Теперь уходи.}
+{19000}{}{Ты - всего лишь жалкий вор. Ты уже получил@sex@|||а| свое, проваливай.@@Воришка? Я хорошо тебя запомнил, неблагодар@sex@|ный ублюдок||ая тварь|. }
+{19010}{}{Ты назвал меня вором? Я запомню это, неблагодарный ублюдок. Я ухожу, прощай.}
+{20000}{}{Если бы ты выполнил@sex@|||а| свою работу, я, безусловно, заплатил бы тебе. Ты ничего не получишь.@@Я не хочу больше рисковать, имея такого бестолкового охранника в своем караване.}
+{20010}{}{Однажды, ты еще пожалеешь, что стал на моем пути. Прощай.}
+{21000}{}{Ты справился, вот твои деньги. Приятно работать с тобой, надеюсь мы еше встретимся.}
+{21010}{}{Приятно видеть человека, который ценит качественную работу. Увидимся. Может быть. [Уйти]}
+{21020}{}{Ну уж нет, не хочу снова провести уйму времени, разглядывая жопу брамина. Пока. [Уйти]}
+{22000}{}{ О, привет! Это было круто. Вот тебе 1000 монет, плюс 200 в качестве премии. Будем рады видеть тебя снова.}
+{22010}{}{Да, было весело. Увидимся, прощай. [Уйти]}
+
+[engl]
+{100}{}{Ben Vaid}
+{200}{}{You see a man in robe.}
+{210}{}{You see Ben Vaid, caravan leader from Vault City.}
+{210}{}{You see a man in Vault City suit.}
+{1000}{}{Predialogue installations}
+{1010}{}{the caravan was at the end of the resources appointments. The player did a quest for the first time}
+{1020}{}{the player attacked caravaneers, tried to kill or plunder a caravan}
+{1030}{}{the player has thrown a caravan}
+{1040}{}{the player was lost during a caravan}
+{1050}{}{a conductor have killed during a caravan protected by the player}
+{1060}{}{the player attacked the caravaneer during a caravan}
+{1070}{}{the caravan was at the end of the resources appointments. The player did a quest repeatedly}
+{1080}{}{it is unfamiliar, the caravan is accessible at present to time}
+{1090}{}{it is unfamiliar, the caravan is inaccessible}
+{1100}{}{Low intelekt}
+{1110}{}{the Player as a part of a caravan. A caravan on enkauntere.}
+{1120}{}{Are familiar. A caravan in a starting point.}
+{1130}{}{Are familiar. The caravan is accessible}
+{1140}{}{the Player as a part of a caravan, the caravan has not gone yet}
+{1150}{}{Are familiar. The caravan is just finished}
+{2000}{}{That you want from me?}
+{2010}{}{Oh. [To Leave]}
+{3000}{}{Greetings. What has resulted you in me?}
+{3010}{}{Security guards are necessary?}
+{3020}{}{Security guards are necessary?}
+{3030}{}{That transports your caravan?}
+{3040}{}{Why you wait to 1го for number?}
+{3050}{}{Why you wait to 1го for number?}
+{3060}{}{we Will meet later. While. [To leave]}
+{4000}{}{Greetings to you. My name Ben. Ben Vejd. I drive trading caravans from Reddinga in Cities-refuges and back. The superfluous security guard never will prevent my caravan. We go today, at 12 o'clock.}
+{4010}{}{Security guards are necessary?}
+{4020}{}{That transports your caravan?}
+{4030}{}{we Will meet later. While. [To leave]}
+{5000}{}{Greetings. My name is Ben. Ben Vejd. I drive trading caravans between the City-refuge and Reddingom. I horoshu to crying for protection of the caravan. If you will want to earn, find me 1го numbers to 12 o'clock in the afternoon.
+ }
+{5010}{}{Security guards are necessary?}
+{5020}{}{That transports your caravan?}
+{5030}{}{Why you wait to 1го for number?}
+{5040}{}{Why you wait to 1го for number?}
+{5050}{}{I Will consider on the future [to Leave]}
+{6000}{}{it is difficult to tell, actually. I think, it depends on how quickly they can collect cargo. I not the miner, but seem to me, on gathering some weeks leave.}
+{6010}{}{it is clear. I will remember your offer, I will probably return. [To leave]}
+{7000}{}{Well, I am not absolutely assured, why leaves so a lot of time for gathering of medicines. But the pair-three of weeks usually suffices. Simply return to me later, and we will be ready.}
+{7010}{}{it is clear. Good luck with a caravan! To leave]}
+{8000}{}{Forgive, @sex | the friend || the girlfriend |, we already do not have places. Protection the complete set.}
+{8010}{}{It is a pity... Well, can be next time I will be in time. [To leave]}
+{9000}{}{Well we take away a heap of medicines from the City-refuge and we exchange them for other heap of gold ore in Reddinge.}
+{9010}{}{it is interesting. You say, what search for the security guard?}
+{9020}{}{it is interesting. You say, what search for the security guard?}
+{9030}{}{Probably, favourable employment... [To Leave]}
+{10000}{}{You приш@sex | ate || la | in time. We soon go. I cry 1000 coins, but you will receive a payment only in destination. Готов@sex ||| and | to join?}
+{10010}{}{I do not think that I want to protect your caravan. We will meet later. While. [To leave]}
+{10020}{}{Why also is not present? I wish to earn. @@ Have agreed. I with you.}
+{11000}{}{the Nearest caravan will be the first. If you want to earn additionally the security guard, address to me before 12 days. At midday we go.}
+{11010}{}{That transports your caravan?}
+{11020}{}{Why you wait to 1го for number?}
+{11030}{}{Why you wait to 1го for number?}
+{11040}{}{it is clear. Probably, I still will return. [To leave]}
+{12000}{}{it is excellent. Try not to be late. At 12 o'clock departure.}
+{12010}{}{do not worry. I will be here. [To Leave]}
+{13000}{}{Something happens? Only do not say to me that you передумал@sex ||| and |.}
+{13010}{}{When our caravan goes?}
+{14000}{}{it is equal at 12 o'clock.}
+{14010}{}{it is equal at 12 o'clock.}
+{15000}{}{Ha! Really someone is so silly, what has decided to attack my caravan? @@ that for disappointment. They should not be here. @@ today the Heathland is not so safe, as usual.}
+{15010}{}{Like all it is quiet. We can continue a way?}
+{15020}{}{I will return. [To leave]}
+{16000}{}{Yes, we continue a way. To stop very dangerously.}
+{16010}{}{It seems, all are ready.}
+{17000}{}{do not dare even to come nearer to me. You will never work on me more.}
+{17010}{}{the Pity geek! You will pay that has refused to me. Farewell. [To leave]}
+{18000}{}{You not the security guard, you are a swindler! Be cleaned from here, the coward.}
+{19000}{}{You - only the pity thief. You have already received the, ruin.}
+{19010}{}{You named me the thief? I will remember it, the ungrateful mongrel. I leave, farewell.}
+{20000}{}{If you выполнил@sex ||| and | the work, I, certainly, would pay to you. You will receive nothing.}
+{20010}{}{Once, you still will regret that became on my way. Farewell.}
+{21000}{}{You have consulted, here your money. It is pleasant to work with you, hope we eshe we will meet.}
+{21010}{}{it is pleasant to see the person who appreciates qualitative work. We will meet. Can be. [To leave]}
+{21020}{}{Well is not present, I do not want to spend again time a great lot, examining an ass bramina. While. [To leave]}
+{22000}{}{About, greetings! It was abruptly. Here to you of 1000 coins, plus 200 as the award. We will be glad to see you again.}
+{22010}{}{Yes, it was cheerful. We will meet, farewell. [To leave]}
+
+
+

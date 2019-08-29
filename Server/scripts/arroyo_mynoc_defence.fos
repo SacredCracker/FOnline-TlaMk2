@@ -1,0 +1,427 @@
+// Name:	arroyo_mynoc_defence
+// Author:	Sufir
+
+// Uses
+#include "_macros.fos"
+
+// Defines
+#define QUEST_TIMEOUT (1)					// Количество игровых суток, которые даются на выполнение каждой из стадий квеста.
+												// Таймаут указывается для каждой стадии квеста. Т.е. при QUEST_TIMEOUT=1 на выполнение
+												// квеста будет дано 2-е суток сутки на выполнение первой стадии и сутки на выполнение второй.
+												// При отсутсвии других соискателей, на квест будет даваться вдвое больше времени.
+
+#define MIN_PLAYERS (3)							// Минимальный размер группы.
+#define MIN_LVL (5)								// Минимальный уровень.
+#define MAX_LVL (24)							// Максимальный уровень.
+
+#define DIALOG_NUM_COUNT (27)					// Переходим на этот диалог, если группа мала для квеста.
+#define DIALOG_NUM_LVL (28)						// Переходим на этот диалог, если игроки не соответсвуют по уровню.
+#define DIALOG_QUEST_USED (29)					// Переходим на этот диалог, если квест выполняется другой группой.
+#define DIALOG_NUM_KARMA (30)					// Переходим на этот диалог, если карма группы слишком низкая для выполнения квеста.
+
+#define ARROYO_POS_X (4 * __GlobalMapZoneLength - __GlobalMapZoneLength/2)	// Координаты Арройо. От них считаем где будет находиться
+#define ARROYO_POS_Y (3 * __GlobalMapZoneLength - __GlobalMapZoneLength/2)	// локация с рейдерами.
+
+
+bool d_IsGroupExist(Critter& player, Critter@ npc)
+{
+	Critter@[] group;
+	Critter@ leader=GetCritter(GetLeaderId(player));
+	group.insertLast(@leader);
+	leader.GetFollowGroup(FIND_ALL, group);
+	if(group.length()>1)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+bool d_IsGroupNotExist(Critter& player, Critter@ npc)
+{
+	return (not d_IsGroupExist(player,null));
+}
+
+bool d_IsQuestGroupLevelRight(Critter& player, Critter@ npc)
+{
+	Critter@[] group;
+	Critter@ leader=GetCritter(GetLeaderId(player));
+	group.insertLast(@leader);
+	leader.GetFollowGroup(FIND_ALL, group);
+
+	// Проверяем уровни группы в которой состоит игрок берущий квест
+	// если кто-то из участников группы не соответствует по уровню - отправляем на вариант диалога DIALOG_NUM_LVL
+	for(uint i=0, iMax=group.length(); i<iMax; i++)
+	{
+		// Если в группе есть НПС - пропускаем его, он может быть любого уровня.
+		if(group[i].IsNpc()) continue;
+
+		// Если хоть один из участников группы не соответсвует требованиям - отправляем на вариант диалога DIALOG_NUM_LVL
+		if(group[i].StatBase[ST_LEVEL]<MIN_LVL || group[i].StatBase[ST_LEVEL] > MAX_LVL) {
+			return false;
+		}
+	}
+	return true;
+}
+
+bool d_IsQuestGroupLevelNotRight(Critter& player, Critter@ npc)
+{
+	return (not d_IsQuestGroupLevelRight(player,null));
+}
+
+bool d_IsQuestGroupHaveGoodKarma(Critter& player, Critter@ npc)
+{
+	Critter@[] group;
+	Critter@ leader=GetCritter(GetLeaderId(player));
+	group.insertLast(@leader);
+	leader.GetFollowGroup(FIND_ALL, group);
+
+	// Проверяем карму группы в которой состоит игрок берущий квест,
+	// если суммарная карма или репутация в Арройо группы низкая - отправляем на вариант диалога DIALOG_NUM_KARMA
+	int GroupKarma=0;
+	for(uint i=0, iMax=group.length(); i<iMax; i++){
+		GroupKarma=GroupKarma + group[i].StatBase[ST_KARMA];
+	}
+	int ArroyoRep=0;
+	for(uint i=0, iMax=group.length(); i<iMax; i++){
+		if(group[i].IsPlayer()){
+			ArroyoRep=ArroyoRep + group[i].Reputation[REPUTATION_ARROYO];
+		}
+	}
+	if(GroupKarma<=-20 || ArroyoRep<=-10){
+		return false;
+	}
+	else
+	{
+		return true;
+	}
+}
+
+bool d_IsQuestGroupHaveBadKarma(Critter& player, Critter@ npc)
+{
+	return (not d_IsQuestGroupHaveGoodKarma(player, null));
+}
+
+bool d_IsQuestActive(Critter& player, Critter@ npc)
+{
+	// Если квест уже взят другой группой - отправляем на вариант диалога DIALOG_QUEST_USED
+	if(! TimeOutIsFree()){
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+bool d_IsQuestNotActive(Critter& player, Critter@ npc)
+{
+	return (not d_IsQuestActive(player,null));
+}
+
+
+// Запуск квеста.
+void r_StartQuest(Critter& player, Critter@ npc) {
+
+	// Квест ещё ни кем не брался. Даем квест игроку и его группе.
+	// Тут мы проверим доступность квеста только по времени, все прочие проверки должны быть сделаны в диалоге зараниее.
+	if(TimeOutIsFree()) {
+		StartQuest(player, 1);
+		return;
+	} else {
+		return;
+	}
+
+}
+
+
+// Запуск второй стадии квеста.
+uint r_StartStage2(Critter& player, Critter@ npc) {
+
+	// Находим группу в которой состоит игрок и лидера группы.
+	Critter@[] group;
+	Critter@ leader=GetCritter(GetLeaderId(player));
+	group.insertLast(@leader);
+	leader.GetFollowGroup(FIND_ALL, group);
+
+	// Проверяем размер группы в которой состоит игрок берущий квест,
+	// если размер группы меньше необходимого - отправляем на вариант диалога DIALOG_NUM_COUNT
+	if(group.length()<MIN_PLAYERS) {
+		return DIALOG_NUM_COUNT;
+	} else {
+		StartQuest(player, 2);
+	}
+	return 0;
+
+}
+
+
+//=====ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ=====\\
+
+
+// Вспомогательная функция, для запуска квеста, используется в r_StartQuest
+void StartQuest(Critter& player, uint stage)
+{
+
+	// Находим группу в которой состоит игрок и лидера группы.
+	Critter@[] group;
+	Critter@ leader=GetCritter(GetLeaderId(player));
+	group.insertLast(@leader);
+	leader.GetFollowGroup(FIND_ALL, group);
+
+	// Проверяем размер группы в которой состоит игрок берущий квест,
+	// если размер группы меньше необходимого - отправляем на вариант диалога DIALOG_NUM_COUNT
+	// Это на тот случай, если игроки поотцеплялись от лидера во время диалога.
+	if(group.length()<MIN_PLAYERS) {
+		return;
+	}
+
+	// В первую очередь удаляем старую карту.
+	// Если квест берёт новая группа - у предыдущей проваливаем квест.
+	if(stage==1){
+		DeleteRaidersCamp(true);
+	// Если группа берёт вторую стадию квеста, просто удаляем старую карту.
+	} else {
+		DeleteRaidersCamp(false);
+	}
+
+	// Записываем текущий состав группы.
+	uint[] LastGoupArrDef(group.length());
+	for(uint i=0, iMax=group.length(); i<iMax; i++) {
+		LastGoupArrDef[i]=group[i].Id;
+	}
+	SetAnyData("LastGoupArrDef", LastGoupArrDef);
+
+	// Обнулим счётчик рейдеров, на всякий случай.
+	uint[] RaidersCount={0};
+	SetAnyData("ArrouoRaidersCount", RaidersCount);
+
+	// Создаем локацию, если не удалось прекращаем работу функции.
+	// Локации создаем ориентируясь по стадиям квеста у лидера.
+	GameVar@ raiders_camp=GetGlobalVar(GVAR_arroyo_mynoc_map);
+	if(!valid(raiders_camp)) return;
+
+	if(stage==1){
+		Location@ camp=_GetRaidersCamp(group);
+		if(!valid(camp)) return;
+		Map@ map=camp.GetMapByIndex(0);
+		// Сохраняем идентификатор карты, для последующего удаления
+		raiders_camp=camp.Id;
+		// Проходимся по всей группе и инициализируем квест у игроков не выполнявших (q_arroyo_mynoc_defence=0) его ранее
+		// или проваливших его (q_arroyo_mynoc_defence=4 или 8). Все прочие в группе могут помочь, но не могут выполнить квест
+		// и не получают опыт, соответственно.
+		for(uint i=0, iMax=group.length(); i<iMax; i++)
+		{
+			// Если в группе есть НПС - пропускаем его
+			if(group[i].IsNpc()) continue;
+			GameVar@ quest=GetLocalVar(LVAR_q_arroyo_mynoc_defence, group[i].Id);
+			if(valid(quest))
+				if(quest.GetValue()==0 || quest.GetValue()==4 || quest.GetValue()==8) quest=1;
+		}
+	} else if(stage==2){
+		Location@ camp=_GetRaidersForce(group);
+		if(!valid(camp)) return;
+		Map@ map=camp.GetMapByIndex(0);
+		// Сохраняем идентификатор карты, для последующего удаления
+		raiders_camp=camp.Id;
+		// Проходимся по всей группе и меняем стадию выполненности квеста.
+		for(uint i=0, iMax=group.length(); i<iMax; i++)
+		{
+			// Если в группе есть НПС - пропускаем его
+			if(group[i].IsNpc()) continue;
+			GameVar@ quest=GetLocalVar(LVAR_q_arroyo_mynoc_defence, group[i].Id);
+			if(valid(quest) && quest.GetValue()==2) quest=3;
+		}
+	} else {
+		return;
+	}
+
+	// Устанавливаем таймаут для квеста.
+	GameVar@ mynoc_timeout=GetGlobalVar(GVAR_arroyo_mynoc_timeout);
+	mynoc_timeout=__FullSecond + (60 * 60 * 24 * QUEST_TIMEOUT);
+	// И создаем событие в котором будем отслеживать не просрочился ли квест. Времени на квест в двое больше если нет других соискателей.
+	CreateTimeEvent(mynoc_timeout.GetValue() + (60 * 24 * QUEST_TIMEOUT), "e_TimeExpired", 0, true);
+
+	// Если дожили до сюда, то всё в порядке. Возвращаем TRUE.
+	return;
+
+}
+
+
+// Проверка доступности квеста по времени.
+bool TimeOutIsFree(){
+
+	// Считываем переменную arroyo_mynoc_timeout.
+	GameVar@ mynoc_timeout=GetGlobalVar(GVAR_arroyo_mynoc_timeout);
+	if(!valid(mynoc_timeout)) return false;
+
+	// Квест ещё ни кем не брался.
+	if(mynoc_timeout.GetValue()==0) {
+		return true;
+	}
+
+	// Квест был взят игроками, но не выполнен.
+	if(__FullSecond >=uint(mynoc_timeout.GetValue())) {
+		mynoc_timeout=0;
+		return true;
+	} else {
+		// Квест выполняется другими игроками и не может быть взят.
+		return false;
+	}
+
+}
+
+
+// Удаление лагеря рейдеров.
+void DeleteRaidersCamp(bool isFail)
+{
+
+	GameVar@ camp=GetGlobalVar(GVAR_arroyo_mynoc_map);
+	if(valid(camp)){
+		if(camp.GetValue() !=0){
+			Location@ loc=GetLocation(camp.GetValue());
+			uint[] oldGroup;
+			if(!GetAnyData("LastGoupArrDef", oldGroup)){
+				//Log("Данные LastGoupArrDef не удалось считать. Пропускаем очистку игроков из старой группы.");
+				//continue;
+			} else {
+				// Ищем пользователей бравших квест, устанавливаем переменные и чистим их карты.
+				for(uint i=0, iMax=oldGroup.length(); i<iMax; i++){
+					Critter@ player=GetCritter(oldGroup[i]);
+					if(!valid(player)) { continue; }
+
+					// Проверяем где находится пользователь. Если в удаляемой локации - выкидываем его от туда.
+					Map @ player_map=player.GetMap();
+					if(valid(player_map)){
+						Location @ player_loc=player_map.GetLocation();
+						if(!valid(player_loc)) continue;
+						if(player_loc.GetProtoId()==loc.GetProtoId()){
+							// В локации найден игрок - переносим его на глобал.
+							player.TransitToGlobal(false);
+							player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 3483);
+						}
+						// Убираем локу с карты игрока
+						if(player.IsKnownLoc(true, loc.Id)) player.UnsetKnownLoc(true, loc.Id);
+					}
+
+					if(isFail){
+						// Если на данный момент у игрока задание всё ещё на стадии выполнения - устанавливаем провал.
+						GameVar@ quest=GetLocalVar(LVAR_q_arroyo_mynoc_defence, player.Id);
+						if(valid(quest))
+							if(quest.GetValue()==1 || quest.GetValue()==2 || quest.GetValue()==3 || quest.GetValue()==5) quest=8;
+					}
+				}
+			}
+			// И собственно удаление локации
+			DeleteLocation(loc.Id);
+			camp=0;
+		}
+		// На всякий случай обнулим количество рейдеров.
+		uint[] RaidersCount={0};
+		SetAnyData("ArrouoRaidersCount", RaidersCount);
+	}
+	return;
+
+}
+
+
+// Вспомогательная функция. Возвращает лидера группы в которой состоит игрок.
+uint GetLeaderId(Critter& player){
+	Critter@ leader;
+	if(valid(player.GetFollowLeader()))
+	{
+		@leader=player.GetFollowLeader();
+	} else {
+		@leader=player;
+	}
+	if(valid(leader)){
+		return(leader.Id);
+	} else {
+		return(0);
+	}
+}
+
+
+// Устанавливаем таймер, не успел побить рейдеров - лузер...
+uint e_TimeExpired(uint[]@ values)
+{
+	uint[] RaidersCount(1);
+	if(GetAnyData("LastGoupArrDef", RaidersCount)){
+		if(RaidersCount[0]==0) {
+			DeleteRaidersCamp(false);
+		} else {
+			DeleteRaidersCamp(true);
+		}
+	} else {
+		DeleteRaidersCamp(false);
+	}
+	// Устанавливаем таймаут для квеста в 0.
+	GameVar@ mynoc_timeout=GetGlobalVar(GVAR_arroyo_mynoc_timeout);
+	if(valid(mynoc_timeout)) {
+		mynoc_timeout=0;
+	}
+	return 0;
+}
+
+
+// Локация 1 "Лагерь рейдеров" для первой части квеста.
+Location @ _GetRaidersCamp(Critter@[] group){
+
+	int x,y;
+	x=Random(0, 1);
+	y=Random(-2, -1);
+	uint locId=CreateLocation(
+		LOCATION_arroyo_mynoc_defence1,
+		(ARROYO_POS_X + x * __GlobalMapZoneLength) ,
+		(ARROYO_POS_Y + y * __GlobalMapZoneLength) ,
+		group);
+	if(locId==0){
+		return null;
+	}
+
+	Location@ camp=GetLocation(locId);
+
+	if(!valid(camp)){
+		return null;
+	}
+
+	// Это должно быть установлено в CITY.TXT
+	camp.Visible=false;
+	camp.AutoGarbage=false;
+	camp.Radius=6;
+	//camp.Color=0x3CFF0000;
+
+	return camp;
+}
+
+
+// Локация 2 "Рейдеры атакующие караван" для второй части квеста.
+Location @ _GetRaidersForce(Critter@[] group){
+
+	int x,y;
+	x=Random(1, 2);
+	y=Random(-1, 2);
+	uint locId=CreateLocation(
+		LOCATION_arroyo_mynoc_defence2,
+		(ARROYO_POS_X + x * __GlobalMapZoneLength + Random(-(__GlobalMapZoneLength/2),(__GlobalMapZoneLength/2))),
+		(ARROYO_POS_Y + y * __GlobalMapZoneLength + Random(-(__GlobalMapZoneLength/2),(__GlobalMapZoneLength/2))),
+		group);
+	if(locId==0){
+		return null;
+	}
+	Location@ camp=GetLocation(locId);
+
+	if(!valid(camp)){
+		return null;
+	}
+
+	// Это должно быть установлено в CITY.TXT
+	camp.Visible=false;
+	camp.AutoGarbage=false;
+	camp.Radius=6;
+	//camp.Color=0x3CFF0000;
+
+	return camp;
+}

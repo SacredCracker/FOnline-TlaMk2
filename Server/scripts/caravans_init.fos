@@ -1,0 +1,373 @@
+// CARAVAN_WADE_REDD_VC
+
+	_SetupCaravan(CARAVAN_WADE_REDD_VC, CRV_TYPE_TWOWAY, 2, LVAR_q_redd_wade_caravan_escort, 5);
+	_SetupCaravanLeader(CARAVAN_WADE_REDD_VC, DIALOG_redd_wade, NPC_PID_Wade, BAG_VaultCity_Military, TEAM_QuestNpc, AIPACKET_PEASANTS, 8);
+	_SetupCaravanLiderPosition(CARAVAN_WADE_REDD_VC, LOCATION_Redding, MAP_redding_outer, 61, 52, true); 
+	_SetupCaravanLiderPosition(CARAVAN_WADE_REDD_VC, LOCATION_VaultCity, MAP_vcity_courtyard, 116, 62, false); 
+	_AddRoutePoint(CARAVAN_WADE_REDD_VC, 675, 525);
+	_AddRoutePoint(CARAVAN_WADE_REDD_VC, 617, 578);
+	_AddRoutePoint(CARAVAN_WADE_REDD_VC, 457, 464);
+	_AddRoutePoint(CARAVAN_WADE_REDD_VC, 520, 208);
+	_AddRoutePoint(CARAVAN_WADE_REDD_VC, 578, 138);
+	_AddRoutePoint(CARAVAN_WADE_REDD_VC, 932, 138);
+	_AddRoutePoint(CARAVAN_WADE_REDD_VC, 969, 205);
+	_AddRoutePoint(CARAVAN_WADE_REDD_VC, 1045, 210);
+	_AddRoutePoint(CARAVAN_WADE_REDD_VC, 1084, 249);
+	_AddRoutePoint(CARAVAN_WADE_REDD_VC, 1175, 240);
+	_AddRoutePoint(CARAVAN_WADE_REDD_VC, 1228, 277);
+	_AddRoutePoint(CARAVAN_WADE_REDD_VC, 1225, 325);
+	_AddGuardInfo(CARAVAN_WADE_REDD_VC,  NPC_PID_VaultCityPatrolMale, DIALOG_crvg_common_male, "caravan@_DefaultGuardInit", AIPACKET_BOUNTY_HUNTER, BAG_SF_Caravan_VaultCityPatrolMale, TEAM_QuestNpc, 10, 0, 0, 15, true);
+	_AddGuardInfo(CARAVAN_WADE_REDD_VC,  NPC_PID_Redd_Vc_male_guard, DIALOG_crvg_common_male, "caravan@_DefaultGuardInit", AIPACKET_BOUNTY_HUNTER, BAG_VaultCity_Military, TEAM_QuestNpc, 10, 0, 0, 45, false);
+	_AddGuardInfo(CARAVAN_WADE_REDD_VC,  NPC_PID_Redd_Vc_black_guard, DIALOG_crvg_common_male, "caravan@_DefaultGuardInit", AIPACKET_BOUNTY_HUNTER, BAG_Caravan_BlackGuard, TEAM_QuestNpc, 10, 0, 0, 100, false);
+	_AddGuardInfo(CARAVAN_WADE_REDD_VC,  NPC_PID_Redd_Vc_black_guard, DIALOG_crvg_common_male, "caravan@_DefaultGuardInit", AIPACKET_BOUNTY_HUNTER, BAG_Caravan_BlackGuard, TEAM_QuestNpc, 50, 0, 0, 5, false);
+	_AddGuardInfo(CARAVAN_WADE_REDD_VC, NPC_PID_VaultCityPatrolFemale, DIALOG_crvg_common_female, "caravan@_DefaultGuardInit", AIPACKET_BOUNTY_HUNTER, BAG_SF_Caravan_VaultCityPatrolFemale, TEAM_QuestNpc, 10, 0, 0, 40, true);
+	_AddGuardInfo(CARAVAN_WADE_REDD_VC, NPC_PID_Redd_Vc_female_guard, DIALOG_crvg_common_male, "caravan@_DefaultGuardInit", AIPACKET_BOUNTY_HUNTER, BAG_VaultCity_Military, TEAM_QuestNpc, 10, 0, 0, 75, false);
+	_SetupCaravanCabs(CARAVAN_WADE_REDD_VC, Random(2,3));
+	// основной маршрут
+	_AddLootToCaravanCabs(CARAVAN_WADE_REDD_VC, -1, PID_BOTTLE_CAPS, 200, 1000, 100, false);
+	_AddLootToCaravanCabs(CARAVAN_WADE_REDD_VC, -1, PID_BOTTLE_CAPS, 100, 200, 35, false);
+	_AddLootToCaravanCabs(CARAVAN_WADE_REDD_VC, -1, PID_BOTTLE_CAPS, 1000, 2000, 10, false);
+	_AddLootToCaravanCabs(CARAVAN_WADE_REDD_VC, -1, PID_GOLD_NUGGET, 10, 20, 100, false);
+	_AddLootToCaravanCabs(CARAVAN_WADE_REDD_VC, -1, PID_GOLD_NUGGET, 3, 5, 100, false);
+	_AddLootToCaravanCabs(CARAVAN_WADE_REDD_VC, -1, PID_GOLD_NUGGET, 4, 7, 100, false);
+	_AddLootToCaravanCabs(CARAVAN_WADE_REDD_VC, 0, PID_FLARE, 1, 3, 100, false);
+	_AddLootToCaravanCabs(CARAVAN_WADE_REDD_VC, 2, PID_FLARE, 1, 3, 100, false);
+	_AddLootToCaravanCabs(CARAVAN_WADE_REDD_VC, 1, PID_FLARE, 1, 3, 100, false);
+	_AddLootToCaravanCabs(CARAVAN_WADE_REDD_VC, -1, PID_MORNING_STAR_MINE, 10, 30, 50, false);
+	_AddLootToCaravanCabs(CARAVAN_WADE_REDD_VC, -1, PID_KOKOWEEF_MINE_SCRIP, 1, 20, 50, false);
+	// обратный маршрут	
+	_AddLootToCaravanCabs(CARAVAN_WADE_REDD_VC, -1, PID_BOTTLE_CAPS, 200, 400, 100, true);
+	_AddLootToCaravanCabs(CARAVAN_WADE_REDD_VC, -1, PID_STIMPAK, 2, 5, 100, true);
+	_AddLootToCaravanCabs(CARAVAN_WADE_REDD_VC, -1, PID_FIRST_AID_BOOK, 1, 2, 30, true);
+	_AddLootToCaravanCabs(CARAVAN_WADE_REDD_VC, -1, PID_STIMPAK, 1, 4, 50, true);
+	_AddLootToCaravanCabs(CARAVAN_WADE_REDD_VC, -1, PID_SUPER_STIMPAK, 1, 2, 100, true);
+	_AddLootToCaravanCabs(CARAVAN_WADE_REDD_VC, -1, PID_JET_ANTIDOTE, 1, 1, 10, true);
+	_AddLootToCaravanCabs(CARAVAN_WADE_REDD_VC, -1, PID_RADAWAY, 1, 2, 45, true);
+	_AddLootToCaravanCabs(CARAVAN_WADE_REDD_VC, -1, PID_STIMPAK, 2, 3, 90, true);
+	
+	_SheduleCaravan(CARAVAN_WADE_REDD_VC, 0, 9, 0, 12); 
+	
+//CARAVAN_SAVINEL_REDD_NR
+
+	_SetupCaravan(CARAVAN_SAVINEL_REDD_NR, CRV_TYPE_TWOWAY, 1, LVAR_q_redd_savinel_caravan_escort, 6);
+	_SetupCaravanLeader(CARAVAN_SAVINEL_REDD_NR, DIALOG_redd_savinel, NPC_PID_Savinelly, BAG_Savinelly, TEAM_QuestNpc, AIPACKET_THUGS, 15);	
+	_SetupCaravanLiderPosition(CARAVAN_SAVINEL_REDD_NR, LOCATION_Redding, MAP_redding_outer, 37, 101, true); 
+	_SetupCaravanLiderPosition(CARAVAN_SAVINEL_REDD_NR, LOCATION_NewReno, MAP_newr1, 75, 124, false); 
+	_AddRoutePoint(CARAVAN_SAVINEL_REDD_NR, 675, 525);//redding
+	_AddRoutePoint(CARAVAN_SAVINEL_REDD_NR, 682, 668);
+	_AddRoutePoint(CARAVAN_SAVINEL_REDD_NR, 721, 730);
+	_AddRoutePoint(CARAVAN_SAVINEL_REDD_NR, 756, 913);
+	_AddRoutePoint(CARAVAN_SAVINEL_REDD_NR, 925, 925);// new reno
+	_AddGuardInfo(CARAVAN_SAVINEL_REDD_NR, NPC_PID_BountyHunter_9, DIALOG_crvg_gekkon, "caravan@_DefaultGuardInitUnlimAmmo", AIPACKET_BOUNTY_HUNTER, BAG_SF_Caravan_VaultCityPatrolMale, TEAM_QuestNpc, 20, 2, 0, 25, true);
+	_AddGuardInfo(CARAVAN_SAVINEL_REDD_NR, NPC_PID_MaleGunThug, DIALOG_crvg_common_male, "caravan@_DefaultGuardInitUnlimAmmo", AIPACKET_BOUNTY_HUNTER, BAG_RDRC_BHCaravan_BigGunGuardMale, TEAM_QuestNpc, 10, 0, 0, 80, false);
+	_AddGuardInfo(CARAVAN_SAVINEL_REDD_NR, NPC_PID_MaleGunThug, DIALOG_crvg_common_male, "caravan@_DefaultGuardInit", AIPACKET_BOUNTY_HUNTER, BAG_Navarro_EnclavePatrol_Male2   , TEAM_QuestNpc, 10, 0, 0, 80, false);
+	_AddGuardInfo(CARAVAN_SAVINEL_REDD_NR, NPC_PID_FemaleGunThug, DIALOG_crvg_common_female, "caravan@_DefaultGuardInit", AIPACKET_BOUNTY_HUNTER, BAG_RDRC_BHCaravan_BigGunGuardFemale, TEAM_QuestNpc, 10, 0, 0, 65, false);
+	_AddGuardInfo(CARAVAN_SAVINEL_REDD_NR, NPC_PID_AgileFemaleThug, DIALOG_crvg_common_female, "caravan@_DefaultGuardInit", AIPACKET_BOUNTY_HUNTER, BAG_SF_Band1_MercenearyFemale2, TEAM_QuestNpc, 10, 0, 0, 35, false);
+	// Бомбермен
+	_AddGuardInfo(CARAVAN_SAVINEL_REDD_NR,  NPC_PID_ToughMaleThug, DIALOG_crvg_bomberman, "caravan@_BomberInit", AIPACKET_SPORE_PLANT, BAG_Empty, TEAM_QuestNpc, 12, 1, 3, 5, true);
+	// Анаферон
+	_AddGuardInfo(CARAVAN_SAVINEL_REDD_NR,  NPC_PID_FemaleHunter, DIALOG_crvg_anaferon, "caravan@_AnaferonInit", AIPACKET_PARTY_VIC_DEFENSIVE, BAG_Empty, TEAM_QuestNpc, 8, 2, 0, 5, true);
+	// Находчивый Василий
+	_AddGuardInfo(CARAVAN_SAVINEL_REDD_NR,  NPC_PID_ToughMaleThug, DIALOG_crvg_vasiliy, "caravan@_VasyaInit", AIPACKET_BOUNTY_HUNTER, BAG_Empty, TEAM_QuestNpc, 8, 3, 1, 5, true);
+	// Киллелпролол
+	 _AddGuardInfo(CARAVAN_SAVINEL_REDD_NR,  NPC_PID_NCRRangerMale, DIALOG_crvg_killerlolpro, "caravan@_KillerInit", AIPACKET_BOUNTY_HUNTER, BAG_Empty, TEAM_QuestNpc, 30, 1, 2, 5, true);
+	
+	_SetupCaravanCabs(CARAVAN_SAVINEL_REDD_NR, Random(1,2));
+		// основной маршрут
+	_AddLootToCaravanCabs(CARAVAN_SAVINEL_REDD_NR, -1, PID_BOTTLE_CAPS, 200, 1000, 100, false);
+	_AddLootToCaravanCabs(CARAVAN_SAVINEL_REDD_NR, -1, PID_BOTTLE_CAPS, 100, 200, 35, false);
+	_AddLootToCaravanCabs(CARAVAN_SAVINEL_REDD_NR, -1, PID_BOTTLE_CAPS, 1000, 2000, 10, false);
+	_AddLootToCaravanCabs(CARAVAN_SAVINEL_REDD_NR, -1, PID_GOLD_NUGGET, 10, 20, 100, false);
+	_AddLootToCaravanCabs(CARAVAN_SAVINEL_REDD_NR, -1, PID_GOLD_NUGGET, 3, 5, 100, false);
+	_AddLootToCaravanCabs(CARAVAN_SAVINEL_REDD_NR, -1, PID_GOLD_NUGGET, 4, 7, 50, false);
+	_AddLootToCaravanCabs(CARAVAN_SAVINEL_REDD_NR, 0, PID_FLARE,5, 7, 100, false);
+	_AddLootToCaravanCabs(CARAVAN_SAVINEL_REDD_NR, -1, PID_MORNING_STAR_MINE, 10, 30, 50, false);
+	_AddLootToCaravanCabs(CARAVAN_SAVINEL_REDD_NR, -1, PID_KOKOWEEF_MINE_SCRIP, 1, 20, 50, false);
+	// обратный маршрут
+	_AddLootToCaravanCabs(CARAVAN_SAVINEL_REDD_NR, -1, PID_BOTTLE_CAPS, 200, 1000, 100, true);
+	_AddLootToCaravanCabs(CARAVAN_SAVINEL_REDD_NR, -1, PID_MENTATS, 1, 3, 35, true);
+	_AddLootToCaravanCabs(CARAVAN_SAVINEL_REDD_NR, -1, PID_PSYCHO, 3, 4, 35, true);
+	_AddLootToCaravanCabs(CARAVAN_SAVINEL_REDD_NR, -1, PID_JET, 3, 35, 45, true);
+	_AddLootToCaravanCabs(CARAVAN_SAVINEL_REDD_NR, -1, PID_JET, 10, 12, 100, true);
+	_AddLootToCaravanCabs(CARAVAN_SAVINEL_REDD_NR, -1, PID_JET, 1, 2, 35, true);
+	
+	_SheduleCaravan(CARAVAN_SAVINEL_REDD_NR, 0, 10, 0, 15);
+	
+//CARAVAN_STANWELL_REDD_NCR
+
+	_SetupCaravan(CARAVAN_STANWELL_REDD_NCR, CRV_TYPE_TWOWAY, 2, LVAR_q_redd_stan_caravan_escort, 8);
+	_SetupCaravanLeader(CARAVAN_STANWELL_REDD_NCR, DIALOG_redd_stanwell, NPC_PID_Stanwell, BAG_Stanwell, TEAM_QuestNpc, AIPACKET_GENERIC_GUARDS, 21);	
+	_SetupCaravanLiderPosition(CARAVAN_STANWELL_REDD_NCR, LOCATION_Redding, MAP_redding_outer, 28, 79, true); 
+	_SetupCaravanLiderPosition(CARAVAN_STANWELL_REDD_NCR, LOCATION_NCR, MAP_ncr_bazaar, 35, 82, false); 
+	_AddRoutePoint(CARAVAN_STANWELL_REDD_NCR, 675, 525);//redding
+	_AddRoutePoint(CARAVAN_STANWELL_REDD_NCR,663, 573);
+	_AddRoutePoint(CARAVAN_STANWELL_REDD_NCR,631, 592);
+	_AddRoutePoint(CARAVAN_STANWELL_REDD_NCR,668, 640);
+	_AddRoutePoint(CARAVAN_STANWELL_REDD_NCR,735, 1188);
+	_AddRoutePoint(CARAVAN_STANWELL_REDD_NCR,841, 1329);
+	_AddRoutePoint(CARAVAN_STANWELL_REDD_NCR,1006, 1397);
+	_AddRoutePoint(CARAVAN_STANWELL_REDD_NCR, 1125, 1425);//ncr
+	
+	_AddGuardInfo(CARAVAN_STANWELL_REDD_NCR,  NPC_PID_VaultCityPatrolMale, DIALOG_crvg_common_male, "caravan@_DefaultGuardInit", AIPACKET_BOUNTY_HUNTER, BAG_SF_Caravan_VaultCityPatrolMale, TEAM_QuestNpc, 15, 0, 0, 100, false);
+	_AddGuardInfo(CARAVAN_STANWELL_REDD_NCR, NPC_PID_VaultCityPatrolFemale, DIALOG_crvg_common_female, "caravan@_DefaultGuardInit", AIPACKET_BOUNTY_HUNTER, BAG_SF_Caravan_VaultCityPatrolFemale, TEAM_QuestNpc, 15, 0, 0, 80, false);
+	_AddGuardInfo(CARAVAN_STANWELL_REDD_NCR,  NPC_PID_VaultCityPatrolMale, DIALOG_crvg_common_male, "caravan@_DefaultGuardInitUnlimAmmo", AIPACKET_BOUNTY_HUNTER, BAG_RDRC_BHCaravan_BigGunGuardMale, TEAM_QuestNpc, 18, 0, 0, 25, false);
+	
+	_SetupCaravanCabs(CARAVAN_STANWELL_REDD_NCR, Random(1,2));
+		// основной маршрут
+	_AddLootToCaravanCabs(CARAVAN_STANWELL_REDD_NCR, -1, PID_BOTTLE_CAPS, 200, 1000, 100, false);
+	_AddLootToCaravanCabs(CARAVAN_STANWELL_REDD_NCR, -1, PID_BOTTLE_CAPS, 100, 200, 35, false);
+	_AddLootToCaravanCabs(CARAVAN_STANWELL_REDD_NCR, -1, PID_BOTTLE_CAPS, 1000, 2000, 10, false);
+	_AddLootToCaravanCabs(CARAVAN_STANWELL_REDD_NCR, -1, PID_GOLD_NUGGET, 10, 20, 100, false);
+	_AddLootToCaravanCabs(CARAVAN_STANWELL_REDD_NCR, -1, PID_GOLD_NUGGET, 3, 5, 100, false);
+	_AddLootToCaravanCabs(CARAVAN_STANWELL_REDD_NCR, -1, PID_GOLD_NUGGET, 4, 7, 50, false);
+	_AddLootToCaravanCabs(CARAVAN_STANWELL_REDD_NCR, 0, PID_FLARE,5, 7, 100, false);
+	_AddLootToCaravanCabs(CARAVAN_STANWELL_REDD_NCR, -1, PID_MORNING_STAR_MINE, 10, 30, 50, false);
+	_AddLootToCaravanCabs(CARAVAN_STANWELL_REDD_NCR, -1, PID_KOKOWEEF_MINE_SCRIP, 1, 20, 50, false);
+	// обратный маршрут
+	_AddLootToCaravanCabs(CARAVAN_STANWELL_REDD_NCR, -1, PID_BOTTLE_CAPS, 2200, 3000, 100, true);
+	_AddLootToCaravanCabs(CARAVAN_STANWELL_REDD_NCR, -1, PID_BRAHMIN_SKIN, 10, 15, 100, true);
+	_AddLootToCaravanCabs(CARAVAN_STANWELL_REDD_NCR, -1, PID_BRAHMIN_SKIN, 5, 7, 80, true);
+	_AddLootToCaravanCabs(CARAVAN_STANWELL_REDD_NCR, -1, PID_MEAT, 12, 15, 100, true);
+	_AddLootToCaravanCabs(CARAVAN_STANWELL_REDD_NCR, -1, PID_MEAT, 3, 5, 55, true);
+	_AddLootToCaravanCabs(CARAVAN_STANWELL_REDD_NCR, -1, PID_MEAT_JERKY, 22, 25, 100, true);
+	_AddLootToCaravanCabs(CARAVAN_STANWELL_REDD_NCR, -1, PID_MEAT_JERKY, 2, 4, 25, true);
+	_AddLootToCaravanCabs(CARAVAN_STANWELL_REDD_NCR, -1, PID_V15_COMPUTER_PART, 1, 5, 25, true);
+	_AddLootToCaravanCabs(CARAVAN_STANWELL_REDD_NCR, -1, PID_MOTOR, 1, 1, 2, true);
+	_AddLootToCaravanCabs(CARAVAN_STANWELL_REDD_NCR, -1, PID_BOTTLE_FULL, 8, 25, 100, true);
+	_AddLootToCaravanCabs(CARAVAN_STANWELL_REDD_NCR, -1, PID_BOTTLE_FULL, 3, 4, 44, true);
+	_SheduleCaravan(CARAVAN_STANWELL_REDD_NCR, 0, 5, 0, 8);
+	
+	
+//CARAVAN_HAL_NCR_REDD
+	_SetupCaravan(CARAVAN_HAL_NCR_REDD, CRV_TYPE_ONEWAY_TRANSITLEADER, 2, LVAR_q_ncr_redding_caravan_escort, 10);
+	_SetupCaravanLeader(CARAVAN_HAL_NCR_REDD, DIALOG_ncr_hal, NPC_PID_Hal, BAG_Hal, TEAM_QuestNpc, AIPACKET_TOUGH_GUARD, 21);
+	_SetupCaravanLiderPosition(CARAVAN_HAL_NCR_REDD, LOCATION_NCR, MAP_ncr_downtown, 154, 80, true); 
+	_SetupCaravanLiderPosition(CARAVAN_HAL_NCR_REDD, LOCATION_Redding, MAP_redding_outer, 73, 86, false); 
+	_AddRoutePoint(CARAVAN_HAL_NCR_REDD, 1125, 1425);//ncr
+	_AddRoutePoint(CARAVAN_HAL_NCR_REDD,1006, 1397);
+	_AddRoutePoint(CARAVAN_HAL_NCR_REDD,841, 1329);
+	_AddRoutePoint(CARAVAN_HAL_NCR_REDD,735, 1188);
+	_AddRoutePoint(CARAVAN_HAL_NCR_REDD,668, 640);
+	_AddRoutePoint(CARAVAN_HAL_NCR_REDD,631, 592);
+	_AddRoutePoint(CARAVAN_HAL_NCR_REDD,663, 573);
+	_AddRoutePoint(CARAVAN_HAL_NCR_REDD, 675, 525);//redding
+	_AddGuardInfo(CARAVAN_HAL_NCR_REDD,  NPC_PID_VaultCityPatrolMale, DIALOG_crvg_common_male, "caravan@_DefaultGuardInitUnlimAmmo", AIPACKET_BOUNTY_HUNTER, BAG_SF_Caravan_VaultCityPatrolMale, TEAM_QuestNpc, 10, 0, 0, 100, false);
+	_AddGuardInfo(CARAVAN_HAL_NCR_REDD, NPC_PID_VaultCityPatrolFemale, DIALOG_crvg_common_female, "caravan@_DefaultGuardInit", AIPACKET_BOUNTY_HUNTER, BAG_SF_Caravan_VaultCityPatrolFemale, TEAM_QuestNpc, 10, 0, 0, 80, false);
+	_AddGuardInfo(CARAVAN_HAL_NCR_REDD,  NPC_PID_VaultCityPatrolMale, DIALOG_crvg_common_male, "caravan@_DefaultGuardInit", AIPACKET_BOUNTY_HUNTER, BAG_RDRC_BHCaravan_BigGunGuardMale, TEAM_QuestNpc, 10, 0, 0, 80, false);
+	// брамины/ 15 штук
+	for(uint i=0; i<15; i++)
+	{
+		_AddFollowerInfo(CARAVAN_HAL_NCR_REDD, NPC_PID_Brahmin3, 0, TEAM_QuestNpc, BAG_Empty);
+	}
+	// специальные охранники, можно копировать в любой караван, только поставить правильный код. У таких охранников обязательно указывать isUnique=true
+	// Отец Петреску
+	_AddGuardInfo(CARAVAN_HAL_NCR_REDD,  NPC_PID_ElronologistMale, DIALOG_crvg_petresku, "caravan@_PetreskuInit", AIPACKET_PARTY_SULIK_BERSERK, BAG_Empty, TEAM_QuestNpc, 20, 2, 0, 25, true);
+	// Mazzy
+	_AddGuardInfo(CARAVAN_HAL_NCR_REDD,  NPC_PID_Nightkin, DIALOG_crvg_mazzy, "caravan@_MazzyInit", AIPACKET_PARTY_LENNY_BERSERK, BAG_Empty, TEAM_QuestNpc, 9, 3, 0, 15, true);
+	// Бомбермен
+	_AddGuardInfo(CARAVAN_HAL_NCR_REDD,  NPC_PID_ToughMaleThug, DIALOG_crvg_bomberman, "caravan@_BomberInit", AIPACKET_SPORE_PLANT, BAG_Empty, TEAM_QuestNpc, 12, 1, 3, 15, true);
+	// Анаферон
+	_AddGuardInfo(CARAVAN_HAL_NCR_REDD,  NPC_PID_FemaleHunter, DIALOG_crvg_anaferon, "caravan@_AnaferonInit", AIPACKET_PARTY_VIC_DEFENSIVE, BAG_Empty, TEAM_QuestNpc, 8, 2, 0, 15, true);
+	// Находчивый Василий
+	_AddGuardInfo(CARAVAN_HAL_NCR_REDD,  NPC_PID_ToughMaleThug, DIALOG_crvg_vasiliy, "caravan@_VasyaInit", AIPACKET_BOUNTY_HUNTER, BAG_Empty, TEAM_QuestNpc, 8, 3, 1, 15, true);
+	// Киллелпролол
+	 _AddGuardInfo(CARAVAN_HAL_NCR_REDD,  NPC_PID_NCRRangerMale, DIALOG_crvg_killerlolpro, "caravan@_KillerInit", AIPACKET_BOUNTY_HUNTER, BAG_Empty, TEAM_QuestNpc, 30, 1, 2, 15, true);
+	// Зомби
+	 _AddGuardInfo(CARAVAN_HAL_NCR_REDD,  NPC_PID_ToughGhoul, DIALOG_crvg_zombie, "caravan@_ZombieInit", AIPACKET_PARTY_SULIK_CUSTOM, BAG_Empty, TEAM_QuestNpc, 15, 4, 0, 15, true);
+	// Рэт
+	_AddGuardInfo(CARAVAN_HAL_NCR_REDD,  NPC_PID_ToughFemaleThug, DIALOG_crvg_rat, "caravan@_RatInit", AIPACKET_PARTY_MACRAE_AGGRESSIVE, BAG_Empty, TEAM_QuestNpc, 12, 1, 0, 22, true);
+	_SheduleCaravan(CARAVAN_HAL_NCR_REDD, 0, 10, 0, 14);
+	
+//CARAVAN_KIT_BH_GECKO 
+	_SetupCaravan(CARAVAN_KIT_BH_GECKO, CRV_TYPE_ONEWAY_DELETELEADER, 2, LVAR_q_bh_kit_caravan_escort, 5);
+	_SetupCaravanLeader(CARAVAN_KIT_BH_GECKO, DIALOG_bh_kit, NPC_PID_Savinelly, BAG_VaultCity_Military, TEAM_QuestNpc, AIPACKET_BOUNTY_HUNTER, 11);
+	_SetupCaravanLiderPosition(CARAVAN_KIT_BH_GECKO, LOCATION_BrokenHills, MAP_broken, 239, 114, true); 
+	_SetupCaravanLiderPosition(CARAVAN_KIT_BH_GECKO, LOCATION_Gecko, MAP_gecko_settlement, 57, 31, false); 
+	_AddRoutePoint(CARAVAN_KIT_BH_GECKO, 1175, 875); // bh
+	_AddRoutePoint(CARAVAN_KIT_BH_GECKO, 1304, 615); 
+	_AddRoutePoint(CARAVAN_KIT_BH_GECKO, 1306, 490); 
+	_AddRoutePoint(CARAVAN_KIT_BH_GECKO, 1341, 446); 
+	_AddRoutePoint(CARAVAN_KIT_BH_GECKO, 1313, 342); 
+	_AddRoutePoint(CARAVAN_KIT_BH_GECKO, 1265, 296); 
+	_AddRoutePoint(CARAVAN_KIT_BH_GECKO, 1275, 225); // gecko
+	
+	_AddGuardInfo(CARAVAN_KIT_BH_GECKO,  NPC_PID_FemaleHunter, DIALOG_crvg_anaferon, "caravan@_AnaferonInit", AIPACKET_PARTY_VIC_DEFENSIVE, BAG_Empty, TEAM_QuestNpc, 8, 2, 0, 25, true);
+	_AddGuardInfo(CARAVAN_KIT_BH_GECKO,  NPC_PID_ToughMaleThug, DIALOG_crvg_vasiliy, "caravan@_VasyaInit", AIPACKET_BOUNTY_HUNTER, BAG_Empty, TEAM_QuestNpc, 8, 3, 1, 25, true);
+	_AddGuardInfo(CARAVAN_KIT_BH_GECKO,  NPC_PID_ToughGhoul, DIALOG_crvg_zombie, "caravan@_ZombieInit", AIPACKET_PARTY_SULIK_CUSTOM, BAG_Empty, TEAM_QuestNpc, 15, 4, 0, 25, true);
+	_AddGuardInfo(CARAVAN_KIT_BH_GECKO, NPC_PID_MaleGunThug, DIALOG_crvg_common_male, "caravan@_BHCaravanGuardInit", AIPACKET_BOUNTY_HUNTER, BAG_VaultCity_Military   , TEAM_QuestNpc, 10, 0, 0, 100, false);
+	_AddGuardInfo(CARAVAN_KIT_BH_GECKO, NPC_PID_FemaleGunThug, DIALOG_crvg_common_female, "caravan@_BHCaravanGuardInit", AIPACKET_BOUNTY_HUNTER, BAG_VaultCity_Military, TEAM_QuestNpc, 10, 0, 0, 65, false);
+	
+	
+	_AddFollowerInfo(CARAVAN_KIT_BH_GECKO, NPC_PID_ToughGhoul, DIALOG_bh_ghoul_follower, TEAM_QuestNpc, BAG_Empty);
+	_AddFollowerInfo(CARAVAN_KIT_BH_GECKO, NPC_PID_ToughGhoul, DIALOG_bh_ghoul_follower, TEAM_QuestNpc, BAG_Empty);
+	_AddFollowerInfo(CARAVAN_KIT_BH_GECKO, NPC_PID_ToughGhoul, DIALOG_bh_ghoul_follower, TEAM_QuestNpc, BAG_Empty);
+	_AddFollowerInfo(CARAVAN_KIT_BH_GECKO, NPC_PID_ToughGhoul, DIALOG_bh_ghoul_follower, TEAM_QuestNpc, BAG_Empty);
+	
+	_SetupCaravanCabs(CARAVAN_KIT_BH_GECKO, 1);
+	_AddLootToCaravanCabs(CARAVAN_KIT_BH_GECKO, -1, PID_BOTTLE_CAPS, 200, 1000, 100, false);
+	_AddLootToCaravanCabs(CARAVAN_KIT_BH_GECKO, -1, PID_BOTTLE_CAPS, 100, 200, 35, false);
+	_AddLootToCaravanCabs(CARAVAN_KIT_BH_GECKO, -1, PID_URANIUM_ORE, 2, 5, 100, false);
+	_AddLootToCaravanCabs(CARAVAN_KIT_BH_GECKO, -1, PID_URANIUM_ORE, 1, 3, 25, false);
+	_AddLootToCaravanCabs(CARAVAN_KIT_BH_GECKO, -1, PID_223_FMJ, 12, 100, 25, false);
+	_AddLootToCaravanCabs(CARAVAN_KIT_BH_GECKO, -1, PID_223_FMJ, 15, 50, 25, false);
+	_AddLootToCaravanCabs(CARAVAN_KIT_BH_GECKO, -1, PID_223_FMJ, 1, 200, 25, false);
+	_AddLootToCaravanCabs(CARAVAN_KIT_BH_GECKO, -1, PID_223_FMJ, 1, 300, 25, false);
+	_AddLootToCaravanCabs(CARAVAN_KIT_BH_GECKO, -1, PID_SHOTGUN_SHELLS, 35, 100, 75, false);
+	_AddLootToCaravanCabs(CARAVAN_KIT_BH_GECKO, -1, PID_SHOTGUN_SHELLS, 15, 50, 25, false);
+	_AddLootToCaravanCabs(CARAVAN_KIT_BH_GECKO, -1, PID_SHOTGUN_SHELLS, 1, 200, 25, false);
+	_AddLootToCaravanCabs(CARAVAN_KIT_BH_GECKO, -1, PID_MEAT, 3, 5, 55, false);
+	_AddLootToCaravanCabs(CARAVAN_KIT_BH_GECKO, -1, PID_MEAT_JERKY, 22, 25, 100, false);
+	_SheduleCaravan(CARAVAN_KIT_BH_GECKO, 0, 6, 0, 10);
+	
+//PATROL_HATE_NCR
+	_SetupCaravan(PATROL_HATE_NCR, CRV_TYPE_ONEWAY_DELETELEADER, 2, LVAR_q_ncr_hate_patrol, 7);
+	_SetupCaravanLeader(PATROL_HATE_NCR, DIALOG_ncr_hate, NPC_PID_HATE, BAG_SF_Caravan_VaultCityPatrolMale, TEAM_QuestNpc, AIPACKET_BOUNTY_HUNTER, 150);
+	_SetupCaravanLiderPosition(PATROL_HATE_NCR, LOCATION_NCR, MAP_ncr_bazaar, 119, 79, true); 
+	_SetupCaravanLiderPosition(PATROL_HATE_NCR, LOCATION_NCR, MAP_ncr_bazaar, 119, 79, false); 
+	_AddRoutePoint(PATROL_HATE_NCR, 1125, 1425);//ncr
+	_AddRoutePoint(PATROL_HATE_NCR, 1225, 1425);
+	_AddRoutePoint(PATROL_HATE_NCR, 1143, 1308);
+	_AddRoutePoint(PATROL_HATE_NCR, 1058, 1436);
+	_AddRoutePoint(PATROL_HATE_NCR, 1038, 1488);
+	_AddRoutePoint(PATROL_HATE_NCR, 1207, 1475);
+	_AddRoutePoint(PATROL_HATE_NCR, 1219, 1335);
+	_AddRoutePoint(PATROL_HATE_NCR, 1125, 1425);//ncr
+	_AddGuardInfo(PATROL_HATE_NCR,  NPC_PID_VaultCityPatrolMale, DIALOG_crvg_ncr_patroller, "caravan@_NcrRangerPatrolInit", AIPACKET_BOUNTY_HUNTER, BAG_SF_Caravan_VaultCityPatrolMale, TEAM_QuestNpc, 15, 0, 0, 100, false);
+	_SheduleCaravan(PATROL_HATE_NCR, 0, 21, 0, 22);
+	
+//PATROL_SHRIM_VC
+	_SetupCaravan(PATROL_SHRIM_VC, CRV_TYPE_ONEWAY_DELETELEADER, 2, LVAR_q_vc_shrim_patrol, 5);
+	_SetupCaravanLeader(PATROL_SHRIM_VC, DIALOG_vc_shrim, NPC_PID_BlackArmoredRebel, BAG_All_BountyHunters_10, TEAM_QuestNpc, AIPACKET_VAULT_GUARD, 50);
+	_SetupCaravanLiderPosition(PATROL_SHRIM_VC, LOCATION_VaultCity, MAP_vcity_courtyard, 58, 86, true); 
+	_SetupCaravanLiderPosition(PATROL_SHRIM_VC, LOCATION_VaultCity, MAP_vcity_courtyard, 58, 86, false); 
+	_AddRoutePoint(PATROL_SHRIM_VC, 1225, 325);//vc
+	_AddRoutePoint(PATROL_SHRIM_VC, 1207, 383);
+	_AddRoutePoint(PATROL_SHRIM_VC, 1154, 303);
+	_AddRoutePoint(PATROL_SHRIM_VC, 1186, 263);
+	_AddRoutePoint(PATROL_SHRIM_VC, 1253, 245);
+	_AddRoutePoint(PATROL_SHRIM_VC, 1279, 309);
+	_AddRoutePoint(PATROL_SHRIM_VC, 1265, 414);
+	_AddRoutePoint(PATROL_SHRIM_VC, 1225, 325);//vc
+	_AddGuardInfo(PATROL_SHRIM_VC,  NPC_PID_VCGuardsman, DIALOG_vc_patroller, "caravan@_VCPatrolInit", AIPACKET_VAULT_GUARD, BAG_SF_Caravan_VaultCityPatrolMale, TEAM_QuestNpc, 15, 0, 0, 100, false);
+	_SheduleCaravan(PATROL_SHRIM_VC, 0, 1, 0, 23);
+	
+//CARAVAN_SELMA_ARR_VC
+_SetupCaravan(CARAVAN_SELMA_ARR_VC, CRV_TYPE_TWOWAY, 2, 1807, 6);
+_SetupCaravanLeader(CARAVAN_SELMA_ARR_VC, 1680, 211, 131, TEAM_QuestNpc, AIPACKET_VAULT_GUARD, 20);
+_SetupCaravanLiderPosition(CARAVAN_SELMA_ARR_VC, LOCATION_Arroyo, MAP_arroyo_bridge, 64, 73, true); 
+_SetupCaravanLiderPosition(CARAVAN_SELMA_ARR_VC, LOCATION_VaultCity, MAP_vcity_courtyard, 135, 108, false); 
+_AddRoutePoint(CARAVAN_SELMA_ARR_VC, 175, 125);
+_AddRoutePoint(CARAVAN_SELMA_ARR_VC, 400, 265);
+_AddRoutePoint(CARAVAN_SELMA_ARR_VC, 571, 138);
+_AddRoutePoint(CARAVAN_SELMA_ARR_VC, 934, 138);
+_AddRoutePoint(CARAVAN_SELMA_ARR_VC, 964, 212);
+_AddRoutePoint(CARAVAN_SELMA_ARR_VC, 1043, 210);
+_AddRoutePoint(CARAVAN_SELMA_ARR_VC, 1207, 270);
+_AddRoutePoint(CARAVAN_SELMA_ARR_VC, 1225, 325);
+_SetupCaravanCabs(CARAVAN_SELMA_ARR_VC, 2);
+_AddLootToCaravanCabs(CARAVAN_SELMA_ARR_VC, -1, PID_COOKIE, 1, 2, 15, false);
+_AddLootToCaravanCabs(CARAVAN_SELMA_ARR_VC, -1, PID_MEAT_JERKY, 6, 13, 50, false);
+_AddLootToCaravanCabs(CARAVAN_SELMA_ARR_VC, -1, PID_MEAT, 5, 8, 50, false);
+_AddLootToCaravanCabs(CARAVAN_SELMA_ARR_VC, -1, PID_BOTTLE_FULL, 12, 25, 100, false);
+_AddLootToCaravanCabs(CARAVAN_SELMA_ARR_VC, -1, PID_BRAHMIN_SKIN, 1, 23, 100, false);
+_AddLootToCaravanCabs(CARAVAN_SELMA_ARR_VC, -1, PID_GECKO_PELT, 1, 32, 100, false);
+_AddLootToCaravanCabs(CARAVAN_SELMA_ARR_VC, -1, PID_BOTTLE_CAPS, 2200, 3000, 100, true);
+_AddLootToCaravanCabs(CARAVAN_SELMA_ARR_VC, -1, PID_STIMPAK, 5, 9, 100, true);
+_AddLootToCaravanCabs(CARAVAN_SELMA_ARR_VC, -1, PID_HYPO, 1, 1, 10, true);
+_AddLootToCaravanCabs(CARAVAN_SELMA_ARR_VC, -1, PID_MENTATS, 2, 3, 50, true);
+_AddLootToCaravanCabs(CARAVAN_SELMA_ARR_VC, -1, PID_FIRST_AID_KIT, 1, 2, 75, true);
+_AddLootToCaravanCabs(CARAVAN_SELMA_ARR_VC, -1, PID_PARAMEDICS_BAG, 1, 1, 100, true);
+_AddGuardInfo(CARAVAN_SELMA_ARR_VC,  NPC_PID_ElronologistMale, DIALOG_crvg_petresku, "caravan@_PetreskuInit", AIPACKET_PARTY_SULIK_BERSERK, BAG_Empty, TEAM_QuestNpc, 20, 2, 0, 25, true);
+_AddGuardInfo(CARAVAN_SELMA_ARR_VC,  NPC_PID_Nightkin, DIALOG_crvg_mazzy, "caravan@_MazzyInit", AIPACKET_PARTY_LENNY_BERSERK, BAG_Empty, TEAM_QuestNpc, 9, 3, 0, 15, true);
+_AddGuardInfo(CARAVAN_SELMA_ARR_VC,  NPC_PID_ToughMaleThug, DIALOG_crvg_bomberman, "caravan@_BomberInit", AIPACKET_SPORE_PLANT, BAG_Empty, TEAM_QuestNpc, 12, 1, 3, 15, true);
+_AddGuardInfo(CARAVAN_SELMA_ARR_VC,  NPC_PID_FemaleHunter, DIALOG_crvg_anaferon, "caravan@_AnaferonInit", AIPACKET_PARTY_VIC_DEFENSIVE, BAG_Empty, TEAM_QuestNpc, 8, 2, 0, 15, true);
+_AddGuardInfo(CARAVAN_SELMA_ARR_VC,  NPC_PID_ToughMaleThug, DIALOG_crvg_vasiliy, "caravan@_VasyaInit", AIPACKET_BOUNTY_HUNTER, BAG_Empty, TEAM_QuestNpc, 8, 3, 1, 15, true);
+_AddGuardInfo(CARAVAN_SELMA_ARR_VC,  NPC_PID_NCRRangerMale, DIALOG_crvg_killerlolpro, "caravan@_KillerInit", AIPACKET_BOUNTY_HUNTER, BAG_Empty, TEAM_QuestNpc, 30, 1, 2, 15, true);
+_AddGuardInfo(CARAVAN_SELMA_ARR_VC,  NPC_PID_ToughGhoul, DIALOG_crvg_zombie, "caravan@_ZombieInit", AIPACKET_PARTY_SULIK_CUSTOM, BAG_Empty, TEAM_QuestNpc, 15, 4, 0, 15, true);
+_AddGuardInfo(CARAVAN_SELMA_ARR_VC,  NPC_PID_ToughFemaleThug, DIALOG_crvg_rat, "caravan@_RatInit", AIPACKET_PARTY_MACRAE_AGGRESSIVE, BAG_Empty, TEAM_QuestNpc, 12, 1, 0, 32, true);
+_AddGuardInfo(CARAVAN_SELMA_ARR_VC,  NPC_PID_VaultCityPatrolMale, DIALOG_crvg_common_male, "caravan@_DefaultGuardInitUnlimAmmo", AIPACKET_BOUNTY_HUNTER, BAG_SF_Caravan_VaultCityPatrolMale, TEAM_QuestNpc, 10, 0, 0, 100, false);
+_SheduleCaravan(CARAVAN_SELMA_ARR_VC, 0, 12, 0, 14);	
+//CARAVAN_GAYZUN_ARR_SF
+_SetupCaravan(CARAVAN_GAYZUN_ARR_SF, CRV_TYPE_TWOWAY, 2, 1808, 9);
+_SetupCaravanLeader(CARAVAN_GAYZUN_ARR_SF, 1678, 217, 131, TEAM_QuestNpc, AIPACKET_GENERIC_GUARDS, 40);
+_SetupCaravanLiderPosition(CARAVAN_GAYZUN_ARR_SF, LOCATION_Arroyo, MAP_arroyo_bridge, 63, 76, true); 
+_SetupCaravanLiderPosition(CARAVAN_GAYZUN_ARR_SF, LOCATION_SanFrancisco, MAP_sf_china, 118, 95, false); 
+_AddRoutePoint(CARAVAN_GAYZUN_ARR_SF, 175, 125);
+_AddRoutePoint(CARAVAN_GAYZUN_ARR_SF, 430, 499);
+_AddRoutePoint(CARAVAN_GAYZUN_ARR_SF, 580, 619);
+_AddRoutePoint(CARAVAN_GAYZUN_ARR_SF, 562, 696);
+_AddRoutePoint(CARAVAN_GAYZUN_ARR_SF, 568, 892);
+_AddRoutePoint(CARAVAN_GAYZUN_ARR_SF, 534, 899);
+_AddRoutePoint(CARAVAN_GAYZUN_ARR_SF, 612, 1216);
+_AddRoutePoint(CARAVAN_GAYZUN_ARR_SF, 599, 1401);
+_AddRoutePoint(CARAVAN_GAYZUN_ARR_SF, 580, 1429);
+_AddRoutePoint(CARAVAN_GAYZUN_ARR_SF, 475, 1325);
+_SetupCaravanCabs(CARAVAN_GAYZUN_ARR_SF, 2);
+_AddLootToCaravanCabs(CARAVAN_GAYZUN_ARR_SF, -1, PID_GECKO_PELT, 1, 32, 100, false);
+_AddLootToCaravanCabs(CARAVAN_GAYZUN_ARR_SF, -1, PID_MEAT_JERKY, 6, 13, 50, false);
+_AddLootToCaravanCabs(CARAVAN_GAYZUN_ARR_SF, -1, PID_MEAT, 5, 8, 50, false);
+_AddLootToCaravanCabs(CARAVAN_GAYZUN_ARR_SF, -1, PID_BOTTLE_FULL, 12, 25, 100, false);
+_AddLootToCaravanCabs(CARAVAN_GAYZUN_ARR_SF, -1, PID_BRAHMIN_SKIN, 1, 23, 100, false);
+_AddLootToCaravanCabs(CARAVAN_GAYZUN_ARR_SF, -1, PID_GECKO_PELT, 1, 32, 100, false);
+_AddLootToCaravanCabs(CARAVAN_GAYZUN_ARR_SF, -1, PID_BOTTLE_CAPS, 100, 3000, 100, false);
+_AddLootToCaravanCabs(CARAVAN_GAYZUN_ARR_SF, -1, PID_SMALL_ENERGY_CELL, 100, 500, 100, true);
+_AddLootToCaravanCabs(CARAVAN_GAYZUN_ARR_SF, -1, PID_MICRO_FUSION_CELL, 12, 100, 100, true);
+_AddLootToCaravanCabs(CARAVAN_GAYZUN_ARR_SF, -1, PID_ELECTRONIC_LOCKPICKS, 1, 2, 75, true);
+_AddLootToCaravanCabs(CARAVAN_GAYZUN_ARR_SF, -1, PID_MULTI_TOOL, 1, 2, 75, true);
+_AddLootToCaravanCabs(CARAVAN_GAYZUN_ARR_SF, -1, PID_V15_COMPUTER_PART, 10, 30, 100, true);
+_AddGuardInfo(CARAVAN_GAYZUN_ARR_SF,  NPC_PID_VaultCityPatrolMale, DIALOG_crvg_common_male, "caravan@_DefaultGuardInitUnlimAmmo", AIPACKET_BOUNTY_HUNTER, BAG_SF_Caravan_VaultCityPatrolMale, TEAM_QuestNpc, 35, 0, 0, 100, false);
+_AddGuardInfo(CARAVAN_GAYZUN_ARR_SF,  NPC_PID_NCRRangerMale, DIALOG_crvg_killerlolpro, "caravan@_KillerInit", AIPACKET_BOUNTY_HUNTER, BAG_Empty, TEAM_QuestNpc, 30, 1, 2, 15, true);
+_AddGuardInfo(CARAVAN_GAYZUN_ARR_SF,  NPC_PID_ToughGhoul, DIALOG_crvg_zombie, "caravan@_ZombieInit", AIPACKET_PARTY_SULIK_CUSTOM, BAG_Empty, TEAM_QuestNpc, 55, 4, 0, 15, true);
+_AddGuardInfo(CARAVAN_GAYZUN_ARR_SF,  NPC_PID_ToughFemaleThug, DIALOG_crvg_rat, "caravan@_RatInit", AIPACKET_PARTY_MACRAE_AGGRESSIVE, BAG_Empty, TEAM_QuestNpc, 55, 1, 0, 12, true);
+_AddGuardInfo(CARAVAN_GAYZUN_ARR_SF,  NPC_PID_VaultCityPatrolMale, DIALOG_crvg_common_male, "caravan@_DefaultGuardInitUnlimAmmo", AIPACKET_BOUNTY_HUNTER, BAG_SF_Caravan_VaultCityPatrolMale, TEAM_QuestNpc, 35, 0, 0, 100, false);
+_SheduleCaravan(CARAVAN_GAYZUN_ARR_SF, 0, 17, 0, 19);
+//CARAVAN_LAUMER_ARR_NCR
+_SetupCaravan(CARAVAN_LAUMER_ARR_NCR, CRV_TYPE_TWOWAY, 2, 1809, 10);
+_SetupCaravanLeader(CARAVAN_LAUMER_ARR_NCR, 1679, 212, 29, TEAM_QuestNpc, AIPACKET_GENERIC_GUARDS, 45);
+_SetupCaravanLiderPosition(CARAVAN_LAUMER_ARR_NCR, LOCATION_Arroyo, MAP_arroyo_bridge, 63, 72, true); 
+_SetupCaravanLiderPosition(CARAVAN_LAUMER_ARR_NCR, LOCATION_NCR, MAP_ncr_bazaar, 77, 84, false); 
+_AddRoutePoint(CARAVAN_LAUMER_ARR_NCR, 175, 125);
+_AddRoutePoint(CARAVAN_LAUMER_ARR_NCR, 434, 501);
+_AddRoutePoint(CARAVAN_LAUMER_ARR_NCR, 582, 594);
+_AddRoutePoint(CARAVAN_LAUMER_ARR_NCR, 656, 941);
+_AddRoutePoint(CARAVAN_LAUMER_ARR_NCR, 795, 1343);
+_AddRoutePoint(CARAVAN_LAUMER_ARR_NCR, 1017, 1408);
+_AddRoutePoint(CARAVAN_LAUMER_ARR_NCR, 1125, 1425);
+_SetupCaravanCabs(CARAVAN_LAUMER_ARR_NCR, 3);
+_AddLootToCaravanCabs(CARAVAN_LAUMER_ARR_NCR, -1, PID_GECKO_PELT, 1, 32, 100, false);
+_AddLootToCaravanCabs(CARAVAN_LAUMER_ARR_NCR, -1, PID_MEAT_JERKY, 6, 13, 50, false);
+_AddLootToCaravanCabs(CARAVAN_LAUMER_ARR_NCR, -1, PID_MEAT, 5, 8, 50, false);
+_AddLootToCaravanCabs(CARAVAN_LAUMER_ARR_NCR, -1, PID_BOTTLE_FULL, 12, 25, 100, false);
+_AddLootToCaravanCabs(CARAVAN_LAUMER_ARR_NCR, -1, PID_BRAHMIN_SKIN, 1, 23, 100, false);
+_AddLootToCaravanCabs(CARAVAN_LAUMER_ARR_NCR, -1, PID_GECKO_PELT, 1, 32, 100, false);
+_AddLootToCaravanCabs(CARAVAN_LAUMER_ARR_NCR, -1, PID_BOTTLE_CAPS, 100, 3000, 100, false);
+_AddLootToCaravanCabs(CARAVAN_LAUMER_ARR_NCR, -1, PID_DOCTORS_BAG, 1, 2, 100, true);
+_AddLootToCaravanCabs(CARAVAN_LAUMER_ARR_NCR, -1, PID_MOTOR, 1, 1, 100, true);
+_AddLootToCaravanCabs(CARAVAN_LAUMER_ARR_NCR, -1, PID_CHEMICALS, 5, 10, 100, true);
+_AddLootToCaravanCabs(CARAVAN_LAUMER_ARR_NCR, -1, PID_PLASMA_TRANSFORMER, 2, 3, 100, true);
+_AddLootToCaravanCabs(CARAVAN_LAUMER_ARR_NCR, -1, PID_ROBOT_MOTIVATOR, 1, 2, 100, true);
+_AddLootToCaravanCabs(CARAVAN_LAUMER_ARR_NCR, -1, PID_PLASMA_RIFLE, 1, 2, 75, true);
+_AddLootToCaravanCabs(CARAVAN_LAUMER_ARR_NCR, -1, PID_MAGNETO_LASER_PISTOL, 1, 2, 50, true);
+_AddLootToCaravanCabs(CARAVAN_LAUMER_ARR_NCR, -1, PID_WELDING, 5, 12, 75, true);
+_AddGuardInfo(CARAVAN_LAUMER_ARR_NCR,  NPC_PID_NCRRangerMale, DIALOG_crvg_killerlolpro, "caravan@_KillerInit", AIPACKET_BOUNTY_HUNTER, BAG_Empty, TEAM_QuestNpc, 30, 1, 2, 15, true);
+_AddGuardInfo(CARAVAN_LAUMER_ARR_NCR,  NPC_PID_ToughGhoul, DIALOG_crvg_zombie, "caravan@_ZombieInit", AIPACKET_PARTY_SULIK_CUSTOM, BAG_Empty, TEAM_QuestNpc, 55, 4, 0, 15, true);
+_AddGuardInfo(CARAVAN_LAUMER_ARR_NCR,  NPC_PID_ToughFemaleThug, DIALOG_crvg_rat, "caravan@_RatInit", AIPACKET_PARTY_MACRAE_AGGRESSIVE, BAG_Empty, TEAM_QuestNpc, 55, 1, 0, 11, true);
+_AddGuardInfo(CARAVAN_LAUMER_ARR_NCR,  NPC_PID_VaultCityPatrolMale, DIALOG_crvg_common_male, "caravan@_DefaultGuardInitUnlimAmmo", AIPACKET_BOUNTY_HUNTER, BAG_SF_Caravan_VaultCityPatrolMale, TEAM_QuestNpc, 45, 0, 0, 100, false);
+_SheduleCaravan(CARAVAN_LAUMER_ARR_NCR, 0, 6, 0, 10);
+//CARAVAN_HOSE_MOD_GECKO
+_SetupCaravan(CARAVAN_HOSE_MOD_GECKO, CRV_TYPE_ONEWAY_DELETELEADER, 1, 3315, 6);
+_SetupCaravanLeader(CARAVAN_HOSE_MOD_GECKO, 323, 71, 102, TEAM_QuestNpc, AIPACKET_GENERIC_GUARDS, 22);
+_SetupCaravanLiderPosition(CARAVAN_HOSE_MOD_GECKO, LOCATION_Modoc, MAP_modoc, 114, 90, true); 
+_SetupCaravanLiderPosition(CARAVAN_HOSE_MOD_GECKO, LOCATION_Gecko, MAP_gecko_settlement, 59, 32, false); 
+_AddRoutePoint(CARAVAN_HOSE_MOD_GECKO, 925, 275);
+_AddRoutePoint(CARAVAN_HOSE_MOD_GECKO, 973, 210);
+_AddRoutePoint(CARAVAN_HOSE_MOD_GECKO, 1024, 226);
+_AddRoutePoint(CARAVAN_HOSE_MOD_GECKO, 1216, 265);
+_AddRoutePoint(CARAVAN_HOSE_MOD_GECKO, 1275, 225);
+for(uint i=0; i<20; i++)
+	_AddFollowerInfo(CARAVAN_HOSE_MOD_GECKO, NPC_PID_Brahmin3, 0, TEAM_QuestNpc, BAG_Empty);
+_AddGuardInfo(CARAVAN_HOSE_MOD_GECKO,  NPC_PID_Nightkin, DIALOG_crvg_mazzy, "caravan@_MazzyInit", AIPACKET_PARTY_LENNY_BERSERK, BAG_Empty, TEAM_QuestNpc, 9, 3, 0, 15, true);
+_AddGuardInfo(CARAVAN_HOSE_MOD_GECKO,  NPC_PID_ToughMaleThug, DIALOG_crvg_bomberman, "caravan@_BomberInit", AIPACKET_SPORE_PLANT, BAG_Empty, TEAM_QuestNpc, 12, 1, 3, 15, true);
+_AddGuardInfo(CARAVAN_HOSE_MOD_GECKO, NPC_PID_MaleGunThug, DIALOG_crvg_common_male, "caravan@_BHCaravanGuardInit", AIPACKET_BOUNTY_HUNTER, BAG_VaultCity_Military   , TEAM_QuestNpc, 10, 0, 0, 100, false);
+_AddGuardInfo(CARAVAN_HOSE_MOD_GECKO, NPC_PID_FemaleGunThug, DIALOG_crvg_common_female, "caravan@_BHCaravanGuardInit", AIPACKET_BOUNTY_HUNTER, BAG_VaultCity_Military, TEAM_QuestNpc, 10, 0, 0, 65, false);
+_SheduleCaravan(CARAVAN_HOSE_MOD_GECKO, 0, 8, 0, 12);

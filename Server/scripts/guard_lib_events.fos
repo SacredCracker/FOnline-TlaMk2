@@ -1,0 +1,70 @@
+// Инициализация нпц. происходит при вводе нпц в игру
+void _GuardInit(Critter& npc, bool firstTime)
+{
+	// вешаем обработчики событий
+	npc.SetEvent(CRITTER_EVENT_SHOW_CRITTER,"_GuardOnAddCritter");
+	npc.SetEvent(CRITTER_EVENT_HIDE_CRITTER,"_GuardOnRemoveCritter");
+	//npc.SetEvent(CRITTER_EVENT_IDLE,"_GuardIdle");
+	npc.SetEvent(CRITTER_EVENT_PLANE_END,"_GuardEndPlane");
+	npc.SetEvent(CRITTER_EVENT_MESSAGE,"_GuardOnMessage");
+	npc.SetEvent(CRITTER_EVENT_SMTH_MOVE_ITEM,"_GuardOnMoveItem");
+	npc.SetEvent(CRITTER_EVENT_SMTH_USE_ITEM,"_GuardOnUseItem");
+	npc.SetEvent(CRITTER_EVENT_SMTH_STEALING,"_GuardStealing");
+	npc.SetEvent(CRITTER_EVENT_SMTH_ATTACK,"_GuardOnSmthAttack");
+	npc.SetEvent(CRITTER_EVENT_SMTH_DROP_ITEM,"_GuardOnDropItem");// r17
+
+	// Создаем событие наблюдения
+	if(not firstTime && npc.GetTimeEvents(CTE_OBSERVING,null,null,null)==0)
+		npc.AddTimeEvent("cte_Observing", OBSERV_PERIOD, CTE_OBSERVING);
+}
+
+uint cte_Observing(Critter& npc, int identifier, uint& stage)
+{
+	return Grd.EventObserving(npc);
+}
+
+void _GuardOnAddCritter(Critter& crit, Critter& showCrit)
+{
+	Grd.EventOnAddCritter(crit, showCrit);
+}
+
+void _GuardOnRemoveCritter(Critter& crit, Critter& hideCrit)
+{
+	Grd.EventOnRemoveCritter(crit,hideCrit);
+}
+
+int _GuardEndPlane(Critter& npc, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem)
+{
+	Grd.EventEndPlane(npc);
+	return PLANE_RUN_GLOBAL;
+}
+
+void _GuardOnMoveItem(Critter& crit, Critter& fromCrit, Item& item, uint8 fromSlot)
+{
+	Grd.EventOnMoveItem(crit, fromCrit, item, fromSlot);
+}
+
+void _GuardOnMessage(Critter& crit, Critter& fromCrit, int message, int value)
+{
+	Grd.EventOnMessage(crit, fromCrit, message, value);
+}
+
+void _GuardOnUseItem(Critter& crit, Critter& fromCrit, Item& item, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+	Grd.EventOnUseItem(crit, fromCrit, item, onCritter, onItem, onScenery);
+}
+
+void _GuardOnDropItem(Critter& crit, Critter& fromCrit, Item& item)//r17
+{
+	Grd.EventOnDropItem(crit, fromCrit, item);
+}
+
+void _GuardOnSmthAttack(Critter& crit, Critter& fromCrit, Critter& target)
+{
+	Grd.EventOnSmthAttack(crit, fromCrit, target);
+}
+
+void _GuardStealing(Critter& crit, Critter& fromCrit, Critter& thief, bool success, Item& item, uint count)
+{
+	Grd.EventStealing(crit, fromCrit, thief, success, item, count);
+}

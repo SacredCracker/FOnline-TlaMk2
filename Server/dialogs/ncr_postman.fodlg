@@ -1,0 +1,333 @@
+[comment]
+Ваши комментарии / Your comments.
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 @
+2 2000 None 0 #
+3 2010 D _var p name_mem_npc_player = 0 R _var p name_mem_npc_player = 1 #
+5 2020 D _var p name_mem_npc_player = 1 #
+12 2030 D _var p q_mail_delivery > 0 D _var p q_mail_delivery < 3 D _var p name_mem_npc_player = 1 #
+16 2040 D _var p q_mail_delivery = 0 D _var p name_mem_npc_player = 1 D _script ncr_postman@d_QTimeOutOK 0  D _param p KILL_MEN > 40 #
+15 2050 D _var p q_mail_delivery = 3 D _var p name_mem_npc_player = 1 #
+18 2060 D _script ncr_postman@d_NotQTimeOutOK 0  D _var p q_mail_delivery = 0 D _var p name_mem_npc_player = 1 @
+3 3000 None 0 #
+0 3010 #
+4 3020 @
+4 4000 None 0 #
+10 4010 #
+5 4020 @
+5 5000 None 0 #
+10 5010 #
+6 5020 @
+6 6000 None 0 #
+7 6010 @
+7 7000 None 0 #
+8 7010 @
+8 8000 None 0 #
+9 8010 @
+9 9000 None 0 #
+10 9010 @
+10 10000 None 0 #
+11 10010 D _param p ST_LEVEL > 9 D _param p KILL_MEN < 40 #
+11 10020 D _param p ST_LEVEL < 10 D _param p KILL_MEN > 39 #
+11 10030 D _param p ST_LEVEL > 9 D _param p KILL_MEN > 39 #
+19 10040 D _param p ST_LEVEL < 10 D _param p KILL_MEN < 40 @
+11 11000 None 0 #
+0 11010 #
+13 11020 D _var p q_mail_delivery > 0 D _var p q_mail_delivery < 3 D _param p KILL_MEN > 40 D _param p ST_LEVEL < 10 #
+21 11030 D _var p q_mail_delivery = 0 D _script ncr_postman@d_QTimeOutOK 0  D _param p KILL_MEN > 40 D _param p ST_LEVEL < 10 #
+15 11040 D _var p q_mail_delivery = 3 D _param p KILL_MEN > 40 D _param p ST_LEVEL < 10 R _var p q_mail_delivery = 0 #
+13 11050 D _var p q_mail_delivery > 0 D _var p q_mail_delivery < 3 D _param p ST_LEVEL > 9 #
+21 11060 D _var p q_mail_delivery = 0 D _script ncr_postman@d_QTimeOutOK 0  D _param p ST_LEVEL > 9 #
+15 11070 D _var p q_mail_delivery = 3 D _param p ST_LEVEL > 9 R _var p q_mail_delivery = 0 @
+12 12000 None 0 #
+0 12010 D _var p q_mail_delivery = 1 #
+14 12020 D _item p PID_POSTMAN_LETTER > 0 R _item p PID_POSTMAN_LETTER = 0 #
+14 12030 D _item p PID_POSTMAN_LETTER = 0 @
+13 13000 None 0 #
+0 13010 D _var p q_mail_delivery = 1 #
+14 13020 D _item p PID_POSTMAN_LETTER > 0 R _item p PID_POSTMAN_LETTER = 0 #
+14 13030 D _item p PID_POSTMAN_LETTER = 0 @
+14 14000 None 0 #
+16 14010 D _script ncr_postman@d_QTimeOutOK 0  R _var p q_mail_delivery = 0 #
+18 14020 D _script ncr_postman@d_NotQTimeOutOK 0  R _var p q_mail_delivery = 0 @
+15 15000 None 0 #
+16 15010 D _script ncr_postman@d_QTimeOutOK 0  #
+0 15020 @
+16 16000 ncr_postman@dlg_GenLetter2Postman 0 #
+17 16010 R _var p q_mail_delivery = 1 R _script ncr_postman@r_GiveLetter 0  R _script ncr_postman@r_SetQTimeOut 0  #
+0 16020 @
+17 17000 None 0 #
+0 17010 @
+18 18000 None 0 #
+0 18010 @
+19 19000 None 0 #
+0 19010 #
+20 19020 @
+20 20000 None 0 @
+21 21000 None 0 #
+22 21010 #
+31 21020 @
+22 22000 None 1 #
+32 22010 #
+23 22020 #
+31 22030 @
+23 23000 None 1 #
+24 23010 #
+31 23020 @
+24 24000 None 1 #
+25 24010 #
+25 24020 #
+31 24030 @
+25 25000 None 1 #
+26 25010 #
+26 25020 #
+31 25030 @
+26 26000 None 0 #
+27 26010 #
+27 26020 #
+27 26030 #
+31 26040 @
+27 27000 None 1 #
+28 27010 #
+28 27020 #
+28 27030 #
+31 27040 @
+28 28000 None 1 #
+29 28010 #
+33 28020 #
+31 28030 @
+29 29000 None 1 #
+30 29010 @
+30 30000 None 1 #
+16 30010 @
+31 31000 None 0 @
+32 32000 None 0 #
+23 32010 @
+33 33000 None 0 #
+16 33010 &
+
+[russ]
+{100}{}{Почтальон}
+{200}{}{Вы видите Почтальона.}
+{210}{}{Перед вами мужчина средних лет. Он одет в помятую форму, имеющую отдаленное сходство с полицейской. На груди непонятная эмблема "Почта США".}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{-}
+{2000}{}{[Почтальон с легкой улыбкой кивает вам] Привет.}
+{2010}{}{Кто ты?}
+{2020}{}{Привет. Расскажи еще о своей работе?}
+{2030}{}{У тебя есть письма, которые нужно доставить? Я могу помочь.}
+{2040}{}{У тебя есть письма, которые нужно доставить? Я могу помочь.}
+{2050}{}{У тебя есть письма, которые нужно доставить? Я могу помочь.}
+{2060}{}{У тебя есть письма, которые нужно доставить? Я могу помочь.}
+{3000}{}{[Прикладывает руку к козырьку] Почтальон. Соединенные Штаты Америки. Почтовая служба.}
+{3010}{}{Ясно. Пока, служба. [Уйти]}
+{3020}{}{Это твое имя? Никогда не слышал@sex@|||а| ничего более нелепого.}
+{4000}{}{Это не имя. Это призвание!}
+{4010}{}{И, я уверен@sex@|||а|, ты неплохо зарабатываешь на своем "призвании"?}
+{4020}{}{А подробнее можно? Что значит, призвание?@@Расскажешь, что это за "призвание такое"?}
+{5000}{}{Мой долг - помогать людям. За все время, что я работаю почтальоном, я встречаюсь с замечательными людьми. И я дарю им надежду. }
+{5010}{}{Понятно. А что ты сам имеешь с этого? Какая выгода?}
+{5020}{}{Надежду? О чем ты?}
+{6000}{}{Человек хочет, чтобы близкие знали, он жив, здоров, не облучен. Но не может их навестить. Что делать?}
+{6010}{}{Утопиться?@@Застрелиться?@@Убить кого-нибудь?}
+{7000}{}{Вариант, но есть и другие пути. Этот человек идет ко мне, передает письмо, в нем вся его история. Я доставляю письмо его родным. Это - почта.}
+{7010}{}{Хм. По-моему, проще по рации поговорить...}
+{8000}{}{Что такое разговор по рации? Если даже ты сумеешь найти нужного человека, перекинешься с ним парой слов, у тебя ничего не останется от этого разговора.}
+{8010}{}{А что останется от твоей "почты"?}
+{9000}{}{Письмо и останется. Человека может уже не быть в живых, а его мысли навсегда запечатлены на бумаге. И я добьюсь, чтобы они достигли адресата!}
+{9010}{}{Понимаю. А заработать на этой почте, никак? }
+{10000}{}{Я делаю это не ради денег или славы. Но, тот, кто ждет письма, всегда благосклонен к почтальону. }
+{10010}{}{Из получателя можно выбить деньжат?}
+{10020}{}{Из получателя можно выбить деньжат?}
+{10030}{}{Из получателя можно выбить деньжат?}
+{10040}{}{Из получателя можно выбить деньжат?}
+{11000}{}{[Ухмыляется] Я бы сказал по-другому. Это не важно. Хочешь попробовать?}
+{11010}{}{Ну уж нет. Мотаться по пустоши с клочком бумаги - это не для меня. [Уйти]}
+{11020}{}{Можно. Что нужно сделать?}
+{11030}{}{Можно. Что нужно сделать?}
+{11040}{}{Можно. Что нужно сделать?}
+{11050}{}{Можно. Что нужно сделать?}
+{11060}{}{Можно. Что нужно сделать?}
+{11070}{}{Можно. Что нужно сделать?}
+{12000}{}{Сначала давай разберемся с предыдущей доставкой. Как успехи?}
+{12010}{}{Я занимаюсь этим. Позже поговорим. [Уйти]@@В процессе. Увидимся, как доставлю. [Уйти]}
+{12020}{}{Эээ... Как бы помягче сказать. В общем, потерял@sex@|||а| я письмо...@@Меня окружили смертокогты и предложили выбор: письмо или жизнь. В общем, я решил@sex@|||а|, пусть они лучше конверт сожрут, чем меня...@@Письмо исчезло. Думаю, тут не обошлось без вмешательства дьявола.@@Письмо поглотила Пустошь...}
+{12030}{}{Эээ... Как бы помягче сказать. В общем, потерял@sex@|||а| я письмо...@@Меня окружили смертокогты и предложили выбор: письмо или жизнь. В общем, я решил@sex@|||а|, пусть они лучше конверт сожрут, чем меня...@@Письмо исчезло. Думаю, тут не обошлось без вмешательства дьявола.@@Письмо поглотила Пустошь...}
+{13000}{}{А что случилось с прошлой доставкой?}
+{13010}{}{Я занимаюсь этим. Позже поговорим. [Уйти]@@В процессе. Увидимся, как доставлю. [Уйти]}
+{13020}{}{Эээ... Как бы помягче сказать. В общем, потерял@sex@|||а| я письмо...@@Меня окружили смертокогты и предложили выбор: письмо или жизнь. В общем, я решил@sex@|||а|, пусть они лучше конверт сожрут, чем меня...@@Письмо исчезло. Думаю, тут не обошлось без вмешательства дьявола.@@Письмо поглотила Пустошь...}
+{13030}{}{Эээ... Как бы помягче сказать. В общем, потерял@sex@|||а| я письмо...@@Меня окружили смертокогты и предложили выбор: письмо или жизнь. В общем, я решил@sex@|||а|, пусть они лучше конверт сожрут, чем меня...@@Письмо исчезло. Думаю, тут не обошлось без вмешательства дьявола.@@Письмо поглотила Пустошь...}
+{14000}{}{Увы, бывает, и довольно часто. Почтальоном может стать далеко не каждый.  Хочешь еще попробовать? @@Печально. Чья-то ниточка оборвалась. Но я дам тебе еще один шанс.}
+{14010}{}{За этим я и здесь.}
+{14020}{}{Можно попробовать. Кому письмо?@@У тебя еще остались не доставленные письма?}
+{15000}{}{Ты отлично справил@sex@|ся||ась| с предыдущей доставкой. Не ожидал, честно говоря!}
+{15010}{}{Это было не сложно. Ну так что, еще есть почта?@@Для меня это не задача, так, пара пустяков. Еще работа есть?}
+{15020}{}{Не стоит благодарности. [Уйти]@@В какой то момент мне даже хотелось выбросить это письмо, но, тем не менее... [Уйти]@@Увидимся позже[Уйти]}
+{16000}{}{Вот, @lex reciever@, адрес: @lex location@  ждет письма от брата. Справишься?@@Сейчас посмотрим... Вариант: нужно отнести открытку @lex reciever@  - @lex location@. Возьмешься?@@У меня письмо для @lex reciever@ (@lex location@). Если сможешь доставить, буду тебе благодарен.}
+{16010}{}{Годится! Давай конверт.@@Без проблем. Я буду быстрее молнии.@@Будет сделано.@@Ок. Думаю, справлюсь}
+{16020}{}{Я не готов@sex@|||а| сейчас этим заниматься. [Уйти]}
+{17000}{}{Отлично. По срокам я тебя не ограничиваю. Главное, найди получателя и отдай ему письмо.}
+{17010}{}{Я так и сделаю.[Уйти]@@Я тебя понял@sex@|||а|.[Уйти]}
+{18000}{}{Нет сейчас ничего нет. Загляни ко мне позже.@@Все заказы доставлены. Больше пока нет.@@Пусто. Завтра заходи.}
+{18010}{}{Ясно. Пока. [Уйти]}
+{19000}{}{Что-то вроде этого. Почтальона всегда встречают с радостью. Я бы тебе предложил попробовать, но по-моему, ты и до ближней заставы рейнджеров целиком не доберёшься. Приходи, когда наберёшься побольше опыта.}
+{19010}{}{Окей!}
+{19020}{}{Эй, да всё отлично. Доставлю я это твоё письмо, не беспокойся.}
+{20000}{}{Нет.}
+{21000}{}{Сначала тебе надо произнести клятву Почтальона. Повторяй за мной.}
+{21010}{}{Давай.}
+{21020}{}{Не буду я произносить никаких клятв.}
+{22000}{}{Ни снег...}
+{22010}{}{Ни... что?}
+{22020}{}{Ни снег...}
+{22030}{}{Я вообще передумал@sex@|||а|.}
+{23000}{}{...ни дождь...}
+{23010}{}{Ни дождь...}
+{23020}{}{Стой, я передумал@sex@|||а|.}
+{24000}{}{...ни палящее солнце...}
+{24010}{}{Ни палящее солнце...}
+{24020}{}{О да, это особенно плохо.}
+{24030}{}{Стой, я передумал@sex@|||а|.}
+{25000}{}{...ни мрак ночи...}
+{25010}{}{Ни. Мрак. Ночи.}
+{25020}{}{Да ерунда, ночью всё хорошо видно.}
+{25030}{}{Стой, я передумал@sex@|||а|.}
+{26000}{}{...не удержат их...}
+{26010}{}{Не удержат... [Зевнуть]}
+{26020}{}{Не...}
+{26030}{}{Не удержат! Их!}
+{26040}{}{Стой, я передумал@sex@|||а|.}
+{27000}{}{...от скорейшего завершения}
+{27010}{}{От скорейшего завершения...}
+{27020}{}{От быстренького конца...}
+{27030}{}{Давай скорей, трубы горят.}
+{27040}{}{Стой, я передумал@sex@|||а|.}
+{28000}{}{...предначертанного им пути.}
+{28010}{}{Предначертанного им пути.}
+{28020}{}{А? Что? Я вроде немного прослушал@sex@|||а|. Уже конец?}
+{28030}{}{Стой, я передумал@sex@|||а|.}
+{29000}{}{Окей, это всё.}
+{29010}{}{Окей, это всё.}
+{30000}{}{Не-не-не, тебе не надо было повторять. Это я говорю: "Окей, это всё". Так вот, сейчас тебе можно давать письмо...}
+{30010}{}{[Далее]}
+{31000}{}{Как пожелаешь.}
+{32000}{}{Не знаю, какое-то довоенное слово. Не придавай значения, это просто традиция, поехали дальше...}
+{32010}{}{Поехали...}
+{33000}{}{Да, всё. Теперь насчёт доставки...}
+{33010}{}{[Далее]}
+
+[engl]
+{100}{}{the Postman}
+{200}{}{you see the Postman.}
+{210}{}{Before you the man of average years. He is dressed in the rumpled form having remote similarity to the police. On a breast not clear emblem "Mail of the USA".}
+{1000}{}{Predialogue installations}
+{1010}{}{-}
+{2000}{}{[the Postman with a faint smile nods to you] Greetings.}
+{2010}{}{Who you?}
+{2020}{}{Greetings. Tell even about the work?}
+{2030}{}{you have letters which it is necessary to deliver? I can help.}
+{2040}{}{you have letters which it is necessary to deliver? I can help.}
+{2050}{}{you have letters which it is necessary to deliver? I can help.}
+{2060}{}{you have letters which it is necessary to deliver? I can help.}
+{3000}{}{[Puts a hand to a peak] the Postman. The United States of America. Post service.}
+{3010}{}{it is clear. While, service. [To leave]}
+{3020}{}{This your name? Never слышал@sex ||| and | anything more ridiculous.}
+{4000}{}{It not a name. This calling!}
+{4010}{}{And, I уверен@sex ||| and |, you not bad earn on "calling"?}
+{4020}{}{And more in detail it is possible? What means, calling? @@ you will tell, what it for "calling such"?}
+{5000}{}{My debt - to help people. For all time that I work as the postman, I meet remarkable people. And I give them hope.}
+{5010}{}{it is clear. And what you have from it? What benefit?}
+{5020}{}{Hope? About what you?}
+{6000}{}{the Person wants, that relatives knew, it is live, healthy, is not irradiated. But cannot visit them. What to do?}
+{6010}{}{To be drowned? @@ To be shot? @@ to kill somebody?}
+{7000}{}{the Variant, but is also other ways. This person goes to me, transfers the letter, in it all its history. I deliver its letter native. It is mail.}
+{7010}{}{Hm. In my opinion, is easier on a portable radio set to talk...}
+{8000}{}{That such conversation on a portable radio set? Even if you will manage to find the necessary person, will be thrown with it in pair words, at you remains nothing from this conversation.}
+{8010}{}{And what remains from your "mail"?}
+{9000}{}{the Letter also remains. The person can not be any more in live, and its thoughts are for ever embodied on a paper. And I will achieve, that they have reached the addressee!}
+{9010}{}{I Understand. And to earn on this mail, in any way?}
+{10000}{}{I do it not for the sake of money or glory. But, the one who waits for the letter, is always favourable to the postman.}
+{10010}{}{From the addressee it is possible to beat out a money?}
+{10020}{}{From the addressee it is possible to beat out a money?}
+{10030}{}{From the addressee it is possible to beat out a money?}
+{10040}{}{From the addressee it is possible to beat out a money?}
+{11000}{}{[I Grin] would tell in another way. It is not important. You want to try?}
+{11010}{}{Well is not present. To be wound on a heathland with a piece of paper is not for me. [To leave]}
+{11020}{}{It is possible. What it is necessary to make?}
+{11030}{}{It is possible. What it is necessary to make?}
+{11040}{}{It is possible. What it is necessary to make?}
+{11050}{}{It is possible. What it is necessary to make?}
+{11060}{}{It is possible. What it is necessary to make?}
+{11070}{}{It is possible. What it is necessary to make?}
+{12000}{}{At first give we will understand with the previous delivery. How successes?}
+{12010}{}{I am engaged in it. We will talk later. [To leave] @@ In process. We will meet, how I will deliver. [To leave]}
+{12020}{}{Eee... As though to tell more softly. In general, потерял@sex ||| and | I the letter... @@ Me have surrounded smertokogty and have offered a choice: the letter or life. In general, I решил@sex ||| and |, let they will gobble up an envelope better, than me... @@ the Letter has disappeared. I think, here has not done without intervention of a devil. @@ the letter was absorbed by the Heathland...}
+{12030}{}{Eee... As though to tell more softly. In general, потерял@sex ||| and | I the letter... @@ Me have surrounded smertokogty and have offered a choice: the letter or life. In general, I решил@sex ||| and |, let they will gobble up an envelope better, than me... @@ the Letter has disappeared. I think, here has not done without intervention of a devil. @@ the letter was absorbed by the Heathland...}
+{13000}{}{And what happens with last delivery?}
+{13010}{}{I am engaged in it. We will talk later. [To leave] @@ In process. We will meet, how I will deliver. [To leave]}
+{13020}{}{Eee... As though to tell more softly. In general, потерял@sex ||| and | I the letter... @@ Me have surrounded smertokogty and have offered a choice: the letter or life. In general, I решил@sex ||| and |, let they will gobble up an envelope better, than me... @@ the Letter has disappeared. I think, here has not done without intervention of a devil. @@ the letter was absorbed by the Heathland...}
+{13030}{}{Eee... As though to tell more softly. In general, потерял@sex ||| and | I the letter... @@ Me have surrounded smertokogty and have offered a choice: the letter or life. In general, I решил@sex ||| and |, let they will gobble up an envelope better, than me... @@ the Letter has disappeared. I think, here has not done without intervention of a devil. @@ the letter was absorbed by the Heathland...}
+{14000}{}{Alas, happens, and it is frequent enough. The postman everyone can become far not. You want to try still? @@ it is sad. Someone's thread has broken. But I will give you one more chance.}
+{14010}{}{Behind it I here again.}
+{14020}{}{It is possible to try. To whom the letter? @@ you still had not delivered letters?}
+{15000}{}{You are excellent справил@sex | sja || as | with the previous delivery. Did not expect, to tell the truth!}
+{15010}{}{It was not difficult. Well so, still there is mail? @@ for me it not a problem, so, a piece of cake. Still work is?}
+{15020}{}{Don't mention it. [To leave] @@ In what that the moment to me even it would be desirable to throw out this letter, but, nevertheless... [To Leave] @@ we Will meet later [to Leave]}
+{16000}{}{Here, @lex reciever, the address: @lex location waits for the letter from the brother. You will consult? @@ now we will look... The Variant: it is necessary to carry a card @lex reciever - @lex location. You will undertake? @@ at me the letter for @lex reciever (@lex location). If you can deliver, to you I will be grateful.}
+{16010}{}{Suits! Give an envelope. @@ without problems. I will be faster lightnings. @@ it will be made. @@ apprx. I Think, I will consult}
+{16020}{}{I not готов@sex ||| and | now in it to be engaged. [To leave]}
+{17000}{}{it is excellent. On terms I do not limit you. The main thing, find the addressee and give it the letter.}
+{17010}{}{I and will make. [To leave] @@ I you понял@sex ||| and |. [To Leave]}
+{18000}{}{There is now nothing is not present. Glance to me later. @@ All orders are delivered. More while is not present. @@ It is empty. Tomorrow come.}
+{18010}{}{it is clear. While. [To Leave]}
+{19000}{}{Something like it. The postman always meet with pleasure. I to you would suggest to try, but in my opinion, you and entirely will not reach a near outpost of rangers. Come, when you will be typed more experience.}
+{19010}{}{Okej!}
+{19020}{}{Hey, yes all is excellent. Will deliver I this your letter, do not worry.}
+{20000}{}{No.}
+{21000}{}{At first you should say an oath of the Postman. Repeat for me.}
+{21010}{}{Give.}
+{21020}{}{I will not say any oaths.}
+{22000}{}{snow...}
+{22010}{}{... What?}
+{22020}{}{snow...}
+{22030}{}{I in general передумал@sex ||| and |.}
+{23000}{}{... A rain...}
+{23010}{}{a rain...}
+{23020}{}{Stand, I передумал@sex ||| and |.}
+{24000}{}{... The scorching sun...}
+{24010}{}{the scorching sun...}
+{24020}{}{About yes, it is especially bad.}
+{24030}{}{Stand, I передумал@sex ||| and |.}
+{25000}{}{... A gloom of night...}
+{25010}{}{. A gloom. Nights.}
+{25020}{}{Yes nonsense, at night all is well visible.}
+{25030}{}{Stand, I передумал@sex ||| and |.}
+{26000}{}{... Will not keep them...}
+{26010}{}{will not keep... [To Yawn]}
+{26020}{}{Not...}
+{26030}{}{will not keep! Them!}
+{26040}{}{Stand, I передумал@sex ||| and |.}
+{27000}{}{... From the prompt end}
+{27010}{}{From the prompt end...}
+{27020}{}{From bystrenkogo the end...}
+{27030}{}{Give more soon, pipes burn.}
+{27040}{}{Stand, I передумал@sex ||| and |.}
+{28000}{}{... The way foreordained by it.}
+{28010}{}{the way Foreordained by it.}
+{28020}{}{And? What? I like a few прослушал@sex ||| and |. Already the end?}
+{28030}{}{Stand, I передумал@sex ||| and |.}
+{29000}{}{Okej, is all.}
+{29010}{}{Okej, is all.}
+{30000}{}{Not-not-not, you should not repeat. I tell it: "Okej, is all". And so, now you can give the letter...}
+{30010}{}{[Further]}
+{31000}{}{As you will wish.}
+{32000}{}{I do not know, any pre-war word. Do not give value, it simply tradition, have gone further...}
+{32010}{}{Have gone...}
+{33000}{}{Yes, all. Now about delivery...}
+{33010}{}{[Further]}

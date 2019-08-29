@@ -1,0 +1,363 @@
+[comment]
+Ваши комментарии / Your comments.
+20 и дальше - квест Охота на охотников (rifleman17)
+31 и дальше - квест Атака на Базар
+40+ - квест Мятеж в сквоте
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 0 #
+5 1010 D _param p ST_INTELLECT < 4 #
+2 1020 D _var n name_mem_npc_player = 0 D _var p ncr_invasion = 0 R _var n name_mem_npc_player = 1 #
+3 1030 D _var n name_mem_npc_player = 1 D _var p ncr_invasion = 0 #
+5 1040 D _param p ST_KARMA < -200 #
+5 1050 D _var n name_mem_npc_player = 3 #
+5 1060 D _var p scen_fraction = 1 #
+11 1070 D _var p scen_fraction = 2 D _var p ncr_invasion = 0 #
+31 1080 D _param p ST_INTELLECT > 3 D _var p ncr_invasion = 1 @
+2 2000 None 0 #
+4 2010 #
+0 2020 @
+3 3000 None 0 #
+7 3010 D _var p ncr_elize_slavers = 0 #
+9 3020 D _var p ncr_elize_slavers = 1 D _script map_primal_tribe@d_QuestSucc 0  R _var p ncr_elize_slavers = 2 R _item p PID_223_FMJ + 150 R _param p REPUTATION_NCR + 1 #
+10 3030 D _var p q_trib_sulik_raid > 2 D _var p q_trib_sulik_raid < 6 D _var p ncr_elize_slavers = 1 R _var p ncr_elize_slavers = 3 #
+0 3040 #
+20 3050 D _var p ncr_elize_slvrs_hunting_status = 0 D _param p ST_LEVEL > 10 D _param p ST_KARMA > 0 #
+28 3060 D _var p ncr_elize_slvrs_hunting_status > 0 D _var p ncr_elize_slvrs_hunting_status < 21 #
+30 3070 D _var p ncr_elize_slvrs_hunting_status = 21 R _var p q_ncr_elize_slvrs_hunting = 7 R _param p ST_EXPERIENCE + 9000 R _item p PID_BOTTLE_CAPS + 2000 R _var p ncr_elize_slvrs_hunting_status = 22 #
+34 3080 D _var p q_ncr_elize_invasion = 3 R _param p ST_EXPERIENCE + 6000 R _var p q_ncr_elize_invasion = 4 R _param p REPUTATION_NCR + 1 R _item p PID_BOTTLE_CAPS + 3000 #
+35 3090 D _var p ncr_elize_slavers = 2 D _var p scen_ranger = 0 #
+40 3100 D _var p q_ncr_elize_slvrs_hunting = 7 D _var p q_ncr_elize_kill_tbu_rebels = 0 #
+49 3110 D _var p q_ncr_elize_kill_tbu_rebels = 20 @
+4 4000 None 0 #
+5 4010 R _var n name_mem_npc_player = 3 #
+6 4020 #
+6 4030 @
+5 5000 None 0 @
+6 6000 None 0 #
+7 6010 D _var p trib_raid = 0 #
+13 6020 D _var p trib_raid = 1 #
+5 6030 R _var n name_mem_npc_player = 3 #
+0 6040 @
+7 7000 None 0 #
+8 7010 D _script dialog@d_IsLocationNotVisible 1 17 R _var p ncr_elize_slavers = 1 R _script dialog@r_ShowLocation 1 17 R _script map_primal_tribe@r_StartQuest 0  #
+12 7020 D _script dialog@d_IsLocationVisible 1 17 R _script map_primal_tribe@r_StartQuest 0  R _var p ncr_elize_slavers = 1 #
+5 7030 R _var n name_mem_npc_player = 3 #
+0 7040 @
+8 8000 None 0 @
+12 9000 None 0 @
+9 10000 None 0 @
+10 11000 None 0 @
+11 12000 None 0 @
+13 13000 None 0 @
+20 14000 None 0 #
+21 14010 @
+21 15000 None 0 #
+22 15010 @
+22 16000 None 0 #
+23 16010 #
+25 16020 @
+23 17000 None 0 #
+24 17010 R _var p q_ncr_elize_slvrs_hunting = 1 R _var p ncr_elize_slvrs_hunting_status = 1 #
+0 17020 @
+24 18000 None 0 #
+0 18010 R _script q_slavers_hunt@r_GetMap 0  @
+25 19000 None 0 #
+26 19010 @
+26 20000 None 0 #
+0 20010 #
+27 20020 R _var p q_ncr_elize_slvrs_hunting = 1 R _var p ncr_elize_slvrs_hunting_status = 1 @
+27 21000 None 0 #
+0 21010 R _script q_slavers_hunt@r_GetMap 0  @
+28 22000 None 0 #
+0 22010 #
+29 22020 @
+29 23000 None 0 #
+0 23010 R _script q_slavers_hunt@r_GetMap 0  @
+30 24000 None 0 #
+0 24010 R _item p PID_COMBAT_ARMOR + 1 #
+0 24020 R _item p PID_SNIPER_RIFLE + 1 R _item p PID_223_FMJ + 70 #
+0 24030 R _item p PID_SUPER_STIMPAK + 15 R _item p PID_RADAWAY + 1 R _item p PID_MENTATS + 1 #
+0 24040 R _item p PID_2MM_EC_AMMO + 100 #
+0 24050 R _param p ST_KARMA + 5 R _param p REPUTATION_NCR + 1 @
+31 25000 None 0 #
+32 25010 #
+33 25020 D _var p q_ncr_elize_invasion = 0 @
+32 26000 None 0 @
+33 27000 None 0 #
+0 27010 #
+0 27020 R _var p q_ncr_elize_invasion = 1 @
+34 28000 None 0 #
+0 28010 @
+35 29000 None 0 #
+0 29010 #
+36 29020 R _var p scen_ranger = 1 R _script dialog@r_InfoMessage 1 1 R _param p REPUTATION_NCR + 1 @
+36 30000 None 0 #
+0 30010 R _script map_ncr_downtown@r_ShowMap 0  @
+40 31000 None 0 #
+0 31010 #
+41 31020 @
+41 32000 None 0 #
+42 32010 @
+42 33000 None 0 #
+43 33010 @
+43 34000 None 0 #
+44 34010 @
+44 35000 None 0 #
+45 35010 @
+45 36000 None 0 #
+46 36010 @
+46 37000 None 0 #
+0 37010 #
+47 37020 R _script loc_tech_bunker@r_BeginKillRebelsQuest 0  @
+47 38000 None 0 #
+48 38010 @
+48 39000 None 0 #
+0 39010 @
+49 40000 None 0 #
+0 40010 D _var p q_ncr_elize_kill_tbu_rebels = 20 R _var p q_ncr_elize_kill_tbu_rebels = 21 R _param p REPUTATION_NCR + 3 R _param p ST_EXPERIENCE + 9000 #
+0 40020 D _var p q_ncr_elize_kill_tbu_rebels = 20 R _var p q_ncr_elize_kill_tbu_rebels = 21 R _param p ST_EXPERIENCE + 9000 R _item p PID_BOTTLE_CAPS + 5000 &
+
+[russ]
+{100}{}{Элизабет}
+{200}{}{Вы видите красивую молодую женщину, одетую в военную форму.}
+{210}{}{Это Элизабет.}
+{210}{}{У нее значительный вид, как будто она привыкла отдавать приказы и заставлять парней подчиняться.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{тупой}
+{1020}{}{не знаком}
+{1030}{}{знаком}
+{1040}{}{Низкая карма}
+{1050}{}{враг}
+{1060}{}{член Анклава}
+{1070}{}{член БС}
+{1080}{}{активна Атака на Базар НКР}
+{2000}{}{Что это вы тут делаете?}
+{2010}{}{А вы кто?}
+{2020}{}{Просто прохожу мимо. [Выход.]}
+{3000}{}{Опять вы?}
+{3010}{}{Что там у вас было за дело c племенем?}
+{3020}{}{Работорговцы ликвидированы!}
+{3030}{}{Мне не удалось справиться с работорговцами.}
+{3040}{}{Кажется ничего сегодня. [Выход.]}
+{3050}{}{Могу ли я чем-то помочь Рейнджерам?}
+{3060}{}{Напомните, где находятся работорговцы?}
+{3070}{}{С работорговцами из Ямы покончено.}
+{3080}{}{Элиза, мы отбили нападение на Базар НКР.}
+{3090}{}{Элиза, расскажите, как я могу вступить к вам в организацию?}
+{3100}{}{Я могу чем-то помочь, Элиза? Готов@sex@|||а| к выполнению любого по сложности задания.}
+{3110}{}{Бункер мятежников захвачен. К сожалению, мирным путем решить проблему не удалось.}
+{4000}{}{Сначала ответьте на вопрос. Как вы относитесь к работорговцам?}
+{4010}{}{У меня есть друзья среди работорговцев.}
+{4020}{}{Ненавижу их!}
+{4030}{}{Я к ним отношусь безразлично.}
+{5000}{}{Пошли вон отсюда!}
+{6000}{}{Замечательно! Я - Элиз, глава рейнджеров в НКР. Не хотите поработать на благо общества?}
+{6010}{}{Конечно. Что надо сделать?}
+{6020}{}{Конечно. Что надо сделать?}
+{6030}{}{Мне это неинтересно.}
+{6040}{}{Может я зайду позже. [Выход.]}
+{7000}{}{Поступили данные от разведчика, что на одно племя далеко отсюда на востоке вскоре должны напасть работорговцы. Если поможете дикарям, то можете расчитывать на нашу помощь в дальнейшем. Или проваливайте.}
+{7010}{}{Хорошо. Где это находится?}
+{7020}{}{Хорошо, я отправляюсь немедленно.}
+{7030}{}{Я выбираю последний вариант.}
+{7040}{}{Мне надо подумать. [Выход.]}
+{8000}{}{Я вам покажу на этой штуке с радаром. [Вы узнали местонахождение Примитивного Племени] Торопитесь!}
+{9000}{}{Торопитесь!}
+{10000}{}{Отлично! Я думаю патроны вам не помешают. Теперь если хотите, можете пообщаться с Братством Стали. Это находится в Убежище 15, к востоку отсюда.}
+{11000}{}{Очень жаль, тогда я ничем не могу вам помочь}
+{12000}{}{Как дела у Братства Стали?@@Надеюсь у Братства Стали все в порядке.}
+{13000}{}{Хм... Оказывается сейчас у нас нет работы.}
+{14000}{}{Одна из основных целей Рейнджеров - борьба с торговлей "живым товаром". Мы должны стереть рабство с лица земли.}
+{14010}{}{Ну, и?}
+{15000}{}{К нам поступила информация о банде работорговцев, расположившейся в окрестностях Ямы. }
+{15010}{}{Нужно уничтожить банду?}
+{16000}{}{Совершенно верно. Учтите, члены этой шайки хорошо вооружены и опасны. Заручитесь поддержкой, прежде чем отправляться на их поиски.}
+{16010}{}{Что я получу, если банда будет ликвидирована?}
+{16020}{}{Где я найду работорговцев?}
+{17000}{}{Вы сможете воспользоваться нашей службой снабжения. Броня, оружие, патроны, медикаменты - на ваш выбор. Кроме того, я заплачу вам 2000 монет.}
+{17010}{}{Хорошо. Условия меня устраивают. Я вернусь, когда с работорговцами будет покончено.}
+{17020}{}{Нет, мне это неинтересно. [Уйти]}
+{18000}{}{Возьмите эту карту. На ней указаны координаты тех мест, где были замечены члены банды.}
+{18010}{}{Благодарю. [Уйти]}
+{19000}{}{Банда довольно многочисленна. По моим данным, члены шайки скрываются на нескольких фермах к югу от Ямы. }
+{19010}{}{Мне нужно вырезать их всех?}
+{20000}{}{Будет достаточно, если вы хорошо ослабите эту банду. Убейте 20 работорговцев из состава шайки. И будем считать, что задача выполнена.}
+{20010}{}{Мне нужно время, чтобы принять решение. [Уйти]}
+{20020}{}{Я сделаю это.}
+{21000}{}{Будьте осторожны, @pname@. Возьмите эту карту. На ней указаны места, где наши разведчики видели работорговцев.}
+{21010}{}{Спасибо. Скоро увидимся. [Уйти]}
+{22000}{}{Бандиты расположились на нескольких фермах к востоку от Ямы. Как ваши успехи?}
+{22010}{}{Я занимаюсь этим. [Уйти]}
+{22020}{}{Мне нужна еще одна карта этой местности...}
+{23000}{}{Без проблем. Держите. [Элиза дает вам карту]}
+{23010}{}{Спасибо, я скоро вернусь. [Уйти]}
+{24000}{}{Замечательно. Мне уже доложили. Ваш вклад очень важен для нас! Выберите себе награду по вкусу.}
+{24010}{}{Я возьму боевую броню.}
+{24020}{}{Мне пригодится снайперская винтовка и патроны.}
+{24030}{}{Я возьму медикаменты.}
+{24040}{}{Я возьму 100 патронов 2mm.}
+{24050}{}{Мне ничего не нужно. Я просто ненавижу работорговцев... [Уйти]}
+{25000}{}{Что? Какие вопросы? Откройте глаза! У нас война, практически.}
+{25010}{}{Что случилось?}
+{25020}{}{Я здесь, чтобы помочь.}
+{26000}{}{Вы с ума сошли. Не сейчас!}
+{27000}{}{Отлично. Помогите уничтожить этих подонков на Базаре. Я хорошо заплачу. }
+{27010}{}{Нет, это слишком опасно.}
+{27020}{}{Да, я сделаю все, что в моих силах.}
+{28000}{}{В этот раз рейдеры были слишком сильны... Уровень их снаряжения и организованности меня пугает. Тем не менее, благодарю за помощь. Вот ваша награда.}
+{28010}{}{Надеюсь, нападения больше не повторятся. [Уйти]}
+{29000}{}{Вы очень помогли нам в ситуации с племенем. Я считаю, что вы достойны того, чтобы называться рейнджером. Вы все еще хотите вступить в Рейнджеры?}
+{29010}{}{Не сейчас. Мне нужно время, чтобы принять решение.}
+{29020}{}{Да, я хочу стать рейнджером!}
+{30000}{}{Отлично. Поздравляю с зачислением в ряды Рейнджеров, рядовой. Пару недель назад наши разведчики обнаружили предполагаемую основную базу рейдеров, лучше не лезь в тот район без особого дела. [Отмечает логово рейдеров на вашей карте]
+За дальнейшими инструкциями обращайтесь к сержанту Кайлу.}
+{30010}{}{Слушаюсь, мэм!}
+{31000}{}{Вы хорошо помогли нам с решением проблемы работорговцев на севере, @pname@. Для вас есть работа. Но выполнить задание будет сложно. В одиночку - невозможно.}
+{31010}{}{Я скоро вернусь.}
+{31020}{}{Думаю, я справлюсь. Если потребуется, наберу команду.}
+{32000}{}{[Командир рейнджеров вздыхает] Хорошо. Я старалась оттянуть момент, когда придется решать эту проблему. Но вы уже здесь, и время пришло. Слышали о "Пустынных крысах"?}
+{32010}{}{Нет, ничего подобного я не слышал@sex@|||а|. }
+{33000}{}{Это специальный отряд рейнджеров особого назначения. В его состав входят самые опытные и отважные бойцы. Они всегда блестяще выполняют любые по сложности задания, причем без потерь.}
+{33010}{}{Звучит солидно. А причем здесь я?}
+{34000}{}{Мне очень горько об этом говорить. Дело в том, что Пустынные крысы объявили о своем выходе из состава Армии НКР и покинули ряды Рейнджеров.}
+{34010}{}{Мятежники?}
+{35000}{}{Именно так. За подобное нарушение устава их ожидал трибунал и тюремное заключение. Взвод рейнджеров и несколько полицейских отправились в казармы Пустынных Крыс чтобы арестовать мятежников и предать их суду.}
+{35010}{}{И что-то пошло не так?}
+{36000}{}{Пустынные крысы устроили засаду. Это была бойня. Крысы не получили ни одного ранения, в то время, как все полицейские и рейнджеры были уничтожены.}
+{36010}{}{Печально. Так что нужно сделать?}
+{37000}{}{Вы должны арестовать лидеров мятежников и доставить в НКР... При встрече сопротивления уничтожить мятежников. Боже мой... [Голос Элизы меняется] Я отдаю этот приказ... Эти ребята...}
+{37010}{}{Что-то мне не кажется это хорошей идеей. Мне нужно время, чтобы взвесить все "за" и "против". }
+{37020}{}{Отставим лирику, мэм. Мы готовы выполнить ваше задание. Где искать мятежный взвод? И что мы получим если выполним задачу?}
+{38000}{}{Пустынные крысы заняли старый исследовательский центр. Вот здесь [Элиза отмечает на вашем пип-бое место расположения центра]. Досье рейнджеров и ответы на вопросы получите у сержанта Гонда.}
+{38010}{}{Это все?}
+{39000}{}{Вы получите 5000 монет, после того, как убьете хотя бы 20 из них. Неважно, будете ли вы од@sex@|ин||на|, или в группе. Награду получит каждый член группы.}
+{39010}{}{Понятно. [Уйти]}
+{40000}{}{[Элиза вздыхает] Хотелось верить, что вы сумеете с ними договориться. Но я понимаю, что это было невозможно. Вот ваша награда.}
+{40010}{}{Нет, спасибо, мне не нужны эти деньги.}
+{40020}{}{Да, благодарю. [Забрать деньги и уйти]}
+{100000001}{}{Вы зачислены в организацию Рейнджеры в чине рядового.}
+
+[engl]
+{100}{}{Elizabeth}
+{200}{}{you see the beautiful young woman dressed in the military form.}
+{210}{}{It is Elizabeth.}
+{210}{}{At it a considerable kind as though she has got used to give orders and to force guys to submit.}
+{1000}{}{Predialogue installations}
+{1010}{}{stupid}
+{1020}{}{it is not familiar}
+{1030}{}{a sign}
+{1040}{}{the Low karma}
+{1050}{}{the enemy}
+{1060}{}{a member of the Enclave}
+{1070}{}{member BS}
+{1080}{}{Attack to Market NKR} is active
+{2000}{}{That you here do it?}
+{2010}{}{And you who?}
+{2020}{}{Simply I pass by. [An exit.]}
+{3000}{}{Again you?}
+{3010}{}{That there at you was for good reason c a tribe?}
+{3020}{}{Rabotorgovtsy are liquidated!}
+{3030}{}{I did not manage to cope rabotorgovtsami.}
+{3040}{}{It seems anything today. [The Exit.]}
+{3050}{}{whether I something Can help Rangers?}
+{3060}{}{Remind, where are rabotorgovtsy?}
+{3070}{}{With rabotorgovtsami from the Hole it is finished.}
+{3080}{}{Eliza, we have beaten off an attack on Market NKR.}
+{3090}{}{Eliza, tell, how I can enter to you the organisation?}
+{3100}{}{I can help something, Eliza? Готов@sex ||| and | to performance of any on complexity of the task.}
+{3110}{}{the Bunker of rebels is grasped. Unfortunately, peacefully to solve a problem it was not possible.}
+{4000}{}{At first answer a question. What do you think of rabotorgovtsam?}
+{4010}{}{I have friends among rabotorgovtsev.}
+{4020}{}{I Hate them!}
+{4030}{}{I am indifferent to them.}
+{5000}{}{Have gone from here!}
+{6000}{}{it is remarkable! I am Eliz, head of rangers in NKR. Do not want to work for the society blessing?}
+{6010}{}{Certainly. What it is necessary to make?}
+{6020}{}{Certainly. What it is necessary to make?}
+{6030}{}{To me it is uninteresting.}
+{6040}{}{I Can I will come later. [The Exit.]}
+{7000}{}{the data from the scout Has arrived that one tribe far from here in the east soon should attack rabotorgovtsy. If will help savages can raschityvat on our help further. Or ruin.}
+{7010}{}{it is good. Where it is?}
+{7020}{}{it is good, I go immediately.}
+{7030}{}{I choose last variant.}
+{7040}{}{I should think. [An exit.]}
+{8000}{}{I will show to you on this piece with a radar. [You have learnt a site of the Primitive Tribe] Hurry up!}
+{9000}{}{Hurry up!}
+{10000}{}{it is excellent! I think cartridges to you will not prevent. Now if want, can communicate to the Steel Brotherhood. It is in the Refuge 15, to the east from here.}
+{11000}{}{It is a pity, then I can help nothing to you}
+{12000}{}{What about the Steel Brotherhood? @@ I Hope at the Brotherhood Became everything is all right.}
+{13000}{}{Hm... It appears now at us there is no work.}
+{14000}{}{One of main objectives of Rangers - struggle against trade in "the live goods". We should wipe out slavery.}
+{14010}{}{Well, and?}
+{15000}{}{To us the information on a gang rabotorgovtsev, the Hole which have settled down in vicinities has arrived.}
+{15010}{}{It is necessary to destroy a gang?}
+{16000}{}{Quite right. Consider, members of this gang are well armed and dangerous. Will get support before to go on their searches.}
+{16010}{}{That I will receive, if the gang is liquidated?}
+{16020}{}{Where I will find rabotorgovtsev?}
+{17000}{}{you can use our service of supply. The reservation, the weapon, cartridges, medicines - on your choice. Besides, I will begin to cry to you of 2000 coins.}
+{17010}{}{it is good. Conditions suit me. I will return, when with rabotorgovtsami will be finished.}
+{17020}{}{No, me it is uninteresting. [To leave]}
+{18000}{}{Take this card. On it co-ordinates of those places where members of a gang have been noticed are specified.}
+{18010}{}{I Thank. [To leave]}
+{19000}{}{the Gang is numerous enough. Under my data, members of gang disappear on several farms to the south from the Hole.}
+{19010}{}{I need to cut out all of them?}
+{20000}{}{Will be enough if you well weaken this gang. Kill 20 rabotorgovtsev from gang structure. Also we will consider that the problem is executed.}
+{20010}{}{I need time to make the decision. [To leave]}
+{20020}{}{I will make it.}
+{21000}{}{Be careful, @pname. Take this card. On it places where our scouts saw rabotorgovtsev are specified.}
+{21010}{}{Thanks. We will soon meet. [To leave]}
+{22000}{}{Gangsters have settled down on several farms to the east from the Hole. How your successes?}
+{22010}{}{I am engaged in it. [To leave]}
+{22020}{}{one more card of this district is necessary To me...}
+{23000}{}{Without problems. Hold. [Eliza gives you a card]}
+{23010}{}{Thanks, I will soon return. [To leave]}
+{24000}{}{it is remarkable. On me have already reported. Your contribution is very important for us! Choose to itself an award to taste.}
+{24010}{}{I will take the fighting reservation.}
+{24020}{}{I need a sniper rifle and cartridges.}
+{24030}{}{I will take medicines.}
+{24040}{}{I will take 100 cartridges 2mm.}
+{24050}{}{it is necessary nothing For me. I simply hate rabotorgovtsev... [To Leave]}
+{25000}{}{That? What questions? Open eyes! At us war, practically.}
+{25010}{}{That happens?}
+{25020}{}{I here to help.}
+{26000}{}{you have become crazy. Not now!}
+{27000}{}{it is excellent. Help to destroy these geeks on the Market. I will well begin to cry.}
+{27010}{}{No, it is too dangerous.}
+{27020}{}{Yes, I will make everything that in my forces.}
+{28000}{}{This time raiders were too strong... Level of their equipment and organisation frightens me. Nevertheless, I thank for the help. Here your award.}
+{28010}{}{I Hope, attacks will not repeat any more. [To leave]}
+{29000}{}{you have very much helped us with a situation with a tribe. I consider that you are worthy to be called as the ranger. All of you still want to enter in Rangers?}
+{29010}{}{Not now. I need time to make the decision.}
+{29020}{}{Yes, I want to become the ranger!}
+{30000}{}{it is excellent. I congratulate on transfer in numbers of Rangers, the private soldier. Couple of weeks back our scouts have found out the prospective basis for raiders, do not climb in that area without special business better. [Marks a den of raiders on your card]
+For the further instructions address to sergeant Kajlu.}
+{30010}{}{I Obey, mem!}
+{31000}{}{you have well helped us with a solution of a problem rabotorgovtsev in the north, @pname. For you there is a work. But the task difficult will carry out. Alone - it is impossible.}
+{31010}{}{I will soon return.}
+{31020}{}{I Think, I will consult. If it is required, I will make a team.}
+{32000}{}{[the Commander of rangers sighs] Well. I tried to delay the moment when it is necessary to solve this problem. But you already here, and time has come. Heard about "Deserted rats"?}
+{32010}{}{No, anything similar I not слышал@sex ||| and |.}
+{33000}{}{It is special group of rangers of special function. Its structure includes the most skilled and brave fighters. They always excellent carry out any on complexity of the task, and lost-free.}
+{33010}{}{Sounds solidly. And and here I?}
+{34000}{}{To me it is very bitter about it to speak. The matter is that deserted rats declared the secession of Army NKR and have left the ranks of Rangers.}
+{34010}{}{Rebels?}
+{35000}{}{so. For similar infringement of their charter the tribunal and imprisonment expected. A platoon of rangers and some policemen have gone to barracks of Deserted Rats to arrest rebels and to prosecute.}
+{35010}{}{And something has gone not so?}
+{36000}{}{Deserted rats suited an ambush. It was the slaughter-house. Rats have not got any wound while all policemen and rangers have been destroyed.}
+{36010}{}{It is sad. So it is necessary to make?}
+{37000}{}{you should arrest leaders of rebels and to deliver in NKR... At a resistance meeting to destroy rebels. My God... [Golos Elizy changes] I give this order... These children...}
+{37010}{}{Something not seems to me it is good idea. I need time to weigh all pro's and con's.}
+{37020}{}{we Will set aside lyrics, mem. We are ready to carry out your task. Where to search for a rebellious platoon? Also what we will receive if we will carry out a problem?}
+{38000}{}{Deserted rats have occupied the old research centre. Here [Eliza marks on your pip-fight the centre location]. The file of rangers and answers to questions receive at sergeant Gonda.}
+{38010}{}{It is all?}
+{39000}{}{you receive 5000 coins after will kill at least 20 of them. It is unimportant, whether there will be you од@sex | in || on |, or in group. The award will be received by each member of group.}
+{39010}{}{it is clear. [To leave]}
+{40000}{}{[Eliza sighs] It would be desirable to believe that you will manage to agree with them. But I understand that it was impossible. Here your award.}
+{40010}{}{No, thanks, are not necessary to me this money.}
+{40020}{}{Yes, I thank. [To take away money and to leave]}
+{100000001}{}{you are enlisted in the organisation Rangers in a rank of the private soldier.}

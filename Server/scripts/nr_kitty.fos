@@ -1,0 +1,88 @@
+// Author: cvet
+#include "_macros.fos"
+#include "_animation.fos"
+
+import void FlushScreen(Critter& cr, bool fadeOut, uint timeMs) from "effects";
+
+
+bool d_IsDefaultDude(Critter& player, Critter@ kitty)
+{
+	return player.Stat[ST_GENDER]==GENDER_MALE && (player.Stat[ST_BASE_CRTYPE]==0 || player.Stat[ST_BASE_CRTYPE]==CRTYPE_DEFAULT_M);
+}
+
+bool d_IsLongHairDude(Critter& player, Critter@ kitty)
+{
+	return player.Stat[ST_GENDER]==GENDER_MALE && player.Stat[ST_BASE_CRTYPE]==CRTYPE_LHD_JUMPSUIT;
+}
+
+void r_HaircutToLongHairDude(Critter& player, Critter@ tray)
+{
+	FlushScreen(player,false,500);
+	FlushScreen(player,true,5000);
+
+	if(GetCritterAnimType(player.CrType)!=ANIM_TYPE_3D)
+	{
+		Item@ armor=player.GetItem(0,SLOT_ARMOR);
+		if(valid(armor)) player.MoveItem(armor.Id,0,SLOT_INV);
+		player.ChangeCrType(CRTYPE_LHD_JUMPSUIT);
+		player.StatBase[ST_BASE_CRTYPE]=CRTYPE_LHD_JUMPSUIT;
+		if(valid(armor)) player.MoveItem(armor.Id,0,SLOT_ARMOR);
+	}
+	else
+	{
+#ifdef PLAYERS_3D
+		player.StatBase[ST_ANIM3D_LAYERS+ANIM3D_LAYER_HAIR]=ATTRIBUTE_Hair_Male_Long;
+#endif
+	}
+}
+
+void r_HaircutToDefaultDude(Critter& player, Critter@ kitty)
+{
+	FlushScreen(player,false,500);
+	FlushScreen(player,true,5000);
+
+	if(GetCritterAnimType(player.CrType)!=ANIM_TYPE_3D)
+	{
+		Item@ armor=player.GetItem(0,SLOT_ARMOR);
+		if(valid(armor)) player.MoveItem(armor.Id,0,SLOT_INV);
+		player.ChangeCrType(CRTYPE_DEFAULT_M);
+		player.StatBase[ST_BASE_CRTYPE]=0;
+		if(valid(armor)) player.MoveItem(armor.Id,0,SLOT_ARMOR);
+	}
+	else
+	{
+#ifdef PLAYERS_3D
+		player.StatBase[ST_ANIM3D_LAYERS+ANIM3D_LAYER_HAIR]=ATTRIBUTE_Hair_Male_Short;
+#endif
+	}
+}
+
+bool d_IsBaldDude(Critter& player, Critter@ kitty)
+{
+	return player.Stat[ST_GENDER]==GENDER_MALE && player.Stat[ST_BASE_CRTYPE]==CRTYPE_BD_JUMPSUIT;
+}
+
+void r_HaircutToBaldDude(Critter& player, Critter@ tray)
+{
+	FlushScreen(player,false,500);
+	FlushScreen(player,true,5000);
+
+	if(GetCritterAnimType(player.CrType)!=ANIM_TYPE_3D)
+	{
+		Item@ armor=player.GetItem(0,SLOT_ARMOR);
+		if(valid(armor)) player.MoveItem(armor.Id,0,SLOT_INV);
+		player.ChangeCrType(CRTYPE_BD_JUMPSUIT);
+		player.StatBase[ST_BASE_CRTYPE]=CRTYPE_BD_JUMPSUIT;
+		if(valid(armor)) player.MoveItem(armor.Id,0,SLOT_ARMOR);
+	}
+	else
+	{
+#ifdef PLAYERS_3D
+		player.StatBase[ST_ANIM3D_LAYERS+ANIM3D_LAYER_HAIR]=ATTRIBUTE_Hair_Male_Long;
+#endif
+	}
+}
+
+
+
+

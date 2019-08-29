@@ -1,0 +1,179 @@
+// Name:	q_item_v13_egg
+// Author:	Sufir
+
+// Uses
+#include "_macros.fos"
+import void AffectPoison(Critter& cr, int value) from "poison";
+
+// Defines
+
+
+// Инициализация zqwf.
+void _EggInit(Item& egg, bool firstTime)
+{
+
+	egg.Info=2;
+	SETFLAG(egg.Flags, ITEM_CAN_USE);
+	egg.SetEvent(ITEM_EVENT_USE,	"e_EggUse");
+	// ToDo: Возможность? при использовании науки, разбить и изучить яйцо, провал квеста при уничтожении яйца
+	//egg.SetEvent(ITEM_EVENT_SKILL,	"e_EggScience");
+	egg.SetEvent(ITEM_EVENT_FINISH,	"e_EggFinish");
+	egg.Update();
+
+}
+
+
+// Действия при использовании яйца.
+bool e_EggUse(Item& item, Critter& player, Critter@ target, Item@ onItem, Scenery@ onScenery)
+{
+
+	#define STR_FOTEXT_SAY_GOOD (3490)
+	#define STR_FOTEXT_GOOD     (3491)
+	#define STR_FOTEXT_SAY_BAD  (3492)
+	#define STR_FOTEXT_BAD      (3493)
+	#define BONUS_HP            (4)
+
+	bool useOnSelf=(!valid(target) && !valid(onItem) && !valid(onScenery));
+
+	if(useOnSelf && item.Val4==int(player.Id)){
+
+		player.StatBase[ST_MAX_LIFE] +=BONUS_HP;
+		player.StatBase[ST_KARMA] -=BONUS_HP * 10;
+		DeleteItem(item);
+		player.SayMsg(SAY_NORM, TEXTMSG_TEXT, STR_FOTEXT_SAY_GOOD);
+		player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_FOTEXT_GOOD, "$Hp " + BONUS_HP);
+		SetQuestStage(player, 6);
+		return true;
+
+	} else if(useOnSelf && item.Val4 !=int(player.Id)){
+
+		AffectPoison(player, Random(30, 50));
+		player.StatBase[ST_KARMA] -=10;
+		DeleteItem(item);
+		player.SayMsg(SAY_NORM, TEXTMSG_TEXT, STR_FOTEXT_SAY_BAD);
+		player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_FOTEXT_BAD);
+		return true;
+
+	}
+
+	return false;
+
+}
+
+
+void e_EggFinish(Item& item, bool deleted)
+{
+
+	if(GetQuestStageById(item.Val4)==1){
+		SetQuestStageById(item.Val4, 5);
+		GameVar@ Genocide=GetGlobalVar(GVAR_ending_v13_dclaw_genocide);
+		if(valid(Genocide)) {
+			Genocide +=1;
+		}
+	}
+	return;
+
+}
+
+
+// Вспомогательная функция. Устанавливает стадию квеста.
+bool SetQuestStage(Critter& player, int stage)
+{
+
+	if(!valid(player)) return false;
+	if(!player.IsPlayer()) return false;
+	SetQuestStageById(player.Id, stage);
+	return false;
+
+}
+
+
+// Вспомогательная функция. Устанавливает стадию квеста.
+bool SetQuestStageById(int playerId, int stage)
+{
+
+	GameVar@ quest=GetLocalVar(LVAR_q_v13_dclaweggs, playerId);
+	if(valid(quest) && quest.GetValue() !=stage){
+		quest=stage;
+		return true;
+	}
+	return false;
+
+}
+
+
+// Вспомогательная функция. Возвращает квеста.
+int GetQuestStageById(int playerId)
+{
+
+	GameVar@ quest=GetLocalVar(LVAR_q_v13_dclaweggs, playerId);
+	if(valid(quest)) {
+		return quest.GetValue();
+	}
+	return -1;
+
+}
+
+/* Можно разбить яйцо и изучить.
+bool e_EggScience(Item& item, Critter& player, int skill)
+{
+
+	if(skill==SK_SCIENCE) {
+		//player.ShowScreen(SCREEN_DIALOGBOX,);
+
+		ShowDialog(player);
+
+	}
+
+	return false;
+
+}
+void ShowDialog(Critter& player)
+{
+
+	// показываем диалоговое окно
+	player.ShowScreen(SCREEN_DIALOGBOX, 1, "answer_EatEgg");
+    // устанавливаем его текст
+	player.Say(SAY_DIALOGBOX_TEXT, "Вы хотите разбить яйцо, что бы изучить его содержимое?");
+    // добавляем пять кнопок
+	player.Say(SAY_DIALOGBOX_BUTTON(0), "Разбить");
+
+}
+// Вспомогательная функция. Результат диалога с игроком.
+void answer_EatEgg(Critter& player, uint answerI, string& answerS)
+{
+	if(answerI !=0) return;
+
+		item
+
+		if(item.Val4==player.Id){
+
+			player.StatBase[ST_EXPERIENCE] +=player.Skill[SK_SCIENCE] * 20;
+			SetQuestStage(player, 7);
+			return true;
+
+		} else if(item.Val4 !=player.Id){
+
+			player.StatBase[ST_EXPERIENCE] +=player.Skill[SK_SCIENCE] * 8;
+			DeleteItem(item);
+			SetQuestStage(player, 7);
+			return true;
+
+		}
+
+}*/
+
+/*
+# 4902 - q_v13_dclaweggs
+# Квест "Беглец", Убежище 13
+
+{4902001}{}{Горис попросил вас вынести из убежища и доставить в Брокен Хиллс Профессору одно из яиц.}
+{4902002}{}{Выполнено. Вы доставили яйцо разумного смертокогта Профессору.}
+{4902003}{}{Выполнено. Вы доставили яйцо и убедили Профессора вырастить и воспитать разумного смертокогта.}
+{4902004}{}{Провалено. Вы отказались помогать Горису.}
+{4902005}{}{Провалено. Вы потеряли яйцо разумного смертокогта.}
+{4902006}{}{Провалено. Вы съели яйцо разумного смертокогта.}
+
+{4901101}{}{Убежище 13}
+{4901102}{}{Яйца смерти}
+*/

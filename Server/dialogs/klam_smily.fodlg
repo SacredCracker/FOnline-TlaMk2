@@ -1,0 +1,503 @@
+[comment]
+Ваши комментарии / Your comments.
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 0 #
+3 1010 D _param p ST_INTELLECT < 4 #
+2 1020 D _var n name_mem_npc_player = 0 #
+4 1030 D _var n name_mem_npc_player = 1 @
+2 2000 None 0 #
+5 2010 R _var n name_mem_npc_player = 1 #
+0 2020 @
+3 3000 None 0 #
+52 3010 D _param p ST_INTELLECT > 1 #
+52 3020 D _param p ST_INTELLECT = 1 #
+0 3030 #
+69 3040 D _var p q_klam_smily_firegecko = 3 R _param p PE_GECKO_SKINNING + 1 @
+4 4000 None 0 #
+69 4010 D _var p q_klam_smily_firegecko = 7 #
+69 4020 D _var p q_klam_smily_firegecko = 3 #
+63 4030 D _var p q_klam_eiden_bramin = 4 #
+22 4040 D _var p q_mod_baltas_gecko = 1 #
+6 4050 #
+17 4060 #
+10 4070 #
+0 4080 #
+4 4090 R _script worldmap@r_StartDialog 0  @
+5 5000 None 0 #
+6 5010 #
+17 5020 #
+10 5030 #
+0 5040 @
+6 6000 None 0 #
+7 6010 D _param p SK_OUTDOORSMAN < 60 #
+65 6020 D _var p q_klam_smily_firegecko > 4 #
+8 6030 D _param p PE_GECKO_SKINNING = 1 D _param p KILL_GECKO > 130 D _var p q_klam_smily_firegecko = 0 #
+64 6040 D _param p KILL_GECKO { 130 D _param p PE_GECKO_SKINNING = 1 D _var p q_klam_smily_firegecko = 0 #
+12 6050 D _param p PE_GECKO_SKINNING < 1 D _param p PE_HUNTER < 1 #
+0 6060 @
+7 7000 None 0 #
+9 7010 R _param p SK_OUTDOORSMAN + 0 @
+8 8000 None 0 #
+68 8010 D _var p q_klam_smily_firegecko = 0 D _script klam_q_smily_firegecko@r_CheckQuestIsRun 1 0 #
+0 8020 D _var p q_klam_smily_firegecko ! 0 #
+65 8030 D _param p SK_SPEECH > 129 #
+66 8040 D _param p SK_SPEECH { 129 @
+9 9000 None 0 #
+0 9010 @
+10 10000 None 0 #
+65506 10010 #
+17 10020 #
+11 10030 #
+0 10040 @
+11 11000 None 0 #
+6 11010 #
+17 11020 #
+10 11030 #
+0 11040 @
+12 12000 None 0 #
+15 12010 D _item p PID_BOTTLE_CAPS > 199 R _item p PID_BOTTLE_CAPS - 200 #
+14 12020 D _param p SK_SPEECH > 59 #
+13 12030 D _param p SK_SPEECH < 60 #
+0 12040 @
+13 13000 None 0 #
+0 13010 @
+14 14000 None 0 #
+15 14010 D _item p PID_BOTTLE_CAPS > 149 R _item p PID_BOTTLE_CAPS - 150 #
+11 14020 @
+15 15000 None 0 #
+0 15010 R _param p PE_GECKO_SKINNING = 1 @
+16 16000 None 0 @
+17 17000 None 0 #
+18 17010 D _item p PID_GECKO_PELT > 0 D _param p KILL_GECKO < 160 #
+18 17020 D _item p PID_GOLDEN_GECKO_PELT > 0 D _param p KILL_GECKO < 160 #
+18 17030 D _item p PID_FIRE_GECKO_PELT > 0 D _param p KILL_GECKO < 160 #
+19 17040 D _param p SK_BARTER < 81 D _var p klam_smily_gecko_counter > 59 D _var p q_klam_smily_modoc = 0 #
+20 17050 D _param p SK_BARTER > 80 D _var p klam_smily_gecko_counter > 59 D _var p q_klam_smily_modoc = 0 #
+11 17060 #
+50 17070 D _param p ST_LEVEL < 4 D _script klam_smily@r_CheckQuestIsRun 1 0 #
+62 17080 D _param p ST_LEVEL < 4 D _script klam_smily@r_CheckQuestIsRun 1 1 #
+70 17090 D _item p PID_GECKO_PELT > 0 D _param p KILL_GECKO } 160 R _param p KARMA_TRAPPER = 1 #
+70 17100 D _item p PID_GOLDEN_GECKO_PELT > 0 D _param p KILL_GECKO } 160 R _param p KARMA_TRAPPER = 1 #
+70 17110 D _item p PID_FIRE_GECKO_PELT > 0 D _param p KILL_GECKO } 160 R _param p KARMA_TRAPPER = 1 @
+18 18000 None 1 #
+18 18010 D _item p PID_GECKO_PELT > 0 R _item p PID_GECKO_PELT - 1 R _var p klam_smily_gecko_counter + 1 R _item p PID_BOTTLE_CAPS + 40 #
+18 18020 D _item p PID_GOLDEN_GECKO_PELT > 0 R _item p PID_GOLDEN_GECKO_PELT - 1 R _var p klam_smily_gecko_counter + 4 R _item p PID_BOTTLE_CAPS + 100 #
+0 18030 #
+18 18040 D _item p PID_FIRE_GECKO_PELT > 0 R _item p PID_FIRE_GECKO_PELT - 1 R _var p klam_smily_gecko_counter + 6 R _item p PID_BOTTLE_CAPS + 300 @
+19 19000 None 0 @
+20 20000 None 0 #
+21 20010 @
+21 21000 None 0 #
+0 21010 D _item p PID_BOTTLE_CAPS > 1599 R _item p PID_BOTTLE_CAPS - 1600 R _item n PID_BOTTLE_CAPS + 1600 R _item p PID_GECKO_PELT + 60 R _var p q_klam_smily_modoc = 1 R _var p klam_smily_gecko_counter - 60 #
+0 21020 D _item p PID_BOTTLE_CAPS < 1600 @
+22 22000 None 0 #
+0 22010 R _var p q_mod_baltas_gecko = 2 R _item p PID_BRAHMIN_SKIN + 15 @
+50 23000 None 0 #
+53 23010 R _script klam_smily@r_CheckGroup 1 0 #
+51 23020 #
+0 23030 #
+61 23040 D _param p ST_CHARISMA < 4 @
+51 24000 None 0 #
+0 24010 R _script klam_smily@r_HintCreationGroup 1 0 @
+52 25000 None 0 #
+0 25010 #
+53 25020 R _script klam_smily@r_CheckGroup 1 0 @
+53 26000 None 0 #
+54 26010 D _script klam_smily@d_GroupLevelIsBad 1 0 R _script klam_smily@r_GotoHunter 1 0 R _script klam_smily@r_WarnToBadHunter 1 0 R _script klam_smily@r_BadHunterWisper 1 0 #
+0 26020 D _script klam_smily@d_GroupLevelIsOk 1 0 R _script klam_smily@r_GotoHunter 1 0 #
+0 26030 @
+54 27000 None 0 #
+0 27010 @
+55 28000 None 0 #
+0 28010 #
+53 28020 D _param p ST_LEVEL > 2 #
+53 28030 D _param p SK_SPEECH > 50 @
+56 29000 None 0 #
+0 29010 @
+57 30000 None 0 #
+51 30010 @
+58 31000 None 0 #
+0 31010 @
+59 32000 None 0 #
+0 32010 @
+60 33000 None 0 #
+0 33010 #
+0 33020 #
+0 33030 D _param p ST_INTELLECT < 5 #
+0 33040 @
+61 34000 None 0 #
+0 34010 @
+62 35000 None 0 #
+0 35010 #
+51 35020 @
+63 36000 None 0 #
+0 36010 R _var p q_klam_eiden_bramin = 5 @
+64 37000 None 0 #
+0 37010 @
+65 38000 None 0 #
+67 38010 D _param p PE_BRAMIN_SKINNING ! 0 D _item p PID_BOTTLE_CAPS } 36200 R _param p PE_HUNTER = 1 R _param p PE_BRAMIN_SKINNING = 0 R _param p PE_GECKO_SKINNING = 0 R _item p PID_BOTTLE_CAPS - 36200 #
+67 38020 D _item p PID_BOTTLE_CAPS > 36199 D _param p PE_BRAMIN_SKINNING = 0 R _item p PID_BOTTLE_CAPS - 36200 R _param p PE_GECKO_SKINNING + 1 #
+0 38030 @
+66 39000 None 0 #
+67 39010 D _item p PID_BOTTLE_CAPS > 43499 D _param p PE_BRAMIN_SKINNING ! 0 R _item p PID_BOTTLE_CAPS - 43500 R _param p PE_BRAMIN_SKINNING = 0 R _param p PE_GECKO_SKINNING = 0 R _param p PE_HUNTER = 1 #
+67 39020 D _param p PE_BRAMIN_SKINNING = 0 D _item p PID_BOTTLE_CAPS } 43500 R _item p PID_BOTTLE_CAPS - 43500 R _param p PE_GECKO_SKINNING + 1 #
+0 39030 @
+67 40000 None 0 #
+0 40010 #
+6 40020 #
+17 40030 @
+68 41000 None 0 #
+0 41010 #
+0 41020 R _var p q_klam_smily_firegecko = 1 R _script klam_q_smily_firegecko@r_StartSearch 1 0 @
+69 42000 None 0 #
+65 42010 R _var p q_klam_smily_firegecko = 5 #
+71 42020 D _param p PE_BRAMIN_SKINNING ! 0 D _script klam_q_smily_firegecko@d_CheckRifle 0  R _param p PE_GECKO_SKINNING = 0 R _param p PE_BRAMIN_SKINNING = 0 R _param p PE_HUNTER = 1 R _var p q_klam_smily_firegecko = 6 R _script klam_q_smily_firegecko@r_DellRifle 0  #
+71 42030 D _param p PE_BRAMIN_SKINNING = 0 D _script klam_q_smily_firegecko@d_CheckRifle 0  R _param p PE_GECKO_SKINNING + 1 R _var p q_klam_smily_firegecko = 6 R _script klam_q_smily_firegecko@r_DellRifle 0  #
+65 42040 R _var p q_klam_smily_firegecko = 5 @
+70 43000 None 0 #
+0 43010 #
+70 43020 D _item p PID_GECKO_PELT > 0 R _var p klam_smily_gecko_counter + 1 R _item p PID_GECKO_PELT - 1 R _item p PID_BOTTLE_CAPS + 50 #
+70 43030 D _item p PID_GOLDEN_GECKO_PELT > 0 R _var p klam_smily_gecko_counter + 4 R _item p PID_BOTTLE_CAPS + 150 R _item p PID_GOLDEN_GECKO_PELT - 1 #
+70 43040 D _item p PID_FIRE_GECKO_PELT > 0 R _var p klam_smily_gecko_counter + 6 R _item p PID_FIRE_GECKO_PELT - 1 R _item p PID_BOTTLE_CAPS + 400 @
+71 44000 None 0 #
+0 44010 &
+
+[russ]
+{100}{}{Смайли}
+{200}{}{Вы видите опытного охотника средних лет, он одет в кожу.}
+{210}{}{Это Смайли, лучший охотник на гекко.}
+{210}{}{Это Смайли, лучший охотник на гекко. Он прихрамывает на одну ногу, но в целом выглядит крепким парнем.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{тупой}
+{1020}{}{не знаком}
+{1030}{}{знаком}
+{2000}{}{Привет, незнакомец. Люди называют меня Смайли. Я рад тебя видеть.}
+{2010}{}{Привет, меня зовут @pname@. Приятно познакомиться.}
+{2020}{}{Рад вас встретить, Смайли. Думаю, мне уже пора.}
+{3000}{}{Здорово. Еще один Торр. Извини, я занят.}
+{3010}{}{Моя добрый! Хочет вам помочь!}
+{3020}{}{Ыыыааа!!! [Вы искренне улыбаетесь доброй, но дебильной улыбкой]}
+{3030}{}{Не такой как Смайли. До свидания.}
+{3040}{}{Ыыыа, моя еле не умирать!! Много много огненных ящериц там!}
+{4000}{}{Привет, @pname@. Рад тебя снова видеть.}
+{4010}{}{Ей, меня там еле не сожгла толпа ящеров. Ты смерти моей хотел?}
+{4020}{}{Ей, меня там еле не сожгла толпа ящеров. Ты смерти моей хотел?}
+{4030}{}{Ты Дантона с браминами не видел?}
+{4040}{}{Меня прислал Балтас за партией кожи браминов.}
+{4050}{}{Можешь меня чему-нибудь научить?}
+{4060}{}{У тебя работы не найдется?}
+{4070}{}{Хочу посмотреть, что у тебя есть из кожаных изделий.}
+{4080}{}{Просто за@sex@|шел||шла| поздороваться.}
+{4090}{}{Говорят, ты много охотился по округе. Не подскажешь ли, есть в окресностях надежное убежище? Разумеется, за мной не остынет.}
+{5000}{}{Раньше я занимался ловлей гекко, теперь занимаюсь выделкой всяких изделий из шкур. Кроме того, я много знаю об охоте на гекко, могу поделиться своими знаниями. Не за просто так, конечно.}
+{5010}{}{Можешь меня чему-нибудь научить?}
+{5020}{}{У тебя работы не найдется?}
+{5030}{}{Хочу посмотреть, что у тебя есть из кожаных изделий.}
+{5040}{}{Просто за@sex@|шел||шла| поздороваться.}
+{6000}{}{Могу тебя научить снимать шкурки с гекко или быть более осторожным охотником.}
+{6010}{}{У меня есть несколько вопросов об охоте на гекко.}
+{6020}{}{Научи меня, как снимать шкуры с огненных гекко.}
+{6030}{}{Научи меня, как снимать шкуры с огненных гекко.}
+{6040}{}{Научи меня, как снимать шкуры с огненных гекко.}
+{6050}{}{Научи меня как снимать шкурки с гекко.}
+{6060}{}{Пожалуй мне ничего не надо.}
+{7000}{}{Я думаю, что знаю о гекко больше, чем кто-либо живой в округе. Я был выращен на молоке гекко, ты знаешь. Но это займет несколько часов.}
+{7010}{}{Я хочу знать все.}
+{8000}{}{Ну это професиональный секрет. Поставщиков этих шкур не так много, а спрос большой и мне не нужны конкуренты.}
+{8010}{}{Ну и ладно.}
+{8020}{}{Ну и ладно.}
+{8030}{}{Я могу щедро заплатить и обещаю не отбивать твоих клиентов.}
+{8040}{}{Я могу щедро заплатить и обещаю не отбивать твоих клиентов.}
+{9000}{}{Ты понимаешь, ситуация такая - золотые гекко и обычные гекко одно и то же в основном, за исключением того, что золотые гекко более упрямы [Через некоторое время ты узнаешь о гекко больше]}
+{9010}{}{Это было чудесно. Теперь я знаю гораздо больше о гекко. Спасибо. До свидания.}
+{10000}{}{Вот все, что у меня есть.}
+{10010}{}{[Обмен]}
+{10020}{}{У тебя работы не найдется?}
+{10030}{}{Мне еще кое-что надо от тебя.}
+{10040}{}{Спасибо, на этом закончим.}
+{11000}{}{Да, что еще?}
+{11010}{}{Можешь меня чему-нибудь научить?}
+{11020}{}{У тебя работы не найдется?}
+{11030}{}{Хочу посмотреть, что у тебя есть из кожаных изделий.}
+{11040}{}{Нет, ничего. Я пойду.}
+{12000}{}{Могу научить тебя снимать шкуры. Ты можешь продавать их, это хороший заработок. Я научу тебя этому, скажем... за 200 монет.}
+{12010}{}{Вот держи 200 монет.}
+{12020}{}{Может, сойдемся на 100?}
+{12030}{}{Может, сойдемся на 100?}
+{12040}{}{У меня не хватает денег. Я зайду попозже.}
+{13000}{}{Не думаю.}
+{13010}{}{Я еще вернусь с деньгами.}
+{14000}{}{Кажется, у тебя язык подвешен... хорошо, сброшу до 150.}
+{14010}{}{Отлично! Вот держи деньги...}
+{14020}{}{Я передумал. Мне нужно кое-что другое.}
+{15000}{}{[Смайли прячет деньги в карман] Итак... Не попорти шкуру, когда будешь убивать гекко. Потом берешь его вот так и ножичком...}
+{15010}{}{Спасибо, что показал, как это делается, Смайли. Я думаю, я попрактикуюсь на каких-нибудь гекко. До свидания.}
+{16000}{}{Думаю, что тебе пока не хватает для этого опыта. Приходи когда будешь в состоянии освоить новые знания.}
+{17000}{}{Ну, работы особо нету. Вообще я покупаю шкурки гекко, а также отправляю крупные партии в другие города. Что тебя интересует?}
+{17010}{}{У меня тут есть шкурка обычного гекко. За сколько возьмешь?}
+{17020}{}{У меня тут есть шкурка золотого гекко. За сколько возьмешь?}
+{17030}{}{Шкуры огненного гекко принимаешь?}
+{17040}{}{А что ты говорил про крупные партии?}
+{17050}{}{А что ты говорил про крупные партии?}
+{17060}{}{Ничего из этого.}
+{17070}{}{Есть простая работа для новичков?}
+{17080}{}{Есть простая работа для новичков?}
+{17090}{}{У меня тут есть шкурка обычного гекко. За сколько возьмешь?}
+{17100}{}{У меня тут есть шкурка золотого гекко. За сколько возьмешь?}
+{17110}{}{Шкуры огненного гекко принимаешь?}
+{18000}{}{40 монет шкура обычного гекко, 100 - золотого. Если достанешь шкуру огненного, дам 300.}
+{18010}{}{Вот шкурка серебристого гекко. [Вы получили 40 монет]}
+{18020}{}{Вот шкурка золотого гекко. [Вы получили 100 монет]}
+{18030}{}{Все. Хватит с меня торговли.}
+{18040}{}{Вот шкурка огненного гекко. [Вы получили 300 монет]}
+{19000}{}{У тебя слишком мало опыта в таких делах.}
+{20000}{}{У меня тут скопилось много шкур гекко. Если хочешь заработать, выкупи их у меня и продай в Модоке Балтасу.}
+{20010}{}{Сколько это будет стоить?}
+{21000}{}{Я продам их тебе за 1600 монет. Балтас их купит за гораздо большую цену.}
+{21010}{}{Хорошо, по рукам.}
+{21020}{}{У меня недостаточно денег.}
+{22000}{}{Вот, забирай.}
+{22010}{}{[Забрать.]}
+{23000}{}{Есть тут у меня задания для молодняка. Ноги у вас быстрые, делать вам все равно нечего. Но денег за это не получите! Нужно зачистить выводок гекко тут неподалеку - а то они расплодятся, проходу не дадут. Собери группу человек 3-6 новичков и сгоняйте.
+Ваша главная цель поубивать гекко и принести мне их шкурки.}
+{23010}{}{Я собрал группу. Мы готовы идти!}
+{23020}{}{Как мне собрать группу/команду/пати ?}
+{23030}{}{Сейчас соберу людей и приду.}
+{23040}{}{Сейчас соберу людей, стану лидером и мы придем!}
+{24000}{}{Найди таких же как ты, договоритесь кто у вас будет лидером. Приходите все вместе ко мне и пусть ваш лидер поговорит со мной.}
+{24010}{}{Ну, пойду попробую.}
+{25000}{}{Значит так, идиот, найди еще таких же, как ты. И приходите, у меня есть задачка подходящая для вас. Эй, аллё, ты меня понял?!  Все, а теперь вали отсюда.}
+{25010}{}{Ога.}
+{25020}{}{А мы тут, все как дядя просил.}
+{26000}{}{[Он осматривает команду внимательным взглядом] Я выберу наиболее подходящий для вас выводок гекко. [Смотрит на старую затертую карту] Да вот эти подойдут. Вы их всех там перебьете без проблем. Вот вам координаты - вперед ребята, удачи там!}
+{26010}{}{Ну, мы пошли...}
+{26020}{}{Отряд, выдвигаемся!}
+{26030}{}{Я передумал.}
+{27000}{}{Не уходите от логова гекко - потревоженный выводок разбежится и вы его больше не найдете. Не потеряйте друг друга по дороге. Держитесь вместе. Пусть один отвлекает ящеров, пока другие их расстреливают. Стреляйте только если рядом нет своих. Бейте все вместе одного ящера - не распыляйтесь. Не давайте себя окружить. Отступайте если сильно ранены. Во время битвы не забывайте лечить друг друга. Ты как лидер должен проследить за всем!}
+{27010}{}{Спасибо Смайли! Я не подведу!}
+{28000}{}{И где твоя группа шляется? Давай собирай сюда ко мне всех, проведу инструктаж.}
+{28010}{}{Окей. Сейчас всех позову.}
+{28020}{}{Я им сам все объясню. Начнем без них.}
+{28030}{}{Я им потом все передам. Давайте начнем без них.}
+{29000}{}{В вашей группе есть слишком крутые ребята - нечего им тратить время на новичков. Вы бы еще папу и маму притащили. Сами всему научитесь салаги!}
+{29010}{}{Мы больше так не будем.}
+{30000}{}{А я вот вижу только тебя. У тебя нет никакой группы.  Идиот!}
+{30010}{}{Как мне собрать группу?}
+{31000}{}{Твоя группа слишком мала - я же сказал 3-6 человек. Иначе не справитесь.}
+{31010}{}{Окей. Скоро все поправим.}
+{32000}{}{Твоя группа слишком велика - я же сказал 3-6 человек. Такой толпой вы всех гекко еще за милю распугаете.}
+{32010}{}{Окей. Скоро все поправим.}
+{33000}{}{Так, где лидер вашей группы?}
+{33010}{}{Он стоит рядом со мной.}
+{33020}{}{Не знаю, мы его где-то потеряли.}
+{33030}{}{Лидер?}
+{33040}{}{Он тут рядом гуляет.}
+{34000}{}{Ну и рожа у тебя... С твоим обаянием мало кто за тобой пойдет. Найди лучше лидера поприятнее.}
+{34010}{}{=(}
+{35000}{}{Нет. Вот только что рейд ушел в зачистку. Приходи позже. Можешь пока свою команду сформировать.}
+{35010}{}{Жаль. Пока.}
+{35020}{}{Команду?}
+{36000}{}{Да, видел я его. Мы как раз шли за гекко, а он шел и вёл за собой двух браминов. Я подумал, что что-то неладно, он меня увидел и сбежал.}
+{36010}{}{Вот спасибо! Пока!}
+{37000}{}{ Даже если бы я и захотел, ты имеешь мало опыта в охоте.}
+{37010}{}{Думаю, ты сменишь мнение, когда я перебью всех гекко от Кламата, до НКР.}
+{38000}{}{[Думает некоторое время] @sex@|Ну.. Ладно, сойдемся на 36200 монетах за обучение.||[Ухмыляется] Не могу отказать такой очаровашке, научу всему всего за 36200 монет|}
+{38010}{}{Да ты шкуродёр. Ну держи деньги.}
+{38020}{}{Да ты шкуродёр. Ну держи деньги.}
+{38030}{}{У меня нет таких денег.}
+{39000}{}{[Думает некоторое время] С тебя 43500. И это золотом, а то был тут один в синем трико, хотел расплатится кучей сломаного оружия.}
+{39010}{}{Да ты шкуродёр. Ну держи деньги.}
+{39020}{}{Да ты шкуродёр. Ну держи деньги.}
+{39030}{}{У меня нет таких денег.}
+{40000}{}{Огненные гекко нельзя подпускать близко, иначе поджарят не хуже огнемёта. Удобней всего убивать их, находясь вне зоны досегаемости.. [Через некоторое время ты узнаешь о гекко больше]}
+{40010}{}{Спасибо, мне пора.}
+{40020}{}{Можешь меня ещё чему-нибудь научить?}
+{40030}{}{У тебя работы не найдется?}
+{41000}{}{[Смотрит на вас недоверчивым взглядом] Хотя постой, есть одно дело. Я где то потерял свое именное ружье. На востоке от города, есть охотничья сторожка, возможно я оставил его там. Если быстро справишься, может и договоримся. }
+{41010}{}{Меня это не интересует.}
+{41020}{}{Хорошо, я мигом.}
+{42000}{}{Ко мне недавно приходил знакомый с юга и оставил рюкзак с яйцами гекко. Очевидно они вылупились. Извини, что так вышло. Емм, а ружье то нашол?}
+{42010}{}{Нет, ничего я не нашел.}
+{42020}{}{Да, вот оно.}
+{42030}{}{Да, вот оно.}
+{42040}{}{Да, оно у меня было, но я его потерял.}
+{43000}{}{Для такого известного траппера, 50 монет шкура обычного гекко, 150 - золотого. Если достанешь шкуру огненного, дам 400.}
+{43010}{}{Все. Хватит с меня торговли.}
+{43020}{}{Вот шкурка гекко. [Вы получили 50 монет]}
+{43030}{}{Вот шкурка золотого гекко. [Вы получили 150 монет]}
+{43040}{}{Вот шкурка огненного гекко. [Вы получили 400 монет]}
+{44000}{}{ Благодарен. Готов обучить тебя бесплатно. [Через некоторое время ты узнаешь о гекко больше]}
+{44010}{}{Спасибо. До свидания.}
+
+[engl]
+{100}{}{Smiley}
+{200}{}{You see a skillful middle-aged hunter, wearing leather clothes.}
+{210}{}{This is Smiley, probably the best gecko hunter around.}
+{210}{}{This is Smiley, the best gecko hunter. He has a limp in his left leg, but seems to be a tough guy.}
+{1000}{}{Pre-dialogue setup}
+{1010}{}{dumb}
+{1020}{}{unfamiliar}
+{1030}{}{familiar}
+{2000}{}{Hello, stranger. People call me Smiley. I am glad to see you.}
+{2010}{}{Hello, my name is @pname@. It is pleasant to be introduced.}
+{2020}{}{Glad to meet you, Smiley. It's time for me to go.}
+{3000}{}{Great. Just another Torr. Sorry, I'm busy.}
+{3010}{}{Me good! Wanna help!}
+{3020}{}{Arghhh!!! [You sincerely smile by nice, but retarded smile]}
+{3030}{}{You're not like Smiley. Good bye.}
+{3040}{}{ Arghhh!!! , me almost die!! Many many fire lizards there!}
+{4000}{}{Hello, @pname@. Glad to see you again.}
+{4010}{}{Hey, I was almost burned by pack of geckoes. Did you want my death?}
+{4020}{}{ Hey, I was almost burned by pack of geckoes. Did you want my death? }
+{4030}{}{Have you seen Dunton with brahmins?}
+{4040}{}{Balthas sent me to get brahmin hides.}
+{4050}{}{Can you teach me something?}
+{4060}{}{Do you have job for me?}
+{4070}{}{I want to see what leather products do you have.}
+{4080}{}{Just came to say "hello".}
+{4090}{}{Говорят, ты много охотился по округе. Не подскажешь ли, есть в окресностях надежное убежище? Разумеется, за мной не остынет.}
+{5000}{}{I used to be a gecko hunter, now I'm making different leather stuff out of gecko pelts. Also I know a lot about gecko hunting and can share my knowledge. Not for free, of cause.}
+{5010}{}{ Can you teach me something? }
+{5020}{}{ Do you have job for me? }
+{5030}{}{ I want to see what leather products do you have. .}
+{5040}{}{ Just came to say "hello" .}
+{6000}{}{I can teach you how to skin gecko or how to be more cautious hunter.}
+{6010}{}{I have few questions about gecko hunt..}
+{6020}{}{Teach me how to skin fire geckos.}
+{6030}{}{ Teach me how to skin fire geckos. }
+{6040}{}{ Teach me how to skin fire geckos. }
+{6050}{}{ Teach me how to skin geckos. }
+{6060}{}{I think I don't need anything else.}
+{7000}{}{I think I know about geckos more than anyone around here. I was nursed by gecko milk, you know. But it will take several hours.}
+{7010}{}{I want to know all.}
+{8000}{}{Well, this is my professional know-how. There are no lots of those pelts suppliers, and there are lots of demands, but I don't need competitors.}
+{8010}{}{Well, ok.}
+{8020}{}{ Well, ok. }
+{8030}{}{I can pay generously and promise not to take your customers away.}
+{8040}{}{I can pay generously and promise not to take your customers away.}
+{9000}{}{You know, golden geckos and simple geckos are pretty the same except - golden geckos are more stubborn [After some time, you learn more about gecko]}
+{9010}{}{It was wonderful. Now I know much more about gecko. Thank you. Good bye.}
+{10000}{}{Here, that's all I've got.}
+{10010}{}{[Exchange]}
+{10020}{}{Do you have a job for me?}
+{10030}{}{I need something else to get from you.}
+{10040}{}{Thanks, let's finish on this.}
+{11000}{}{Yeah, what else?}
+{11010}{}{Can you teach me something?}
+{11020}{}{ Do you have a job for me?}
+{11030}{}{I want to see what leather products do you have.}
+{11040}{}{No, nothing. I'll go.}
+{12000}{}{I can teach you how to skin. You can sell it, it's good bussines. I'll teach you for, let's say... 200 caps.}
+{12010}{}{Here, take 200 caps.}
+{12020}{}{Can we make it 100?}
+{12030}{}{ Can we make it 100? }
+{12040}{}{I don't have enough money. I'll come back later.}
+{13000}{}{Don't think so.}
+{13010}{}{I'll be back with money.}
+{14000}{}{Looks like you know how to negotiate... ok, let it be 150.}
+{14010}{}{Nice! Here take money...}
+{14020}{}{I've chnged my mind. I need something else.}
+{15000}{}{[Smiley hides money in the pocket] So... Don't spoil the pelt, while killing gecko. Then take it like this and cut it with the knofe like this...}
+{15010}{}{Thanks for showing me, how do that, Smiley. I think, I'll practice on some geckoes now. Good bye.}
+{16000}{}{I think, you're not expirienced enough for that. Come back when you will be ready to learn new things.}
+{17000}{}{Well, don't have a job actually. I just buy gecko pelts and sending large quantities to other towns. What are you intersted in?}
+{17010}{}{I have simple gecko pelt. How much you'll give for that?}
+{17020}{}{I have golden gecko pelt. How much you'll give for that?}
+{17030}{}{Do you buy fire gecko pelts?}
+{17040}{}{What have you said about large quantities?}
+{17050}{}{What have you said about large quantities?}
+{17060}{}{Nothing of it.}
+{17070}{}{Do you have simple job for newbies?}
+{17080}{}{Do you have simple job for newbies?}
+{17090}{}{I have simple gecko pelt. How much you'll give for that?}
+{17100}{}{I have golden gecko pelt. How much you'll give for that?}
+{17110}{}{Do you buy fire gecko pelts?}
+{18000}{}{40 caps simple gecko pelt, 100 - golden. If you'll bring fire gecko pelt, I'll give 300.}
+{18010}{}{Here gecko pelt. [You've received 40 caps]}
+{18020}{}{Here golden gecko pelt. [You've received 100 caps]}
+{18030}{}{That's it. Enough of trading.}
+{18040}{}{Here fire gecko pelt. [You've received 300 caps]}
+{19000}{}{You have too litle of experiance in such tasks.}
+{20000}{}{I've got a lot of pelts here. If you want to earn some money, buy it from me and sell to Balthas in Modoc.}
+{20010}{}{How much it will cost?}
+{21000}{}{I'll sell you it for 1600 caps. Balthas will give much more for that.}
+{21010}{}{O'k, deal.}
+{21020}{}{I don't have enough money.}
+{22000}{}{Here, take.}
+{22010}{}{[Take.]}
+{23000}{}{I have some task for a bunch of newbies. You can run fast, and have not much to do. But you will get no money for that! You need to clean out a pck of geckos - otherwise they will breed in great numbers. Gather a group of 3-6 newbies and handle that.
+Your main task is to kill geckoes and bring all the pelts to me.}
+{23010}{}{I've gathered a party. We are ready to go!}
+{23020}{}{How can I gather a party?}
+{23030}{}{Let me gather the group and come back.}
+{23040}{}{Let me gather the group, I'll become a leader and we will go!}
+{24000}{}{Find some other guys like you, deal who will be a leader. Then come back to me and let the leader speak to me.}
+{24010}{}{Well, I'll go and try.}
+{25000}{}{O'k then, idiot, just find some others like you. And come back, I got a task for you. Hey, hello! Do you understand me?! That's all, now get the hell out of here.}
+{25010}{}{Mmkey.}
+{25020}{}{And we here, all like uncle ask.}
+{26000}{}{[He looks at the group with sharp look] I'll select a gecko packs that you can handle. [Looks in old, rubbed map] Yeah, those will be fine. You can kill them all without any promblems. Here the coords - go ahead guys, good luck for you there!}
+{26010}{}{O'k, we'll go...}
+{26020}{}{Squad, advance!}
+{26030}{}{I've changed my mind.}
+{27000}{}{Don't leave gecko lair - all the breed will get away and you will not find them anymore. Don't lose yourself on the road. Stay together. Let one guy to distract lizards, while others will shoot them. Shoot only when you are sure not to hit each other. Concentrate fire on one gecko. Don't let them to surround you. Fall back if you're hurt too much. During fight don't forget to give first aid to each other. You, like the leader should take care of everything!}
+{27010}{}{Thanks Smiley! I will not fail!}
+{28000}{}{And where is your group? Come on, gather them all, I'll instruct them.}
+{28010}{}{O'k. I'll call them all right now.}
+{28020}{}{I will explain all by myself. We can start without them.}
+{28030}{}{I'll tell them later. Let's start without them.}
+{29000}{}{In your grup there are some tough guys - don't worth to waste your time on newbies. You could get you mom and dad instead. You should learn everything by yourself, greenhorns!}
+{29010}{}{We will not do that again.}
+{30000}{}{All I can see is you. You don't have any group. Moron!}
+{30010}{}{How can I gather a group?}
+{31000}{}{Your group is too small - I've said 3-6 guys! Otherwise you will fail.}
+{31010}{}{O'k. We'll fix that soon.}
+{32000}{}{Your group is too big - I've said 3-6 guys! Gecko will be frighten away mile ahead by such a crowd.}
+{32010}{}{O'k. We'll fix that soon.}
+{33000}{}{So, where is the leader of your group?}
+{33010}{}{He stand right next to me.}
+{33020}{}{I don't know, we lost him somewhere.}
+{33030}{}{Leader?}
+{33040}{}{He walks by near.}
+{34000}{}{What an ugly face... With your charisma few people will follow you. Get more charming leader.}
+{34010}{}{=(}
+{35000}{}{No. A bunch of guys just left to clear out some lair. Come back later. Use time to gather your team.}
+{35010}{}{Pity. Bye.}
+{35020}{}{A team?}
+{36000}{}{Yeah, I saw him. We were going for gecko, and he was going with 2 brahmins. I thought, something is wrong, he ran away as saw me.}
+{36010}{}{Thanks! Buy!}
+{37000}{}{Even if I wanted to, you have too litle experience in gecko hunting.}
+{37010}{}{I think, you will change your mind, when I'll kill all the gecko on the way from Klamath to NCR.}
+{38000}{}{[Thinks for some time] @sex@|Well.. O'k, let's make it 36200 caps for the training.||[Grins] Can not refuse sucj a cutie, will teach you everything just for 36200 caps|}
+{38010}{}{You are really the skinner. Here, take money.}
+{38020}{}{You are really the skinner. Here, take money.}
+{38030}{}{I don't have enough money.}
+{39000}{}{[Thinks for some time] You owe me 43500. In cash, not like that guy in bluesuit, wanted to push to me a bunch of broken weapon.}
+{39010}{}{You are really the skinner. Here, take money}
+{39020}{}{You are really the skinner. Here, take money}
+{39030}{}{I don't have enough money.}
+{40000}{}{You should not let fire geckos to get close to you, otherwise will fry you just better than flamethrower. Better to kill them while staying out of reach.. [After some time, you learn a lot about fire geckoes]}
+{40010}{}{Thanks, I gotta go.}
+{40020}{}{Can you teach me something else?}
+{40030}{}{Do you have a job for me?}
+{41000}{}{[Stares at you with suspicious glance] Hmm wait, I got one job. I've lost my family rifle somewhere. There's a hunting lodge to the east of town, perhaps I left my gun there. If you can turn in fast, we can have a deal. }
+{41010}{}{I'm not interested.}
+{41020}{}{Fine, I'll be in a moment.}
+{42000}{}{Recently a friend of mine came from the south and left a backpack with gecko eggs. Obvoiusly they hatched out. Sorry for that. Emm, have you found the rifle?}
+{42010}{}{No, I din not find anything.}
+{42020}{}{Yes, here it is.}
+{42030}{}{Yes, here it is.}
+{42040}{}{Yes, I had it, but I lost it.}
+{43000}{}{For such a notorius trapper, 50 caps simple gecko pelt, 150 - golden. If you'll manage to get fire gecko pelt, I'll give 400.}
+{43010}{}{That's it. Enough of trading.}
+{43020}{}{Here gecko pelt. [You've received 50 caps]}
+{43030}{}{Here golden gecko pelt. [You've received 150 caps]}
+{43040}{}{Here fire gecko pelt. [You've received 400 caps]}
+{44000}{}{ I'm very grateful and ready to teach you for free.[After some time you learn more about gecko]}
+{44010}{}{Thanks. Goodbye.}
+

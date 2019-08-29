@@ -1,0 +1,114 @@
+#include "_client_defines.fos"
+#include "_macros.fos"
+#include "_colors.fos"
+
+uint[] RedList;
+uint[] TealList;
+
+void TryColorizePlayer(CritterCl& cr)
+{
+	for(uint n=0, nMax=TealList.length(); n<nMax; n++)
+	{
+		if(cr.Id==TealList[n])
+		{
+			cr.NameColor=COLOR_CONTOUR_GREEN;
+			cr.ContourColor=COLOR_CONTOUR_GREEN;
+		}
+	}
+	for(uint n=0, nMax=RedList.length(); n<nMax; n++)
+	{
+		if(cr.Id==RedList[n])
+		{
+			cr.NameColor=COLOR_CONTOUR_RED;
+			cr.ContourColor=COLOR_CONTOUR_RED;
+		}
+	}
+}
+
+void SetPlayerColorizing(CritterCl& cr, bool enemy)
+{
+	uint id=cr.Id;
+	if(enemy)
+	{
+		for(uint n=0, nMax=TealList.length(); n<nMax; n++)
+		{
+			if(TealList[n]==id)
+			{
+				TealList.removeAt(n);
+				WritePlayersColorizing();
+				Message("|"+COLOR_CONTOUR_YELLOW+" "+GetMsgStr(TEXTMSG_GAME, 15003) + cr.Name);
+				return;
+			}
+		}
+		for(uint n=0, nMax=RedList.length(); n<nMax; n++)
+		{
+			if(RedList[n]==id) return;
+		}
+		RedList.insertLast(id);
+		WritePlayersColorizing();
+		Message("|"+COLOR_CONTOUR_YELLOW+" "+GetMsgStr(TEXTMSG_GAME, 15000) + cr.Name);
+	}
+	else
+	{
+		for(uint n=0, nMax=RedList.length(); n<nMax; n++)
+		{
+			if(RedList[n]==id)
+			{
+				RedList.removeAt(n);
+				WritePlayersColorizing();
+				if(valid(cr)) Message("|"+COLOR_CONTOUR_YELLOW+" "+GetMsgStr(TEXTMSG_GAME, 15002) + cr.Name);
+				return;
+			}
+		}
+		for(uint n=0, nMax=TealList.length(); n<nMax; n++)
+		{
+			if(TealList[n]==id) return;
+		}
+		TealList.insertLast(id);
+		WritePlayersColorizing();
+		Message("|"+COLOR_CONTOUR_YELLOW+" "+GetMsgStr(TEXTMSG_GAME, 15001) + cr.Name);
+	}
+}
+
+void InitPlayersColorizing()
+{
+	file f;
+	if(f.open("PlayersColorizing"+"("+__Host+")"+".ini", "r") >=0) 
+	{
+		RedList.resize(0);
+		TealList.resize(0);
+		uint friendsCount=f.readUint32();
+		uint enemiesCount=f.readUint32();
+		for(uint n=0; n<friendsCount; n++)
+		{
+			TealList.insertLast(f.readUint32());
+		}
+		for(uint n=0; n<enemiesCount; n++)
+		{
+			RedList.insertLast(f.readUint32());
+		}
+		f.close();
+	}
+}
+
+void WritePlayersColorizing()
+{
+	file f;
+	f.open("PlayersColorizing"+"("+__Host+")"+".ini", "w");
+	f.writeUint32(TealList.length());
+	f.writeUint32(RedList.length());
+	for(uint n=0, nMax=TealList.length(); n<nMax; n++)
+	{
+		f.writeUint32(TealList[n]);
+	}
+	for(uint n=0, nMax=RedList.length(); n<nMax; n++)
+	{
+		f.writeUint32(RedList[n]);
+	}
+}
+
+void __ColorizePlayer(int id, int enemy, int param2, string@ param3, int[]@ param4)
+{
+	CritterCl@ cr=GetCritter(uint((id)&0xFFFFFFFF));
+	if(valid(cr)) SetPlayerColorizing(cr, (enemy==0));
+}

@@ -1,0 +1,188 @@
+[comment]
+>> 10 : Убит охранник
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 D _var p name_mem_npc_player = 0 D _script merc@d_NpcIsNotMerc 0  #
+3 1020 D _var p name_mem_npc_player = 1 D _script merc@d_NpcIsNotMerc 0  D _var p nr_kidnap_all_marodeurs_dead = 0 #
+5 1030 D _script merc@d_NpcIsMerc 0  #
+22 1040 D _var p nr_kidnap_all_marodeurs_dead = 1 D _var p name_mem_npc_player = 1 D _script merc@d_NpcIsNotMerc 0  @
+2 2000 None 0 #
+0 2010 #
+4 2020 D _var p nr_kidnap_all_marodeurs_dead = 0 D _var p q_nr_wri_kidnap > 0 R _var p name_mem_npc_player = 1 #
+20 2030 D _var p nr_kidnap_all_marodeurs_dead > 0 D _var p nr_kidnap_kills_counter = 0 D _var p q_nr_wri_kidnap > 0 #
+23 2040 D _var p nr_kidnap_kills_counter } 1 D _var p nr_kidnap_all_marodeurs_dead } 1 D _var p q_nr_wri_kidnap } 1 @
+3 3000 None 0 #
+4 3010 @
+4 4000 None 0 #
+0 4010 #
+10 4020 D _var p nr_wri_guard_dead > 0 D _var p q_nr_wri_kidnap = 3 #
+30 4030 D _var p q_nr_wri_kidnap = 2 @
+5 5000 None 0 @
+10 6000 None 0 #
+11 6010 #
+15 6020 @
+11 7000 q_nr_wri_kidnap@dlg_WeaponHand 0 #
+12 7010 #
+13 7020 D _script q_nr_wri_kidnap@d_WeaponHand 0  R _script q_nr_wri_kidnap@r_GiveWeaponHand 0  R _script q_nr_wri_kidnap@r_Fight 0  @
+12 8000 None 0 #
+0 8010 @
+13 9000 None 0 #
+14 9010 @
+14 10000 None 0 @
+15 11000 None 0 #
+0 11010 #
+16 11020 @
+16 12000 None 0 #
+0 12010 R _param n MODE_HIDE = 1 R _script q_nr_wri_kidnap@r_WrightMerc 0  @
+20 13000 None 0 #
+21 13010 @
+21 14000 None 0 @
+22 15000 None 0 #
+20 15010 D _var p nr_kidnap_kills_counter = 0 #
+23 15020 D _var p q_nr_wri_kidnap } 1 D _var p nr_kidnap_kills_counter } 1 D _var p nr_kidnap_all_marodeurs_dead } 1 @
+23 16000 None 0 #
+0 16010 @
+30 17000 None 0 #
+31 17010 @
+31 18000 None 0 #
+32 18010 #
+34 18020 @
+32 19000 None 0 #
+33 19010 @
+33 20000 None 0 #
+0 20010 R _script q_nr_wri_kidnap@r_WrightMerc 0  @
+34 21000 None 0 #
+35 21010 @
+35 22000 None 0 #
+0 22010 #
+36 22020 R _script q_nr_wri_kidnap@r_Fight 0  @
+36 23000 None 0 &
+
+[russ]
+{100}{}{Сын Райта}
+{200}{}{Вы видите одного из сыновей Райта.}
+{210}{}{Вы видите юношу с растерянным выражением лица.}
+{1000}{}{Predialogue installations}
+{1010}{}{не знаком}
+{1020}{}{Знаком. Мародеры живы}
+{1030}{}{чей-то мерк}
+{1040}{}{знаком, мародеры мертвы}
+{2000}{}{Кто ты? Ты од@sex@|ин||на| из них?}
+{2010}{}{Не бери в голову.}
+{2020}{}{Твой папаша попросил заглянуть сюда и разобраться, что тут у тебя за проблемы.}
+{2030}{}{Твой папаша попросил заглянуть сюда и разобраться, что тут у тебя за проблемы.}
+{2040}{}{С этими подонками покончено. Ты можешь вернуться домой.}
+{3000}{}{Есть новости?}
+{3010}{}{Пока нет. Не дергайся.}
+{4000}{}{Тогда, почему ты медлишь? Убей этих мерзавцев! Они должны понять, что с Райтами шутки плохи. Убей их всех!!!}
+{4010}{}{Именно это я и собираюсь сделать. Скоро вернусь.}
+{4020}{}{[Шепотом] Тише! Не ори ты так! Часового я снял@sex@|||а|, мы можем слинять отсюда так, что никто и не заметит.}
+{4030}{}{Сначала расскажи мне, что здесь происходит.}
+{5000}{}{Я хочу только одного. Быстрее убраться отсюда.}
+{6000}{}{Хм. Но это неправильно. Тот, кто поднял руку на Райта, должен умереть мучительной смертью! А мы оставим их всех здесь живыми? Нет, так не пойдет.}
+{6010}{}{Хочешь, я дам тебе ствол, а ты сам продемонстрируешь гнев Райтов мародерам?}
+{6020}{}{Я что, похож@sex@|||а| на терминатора? Ты видел, сколько их там? Даже если я и уложу парочку, меня затопчут, как пить дать. Если тебе дорога твоя шкура, делай все, что я скажу.}
+{7000}{}{[Глаза юноши загораются яростью] Да! Это - то, что нужно! Давай пушку! Они узнают, что такое месть Райтов!}
+{7010}{}{Я пошутил@sex@|||а|. Ты видел, сколько их? И как они вооружены? Мы вдвоем никак не справимся со всей бандой. Ладно, побудь пока здесь. Я что-нибудь придумаю.}
+{7020}{}{Да, забирай. А я понаблюдаю. Ха! [Отдать @lex weaponName@]}
+{8000}{}{Хорошо. Только придумывай быстрее...}
+{8010}{}{Тебе не придется долго ждать.}
+{9000}{}{[Всем своим видом выражает презрение] Ты всего лишь жалкий трус! И как только отец не понял этого сразу! Сейчас ты увидишь, на что способен Райт!}
+{9010}{}{Угу, угу. Валяй, парнишка... Покажи, на что ты способен..}
+{10000}{}{Эй вы, трусы!! Выходите на честный бой!!!}
+{11000}{}{Ладно, пусть так... Отцу это не понравится... Что мы будем делать?}
+{11010}{}{Подожди здесь, я скоро вернусь.}
+{11020}{}{Прячься в тень, как я и следуй за мной след в след.}
+{12000}{}{Хорошо, двинули...}
+{12010}{}{Будь тише воды, ниже травы. Идем.}
+{13000}{}{Ты опоздал@sex@|||а| , мародеры мертвы, и твоя помощь мне не требуется.}
+{13010}{}{Эй, как так? Я столько времени потратил@sex@|||а|! Кто мне оплатит расходы?}
+{14000}{}{Не знаю, прощай.}
+{15000}{}{Я здесь долго не задержусь... В чем дело?}
+{15010}{}{Твой отец попросил меня помочь тебе отсюда выбраться.}
+{15020}{}{С этими подонками покончено. Ты можешь вернуться домой.}
+{16000}{}{Ты в одиночку с ними справил@sex@|ся||ась|? Ты крут@sex@|ой||ая|. Я все расскажу отцу, он наградит тебя.}
+{16010}{}{Да знаю я, знаю. Не вляпайся снова в историю. Прощай.}
+{17000}{}{Они держат меня в заложниках. Лучше уноси отсюда ноги, пока не тебя не заметили...}
+{17010}{}{Уже нет. Я поговорил с их главарем. Все вопросы решены, ты можешь уходить.}
+{18000}{}{Что? Правда? Но... Они не могут так просто уйти от мести Райтов. Мы должны их проучить!}
+{18010}{}{Нет. Я заплатил@sex@|||а| за тебя, мы просто тихо уйдем отсюда. }
+{18020}{}{Проучить? Не уверен@sex@|||а|, что это хорошая мысль. Правда, сейчас мародеры не готовы к нападению... }
+{19000}{}{Проклятье! Это все неправильно... Отец будет в бешенстве, нам нужно было убить их всех...}
+{19010}{}{Что тебе дороже: твоя шкура или честь Райтов? Делай ноги, парень, пока они не передумали.}
+{20000}{}{Ладно. Спасибо за помощь. [Вздыхает] Как только это все объяснить отцу...}
+{20010}{}{Хватит разговоров, я ухожу.}
+{21000}{}{Вот и я о том! Нужно вырезать это змеиное гнездо! Что мы будем делать?}
+{21010}{}{Разве я сказал@sex@|||а| "мы"? Я все еще за тебя в ответе. Стой на месте, а я займусь головорезами.}
+{22000}{}{Я тоже умею стрелять, и ничего не боюсь! Я - Райт!}
+{22010}{}{Помню, да. Оставайся тут, Райт, иначе все провалишь.}
+{22020}{}{Держись рядом со мной и попробуй прикончить хотя бы одного.}
+{23000}{}{Да! Сейчас они у меня получат!}
+{100000001}{}{Спасибо тебе. Дальше я уж сам доберусь. Увидимся в Нью-Рено}
+
+[engl]
+{100}{}{Right's Son}
+{200}{}{you see one of Right's sons.}
+{210}{}{you see the young man with a confused look.}
+{1000}{}{Predialogue installations}
+{1010}{}{it is not familiar}
+{1020}{}{the Sign. Marauders are live}
+{1030}{}{someone's grew dim}
+{1040}{}{a sign, marauders are dead}
+{2000}{}{Who you? You од@sex | in || on | from them?}
+{2010}{}{do not get into the head.}
+{2020}{}{Your daddy has asked to glance here and to understand that here at you for problems.}
+{2030}{}{Your daddy has asked to glance here and to understand that here at you for problems.}
+{2040}{}{these geeks it is finished. You can come back home.}
+{3000}{}{There are news?}
+{3010}{}{While is not present. Do not twitch.}
+{4000}{}{Then why you hesitate? Kill these bastards! They should understand that with Rights jokes are bad. Kill all of them!!!}
+{4010}{}{I also am going to make it. I will soon return.}
+{4020}{}{[In a whisper] Silence! do not shout you so! The sentry I снял@sex ||| and |, we can fade from here so that anybody and will not notice.}
+{4030}{}{At first tell to me that here occurs.}
+{5000}{}{I want only one. Faster to be cleaned from here.}
+{6000}{}{Hm. But it is wrong. The one who has raised a hand against Right, should die painful death! And we will leave all of them here live? No so will not go.}
+{6010}{}{you Want, I will give you a trunk, and you will show Right's anger to marauders?}
+{6020}{}{I that, похож@sex ||| and | on terminatora? You saw, how many them there? Even if I also will lay a couple, me will trample, for sure. If to you road your skin, do everything that I will tell.}
+{7000}{}{[Eyes of the young man light up fury] Yes! It - that is necessary! Give a gun! They learn that such Right's revenge!}
+{7010}{}{I пошутил@sex ||| and |. You saw, how many them? And how they are armed? We together will not consult in any way with all gang. All right, stay while here. I will think up something.}
+{7020}{}{Yes, take away. And I will observe. Ha! [To Give @lex weaponName]}
+{8000}{}{it is good. Only think out faster...}
+{8010}{}{You should not wait long.}
+{9000}{}{[All kind expresses contempt] You only the pity coward! And as soon as the father has not understood it at once! Now you will see, on what Right is capable!}
+{9010}{}{Ugu, ugu. Drag, the fellow... Show, on what you are capable.}
+{10000}{}{Hey you, cowards!! Leave on fair fight!!!}
+{11000}{}{it is fine, let so... It will not be pleasant to the Father... What will we do?}
+{11010}{}{Wait here, I will soon return.}
+{11020}{}{Hide in a shade as I and follow me a trace in a trace.}
+{12000}{}{it is good, have set...}
+{12010}{}{Be meek and mild. We go.}
+{13000}{}{You опоздал@sex ||| and |, marauders are dead, and your help to me is not required.}
+{13010}{}{Hey, how so? I so much time потратил@sex ||| and |! Who to me will pay expenses?}
+{14000}{}{I do not know, farewell.}
+{15000}{}{I here long will not be late... What is the matter?}
+{15010}{}{Your father has asked me to help you from here to get out.}
+{15020}{}{these geeks it is finished. You can come back home.}
+{16000}{}{You alone with them справил@sex | sja || as |? You крут@sex | oh || aja |. I will tell all to the father, it will award you.}
+{16010}{}{Yes I know, I know. Do not walk smack again in history. Farewell.}
+{17000}{}{They hold me in hostages. Carry away from here feet is better, yet you have not noticed...}
+{17010}{}{Already is not present. I have talked to their leader. All questions are solved, you can leave.}
+{18000}{}{That? Truth? But... They cannot so simply to leave from Right's revenge. We should teach a good lesson them!}
+{18010}{}{No. I заплатил@sex ||| and | for you, we will simply silently leave from here.}
+{18020}{}{to Teach a good lesson? Not уверен@sex ||| and | that is good thought. However, now marauders are not ready to an attack...}
+{19000}{}{Prokljate! It is all incorrectly... The Father will be in furiousness, we needed to kill all of them...}
+{19010}{}{That to you is more expensive: your skin or Right's honour? Do feet, the guy while they have not changed the mind.}
+{20000}{}{it is fine. Thanks for the help. [Sighs] As soon as it is all to explain to the father...}
+{20010}{}{conversations Will suffice, I leave.}
+{21000}{}{Here and I about that! It is necessary to cut out this snake nest! What will we do?}
+{21010}{}{Unless I сказал@sex ||| and | "we"? I still for you in the answer. Be at a stop, and I will be engaged in bandits.}
+{22000}{}{I too am able to shoot, and I am afraid of nothing! I am Right!}
+{22010}{}{I Remember, yes. Remain here, Right, differently all you will ruin.}
+{22020}{}{Keep near to me and try to finish off at least one.}
+{23000}{}{Yes! Now they at me will receive!}
+{100000001}{}{Thanks you. Further I itself will reach. We will meet in Nju-Reno}

@@ -1,0 +1,114 @@
+// Author: Tab10id
+#include "_macros.fos"
+
+
+// away position
+#define AWAY_X (131)
+#define AWAY_Y (225)
+
+// home position (near Mom's Diner)
+#define HOME_X (134)
+#define HOME_Y (255)
+
+// states
+#define IS_HOME (0)
+#define IS_AWAY (1)
+
+
+import bool AddWalkPlane(Critter& npc, uint priority, uint16 hexX, uint16 hexY, uint8 dir, bool run, uint cut) from "npc_planes";
+
+
+void _VirginInit(Critter& virgin, bool firstTime)
+{
+	virgin.SetEvent(CRITTER_EVENT_IDLE, "_VirginIdle");
+	virgin.SetEvent(CRITTER_EVENT_SHOW_CRITTER, "_VirginShowCritter");
+	virgin.SetEvent(CRITTER_EVENT_TALK, "_VirginTalk");
+
+	if(CreateTimeEvent(__FullSecond+Random(1, 60)*60, "e_Check", virgin.Id, false)==0)
+        Log("Time event Check create fail, "+GetLastError());
+
+	virgin.StatBase[ST_VAR0]=0;
+	virgin.StatBase[ST_VAR1]=0;
+}
+
+void _VirginIdle(Critter& virgin)
+{
+	//if(npc.StatBase[ST_VAR0]>0)
+	//{
+	//	virgin.MoveToHex(131, 225, 3);
+	//}
+	if(virgin.HexX==134 && virgin.HexY==255)
+	{
+		virgin.SendMessage(1220, 1, MESSAGE_TO_ALL_ON_MAP);
+	}
+	else
+	{
+		virgin.SendMessage(1220, 0, MESSAGE_TO_ALL_ON_MAP);
+	}
+	//virgin.Say(SAY_NORM_ON_HEAD, "Иди сюда, милашка!");
+	virgin.Wait(10000);
+}
+
+void _VirginShowCritter(Critter& virgin, Critter& crit)
+{
+	//if(crit.Gender)
+}
+
+bool _VirginTalk(Critter& virgin, Critter& player, bool attach, uint talkCount)
+{
+    // handle end of dialog
+    if (!attach)
+    {
+        if(virgin.StatBase[ST_VAR1]==IS_AWAY)
+        {
+            GameVar@ virginState=GetGlobalVar(GVAR_den_virgin);
+            if(not valid(virginState))
+            {
+                Log("GetGlobalVar(GVAR_den_virgin) fail.");
+                // no matter what to return
+                return true;
+            }
+
+            virginState=IS_AWAY;
+
+            // reset
+            virgin.StatBase[ST_VAR1]=IS_HOME;
+
+            AddWalkPlane(virgin, 0, AWAY_X, AWAY_Y, 2, false, 2);
+        }
+    }
+    return true;
+}
+
+uint e_Check(uint[]@ values)
+{
+	Critter@ virgin=GetCritter(values[0]);
+	if(not valid(virgin)) return 0;
+
+	GameVar@ virginState=GetGlobalVar(GVAR_den_virgin);
+	if(not valid(virginState))
+	{
+		Log("GetGlobalVar(GVAR_den_virgin) fail.");
+	}
+	else
+	{
+		if(virgin.StatBase[ST_VAR0]==0 && virginState==IS_AWAY)
+		{
+			virginState=IS_HOME;
+			AddWalkPlane(virgin, 0, HOME_X, HOME_Y, 2, false, 2);
+		}
+		else
+		{
+			virgin.StatBase[ST_VAR0]--;
+		}
+	}
+
+	return 60*60;
+}
+
+void r_GoAway(Critter& player, Critter@ virgin, int val)
+{
+	virgin.StatBase[ST_VAR0]=3;
+	// delay plan execution to dialog end
+	virgin.StatBase[ST_VAR1]=IS_AWAY;
+}

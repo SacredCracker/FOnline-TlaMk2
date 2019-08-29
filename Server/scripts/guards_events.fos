@@ -1,0 +1,68 @@
+// Author: Ra, Cracker
+// Обработка триггеров универсальной охраны
+
+#include "guards_h.fos"
+#include "_macros.fos"
+
+void CheckHex(bool entered, Critter& cr)
+{
+	if(entered)
+	{
+		if(cr.GetTimeEvents(CTE_BLOCK_DOOR, null, null, null) !=0) return;						// Событие уже запущено, отмена
+		cr.AddTimeEvent("cte_BlockDoors",TIMEOUT_TO_KILL_DOOR_DLOCKER,CTE_BLOCK_DOOR, 0);
+	}
+	else cr.EraseTimeEvents(CTE_BLOCK_DOOR);	// Игрок слез с двери, можно на него забить
+	//cr.SendMessage(MESSAGE_I_AM_NO_BLOCK_DOOR, 0, MESSAGE_TO_WHO_SEES_ME);
+}
+
+// Інициализация дверей
+void _DoorInit(Item& item, bool firstTime)
+{
+	item.SetEvent(ITEM_EVENT_WALK,"e_Doorwalk");
+}
+
+void e_Doorwalk(Item& item, Critter& cr, bool entered, uint8 dir)
+{	
+	CheckHex(entered, cr);
+}
+
+// ТРИГГЕРЫ
+// Наступил на триггер обозначающий проход
+void t_block_door(Critter& cr, Scenery& trigger, bool entered, uint8 dir)
+{
+	CheckHex(entered, cr);
+}
+
+// Наступил в расстрельную зону
+void t_kill_zone(Critter& cr, Scenery& trigger, bool entered, uint8 dir)
+{
+	cr.SendMessage(MESSAGE_KILL_ME, 0, MESSAGE_TO_WHO_SEES_ME);
+}
+
+uint cte_BlockDoors(Critter& cr, int identifier, uint& rate)
+{
+	if(rate==0)
+	{
+		cr.SendMessage(MESSAGE_I_AM_BLOCK_DOOR, 0, MESSAGE_TO_WHO_SEES_ME);
+		cr.AddTimeEvent("cte_BlockDoors",TIMEOUT_TO_KILL_DOOR_DLOCKER,CTE_BLOCK_DOOR, 1);
+		return 0;
+	}
+	
+	if(cr.IsPlayer() || (cr.IsNpc() && cr.MercBase[MERC_MASTER_ID]>0))
+	{
+		cr.SendMessage(MESSAGE_KILL_ME, 0, MESSAGE_TO_WHO_SEES_ME);
+	}
+	else
+	{
+		NpcPlane@ plane=cr.GetCurPlane();
+		if(valid(plane))
+		{
+			if(plane.Attack_TargId!=0)
+			{
+				Critter@ player=GetCritter(plane.Attack_TargId);
+				if(valid(player)) player.SendMessage(MESSAGE_KILL_ME, 0, MESSAGE_TO_WHO_SEES_ME);
+			}
+		}
+	}
+	return 0;
+}

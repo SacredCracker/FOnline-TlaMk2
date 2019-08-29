@@ -1,0 +1,205 @@
+[comment]
+
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 D _var p q_newbie_trapper_gecko_skinning < 2 #
+7 1020 D _var p q_newbie_trapper_gecko_skinning = 2 @
+2 2000 None 0 #
+4 2010 #
+5 2020 D _var p q_newbie_trapper_gecko_skinning = 1 D _item p PID_TRAP_PLANT_SPIKE = 0 D _item p PID_ACTIVATE_TRAP_PLANT_SPIKE = 0 D _param p KILL_GECKO < 3 #
+8 2030 D _var p q_newbie_trapper_gecko_skinning = 1 D _param p KILL_GECKO > 2 R _param p PE_GECKO_SKINNING = 1 R _var p q_newbie_trapper_gecko_skinning = 2 R _param p ST_EXPERIENCE + 850 R _item p PID_BOTTLE_CAPS + 359 #
+9 2040 D _param p ST_LEVEL > 2 D _var p q_newbie_trapper_gecko_skinning = 0 #
+0 2050 #
+65507 2060 @
+4 3000 None 0 @
+5 4000 None 0 @
+7 5000 None 0 #
+0 5010 #
+12 5020 #
+16 5030 #
+21 5040 D _var p q_newbie_snakeater = 1 D _item p PID_SCORPION_TAIL > 6 R _var p q_newbie_snakeater = 2 R _item p PID_BOTTLE_CAPS + 679 R _item p PID_SCORPION_TAIL - 7 #
+22 5050 D _var p q_newbie_snakeater = 1 D _item p PID_SCORPION_TAIL { 6 D _item p PID_SCORPION_TAIL > 0 #
+21 5060 D _var p q_newbie_snakeater = 2 @
+8 6000 None 0 @
+9 7000 None 0 #
+10 7010 @
+10 8000 None 0 #
+0 8010 #
+11 8020 R _var p q_newbie_trapper_gecko_skinning = 1 R _item p PID_PLANT_SPIKE + 14 R _item p PID_TRAP_PLANT_SPIKE + 1 R _script q_newbie_scripts@r_RunGeckoSkinningQuest 0  @
+11 9000 None 0 @
+12 10000 None 0 #
+13 10010 #
+16 10020 #
+0 10030 @
+13 11000 None 0 #
+14 11010 #
+0 11020 #
+16 11030 @
+14 12000 None 0 #
+0 12010 #
+15 12020 #
+16 12030 @
+15 13000 None 0 #
+0 13010 #
+16 13020 @
+16 14000 None 0 #
+17 14010 D _var p q_newbie_snakeater = 0 #
+18 14020 D _var p q_newbie_snakeater ! 0 #
+0 14030 #
+19 14040 @
+17 15000 None 0 #
+20 15010 D _var p q_newbie_snakeater = 0 R _script q_newbie_scripts@r_RunSnakeaterQuest 0  R _item p PID_PLANT_SPIKE + 14 R _var p q_newbie_snakeater = 1 R _item p PID_TRAP_PLANT_SPIKE + 2 #
+0 15020 #
+16 15030 @
+18 16000 None 0 @
+19 17000 None 0 #
+0 17010 #
+16 17020 #
+20 17030 D _var p q_newbie_snakeater = 0 R _var p q_newbie_snakeater = 1 R _item p PID_PLANT_SPIKE + 14 R _script q_newbie_scripts@r_RunSnakeaterQuest 0  R _item p PID_TRAP_PLANT_SPIKE + 2 @
+20 18000 None 0 @
+21 19000 None 0 #
+0 19010 #
+24 19020 D _param p ST_ENDURANCE > 5 D _var p q_newbie_snakeater = 2 R _param p ST_POISON_RESISTANCE + 15 R _param p PE_SNAKEATER = 1 R _var p q_newbie_snakeater = 3 R _script q_newbie_scripts@r_RunSnakeaterQuestResult 0  R _item p PID_ANTIDOTE + 1 #
+24 19030 D _param p ST_ENDURANCE { 5 D _var p q_newbie_snakeater = 2 R _script q_newbie_scripts@r_RunSnakeaterQuestResult 0  R _item p PID_ANTIDOTE + 1 R _var p q_newbie_snakeater = 4 @
+22 20000 None 0 @
+24 21000 None 0 &
+
+[russ]
+{100}{}{Логан Мид}
+{200}{}{Логан Мид - странствующий траппер.}
+{210}{}{Вы видите потертого пустошью человека с шрамами на лице.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{Не прошол первый квест.}
+{1020}{}{Прошол первый квест. Заслужил доверие.}
+{2000}{}{Не трать мое время! Говори, что нужно?@@Я занят. Если по делу, то говори.@@Вы надоели со своими расспросами! Чего тебе?@@Надеюсь, ты не еду просить пришел?@@Очередной раб? Я уже не различаю вас на лица. С чем пожаловал?@@Быстро и лаконично говори, чего тебе нужно.}
+{2010}{}{Мне просто было интересно, чем ты тут занимаешся.@@Да так, посмотреть хотелось.@@А что это ты делаешь с этими шкурами?}
+{2020}{}{Эй, твоя ловушка не убила гекко и я сбежал.@@Я потратил ловушку, можно ещё одну? [Переминаетесь с ноги на ногу]}
+{2030}{}{Я справился с твоим заданием. Туши гекконов можно забирать.}
+{2040}{}{Зря ты так, я мог бы помочь тебе с охотой. Охранники поговаривают, ты не успеваешь уже поставлять им мясо.}
+{2050}{}{Прошу прощения.@@Уже ухожу.@@Ну и тебе того же, придурок старый.}
+{2060}{}{Я научу тебя манерам!@@Старый хрыч, я сейчас сломаю тебе нос.}
+{3000}{}{Нечего тут смотреть!@@Не путайся под ногами! Эй, тут тебе что, водевиль?@@Лучше тебе отвалить. Я нервничаю при виде этих ошейников.}
+{4000}{}{Это твои проблемы, больше не получишь.@@Я не удивлен, что ты оказался слабаком.@@Значит, придется управиться зубами. Это не мои проблемы.}
+{5000}{}{А, это снова ты. Повезло, что ещё живой.@@Ты ещё живой? Значит, не такой сопляк, как скажешь по виду.@@Пришел по делу? Я слушаю.}
+{5010}{}{Я просто проходи мимо.@@Я просто заглянул тебя проведать.}
+{5020}{}{[Переходите на шепот] Ты не знаешь, как выбраться из этого места?}
+{5030}{}{Я кое о чем хотел тебя расспросить.}
+{5040}{}{Я почистил округу. Вот хвосты скорпионов, которые ты просил.}
+{5050}{}{Я почистил округу. Вот хвосты скорпионов, которые ты просил.}
+{5060}{}{Я подумал и решил рискнуть выпить твою ядовитую сыворотку.}
+{6000}{}{Очень хорошо. Слушай тогда.. [Объясняет как снимать шкуры с гекко]@@Отлично, за мной не постоит. [Объясняет, как снимать шкуры с гекко]}
+{7000}{}{Это тебя не касается. Кроме того, вам запрещено носить оружие. Голыми руками задавишь гекко? А с чего бы тебе мне помогать? [Недоверчиво прищурился]}
+{7010}{}{Это не проблема, дай мне одну из своих ловушек. Я буду охотиться в местах, где охрана за нами не наблюдает. А взамен, за гекко, - обучишь меня выделывать их шкуры.}
+{8000}{}{Что ж, мне хуже не станет. Вот хорошая ловушка,  Атакует разлетающимися шипами. Ну и шипов на два заряда. Постарайся вывести гекконов на неё всем скопом, тогда шансов у тебя будет значительно больше. Тушки оставишь там,  их заберут. По рукам?}
+{8010}{}{Знаешь, у меня ещё дела. Я позже зайду снова.}
+{8020}{}{Договорились. Скоро вернусь.}
+{9000}{}{Иди на запад, там среди мертвого леса часто появляются молодые гекконы. Только не забудь активировать ловушку перед использованием.}
+{10000}{}{Я бы не советовал тебе убегать с этой штуковиной на шее. Многие так плохо закончили. Иногда у меня начинается мигрень от взрывов ваших ошейников по ночам.}
+{10010}{}{Значит, я обречен?}
+{10020}{}{Ладно, забудь, я о другом спросить хотел.}
+{10030}{}{Да, ты прав. Пожалуй, я пойду.}
+{11000}{}{[Оглядывается по сторонам] Есть один раб, по имени Том, ходят слухи, он умеет взламывать ошейники. Но я думаю, это подстава, чтобы выманивать незадачливых беглецов.}
+{11010}{}{Почему ты так в этом уверен?}
+{11020}{}{Ладно, поговорим позже.}
+{11030}{}{Спасибо. Я ещё тут спросить хотел...}
+{12000}{}{А как по-твоему его до сих пор не выловила охрана? Не будь дураком, эти слухи ходят по всему лагерю.}
+{12010}{}{Наверное, ты прав.}
+{12020}{}{Все таки, я рискну. Где найти этого тома}
+{12030}{}{Очень жаль. Так я никогда не выберусь отсюда. Давай тогда сменим тему.}
+{13000}{}{Он околачивается в пещерах у репликационной базы. Ты его быстро найдешь, так как волосатых парней там не так много.}
+{13010}{}{Спасибо, Логан!}
+{13020}{}{Понятно. Но я хотел поговорить о другом в общем то.}
+{14000}{}{Что ты ещё хотел узнать?@@Чего тебе ещё нужно от старого Логана?}
+{14010}{}{Говорят, ты всю жизнь провел в скитаниях по пустоши. Можешь меня чему-либо полезному обучить?}
+{14020}{}{Говорят, ты всю жизнь провел в скитаниях по пустоши. Можешь меня чему-либо полезному обучить?}
+{14030}{}{Да нет, забудь.@@Ничего, мне пора.@@Прости, вроде, мне больше ничего не нужно знать.}
+{14040}{}{А как ты тут оказался?}
+{15000}{}{Боюсь, до большинства моих знаний нужно дойти самому. Да и в лагере я тебе мало чем могу помочь. Хотя... [Задумался] У меня недавно закончилось противоядие от рад-скорпионов. Их тут в последнее время очень много и они мешают охоте. Если ты убьешь для меня парочку - приноси хвосты, тогда смогу тебя кое-чему обучить.}
+{15010}{}{Я могу очистить округу от скорпионов.}
+{15020}{}{Мне не до этого.}
+{15030}{}{Меня другое волнует.}
+{16000}{}{Больше я тебя ничему не могу тут обучить.@@Пустошь станет для тебя лучшим учителем.}
+{17000}{}{Начальник лагеря нанял меня, чтобы я добывал еду и шкуры для лагеря по округе. Хотя, последнее время мне это трудно делать. Тут развелось слишком много рад-скорпионов.}
+{17010}{}{Ясно. Мне пора.}
+{17020}{}{Я ещё кое о чем хотел поговорить.}
+{17030}{}{Я могу очистить округу от скорпионов.}
+{18000}{}{Договорились. Вот, возьми ещё пару из моих ловушек и не подпускай их близко. Принесешь достаточно хвостов - поговорим.}
+{19000}{}{Очень хорошо. Я свое обещание сдержу, но "обучение" тебе может не понравится. Вот сыворотка из хвостов скорпионов, она поможет тебе приобрести иммунитет к их яду, правда, ощущения будут не из приятных и не каждому это помогает.}
+{19010}{}{Нет, я не рискну.}
+{19020}{}{Давай уже свою сыворантку. [Выпиваете залпом]}
+{19030}{}{Давай уже свою сыворантку. [Выпиваете залпом]}
+{20000}{}{Спасибо за помощь, но этих хвостов мало.}
+{21000}{}{Держись теперь парень. Если совсем плохо станет, вот, прими противоядие.}
+
+[engl]
+{100}{}{Logan Meed}
+{200}{}{Logan Meed, a wandering trapper.}
+{210}{}{You see a man worn by the wasteland. He has scars on his face.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{Не прошол первый квест.}
+{1020}{}{Прошол первый квест. Заслужил доверие.}
+{2000}{}{Don't waste my time, tell me what you want.@@I'm busy. If you have something to say, then do so.@@I'm sick of your poking around! What is it?@@I hope you didn't come to beg for food.@@Another slave? I can't even tell your faces one from the other no more. What is it?@@Say briefly, what do you want?}
+{2010}{}{I was just wondering what do you do here.@@I was just looking around.@@What do you do with these skins?}
+{2020}{}{Hey, your trap didn't kill the gecko and I ran away.@@I used the trap, can I have another one? [You shift from one foot to the other]}
+{2030}{}{I've accomplished your task. You can take away the carcasses now.}
+{2040}{}{Don't be so mean. I could help you with hunting. The guards are talking that you can't supply meat in time.}
+{2050}{}{I'm sorry.@@Already leaving.@@The same to you, jerk.}
+{2060}{}{I'll teach you some manners!@@I'll break your nose, old faggot.}
+{3000}{}{There's nothing to look at!@@Don't get in my way! What do you think it is, a circus?@@You'd better get out. The sight of these collars makes me edgy.}
+{4000}{}{It's your problem, you're not getting any more.@@I'm not surprised that you turned out a wussie.@@You'll have to use your teeth then. I don't care.}
+{5000}{}{Hey, you again. You're lucky to be alive.@@You're still alive? You're not as much of a wussie as you look after all.@@You come on business? I'm listening.}
+{5010}{}{I was just passing by.@@I just dropped by to see how you are doing.}
+{5020}{}{[Lower your voice] Do you know any way to get out of this place?}
+{5030}{}{I wanted to ask you something.}
+{5040}{}{I cleared the neighborhood. Here are the tails you asked for.}
+{5050}{}{I cleared the neighborhood. Here are the tails you asked for.}
+{5060}{}{I thought it over and decided to take your deadly serum.}
+{6000}{}{Very well. Listen good... [Explains you how to skin a gecko]@@Fine, I owe you one. [Explains you how to skin a gecko]}
+{7000}{}{It's none of your business. In addition you are not allowed to bear arms. Do you intend to strangle a gecko with your bare hands? And why would you help me, by the way? [Screws his eyes in suspicion]}
+{7010}{}{It's not a problem. Just give me one of your traps. I'll hunt in the places where there are no guards around. And you'll teach me to skin a gecko in exchange.}
+{8000}{}{Well, I guess that won't hurt. Here's a good trap. It attacks with scattering spikes. There are just enough spikes for two charges. Try to lead a bunch of geckos on it, this way you'll have much more chance to hit. Leave the carcasses, I'll take them away later. Do we have a deal?}
+{8010}{}{You know what, I got stuff to do. I'll come by later.}
+{8020}{}{Deal. I'll be back.}
+{9000}{}{Go west, you can often see young geckos among the dead woods. Don't forget to activate the trap before using it.}
+{10000}{}{I wouldn't try to run off with this thing on your neck. I've seen a lot of slaves make this mistake. I have headaches from all these explosions at night.}
+{10010}{}{So this means I am doomed?}
+{10020}{}{Forget it, I want to ask you something else.}
+{10030}{}{Yeah, you're right. I got to go.}
+{11000}{}{[He looks around] There's a slave named Tom. There are rumors he knows how to take off collars. But I think it's a set up to lure those who want to escape.}
+{11010}{}{Why are you so sure?}
+{11020}{}{All right, let's talk later.}
+{11030}{}{Thanks, I wanted to ask something else...}
+{12000}{}{Why the guards didn't get to him yet, then? Don't be stupid, these rumors are all over the place.}
+{12010}{}{I guess you're right.}
+{12020}{}{I'll take the risk. Where can I find this Tom?}
+{12030}{}{What a pity. I'll never get out of here. Let's talk about something else.}
+{13000}{}{He hangs out in the caves by the replication center. You'll find him easily, there aren't many long-haired fellows around.}
+{13010}{}{Thanks, Logan!}
+{13020}{}{I see. I wanted to talk about something else.}
+{14000}{}{What else would you like to know?@@What else do you want from old Logan?}
+{14010}{}{They say you've spent all your life roaming the wasteland. Can you teach me something useful?}
+{14020}{}{They say you've spent all your life roaming the wasteland. Can you teach me something useful?}
+{14030}{}{Nothing, forget it.@@Nothing, I got to go.@@I don't really nead to know anything else.}
+{14040}{}{How did you end up here?}
+{15000}{}{You have to live through it to learn what I know. There's not much use of my knowledge in the camp anyway. Well... [Thinks] I've run out of antidote for scorpion poison. There's a lot of radscorpions around lately, they really get in the way of hunting. If you can kill a couple, bring me their tails, then I'll teach you something.}
+{15010}{}{I can clear the grounds from radscorpions.}
+{15020}{}{I have other stuff to take care of.}
+{15030}{}{I'm interested in other things.}
+{16000}{}{I can't teach you anything else.@@Let the wasteland be your teacher.}
+{17000}{}{The camp superior hired me to provide food and skins for the camp. It's quite difficult to carry out lately. There are too many radscorpions around.}
+{17010}{}{I see. I got to go.}
+{17020}{}{Let me ask you something else.}
+{17030}{}{I can clear the grounds from radscorpions.}
+{18000}{}{All right. Here, take a couple more of my traps, and don't let them close. We'll talk when you bring enough tails.}
+{19000}{}{Very well. I keep my word, but you might not like the "lesson". Here's the serum from scorpion tails, It will make you immune to their poison. It's not the most pleasant of things, though. And it doesn't help everyone equally.}
+{19010}{}{I'm not going to risk it.}
+{19020}{}{Give me your serum already. [Drink in one gulp]}
+{19030}{}{Give me your serum already. [Drink in one gulp]}
+{20000}{}{Thanks for your help, but there's not enough tails.}
+{21000}{}{Now hold on, buddy. If it gets real bad, take this antidote.}
+

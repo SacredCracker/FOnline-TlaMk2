@@ -1,0 +1,278 @@
+[comment]
+
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 D _var p name_mem_npc_player = 0 #
+28 1020 D _var p name_mem_npc_player = 1 @
+2 2000 None 0 #
+3 2010 D _param p ST_INTELLECT > 3 @
+3 3000 None 0 #
+4 3010 #
+5 3020 #
+6 3030 @
+4 4000 None 0 #
+0 4010 @
+5 5000 None 0 #
+0 5010 @
+6 6000 None 0 #
+7 6010 R _var p name_mem_npc_player = 1 @
+7 7000 None 0 #
+8 7010 #
+9 7020 @
+8 8000 None 0 #
+0 8010 @
+9 9000 None 0 #
+10 9010 D _param p ST_CHARISMA < 5 #
+11 9020 D _param p ST_CHARISMA > 4 D _script dialog@d_TimeoutOk 0  R _script dialog@r_SetUniqTO 1 60 #
+10 9030 D _param p ST_CHARISMA > 4 D _script dialog@d_NotTimeoutOk 0  @
+10 10000 None 0 @
+11 11000 None 0 #
+12 11010 #
+13 11020 @
+12 12000 None 0 #
+0 12010 @
+13 13000 None 0 #
+14 13010 #
+15 13020 #
+16 13030 #
+17 13040 D _var p ncr_alex_quest_status < 1 R _var p ncr_alex_quest_status = 1 #
+17 13050 D _var p ncr_alex_quest_status > 0 @
+14 14000 None 0 #
+0 14010 @
+15 15000 None 0 #
+0 15010 @
+16 16000 None 0 #
+0 16010 @
+17 17000 None 0 #
+18 17010 @
+18 18000 None 0 #
+19 18010 #
+20 18020 D _var p ncr_alex_quest_status = 2 #
+30 18030 D _var p ncr_alex_quest_status = 3 @
+19 19000 None 0 #
+0 19010 @
+20 20000 None 0 #
+21 20010 @
+21 21000 None 0 #
+22 21010 #
+27 21020 #
+27 21030 #
+0 21040 @
+22 22000 None 0 #
+0 22010 #
+23 22020 #
+27 22030 #
+27 22040 @
+23 23000 None 0 #
+0 23010 #
+24 23020 #
+27 23030 #
+27 23040 @
+24 24000 None 0 #
+0 24010 #
+25 24020 R _var p ncr_alex_quest_status = 3 R _param p ST_EXPERIENCE + 1350 R _var p ncr_alex_holo_find_status = 1 #
+27 24030 #
+27 24040 @
+25 25000 None 0 #
+0 25010 #
+26 25020 D _var p click_counter = 0 D _var p chance_one_from_two = 0 R _script q_ncr_alex_holo@r_GiveHoloToPlayer 0  R _var p click_counter = 1 @
+26 26000 None 0 #
+0 26010 @
+27 27000 None 0 #
+0 27010 @
+28 28000 None 0 #
+0 28010 #
+17 28020 D _var p ncr_alex_quest_status < 1 R _var p ncr_alex_quest_status = 1 #
+17 28030 D _var p ncr_alex_quest_status > 0 @
+29 29000 None 0 @
+30 30000 None 0 #
+0 30010 &
+
+[russ]
+{100}{}{Алекс}
+{200}{}{Вы видите Алекса, интенданта Армии НКР.}
+{210}{}{Вы видите молодого амбиционного человека в форме высокопоставленного военного.}
+{210}{}{Это интендант Армии Нкр Алекс. Уверен в своих силах и знает себе цену.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{Текст ответа}
+{1020}{}{знаком}
+{2000}{}{Добрый день, я Алекс. Что привело вас сюда?}
+{2010}{}{Чем вы занимаетесь, Алекс?}
+{3000}{}{Кто вы так@sex@|ой||ая|, чтобы я отвечал на ваши вопросы?}
+{3010}{}{Мое имя слишком известно, чтобы его называть. Мне хотелось бы сохранить инкогнито.}
+{3020}{}{Я - Мессия. На колени предо мной!}
+{3030}{}{Меня зовут @pname@.}
+{4000}{}{В таком случае, убирайтесь отсюда, чтобы ваше "инкогнито" не отстрелил полицейский.}
+{4010}{}{Уже ухожу. [Уйти]}
+{5000}{}{Ваше место в психушке. Сумасшедшим нельзя находиться в обществе.}
+{5010}{}{Прошу прощения, это была шутка, я ухожу. [Уйти]}
+{6000}{}{Имя мне не знакомо. Итак, что вы хотели узнать?}
+{6010}{}{Вы состоите на службе в армии НКР?}
+{7000}{}{Я - интендант армии НКР. Отвечаю за техническое и медицинское обеспечение армии.}
+{7010}{}{Сложная, наверное, работа?}
+{7020}{}{Служба отнимает все ваше время?}
+{8000}{}{Это плохая тема для разговора. Еще вопросы?}
+{8010}{}{Думаю, вопросов больше нет. Спасибо, что уделили мне время, Алекс. [Уйти]}
+{9000}{}{Что вы имеете в виду?}
+{9010}{}{У вас есть какое-нибудь увлечение или хобби?}
+{9020}{}{У вас есть какое-нибудь увлечение или хобби?}
+{9030}{}{У вас есть какое-нибудь увлечение или хобби?}
+{10000}{}{Вас это не касается. Прошу покинуть помещение.}
+{11000}{}{Вам все равно не понять. У меня есть страсть - автомобили.}
+{11010}{}{ Почему же, не понять? Я тоже видел эти штуки на колесах!}
+{11020}{}{Совершенно с вами солидар@sex@|ен||на|, Алекс. Очень жаль, что многие технологии потеряны навсегда...}
+{12000}{}{[Смотрит на вас с презрением] Об этом и говорю. Для сброда из Пустоши, это всего лишь "штука на колесах".}
+{12010}{}{Да чего я такого сказал@sex@||||а?! }
+{13000}{}{Важнейшие знания сохранены. Образованные люди в курсе всех значимых технологий.}
+{13010}{}{Вы говорите о двигателях внутреннего сгорания?}
+{13020}{}{Жаль, что электромобили не сохранились...}
+{13030}{}{Например, паровая тяга?}
+{13040}{}{Вы имеете в виду "холодный синтез"?}
+{13050}{}{Вы имеете в виду "холодный синтез"?}
+{14000}{}{Век жидкого топлива прошел. Это ясно даже ребенку.}
+{14010}{}{Пожалуй, мне пора. [Уйти]}
+{15000}{}{Ерунда. Эффективность электромобиля - это миф. На то, чтобы электрокар проехал сотню километров, тратилась уйма энергии.}
+{15010}{}{Я подумаю над этим, прощайте. [Уйти]}
+{16000}{}{Ха, причем здесь паровая тяга? Не несите чушь.}
+{16010}{}{Пардон, мне нужно идти. [Уйти]}
+{17000}{}{[Алекс слегка удивлен] О! Неужели, вам известно, что это такое?}
+{17010}{}{Конечно, ведь на ходу остались только авто с атомным двигателем.}
+{18000}{}{Ну я бы не был так категоричен. Большинство - да, но ходят слухи...}
+{18010}{}{Что за слухи?}
+{18020}{}{Ходят слухи, что в Пустоши найден автомобиль с водородным двигателем? Так?}
+{18030}{}{Ходят слухи, что в Пустоши найден автомобиль с водородным двигателем? Так?}
+{19000}{}{Не важно. Я и так потратил на вас слишком много своего времени. Поговорите с Ретчем, он достаточно примитивен, чтобы вы нашли общий язык.}
+{19010}{}{Хорошо, я ухожу. Увидимся! [Уйти]}
+{20000}{}{[Алекс изумлен] Невероятно! Откуда у вас эти сведения?}
+{20010}{}{Я всего лишь смотрю вокруг широко открытыми глазами. Стараюсь ничего не упускать.}
+{21000}{}{Что вам  известно о принципе работы водородного двигателя?}
+{21010}{}{В топливном элементе три составляющих: топливный электрод - анод, кислородный электрод - катод и электролит}
+{21020}{}{Электролит, кислородный электрод-анод и топливный катод образуют уникальный топливный элемент. }
+{21030}{}{Катод и анод топливного элемента выполнены из полимеров.}
+{21040}{}{Продолжим в следующий раз. [Уйти]}
+{22000}{}{Это интересно. Я уже слышал об этом, но пока не получал подтверждений. Что-то еще?}
+{22010}{}{Продолжим в следующий раз. [Уйти]}
+{22020}{}{Полимерная мембрана играет роль электролита в топливном элементе водородного двигателя.}
+{22030}{}{Опустив катод в водород, мы отделим электроны от катализатора. В результате образуются отрицательно заряженные атомы.}
+{22040}{}{Водород и кислород вступают в химическую реакцию и образуют воду при температуре - 253 градуса по Цельсию - вырабатывается электроэнергия.}
+{23000}{}{Верно. Вы все больше меня удивляете. }
+{23010}{}{Продолжим в следующий раз. [Уйти]}
+{23020}{}{Основной принцип действия двигателя - положительно заряженные ионы водорода - протоны - соединяются с отрицательно заряженными ионами кислорода, в результате образуется вода. }
+{23030}{}{Основной принцип действия двигателя - положительно заряженные ионы кислорода - протоны - соединяются с отрицательно заряженными ионами водорода, в результате образуется вода.}
+{23040}{}{Катод и анод топливного элемента выполнены из полимеров.}
+{24000}{}{Ого! Я об этом не думал.}
+{24010}{}{Продолжим в следующий раз. [Уйти]}
+{24020}{}{Сжиженный водород содержится в специальном топливном баке.}
+{24030}{}{В результате химической реакции происходит процесс сжижения водорода.}
+{24040}{}{Если окружить катод водородом, положительно заряженные атомы проходят через электролит к аноду. Между электродами возникает электрическое напряжение.}
+{25000}{}{Это все очень, и очень интересно, @pname@! Было приятно с вами общаться.}
+{25010}{}{Да ничего особенного. Мне не сложно поделиться информацией с умным человеком. [Уйти]}
+{25020}{}{Алекс, возможно, вы тоже могли бы поделиться со мной информацией?}
+{26000}{}{К сожалению, мне пора. Поговорим в следующий раз. Но у меня для вас небольшой подарок, надеюсь, пригодится. [Алекс дает вам голодиск]}
+{26010}{}{Всего доброго, Алекс. [Уйти]}
+{27000}{}{Мне все ясно. Слышал звон, да не знает, где он. Это о вас. Нельзя нести такой откровенный бред!}
+{27010}{}{Это не бред. Вы просто не понимаете... [Уйти]}
+{28000}{}{[Интендант раздражен] Разве вы не видите, я очень занят!}
+{28010}{}{Я уже ухожу. [Уйти]}
+{28020}{}{Что вы думаете о холодном синтезе, Алекс?}
+{28030}{}{Что вы думаете о холодном синтезе, Алекс?}
+{29000}{}{Дурачок на свалке перед входом в город. Его нельзя пропустить.}
+{30000}{}{Так, так. И мы с вами об этом говорили. Вы уже забыли, да?}
+{30010}{}{Ммм... Точно. Я пойду.}
+
+[engl]
+{100}{}{Alex}
+{200}{}{you see Alex, the quartermaster of Army NKR.}
+{210}{}{you see young ambitsionnogo the person in the form of the high-ranking military man.}
+{210}{}{It is the quartermaster of Army Nkr Alex. It is assured of the forces and knows the own worth.}
+{1000}{}{Predialogue installations}
+{1010}{}{the answer Text}
+{1020}{}{a sign}
+{2000}{}{Good afternoon, I Alex. What has resulted you here?}
+{2010}{}{Than you are engaged, Alex?}
+{3000}{}{Who you так@sex | oh || aja | that I answered your questions?}
+{3010}{}{My name is too known, that it to name. I would like to keep incognito.}
+{3020}{}{I am a Messiah. On knees predo me!}
+{3030}{}{My name is @pname.}
+{4000}{}{In that case, be cleaned from here, that yours "incognito" not otstrelil the policeman.}
+{4010}{}{Already I leave. [To leave]}
+{5000}{}{your place in a mental hospital. Madwomen cannot be in a society.}
+{5010}{}{I Am sorry, it was the joke, I leave. [To leave]}
+{6000}{}{the Name is not familiar to me. So, what you wanted to learn?}
+{6010}{}{you are in the service in army NKR?}
+{7000}{}{I am a quartermaster of army NKR. I Am responsible for technical and medical maintenance of army.}
+{7010}{}{Difficult, probably, work?}
+{7020}{}{the Service takes away all your time?}
+{8000}{}{It is a bad theme for conversation. Still questions?}
+{8010}{}{I Think, questions are not present more. Thanks that have found for me time, Alex. [To leave]}
+{9000}{}{That you mean?}
+{9010}{}{you have any hobby or a hobby?}
+{9020}{}{you have any hobby or a hobby?}
+{9030}{}{you have any hobby or a hobby?}
+{10000}{}{you it does not concern. I ask to leave a premise.}
+{11000}{}{to you all the same not to understand. I have a passion - cars.}
+{11010}{}{Why not to understand? I too saw these pieces on wheels!}
+{11020}{}{it is perfect with you солидар@sex | en || on |, Alex. It is a pity that many technologies are lost for ever...}
+{12000}{}{[Looks at you with contempt] About it and I speak. For crowd from the Heathland, it only "a piece on wheels".}
+{12010}{}{Yes that I such сказал@sex |||| and?!}
+{13000}{}{the Major knowledge is kept. The formed people in a course of all significant technologies.}
+{13010}{}{you speak about internal combustion engines?}
+{13020}{}{It is a pity that electromobiles have not remained...}
+{13030}{}{For example, steam draught?}
+{13040}{}{you mean "cold synthesis"?}
+{13050}{}{you mean "cold synthesis"?}
+{14000}{}{the Century of liquid fuel has passed. It is clear even to the child.}
+{14010}{}{Perhaps, me it is time. [To Leave]}
+{15000}{}{Nonsense. Efficiency of an electromobile is a myth. On that electropenalties has passed one hundred kilometres, energy a great lot was spent.}
+{15010}{}{I will think over it, farewell. [To leave]}
+{16000}{}{Ha, and here steam draught? Do not talk nonsense.}
+{16010}{}{Sorry, I need to go. [To leave]}
+{17000}{}{[Alex is slightly surprised] About! Really, you know, what is it?}
+{17010}{}{Certainly, after all on the move there were only cars with the nuclear engine.}
+{18000}{}{Well I would not be so is categorical. The majority - yes, but hearings go...}
+{18010}{}{That for hearings?}
+{18020}{}{It is rumored that the car is found in the Heathland with the hydrogen engine? So?}
+{18030}{}{It is rumored that the car is found in the Heathland with the hydrogen engine? So?}
+{19000}{}{it is not important. I and so have spent for you too much the time. Talk to Retchem, it is primitive enough, that you have found common language.}
+{19010}{}{it is good, I leave. We will meet! [To leave]}
+{20000}{}{[Alex is amazed] Improbably! Whence at you these data?}
+{20010}{}{I only take a broad view around open eyes. I try to miss nothing.}
+{21000}{}{That is known to you about a principle of work of the hydrogen engine?}
+{21010}{}{In a fuel element three components: a fuel electrode - the anode, an oxygen electrode - the cathode and electrolit}
+{21020}{}{Electrolit, the oxygen electrode-anode and the fuel cathode form a unique fuel element.}
+{21030}{}{the Cathode and the anode of a fuel element are executed from polymers.}
+{21040}{}{we Will continue next time. [To leave]}
+{22000}{}{It is interesting. I already heard about it, but yet did not receive acknowledgement. Something else?}
+{22010}{}{we Will continue next time. [To leave]}
+{22020}{}{the Polymeric membrane plays an electrolit role in a fuel element of the hydrogen engine.}
+{22030}{}{Having lowered the cathode in hydrogen, we will separate elektrony from the catalyst. Negatively charged atoms are as a result formed.}
+{22040}{}{Hydrogen and oxygen enter chemical reaction and form water at temperature - 253 degrees on Celsius - the electric power is developed.}
+{23000}{}{it is true. All of you more me surprise.}
+{23010}{}{we Will continue next time. [To leave]}
+{23020}{}{Main principle of action of the engine - positively charged ions of hydrogen - protons - incorporate to negatively charged ions of oxygen, water is as a result formed.}
+{23030}{}{Main principle of action of the engine - positively charged ions of oxygen - protons - incorporate to negatively charged ions of hydrogen, water is as a result formed.}
+{23040}{}{the Cathode and the anode of a fuel element are executed from polymers.}
+{24000}{}{Ogo! I did not think of it.}
+{24010}{}{we Will continue next time. [To leave]}
+{24020}{}{Szhizhennyj hydrogen contains in a special fuel tank.}
+{24030}{}{As a result of chemical reaction there is a process szhizhenija hydrogen.}
+{24040}{}{If to surround the cathode with the hydrogen, positively charged atoms pass through electrolit to the anode. Between electrodes there is an electric pressure.}
+{25000}{}{It is all very much, and it is very interesting, @pname! It was pleasant to communicate with you.}
+{25010}{}{Yes anything especial. It is not difficult to me to share the information with the clever person. [To leave]}
+{25020}{}{Alex, probably, you too could share with me the information?}
+{26000}{}{Unfortunately, me it is time. We will talk next time. But at me for you a small gift, I hope, it is useful. [Alex gives to you golodisk]}
+{26010}{}{All kind, Alex. [To leave]}
+{27000}{}{all is clear To me. He doesn't know what he is talking about. It about you. It is impossible to talk such frank nonsense!}
+{27010}{}{It not delirium. You simply do not understand... [To Leave]}
+{28000}{}{[the Quartermaster is angry] Unless you do not see, I am very occupied!}
+{28010}{}{I already leave. [To leave]}
+{28020}{}{That you think of cold synthesis, Alex?}
+{28030}{}{That you think of cold synthesis, Alex?}
+{29000}{}{the Little fool on a dump before an input in a city. It cannot be passed.}
+{30000}{}{So, so. And we spoke about it. You have already forgotten, yes?}
+{30010}{}{Mmm... Precisely. I will go.}

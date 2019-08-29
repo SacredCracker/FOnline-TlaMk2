@@ -1,0 +1,573 @@
+/*================================================================================================================================
+==Автор: Ra																													==
+==Скрипт встановлює випадкові бонуси для предметів.																			==
+==================================================================================================================================*/
+
+#include "_macros.fos"
+#include "_defines.fos"
+
+#define minDamage                   (7510)
+#define maxDamage                   (7511)
+#define CRITROLL                    (7512)
+#define TOHIT                       (7513)
+#define critchance                  (7514)
+
+#define DRNORMAL                   (7600)
+#define DRLASER                    (7601)
+#define drfire                     (7602)
+#define drplasma                   (7603)
+#define drelectr                   (7604)
+#define drexplode                  (7605)
+#define dtnormal                   (7606)
+#define dtlaser                    (7607)
+#define dtfire                     (7608)
+#define dtplasma                   (7609)
+#define dtelectr                   (7610)
+#define ac                         (7611)
+#define dtexplode                  (7612)
+#define drrad     	               (7613)
+#define carryweight		     	   (7614)
+#define fasterhealing		       (7615)
+#define harisma			     	   (7616)
+#define perception 	 	    	   (7617)
+#define strength  	 	    	   (7618)
+#define criticalresist     	       (7619)
+#define luck			           (7620)
+#define ap			     	   	   (7621)
+
+#define	STR_STANDART				(92)
+#define	STR_HIGH_QUALITY			(93)
+#define	STR_QUALITATIVE				(94)
+#define	STR_WORKSHOP				(95)
+#define	STR_EXCELLENT				(96)
+#define	STR_IDEAL					(97)
+#define	STR_UNIQUE					(98)
+
+#define STR_CARRYWEIGHT		     	(3)
+#define STR_FASTERHEALING		    (4)
+#define STR_HARISMA			     	(5)
+#define STR_PERCEPTION 	 	    	(6)
+#define STR_STRENGTH  	 	    	(7)
+#define STR_CRITICALRESIST     	    (8)
+#define STR_LUCK			        (9)
+#define STR_AP			     	   	(10)
+#define STR_DETERIORATERESIST  	   	(11)
+
+#define STR_MINDAMAGE               (70)
+#define STR_MAXDAMAGE               (71)
+#define STR_CRITROLL                (72)
+#define STR_TOHIT                   (73)
+#define STR_CRITCHANCE              (74)
+
+#define	STR_NAME_CRAFTER			(2)
+#define	STR_NAME_CRAFTER_LOST       (12)
+
+#define COUNT_BUNUSES_ARMOR	         (23) //
+
+#define BONUS_VALUE_OFFSET		      (6) //
+
+#define BONUS_DR		          	  (0) //
+#define BONUS_DT		          	  (1) //
+#define BONUS_AC		          	  (2) //
+#define BONUS_ST		          	  (3) //
+#define BONUS_OTHER		          	  (4) //
+
+// Bonus types
+#define BONUS_TYPE_W_MINDMG    	  (0) //
+#define BONUS_TYPE_W_MAXDMG		  (1) //
+#define BONUS_TYPE_W_CRITROLL	  (2) //
+#define BONUS_TYPE_W_TOHIT		  (3) //
+#define BONUS_TYPE_W_CRITCHANCE	  (4) //
+#define BONUS_TYPE_W_DIST      	  (5) //
+#define BONUS_TYPE_W_SHOTCOST	  (6) //
+#define BONUS_TYPE_W_RELOADCOST   (7) //
+
+uint count0=0;
+uint count1=0;
+uint count2=0;
+uint count3=0;
+uint count4=0;
+uint count5=0;
+uint count6=0;
+uint count7=0;
+uint count8=0;
+uint count9=0;
+uint count10=0;
+uint count11=0;
+uint count12=0;
+uint count13=0;
+uint countAP=0;
+
+int GetBonusParametr(Item& item, uint16 type)
+{
+	if (!valid(item))
+		return 0;
+	GameVar@ bonus=GetLocalVar(type, item.Id);
+	if (!valid(bonus))
+		return 0;
+	return bonus.GetValue();
+}
+
+void SetBonusParametr(Item& item, uint8 type, uint16 value)
+{
+	GameVar@ bonus=GetLocalVar(type, item.Id);
+	if (!valid(bonus))
+		return;
+	bonus=value;
+}
+
+void DeteriorateBonuses(Item& item, Critter& cr)
+{
+	if(not item.IsDeteriorable()) return;
+	if(FLAG(item.BrokenFlags,BI_BROKEN))
+		ClearBonus(cr);
+}
+
+//												ROLL	 0-70		71-90		91-100	
+int[] BonusDRValue={ 	   /*LEATHER_JACKET_MIN*/		 2,			4,			6,
+						   /*LEATHER_JACKET_MAX*/		 5,			8,			10,
+						   /*LEATHER_ARMOR_MIN*/		 3, 		5,			8,
+						   /*LEATHER_ARMOR_MAX*/		 6,			10,			13,
+						   /*METAL_ARMOR_MIN*/			 4,			6,			9,
+						   /*METAL_ARMOR_MAX*/			 7,			12,			15,
+						   /*COMBAT_ARMOR_MIN*/			 6,			8,			11,
+						   /*COMBAT_ARMOR_MAX*/			 9,			14,			17,
+						   /*POWERED_ARMOR_MIN*/		 8,			10,			13,
+						   /*POWERED_ARMOR_MAX*/ 		 12,		16,			20};				   
+
+//												ROLL	0-70		71-90		91-100	
+int[] BonusTHValue={ 	   /*LEATHER_JACKET_MIN*/		0,			0,			1,
+						   /*LEATHER_JACKET_MAX*/		1,			1,			2,
+						   /*LEATHER_ARMOR_MIN*/		1,			2,			3,
+						   /*LEATHER_ARMOR_MAX*/		2,			3,			4,
+						   /*METAL_ARMOR_MIN*/			1,			2,			3,
+						   /*METAL_ARMOR_MAX*/			3,			4,			6,
+						   /*COMBAT_ARMOR_MIN*/			2,			3,			4,
+						   /*COMBAT_ARMOR_MAX*/			5,			6,			7,
+						   /*POWERED_ARMOR_MIN*/		3,			4,			7,
+						   /*POWERED_ARMOR_MAX*/ 		6,			7,			10};
+
+//												ROLL	 0-70		71-90		91-100	
+int[] BonusACValue={ 		/*LEATHER_JACKET_MIN*/		 7,			9,			11,
+						   /*LEATHER_JACKET_MAX*/		 10,		13,			15,
+						   /*LEATHER_ARMOR_MIN*/		 8, 		10,			13,
+						   /*LEATHER_ARMOR_MAX*/		 11,		15,			18,
+						   /*METAL_ARMOR_MIN*/			 9,			11,			14,
+						   /*METAL_ARMOR_MAX*/			 12,		17,			20,
+						   /*COMBAT_ARMOR_MIN*/			 11,		13,			22,
+						   /*COMBAT_ARMOR_MAX*/			 14,		14,			26,
+						   /*POWERED_ARMOR_MIN*/		 13,		15,			18,
+						   /*POWERED_ARMOR_MAX*/ 		 17,		21,			25};
+
+//												ROLL	 0-70		71-90		91-100	
+int[] BonusDamageValue={	 				   /*1*/ 	    1,			1,			 2, 
+															1,			2,			 3,
+											   /*2*/		2,			4,			 6,
+															3,			5,			 7,
+											   /*3*/		1,			1,			 2,
+															1,			2,			 3,	
+											   /*4*/		2,			4,			 6,
+															3,			5,			 7,
+											   /*5*/		4,			5,			 7,
+															5,			6,			 8,
+											   /*6*/		5,			7,			12,
+															6,			10,			15};
+uint8 GetRollValue(Critter& cr)
+{
+	uint8 roll=Random(0,98);
+	if(valid(cr))
+	{
+		if(cr.IsPlayer()) roll+=cr.StatBase[ST_LUCK]*2;
+		else roll -=7;
+	}
+	if(roll<70) return 0;
+	if(roll<90) return 1;
+	return 2;
+}
+
+void InitRandomisationItem(Item& item, bool isCrafted, Critter& cr, string sufix)
+{	
+	if(not valid(item)) return;
+	if(item.GetType()!=ITEM_TYPE_WEAPON && item.GetType()!=ITEM_TYPE_ARMOR) return;
+	
+	if(item.IsStackable()) return;
+	ProtoItem@ pItem=GetProtoItem(item.GetProtoId());
+	if(pItem.Stackable) return;
+	
+	uint8 randomisable=item.Proto.Randomisable;
+	if(randomisable==0) return;
+
+	string prefix="$p";
+	//string sufix=sufix;
+	string bonuses="$b ";
+	string crafter="";
+	
+	uint8 countToBreak=0;
+	uint8 count=0;
+	uint8 countBonusInfo=0;
+	uint8 rollValue=0; 
+	uint16 costForBonusArmor=item.Proto.Cost/20;
+	uint16 costForBonusWeapon=item.Proto.Cost/6;
+	
+	if(randomisable<6)
+	{
+		uint16[] varBonusArmor={   DRNORMAL, 	dtnormal,	 DRLASER,	 dtlaser,	 drfire,	 dtfire,	 drplasma,	 dtplasma, 		drelectr, 	dtelectr, 	drexplode,  dtexplode, 		drrad,	 	 carryweight,		  ac, 		fasterhealing,		harisma, 	 perception,	 strength,	   criticalresist,		 luck,		       ap,			          7622};
+		uint16[] lexBonusArmor={   	   0, 		   0,          0,	 	   0,	 	  0,	 	  0,	 	    0,	        0, 		 	   0, 		   0, 			0,  		0, 			0,	 STR_CARRYWEIGHT,		   0, 	STR_FASTERHEALING,	STR_HARISMA, STR_PERCEPTION, STR_STRENGTH, STR_CRITICALRESIST,	 STR_LUCK,		   STR_AP,   STR_DETERIORATERESIST};
+		uint8[] chanceBonusArmor={	  	  95,		  70, 		  60,		  60,		 60,    	 60, 		   50,	       50, 			  50,		  50,   	   60,         60,	 	   40,			      0,	   	  60,				   25, 			 0,		   	 0,	  	   		0,				   35,		  	 	20,			   10,				 		20,
+											  95,		  70, 		  60,		  60,		 60,    	 60, 		   50,	       50, 			  50,		  50,   	   60,         60,	 	   40,			      0,	   	  60,				   25, 			 0,		   	 0,	  	   		0,				   35,		   		20,			   10,				 		20,
+											  95,		  70, 		  60,		  60,		 60,    	 60, 		   50,	       50, 			  50,		  50,   	   60,         60,	 	   40,			      0,	   	  60,				   25, 			 0,		   	 0,	  	   		0,				   35,		  		20,			   10,				 		20,
+											  95,		  70, 		  60,		  60,		 60,    	 60, 		   50,	       50, 			  50,		  50,   	   60,         60,	 	   40,			      25,	   	  60,				   25, 			 0,		   	 0,	  	   		0,				   55,		   		20,			   40,				 		40,
+											  95,		  70, 		  60,		  60,		 60,    	 60, 		   50,	       50, 			  50,		  50,   	   60,         60,	 	   40,			      0,	   	  60,				   25, 			 15,		 15,	  	   15,				   55,		   		20,			   40,				 		40};
+		uint8[] typeBonusArmor={		BONUS_DR, 	BONUS_DT,	BONUS_DR,	BONUS_DT,  BONUS_DR,	BONUS_DT, 	 BONUS_DR,	  BONUS_DT, 	BONUS_DR,   BONUS_DT,    BONUS_DR,   BONUS_DT,	 BONUS_DR,		 BONUS_OTHER,	BONUS_AC,		  BONUS_OTHER,	   BONUS_ST,	   BONUS_ST,	 BONUS_ST,      	 BONUS_DR,	 BONUS_ST,	  BONUS_OTHER,			   BONUS_OTHER};
+
+		uint roll=Random(0,1000);
+		
+		if(isCrafted)
+		if(roll<230) 	  {roll=0; count0++;}
+		else if(roll<430) {roll=1; count1++;}
+		else if(roll<580) {roll=2; count2++;}
+		else if(roll<690) {roll=3; count3++;}
+		else if(roll<785) {roll=4; count4++;}
+		else if(roll<859) {roll=5; count5++;}
+		else if(roll<915) {roll=6; count6++;}
+		else if(roll<945) {roll=7; count7++;}
+		else if(roll<966) {roll=8; count8++;}
+		else if(roll<976) {roll=9; count9++;}
+		else if(roll<985) {roll=10; count10++;}
+		else if(roll<992) {roll=11; count11++;}
+		else if(roll<997) {roll=12; count12++;}
+		else {roll=13; count13++;}
+		else 
+		if(roll<420) 	  {roll=0; count0++;}
+		else if(roll<610) {roll=1; count1++;}
+		else if(roll<730) {roll=2; count2++;}
+		else if(roll<800) {roll=3; count3++;}
+		else if(roll<865) {roll=4; count4++;}
+		else if(roll<920) {roll=5; count5++;}
+		else if(roll<965) {roll=6; count6++;}
+		else if(roll<984) {roll=7; count7++;}
+		else if(roll<990) {roll=8; count8++;}
+		else if(roll<995) {roll=9; count9++;}
+		else if(roll<997) {roll=10; count10++;}
+		else if(roll<998) {roll=11; count11++;}
+		else if(roll<999) {roll=12; count12++;}
+		else {roll=13; count13++;}
+
+		for(uint i=0; i<roll; i++)
+		{
+			uint number=Random(0, varBonusArmor.length()-1);
+			uint8 rollValue=GetRollValue(cr);	
+			if(varBonusArmor[number]!=0 && Random(0,100)<chanceBonusArmor[number+(varBonusArmor.length()*(randomisable-1))])
+			{
+				GameVar@ bonus=GetLocalVar(varBonusArmor[number], item.Id);		
+				uint8 offset=(randomisable-1)*BONUS_VALUE_OFFSET+rollValue;
+				if(typeBonusArmor[number]==BONUS_DR)
+					bonus=Random(BonusDRValue[offset], BonusDRValue[offset+3]);
+				else if(typeBonusArmor[number]==BONUS_DT)
+					bonus=Random(BonusTHValue[offset], BonusTHValue[offset+3]);
+				else if(typeBonusArmor[number]==BONUS_AC)
+					bonus=Random(BonusACValue[offset], BonusACValue[offset+3]);
+				else if(countBonusInfo<6)
+				{
+				    if(typeBonusArmor[number]==BONUS_ST)
+					{				
+						bonus=1;
+						if(count<2) count++;
+						countBonusInfo++;
+						bonuses +="@msg game "+lexBonusArmor[number]+"@";
+					}
+					else if(varBonusArmor[number]==carryweight)
+					{		
+						bonus=Random(7+rollValue*3, 16+rollValue*3)*1000;
+						if(count<2) count++;
+						countBonusInfo++;
+						bonuses +="@msg game "+lexBonusArmor[number]+"@";
+					}
+					else if(varBonusArmor[number]==fasterhealing)
+					{
+						bonus=Random(2+rollValue*2, 4+rollValue*2);
+						if(count<2) count++;
+						countBonusInfo++;
+						bonuses +="@msg game "+lexBonusArmor[number]+"@";
+					}
+					else if(varBonusArmor[number]==ap || varBonusArmor[number]==7622)
+					{
+						bonus=rollValue==2?2:1;
+						if(count<2) count++;
+						countBonusInfo++;
+						bonuses +="@msg game "+lexBonusArmor[number]+"@";
+						countAP++;
+					}	
+				}
+				else
+				{
+					count--;
+					i--;
+				}
+
+				varBonusArmor[number]=0;
+				count++;
+				
+				item.Cost+=costForBonusArmor*(rollValue+1)*(randomisable/2+1);
+			}
+			else i--;
+
+			countToBreak++;
+			if(countToBreak>60)
+				break;
+		}
+
+		if(count<2) prefix +=" @msg game "+STR_STANDART+"@";
+		else if(count<4) prefix +=" @msg game "+STR_HIGH_QUALITY+"@";
+		else if(count<6) prefix +=" @msg game "+STR_QUALITATIVE+"@";
+		else if(count<8) prefix +=" @msg game "+STR_WORKSHOP+"@";
+		else if(count<10) prefix +=" @msg game "+STR_EXCELLENT+"@";
+		else if(count<12) prefix +=" @msg game "+STR_IDEAL+"@";	
+		else prefix +=" @msg game "+STR_UNIQUE+"@";
+		
+		// Статистика Мастера брони
+		if(isCrafted && valid(cr) && count>1) cr.AddScore(SCORE_ARMOR_MASTER, count/2+item.Cost/3000);
+	}
+	else
+	{
+		string strMinDamage="";
+		string strMaxDamage="";
+		string strEtc="";
+		
+		uint16[] varBonusWeapon={ minDamage,  		  maxDamage,	 CRITROLL,	   TOHIT,     critchance};
+		uint16[] lexBonusWeapon={ STR_MINDAMAGE, STR_MAXDAMAGE, STR_CRITROLL, STR_TOHIT, STR_CRITCHANCE};
+		uint8[] chanceBonusWeapon={	  		  95,		  	 95, 		   95,		  95,			  95,
+												  95,		  	 95,		   95,		  95,		 	  95,
+												  95,		  	 95,		   95,		  95,		 	  95,
+												  95,		   	 95,		   95,		  95,		 	  95,
+												  95,		  	 95,		   95,		  95,		 	  95,
+												  95,		  	 95,		   95,		  95,		 	  95};
+		uint roll=Random(0,1000);
+		if(isCrafted)
+		if(roll<250) 	  roll=0;
+		else if(roll<600) roll=1;
+		else if(roll<800) roll=2;
+		else if(roll<940) roll=3;
+		else if(roll<980) roll=4;
+		else roll=5;
+		else
+		if(roll<450) 	  roll=0;
+		else if(roll<660) roll=1;
+		else if(roll<800) roll=2;
+		else if(roll<940) roll=3;
+		else if(roll<990) roll=4;
+		else roll=5;
+	
+		for(uint i=0; i<roll; i++)
+		{			
+			rollValue=GetRollValue(cr);
+			uint8 offset=(randomisable-6)*BONUS_VALUE_OFFSET+rollValue;
+			uint number=Random(0, varBonusWeapon.length()-1);
+			if(varBonusWeapon[number]!=0 && Random(0,100)<chanceBonusWeapon[number+((randomisable-6)*varBonusWeapon.length())])
+			{
+				GameVar@ bonus=GetLocalVar(varBonusWeapon[number], item.Id);
+				if(varBonusWeapon[number]==minDamage)
+				{
+					//bonus=Random(BonusDamageValue[offset], BonusDamageValue[offset+3]);
+					item.Val6=Random(BonusDamageValue[offset], BonusDamageValue[offset+3]);
+					strMinDamage +="\n@msg game "+lexBonusWeapon[number]+"@"+item.Val6;
+				}
+				if(varBonusWeapon[number]==maxDamage)
+				{
+					//bonus=Random(BonusDamageValue[offset], BonusDamageValue[offset+3]);
+					item.Val7=Random(BonusDamageValue[offset], BonusDamageValue[offset+3]);
+					strMaxDamage +="\n@msg game "+lexBonusWeapon[number]+"@"+item.Val7;
+				}
+				else if(varBonusWeapon[number]==CRITROLL)
+				{
+					bonus=Random((rollValue+1)*4,(rollValue+1)*6);
+					strEtc +="\n@msg game "+lexBonusWeapon[number]+"@"+bonus.GetValue();
+				}
+				else if(varBonusWeapon[number]==TOHIT)
+				{
+					//bonus=Random((rollValue+1)*7,(rollValue+1)*10);
+					item.Val8=Random((rollValue+1)*7,(rollValue+1)*10);				
+					strEtc +="\n@msg game "+lexBonusWeapon[number]+"@"+item.Val8;
+				}
+				else if(varBonusWeapon[number]==critchance)
+				{
+					item.Val9=Random(rollValue*3+3,rollValue*3+5);
+					strEtc +="\n@msg game "+lexBonusWeapon[number]+"@"+item.Val9;
+				}
+
+				int use=_WeaponModeUse(item.Mode);
+				if ((_WeaponDmgMin(item.Proto, use)+item.Val6)>(_WeaponDmgMax(item.Proto, use)+item.Val7)) item.Val6=item.Val7;
+
+				varBonusWeapon[number]=0;
+
+				item.Cost+=costForBonusWeapon*(rollValue+1);
+
+				count++;
+			}
+			else i--;
+
+			countToBreak++;
+			if(countToBreak>60)
+			break;
+		}
+
+		bonuses +=strMinDamage+strMaxDamage+strEtc;
+
+		prefix +="";
+		
+		// Статистика Мастера оружия
+		if(isCrafted && valid(cr) && count>0) cr.AddScore(SCORE_WEAPON_MASTER, count+item.Cost/2000);
+	}
+
+	if(isCrafted && valid(cr))	
+	{
+		bonuses +="\n@msg game " + STR_NAME_CRAFTER + "@" + GetPlayerName(cr.Id) +"\n";
+		GameVar@ itemCrafterId=GetLocalVar(LIVAR_item_crafter_id, item.Id);
+		if(valid(itemCrafterId)) itemCrafterId=cr.Id;
+	}
+
+	item.Cost+=item.Proto.Cost;
+	item.Info=2;
+	item.SetLexems(prefix+"$s"+sufix+bonuses);
+
+	item.Update();
+}
+
+void SaveBonusArmor(Item& item, Critter& cr)
+{
+	for(uint i=0; i<COUNT_BUNUSES_ARMOR; i++)
+	{
+		GameVar@ bonus=GetLocalVar(DRNORMAL+i, item.Id);	
+		cr.MyBonusBase[ARMOR_BONUS_DRNORMAL+i]=bonus.GetValue();
+	}
+}
+
+void ClearSave(Critter& cr)
+{
+	for(uint i=0; i<COUNT_BUNUSES_ARMOR; i++)
+		cr.MyBonusBase[ARMOR_BONUS_DRNORMAL+i]=0;	
+}
+
+void ClearBonus(Critter& cr)
+{
+	cr.StatBase[ST_NORMAL_RESIST_EXT]-=cr.MyBonusBase[ARMOR_BONUS_DRNORMAL];
+	cr.StatBase[ST_LASER_RESIST_EXT]-=cr.MyBonusBase[ARMOR_BONUS_DRLASER];
+	cr.StatBase[ST_FIRE_RESIST_EXT]-=cr.MyBonusBase[ARMOR_BONUS_DRFIRE];
+	cr.StatBase[ST_PLASMA_RESIST_EXT]-=cr.MyBonusBase[ARMOR_BONUS_DRPLASMA];
+	cr.StatBase[ST_ELECTRO_RESIST_EXT]-=cr.MyBonusBase[ARMOR_BONUS_DRELECTR];
+	cr.StatBase[ST_EXPLODE_RESIST_EXT]-=cr.MyBonusBase[ARMOR_BONUS_DREXPLODE];
+	cr.StatBase[ST_NORMAL_ABSORB_EXT]-=cr.MyBonusBase[ARMOR_BONUS_DTNORMAL];
+	cr.StatBase[ST_LASER_ABSORB_EXT]-=cr.MyBonusBase[ARMOR_BONUS_DTLASER];	
+	cr.StatBase[ST_FIRE_ABSORB_EXT]-=cr.MyBonusBase[ARMOR_BONUS_DTFIRE];
+	cr.StatBase[ST_PLASMA_ABSORB_EXT]-=cr.MyBonusBase[ARMOR_BONUS_DTPLASMA];
+	cr.StatBase[ST_ELECTRO_ABSORB_EXT]-=cr.MyBonusBase[ARMOR_BONUS_DTELECTR];
+	cr.StatBase[ST_EXPLODE_ABSORB_EXT]-=cr.MyBonusBase[ARMOR_BONUS_DTEXPLODE];
+	cr.StatBase[ST_ARMOR_CLASS_EXT]-=cr.MyBonusBase[ARMOR_BONUS_AC];
+	cr.StatBase[ST_CRITICAL_RESISTANCE]-=cr.MyBonusBase[ARMOR_BONUS_CRITICALRESIST];
+	cr.StatBase[ST_ACTION_POINTS_EXT]-=cr.MyBonusBase[ARMOR_BONUS_AP];
+	cr.StatBase[ST_LUCK_EXT]-=cr.MyBonusBase[ARMOR_BONUS_LUCK];
+	cr.StatBase[ST_STRENGTH_EXT]-=cr.MyBonusBase[ARMOR_BONUS_STRENGTH];
+	cr.StatBase[ST_PERCEPTION_EXT]-=cr.MyBonusBase[ARMOR_BONUS_PERCEPTION];
+	cr.StatBase[ST_CHARISMA_EXT]-=cr.MyBonusBase[ARMOR_BONUS_HARISMA];
+	cr.StatBase[ST_HEALING_RATE_EXT]-=cr.MyBonusBase[ARMOR_BONUS_FASTERHEALING];
+	cr.StatBase[ST_CARRY_WEIGHT_EXT]-=cr.MyBonusBase[ARMOR_BONUS_CARRYWEIGHT];
+	cr.StatBase[ST_RADIATION_RESISTANCE_EXT]-=cr.MyBonusBase[ARMOR_BONUS_DRRAD];
+	ClearSave(cr);
+}
+//================================================
+//====Работа с бонусными параметрами ====
+//================================================
+
+
+// Установка лексем на "чистый" предмет
+void SetLex(Item& item, string prefix, string sufix, string des)
+{
+	if(item.Proto.Randomisable==0) return;
+	item.Info=2;
+	item.SetLexems("$p"+prefix+"$s"+sufix+"$b"+des);
+	item.Update();
+}
+
+// Установка лексем на "рандомизированное" оружие с дописыванием значений бонусов
+void regenLexWeapon(Item& item)
+{
+	string prefix="$p ";
+	string sufix="$s ";
+	string bonuses="$b ";
+	string crafter="";
+	
+	if(item.Val6>0) bonuses +="\n@msg game "+STR_MINDAMAGE+"@"+item.Val6;
+	if(item.Val7>0) bonuses +="\n@msg game "+STR_MAXDAMAGE+"@"+item.Val7;
+	if(item.Val8>0)	bonuses +="\n@msg game "+STR_TOHIT+"@"+item.Val8;
+	if(item.Val9>0)	bonuses +="\n@msg game "+STR_CRITCHANCE+"@"+item.Val9;
+	GameVar@ bonusCritroll=GetLocalVar(CRITROLL, item.Id);
+	if(valid(bonusCritroll))
+		if(bonusCritroll.GetValue()>0)
+			bonuses +="\n@msg game "+STR_CRITROLL+"@"+bonusCritroll.GetValue();
+	
+	GameVar@ itemCrafterId=GetLocalVar(LIVAR_item_crafter_id, item.Id);
+	if(valid(itemCrafterId))
+		if(itemCrafterId.GetValue()>0)
+		{
+			Critter@ cr=GetCritter(itemCrafterId.GetValue());
+			if(valid(cr)) bonuses +="\n@msg game " + STR_NAME_CRAFTER + "@" + GetPlayerName(cr.Id) +"\n";
+			else bonuses +="\n@msg game " + STR_NAME_CRAFTER_LOST + "@" + "\n";
+		}
+
+	item.Info=2;
+	item.SetLexems(prefix+sufix+bonuses);
+	item.Update();
+}
+
+// Установка бонуса оружия
+void setBonusWeapon(Item& item, uint8 bonusType, int rollValue, bool reloadDescription)
+{
+	uint8 randomisable=item.Proto.Randomisable;
+	if(randomisable<6) return;
+	uint8 offset=(randomisable-6)*BONUS_VALUE_OFFSET+rollValue;
+	switch(bonusType)
+	{
+		case BONUS_TYPE_W_MINDMG:
+		{
+			item.Val6 +=Random(BonusDamageValue[offset], BonusDamageValue[offset+3]);
+			int use=_WeaponModeUse(item.Mode);
+			if ((_WeaponDmgMin(item.Proto, use)+item.Val6)>(_WeaponDmgMax(item.Proto, use)+item.Val7)) 
+				item.Val6=item.Val7;
+			break;
+		}
+		case BONUS_TYPE_W_MAXDMG:
+			item.Val7 +=Random(BonusDamageValue[offset], BonusDamageValue[offset+3]);
+			break;
+		case BONUS_TYPE_W_TOHIT:
+			item.Val8 +=Random((rollValue+1)*7,(rollValue+1)*10);
+			break;
+		case BONUS_TYPE_W_CRITCHANCE:
+			item.Val9 +=Random(rollValue*3+3,rollValue*3+5);
+			break;
+		case BONUS_TYPE_W_CRITROLL:
+			{
+				GameVar@ bonusCritroll=GetLocalVar(CRITROLL, item.Id);
+				if(valid(bonusCritroll))
+					bonusCritroll +=Random((rollValue+1)*4,(rollValue+1)*6);
+			}
+			break;
+		default:
+			break;
+	}
+	if(reloadDescription) regenLexWeapon(item);
+	item.Cost +=(item.Cost==0?item.Proto.Cost:0) + (item.Proto.Cost/6)*(rollValue+1);	
+}
+
+// Проверка, есть ли оружие в руках у криттера
+bool d_WeaponInHand(Critter& player, Critter@ npc)
+{
+	Item@ realWeapon=_CritGetItemHand(player);
+	if(not valid(realWeapon)) return false;
+	if(realWeapon.Proto.Randomisable<6) return false;
+	return true;
+}
+
+bool d_notWeaponInHand(Critter& player, Critter@ npc)
+{
+	return !d_WeaponInHand(player, npc);
+}

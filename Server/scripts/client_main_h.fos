@@ -1,0 +1,603 @@
+void merc_setmode(uint mode)
+{
+	
+	merc_click_mode=mode;
+	
+	switch (merc_click_mode)
+	{
+		case MODE_ATTACK: ChangeCursor  (CURSOR_USE_WEAPON);   break;
+		case MODE_MOVE: ChangeCursor  (CURSOR_MOVE);  break;
+	
+		default: merc_click_mode=MODE_DEFAULT; break;
+	}
+	
+}
+
+bool merc_process_mode()
+{
+	uint16 hx=0, hy=0;
+	
+
+	if(merc_click_mode<MODE_ATTACK) return false;
+	
+	if(merc_click_mode==MODE_ATTACK)
+	{
+			CritterCl@ cr=GetMonitorCritter  (__MouseX,__MouseY) ;
+			
+			if(valid(cr))
+							RunServerScriptUnsafe("merc@unsafe_MercCmd",cr.HexX,cr.HexY,0,null,null);
+				
+			
+	}
+	else 
+	if(merc_click_mode==MODE_MOVE)
+	{
+	
+			if(GetMonitorHex  (__MouseX,__MouseY, hx,hy))
+				RunServerScriptUnsafe("merc@unsafe_MercCmd",hx,hy,1,null,null); 
+				
+	
+	}
+	
+	merc_click_mode=MODE_DEFAULT;
+	ChangeCursor  (CURSOR_DEFAULT);
+	return true;
+
+}
+
+					
+//TabaK. Интерфейс Теслы
+
+class Tesla_Panel: IGUIElementCallbackInit, IGUIElementCallbackMouseClick
+{
+	void OnInit()
+	{
+		@TeslaPanel=GUI_GetElementOptions();
+		if(ifaceHidden) TeslaPanel.ToHide(true);
+	}
+	void OnMouseClick(int click){}
+}
+
+class Tesla_Display: IGUIElementCallbackInit, IGUIElementCallbackMouseClick
+{
+	void OnInit()
+	{
+		@TeslaDisplay=GUI_GetElementOptions();
+		if(ifaceHidden) TeslaDisplay.ToHide(true);
+	}
+	void OnMouseClick(int click){}
+}
+
+
+class Tesla_Discharge_Button : IGUIElementCallbackInit, IGUIElementCallbackMouseClick
+{
+	void OnInit()
+	{
+		@TeslaButton=GUI_GetElementOptions();
+		if(ifaceHidden) TeslaButton.ToHide(true);
+	}
+	void OnMouseClick(int click)
+	{
+		if(click==MOUSE_CLICK_LEFT && GetChosen().Param[ST_CURRENT_ARMOR_PERK]==ARMOR_PERK_TESLA) RunServerScriptUnsafe("lightning_weapon@unsafe_Tesla_Discharge",0,0,0,null,null);
+		else Message(GetMsgStr(TEXTMSG_GAME, 530));
+	}
+}
+
+
+//TabaK. Интерфейс автовыстрела
+
+
+class BullsEye: IGUIElementCallbackInit
+{
+	void OnInit()
+	{
+		@AimInd=GUI_GetElementOptions();
+		AimInd.ToHide(!AutoAim || ifaceHidden);
+	}
+}
+
+class AimTorsoButton: IGUIElementCallbackInit, IGUIElementCallbackMouseClick
+{
+	void OnInit()
+	{
+		@ButtonAimTorso=GUI_GetElementOptions();
+		if(AutoAim)
+		{
+			ButtonAimTorso.Picture(TorsoButtonPic);
+			ButtonAimTorso.Font(FONT_FALLOUT, COLOR_GREEN);
+		}
+		if(ifaceHidden) ButtonAimTorso.ToHide(true);
+	}
+	void OnMouseClick(int click)
+	{
+		if(click!=MOUSE_CLICK_LEFT) return;
+		if(AutoAim)
+		{
+			AutoAim=false;
+			AimInd.ToHide(!AutoAim || ifaceHidden);
+			ButtonAimTorso.Font(FONT_FALLOUT, COLOR_BLACK);
+			ButtonAimTorso.Picture(TorsoButtonActPic);
+			switch(AutoAimLocation)
+			{
+				case HIT_LOCATION_HEAD:
+					ButtonAimHead.Picture(HeadButtonPic);
+					ButtonAimHead.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				case HIT_LOCATION_EYES:
+					ButtonAimEyes.Picture(EyesButtonPic);
+					ButtonAimEyes.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				case HIT_LOCATION_LEFT_ARM:
+					ButtonAimLHand.Picture(LHandButtonPic);
+					ButtonAimLHand.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				case HIT_LOCATION_RIGHT_ARM:
+					ButtonAimRHand.Picture(RHandButtonPic);
+					ButtonAimRHand.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				case HIT_LOCATION_RIGHT_LEG:
+					ButtonAimRLeg.Picture(RLegButtonPic);
+					ButtonAimRLeg.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				case HIT_LOCATION_LEFT_LEG:
+					ButtonAimLLeg.Picture(LLegButtonPic);
+					ButtonAimLLeg.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				case HIT_LOCATION_GROIN:
+					ButtonAimGroin.Picture(GroinButtonPic);
+					ButtonAimGroin.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				default: break;
+			}
+			AutoAimLocation=0;
+		}
+	}
+}
+
+class AimHeadButton: IGUIElementCallbackInit, IGUIElementCallbackMouseClick
+{
+	void OnInit()
+	{
+		@ButtonAimHead=GUI_GetElementOptions();
+		if(AutoAim && AutoAimLocation==HIT_LOCATION_HEAD)
+		{
+			ButtonAimHead.Font(FONT_FALLOUT, COLOR_BLACK);
+			ButtonAimHead.Picture(HeadButtonActPic);
+		}
+		if(ifaceHidden) ButtonAimHead.ToHide(true);
+	}
+	void OnMouseClick(int click)
+	{
+		if(click!=MOUSE_CLICK_LEFT) return;
+		uint8 mode=0;
+		ProtoItem@ weapon=GetChosen().GetSlotProto(SLOT_HAND1, mode);
+		mode=_WeaponModeUse(mode);
+		if(weapon.Type!=ITEM_TYPE_WEAPON) return;
+		if ((mode==ITEM_MODE_PRIMARY && weapon.Weapon_Aim_0) || (mode==ITEM_MODE_SECONDARY && weapon.Weapon_Aim_1) || (mode==ITEM_MODE_THIRD && weapon.Weapon_Aim_2))
+		{
+			if (!AutoAim)
+			{
+				AutoAim=true;
+				AimInd.ToHide(!AutoAim || ifaceHidden);
+				ButtonAimTorso.Picture(TorsoButtonPic);
+				ButtonAimTorso.Font(FONT_FALLOUT, COLOR_GREEN);
+			}
+		
+			ButtonAimHead.Font(FONT_FALLOUT, COLOR_BLACK);
+			ButtonAimHead.Picture(HeadButtonActPic);
+			switch(AutoAimLocation)
+			{
+				case HIT_LOCATION_EYES:
+					ButtonAimEyes.Picture(EyesButtonPic);
+					ButtonAimEyes.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				case HIT_LOCATION_LEFT_ARM:
+					ButtonAimLHand.Picture(LHandButtonPic);
+					ButtonAimLHand.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				case HIT_LOCATION_RIGHT_ARM:
+					ButtonAimRHand.Picture(RHandButtonPic);
+					ButtonAimRHand.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				case HIT_LOCATION_RIGHT_LEG:
+					ButtonAimRLeg.Picture(RLegButtonPic);
+					ButtonAimRLeg.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				case HIT_LOCATION_LEFT_LEG:
+					ButtonAimLLeg.Picture(LLegButtonPic);
+					ButtonAimLLeg.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				case HIT_LOCATION_GROIN:
+					ButtonAimGroin.Picture(GroinButtonPic);
+					ButtonAimGroin.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				default: break;
+			}
+			AutoAimLocation=HIT_LOCATION_HEAD;
+		}
+	}
+}
+
+class AimEyesButton: IGUIElementCallbackInit, IGUIElementCallbackMouseClick
+{
+	void OnInit()
+	{
+		@ButtonAimEyes=GUI_GetElementOptions();
+		if(AutoAim && AutoAimLocation==HIT_LOCATION_EYES)
+		{
+			ButtonAimEyes.Font(FONT_FALLOUT, COLOR_BLACK);
+			ButtonAimEyes.Picture(EyesButtonActPic);
+		}
+		if(ifaceHidden) ButtonAimEyes.ToHide(true);
+	}
+	void OnMouseClick(int click)
+	{
+		if(click!=MOUSE_CLICK_LEFT) return;
+		uint8 mode=0;
+		ProtoItem@ weapon=GetChosen().GetSlotProto(SLOT_HAND1, mode);
+		mode=_WeaponModeUse(mode);
+		if(weapon.Type!=ITEM_TYPE_WEAPON) return;
+		if ((mode==ITEM_MODE_PRIMARY && weapon.Weapon_Aim_0) || (mode==ITEM_MODE_SECONDARY && weapon.Weapon_Aim_1) || (mode==ITEM_MODE_THIRD && weapon.Weapon_Aim_2))
+		{
+			if (!AutoAim)
+			{
+				AutoAim=true;
+				AimInd.ToHide(!AutoAim || ifaceHidden);
+				ButtonAimTorso.Picture(TorsoButtonPic);
+				ButtonAimTorso.Font(FONT_FALLOUT, COLOR_GREEN);
+			}
+		
+			ButtonAimEyes.Font(FONT_FALLOUT, COLOR_BLACK);
+			ButtonAimEyes.Picture(EyesButtonActPic);
+			switch(AutoAimLocation)
+			{
+				case HIT_LOCATION_HEAD:
+					ButtonAimHead.Picture(HeadButtonPic);
+					ButtonAimHead.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				case HIT_LOCATION_LEFT_ARM:
+					ButtonAimLHand.Picture(LHandButtonPic);
+					ButtonAimLHand.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				case HIT_LOCATION_RIGHT_ARM:
+					ButtonAimRHand.Picture(RHandButtonPic);
+					ButtonAimRHand.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				case HIT_LOCATION_RIGHT_LEG:
+					ButtonAimRLeg.Picture(RLegButtonPic);
+					ButtonAimRLeg.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				case HIT_LOCATION_LEFT_LEG:
+					ButtonAimLLeg.Picture(LLegButtonPic);
+					ButtonAimLLeg.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				case HIT_LOCATION_GROIN:
+					ButtonAimGroin.Picture(GroinButtonPic);
+					ButtonAimGroin.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				default: break;
+			}
+			AutoAimLocation=HIT_LOCATION_EYES;
+		}
+	}
+}
+
+class AimRHandButton: IGUIElementCallbackInit, IGUIElementCallbackMouseClick
+{
+	void OnInit()
+	{
+		@ButtonAimRHand=GUI_GetElementOptions();
+		if(AutoAim && AutoAimLocation==HIT_LOCATION_RIGHT_ARM)
+		{
+			ButtonAimRHand.Font(FONT_FALLOUT, COLOR_BLACK);
+			ButtonAimRHand.Picture(RHandButtonActPic);
+		}
+		if(ifaceHidden) ButtonAimRHand.ToHide(true);
+	}
+	void OnMouseClick(int click)
+	{
+		if(click!=MOUSE_CLICK_LEFT) return;
+		uint8 mode=0;
+		ProtoItem@ weapon=GetChosen().GetSlotProto(SLOT_HAND1, mode);
+		mode=_WeaponModeUse(mode);
+		if(weapon.Type!=ITEM_TYPE_WEAPON) return;
+		if ((mode==ITEM_MODE_PRIMARY && weapon.Weapon_Aim_0) || (mode==ITEM_MODE_SECONDARY && weapon.Weapon_Aim_1) || (mode==ITEM_MODE_THIRD && weapon.Weapon_Aim_2))
+		{
+			if (!AutoAim)
+			{
+				AutoAim=true;
+				AimInd.ToHide(!AutoAim || ifaceHidden);
+				ButtonAimTorso.Picture(TorsoButtonPic);
+				ButtonAimTorso.Font(FONT_FALLOUT, COLOR_GREEN);
+			}
+		
+			ButtonAimRHand.Font(FONT_FALLOUT, COLOR_BLACK);
+			ButtonAimRHand.Picture(RHandButtonActPic);
+			switch(AutoAimLocation)
+			{
+				case HIT_LOCATION_EYES:
+					ButtonAimEyes.Picture(EyesButtonPic);
+					ButtonAimEyes.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				case HIT_LOCATION_LEFT_ARM:
+					ButtonAimLHand.Picture(LHandButtonPic);
+					ButtonAimLHand.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				case HIT_LOCATION_HEAD:
+					ButtonAimHead.Picture(HeadButtonPic);
+					ButtonAimHead.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				case HIT_LOCATION_RIGHT_LEG:
+					ButtonAimRLeg.Picture(RLegButtonPic);
+					ButtonAimRLeg.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				case HIT_LOCATION_LEFT_LEG:
+					ButtonAimLLeg.Picture(LLegButtonPic);
+					ButtonAimLLeg.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				case HIT_LOCATION_GROIN:
+					ButtonAimGroin.Picture(GroinButtonPic);
+					ButtonAimGroin.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				default: break;
+			}
+			AutoAimLocation=HIT_LOCATION_RIGHT_ARM;
+		}
+	}
+}
+
+class AimLHandButton: IGUIElementCallbackInit, IGUIElementCallbackMouseClick
+{
+	void OnInit()
+	{
+		@ButtonAimLHand=GUI_GetElementOptions();
+		if(AutoAim && AutoAimLocation==HIT_LOCATION_LEFT_ARM)
+		{
+			ButtonAimLHand.Font(FONT_FALLOUT, COLOR_BLACK);
+			ButtonAimLHand.Picture(LHandButtonActPic);
+		}
+		if(ifaceHidden) ButtonAimLHand.ToHide(true);
+	}
+	void OnMouseClick(int click)
+	{
+		if(click!=MOUSE_CLICK_LEFT) return;
+		uint8 mode=0;
+		ProtoItem@ weapon=GetChosen().GetSlotProto(SLOT_HAND1, mode);
+		mode=_WeaponModeUse(mode);
+		if(weapon.Type!=ITEM_TYPE_WEAPON) return;
+		if ((mode==ITEM_MODE_PRIMARY && weapon.Weapon_Aim_0) || (mode==ITEM_MODE_SECONDARY && weapon.Weapon_Aim_1) || (mode==ITEM_MODE_THIRD && weapon.Weapon_Aim_2))
+		{
+			if (!AutoAim)
+			{
+				AutoAim=true;
+				AimInd.ToHide(!AutoAim || ifaceHidden);
+				ButtonAimTorso.Picture(TorsoButtonPic);
+				ButtonAimTorso.Font(FONT_FALLOUT, COLOR_GREEN);
+			}
+		
+			ButtonAimLHand.Font(FONT_FALLOUT, COLOR_BLACK);
+			ButtonAimLHand.Picture(LHandButtonActPic);
+			switch(AutoAimLocation)
+			{
+				case HIT_LOCATION_EYES:
+					ButtonAimEyes.Picture(EyesButtonPic);
+					ButtonAimEyes.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				case HIT_LOCATION_RIGHT_ARM:
+					ButtonAimRHand.Picture(RHandButtonPic);
+					ButtonAimRHand.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				case HIT_LOCATION_HEAD:
+					ButtonAimHead.Picture(HeadButtonPic);
+					ButtonAimHead.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				case HIT_LOCATION_RIGHT_LEG:
+					ButtonAimRLeg.Picture(RLegButtonPic);
+					ButtonAimRLeg.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				case HIT_LOCATION_LEFT_LEG:
+					ButtonAimLLeg.Picture(LLegButtonPic);
+					ButtonAimLLeg.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				case HIT_LOCATION_GROIN:
+					ButtonAimGroin.Picture(GroinButtonPic);
+					ButtonAimGroin.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				default: break;
+			}
+			AutoAimLocation=HIT_LOCATION_LEFT_ARM;
+		}
+	}
+}
+
+class AimRLegButton: IGUIElementCallbackInit, IGUIElementCallbackMouseClick
+{
+	void OnInit()
+	{
+		@ButtonAimRLeg=GUI_GetElementOptions();
+		if(AutoAim && AutoAimLocation==HIT_LOCATION_RIGHT_LEG)
+		{
+			ButtonAimRLeg.Font(FONT_FALLOUT, COLOR_BLACK);
+			ButtonAimRLeg.Picture(RLegButtonActPic);
+		}
+		if(ifaceHidden) ButtonAimRLeg.ToHide(true);
+	}
+	void OnMouseClick(int click)
+	{
+		if(click!=MOUSE_CLICK_LEFT) return;
+		uint8 mode=0;
+		ProtoItem@ weapon=GetChosen().GetSlotProto(SLOT_HAND1, mode);
+		mode=_WeaponModeUse(mode);
+		if(weapon.Type!=ITEM_TYPE_WEAPON) return;
+		if ((mode==ITEM_MODE_PRIMARY && weapon.Weapon_Aim_0) || (mode==ITEM_MODE_SECONDARY && weapon.Weapon_Aim_1) || (mode==ITEM_MODE_THIRD && weapon.Weapon_Aim_2))
+		{
+			if (!AutoAim)
+			{
+				AutoAim=true;
+				AimInd.ToHide(!AutoAim || ifaceHidden);
+				ButtonAimTorso.Picture(TorsoButtonPic);
+				ButtonAimTorso.Font(FONT_FALLOUT, COLOR_GREEN);
+			}
+		
+			ButtonAimRLeg.Font(FONT_FALLOUT, COLOR_BLACK);
+			ButtonAimRLeg.Picture(RLegButtonActPic);
+			switch(AutoAimLocation)
+			{
+				case HIT_LOCATION_EYES:
+					ButtonAimEyes.Picture(EyesButtonPic);
+					ButtonAimEyes.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				case HIT_LOCATION_LEFT_ARM:
+					ButtonAimLHand.Picture(LHandButtonPic);
+					ButtonAimLHand.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				case HIT_LOCATION_HEAD:
+					ButtonAimHead.Picture(HeadButtonPic);
+					ButtonAimHead.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				case HIT_LOCATION_RIGHT_ARM:
+					ButtonAimRHand.Picture(RHandButtonPic);
+					ButtonAimRHand.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				case HIT_LOCATION_LEFT_LEG:
+					ButtonAimLLeg.Picture(LLegButtonPic);
+					ButtonAimLLeg.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				case HIT_LOCATION_GROIN:
+					ButtonAimGroin.Picture(GroinButtonPic);
+					ButtonAimGroin.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				default: break;
+			}
+			AutoAimLocation=HIT_LOCATION_RIGHT_LEG;
+		}
+	}
+}
+
+class AimLLegButton: IGUIElementCallbackInit, IGUIElementCallbackMouseClick
+{
+	void OnInit()
+	{
+		@ButtonAimLLeg=GUI_GetElementOptions();
+		if(AutoAim && AutoAimLocation==HIT_LOCATION_LEFT_LEG)
+		{
+			ButtonAimLLeg.Font(FONT_FALLOUT, COLOR_BLACK);
+			ButtonAimLLeg.Picture(LLegButtonActPic);
+		}
+		if(ifaceHidden) ButtonAimLLeg.ToHide(true);
+	}
+	void OnMouseClick(int click)
+	{
+		if(click!=MOUSE_CLICK_LEFT) return;
+		uint8 mode=0;
+		ProtoItem@ weapon=GetChosen().GetSlotProto(SLOT_HAND1, mode);
+		mode=_WeaponModeUse(mode);
+		if(weapon.Type!=ITEM_TYPE_WEAPON) return;
+		if ((mode==ITEM_MODE_PRIMARY && weapon.Weapon_Aim_0) || (mode==ITEM_MODE_SECONDARY && weapon.Weapon_Aim_1) || (mode==ITEM_MODE_THIRD && weapon.Weapon_Aim_2))
+		{
+			if (!AutoAim)
+			{
+				AutoAim=true;
+				AimInd.ToHide(!AutoAim || ifaceHidden);
+				ButtonAimTorso.Picture(TorsoButtonPic);
+				ButtonAimTorso.Font(FONT_FALLOUT, COLOR_GREEN);
+			}
+		
+			ButtonAimLLeg.Font(FONT_FALLOUT, COLOR_BLACK);
+			ButtonAimLLeg.Picture(LLegButtonActPic);
+			switch(AutoAimLocation)
+			{
+				case HIT_LOCATION_EYES:
+					ButtonAimEyes.Picture(EyesButtonPic);
+					ButtonAimEyes.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				case HIT_LOCATION_LEFT_ARM:
+					ButtonAimLHand.Picture(LHandButtonPic);
+					ButtonAimLHand.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				case HIT_LOCATION_HEAD:
+					ButtonAimHead.Picture(HeadButtonPic);
+					ButtonAimHead.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				case HIT_LOCATION_RIGHT_LEG:
+					ButtonAimRLeg.Picture(RLegButtonPic);
+					ButtonAimRLeg.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				case HIT_LOCATION_RIGHT_ARM:
+					ButtonAimRHand.Picture(RHandButtonPic);
+					ButtonAimRHand.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				case HIT_LOCATION_GROIN:
+					ButtonAimGroin.Picture(GroinButtonPic);
+					ButtonAimGroin.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				default: break;
+			}
+			AutoAimLocation=HIT_LOCATION_LEFT_LEG;
+		}
+	}
+}
+
+class AimGroinButton: IGUIElementCallbackInit, IGUIElementCallbackMouseClick
+{
+	void OnInit()
+	{
+		@ButtonAimGroin=GUI_GetElementOptions();
+		if(AutoAim && AutoAimLocation==HIT_LOCATION_GROIN)
+		{
+			ButtonAimGroin.Font(FONT_FALLOUT, COLOR_BLACK);
+			ButtonAimGroin.Picture(GroinButtonActPic);
+		}
+		if(ifaceHidden) ButtonAimGroin.ToHide(true);
+	}
+	void OnMouseClick(int click)
+	{
+		if(click!=MOUSE_CLICK_LEFT) return;
+		uint8 mode=0;
+		ProtoItem@ weapon=GetChosen().GetSlotProto(SLOT_HAND1, mode);
+		mode=_WeaponModeUse(mode);
+		if(weapon.Type!=ITEM_TYPE_WEAPON) return;
+		if ((mode==ITEM_MODE_PRIMARY && weapon.Weapon_Aim_0) || (mode==ITEM_MODE_SECONDARY && weapon.Weapon_Aim_1) || (mode==ITEM_MODE_THIRD && weapon.Weapon_Aim_2))
+		{
+			if (!AutoAim)
+			{
+				AutoAim=true;
+				AimInd.ToHide(!AutoAim || ifaceHidden);
+				ButtonAimTorso.Picture(TorsoButtonPic);
+				ButtonAimTorso.Font(FONT_FALLOUT, COLOR_GREEN);
+			}
+		
+			ButtonAimGroin.Font(FONT_FALLOUT, COLOR_BLACK);
+			ButtonAimGroin.Picture(GroinButtonActPic);
+			switch(AutoAimLocation)
+			{
+				case HIT_LOCATION_EYES:
+					ButtonAimEyes.Picture(EyesButtonPic);
+					ButtonAimEyes.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				case HIT_LOCATION_LEFT_ARM:
+					ButtonAimLHand.Picture(LHandButtonPic);
+					ButtonAimLHand.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				case HIT_LOCATION_HEAD:
+					ButtonAimHead.Picture(HeadButtonPic);
+					ButtonAimHead.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				case HIT_LOCATION_RIGHT_LEG:
+					ButtonAimRLeg.Picture(RLegButtonPic);
+					ButtonAimRLeg.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				case HIT_LOCATION_LEFT_LEG:
+					ButtonAimLLeg.Picture(LLegButtonPic);
+					ButtonAimLLeg.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				case HIT_LOCATION_RIGHT_ARM:
+					ButtonAimRHand.Picture(RHandButtonPic);
+					ButtonAimRHand.Font(FONT_FALLOUT, COLOR_GREEN);
+					break;
+				default: break;
+			}
+			AutoAimLocation=HIT_LOCATION_GROIN;
+		}
+	}
+}

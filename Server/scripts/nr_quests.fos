@@ -1,0 +1,978 @@
+// Author: TabaK
+// Фракционные квесты на вступление в мафиозные семьи
+
+#include "guards_h.fos"
+#include "_macros.fos"
+#include "_colors.fos"
+#include "_npc_pids.fos"
+#include "_dialogs.fos"
+
+#define ROLE_ENCLAVE_LEADER  (666)
+#define ROLE_ENCLAVE_SUPPORT (500)
+#define QUEST_COMPLETED      (0)
+#define QUEST_FAILED         (1)
+#define WRIGHT_MEMBER        (300)
+#define WRIGHT_DOG           (301)
+#define WRIGHT_CARAVAN       (305)
+#define MORDINO_MAN          (310)
+#define ROLE_MIRON           (311)
+
+import string GetOrgName(uint num) from "main";
+import uint[] GetPlayersByFraction(uint orgId) from "main";
+import uint[] GetOrgStats(uint orgId) from "main";
+import bool SetOrgStats(uint orgId, uint[] stats) from "main";
+import bool AddAttackPlane(Critter& npc, uint priority, uint critId, bool run) from "npc_planes";
+import bool AddFactionLoc(uint frId, uint16 locId) from "main";
+import void RemoveFactionLoc(uint frId, uint16 locId) from "main";
+import void ExplodeEx(Map& map, uint16 hexX, uint16 hexY, uint16 effectPid, uint effectRadius, uint damage, uint damageType, uint damageRadius, uint ownerId) from "explode";
+
+
+
+bool d_OrgIsBad(Critter& master, Critter@ slave)
+{
+	if(master.Param[ST_FRACTION]==0) return true;
+	uint[] stats=GetOrgStats(master.Param[ST_FRACTION]);
+	if(stats[FR_RATING]<10000) return true;
+	return false;
+}
+
+bool d_OrgIsGood(Critter& master, Critter@ slave)
+{
+	if(master.Param[ST_FRACTION]==0) return false;
+	uint[] stats=GetOrgStats(master.Param[ST_FRACTION]);
+	if(stats[FR_RATING]>=10000) return true;
+	return false;
+}
+
+void r_GetSalvatoreQuest(Critter& master, Critter@ slave)
+{
+	uint locId=CreateLocation(LOCATION_Salvatore_Supply, 925+Random(50, 100), 925+Random(50, 100), null);
+	GameVar@ frId=GetLocalVar(LLVAR_questloc_frid, locId);
+	GameVar@ isQuest=GetLocalVar(LLVAR_is_quest_loc, locId);
+	isQuest=1;
+	AddFactionLoc(uint(master.Param[ST_FRACTION]), locId);
+	frId=master.Param[ST_FRACTION];
+	uint[] players=GetPlayersByFraction(master.Param[ST_FRACTION]);
+	for(uint n=0, nMax=players.length(); n<nMax; n++)
+	{
+		Critter@ player=GetCritter(players[n]);
+		if(valid(player))
+		{
+			GameVar@ quest=GetLocalVar(LVAR_q_salvatore_supply, players[n]);
+			quest=1;
+			player.SetKnownLoc(true, locId);
+		}
+	}
+	uint[] stats=GetOrgStats(master.Param[ST_FRACTION]);
+	stats[FR_SALVATORE_SUPPLY]=1;
+	SetOrgStats(master.Param[ST_FRACTION], stats);
+}
+
+void r_JoinMordino(Critter& master, Critter@ slave)
+{
+	uint[] players=GetPlayersByFraction(master.Param[ST_FRACTION]);
+	for(uint n=0, nMax=players.length(); n<nMax; n++)
+	{
+		Critter@ player=GetCritter(players[n]);
+		if(valid(player))
+		{
+			player.ParamBase[KARMA_MAN_MORDINO]=1;
+		}
+	}
+	uint[] stats=GetOrgStats(master.Param[ST_FRACTION]);
+	stats[FR_NR_FAMILY]=1;
+	SetOrgStats(master.Param[ST_FRACTION], stats);
+}
+
+uint r_TryGetSalvQuestMordino(Critter& master, Critter@ slave)
+{
+	uint[] stats=GetOrgStats(master.StatBase[ST_FRACTION]);
+	if(stats[FR_LAST_MAFIA_QUEST_FAILED]+REAL_DAY(1)>__FullSecond) return 10;
+	return 12;
+}
+
+uint r_TryGetWrightQuestMordino(Critter& master, Critter@ slave)
+{
+	uint[] stats=GetOrgStats(master.StatBase[ST_FRACTION]);
+	if(stats[FR_LAST_MAFIA_QUEST_FAILED]+REAL_DAY(1)>__FullSecond) return 15;
+	return 16;
+}
+
+void r_GetWrightQuest(Critter& master, Critter@ slave)
+{
+	uint locId=CreateLocation(LOCATION_Golgotha, 925, 925+Random(50, 75), null);
+	GameVar@ isQuest=GetLocalVar(LLVAR_is_quest_loc, locId);
+	isQuest=1;
+	GameVar@ frId=GetLocalVar(LLVAR_questloc_frid, locId);
+	AddFactionLoc(uint(master.Param[ST_FRACTION]), locId);
+	frId=master.Param[ST_FRACTION];
+	uint[] players=GetPlayersByFraction(master.Param[ST_FRACTION]);
+	for(uint n=0, nMax=players.length(); n<nMax; n++)
+	{
+		Critter@ player=GetCritter(players[n]);
+		if(valid(player))
+		{
+			GameVar@ quest=GetLocalVar(LVAR_q_wright_supply, players[n]);
+			quest=1;
+			player.SetKnownLoc(true, locId);
+		}
+	}
+	master.AddItem(PID_HYPO_POISON, 5);
+	uint[] stats=GetOrgStats(master.Param[ST_FRACTION]);
+	stats[FR_WRIGHT_SUPPLY]=1;
+	SetOrgStats(master.Param[ST_FRACTION], stats);
+}
+
+void r_FailWrightQuest(Critter& master, Critter@ slave)
+{
+	SwitchWrightQuest(master.GetMap(), 5);
+}
+
+void r_CompleteWrightDeal(Critter& master, Critter@ slave)
+{
+	Map@ map=master.GetMap();
+	if(map.GetData(1)==1) SwitchWrightQuest(map,4);
+	else SwitchWrightQuest(map,5);
+}
+
+//Квест на срыв поставки сальваторе
+
+void _SalvVertiInit(Item& verti, bool firstTime)
+{
+	verti.LockerCondition=LOCKER_NOOPEN;
+}
+
+void _SalvSupplyInit(Map& map, bool firstTime)
+{
+	map.SetLoopTime(0, 30000);
+	map.SetEvent(MAP_EVENT_IN_CRITTER, "_SalvFactionArrived");
+	map.SetEvent(MAP_EVENT_LOOP_0, "_ChopperCover");
+	map.SetEvent(MAP_EVENT_CRITTER_DEAD, "_SalvCritterDead");
+	map.SetEvent(MAP_EVENT_OUT_CRITTER, "_SalvOutCritter");
+	map.GetLocation().Color=COLOR_RED;
+	uint16 x=0;
+	uint16 y=0;
+	map.GetEntireCoords(1000,0, x,y);
+	Item@ car=map.AddItem(x,y,PID_HIGHWAYMAN,1);
+	if(valid(car))
+	{
+		uint keynum=Random(10000, 50000);
+		car.LockerId=keynum;
+		car.LockerComplexity=300;
+		car.CarFuel=car.Proto.Car_TankVolume;
+		car.CarDeterioration=0;
+		car.Update();
+		Item@ bag=car.GetChild(0);
+		if(valid(bag))
+		{
+			bag.AddItem(PID_CHEMICALS, 100, 0);
+			bag.LockerId=keynum;
+			bag.LockerComplexity=250;
+			bag.Update();
+		}
+		Critter@ leader=map.GetNpc(ROLE_ENCLAVE_LEADER, FIND_ALL, 0);
+		if(valid(leader))
+		{
+			Item@ key=leader.AddItem(PID_KEY, 1);
+			key.LockerId=keynum;
+			key.Update();
+		}
+	}
+}
+
+void _SalvOutCritter(Map& map, Critter& cr)
+{
+	if(cr.IsPlayer() && map.GetCritters(0, FIND_ONLY_PLAYERS|FIND_LIFE_AND_KO, null)==0)
+	{
+		uint[] vals={map.Id, QUEST_FAILED};
+		CreateTimeEvent(__FullSecond+REAL_SECOND(30), "e_DeleteSalvLoc", vals, false);
+	}
+}
+
+
+void _SalvCritterDead(Map& map, Critter& cr, Critter@ killer)
+{
+	if(cr.IsPlayer() && map.GetCritters(0, FIND_ONLY_PLAYERS|FIND_LIFE_AND_KO, null)==0)
+	{
+		if(valid(map.GetNpc(ROLE_ENCLAVE_LEADER, FIND_LIFE_AND_KO, 0)) || valid(map.GetNpc(ROLE_ENCLAVE_SUPPORT, FIND_LIFE_AND_KO, 0)))
+		{
+			uint[] vals={map.Id, QUEST_FAILED};
+			CreateTimeEvent(__FullSecond+REAL_SECOND(30), "e_DeleteSalvLoc", vals, false);
+		}
+	}
+	if(cr.IsNpc())
+	{
+		if(!valid(map.GetNpc(ROLE_ENCLAVE_LEADER, FIND_LIFE_AND_KO, 0)) && !valid(map.GetNpc(ROLE_ENCLAVE_SUPPORT, FIND_LIFE_AND_KO, 0)))
+		{
+			GameVar@ frId=GetLocalVar(LLVAR_questloc_frid, map.GetLocation().Id);
+			uint[] stats=GetOrgStats(frId.GetValue());
+			uint[] players=GetPlayersByFraction(frId.GetValue());
+			stats[FR_SALVATORE_SUPPLY]=2;
+			SetOrgStats(frId.GetValue(), stats);
+			for(uint n=0, nMax=players.length(); n<nMax;n++)
+			{
+				Critter@ player=GetCritter(players[n]);
+				if(valid(player))
+				{
+					GameVar@ quest=GetLocalVar(LVAR_q_salvatore_supply, players[n]);
+					quest=2;
+				}
+			}
+			uint[] vals={map.Id, QUEST_COMPLETED};
+			CreateTimeEvent(__FullSecond+REAL_MINUTE(5), "e_DeleteSalvLoc", vals, false);
+			Critter@ leader=map.GetNpc(ROLE_ENCLAVE_LEADER, FIND_ALL, 0);
+			if(!valid(leader)) return;
+			Item@ radio=map.AddItem(leader.HexX+1, leader.HexY, PID_RADIO, 1);
+			if(valid(radio))
+			{
+				radio.RadioChannel=666;
+				radio.Update();
+				CreateTimeEvent(__FullSecond+REAL_SECOND(1), "e_SulvRadioTalk",1,false);
+				map.SetData(0, 0);
+			}
+		}
+	}
+}
+
+uint e_SulvRadioTalk(uint[]@ vals)
+{
+	if(vals[0]>=5) return 0;
+	RadioMessageMsg(666, TEXTMSG_TEXT, 310+vals[0]);
+	vals[0]++;
+	return REAL_SECOND(3);
+}
+
+uint e_DeleteSalvLoc(uint[]@ vals)
+{
+	Map@ map=GetMap(vals[0]);
+	if(!valid(map)) return 0;
+	GameVar@ frId=GetLocalVar(LLVAR_questloc_frid, map.GetLocation().Id);
+	uint[] stats=GetOrgStats(frId.GetValue());
+	uint[] players=GetPlayersByFraction(frId.GetValue());
+	if(vals[1]==QUEST_FAILED)
+	{
+		if(map.GetCritters(0, FIND_ONLY_PLAYERS|FIND_LIFE_AND_KO, null)>0) return 0;
+		else
+		{
+			stats[FR_SALVATORE_SUPPLY]=3;
+			stats[FR_LAST_MAFIA_QUEST_FAILED]=__FullSecond;
+			SetOrgStats(frId.GetValue(), stats);
+			for(uint n=0, nMax=players.length(); n<nMax;n++)
+			{
+				Critter@ player=GetCritter(players[n]);
+				if(valid(player))
+				{
+					GameVar@ quest=GetLocalVar(LVAR_q_salvatore_supply, players[n]);
+					quest=3;
+				}
+			}
+		}
+	}
+	RemoveFactionLoc(frId.GetValue(), map.GetLocation().Id);
+	DeleteLocation(map.GetLocation().Id);
+	return 0;
+}
+
+void _ChopperCover(Map& map)
+{
+	if(map.GetData(0)==1)
+	{
+		map.PlaySound("heli.wav");
+		uint[] vals={map.Id, 1};
+		CreateTimeEvent(__FullSecond+REAL_SECOND(1), "e_ChopperAttack",  vals, false);
+	}
+}
+
+uint e_ChopperAttack(uint[]@ vals)
+{
+	if(vals[1]>=uint(Random(4,6))) return 0;
+	Map@ map=GetMap(vals[0]);
+	if(valid(map))
+	{
+		Critter@[] players;
+		map.GetCritters(0, FIND_ONLY_PLAYERS|FIND_LIFE_AND_KO, players);
+		if(players.length()<1) return 0;
+		uint8 victim=Random(0, players.length()-1);
+		ExplodeEx(map, players[victim].HexX+Random(0,1), players[victim].HexY+Random(0,1), PID_EXPLODE_ROCKET, 1, Random(75, 200), DAMAGE_EXPLODE, 1, 0);
+	}
+	vals[1]++;
+	return REAL_SECOND(1)/2;
+}
+
+void _SalvFactionArrived(Map& map, Critter& cr)
+{
+	if(map.GetData(0)==0) CreateTimeEvent(__FullSecond+REAL_SECOND(5), "e_StartChopper", map.Id, false);
+}
+
+uint e_StartChopper(uint[]@ values)
+{
+	Map@ map=GetMap(values[0]);
+	if(valid(map))
+	{
+		Critter@ officer=map.GetNpc(ROLE_ENCLAVE_LEADER, FIND_LIFE, 0);
+		if(valid(officer))
+		{
+			officer.SayMsg(SAY_SHOUT_ON_HEAD, TEXTMSG_TEXT, 310);
+		}
+		Item@[] items;
+		map.GetItems(PID_VERTIBIRD, items);
+		for(uint8 n=0, nMax=items.length(); n<nMax; n++)
+		{
+			if(items[n].LockerCondition==LOCKER_NOOPEN)
+			{
+				items[n].Animate(0,7);
+				map.PlaySound("heli.wav");
+				DeleteItem(items[0]);
+				map.SetData(0,1);
+				break;
+			}
+		}
+	}
+	return 0;
+}
+
+void _SalvSupplyNpc(Critter& cr, bool firstTime)
+{
+	uint16[] weaponList={PID_VINDICATOR_MINIGUN, PID_TURBO_PLASMA_RIFLE, PID_YK32_PULSE_PISTOL, PID_PK12_GAUSS_PISTOL, PID_M72_GAUSS_RIFLE};
+	if(firstTime)
+	{
+		if(cr.Param[ST_BODY_TYPE]!=BT_ROBOT)
+		{
+			uint pid=weaponList[Random(0, weaponList.length()-1)];
+			Item@ weapon=cr.AddItem(pid,1);
+			cr.SetFavoriteItem(SLOT_HAND1, pid);
+			Item@ ammo=cr.AddItem(weapon.Proto.Weapon_DefaultAmmoPid, weapon.Proto.Weapon_MaxAmmoCount*Random(4,10));
+			cr.SetFavoriteItem(SLOT_HAND2, ammo.GetProtoId());
+			cr.SkillBase[weapon.Proto.Weapon_Skill_0]=300;
+		}
+		else cr.SkillBase[SK_BIG_GUNS]=300;
+		cr.StatBase[ST_MAX_LIFE]+=Random(250, 400);
+		cr.StatBase[ST_CURRENT_HP]=cr.Stat[ST_MAX_LIFE];
+		cr.StatBase[ST_ACTION_POINTS]+=10;
+		cr.PerkBase[PE_TOUGHNESS]=2;
+		cr.StatBase[ST_PERCEPTION]=15;
+		if(cr.Stat[ST_NPC_ROLE]==ROLE_ENCLAVE_LEADER)
+		{
+			Item@ key=cr.AddItem(PID_KEY,1);
+			key.LockerId=1265;
+			key.Update();
+		}
+	}
+	cr.SetEvent(CRITTER_EVENT_SHOW_CRITTER, "_SalvSupKillem");
+	cr.SetEvent(CRITTER_EVENT_SMTH_ATTACKED, "_SulvSupAssist");
+}
+
+ void _SulvSupAssist(Critter& cr, Critter& fromCr, Critter& attacker)
+{
+	if(attacker.StatBase[ST_NPC_ROLE]==ROLE_ENCLAVE_SUPPORT && fromCr.StatBase[ST_NPC_ROLE]!=ROLE_ENCLAVE_SUPPORT)
+	{
+		cr.AddEnemyInStack(fromCr.Id);
+	}
+	else if(attacker.StatBase[ST_NPC_ROLE]!=ROLE_ENCLAVE_SUPPORT && fromCr.StatBase[ST_NPC_ROLE]==ROLE_ENCLAVE_SUPPORT && !cr.CheckEnemyInStack(attacker.Id))
+	{
+		cr.AddEnemyInStack(attacker.Id);
+	}
+}
+
+void _SalvSupKillem(Critter& cr, Critter& showCr)
+{
+	if(showCr.StatBase[ST_NPC_ROLE]!=ROLE_ENCLAVE_LEADER && showCr.StatBase[ST_NPC_ROLE]!=ROLE_ENCLAVE_SUPPORT && !cr.CheckEnemyInStack(showCr.Id)) cr.AddEnemyInStack(showCr.Id);
+}
+
+void _SalvContInit(Item& item, bool firstTime)
+{
+	if(firstTime)
+	{
+		uint16[] wPids={PID_M72_GAUSS_RIFLE, PID_PK12_GAUSS_PISTOL, PID_YK32_PULSE_PISTOL, PID_PLASMA_PISTOL, PID_GATLING_LASER, PID_PLASMA_RIFLE, PID_TURBO_PLASMA_RIFLE};
+		uint16[] aPids={PID_SMALL_ENERGY_CELL, PID_MICRO_FUSION_CELL, PID_4_7MM_CASELESS, PID_2MM_EC_AMMO, PID_223_FMJ};
+		if(Random(0,1)==1)
+		{
+			for(uint8 n=0, nMax=Random(3, 6);n<=nMax;n++)
+			{
+				item.AddItem(wPids[Random(0, wPids.length()-1)],Random(1,3),0);
+			}
+		}
+		else
+		{
+			for(uint8 n=0, nMax=Random(3, 6);n<=nMax;n++)
+			{
+				item.AddItem(aPids[Random(0, aPids.length()-1)],Random(300,800),0);
+			}
+		}
+	}
+	item.LockerComplexity=300;
+	item.LockerId=1265;
+	item.Update();
+}
+
+// Квест на срыв сделки Райтов
+
+void _GolgothaInit(Map& map, bool firstTime)
+{
+	map.SetEvent(MAP_EVENT_IN_CRITTER, "_GolgInCritter");
+	map.SetEvent(MAP_EVENT_CRITTER_DEAD, "_GoldCritterDead");
+	map.GetLocation().Color=COLOR_RED;
+}
+
+void _GoldCritterDead(Map& map, Critter& cr, Critter@ killer)
+{
+	if(cr.Stat[ST_NPC_ROLE]==WRIGHT_MEMBER && map.GetNpcCount(WRIGHT_MEMBER, FIND_LIFE_AND_KO)==0) SwitchWrightQuest(map, 2);
+}
+
+
+void _GolgInCritter(Map& map, Critter& cr)
+{
+	if(map.GetData(3)==0 && cr.IsPlayer())
+	{
+		uint[] vals={map.Id, 1};
+		map.SetData(3,1);
+		CreateTimeEvent(__FullSecond+REAL_SECOND(10), "e_CaravanCountDown", vals, false);
+	}
+	if(cr.IsPlayer()) cr.SetEvent(CRITTER_EVENT_USE_ITEM, "_GolgUseShovel");
+}
+
+uint e_CaravanCountDown(uint[]@ vals)
+{
+	Map@ map=GetMap(vals[0]);
+	if(!valid(map)) return 0;
+	GameVar@ frId=GetLocalVar(LLVAR_questloc_frid, map.GetLocation().Id);
+	uint[] players=GetPlayersByFraction(frId.GetValue());
+	for(uint n=0, nMax=players.length();n<nMax; n++)
+	{
+		Critter@ player=GetCritter(players[n]);
+		if(valid(player))
+		{
+			player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 324+vals[1]);
+		}
+	}
+	if(vals[1]==5)
+	{
+		if(map.GetData(2)==0)
+		{
+			SwitchWrightQuest(map, 5);
+		}
+		WrightSpawnCaravan(map);
+		return 0;
+	}
+	vals[1]++;
+	return 1800;
+}
+
+uint e_DeleteLoc(uint[]@ vals)
+{
+	Map@ map=GetMap(vals[0]);
+	GameVar@ frId=GetLocalVar(LLVAR_questloc_frid, map.GetLocation().Id);
+	RemoveFactionLoc(frId.GetValue(), map.GetLocation().Id);
+	DeleteLocation(map.GetLocation().Id);
+	return 0;
+}
+
+void WrightSpawnCaravan(Map& map)
+{
+	map.SetData(4,1);
+	uint16[] coords={0,0};
+	map.GetEntireCoords(1001, 0, coords[0], coords[1]);
+	int[] params={ST_NPC_ROLE, WRIGHT_CARAVAN, ST_DIALOG_ID, DIALOG_golg_caravan};
+	int[] params2={ST_NPC_ROLE, WRIGHT_CARAVAN};
+	int[] items={PID_PK12_GAUSS_PISTOL, 1, SLOT_HAND1, PID_2MM_EC_AMMO, 40, SLOT_HAND2};
+	int[] items2={PID_AVENGER_MINIGUN, 1, SLOT_HAND1, PID_5MM_JHP,400,SLOT_HAND2};
+	Critter@ npc=map.AddNpc(NPC_PID_MasterMerchantMale, coords[0], coords[1], 2,params,items,"nr_quests@_WrightTraderInit");
+	map.GetEntireCoords(1002, 0, coords[0], coords[1]);
+	@npc=map.AddNpc(NPC_PID_Brahmin, coords[0], coords[1], 2,params,null,null);
+	for(uint8 n=0, nMax=map.CountEntire(1000);n<nMax;n++)
+	{
+		map.GetEntireCoords(1000, n, coords[0], coords[1]);
+		@npc=map.AddNpc(NPC_PID_ToughGuardMale, coords[0], coords[1],2,params2,items2,"nr_quests@_WrightCaravanInit");
+	}
+}
+
+void _WrightCaravanInit(Critter& cr, bool firstTime)
+{
+	cr.SetFavoriteItem(SLOT_HAND1, PID_AVENGER_MINIGUN);
+	cr.SetFavoriteItem(SLOT_HAND2, PID_5MM_JHP);
+	cr.SkillBase[SK_BIG_GUNS]=300;
+	cr.StatBase[ST_MAX_LIFE]+=200;
+	cr.StatBase[ST_CURRENT_HP]=cr.Stat[ST_MAX_LIFE];
+	cr.StatBase[ST_ACTION_POINTS]+=15;
+	cr.PerkBase[PE_TOUGHNESS]=3;
+	cr.StatBase[ST_PERCEPTION]=15;
+	cr.SetEvent(CRITTER_EVENT_SHOW_CRITTER, "_WrightCaravanAttackCheck");
+	cr.SetEvent(CRITTER_EVENT_SMTH_USE_ITEM, "_WrightCheckPoisoning");
+	cr.SetEvent(CRITTER_EVENT_ATTACKED, "_WrightAssist");
+}
+
+void _WrightTraderInit(Critter& cr, bool firstTime)
+{
+	cr.SetFavoriteItem(SLOT_HAND1, PID_PK12_GAUSS_PISTOL);
+	cr.SetFavoriteItem(SLOT_HAND2, PID_2MM_EC_AMMO);
+	cr.SkillBase[SK_SMALL_GUNS]=300;
+	cr.StatBase[ST_MAX_LIFE]+=200;
+	cr.StatBase[ST_CURRENT_HP]=cr.Stat[ST_MAX_LIFE];
+	cr.StatBase[ST_ACTION_POINTS]+=15;
+	cr.PerkBase[PE_TOUGHNESS]=3;
+	cr.StatBase[ST_PERCEPTION]=15;
+	cr.SetEvent(CRITTER_EVENT_IDLE, "_WrightTraderTalk");
+	cr.SetEvent(CRITTER_EVENT_SHOW_CRITTER, "_WrightCaravanAttackCheck");
+	cr.SetEvent(CRITTER_EVENT_SMTH_USE_ITEM, "_WrightCheckPoisoning");
+	cr.SetEvent(CRITTER_EVENT_ATTACKED, "_WrightAssist");
+	Map@ map=cr.GetMap();
+	if(map.GetData(2)==0) cr.SayMsg(SAY_SHOUT_ON_HEAD, TEXTMSG_TEXT, 331);
+}
+void _WrightCheckPoisoning(Critter& cr, Critter& fromCr, Item& item, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+	if(item.GetProtoId()==PID_HYPO_POISON && valid(onItem))
+	{
+		if(onItem.GetProtoId()==PID_WAGON_GREY)
+		{
+			AddAttackPlane(cr, 1, fromCr.Id, false);
+			if(cr.GetProtoId()==NPC_PID_MasterMerchantMale) cr.SayMsg(SAY_SHOUT_ON_HEAD, TEXTMSG_TEXT, 331);
+			SwitchWrightQuest(cr.GetMap(), 5);
+		}
+	}
+}
+
+
+void _WrightCaravanAttackCheck(Critter& cr, Critter& showCr)
+{
+	Map@ map=cr.GetMap();
+	if(map.GetData(2)==0 && showCr.Stat[ST_NPC_ROLE]!=WRIGHT_CARAVAN && showCr.Stat[ST_NPC_ROLE]!=WRIGHT_MEMBER) AddAttackPlane(cr, 1, showCr.Id, false);
+}
+
+void _WrightTraderTalk(Critter& cr)
+{
+	Map@ map=cr.GetMap();
+	if(map.GetData(2)==1 && map.GetData(5)==0) cr.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_TEXT, Random(332, 335));
+}
+
+bool _GolgUseShovel(Critter& cr, Item& item, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+	if(!valid(onCritter) || item.GetProtoId()!=PID_SHOVEL) return false;
+	if(!onCritter.IsDead()) return false;
+	if(onCritter.Stat[ST_NPC_ROLE]==WRIGHT_MEMBER)
+	{
+		Map@ map=cr.GetMap();
+		if(map.GetData(4)>0)
+		{
+			cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 336);
+			return true;
+		}
+		Item@ grave=GetFreeGrave(map);
+		if(!valid(grave))
+		{
+			cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 339);
+			return true;
+		}
+		UNSETFLAG(grave.LockerCondition, LOCKER_ISOPEN);
+		Item@[] inv;
+		onCritter.GetItems(SLOT_HAND1, inv);
+		onCritter.GetItems(SLOT_HAND2, inv);
+		onCritter.GetItems(SLOT_INV, inv);
+		MoveItems(inv, grave,0);
+		grave.Update();
+		DeleteNpc(onCritter);
+		cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 330);
+		if(map.GetNpcCount(WRIGHT_MEMBER, FIND_ALL)==1)
+		{
+			map.SetData(2,1);
+			cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 337);
+			if(map.GetData(1)>0) SwitchWrightQuest(map, 3);
+		}
+		return true;
+	}
+	return false;
+}
+
+Item@ GetFreeGrave(Map& map)
+{
+	Item@[] graves;
+	map.GetItems(PID_GRAVESITE_1, graves);
+	map.GetItems(PID_GRAVESITE_2, graves);
+	map.GetItems(PID_GRAVESITE_3, graves);
+	map.GetItems(PID_GRAVESITE_4, graves);
+	map.GetItems(PID_LF_GRAVESITE_1, graves);
+	map.GetItems(PID_LF_GRAVESITE_2, graves);
+	map.GetItems(PID_LF_GRAVESITE_3, graves);
+	for(uint8 n=0, nMax=graves.length();n<nMax;n++)
+	{
+		if(FLAG(graves[n].LockerCondition, LOCKER_ISOPEN)) return graves[n];
+	}
+	return null;
+}
+
+void SwitchWrightQuest(Map& map, uint8 val)
+{
+	GameVar@ frId=GetLocalVar(LLVAR_questloc_frid, map.GetLocation().Id);
+	uint[] stats=GetOrgStats(frId.GetValue());
+	if(stats[FR_WRIGHT_SUPPLY]==val) return;
+	stats[FR_WRIGHT_SUPPLY]=val;
+	SetOrgStats(frId.GetValue(), stats);
+	uint[] players=GetPlayersByFraction(frId.GetValue());
+	for(uint n=0, nMax=players.length(); n<nMax;n++)
+	{
+		Critter@ cr=GetCritter(players[n]);
+		if(valid(cr))
+		{
+			GameVar@ quest=GetLocalVar(LVAR_q_wright_supply, players[n]);
+			quest=val;
+		}
+	}
+	if(val==5)
+	{
+		stats[FR_LAST_MAFIA_QUEST_FAILED]=__FullSecond;
+		CreateTimeEvent(__FullSecond+REAL_MINUTE(5), "e_DeleteLoc", map.Id, false);
+		map.SetData(5,1);
+	}
+	else if(val==4)
+	{
+		map.SetData(5,1);
+		CreateTimeEvent(__FullSecond+REAL_MINUTE(5), "e_DeleteLoc", map.Id, false);
+		CreateTimeEvent(__FullSecond+REAL_SECOND(10), "e_DeleteWrightCaravan", map.Id, false);
+	}
+}
+
+uint e_DeleteWrightCaravan(uint[]@ vals)
+{
+	Map@ map=GetMap(vals[0]);
+	for(uint n=0, nMax=map.GetNpcCount(WRIGHT_CARAVAN, FIND_LIFE_AND_KO);n<nMax;n++)
+	{
+		Critter@ npc=map.GetNpc(WRIGHT_CARAVAN, FIND_LIFE_AND_KO, n);
+		if(!npc.IsNoPlanes()) return 0;
+		DeleteNpc(npc);
+	}
+	Item@[] wagon;
+	map.GetItems(PID_WAGON_GREY, wagon);
+	if(wagon.length()>0) DeleteItem(wagon[0]);
+	return 0;
+}
+
+void _WrightInit(Critter& cr, bool firstTime)
+{
+	cr.ShowCritterDist1=20;
+	cr.ShowCritterDist2=10;
+	cr.SetEvent(CRITTER_EVENT_SHOW_CRITTER_1, "_WrightWarning");
+	cr.SetEvent(CRITTER_EVENT_SHOW_CRITTER_2, "_WrightAttack");
+	cr.SetEvent(CRITTER_EVENT_ATTACKED, "_WrightAssist");
+	cr.SkillBase[SK_SMALL_GUNS]=300;
+	cr.StatBase[ST_PERCEPTION]=15;
+	cr.ModeBase[MODE_UNLIMITED_AMMO]=1;
+	cr.StatBase[ST_MAX_LIFE]+=1500;
+	cr.StatBase[ST_CURRENT_HP]=cr.Stat[ST_MAX_LIFE];
+	cr.PerkBase[PE_TOUGHNESS]=3;
+}
+
+void _WrightWarning(Critter& cr, Critter& showCr)
+{
+	if(showCr.Stat[ST_NPC_ROLE]==WRIGHT_MEMBER || showCr.Stat[ST_NPC_ROLE]==WRIGHT_CARAVAN || showCr.Stat[ST_NPC_ROLE]==WRIGHT_DOG) return;
+	Map@ map=cr.GetMap();
+	if(map.GetData(0)==0)
+	{
+		cr.SayMsg(SAY_SHOUT_ON_HEAD, TEXTMSG_TEXT, 320);
+		map.SetData(0,1);
+	}
+}
+
+void _WrightAttack(Critter& cr, Critter& showCr)
+{
+	if(showCr.Stat[ST_NPC_ROLE]==WRIGHT_MEMBER || showCr.Stat[ST_NPC_ROLE]==WRIGHT_CARAVAN ||  showCr.Stat[ST_NPC_ROLE]==WRIGHT_DOG) return;
+	Map@ map=cr.GetMap();
+	if(map.GetData(0)<2)
+	{
+		cr.SayMsg(SAY_SHOUT_ON_HEAD, TEXTMSG_TEXT, 321);
+		map.SetData(0,2);
+		for(uint8 n=0, nMax=map.GetNpcCount(WRIGHT_MEMBER, FIND_LIFE_AND_KO);n<nMax;n++)
+		{
+			Critter@ sup=map.GetNpc(WRIGHT_MEMBER, FIND_LIFE_AND_KO, n);
+			if(valid(sup)) AddAttackPlane(sup, 1, showCr.Id, true);
+		}
+		for(uint8 n=0, nMax=map.GetNpcCount(WRIGHT_DOG, FIND_LIFE_AND_KO);n<nMax;n++)
+		{
+			Critter@ sup=map.GetNpc(WRIGHT_DOG, FIND_LIFE_AND_KO, n);
+			if(valid(sup)) AddAttackPlane(sup, 1, showCr.Id, true);
+		}
+	}
+}
+
+void _WrDogInit(Critter& cr, bool firstTime)
+{
+	cr.SetEvent(CRITTER_EVENT_ATTACKED, "_WrightAssist");
+	cr.SkillBase[SK_UNARMED]=300;
+	cr.StatBase[ST_PERCEPTION]=15;
+	cr.StatBase[ST_MAX_LIFE]+=200;
+	cr.StatBase[ST_CURRENT_HP]=cr.Stat[ST_MAX_LIFE];
+	cr.PerkBase[PE_TOUGHNESS]=1;
+}
+
+bool _WrightAssist(Critter& cr, Critter& attacker)
+{
+	if(attacker.Stat[ST_NPC_ROLE]==WRIGHT_MEMBER || attacker.Stat[ST_NPC_ROLE]==WRIGHT_CARAVAN) return false;
+	Map@ map=cr.GetMap();
+	if(cr.Stat[ST_NPC_ROLE]==WRIGHT_CARAVAN) SwitchWrightQuest(map, 5);
+	for(uint8 n=0, nMax=map.GetNpcCount(WRIGHT_MEMBER, FIND_LIFE_AND_KO);n<nMax;n++)
+	{
+		Critter@ sup=map.GetNpc(WRIGHT_MEMBER, FIND_LIFE_AND_KO, n);
+		if(valid(sup))
+		{
+			if(sup.IsNoPlanes()) AddAttackPlane(sup, 1, attacker.Id, true);
+			if(!sup.CheckEnemyInStack(attacker.Id)) sup.AddEnemyInStack(attacker.Id);
+		}
+	}
+	for(uint8 n=0, nMax=map.GetNpcCount(WRIGHT_CARAVAN, FIND_LIFE_AND_KO);n<nMax;n++)
+	{
+		Critter@ sup=map.GetNpc(WRIGHT_CARAVAN, FIND_LIFE_AND_KO, n);
+		if(valid(sup))
+		{
+			if(sup.IsNoPlanes()) AddAttackPlane(sup, 1, attacker.Id, true);
+			if(!sup.CheckEnemyInStack(attacker.Id)) sup.AddEnemyInStack(attacker.Id);
+		}
+	}
+	for(uint8 n=0, nMax=map.GetNpcCount(WRIGHT_DOG, FIND_LIFE_AND_KO);n<nMax;n++)
+	{
+		Critter@ sup=map.GetNpc(WRIGHT_DOG, FIND_LIFE_AND_KO, n);
+		if(valid(sup)) AddAttackPlane(sup, 1, attacker.Id, true);
+	}
+	return false;
+}
+
+void _WrightSupInit(Critter& cr, bool firstTime)
+{
+	uint16[] weaponList={PID_VINDICATOR_MINIGUN, PID_TURBO_PLASMA_RIFLE, PID_M72_GAUSS_RIFLE};
+	if(firstTime)
+	{
+		uint pid=weaponList[Random(0, weaponList.length()-1)];
+		Item@ weapon=cr.AddItem(pid,1);
+		cr.SetFavoriteItem(SLOT_HAND1, pid);
+		Item@ ammo=cr.AddItem(weapon.Proto.Weapon_DefaultAmmoPid, weapon.Proto.Weapon_MaxAmmoCount*Random(4,10));
+		cr.SetFavoriteItem(SLOT_HAND2, ammo.GetProtoId());
+		cr.SkillBase[weapon.Proto.Weapon_Skill_0]=300;
+		cr.StatBase[ST_MAX_LIFE]+=Random(1500, 2000);
+		cr.StatBase[ST_CURRENT_HP]=cr.Stat[ST_MAX_LIFE];
+		cr.StatBase[ST_ACTION_POINTS]+=15;
+		cr.PerkBase[PE_TOUGHNESS]=4;
+		cr.StatBase[ST_PERCEPTION]=15;
+	}
+	cr.SetEvent(CRITTER_EVENT_ATTACKED, "_WrightAssist");
+}
+
+void _AlcoInit(Item& item, bool firstTime)
+{
+	item.SetEvent(ITEM_EVENT_SKILL, "_UseAlco");
+	item.SetEvent(ITEM_EVENT_USE_ON_ME, "_UseOnAlco");
+}
+
+bool _UseAlco(Item& item, Critter& crit, int skill)
+{
+	if(skill==SKILL_PICK_ON_GROUND || skill==SK_STEAL)
+	{
+		Map@ map=crit.GetMap();
+		if(CheckWrightQuestState(map)==5 && map.GetData(1)==0) return false;
+		if(map.GetData(1)==0) crit.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 322);
+		else crit.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 323);
+	}
+	return true;
+}
+
+bool _UseOnAlco(Item& item, Critter& crit, Item@ usedItem)
+{
+	if(valid(usedItem))
+	{
+		if(usedItem.GetProtoId()==PID_HYPO_POISON)
+		{
+			Map@ map=crit.GetMap();
+			if(CheckWrightQuestState(map)>3)
+			{
+				crit.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 338);
+				return true;
+			}
+			map.SetData(1,1);
+			crit.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 324);
+			DeleteItem(usedItem);
+			if(map.GetData(4)==1)
+			{
+				for(uint n=0, nMax=map.GetNpcCount(WRIGHT_CARAVAN, FIND_LIFE_AND_KO);n<nMax;n++)
+				{
+					if(crit.IsSeenBy(map.GetNpc(WRIGHT_CARAVAN, FIND_LIFE_AND_KO, 0))) return false;
+				}
+			}
+			if(map.GetData(2)>0)
+			{
+				SwitchWrightQuest(map, 3);
+			}
+			return true;
+		}
+	}
+	return false;
+}
+
+uint CheckWrightQuestState(Map& map)
+{
+	GameVar@ frId=GetLocalVar(LLVAR_questloc_frid, map.GetLocation().Id);
+	uint[] stats=GetOrgStats(frId.GetValue());
+	return stats[FR_WRIGHT_SUPPLY];
+}
+
+// Диалог с Сальваторе
+uint r_TryWorkForSalv(Critter& master, Critter@ slave)
+{
+	if(d_OrgIsGood(master, slave))
+	{
+		if(master.Param[ST_FR_LEADERSHIP]>0) return 10;
+		else return 12;
+	}
+	else return 3;
+}
+
+void r_GetMordinoQuestSalv(Critter& master, Critter@ slave)
+{
+	uint locId=CreateLocation(LOCATION_Stables, 905, 905+Random(50, 75), null);
+	GameVar@ isQuest=GetLocalVar(LLVAR_is_quest_loc, locId);
+	isQuest=1;
+	GameVar@ frId=GetLocalVar(LLVAR_questloc_frid, locId);
+	AddFactionLoc(uint(master.Param[ST_FRACTION]), locId);
+	frId=master.Param[ST_FRACTION];
+	uint[] players=GetPlayersByFraction(master.Param[ST_FRACTION]);
+	for(uint n=0, nMax=players.length(); n<nMax; n++)
+	{
+		Critter@ player=GetCritter(players[n]);
+		if(valid(player))
+		{
+			GameVar@ quest=GetLocalVar(LVAR_q_kill_miron, players[n]);
+			quest=1;
+			player.ParamBase[KARMA_MAN_SALVATORE]=1;
+			player.SetKnownLoc(true, locId);
+		}
+	}
+	master.AddItem(PID_HYPO_POISON, 5);
+	uint[] stats=GetOrgStats(master.Param[ST_FRACTION]);
+	stats[FR_NR_FAMILY]=2;
+	stats[FR_KILL_MIRON]=1;
+	SetOrgStats(master.Param[ST_FRACTION], stats);
+}
+
+// Квест на убийство Мирона
+
+void _StablesInit(Map& map, bool firstTime)
+{
+	map.GetLocation().Color=COLOR_RED;
+	map.SetEvent(MAP_EVENT_CRITTER_DEAD, "_StablesDead");
+	map.SetEvent(MAP_EVENT_OUT_CRITTER, "_StablesRunAway");
+}
+
+void _StablesRunAway(Map& map, Critter& cr)
+{
+	Location@ loc=map.GetLocation();
+	if(!valid(loc)) return;
+	if(loc.GetMapByIndex(0).GetCritters(0, FIND_ONLY_PLAYERS|FIND_LIFE_AND_KO,null) + loc.GetMapByIndex(1).GetCritters(0, FIND_ONLY_PLAYERS|FIND_LIFE_AND_KO,null) == 0)
+	{
+		if(valid(loc.GetMapByIndex(1).GetNpc(ROLE_MIRON, FIND_LIFE_AND_KO, 0)))
+		{
+			uint[] vals={map.Id, QUEST_FAILED};
+			CreateTimeEvent(__FullSecond+REAL_SECOND(30), "e_DeleteStables", vals, false);
+		}
+	}
+}
+
+void _StablesDead(Map& map, Critter& cr, Critter@ killer)
+{
+	Location@ loc=map.GetLocation();
+	if(cr.IsNpc())
+	{
+		if(cr.Param[ST_NPC_ROLE]==ROLE_MIRON)
+		{
+			GameVar@ frId=GetLocalVar(LLVAR_questloc_frid, map.GetLocation().Id);
+			uint[] players=GetPlayersByFraction(frId.GetValue());
+			for(uint n=0, nMax=players.length(); n<nMax;n++)
+			{
+				Critter@ player=GetCritter(players[n]);
+				if(valid(player))
+				{
+					GameVar@ quest=GetLocalVar(LVAR_q_kill_miron, players[n]);
+					player.StatBase[ST_EXPERIENCE]+=10000;
+					quest=2;
+				}
+			}
+			uint[] stats=GetOrgStats(frId.GetValue());
+			stats[FR_KILL_MIRON]=2;
+			SetOrgStats(frId.GetValue(), stats);
+			uint[] vals={map.Id, QUEST_COMPLETED};
+			CreateTimeEvent(__FullSecond+REAL_MINUTE(5), "e_DeleteStables", vals, false);
+		}
+		return;
+	}
+	if(loc.GetMapByIndex(0).GetCritters(0, FIND_ONLY_PLAYERS|FIND_LIFE_AND_KO,null) + loc.GetMapByIndex(1).GetCritters(0, FIND_ONLY_PLAYERS|FIND_LIFE_AND_KO,null) == 0)
+	{
+		if(valid(loc.GetMapByIndex(1).GetNpc(ROLE_MIRON, FIND_LIFE_AND_KO, 0)))
+		{
+			uint[] vals={map.Id, QUEST_FAILED};
+			CreateTimeEvent(__FullSecond+REAL_SECOND(30), "e_DeleteStables", vals, false);
+		}
+	}
+}
+
+uint e_DeleteStables(uint[]@ vals)
+{
+	Map@ map=GetMap(vals[0]);
+	if(!valid(map)) return 0;
+	GameVar@ frId=GetLocalVar(LLVAR_questloc_frid, map.GetLocation().Id);
+	uint[] stats=GetOrgStats(frId.GetValue());
+	uint[] players=GetPlayersByFraction(frId.GetValue());
+	if(vals[1]==QUEST_FAILED)
+	{
+		if(map.GetLocation().GetMapByIndex(0).GetCritters(0, FIND_ONLY_PLAYERS|FIND_LIFE_AND_KO, null)+map.GetLocation().GetMapByIndex(1).GetCritters(0, FIND_ONLY_PLAYERS|FIND_LIFE_AND_KO, null)>0) return 0;
+		else
+		{
+			stats[FR_KILL_MIRON]=3;
+			stats[FR_LAST_MAFIA_QUEST_FAILED]=__FullSecond;
+			SetOrgStats(frId.GetValue(), stats);
+			for(uint n=0, nMax=players.length(); n<nMax;n++)
+			{
+				Critter@ player=GetCritter(players[n]);
+				if(valid(player))
+				{
+					GameVar@ quest=GetLocalVar(LVAR_q_kill_miron, players[n]);
+					quest=3;
+				}
+			}
+		}
+	}
+	RemoveFactionLoc(frId.GetValue(), map.GetLocation().Id);
+	DeleteLocation(map.GetLocation().Id);
+	return 0;
+}
+
+
+void _MordinoManInit(Critter& cr, bool firstTime)
+{
+	if(firstTime)
+	{
+		Item@ weapon=cr.GetItem(0, SLOT_HAND1);
+		if(!valid(weapon))
+		{
+			uint16[] weaponList={PID_VINDICATOR_MINIGUN, PID_TURBO_PLASMA_RIFLE, PID_M72_GAUSS_RIFLE};
+			@weapon=cr.AddItem(weaponList[Random(0,weaponList.length()-1)], 1);
+		}
+		cr.SetFavoriteItem(SLOT_HAND1, weapon.GetProtoId());
+		cr.SkillBase[weapon.Proto.Weapon_Skill_0]=300;
+		Item@ ammo=cr.AddItem(weapon.Proto.Weapon_DefaultAmmoPid, weapon.Proto.Weapon_MaxAmmoCount*Random(5,15));
+		cr.SetFavoriteItem(SLOT_HAND2, ammo.GetProtoId());
+		cr.StatBase[ST_MAX_LIFE]+=Random(500, 1000);
+		cr.StatBase[ST_CURRENT_HP]=cr.Stat[ST_MAX_LIFE];
+		cr.StatBase[ST_ACTION_POINTS]+=15;
+		cr.PerkBase[PE_TOUGHNESS]=4;
+		cr.StatBase[ST_PERCEPTION]=15;
+	}
+	cr.SetEvent(CRITTER_EVENT_SHOW_CRITTER, "_MordinoSeeCr");
+}
+
+void _MordinoSeeCr(Critter& cr, Critter& showCr)
+{
+	if(showCr.Param[ST_NPC_ROLE]!=MORDINO_MAN && showCr.Param[ST_NPC_ROLE]!=ROLE_MIRON)
+	{
+		NpcPlane@ plane=cr.GetCurPlane();
+		if(!valid(plane)) AddAttackPlane(cr, 1, showCr.Id, true);
+		else
+		{
+			AddAttackPlane(cr, plane.Priority+1, showCr.Id, true);
+			cr.AddEnemyInStack(showCr.Id);
+		}
+	}
+}

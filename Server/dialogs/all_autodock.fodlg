@@ -1,0 +1,45 @@
+[comment]
+
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 @
+2 2000 None 0 #
+2 2010 D _param p DAMAGE_RIGHT_ARM > 0 D or D _param p DAMAGE_LEFT_ARM > 0 D or D _param p DAMAGE_RIGHT_LEG > 0 D or D _param p DAMAGE_LEFT_LEG > 0 R _param p DAMAGE_RIGHT_ARM = 0 R _param p DAMAGE_LEFT_ARM = 0 R _param p DAMAGE_RIGHT_LEG = 0 R _param p DAMAGE_LEFT_LEG = 0 #
+2 2020 D _script dialog@d_IsToHeal 0  R _script dialog@r_ToHeal 0  #
+2 2030 D _param p DAMAGE_EYE > 0 R _param p DAMAGE_EYE = 0 #
+2 2040 D _param p DAMAGE_POISONED > 0 D or D _param p ST_POISONING_LEVEL > 0 R _param p DAMAGE_POISONED = 0 R _param p ST_POISONING_LEVEL = 0 #
+2 2050 D _param p DAMAGE_RADIATED > 0 D or D _param p ST_RADIATION_LEVEL > 0 R _param p DAMAGE_RADIATED = 0 R _param p ST_RADIATION_LEVEL = 0 #
+0 2060 &
+
+[russ]
+{100}{}{none}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{}
+{2000}{}{Инициализация и проверка систем..
+Сканирование пациента..
+Что вам угодно?}
+{2010}{}{Излечить переломы.}
+{2020}{}{Восстановить повреждения.}
+{2030}{}{Вылечить глаза.}
+{2040}{}{Очистить организм от яда.}
+{2050}{}{Деактивировать радиационное облучение.}
+{2060}{}{Отключиться.}
+
+[engl]
+{100}{}{none}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{}
+{2000}{}{Initialization and verification systems ..
+Scanning the patient ..
+What do you want?}
+{2010}{}{Heal broken bones.}
+{2020}{}{restore damage.}
+{2030}{}{Cure eyes.}
+{2040}{}{cleanse the body of poison.}
+{2050}{}{Deactivate radiation exposure.}
+{2060}{}{Disconnect.}

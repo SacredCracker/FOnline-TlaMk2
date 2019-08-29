@@ -1,0 +1,209 @@
+#include "hell_h.fos"
+#include "_macros.fos"
+
+#define STR_NEED_REST           (2201)
+#define STR_NOWAY_TO_CLAWS      (3045)
+#define STR_REPAIR_FAIL         (3046)
+#define STR_REPAIR_OK           (3047)
+
+
+#define ENTER_HEX1              (0)// Номера гексов входа на карту
+#define ENTER_HEX2				(99)
+
+#define TEAM_CLAWS              (8)
+#define CLAW_DIALOG_DIST        (6) // Дистанция, на которой коготь начинает диалог
+
+#define HEX_DEADLY_TRANSIT      (102)
+
+// Квест с когтями смерти
+// 1. s_TryRepair - Ремонт генератора, функция  для сценери
+// 2. s_TransitToHellBurrow - телепорт на карту к когтям, для сценери
+// 3. _TClawInit - скрипт для когтя, который будет говорить с игроком
+// 4. _ClawInit - скрипт для неговорящего когтя
+
+
+import bool TransitToMap(Critter& cr, int locPid, int mapIndex, int entranceNum) from "stdlib";
+
+// Попытка починить реактор
+// используется переменная LVAR_timeout9 для сохранения таймаута на попытку починить для данного игрока
+bool s_TryRepair(Critter& player, Scenery& scenery, int skill, Item@ item)
+{
+	if(skill!=SK_REPAIR) return true;
+
+	GameVar @ qVar = GetLocalVar(LVAR_q_hell_reactor, player.Id);
+	if(!valid(qVar)) return true;
+
+	GameVar @ status = GetLocalVar(LVAR_hell_reactor_power, player.Id);
+	if(!valid(status)) return true;
+	if(status.GetValue()!=0) return true;
+
+	if(qVar.GetValue()!=2&&qVar.GetValue()!=3) return true;
+
+	if(!_CheckTimeOut(LVAR_timeout9, player)||player.Timeout[TO_SK_REPAIR]>0)
+	{
+			// critter need a rest
+		player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_NEED_REST);
+		return true;
+
+	}else{
+
+		_SetTimeOut(LVAR_timeout9, player, REACTOR_REPAIR_TIMEOUT);
+		player.TimeoutBase[TO_SK_REPAIR] = __FullSecond+REACTOR_REPAIR_TIMEOUT;
+
+		if(_CheckSkill(player, skill, -10)&&status.GetValue()==0)
+		{
+			status = 1;
+			player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_REPAIR_OK);
+			player.StatBase[ST_EXPERIENCE] += 1000;
+		}else{
+
+			player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_REPAIR_FAIL);
+		}
+	}
+	return true;
+}
+
+// Перенос игрока на карту hell_burrow
+bool s_TransitToHellBurrow(Critter& player, Scenery& scenery, int skill, Item@ item)
+{
+	// В нору игрока пропускают только при LVAR_q_hell_reactor = 2..3
+	if(skill>-1) return true;
+	GameVar @ qVar = GetLocalVar(LVAR_q_hell_reactor, player.Id);
+	GameVar @ status = GetLocalVar(LVAR_hell_reactor_dclaws, player.Id);
+	if(!valid(qVar)||!valid(status)) return true;
+
+	if(qVar.GetValue()!=2&&qVar.GetValue()!=3)
+	{
+		player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_NOWAY_TO_CLAWS);
+		return true;
+	}
+	if(status.GetValue()!=0)
+	{
+		player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_NOWAY_TO_CLAWS);
+		return true;
+	}
+	TransitToMap(player, LOCATION_ReplicationHell, MAP_INDEX_hell_burrow, (Random(0,1)==1?ENTER_HEX1:ENTER_HEX2));
+	return true;
+}
+
+// Когти смерти в пещере
+
+// Скрипт для когтей смерти, используется событие смерти для подсчета оставшихся когтей в живых и изменении статуса у игроков на карте
+// Говорящий коготь
+void _TClawInit(Critter & cr, bool firstTime)
+{
+	cr.StatBase[ST_NPC_ROLE] = TEAM_CLAWS;
+	cr.ShowCritterDist1 = CLAW_DIALOG_DIST;
+	cr.StatBase[ST_TALK_DISTANCE] = CLAW_DIALOG_DIST;
+	cr.SetEvent(CRITTER_EVENT_DEAD,"_ClawDead");
+	cr.SetEvent(CRITTER_EVENT_SHOW_CRITTER_1, "_ClawShowCritter1");
+}
+// Коготь неговорящий
+void _ClawInit(Critter & cr, bool firstTime)
+{
+	cr.StatBase[ST_NPC_ROLE] = TEAM_CLAWS;
+	cr.SetEvent(CRITTER_EVENT_DEAD,"_ClawDead");
+}
+
+void _ClawShowCritter1(Critter& cr, Critter& showCrit)
+{
+	if(showCrit.IsNpc()) return;
+	showCrit.Wait(0);
+	RunDialog(showCrit,cr,false);
+
+}
+void _ClawDead(Critter& cr, Critter@ killer)
+{
+	Map @map = cr.GetMap();
+	if(!valid(map)) return;
+	Critter @[] npcs;
+	if(map.GetCritters(0,FIND_LIFE|FIND_ONLY_NPC,npcs)>0)
+	{
+		for(uint j = 0; j<npcs.length(); j++)
+		{
+			if(npcs[j].StatBase[ST_NPC_ROLE]==TEAM_CLAWS) return;
+		}
+	}
+
+	Critter @[] players;
+	if(map.GetCritters(0,FIND_LIFE|FIND_ONLY_PLAYERS,players)>0)
+	{
+		for(uint i=0;i<players.length(); i++)
+		{
+			if(players[i].IsPlayer())
+			{
+				GameVar @ status = GetLocalVar(LVAR_hell_reactor_dclaws, players[i].Id);
+				if(!valid(status)) continue;
+
+				if(status.GetValue()==0)
+				{
+					status = 1;
+				}
+			}
+		}
+	}
+}
+// Телепорт на карту hell_level4 + смерть персонажа
+bool s_DeadlyTransitToLvl4(Critter& player, Scenery& scenery, int skill, Item@ item)
+{
+	if(skill>-1) return true;
+	if(TransitToMap(player, LOCATION_ReplicationHell, MAP_INDEX_hell_level4, HEX_DEADLY_TRANSIT))
+	{
+		 player.ToDead(ANIM2_DEAD_FUSED,null);
+	}
+	return true;
+}
+
+
+// Проверка таймаута
+// varNum - номер переменной, в которой хранится таймаут
+bool _CheckTimeOut(uint varNum, Critter & cr)
+{
+	GameVar @ to = GetLocalVar(varNum, cr.Id);
+	if(!valid(to)) return false;
+
+	return (uint(to.GetValue())<__FullSecond);
+}
+// Установка таймаута
+void _SetTimeOut(uint varNum, Critter& cr, uint time)
+{
+	GameVar @ to = GetLocalVar(varNum, cr.Id);
+	if(!valid(to)) return;
+
+	to = __FullSecond+time;
+}
+
+// возрождение когтей смерти, раз в 30 сек, если они мертвы и на карте нет ниодного игрока
+void _MapBurrowInit(Map & map, bool firstTime)
+{
+	map.SetLoopTime(4, 30000);
+	map.SetEvent(MAP_EVENT_LOOP_4,"_MapBurrowLoop4");
+}
+
+void _MapBurrowLoop4(Map& map)
+{
+	if(map.GetCritters(0, FIND_LIFE|FIND_ONLY_PLAYERS, null)>0) return;
+
+	Critter @[] critters;
+
+	if(map.GetCritters(0, FIND_DEAD|FIND_ONLY_NPC, critters)>0)
+	{
+		for(uint i=0; i<critters.length(); i++)
+		{
+			critters[i].ToLife();
+		}
+	}
+}
+
+void _GurthrualInit(Critter& npc, bool firstTime)
+{
+	npc.StatBase[ST_TALK_DISTANCE] = 10;
+	npc.ModeBase[MODE_NO_LOOT] = 0;
+	npc.ModeBase[MODE_NO_STEAL] = 0;
+	npc.ModeBase[MODE_NO_DROP] = 0;
+	npc.PerkBase[PE_MORE_CRITICALS] = 3;
+	npc.PerkBase[PE_BETTER_CRITICALS] = 1;
+	npc.SkillBase[SK_UNARMED] += 150;
+	npc.StatBase[ST_ACTION_POINTS] += 6;
+	npc.StatBase[ST_KILL_EXPERIENCE] = 5000;
+}

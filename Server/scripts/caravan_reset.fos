@@ -1,0 +1,154 @@
+
+// ќтмывание провалов квестов на сопровождение каравана
+// пока дл€ данного квеста caravanResetVar>0 игрок может откатить караванную переменную в ноль, заплатив условному "боссу караванов"
+// –асчет стоимости отмывки провала квеста 
+// существует переменна€, в которой считаетс€ число доступных персонажу отмывок
+// при каждой очередной отмывке переменна€ измен€етс€ на -1, ≈сли переменна€=0, больше игрок квест отмыть не сможет
+#define CARAVAN_DEFAULT        (0) // караван по умолчанию
+const uint[] crvCosts={
+
+//	caravanNumber,              caravanVar,                          caravanResetVar                CARAVAN_FAILURE_PLAYER_THIEFT,      CARAVAN_FAILURE_PLAYER_DEAD,         CARAVAN_FAILURE_PLAYER_KILL_LEADER
+//                                                                                                            CARAVAN_FAILURE_PLAYER_ABANDONED,   CARAVAN_FAILURE_CARAVANLEADER_DEAD, 
+	CARAVAN_DEFAULT,            0,                                  LVAR_common_crv_reset_counter, 5000,      1000,                    1000,      2000,                     6000,  
+	CARAVAN_WADE_REDD_VC,       LVAR_q_redd_wade_caravan_escort,    LVAR_redd_crv_reset_counter,   5000,      1000,                    1000,      3000,                     5000,
+	CARAVAN_SAVINEL_REDD_NR,    LVAR_q_redd_savinel_caravan_escort, LVAR_redd_crv_reset_counter,   6000,      2000,                    3000,      4000,                     7000,
+	CARAVAN_STANWELL_REDD_NCR,  LVAR_q_redd_stan_caravan_escort,    LVAR_redd_crv_reset_counter,   10000,     1000,                    3000,      2000,                     15000,
+	CARAVAN_HAL_NCR_REDD,       LVAR_q_ncr_redding_caravan_escort,  LVAR_ncr_crv_reset_counter,    5000,      3000,                    3000,      3000,                     7000,
+	CARAVAN_KIT_BH_GECKO,       LVAR_q_bh_kit_caravan_escort,       LVAR_bh_crv_reset_counter,     4000,      4000,                    1000,      2000,                     10000,
+	CARAVAN_SELMA_ARR_VC,		LVAR_q_arroyo_selma_caravan_escort, LVAR_arroyo_crv_reset_counter, 5000,      1000,                    1000,      2000,                     6000,
+	CARAVAN_GAYZUN_ARR_SF,      LVAR_q_arroyo_gayzum_caravan_escort,LVAR_arroyo_crv_reset_counter, 6000,      3000,                    2000,      4000,                     8000,
+	CARAVAN_LAUMER_ARR_NCR,     LVAR_q_arroyo_laumer_caravan_escort,LVAR_arroyo_crv_reset_counter, 7000,      4000,                    1000,      3000,                     12000
+};
+
+#define ROW_COUNT     (9) // число строк в таблице отмывки провалов
+#define COL_COUNT     (8) // число колонок в таблице
+#define CELL#(row, col) (crvCosts[(row<ROW_COUNT?row:0)*COL_COUNT + (col<COL_COUNT?col:0)])
+
+// ¬озвращает индекс строки в таблице, относ€щейс€ к указанному каравану
+// ≈сли индекс не найден, будет возвращен 0
+uint RowIndex(uint caravanId)
+{
+	
+	for(uint i=0; i<ROW_COUNT; i++)
+	{
+		if(CELL(i,0)==caravanId)
+		{
+			return i;
+		}
+	}
+	
+	return 0;
+}
+
+// –асчет цены "отмывки" указанного каравана
+// crvId - номер каравана (см. caravan_h)
+// player - игрок
+// возвращает цену отмывки, либо 0, в этом случае отмывка не требуетс€ или невозможна
+// либо цена провала
+uint GetCrvResetCost(int crvId, Critter & player)
+{
+	if (!CanResetCaravan(crvId, player)||!NeedResetCaravanStatus(crvId, player)) return 0;
+	
+	GameVar @ status=GetLocalVar(CELL(RowIndex(crvId),1), player.Id);
+	if (!valid(status)) return 0;
+	
+	return CELL(RowIndex(crvId), status.GetValue());
+}
+// ѕроверка, может ли игрок "отмыть" указанный караван
+bool CanResetCaravan(int crvId, Critter & player)
+{
+	GameVar @ status=GetLocalVar(CELL(RowIndex(crvId),2), player.Id);
+	if (!valid(status)) return false;
+	
+	return status.GetValue()>0;
+}
+
+// ѕроверка, нуждаетс€ ли игрок в отмывке каравана
+bool NeedResetCaravanStatus(int crvId, Critter & player)
+{
+	GameVar @ status=GetLocalVar(CELL(RowIndex(crvId),1), player.Id);
+	if (!valid(status)) return false;
+	
+	
+	return (status.GetValue()>=CARAVAN_FAILURE_PLAYER_THIEFT&&status.GetValue()<=CARAVAN_FAILURE_PLAYER_KILL_LEADER);
+}
+
+// ѕроверка, не исчерпал ли игрок число возможных отмывок провалов данного каравана
+bool d_CanResetCaravanStatus(Critter & player, Critter @ npc, int crvId)
+{
+	return CanResetCaravan(crvId, player);
+}
+bool d_CanNotResetCaravanStatus(Critter & player, Critter @ npc, int crvId)
+{
+	return !d_CanResetCaravanStatus(player, npc, crvId);
+}
+// ѕроверка в диалоге, нуждаетс€ ли данный караван в отмывке
+bool d_NeedResetCaravanStatus(Critter & player, Critter @ npc, int crvId)
+{
+	return NeedResetCaravanStatus(crvId, player);
+}
+
+// ƒиалог с лексемами им€ караванщика (@lex leader@) и сумма дл€ погашени€(@lex cost@)
+// использовать только в сочентании с r_SetSelectedCaravan!!
+void dlg_GenResetCaravanText(Critter& player, Critter@ npc, string@ lexems)
+{
+	if(IS_DIALOG_END(lexems) or IS_DIALOG_SAY_MODE(lexems))
+	{
+		return;
+	}
+	if (!valid(npc)) return;
+	GameVar @ crv=GetUnicumVar(UVAR_selected_caravan, npc.Id, player.Id);
+	if (!valid(crv)) return;
+	
+	uint crvId=crv.GetValue();
+	crv=0; // —брос выбора
+	
+	CaravanInfo @ ci=_GetCaravan(crvId);
+	if (!valid(ci)) return;
+	
+	CaravanLeaderInfo @ li=ci.Leader;
+	if (!valid(ci)) return;
+	
+	uint cost=GetCrvResetCost(crvId, player);
+	
+	lexems="$leader@msg DLG "+STR_NPC_NAME(li.DialogId,0)+"@$money "+cost;		
+	
+}
+// перед выбором каравана, за который игрок хочет внести выкуп, чтобы откупитьс€ от провала квеста
+// необходимо сохранить ид каравана в уникальную переменную, чтобы потом использовать при генерации лексем
+// дл€ этого используетс€ уникальна€ переменна€ UVAR_selected_caravan (3603)
+void r_SetSelectedCaravan(Critter & player, Critter @ npc, int crvId)
+{
+	if (!valid(npc)) return;
+	GameVar @ crv=GetUnicumVar(UVAR_selected_caravan, npc.Id, player.Id);
+	if (!valid(crv)) return;
+	
+	crv=crvId;
+}
+bool  d_CheckHasEnoughMoney(Critter & player, Critter @ npc, int crvId)
+{
+	uint cost=GetCrvResetCost(crvId, player);
+	if(cost==0) return false;
+	
+	uint money=player.CountItem(PID_BOTTLE_CAPS);
+	return (money>=cost); 
+}
+// —н€ти€ статуса провала с каравана, обновление числа отмывок каравана
+void r_ResetCaravanStatus(Critter & player, Critter @ npc, int crvId)
+{
+	uint cost=GetCrvResetCost(crvId, player);
+	if(cost==0) return;
+	
+	uint money=player.CountItem(PID_BOTTLE_CAPS);
+	if(money<cost) return; // Ќе хватает денег на погашение провала
+	Item @ item=player.GetItem(PID_BOTTLE_CAPS, -1);
+	if (!valid(item)) return;
+	_SubItem(item, cost);
+	
+	GameVar @questVar=GetLocalVar(CELL(RowIndex(crvId),1), player.Id);
+	GameVar @status=GetLocalVar(CELL(RowIndex(crvId),2), player.Id);
+	if (!valid(status)||!valid(questVar)) return;
+	
+	status=status.GetValue()-1;
+	questVar=0;		
+}

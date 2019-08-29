@@ -1,0 +1,33 @@
+// Author: cvet, dagnir, Cracker
+#include "_macros.fos"
+
+import void _DenInCritterMap(Map& den, Critter& cr) from "den_brotherhood";
+import void _DenKillCritterMap(Map& map, Critter& cr, Critter@ killer) from "den_brotherhood";
+
+#define STR_DENBUS_IN  (1050) //"Вы испытываете странное чувство полной разрухи."
+#define STR_DENBUS_OUT (1051) //"Где-то в глубине души вы очень рады, что покинули это место."
+
+void _DenBusInit(Map& denBus, bool firstTime)
+{
+	denBus.SetEvent(MAP_EVENT_IN_CRITTER,"_DenBusInCritter");
+	denBus.SetEvent(MAP_EVENT_OUT_CRITTER,"_DenBusOutCritter");
+	
+	//Убираем запоминание - слишком опасно для безопасной зоны
+    Critter @ [] critters;
+    denBus.GetCritters(0,FIND_LIFE|FIND_ONLY_NPC, critters);
+    for(uint i=0, iMax=critters.length(); i<iMax; i++)
+	{
+		critters[i].ModeBase[MODE_NO_ENEMY_STACK]=1;
+	}
+}
+
+void _DenBusInCritter(Map& denBus, Critter& player)
+{
+	_DenInCritterMap(denBus, player);
+	if(player.IsPlayer() && player.IsLife()) player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT,  STR_DENBUS_IN); 
+}
+
+void _DenBusOutCritter(Map& denBus, Critter& player)
+{
+	if(player.IsPlayer() && player.IsLife()) player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT,  STR_DENBUS_OUT); 
+}

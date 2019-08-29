@@ -1,0 +1,14 @@
+#define IsGrup #(cr)	(cr.Patrol[PL_GRUP_NUMBER]!=0)
+
+#ifdef _MAIN_
+import bool _Attack(Critter& cr, Critter& target) from "GrupPatrol";
+import void _Idle(Critter& cr) from "GrupPatrol";
+import bool _Attacked(Critter& cr, Critter& attacker) from "GrupPatrol";
+import void _Dead(Critter& cr, Critter@ killer) from "GrupPatrol";
+import void _Respawn(Critter& cr) from "GrupPatrol";
+#endif
+
+#ifdef _PLANE_
+import int _GrupPlaneEnd(Critter& npc, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem) from "GrupPatrol";
+import int _GrupPlaneBegin(Critter& cr, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem) from "GrupPatrol";
+#endif

@@ -1,0 +1,44 @@
+// Author: Тринитротолуол
+
+// Для квеста "Проучить Дантона".
+
+#include "_macros.fos"
+#include "_cityrole.fos"
+import bool AddWalkPlane(Critter& npc, uint priority, uint16 hexX, uint16 hexY, uint8 dir, bool run, uint cut) from "npc_planes";
+
+#define ROLE_DANTON             (210)
+
+void InitDantonKilling(Map& map, bool firstTime)
+{
+	Critter@ danton=map.GetNpc(ROLE_DANTON, FIND_ALL, 0);     if(not valid(danton)) { Log("ERROR: critter not valid"); return; }
+	danton.StatBase[ST_NPC_ROLE_CITY]=CITY_NONE_PROTECT;
+	danton.SetEvent(CRITTER_EVENT_ATTACKED, "_DantonAttacked");
+	danton.ModeBase[MODE_NO_SUPPLY]=1;
+}
+
+bool _DantonAttacked(Critter& danton, Critter& player)
+{
+	if(player.IsNpc()) return false;
+
+	if(danton.Stat[ST_CURRENT_HP]>((danton.Stat[ST_MAX_LIFE]/100)*30)) return true;
+	GameVar@ var=GetLocalVar(LVAR_q_klam_josall_danton, player.Id);     if(not valid(var)) { Log("ERROR: not valid GameVar №" + LVAR_q_klam_josall_danton); return false; }
+	if(var !=1) return false;
+	
+	var=2;
+	danton.EraseEnemyFromStack(player.Id);
+	danton.ErasePlane(AI_PLANE_ATTACK,true);
+	AddWalkPlane(danton, 0, Random(danton.HexX-15,danton.HexX+15),Random(danton.HexY-15,danton.HexY+15),Random(0,5),true,0);
+	return true;
+}
+
+void _DantonDead(Critter& danton, Critter@ player)
+{
+	if(not valid(player)) return;
+	if(player.IsNpc()) return;
+
+	GameVar@ var=GetLocalVar(LVAR_q_klam_josall_danton, player.Id);     if(not valid(var)) { Log("ERROR: not valid GameVar №" + LVAR_q_klam_josall_danton); return; }
+	if(var !=1) return;
+
+	var=2;
+	danton.EraseEnemyFromStack(player.Id);
+}

@@ -1,0 +1,505 @@
+#include "_macros.fos"
+
+
+import bool OrgExist(string& name) from "main";
+import uint AddOrg(string@ name) from "main";
+import bool AddPlayerOrg(uint id, uint frId) from "main";
+import uint[] GetOrgStats(uint orgId) from "main";
+import string GetOrgName(uint num) from "main";
+import string@[] GetOrgPlayersList(string@ orgName) from "main";
+import int[] GetFriendList(uint frId) from "main";
+import int[] GetEnemyList(uint frId) from "main";
+import string@[] GetOrgList() from "main";
+import string@[] GetOrgPlayersByAccess(string@ orgName, string access) from "main";
+import int8 ChangePlayerAccessOrg(string@ name, Critter& boss, bool increase) from "main";
+import int8 DismissPlayerOrg(string@ name, Critter& boss) from "main";
+import void RemovePlayerOrg(string@ name, string orgName) from "main";
+import bool ChangeOrgStat(uint orgId, uint8 stat, int val) from "main";
+import void RequestFriendshipOrg(uint targetId, uint frId) from "main";
+import string@[] GetUnrelatedOrgList(uint frId) from "main";
+import uint GetOrgId(string name) from "main";
+import int[] GetFrRequestsOrg(uint frId) from "main";
+import void ApproveFriendshipOrg(uint frId, uint rqId) from "main";
+import void CancelAllianceOrg(uint frId,uint targetId) from "main";
+import void AddEnemyOrg(uint frId, uint targetId) from "main";
+import void RemoveEnemy(uint OrgId, uint targetId) from "main";
+import void DeleteOrg(uint orgId) from "main";
+import string@[] GetOrgListByOrder() from "main";
+
+
+void unsafe_DeleteOrg(Critter& cr, int param1, int param2, int param3, string@ param4, int[]@ param5)
+{
+	cr.ShowScreen(SCREEN_DIALOGBOX, 1, "approveDeleting");
+	cr.SayMsg(SAY_DIALOGBOX_TEXT, TEXTMSG_GAME, 14036);
+	cr.SayMsg(SAY_DIALOGBOX_BUTTON(0), TEXTMSG_GAME, 14037);
+}
+
+void approveDeleting(Critter& cr, uint answerI, string& answerS)
+{
+	if(cr.Param[ST_FR_LEADERSHIP]<2)
+	{
+		cr.Say(SAY_NETMSG, "FUCK YOU, CHEATER!");
+		return;
+	}
+	DeleteOrg(uint(cr.Param[ST_FRACTION]));
+}
+
+void unsafe_RemoveEnemy(Critter& cr, int param1, int param2, int param3, string@ name, int[]@ param4)
+{
+	RemoveEnemy(cr.Param[ST_FRACTION], GetOrgId(name));
+	cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, 14038, "$name"+name);
+	unsafe_GetOrgEnemies(cr, 2,0,0,null,null);
+}
+
+void unsafe_AddEnemy(Critter& cr, int param0, int param1, int param2, string@ name, int[]@ param4)
+{
+	if(cr.Param[ST_FR_LEADERSHIP]<2)
+	{
+		cr.Say(SAY_NETMSG, "FUCK YOU, CHEATER!");
+		return;
+	}
+	AddEnemyOrg(cr.Param[ST_FRACTION], GetOrgId(name));
+	cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, 14039, "$name"+name);
+	unsafe_GetUnrelatedList(cr,REASON_ADD_ENEMY,0,0,null,null);
+}
+
+void unsafe_ApproveAlliance(Critter& cr, int param0, int param1, int param2, string@ name, int[]@ param4)
+{
+	if(cr.Param[ST_FR_LEADERSHIP]<2)
+	{
+		cr.Say(SAY_NETMSG, "FUCK YOU, CHEATER");
+		return;
+	}
+	if(GetOrgId(name)>0) ApproveFriendshipOrg(cr.Param[ST_FRACTION], GetOrgId(name));
+	cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, 14040, "$name"+name);
+	unsafe_GetAllianceRequests(cr,0,0,0,null,null);
+}
+
+void unsafe_RequestAlliance(Critter& cr, int param0, int param1, int param2, string@ name, int[]@ param4)
+{
+	if(cr.Param[ST_FR_LEADERSHIP]<2)
+	{
+		cr.Say(SAY_NETMSG, "FUCK YOU, CHEATER");
+		return;
+	}
+	RequestFriendshipOrg(GetOrgId(name), cr.Param[ST_FRACTION]);
+	cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, 14041, "$name"+name);
+	unsafe_GetUnrelatedList(cr, REASON_REQUEST_FRIENDSHIP, 0, 0, null,null);
+}
+void unsafe_GetUnrelatedList(Critter& cr, int reason, int param1, int param2, string@ param3, int[]@ param4)
+{
+	string@[]@ list=GetUnrelatedOrgList(cr.Param[ST_FRACTION]);
+	if(list.length()==0)
+	{
+		cr.RunClientScript("client_fraction_gui@__ManageShowUnrelated", reason,1,0,"%noneutraltag%",null);
+		return;
+	}
+	cr.RunClientScript("client_fraction_gui@__ManageShowUnrelated", reason,0,0,join(list,"\n"),null);
+}
+
+void unsafe_GetAllianceRequests(Critter& cr, int param0, int param1, int param2, string@ param3, int[]@ param4)
+{
+	int[] requests=GetFrRequestsOrg(cr.Param[ST_FRACTION]);
+	string list;
+	if(requests.length()==0)
+	{
+		cr.RunClientScript("client_fraction_gui@__ManageShowUnrelated", 0,1,0,"%nofrrequeststag%",null);
+		return;
+	}
+	for(uint8 n=0, nMax=requests.length(); n<nMax; n++)
+	{
+		list+=GetOrgName(requests[n])+"\n";
+	}
+	cr.RunClientScript("client_fraction_gui@__ManageShowRequests", 0,0,0,list,null);
+}
+
+void unsafe_CancelAlliance(Critter& cr, int param0, int param1, int param2, string@ name, int[]@ param4)
+{
+	if(cr.Param[ST_FR_LEADERSHIP]<2)
+	{
+		cr.Say(SAY_NETMSG, "FUCK YOU, CHEATER");
+		return;
+	}
+	CancelAllianceOrg(cr.Param[ST_FRACTION],GetOrgId(name));
+	cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, 14042, "$name"+name);
+	unsafe_GetOrgFriends(cr,2,0,0,null,null);
+}
+
+void unsafe_CreateFraction(Critter& cr, int param0, int param1, int param2, string@ param3, int[]@ param4)
+ {
+	if(cr.Param[ST_FRACTION]>0)
+	{
+		cr.Say(SAY_NETMSG, "Error! Critter is already in fraction!");
+		return;
+	}
+	if(cr.Param[ST_LEVEL]<15||cr.Param[ST_REPLICATION_MONEY]<50000)
+	{
+		cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, 14068);
+		return;
+	}
+	cr.ShowScreen(SCREEN_SAY, 0, "create_Org");
+	cr.SayMsg(SAY_SAY_TITLE, TEXTMSG_GAME, 14043);
+ }
+
+ void create_Org(Critter& cr, uint answerI, string& answerS)
+ {
+	if (!OrgExist(answerS))
+	{
+		if(answerS.length()<2 || answerS.length()>16)
+		{
+			cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, 14044);
+			return;
+		}
+		if(!CorrectName(strupr(answerS)))
+		{
+			cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, 14075);
+			return;
+		}
+		uint orgId=AddOrg(answerS);
+		cr.ParamBase[ST_FRACTION]=orgId;
+		cr.ParamBase[ST_FR_LEADERSHIP]=2;
+		cr.StatBase[ST_REPLICATION_MONEY]-=50000;
+		AddPlayerOrg(cr.Id, orgId);
+		cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, 14045);
+		Fr_GUI_Reinit(cr, orgId, 2);
+	}
+	else cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, 14046);
+ }
+ 
+ bool CorrectName(string& str)
+{
+	bool english=false;
+	if(str[0]>=65 && str[0]<=90) english=true;
+	else if(str[0]>=192 && str[0]<=223) english=false;
+	else return false;
+	if(str[str.length()-1]==32) return false;
+	if(findFirst(str, "DELETED")!=-1) return false;
+	for(uint8 n=0, nMax=str.length(); n<nMax; n++)
+	{
+		if(str[n]>=65 && str[n]<=90 && !english) return false;
+		else if(str[n]>=192 && str[0]<=223 && english) return false;
+		else if(str[n]=='\n') return false;
+	}
+	return true;
+}
+ 
+ void unsafe_GetOrgStatistics(Critter& cr, int param0, int param1, int param2, string@ param3, int[]@ param4)
+ {
+	string statString="";
+	if(cr.Param[ST_FRACTION]==0) return;
+	uint[] stats=GetOrgStats(cr.Param[ST_FRACTION]);
+	statString+="%nametag% "+GetOrgName(cr.Param[ST_FRACTION])+"\n";
+	statString+="%ratingtag% " +stats[FR_RATING]+"\n";
+	statString+="%killstag% "+stats[FR_KILLS]+"\n";
+	statString+="%deathstag% "+stats[FR_DEATHS]+"\n";
+	statString+="%enkillstag% "+stats[FR_ENEMIES_KILLED]+"\n";
+	statString+="%frkillstag% "+stats[FR_FRIENDS_KILLED]+"\n";
+	statString+="%moneytag% "+stats[FR_MONEY]+"\n";
+	statString+="%poptag% "+stats[FR_POPULATION]+"\n";
+	cr.RunClientScript("client_fraction_gui@__FrScr_ShowInfo", 0,0,0,statString,null);
+ }
+ 
+ void unsafe_GetOrgMembers(Critter& cr, int param0, int param1, int param2, string@ param3, int[]@ param4)
+ {
+	string@[]@ players=GetOrgPlayersList(GetOrgName(cr.Param[ST_FRACTION]));
+	string sendText="";
+	for(uint8 n=0, nMax=players.length(); n<nMax; n++)
+	{
+		sendText+=(n+1)+") "+players[n]+"\n";
+	}
+	cr.RunClientScript("client_fraction_gui@__FrScr_ShowInfo", 0,0,0,sendText,null);
+ }
+ 
+ void unsafe_GetOrgFriends(Critter& cr, int screen, int param1, int param2, string@ param3, int[]@ param4)
+ {
+	int[] friends=GetFriendList(cr.Param[ST_FRACTION]);
+	bool listEmpty=true;
+	string sendText="";
+	for(uint8 n=0, nMax=friends.length(); n<nMax; n++)
+	{
+		if(screen<2) sendText+=(n+1)+") "+GetOrgName(uint(friends[n]))+"\n";
+		else sendText+=GetOrgName(uint(friends[n]))+"\n";
+	}
+	if(friends.length()==0) sendText="%nofriendstag%";
+	else listEmpty=false;
+	if(screen==0) cr.RunClientScript("client_fraction_gui@__FrScr_ShowInfo", 0,0,0,sendText,null);
+	else if(screen==1||listEmpty) cr.RunClientScript("client_fraction_gui@__ManageShowFriends", 0,0,0,sendText,null);
+	else cr.RunClientScript("client_fraction_gui@__ManageShowFriends", 1,0,0,sendText,null);
+ }
+ 
+ void unsafe_GetOrgEnemies(Critter& cr, int screen, int param1, int param2, string@ param3, int[]@ param4)
+ {
+	int[] enemies=GetEnemyList(cr.Param[ST_FRACTION]);
+	string sendText="";
+	int empty=0;
+	for(uint8 n=0, nMax=enemies.length(); n<nMax; n++)
+	{
+		if(screen!=2) sendText+=(n+1)+")"+GetOrgName(uint(enemies[n]))+"\n";
+		else sendText+=GetOrgName(uint(enemies[n]))+"\n";
+	}
+	if(enemies.length()==0)
+	{
+		sendText="%noenemiestag%";
+		empty=1;
+	}
+	if(screen==0) cr.RunClientScript("client_fraction_gui@__FrScr_ShowInfo", 0,0,0,sendText,null);
+	else if(screen==1) cr.RunClientScript("client_fraction_gui@__ManageShowEnemy",0,0,0,sendText,null);
+	else cr.RunClientScript("client_fraction_gui@__ManageShowEnemy",1,empty,0,sendText,null);
+ }
+ 
+ void unsafe_GetOrgStatByName(Critter& cr, int param0, int param1, int param2, string@ name, int[]@ param4)
+ {
+	uint[] stats;
+	if(GetAnyData(name, stats))
+	{
+		uint FrId=GetOrgId(name);
+		int[] friends;
+		int[] enemies;
+		string statString="";
+		if(FrId>0)
+		{
+			friends=GetFriendList(FrId);
+			enemies=GetEnemyList(FrId);
+		}
+		statString+="%nametag% "+name+"\n";
+		statString+="%ratingtag% "+stats[FR_RATING]+"\n";
+		statString+="%killstag% "+stats[FR_KILLS]+"\n";
+		statString+="%deathstag% "+stats[FR_DEATHS]+"\n";
+		statString+="%enkillstag% "+stats[FR_ENEMIES_KILLED]+"\n";
+		statString+="%frkillstag% "+stats[FR_FRIENDS_KILLED]+"\n";
+		statString+="%moneytag% "+stats[FR_MONEY]+"\n";
+		statString+="%poptag% "+stats[FR_POPULATION]+"\n";
+		if(friends.length()>0)
+		{
+			statString+="\n %alliancetag% \n";
+			for(uint n=0, nMax=friends.length(); n<nMax; n++)
+			{
+				statString+=(n+1)+") " + GetOrgName(friends[n])+"\n";
+			}
+			statString+="\n";
+		}
+		else statString+="\n %noalliancetag% \n";
+		
+		if(enemies.length()>0)
+		{
+			statString+="\n %enemytag% \n";
+			for(uint n=0, nMax=enemies.length(); n<nMax; n++)
+			{
+				statString+=(n+1)+") "+GetOrgName(enemies[n])+"\n";
+			}
+			statString+="\n";
+		}
+		else statString+="\n %noenemytag% \n";
+		
+		cr.RunClientScript("client_fraction_gui@__FrStat_ShowInfo", 0,0,0,statString,null);
+	}
+	else cr.Say(SAY_NETMSG, "ERROR! Fraction not found!");
+ }
+ 
+ void unsafe_GetOrgList(Critter& cr, int param0, int param1, int param2, string@ param3, int[]@ param4)
+ {
+	string@[]@ list=GetOrgList();
+	if(list.length()==0) return;
+	cr.RunClientScript("client_fraction_gui@__StatScr_SetList", 0,0,0,join(list, "\n"),null);
+ }
+ 
+ void Fr_GUI_Reinit(Critter@ cr, int frId, int leadership)
+ {
+	cr.RunClientScript("client_fraction_gui@__Scr_ReInit", frId,leadership,0,null,null);
+ }
+ 
+ void unsafe_InvitePlayer(Critter& cr, int param0, int param1, int param2, string@ name, int[]@ param4)
+ {
+	Critter@ invited=GetPlayer(name);
+	if(valid(invited))
+	{
+		if(invited.Param[ST_FRACTION]!=0)
+		{
+			cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, 14047, "$name"+name+"$orgname"+GetOrgName(invited.Param[ST_FRACTION]));
+		}
+		else if(invited.Param[ST_LAST_FRACTION_QUIT]+REAL_DAY(1)>__FullSecond)
+		{
+			cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, 14076, "$pname"+name);
+		}
+		else
+		{
+			invited.ParamBase[ST_FR_CLIPBOARD]=cr.Param[ST_FRACTION]|(cr.Id<<16);
+			invited.ShowScreen(SCREEN_DIALOGBOX, 1, "addPlayerToOrg");
+			invited.SayMsg(SAY_DIALOGBOX_TEXT, TEXTMSG_GAME, 14048, "$name"+ GetPlayerName(cr.Id)+"$orgname"+GetOrgName(cr.Param[ST_FRACTION]));
+			invited.SayMsg(SAY_DIALOGBOX_BUTTON(0), TEXTMSG_GAME,14049);
+			cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, 14050, "$name"+name);
+		}
+	}
+	else
+	{
+		cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, 14050);
+	}
+ }
+ 
+ 
+ void addPlayerToOrg(Critter& cr, uint answerI, string& answerS)
+ {
+	int fraction=(cr.Param[ST_FR_CLIPBOARD])&0xFFFF;
+	int masterId=(cr.Param[ST_FR_CLIPBOARD]>>16)&0xFFFF;
+	Critter@ master=GetCritter(masterId);
+	AddPlayerOrg(cr.Id, fraction);
+	Fr_GUI_Reinit(cr, fraction,0);
+	if(valid(master))
+	{
+		master.SayMsg(SAY_NETMSG, TEXTMSG_GAME, 14051, "$name"+GetPlayerName(cr.Id));
+	}
+ }
+ 
+ void unsafe_GetLowPlayersList(Critter& cr, int param0, int param1, int param2, string@ param3, int[]@ param4)
+ {
+	int8 list=1;
+	string@[]@ players=GetOrgPlayersByAccess(GetOrgName(cr.Param[ST_FRACTION]), "0");
+	if(players.length()<1)
+	{
+		players.insertLast("%nobodytag%");
+		list=0;
+	}
+	cr.RunClientScript("client_fraction_gui@__ShowIncreaselist", list,0,0,join(players, "\n"),null);
+ }
+
+ void unsafe_GetHighPlayersList(Critter& cr, int param0, int param1, int param2, string@ param3, int[]@ param4)
+ {
+	int8 list=1;
+	string@[]@ players=GetOrgPlayersByAccess(GetOrgName(cr.Param[ST_FRACTION]), "1");
+	if(players.length()<1)
+	{
+		players.insertLast("%nobodytag%");
+		list=0;
+	}
+	cr.RunClientScript("client_fraction_gui@__ShowLowerlist", list,0,0,join(players, "\n"),null);
+ }
+ 
+ void unsafe_GetDismissPlayers(Critter& cr, int param0, int param1, int param2, string@ param3, int[]@ param4)
+ {
+	uint8 list=1;
+	string@[] players;
+	if(cr.Param[ST_FR_LEADERSHIP]==2)
+	{
+		players=GetOrgPlayersList(GetOrgName(cr.Param[ST_FRACTION]));
+		players.removeFirst();
+	}
+	else
+	{
+		players=GetOrgPlayersByAccess(GetOrgName(cr.Param[ST_FRACTION]), "0");
+	}
+		
+	if(players.length()<1) 
+	{
+		players.insertLast("%nobodytag%");
+		list=0;
+	}
+	cr.RunClientScript("client_fraction_gui@__ShowDismissList", list,0,0,join(players, "\n"),null);
+ }
+ 
+ void unsafe_ApproveIncreasing(Critter& cr, int param0, int param1, int param2, string@ name, int[]@ param4)
+ {
+	if(cr.Param[ST_FR_LEADERSHIP]<2)
+	{
+		cr.Say(SAY_NETMSG, "FUCK YOU CHEATER!!!");
+		return;
+	}
+	int result=ChangePlayerAccessOrg(name, cr, true);
+	if(result==-1) cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, 14052, "$name"+name);
+	else if(result==0) cr.Say(SAY_NETMSG, "ERROR! Player not found!");
+	else cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, 14053, "$name"+name);
+	unsafe_GetLowPlayersList(cr,0,0,0,null,null);
+	Critter@ player=GetPlayer(name);
+	if(valid(player))
+	{
+		Fr_GUI_Reinit(player, player.Param[ST_FRACTION], player.Param[ST_FR_LEADERSHIP]);
+	}
+ }
+ 
+ void unsafe_ApproveLowing(Critter& cr, int param0, int param1, int param2, string@ name, int[]@ param4)
+ {
+	if(cr.Param[ST_FR_LEADERSHIP]<2)
+	{
+		cr.Say(SAY_NETMSG, "FUCK YOU CHEATER!!!");
+		return;
+	}
+	int8 result=ChangePlayerAccessOrg(name, cr, false);
+	if(result==-1) cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, 14054, "$name"+name);
+	else if(result==0) cr.Say(SAY_NETMSG, "ERROR! Player not found!");
+	else cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, 14055, "$name"+name);
+	unsafe_GetHighPlayersList(cr,0,0,0,null,null);
+	Critter@ player=GetPlayer(name);
+	if(valid(player))
+	{
+		Fr_GUI_Reinit(player, player.Param[ST_FRACTION], player.Param[ST_FR_LEADERSHIP]);
+	}
+ }
+
+ void unsafe_DismissPlayer(Critter& cr, int param0, int param1, int param2, string@ name, int[]@ param4)
+ {
+	int8 result=DismissPlayerOrg(name, cr);
+	if(result!=1)
+	{
+		cr.Say(SAY_NETMSG, "ERROR!");
+		return;
+	}
+	else
+	{
+		cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, 14056, "$name"+name);
+		Critter@ player=GetPlayer(name);
+		if(valid(player)) Fr_GUI_Reinit(player, 0, 0);
+		unsafe_GetDismissPlayers(cr, 0,0,0,null,null);
+	}
+ }
+ 
+ void unsafe_quitOrg(Critter& cr, int param0, int param1, int param2, string@ name, int[]@ param4)
+ {
+	cr.ShowScreen(SCREEN_DIALOGBOX, 1, "approveQuitOrg");
+	cr.SayMsg(SAY_DIALOGBOX_TEXT, TEXTMSG_GAME, 14057, "$name"+GetOrgName(cr.Param[ST_FRACTION]));
+	cr.SayMsg(SAY_DIALOGBOX_BUTTON(0), TEXTMSG_GAME, 14037);
+ }
+ 
+ void approveQuitOrg(Critter& cr, uint answerI, string& answerS)
+ {
+	ChangeOrgStat(cr.Param[ST_FRACTION], FR_POPULATION, -1);
+	RemovePlayerOrg(GetPlayerName(cr.Id), GetOrgName(cr.Param[ST_FRACTION]));
+	Fr_GUI_Reinit(cr,0,0);
+ }
+ 
+  void unsafe_GetOrgsByOrder(Critter& cr, int param0, int param1, int param2, string@ name, int[]@ param4)
+  {
+	string@[] orgs=GetOrgListByOrder();
+	if(orgs.length()>0) cr.RunClientScript("client_fraction_gui@__SetColorList", 0,0,0,join(orgs, "\n"),null);
+  }
+  
+void unsafe_OrgColorizingSend(Critter& cr, int param0, int param1, int param2, string@ param3, int[]@ colors)
+{
+	if (!valid(colors) || cr.Param[ST_FR_LEADERSHIP]<1) return;
+	EraseAnyData(GetOrgName(cr.Param[ST_FRACTION])+"_FactionColorize");
+	SetAnyData(GetOrgName(cr.Param[ST_FRACTION])+"_FactionColorize", colors);
+	cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, 14067);
+}
+
+void unsafe_OrgColorizingRefresh(Critter& cr, int param0, int param1, int param2, string@ param3, int[]@ param4)
+{
+	int[] newColors;
+	if(GetAnyData(GetOrgName(cr.Param[ST_FRACTION])+"_FactionColorize", newColors))
+	{
+		cr.RunClientScript("client_main@__RefreshFrColors",0,0,0,null,newColors);
+	}
+	else cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, 14065);
+}
+
+void unsafe_MarkTarget(Critter& cr, int id, int targetIsCritter, int hex, string@ param3, int[]@ param4)
+{
+	if(cr.Param[ST_FRACTION]==0 || cr.Param[ST_FR_LEADERSHIP]==0) return;
+	Map@ map=cr.GetMap();
+	if(valid(map))
+	{
+		Critter@[] crits;
+		map.GetCritters(0, FIND_LIFE_AND_KO|FIND_ONLY_PLAYERS, crits);
+		for(uint n=0, nMax=crits.length(); n<nMax; n++)
+		{
+			if(crits[n].Param[ST_FRACTION]==cr.Param[ST_FRACTION]) crits[n].RunClientScript("client_main@__SetAssist",id,targetIsCritter,hex,null,null);
+		}
+	}
+}

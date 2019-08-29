@@ -1,0 +1,168 @@
+// Скрипты советника Вейстина
+// rifleman17
+
+
+#include "_macros.fos"
+#include "entire.fos"
+#include "npc_ai.fos"
+
+
+import bool AddWalkPlane(Critter& npc, uint priority, int identifier, uint identifierExt, uint16 hexX, uint16 hexY, uint8 dir, bool run, uint cut) from "npc_planes";
+import uint GetNearFullSecond(uint16 year, uint16 month, uint16 day, uint16 hour, uint16 minute, uint16 second) from "time";
+import bool AddMiscPlane(Critter& npc, uint priority, uint waitSecond, string@ funcName) from "npc_planes";
+#define PLANE_MOVE_TO_EXIT_GRID					(17) // план: Вейстин идет к выходу из локации для последующего телепорта.
+#define MAP_PID_NCR_COUNCIL						(43) // прототип карты НКР - здание правительства
+#define	ENT_HEX_ID_COUNCIL_HOME 				(17) // номер EN гекса - исходная позиция в здании правительства
+#define ENT_HEX_ID_COUNSIL_TRANSIT				(18) // номер EN гекса - позиция перед выходом из локации  правительства
+#define MAP_PID_RANCH							(44) // прототип карты НКР - Ранчо вейстина
+#define	ENT_HEX_ID_RANCH_HOME 					(17) // номер EN гекса - исходная позиция на Ранчо
+#define ENT_HEX_ID_RANCH_TRANSIT				(18) // номер EN гекса - позиция перед выходом из Ранчо
+
+#define NPC_ROLE_WESTIN							(19) // роль=вейстин
+
+/*
+{2930}{}{Тяжелый день...}
+{2931}{}{Ну вот, опять нужно куда-то идти...}
+*/
+
+#define STR_NUM_GO_HOME							(2930)
+#define STR_NUM_GO_WORK							(2931)
+
+#define MapPidTo 								StatBase[ST_VAR1]
+#define HexNumTo 								StatBase[ST_VAR2]
+
+#define WESTIN_PLANE_MOVE_PRIORITY				(49)
+#define WESTIN_PLANE_TRANSIT_PRIORITY			(48)
+
+#define WESTIN_POS_VAR_COUNCIL					(0)
+#define WESTIN_POS_VAR_RANCH					(1)
+
+
+void _WestinInit(Critter& westin, bool firstTime)
+{
+	//~settime 99 2246 11 3 20 50
+	if(firstTime)
+	{
+		// каждые игровые сутки Вейстин уходит с работы до своего Ранчо в 21:00
+		westin.StatBase[ST_VAR4]=CreateTimeEvent(GetNearFullSecond(0,0,0,21,0,0),"e_EveryEvening", westin.Id, true);
+
+		// каждые игровые сутки Вейстин пытается дойти до здания правительства в 07:00
+		westin.StatBase[ST_VAR5]=CreateTimeEvent(GetNearFullSecond(0,0,0,7,0,0),"e_EveryMorning", westin.Id, true);
+	}
+	westin.StatBase[ST_NPC_ROLE]=NPC_ROLE_WESTIN;
+	westin.SetEvent(CRITTER_EVENT_FINISH,"_WestinFinish");
+
+}
+
+// при удалении нпц удаляются обработчики временных событий, чтобы не было ошибок о null ptr
+void _WestinFinish(Critter& westin, bool deleted)
+{
+	//if (!valid(westin.GetMap())){Log("Bla... no map..");}
+	//if(deleted){Log("and npc deleted");}else{Log("but npc not deleted");}
+	if(deleted)
+	{
+		EraseTimeEvent(westin.StatBase[ST_VAR4]);
+		EraseTimeEvent(westin.StatBase[ST_VAR5]);
+		// если Вейстин был на карте Ранчо, его нужно телепортировать в консульство
+	}
+	//Log("\n mapId: "+westin.GetMap().Id + "\n прото удаляемой:"+ westin.GetMap().GetProtoId()+ "\n куда пойти:"+ westin.MapPidTo);
+}
+
+// вечернее событие
+uint e_EveryEvening(uint[]@ values)
+{
+	//Log("вечерняя прогулка вейстина");
+
+	Critter@ westin=GetCritter(values[0]);
+	uint time=GetNearFullSecond(0,0,0,21,0,0)-__FullSecond;
+
+	if (!valid(westin)){return time;}
+	if (!westin.IsLife()){return time;}
+
+	westin.SayMsg(SAY_NORM_ON_HEAD,TEXTMSG_TEXT,STR_NUM_GO_HOME);
+	// куда телепортироваться
+	westin.MapPidTo=MAP_PID_RANCH;
+	westin.HexNumTo=ENT_HEX_ID_RANCH_HOME;
+	// координаты гекса, до которого должен дойти Вейстин перед телепортом
+
+
+	if(westin.GetMap().GetProtoId()==MAP_PID_RANCH){return time;}
+
+	uint16 hx=westin.HexX;
+	uint16 hy=westin.HexY;
+	if (!GetNearEntire(westin.GetMap(), ENT_HEX_ID_COUNSIL_TRANSIT, hx, hy)){Log("Entire Hex not found, "+GetLastError());}
+
+	AddWalkPlane(westin, WESTIN_PLANE_MOVE_PRIORITY, PLANE_MOVE_TO_EXIT_GRID, 0, hx, hy, Random(0,5), false, Random(0,1));
+	AddMiscPlane(westin, WESTIN_PLANE_TRANSIT_PRIORITY, 0, "ncr_westin@plane_Transit");
+
+	return time;
+}
+
+// утреннее событие
+uint e_EveryMorning(uint[]@ values)
+{
+	//Log("утренняя прогулка вейстина");
+
+	Critter@ westin=GetCritter(values[0]);
+	uint time=GetNearFullSecond(0,0,0,7,0,0)-__FullSecond;
+	if (!valid(westin)){Log(" invalid");return time;}
+	if (!westin.IsLife()){Log(" dead");return time;}
+
+	westin.SayMsg(SAY_NORM_ON_HEAD,TEXTMSG_TEXT,STR_NUM_GO_WORK);
+
+	westin.MapPidTo=MAP_PID_NCR_COUNCIL;
+	westin.HexNumTo=ENT_HEX_ID_COUNCIL_HOME;
+
+	if(westin.GetMap().GetProtoId()==MAP_PID_NCR_COUNCIL){return time;}
+
+	// координаты гекса, до которого должен дойти Вейстин перед телепортом
+	uint16 hx=westin.HexX;
+	uint16 hy=westin.HexY;
+	if (!GetNearEntire(westin.GetMap(), ENT_HEX_ID_RANCH_TRANSIT, hx, hy)){Log("Entire Hex not found, "+GetLastError());}
+
+	AddWalkPlane(westin, WESTIN_PLANE_MOVE_PRIORITY, PLANE_MOVE_TO_EXIT_GRID, 0, hx, hy, Random(0,5), false, Random(0,1));
+	AddMiscPlane(westin, WESTIN_PLANE_TRANSIT_PRIORITY, 0, "ncr_westin@plane_Transit");
+
+	return time;
+}
+
+ // телепортация на карту с прототипом, сохраненным в MapPidTo
+ void plane_Transit(Critter& westin)
+ {
+	//Log(" try transit");
+	if(westin.MapPidTo==0){return;}
+	Map @map=westin.GetMap();
+	if (!valid(map)){return;}
+	if(map.GetProtoId()==westin.MapPidTo){return;}
+
+	Map @ mapTo=GetMapByPid(westin.MapPidTo,0);
+	if (!valid(mapTo)){return;}
+	// проверяем, что на карте назначения нет уже такого нпц
+	// если есть, удаляем этого.
+	uint westins=mapTo.GetNpcCount(NPC_ROLE_WESTIN, FIND_ALL);
+	if(westins>0)
+	{
+		//Critter@[] westins;
+		Log("Multiple westins founded. Kill'em all");
+		for(uint i=0;i<westins;i++)
+		{
+			Critter @ realWestin=mapTo.GetNpc(NPC_ROLE_WESTIN,FIND_ALL,i);
+			if (!valid(realWestin)){ continue; }
+			if(realWestin.StatBase[ST_DIALOG_ID]==westin.StatBase[ST_DIALOG_ID])
+			{
+				Log("Fake Westin successfully terminated!");
+				DeleteNpc(westin);
+				return;
+			}
+		}
+	}
+
+	if (!westin.TransitToMap(mapTo.Id, westin.HexNumTo))
+	{
+		Log("Westin teleport error "+GetLastError());
+	}else{
+		westin.SetHomePos(westin.HexX, westin.HexY, westin.Dir);
+		GameVar@ w_pos=GetGlobalVar(GVAR_ncr_vestin_position_global);
+		if(valid(w_pos)){w_pos=westin.MapPidTo==MAP_PID_NCR_COUNCIL?WESTIN_POS_VAR_COUNCIL:WESTIN_POS_VAR_RANCH;}
+	}
+ }

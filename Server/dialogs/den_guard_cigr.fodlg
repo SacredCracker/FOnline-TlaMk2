@@ -1,0 +1,92 @@
+[comment]
+21/09/09 rifleman17
+----------------------------------------
+Скучающий охранник, не против потрепаться с игроком.
+
+Спрашивает у персонажа сигареты, если навык торговли >100, персонаж получит 20 патронов 10 мм.
+
+Если красноречие высокое, и нет сигарет, охранник вздохнет и отдаст игроку зажигалку "мне все равно не нужна. Сигареты уже полгода не видел"
+
+name_mem_npc_player - используется для того, чтобы дать сигареты или получить зажигалку можно было только один раз
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 NOT_ANSWER_CLOSE_DIALOG 1#
+2 1010@
+2 2000 NOT_ANSWER_CLOSE_DIALOG 0#
+3 2010d*stat p ST_INTELLECT > 3#
+0 2020@
+3 3000 NOT_ANSWER_CLOSE_DIALOG 0#
+4 3010@
+4 4000 NOT_ANSWER_CLOSE_DIALOG 0#
+5 4010@
+5 5000 NOT_ANSWER_CLOSE_DIALOG 0#
+6 5010d*var p name_mem_npc_player = 0r*var p name_mem_npc_player = 1@
+6 6000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 6010#
+10 6020d*skill p SK_BARTER < 60*item p 541 > 0r*item p 541 - 1#
+7 6030d*skill p SK_BARTER > 59*item p 541 > 0r*item p 541 - 1*item p 30 + 20#
+8 6040d*item p 541 < 1*skill p SK_SPEECH > 59@
+7 7000 NOT_ANSWER_CLOSE_DIALOG 0@
+8 8000 NOT_ANSWER_CLOSE_DIALOG 0#
+9 8010r*item p 101 + 1@
+9 9000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 9010@
+10 10000 NOT_ANSWER_CLOSE_DIALOG 0&
+
+[russ]
+{100}{}{Охранник}
+{200}{}{Вы видите скучающего охранника. }
+{210}{}{Вы видите человека крепкого телосложения. Похоже, что он уже не первый час на посту. }
+{1000}{}{Преддиалоговые установки}
+{1010}{}{- }
+{2000}{}{[Охранник хмурится] Чего уставился? Дыру на мне взглядом хочешь протереть?}
+{2010}{}{Да вот, смотрю на тебя и думаю, непросто это, целый день на одном месте торчать.}
+{2020}{}{Все, ухожу уже. [Уйти]}
+{3000}{}{А что поделать, работа такая. }
+{3010}{}{А смена у тебя когда? }
+{4000}{}{Смена, ха, скажешь тоже. Людей не хватает, а жулья всякого развелось, как грязи. Свободного времени только и хватает что поспать, да пожрать.}
+{4010}{}{Жестоко. Ну а выходные-то как проводишь?}
+{5000}{}{Выходные у нас за свой счет. Про отпуск можешь даже не спрашивать. И чего ты так@sex@|ой||ая| любопытн@sex@|ый||ая|? Подозрительно.}
+{5010}{}{Да вот, жду тут кое-кого. Дай, думаю, с крутым парнем поговорю.}
+{6000}{}{Ха. Ну жди, что я, против что ли? Под ногами только не путайся. У тебя, кстати, закурить не найдется?}
+{6010}{}{Нет, не курю. Да и остальным не советую. Ну, удачи тебе! [Уйти]}
+{6020}{}{Повезло тебе. Найдется у меня закурить, угощайся}
+{6030}{}{Найдется, да. Сигареты в Пустоши редкость. Может, ты патронами поделишься? Махнемся?}
+{6040}{}{Нет, сигарет нету.}
+{7000}{}{Ну, почему бы и нет. Давай по быстрому, пока шеф не видит. 20 гильз в обмен на пачку. Спасибо, @sex@|приятель||подруга|. Который день без курева.}
+{8000}{}{Эх. Месяц уже сигарету достать не могу. Дефицит. Может бросить, как думаешь?}
+{8010}{}{Бросай, правильно. Здоровье у хаболога не купишь.}
+{9000}{}{Можно попробовать. Да и жена довольна будет, все расходов меньше... Знаешь что, забирай-ка ты мою зажигалку,  хорошая вещь. Мне она теперь без надобности.}
+{9010}{}{Спасибо. Жене привет передавай [Уйти]}
+{10000}{}{Спасибо, друг! Если смогу тебе чем-нибудь помочь, рад буду!}
+
+[engl]
+{100}{}{Guard}
+{200}{}{You see a bored guard.}
+{210}{}{You see a man of strong constitution. Is seems he’s being on his beat not for the first hour.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{-}
+{2000}{}{[The guard frowns] Whatcha staring at? Wanna burn a hole in me with your eyes?}
+{2010}{}{Oh, I’m looking at you and I think, uh, isn’t it easy sticking around here all day long.}
+{2020}{}{I’m alredy leaving.}
+{3000}{}{There’s nothing to be done, it’s my job.}
+{3010}{}{And when does your relief come?}
+{4000}{}{Relief, huh, you must be kidding! We have lack of people and the swindlers are hanging around all the time. My free time is sufficient only for sleeping and eating.}
+{4010}{}{Sternly. And how do you spend your weekends?}
+{5000}{}{Weekends we have at our own expense. About vacations you’d better don’t ask. And why are you so curious? It is suspicious.}
+{5010}{}{Uh, I was just waiting for one man. And I’ve thought why not to speak with a tough guy.}
+{6000}{}{Hah. Then wait, I’m not against it. But don’t only stay out of my way. By the way, haven’t you got cigarettes?}
+{6010}{}{No, I don’t smoke. And I advice others not to do it either. Well, good luck!}
+{6020}{}{You’re lucky. I got, please help yourself!}
+{6030}{}{Yep, I got. Cigarettes are a rarity in Wastelands. Maybe you’d like to share cartridges with me? Deal?}
+{6040}{}{No cigarettes.}
+{7000}{}{Okay, why not. Quickly, while boss doesn’t see. 20 cartridges for one pack. Thanks, buddy. What a day without something to smoke.}
+{8000}{}{Oh, I can’t find a cigarette for the whole month. Damned deficit. Maybe give up smoking, how do you think?}
+{8010}{}{Right decision. Habbologists don’t sell health.}
+{9000}{}{I’ll try. And my wife will be glad, less expenses... Buddy, take my lighter, that’s nice thing. I don’t need it anymore.}
+{9010}{}{Thanks. Give her my regards.}
+{10000}{}{Thanks, buddy! If I can help you some way, I’ll be glad.}

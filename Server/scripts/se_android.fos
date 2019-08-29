@@ -1,0 +1,494 @@
+// Author: rifleman17
+// Квест-специальный энкаунтер. Две последовательные локации
+// На первой игрок находит труп нпц с рацией, если он возьмет рацию, может услышать сообщение о том, что где-то в Пустоши найден военный склад. На самом деле это - ловушка, в которой его поджидает сумасшедший ученый.
+// При заходе на вторую локацию персонаж попадает на хирургический стол, где его оперируют и персонаж превращается в андроида.
+#include "_macros.fos"
+#include "_colors.fos"
+#include "utils_for_array.fos"
+
+
+#define STR_RADIO_MESSAGE         (70070) // Группа "Браво", ответьте. Группа "Браво", ответьте. Докладываю. Склад высокотехнологичного вооружения расконсервирован. Нам потребуются еще люди, чтобы забрать все. Также нам потребуется еще один грузовик. Повторяю наши координаты: Долина Смерти, зона.. *помехи* ...
+// debug log
+//#define DL #(s) (Log("android: " + s))
+#define DL #(s)
+
+import void FlushScreen(Critter& cr, uint fromColor, uint toColor, uint timeMs) from "effects";
+
+void _DeadInit(Critter& cr, bool firstTime)
+{
+	if(cr.IsLife())
+		cr.ToDead(ANIM2_DEAD_BACK , null);
+	cr.StatBase[ST_REPLICATION_TIME]=-1;
+	if(cr.CountItem(PID_RADIO)==0)
+	{
+		Item@ item=cr.AddItem(PID_RADIO, 1);
+		if(valid(item))
+			item.SetScript("_RadioInit");
+		@item=cr.AddItem(PID_INDEPENDENT, 1);
+		if(valid(item))
+		{
+			item.WeaponAmmoCount=0;
+			item.Update();
+		}
+	}
+}
+
+void _RadioInit(Item& item, bool firstTime)
+{
+	DL("RadioInit");
+	if(firstTime)
+	{
+		item.RadioChannel=Random(1000, 9999);
+		DL("Channel: " + item.RadioChannel);
+		item.Update();
+	}
+	item.SetEvent(ITEM_EVENT_SKILL, "_RadioSkill");
+}
+
+bool _RadioSkill(Item& item, Critter& cr, int skill)
+{
+	DL("Radio skill " + skill);
+	if(skill<0)
+	{
+		GameVar @alreadyRun=GetLocalVar(LIVAR_se_android_radio_listened, item.Id);
+		if(valid(alreadyRun) && alreadyRun==0)
+		{
+			uint[] values={item.Id, 0, cr.Id, item.RadioChannel};
+			CreateTimeEvent(__FullSecond + __TimeMultiplier, "e_AndroidRadio", values, false);
+			alreadyRun=1;
+		}
+	}
+	return false;
+}
+
+uint e_AndroidRadio(uint[]@ values)
+{
+	DL("e_AndroidRadio. ItemId:" + values[0] + "; MsgCount:" + values[1] + "; " + "radioChannel: " + values[2]);
+	Item@ item=GetItem(values[0]);
+	if(valid(item))
+	{
+		GameVar@ radioListened=GetLocalVar(LIVAR_se_android_radio_listened, item.Id);
+		if(valid(radioListened))
+		{
+			RadioMessageMsg(values[3], TEXTMSG_TEXT, STR_RADIO_MESSAGE);
+			values[1]++;
+			DL("count radio messages:" + values[1]);
+			Critter@ cr=GetCritter(item.CritId);
+			GameVar@ seAndroid=GetLocalVar(LVAR_special_android, item.CritId);
+			if(valid(seAndroid) && seAndroid.GetValue()<2 && item.RadioChannel==values[3]) // Про локацию пока не известно, радио на нужной волне
+				seAndroid=2;
+			DL("seAndroidValue: " + seAndroid.GetValue());
+			if(values[1]<5) // Максимум 5 повторов раз в 20 секунд на нужной радиоволне
+				return __TimeMultiplier * 20;
+		}
+	}
+	return 0;
+}
+
+// Локация с лабораторией
+#define ENTIRE_DOOR_GROUND             (17)    // Номер гекса, на котором стоит дверь
+#define ENTIRE_CONTAINER               (25)    // Номер гекса, на котором стоит ящик для вещей игрока
+#define PID_CONTAINER                  (135)   // Номер контейнера для вещей игрока
+#define ENTIRE_KNOCKOUT                (26)    // Гекс, на котором будет лежать игрок после того, как попадет в лабораторию
+#define CTE_CHECK_KNOCKOUT             (128)   // Номер события проверки, вышел ли игрок из нокаута.
+#define PID_GROUND_DOOR                (2421)  // Номер прототипа двери, которая закрывается после того, как первый персонаж попался в лапы хирургу
+#define STR_LIFT_BROKEN                (70072) // Лифт не функционирует. Видимо, заблокирован откуда-то снизу.
+#define KEY_DOOR_ID                    (16643) // Код ключа к двери
+
+// Скрипт двери. Пока не вошел ни один игрок она и открывается и закрывается.
+void _GroundDoorInit(Item& item, bool firstTime)
+{
+	item.SetEvent(ITEM_EVENT_SKILL,"_UseGroundDoor");
+	SETFLAG(item.Flags,ITEM_ALWAYS_VIEW);
+}
+
+void _OuterDoorInit(Item& item, bool firstTime)
+{
+	SETFLAG(item.Flags,ITEM_ALWAYS_VIEW);
+}
+
+bool _UseGroundDoor(Item& door, Critter& cr, int skill)
+{
+	Map@ map=cr.GetMap();
+	Location@ loc=map.GetLocation();
+	GameVar@ playerIn=GetLocalVar(LLVAR_se_android_player_in, loc.Id);
+	if(valid(playerIn) && playerIn==1)
+	{
+		return true;
+	}
+	return false;
+}
+
+void t_TransitPlayer(Critter& player, Scenery& trigger, bool entered, uint8 dir)
+{
+	Map@ map=player.GetMap();
+	Location@ loc=map.GetLocation();
+	GameVar@ playerIn=GetLocalVar(LLVAR_se_android_player_in, loc.Id);
+	if(valid(playerIn) && playerIn==0)
+	{
+		// Переносим игрока в подвал, кладем в нокаут
+		Map@ basement=loc.GetMapByIndex(1);
+		GameVar@ playerId=GetLocalVar(LLVAR_se_android_player_id, loc.Id);
+		uint16 x=0;
+		uint16 y=0;
+		uint8 dir=0;
+		if(valid(basement) && valid(playerId))
+		{
+			basement.GetEntireCoords(ENTIRE_KNOCKOUT, 0, x, y);
+			FlushScreen(player, COLOR_BLACK, COLOR_BLACK, 5000);
+			player.TransitToMap(basement.Id, x, y, 3);
+			FlushScreen(player, COLOR_BLACK, COLOR_BLACK, 1000);
+			playerId=player.Id;
+			player.AddTimeEvent("cte_CheckPlayerKnockOut", __TimeMultiplier*60*30, 0); // Подстраховка
+			player.ToKnockout(KNOCKOUT_ANIM2_DEFAULT(true), 100000, player.HexX, player.HexY);
+			// Все вещи игрока перекладываем в разные ящики
+			Item@[] items;
+			if(player.GetItems(-1, items) > 0)
+			{
+				if(basement.GetEntireCoords(ENTIRE_CONTAINER, 0, x, y))
+				{
+					Item@ cont=basement.GetItem(x, y, PID_CONTAINER);
+					if(valid(cont))
+					{
+						MoveItems(items, cont, 0);
+						items.resize(0);
+						if(cont.GetItems(0, items)>0)
+						{
+							for(uint i=0, l=items.length(); i<l; i++)
+							{
+								uint pid=items[i].GetProtoId();
+								if(Present(pid, pids) || pid==PID_POT)
+									DeleteItem(items[i]);
+							}
+						}
+						Item@ item=cont.AddItem(PID_POT, 1, 0);
+						item.SetLexems("$text" + GetPlayerName(player.Id));
+					}
+				
+				}
+			}
+			RunDoctorMonologue(basement);
+		}
+		// Игрок внутри, больше никто туда не попадет
+		playerIn=1;
+		// Закрываем дверь
+		map.GetEntireCoords(ENTIRE_DOOR_GROUND, 0, x, y, dir);
+		Item@ door=map.GetItem(x, y, PID_GROUND_DOOR);
+		if(valid(door))
+			door.LockerClose();
+		return;
+	}
+	else if(valid(playerIn) && playerIn==1)
+	{
+		player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_LIFT_BROKEN);
+	}
+}
+
+uint cte_CheckPlayerKnockOut(Critter& cr, int identifier, uint& rate)
+{
+	DL("CheckKnockout");
+	
+	if(cr.IsKnockout())
+	{
+		Map@ map=cr.GetMap();
+		if(valid(map))
+		{
+			Location@ loc=map.GetLocation();
+			if(loc.GetProtoId()==LOCATION_SpecialAndroid)
+			{
+				Log("Warning: player character can't stand up knockout.");
+				cr.ToLife();
+			}
+		}
+	}
+	return 0;
+}
+
+// Внешний уровень
+#define STR_MAP_IN                  (70071) //Похоже, вы наткнулись на тот самый "военный склад", о котором услышали по рации. Однако, этот небольшой бункер выглядит необычно для склада. Очень необычно.
+void _GroundInit(Map& map, bool firstTime)
+{
+	DL("Groun map Init");
+	map.SetEvent(MAP_EVENT_IN_CRITTER, "_GroundInCritter");
+}
+
+void _GroundInCritter(Map& map, Critter& cr)
+{
+	cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_MAP_IN);
+}
+
+// Монолог хирурга
+#define ROLE_DOCTOR          (17) 
+
+import void SetMonologue(Critter@ cr, uint firstStr, uint lastStr, uint nextMsg, uint nextDialog, uint8 sayType) from "monologue";
+import bool MonologueRunning(Critter& cr)  from "monologue";
+
+void _DoctorInit(Critter& cr, bool firstTime)
+{
+	DL("Doctor init");
+	cr.SetEvent(CRITTER_EVENT_IDLE, "_DoctorIdle");
+	if(firstTime)
+	{
+		Item@ key=cr.AddItem(PID_NUKE_KEY,1);
+		if(valid(key))
+			key.LockerId=KEY_DOOR_ID;
+	}
+}
+
+void _DoctorIdle(Critter& cr)
+{
+	if(cr.Stat[ST_VAR1] !=0)
+	{
+		if (!MonologueRunning(cr))
+		{
+			DL("Second stage begin");
+			cr.StatBase[ST_VAR1]=0;
+			Map@ map=cr.GetMap();
+			Location@ loc=map.GetLocation();
+			GameVar@ playerId=GetLocalVar(LLVAR_se_android_player_id, loc.Id);
+			if(valid(playerId) && playerId !=0)
+			{
+				Critter@ player=GetCritter(playerId.GetValue());
+				if(valid(player))
+					TransformPlayer(map, player, cr);
+			}
+		}
+	}
+}
+
+void RunDoctorMonologue(Map& map)
+{
+	Critter@ cr=map.GetNpc(ROLE_DOCTOR, FIND_LIFE|FIND_ONLY_NPC, 0);
+	if (!valid(cr)) 
+		return;
+	SetMonologue(cr, 70073, 70090, __TimeMultiplier*10, 0, SAY_NORM); // 70090
+	cr.StatBase[ST_VAR1]=1;	
+}
+
+// Перенос в камеру
+#define ENTIRE_DOC_POS           (27) // dir=0 Положение доктора после того, как игрок уже превращен в андроида
+#define ENTIRE_PLAYER_POS        (28) // dir=3 Положение персонажа после превращения (в камере)
+#define ENTIRE_DOC_HOME          (29) // dir=3 Домашняя позиция доктора после диалога
+#define STR_AWAKE                (70091) // Реплика при пробуждении
+void TransformPlayer(Map& map, Critter& player, Critter& doctor)
+{
+	DL("TRANSFORM");
+	FlushScreen(player, COLOR_BLACK, COLOR_BLACK, 5000);
+	if(player.Stat[ST_NEXT_CRTYPE]==0)
+		player.StatBase[ST_NEXT_CRTYPE]=player.CrType;
+	player.ChangeCrType(CRTYPE_TACTICS_RHUMANOID);
+	player.StatBase[ST_BASE_CRTYPE]=CRTYPE_TACTICS_RHUMANOID;
+	uint16 hX=0, hY=0;
+	uint8 dir=0;
+	if (!map.GetEntireCoords(ENTIRE_DOC_POS, 0, hX, hY))
+		return;
+	doctor.TransitToMap(map.Id, hX, hY, 0);
+	doctor.SetHomePos(hX, hY, 0);
+	if(map.GetEntireCoords(ENTIRE_PLAYER_POS, 0, hX, hY))
+	{
+		player.TransitToMap(map.Id, hX, hY, 3);
+	}
+	uint[] values={player.Id, doctor.Id, map.Id};
+	CreateTimeEvent(__FullSecond + __TimeMultiplier*6, "e_AwakePlayer", values, true);
+}
+
+uint e_AwakePlayer(uint[]@ values)
+{
+	Critter@ player=GetCritter(values[0]);
+	Critter@ doctor=GetCritter(values[1]);
+	if(valid(player) && valid(doctor))
+	{
+		player.StatBase[ST_EXPERIENCE] +=4000;
+		player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_AWAKE);
+		player.ToDead(ANIM2_DEAD_BACK, null); // TODO: убрать
+		player.StatBase[ST_CURRENT_AP]=0;
+		player.ToLife();
+		RunDialog(player, doctor, true);
+	}
+	return 0;
+}
+
+void r_SendDoctorHome(Critter& player, Critter@ npc)
+{
+	DL("Sending home");
+	if (!valid(npc))
+		return;
+	uint16 hX=0, hY=0;
+	Map@ map=npc.GetMap();
+	if(valid(map) && map.GetEntireCoords(ENTIRE_DOC_HOME, 0, hX, hY))
+	{
+		DL("New home");
+		npc.SetHomePos(hX, hY, 3);
+	}
+}
+
+// Взрывы на выходе из лаборатории
+#define ENTIRE_EXPLODE         (30) // Номера гексов, на которых будут взрывы
+#define STR_OUT                (70095) // Вам чудом удалось пройти мимо ловушек безумца. Но сейчас нужно делать ноги.
+#include "entire.fos"
+import void ExplodeEx(Map& map, uint16 hexX, uint16 hexY, uint16 effectPid, uint effectRadius, uint damage, uint damageType, uint damageRadius, uint ownerId) from "explode";
+
+void t_Warn(Critter& player, Scenery& trigger, bool entered, uint8 dir)
+{
+	Map@ map=player.GetMap();
+	Location@ loc=map.GetLocation();
+	GameVar@ triggered=GetLocalVar(LLVAR_se_android_mines_triggered, loc.Id);
+	if(valid(triggered) && triggered==0)
+	{
+		player.Wait(0);
+		player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_OUT);
+		triggered=1;
+		CreateTimeEvent(__FullSecond + __TimeMultiplier, "e_Explode", map.Id, true);
+		CreateTimeEvent(__FullSecond + __TimeMultiplier*20, "e_DeleteMap", map.Id, true);
+	}
+}
+
+uint e_Explode(uint[]@ values)
+{
+	Map@ map=GetMap(values[0]);
+	if (!valid(map))
+		return 0;
+	DL("e_Explode called");
+	Entire[] entires;
+	Entire@ entire;
+	if(ParseEntires(map, entires, ENTIRE_EXPLODE)>0)
+	{
+		for(uint i=0; i<3; i++)
+		{
+			@entire=entires[Random(0, entires.length()-1)];
+			if(valid(entire))
+			{
+				ExplodeEx(map, entire.HexX, entire.HexY, PID_EXPLODE_ROCKET, 3, 666, DAMAGE_EXPLODE, 3, 0);
+			}
+			
+		}
+	}
+	return REAL_SECOND(1);
+	
+}
+
+uint e_DeleteMap(uint[]@ values)
+{
+	Map@ map=GetMap(values[0]);
+	if(valid(map))
+	{
+		DeleteLocation(map.GetLocation().Id);
+	}
+	return 0;
+}
+// Части тела в банках с биогелем
+#define STR_EMPTY                (70092) // Больше в этих коробках ничего нет.@@Эти ящики пусты.
+#define STR_OPEN_POT             (70096) // Строка при открытии банки
+#define STR_FOUND                (70093) // В одном из ящиков вы обнаружили странную стеклянную банку с формалином.
+#define STR_UNLUCK               (70094) // Вы не нашли ничего интересного в этих старых коробках.@@Удача вам не улыбнулось. Вы ничего не нашли в ящиках.
+void _PotInit(Item& item, bool firstTime)
+{
+	GameVar@ num=GetLocalVar(LIVAR_se_android_item_num, item.Id);
+	if(valid(num))
+	{
+		int n=num.GetValue();
+		string lexems="$text";
+		switch (n)
+		{
+			case LLVAR_se_android_t_founded:
+				lexems +="Tab10id";
+				break;
+			case LLVAR_se_android_c_founded:
+				lexems +="cvet";
+				break;
+			case LLVAR_se_android_p_founded:
+				lexems +="Ponchik";
+				break;
+			case LLVAR_se_android_r_founded:
+				lexems +="rifleman17";
+				break;
+			case LLVAR_se_android_d_founded:
+				lexems +="Dagnir";
+				break;
+			case LLVAR_se_android_l_founded:
+				lexems +="LoadRunner";
+				break;
+			default:
+				lexems +=" ";				
+				break;
+		}
+		item.SetLexems(lexems);
+	}
+	SETFLAG(item.Flags,ITEM_CAN_USE);
+	item.Update();
+	CreateTimeEvent(__FullSecond + REAL_HOUR(2), "e_DeleteItem", item.Id, true);
+	item.SetEvent(ITEM_EVENT_USE, "_PotUse");
+}
+
+uint e_DeleteItem(uint[]@ values)
+{
+	Item@ item=GetItem(values[0]);
+	if(valid(item))
+		DeleteItem(item);
+	return 0;
+}
+
+bool _PotUse(Item& item, Critter& cr, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+	if(valid(onCritter) || valid(onItem) || valid(onScenery))
+		return false;
+	DeleteItem(item);
+	Item@ newItem=cr.AddItem(pids[Random(0, pids.length()-1)],1);
+	if(valid(newItem))
+	{
+		newItem.Info=2;
+		newItem.Update();
+	}
+	cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_OPEN_POT);
+	return true;
+}
+
+const uint[] pids={PID_HUMAN_BRAIN, PID_GOLD_TOOTH, PID_PLAYERS_EAR, PID_DIXON_EYE, PID_MEAT};
+
+bool s_Boxes(Critter& player, Scenery& scenery, int skill, Item@ itemUse, int chance)
+{
+	if(skill !=SKILL_PICK_ON_GROUND)
+		return false;
+	Map@ map=player.GetMap();
+	Location@ loc=map.GetLocation();
+	// Проверяем, что в этом контейнере еще не нашли ничего.
+	// Заодно запоминаем последнюю незаполненную переменную
+	uint id=scenery.HexX * scenery.HexY;
+	int varNum=-1;
+	for(int i=LLVAR_se_android_t_founded; i<=LLVAR_se_android_l_founded; i++)
+	{
+		GameVar@ found=GetLocalVar(i, loc.Id);
+		if(valid(found))
+		{
+			if(found==0 && varNum<0)
+				varNum=i;
+			if(found==id || varNum==LLVAR_se_android_l_founded) // Эти ящики уже обыскивали, либо найдены все предметы
+			{
+				player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_EMPTY);
+				return true;
+			}
+		}
+	}
+	player.Wait(1000);
+	chance=chance - (varNum - LLVAR_se_android_t_founded)*10; // Каждый последующий предмет найти сложнее
+	if(Random(5,95) > chance || Random(1,2)==1)
+	{
+		player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_UNLUCK);
+		return true;
+	}
+	DL("VarNum=" + varNum);
+	GameVar @ save=GetLocalVar(varNum, loc.Id);
+	save=id;
+	Item@ item=player.AddItem(PID_POT, 1);
+	if(valid(item))
+	{
+		GameVar @ itemNum=GetLocalVar(LIVAR_se_android_item_num, item.Id);
+		if(valid(itemNum))
+		{
+			itemNum=varNum;
+		}
+		item.SetScript("_PotInit");
+		player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_FOUND);
+	}	
+	return true;	
+}

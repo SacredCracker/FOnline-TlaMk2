@@ -1,0 +1,133 @@
+// Author: rifleman17
+// Работы на шахтах Реддинга
+
+#include "_macros.fos"
+
+// Скрытый контейнер для хранения предметов, принадлежащих игроку
+
+#define PID_MINER                             (169)
+#define NUGGET_COST                           (10)
+#define XP_COST                               (40)
+#define STR_REMOVE_NUGGET                     (5420)
+int IdHiddenCont;
+
+void _HiddenContainerInit(Item & item, bool firstTime)
+{
+	SETFLAG(item.Flags, ITEM_HIDDEN);
+	IdHiddenCont=item.Id;
+}
+
+Item @GetHiddenContainer()
+{
+	return GetItem(IdHiddenCont);
+}
+
+bool TransferItems(Critter & player, bool toContainer)
+{
+	Item@[] items;
+	Item@ cont=GetHiddenContainer();
+	if (!valid(cont)) return false;
+	if(toContainer)
+	{
+		if(player.GetItems(-1, items)<0)
+			return true;
+		
+		Item@[] itemsTemp;
+		for(uint16 i=0, iMax=items.length(); i<iMax; i++)
+			if(items[i].GetProtoId()!=PID_POSTMAN_LETTER) itemsTemp.insertLast(items[i]);
+		
+		MoveItems(itemsTemp,cont,player.Id);
+			
+		return true;
+	}
+	
+	if(cont.GetItems(player.Id,items)>0)
+		MoveItems(items,player);			
+	return true;
+}
+
+void ClearPlayerItems(Critter & player)
+{
+	Item@[] items;
+	if(player.GetItems(-1, items)>0)
+	{
+		for(uint i=0, iMax=items.length(); i<iMax; i++)
+		{
+			DeleteItem(items[i]);
+		}
+	}
+}
+
+void r_SendPlayerToMines(Critter & player, Critter @ npc)
+{
+	if (!TransferItems(player, true)) return;
+	Map @ map=GetMapByPid(MAP_redding_mine,0);
+	if (!valid(map)) return;
+	if (!player.TransitToMap(map.Id,1)) return;
+	player.AddItem(PID_SLEDGEHAMMER,1);
+}
+
+void r_SendPlayerFromMines(Critter & player, Critter @ npc)
+{
+	ClearPlayerItems(player);
+	Map @ map=GetMapByPid(MAP_redding_miners,0);
+	if (!valid(map)) return;
+	player.TransitToMap(map.Id,77);
+}
+
+void r_PayPlayer(Critter & player, Critter @ npc)
+{
+	TransferItems(player, false);
+	GameVar @ counter=GetLocalVar(LVAR_redd_mine_nuggets, player.Id);
+	if (!valid(counter)) return;
+	int money=counter.GetValue();
+	counter=0;
+	if(money>0)
+	{
+		player.AddItem(PID_KOKOWEEF_MINE_SCRIP, money*NUGGET_COST);
+		player.StatBase[ST_EXPERIENCE]+=money*XP_COST;
+	}
+	
+}
+// Добыча золота
+// есть таймаут на вход - 3 игровых суток
+// выход разрешают, если игрок собрал минимум 15 самородков
+// за каждый самородок игрок получает x марок шахты
+// марки можно менять на деньги у мужика в казино
+bool s_CountNuggets(Critter& player, Scenery& sc, int skill, Item@ item)
+{
+	if(valid(item))
+	{
+		uint pid=item.GetProtoId(); 
+		if(pid==PID_GOLD_NUGGET)
+		{
+			GameVar @ counter=GetLocalVar(LVAR_redd_mine_nuggets, player.Id);
+			if(valid(counter))
+			{
+				if(counter.GetValue()<counter.GetMax())
+				{
+					counter=counter.GetValue()+1;				
+					player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_REMOVE_NUGGET,"$num "+counter.GetValue()); // Вы бережно опускаете один из золотых самородков в вагонетку. Всего добыто золота: @lex num@.
+				}
+			}
+		}
+		if(pid==PID_GOLD_NUGGET||pid==PID_ROCK)
+		{
+			_SubItem(item,1);
+		}
+	}
+	return true;
+}
+
+// Счетчик оставшихся 
+void dlg_CountNuggets(Critter& player, Critter@ barman, string@ lexems)
+{
+	if (!IS_DIALOG_GENERATED(lexems)) return;
+	GameVar @ counter=GetLocalVar(LVAR_redd_mine_nuggets, player.Id);
+	if (!valid(counter)) 
+	{
+		lexems="$nuggets15";
+		return;
+	}
+	lexems="$nuggets"+(15-counter.GetValue());
+}

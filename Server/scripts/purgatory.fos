@@ -1,0 +1,565 @@
+#include "battle_info.fos"
+#include "_teams.fos"
+#include "_ai.fos"
+#include "_npc_pids.fos"
+#include "_bags.fos"
+
+#define TIME_NEXT_RADIO_STAGE1    (REAL_MINUTE(5))
+#define STR_RADIO_STAGE1          (7120)             // Внимание! Открыт набор участников для Испытания в Чистилище. Для того, чтобы подать заявку найдите Экзекутора на входе любого города Пустоши.
+#define STR_KILL                  (7121)             // Мощный электрически разряд из пипбоя отправляет вас на небеса. Правда, вам показалось, что удар был нанесен в шею, откуда-то сзади.
+#define STR_ITEMS                 (7122)
+#define SPAWN_ENTIRE              # (locPid)               ((locPid==LOCATION_ReplicationHell) ? 242 : 0)
+#define ENTIRE_NOPVP_FIRST        (100)              // Первый спецгекс нопвп зоны
+#define ENTIRE_NOPVP_LAST         (103)              // Первый спецгекс нопвп зоны
+#define CTE_NOPVP_OFF             (42)               // Идентификатор события "очистить нопвп режим"
+#define TIME_CHECK                (REAL_MINUTE(1)) // Время проверки, не вышел ли игрок с нопвп зоны
+#define PURGATORY_WORLD_X         (800)
+#define PURGATORY_WORLD_Y         (500)
+#define ENTIRE_TEAM_1             (33)
+#define ENTIRE_TEAM_2             (34)
+#define ENTIRE_TEAM_3             (35)
+#define ENTIRE_TEAM_4             (36)
+
+#define _RndCont                  # (containers) (containers[ Random(0, containers.length() - 1) ])
+
+
+import bool   GetNearEntire(Map& map, int number, uint16& hx, uint16& hy) from "entire";
+import bool   IsCritterInDeadZone(Critter& cr, Map& map, uint8 dir, uint8 hexFirst, uint8 hexEnd) from "entire";
+import uint   GetEventOccurenceTime(uint idx) from "game_event";
+import string DateTimeToString(uint gameTime) from "time";
+
+
+BattleInfo@ bInfo;
+
+uint        TeamContainerId; // код контейнера для игроков в составе команды
+
+// Обработчики смены состояний и инвайта
+
+class PurgatoryStageChangedHandler : IBattleInfoStageChangedHandler, IBattleInfoCallBack
+{
+    void OnStageChanged(uint8 stage)
+    {
+        if(bInfo.Stage==STAGE_FIGHT)
+        {
+            RadioMessageMsg(0, TEXTMSG_TEXT, 7132);
+            Location@ loc=GetLocationByPid(LOCATION_Purgatory, 0);
+            if(valid(loc))
+            {
+                Map@ map=loc.GetMapByIndex(0);
+                if(valid(map))
+                {
+                    map.SetEvent(MAP_EVENT_LOOP_0, "_PurgatoryLoop");
+                    map.SetLoopTime(0, 25000);                    // Раз в 25 секунд
+                    Critter@[] players;
+                    map.GetCritters(0, FIND_ALL | FIND_ONLY_PLAYERS, players);
+                    for(uint i=0, l=players.length(); i<l; i++)
+                    {
+                        players[ i ].SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 7132);
+                    }
+                }
+            }
+            return;
+        }
+        if(bInfo.Stage==STAGE_FINISH)
+        {
+            // Завершение испытания
+            Location@ loc=GetLocationByPid(LOCATION_Purgatory, 0);
+            if(valid(loc))
+            {
+                loc.Visible=false;
+                loc.AutoGarbage=true;
+                CreateTimeEvent(__FullSecond + REAL_MINUTE(20), "e_DeletePurgatory", loc.Id, true);
+            }
+            BattleTeam@ winners=bInfo.GetWinnerTeam();
+            if(valid(winners))
+            {
+                Critter@[] players;
+                Map@ mapInfo=loc.GetMapByIndex(0);
+                mapInfo.GetCritters(0, FIND_ALL | FIND_ONLY_PLAYERS, players);
+                for(uint i=0, l=players.length(); i<l; i++)
+                {
+                    Critter@ player=players[ i ];
+                    if(valid(player))
+                        player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 7131, "$team" + (winners.Index + 1));
+                }
+                int  points=winners.BattlePoints;
+                int  alive=winners.CountAlive();
+                Map@ map=loc.GetMapByIndex(1);
+                Item@[] containers;
+                Item@[] prizeContainers;
+                if(map.GetItemsByType(ITEM_TYPE_CONTAINER, containers) > 0)
+                {
+                    for(uint i=0, l=containers.length(); i<l; i++)
+                    {
+                        if(containers[ i ].Val0 !=0)
+                            prizeContainers.insertLast(containers[ i ]);
+                    }
+                    if(prizeContainers.length() > 0 && points > 0)
+                    {
+                        // Раздача призов
+                        // Сначала обязательные призы
+                        for(int i=0; i<alive; i++)
+                        {
+                            _RndCont(prizeContainers).AddItem(PID_BOTTLE_CAPS, points * 50, 0);
+                            _RndCont(prizeContainers).AddItem(PID_METAL_ARMOR_MK_II, 1, 0);
+                            _RndCont(prizeContainers).AddItem(PID_223_PISTOL, 1, 0);
+                            _RndCont(prizeContainers).AddItem(PID_223_FMJ, points * 2, 0);
+                            _RndCont(prizeContainers).AddItem(PID_STIMPAK, 5, 0);
+                        }
+                        uint rnd=Random(1, 3);
+                        // ПА
+                        if(points > 200 && rnd==1)
+                        {
+                            _RndCont(prizeContainers).AddItem(PID_POWERED_ARMOR, 1, 0);
+                            points -=50;
+                        }
+                        if(points > 200)
+                        {
+                            _RndCont(prizeContainers).AddItem(PID_CATS_PAW_ISSUE_5, 2, 0);
+                        }
+                        if(points > 200)
+                        {
+                            if(rnd==1)
+                            {
+                                _RndCont(prizeContainers).AddItem(PID_M72_GAUSS_RIFLE, Random(1, 2), 0);
+                                _RndCont(prizeContainers).AddItem(PID_2MM_EC_AMMO, Random(333, 444), 0);
+                            }
+                            if(rnd==2)
+                            {
+                                _RndCont(prizeContainers).AddItem(PID_VINDICATOR_MINIGUN, Random(1, 2), 0);
+                                _RndCont(prizeContainers).AddItem(PID_4_7MM_CASELESS, Random(4000, 6000), 0);
+                            }
+                            if(rnd==3)
+                            {
+                                _RndCont(prizeContainers).AddItem(PID_YK42B_PULSE_RIFLE, Random(1, 2), 0);
+                                _RndCont(prizeContainers).AddItem(PID_TURBO_PLASMA_RIFLE, Random(1, 2), 0);
+                                _RndCont(prizeContainers).AddItem(PID_MICRO_FUSION_CELL, Random(200, 300), 0);
+                            }
+                            points -=50;
+                        }
+                        if(points > 150)
+                        {
+                            for(int i=0; i<alive; i++)
+                            {
+                                _RndCont(prizeContainers).AddItem(PID_COMBAT_ARMOR, 1, 0);
+                                _RndCont(prizeContainers).AddItem(PID_FN_FAL_HPFA, 1, 0);
+                                _RndCont(prizeContainers).AddItem(PID_AVENGER_MINIGUN, 1, 0);
+                                _RndCont(prizeContainers).AddItem(PID_5MM_JHP, 500, 0);
+                            }
+                            points -=50;
+                        }
+                        if(points > 100)
+                        {
+                            _RndCont(prizeContainers).AddItem(PID_SUPER_STIMPAK, 4 * alive, 0);
+                            _RndCont(prizeContainers).AddItem(PID_PSYCHO, 5 * alive, 0);
+                            _RndCont(prizeContainers).AddItem(PID_HYPO, 2 * alive, 0);
+                            points -=50;
+                        }
+                        if(points > 50)
+                        {
+                            _RndCont(prizeContainers).AddItem(PID_SUPER_STIMPAK, 5 * alive, 0);
+                            _RndCont(prizeContainers).AddItem(PID_BUFFOUT, 2 * alive, 0);
+                            _RndCont(prizeContainers).AddItem(PID_JET, 2 * alive, 0);
+                            _RndCont(prizeContainers).AddItem(PID_BIG_BOOK_OF_SCIENCE, 2, 0);
+                            _RndCont(prizeContainers).AddItem(PID_FIRST_AID_BOOK, 2, 0);
+                            _RndCont(prizeContainers).AddItem(PID_SCOUT_HANDBOOK, 2, 0);
+                            _RndCont(prizeContainers).AddItem(PID_GUNS_AND_BULLETS, 2, 0);
+                        }
+                    }
+                }
+
+            }
+
+        }
+    }
+
+    void OnCritterDead(Critter& dead, Critter@ killer)
+    {
+        BattleTeam@ btDead=bInfo.GetCritterTeam(dead.Id);
+        BattleTeam@ btKiller=bInfo.GetCritterTeam(killer.Id);
+        if(valid(btKiller) && valid(btDead) && killer.IsPlayer())
+        {
+            if(btKiller.Index==btDead.Index)
+            {
+                killer.StatBase[ ST_REPLICATION_MONEY ] -=1000;
+                killer.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 7129);
+            }
+            else
+            {
+                uint xp=killer.Stat[ ST_LEVEL ] * 100;
+                killer.StatBase[ ST_REPLICATION_MONEY ] +=300;
+                killer.StatBase[ ST_EXPERIENCE ] +=xp;
+                killer.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 7130, "$xp" + xp);
+            }
+        }
+    }
+}
+
+
+
+bool NeedReplicateCritterToBattle(Critter& cr)
+{
+    DL("replication called");
+    if(valid(bInfo) && cr.Stat[ ST_NEXT_REPLICATION_MAP ] > 0 && cr.Stat[ ST_NEXT_REPLICATION_ENTIRE ] > 0)
+    {
+        BattleTeam@ team=bInfo.GetCritterTeam(cr.Id);
+        if(valid(team) && bInfo.Stage==STAGE_BEGIN)
+        {
+            if(team.StartMapIndex==uint(cr.Stat[ ST_NEXT_REPLICATION_MAP ]) &&
+                team.StartEntire==uint(cr.Stat[ ST_NEXT_REPLICATION_ENTIRE ]))
+            {
+                cr.StatBase[ ST_REPLICATION_MONEY ] +=cr.Stat[ ST_REPLICATION_COST ];
+                cr.StatBase[ ST_REPLICATION_COUNT ] -=1;
+                return true;
+            }
+        }
+    }
+    DL("false");
+    return false;
+}
+
+class PurgatoryInviteCallback : IBattleTeamInviteCallback
+{
+    void OnInvite(Critter@ cr, bool& transit, BattleTeam@ team)
+    {
+        if(valid(cr) && cr.IsNpc())
+            return;
+        Item@[] items;
+        Item@ container;
+        if(TeamContainerId > 0)
+            @container=GetItem(TeamContainerId);
+        if(!valid(cr))
+            return;
+        if(valid(container))
+            if(cr.GetItems(-1, items) > 0)
+            {
+                MoveItems(items, container, cr.Id);
+            }
+        cr.ToDead(ANIM2_DEAD_PULSE_DUST, null);
+        cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_KILL);
+        cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_ITEMS);
+        if(valid(team))
+        {
+            cr.StatBase[ ST_NEXT_REPLICATION_MAP ]=team.StartMapIndex;
+            cr.StatBase[ ST_NEXT_REPLICATION_ENTIRE ]=team.StartEntire;
+        }
+        transit=false;
+    }
+
+    void OnTransit(Critter@ cr)
+    {
+        // не требуется
+    }
+}
+
+PurgatoryStageChangedHandler stageHandler;
+PurgatoryInviteCallback      inviteCallback;
+
+uint e_RunPreparationStage(uint[] @ values)
+{
+    @bInfo=BattleInfo();
+    bInfo.SetStageHandler(stageHandler);
+    bInfo.SetCallBack(stageHandler);
+    Location@ loc=GetLocationByPid(LOCATION_Purgatory, 0);
+    if(valid(loc))
+    {
+        loc.Visible=false;
+        loc.AutoGarbage=true;
+    }
+    uint locId=CreateLocation(LOCATION_Purgatory, PURGATORY_WORLD_X, PURGATORY_WORLD_Y, null);
+    if(locId==0)
+        return 0;
+    @loc=GetLocation(locId);
+    if(!valid(loc))
+        return 0;
+    bInfo.LocId=locId;
+    Map@ map=loc.GetMapByIndex(0);
+    bInfo.AddTeam(ENTIRE_TEAM_1, map.Id, COLOR_SAND, inviteCallback);
+    bInfo.AddTeam(ENTIRE_TEAM_2, map.Id, COLOR_LBLUE, inviteCallback);
+    bInfo.AddTeam(ENTIRE_TEAM_3, map.Id, COLOR_LRED, inviteCallback);
+    bInfo.AddTeam(ENTIRE_TEAM_4, map.Id, COLOR_GREEN_RED, inviteCallback);
+    bInfo.PrepareBattle();
+    uint16 x=0;
+    uint16 y=0;
+    // Расстановка нпц-нанимателей
+    for(uint i=LOCATION_Den; i<=LOCATION_ReplicationHell; i++)
+    {
+        if(LOCATION_IS_CITY(i) || i==LOCATION_ReplicationHell)
+        {
+            Location@ loc=GetLocationByPid(i, 0);
+            if(!valid(loc))
+                continue;
+            Map@ map=loc.GetMapByIndex(0);
+            if(!valid(map))
+                continue;
+            if(GetNearEntire(map, SPAWN_ENTIRE(i), x, y))
+            {
+                int[] params=
+                {
+                    ST_DIALOG_ID, DIALOG_purg_executor, ST_TEAM_ID, TEAM_Slaver, ST_AI_ID, AIPACKET_BOUNTY_HUNTER, ST_BAG_ID,
+                    BAG_Navarro_EnclavePatrol_Male2, ST_LEVEL, 50, MODE_NO_LOOT, 1, MODE_NO_KNOCK, 1, MODE_NO_LOOSE_LIMBS, 1, MODE_NO_ENEMY_STACK, 1, MODE_NO_STEAL, 1,
+                    MODE_UNLIMITED_AMMO, 1, ST_CRITICAL_RESISTANCE, 80, PE_LIVING_ANATOMY, 1, PE_BETTER_CRITICALS, 1, PE_BONUS_RATE_OF_FIRE, 1, ST_ACTION_POINTS, 30, SK_ENERGY_WEAPONS, 300,
+                    ST_STRENGTH, 10, ST_ENDURANCE, 10, PE_SNIPER, 1, ST_CRITICAL_CHANCE, 100, ST_NORMAL_RESIST, 200, ST_LASER_RESIST, 200, ST_FIRE_RESIST, 200, ST_PLASMA_RESIST, 200,
+                    ST_EXPLODE_RESIST, 200, ST_MAX_LIFE, 1000, ST_CURRENT_HP, 1500
+                };
+                map.AddNpc(NPC_PID_ElronologistMale, x, y, Random(0, 5), params, null, "purgatory@_RiperInit");
+                DL("Location pid" + i + " executor placed");
+            }
+        }
+    }
+    CreateTimeEvent(__FullSecond, "e_RadioPurgatory1", true);
+    return 0;
+}
+
+uint e_RadioPurgatory1(uint[] @ values)
+{
+    if(valid(bInfo) && bInfo.Stage==STAGE_PREPARE)
+    {
+        RadioMessageMsg(0, TEXTMSG_TEXT, STR_RADIO_STAGE1);
+        return TIME_NEXT_RADIO_STAGE1;
+    }
+    return 0;
+}
+
+// экзекуторы
+
+void _RiperInit(Critter& cr, bool firstTime)
+{
+    cr.StatBase[ ST_CURRENT_HP ]=cr.Stat[ ST_MAX_LIFE ];
+    cr.AddTimeEvent("cte_RipperShout", REAL_MINUTE(5), 0);
+    cr.SetEvent(CRITTER_EVENT_IDLE, "_RiperIdle");
+}
+
+uint cte_RipperShout(Critter& cr, int identifier, uint& rate)
+{
+    if(valid(bInfo) && bInfo.Stage==STAGE_PREPARE)
+    {
+        cr.SayMsg(SAY_SHOUT, TEXTMSG_DLG, DLGSTR(cr.Stat[ ST_DIALOG_ID ], 1));
+        return REAL_MINUTE(9);
+    }
+    return 0;
+}
+
+void _RiperIdle(Critter& cr)
+{
+    cr.StatBase[ ST_CURRENT_HP ]=cr.Stat[ ST_MAX_LIFE ];
+}
+
+// второй этап: перемещение игроков к бою
+
+uint e_RunBeginStage(uint[] @ values)
+{
+    Critter@[] critters;
+    Critter@  cr;
+    Location@ loc;
+    Map@      map;
+    // Добавление в участники каждой команды по одному нпц из хранилища
+    // Чтобы бой состоялся, даже есть только один игрок
+    @map=GetMapByPid(MAP_purgatory3, 0);
+    if(valid(map))
+        map.GetCritters(0, FIND_LIFE | FIND_ONLY_NPC, critters);
+    for(uint i=0; i<4 && i<critters.length(); i++)
+        bInfo.AddRequest(i, critters[ i ].Id);
+
+    bInfo.BeginBattle();
+
+    critters.resize(0);
+    // Удаление экзекуторов
+    for(uint i=LOCATION_Den; i<=LOCATION_ReplicationHell; i++)
+    {
+        if(LOCATION_IS_CITY(i) || i==LOCATION_ReplicationHell)
+        {
+            @loc=GetLocationByPid(i, 0);
+            if(valid(loc))
+            {
+                @map=loc.GetMapByIndex(0);
+                if(valid(map))
+                    map.GetCritters(NPC_PID_ElronologistMale, FIND_ALL | FIND_ONLY_NPC, critters);
+            }
+        }
+    }
+    for(uint i=0, l=critters.length(); i<l; i++)
+    {
+        @cr=critters[ i ];
+        if(valid(cr) && cr.Stat[ ST_DIALOG_ID ]==DIALOG_purg_executor)
+            DeleteNpc(cr);
+    }
+    return 0;
+}
+
+// третий этап: начало боя
+uint e_RunFightStage(uint[] @ values)
+{
+    bInfo.Fight();
+
+    return 0;
+}
+
+// четвертый этап: завершение боя после того, как истекло время
+uint e_RunEndStage(uint[] @ values)
+{
+    if(bInfo.Stage==STAGE_FIGHT)
+        bInfo.Finish();
+    return 0;
+}
+
+// Карты чистилища
+void _PurgatoryInit(Map& map, bool firstTime)
+{
+    map.SetEvent(MAP_EVENT_IN_CRITTER, "_PurgatoryMapIn");
+    map.SetEvent(MAP_EVENT_OUT_CRITTER, "_PurgatoryMapOut");
+}
+
+void _PurgatoryMapIn(Map& map, Critter& cr)
+{
+    cr.ModeBase[ MODE_NO_PVP ]=0;
+    if(cr.IsPlayer() && IsCritterInDeadZone(cr, map, 0, ENTIRE_NOPVP_FIRST, ENTIRE_NOPVP_LAST))
+    {
+        cr.ModeBase[ MODE_NO_PVP ]=1;
+        cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 1);
+        if(cr.GetTimeEvents(CTE_NOPVP_OFF, null, null, null)==0)
+        {
+            cr.AddTimeEvent("cte_NoPvpOff", TIME_CHECK, CTE_NOPVP_OFF);
+        }
+    }
+}
+
+void _PurgatoryMapOut(Map& map, Critter& cr)
+{
+    Map@ mapCr=cr.GetMap();
+    if(valid(mapCr) && IsCritterInDeadZone(cr, map, 0, ENTIRE_NOPVP_FIRST, ENTIRE_NOPVP_LAST))
+        return;
+    cr.ModeBase[ MODE_NO_PVP ]=0;
+    cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 2);
+    _BattleMapCritterIn(map, cr);
+}
+
+uint cte_NoPvpOff(Critter& cr, int identifier, uint& rate)
+{
+    if(cr.Mode[ MODE_NO_PVP ]==0)
+        return 0;
+    Map@map=cr.GetMap();
+    if(valid(map) && IsCritterInDeadZone(cr, map, 0, ENTIRE_NOPVP_FIRST, ENTIRE_NOPVP_LAST))
+        return TIME_CHECK;
+    cr.ModeBase[ MODE_NO_PVP ]=0;
+    cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 2);
+    return 0;
+}
+
+void _GateKeeperInit(Critter& cr, bool firstTime)
+{
+    cr.ModeBase[ MODE_INVULNERABLE ]=1;
+}
+
+void dlg_WhenBegin(Critter& cr, Critter@ npc, string@ lexems)
+{
+    if(!IS_DIALOG_GENERATED(lexems))
+        return;
+    lexems="$time" + DateTimeToString(GetEventOccurenceTime(8));
+}
+
+void dlg_CountPlayers(Critter& player, Critter@ npc, string@ lexems)
+{
+    if(!IS_DIALOG_GENERATED(lexems))
+        return;
+    uint     total=0;
+    uint     alive=0;
+    Critter@ cr;
+    for(uint i=0, l=bInfo.Teams.length(); i<l; i++)
+    {
+        alive +=bInfo.Teams[ i ].CountAlive();
+        total +=bInfo.Stage >=STAGE_BEGIN ? bInfo.Teams[ i ].Players.length() : bInfo.Teams[ i ].Requests.length();
+    }
+    lexems="$total" + total + "$alive" + alive;
+}
+
+void dlg_Team1(Critter& player, Critter@ npc, string@ lexems)
+{
+    if(!IS_DIALOG_GENERATED(lexems))
+        return;
+    lexems="$players" + GetTeamPlayers(bInfo.Teams[ 0 ]);
+}
+
+void dlg_Team2(Critter& player, Critter@ npc, string@ lexems)
+{
+    if(!IS_DIALOG_GENERATED(lexems))
+        return;
+    lexems="$players" + GetTeamPlayers(bInfo.Teams[ 1 ]);
+}
+
+void dlg_Team3(Critter& player, Critter@ npc, string@ lexems)
+{
+    if(!IS_DIALOG_GENERATED(lexems))
+        return;
+    lexems="$players" + GetTeamPlayers(bInfo.Teams[ 2 ]);
+}
+
+void dlg_Team4(Critter& player, Critter@ npc, string@ lexems)
+{
+    if(!IS_DIALOG_GENERATED(lexems))
+        return;
+    lexems="$players" + GetTeamPlayers(bInfo.Teams[ 3 ]);
+}
+
+// Генерация итемов в ящиках
+// На третьей карте Чистилища стоят ящики с лутом
+// периодически совершается попытка переместить из одного из ящиков содержимое на территорию бг
+void _PurgatoryLoop(Map& map)
+{
+    if(valid(bInfo) && bInfo.Stage==STAGE_FIGHT)
+    {
+        Location@ loc=map.GetLocation();
+        if(valid(loc))
+        {
+            GameVar@ lastTransfer=GetLocalVar(LLVAR_last_loot_transfer, loc.Id);
+            if(valid(lastTransfer) && lastTransfer + REAL_MINUTE(1)<int(__FullSecond))
+            {
+                lastTransfer=__FullSecond;
+                Map@ mapFrom=loc.GetMapByIndex(2);
+                if(valid(mapFrom))
+                {
+                    Item@[] containersFrom;
+                    Item@[] containersTo;
+                    map.GetItemsByType(ITEM_TYPE_CONTAINER, containersTo);
+                    mapFrom.GetItemsByType(ITEM_TYPE_CONTAINER, containersFrom);
+                    if(containersFrom.length() > 0 && containersTo.length() > 0)
+                    {
+                        Item@[] items;
+                        Item@ contFrom=containersFrom[ Random(0, containersFrom.length() - 1) ];
+                        if(valid(contFrom) && contFrom.GetItems(0, items) > 0)
+                        {
+                            Item@ contTo=containersTo[ Random(0, containersTo.length() - 1) ];
+                            if(valid(contTo))
+                            {
+                                DL("Moving " + items.length() + " items to container at x:" + contTo.HexX + "; y:" + contTo.HexY);
+                                MoveItems(items, contTo, 0);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Удаление локации после того, как время истекло
+uint e_DeletePurgatory(uint[] @ values)
+{
+    Location@ loc=GetLocation(values[ 0 ]);
+    if(valid(loc))
+    {
+        Map@ map;
+        Critter@[] critters;
+        for(uint i=0; i<3; i++)
+        {
+            @map=loc.GetMapByIndex(i);
+            map.GetCritters(0, FIND_ALL | FIND_ONLY_PLAYERS, critters);
+        }
+        for(uint i=0, l=critters.length(); i<l; i++)
+        {
+            critters[ i ].SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 7128);
+        }
+        DeleteLocation(loc.Id);
+    }
+    return 0;
+}

@@ -1,0 +1,146 @@
+#include "_macros.fos"
+#include "entire.fos"
+#include "_msgstr.fos"
+
+//import uint GetCarCost(uint16 protoCar) from "car";
+
+#define FD_NO_MONEY                      (5)
+#define FD_NO_PLACES                     (6)
+#define FD_BUY_SUCCESS_WORKSHOP          (7)
+#define FD_BUY_SUCCESS_CARSTOP           (8)
+#define FD_MODIFY_NO_MONEY               (37)
+#define FD_MODIFY_NO_NEED                (38)
+#define FD_GENERIC_ERROR                 (100)
+#define FD_TAKE_KEY_IN_HAND              (101)
+#define FD_CAR_NOT_FOUND                 (102)
+#define FD_TAKE_KEY_IN_HAND2             (103)
+
+#define ENTIRE_WORKSHOP                  (103)
+
+//#define KEY_COPY_COST                  (1000)
+
+#define TIME_TO_RESP_CAR				 (REAL_SECOND(10))
+
+#define HIGHWAYMAN				 (0)
+#define FAETON					 (1)
+
+// проверка: квест уже выполняют?
+bool r_CheckQuestIsRun(Critter& player, Critter@ npc, int val)
+{
+	GameVar@ timeout=GetGlobalVar(GVAR_den_smitty_car_timeout);
+	if(uint(timeout.GetValue()) > __FullSecond)
+	{
+		timeout=0;
+		return val!=0; // квест выполняют
+	}
+	return val==0; // квест не выполняют
+	/*GameVar@ game_map=GetGlobalVar(GVAR_klam_smily_gecko_location);
+	GameVar@ timeout=GetGlobalVar(GVAR_klam_smily_gecko_timeout);
+
+	// убиваем карту если квест устарел.
+	// Цитата из мануала:
+	// "Не рекомендуется выполнять какие-либо конкретные действия в функции-условии, она для этого не предназначена."
+	// Ну да фиг с ним, ничего плохого не должно произойти... (heX посмотрел взглядом налево, затем направо, и продолжил писать...)
+	if(
+		(uint(timeout.GetValue()) > __FullSecond) or
+		(timeout.GetValue()==0) or
+		(game_map.GetValue()==0)
+		)
+	{ // Если прошло больше суток но квест невыполнен то
+		DeleteGeckoMap(); // удаляем карту
+		for(uint i=0;i<GlobalGroups.length();i++)
+		{
+			QuestCompleteNotify(GlobalGroups[i]);
+		}
+		timeout=0;
+	}
+
+	if(game_map.GetValue()==0)
+		return val==0; // true
+	else
+		return val!=0; // false*/
+}
+
+uint r_CreateCarProcessFirst(Critter& player, Critter@ smitty, int CarType)
+{
+	/*uint16 protoCar;
+	uint[] CarInfo(6);
+	
+	if(CarType==HIGHWAYMAN)
+	{
+		protoCar=PID_HIGHWAYMAN_FIX1;
+		CarInfo[1]=PID_HIGHWAYMAN_FIX1;
+	}
+	else protoCar=PID_HIGHWAYMAN_FIX1;
+
+	Map@ map=player.GetMap();
+	if(not valid(map)) return FD_GENERIC_ERROR;
+	CarInfo[5]=map.Id;
+
+	Entire[] entires;
+	ParseEntires(map,entires,ENTIRE_WORKSHOP);
+
+	uint16 entNum;
+	for(int i=0,j=entires.length();i<=j;i++)
+	{
+		if(i==j) return FD_NO_PLACES;
+
+		Entire@ ent=entires[i];
+		/*if(map.CheckPlaceForCar(ent.HexX,ent.HexY,protoCar))
+		{
+			CarInfo[3]=ent.HexX;
+			CarInfo[4]=ent.HexY;
+			entNum=ent.Number;
+			break;
+		}
+	}
+
+	SetAnyData("CarInfo", CarInfo);
+
+	CreateTimeEvent(__FullSecond+TIME_TO_RESP_CAR, "e_CreateCar", true);*/
+
+	return 0;
+}
+
+uint r_CreateCarProcessNext(Critter& player, Critter@ smitty, int etap, int carType)
+{
+	/*uint[] CarInfo(6);	
+	GetAnyData("CarInfo", CarInfo);
+	
+	if(carType==HIGHWAYMAN)
+		if(etap==2) CarInfo[1]=PID_HIGHWAYMAN_FIX2;
+		else if(etap==3) CarInfo[1]=PID_HIGHWAYMAN_FIX3;
+			 else 
+			 {
+				CarInfo[1]=PID_HIGHWAYMAN;
+				GameVar@ game_time=GetGlobalVar(GVAR_den_smitty_car_timeout);
+				game_time=__FullSecond + (60 * 60);
+			 }
+	
+	SetAnyData("CarInfo", CarInfo);
+	
+	CreateTimeEvent(__FullSecond+TIME_TO_RESP_CAR, "e_CreateCar", true);*/
+	
+	return 0;
+}
+
+uint e_CreateCar(uint[]@ value)
+{
+	/*uint[] CarInfo(6);
+	GetAnyData("CarInfo", CarInfo);
+	
+	Map@ map=GetMap(CarInfo[5]);
+	
+	Item@ oldCar=GetItem(CarInfo[0]);
+	if(valid(oldCar)) DeleteItem(oldCar);
+	
+	/*if(map.CheckPlaceForCar(CarInfo[3],CarInfo[4],CarInfo[1]))
+	{
+		Item@ car=map.AddItem(CarInfo[3],CarInfo[4],CarInfo[1],1);
+		CarInfo[0]=car.Id;
+		SetAnyData("CarInfo", CarInfo);
+	}*/
+	//else return 1;
+	
+	return 0;
+}

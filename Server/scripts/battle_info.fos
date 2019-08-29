@@ -1,0 +1,792 @@
+// Author: rifleman17
+// Групповые поединки на локациях. //wip
+// Проходят в 4 этапа, участвует несколько команд/групп.
+// Ведется учет убийств членами команд.
+// Подразумевается, что изначально команды закрыты друг от друга. Доступ к сражению команды получают только на стадии 3.
+// TODO: Сериализация в AnyData, если потребуется.
+// TODO: Сделать расписание этапов по эвентам
+// * ВНИМАНИЕ: при использовании BattleInfo необходимо включить battle_info.fos в соответствующий скрипт #include'ом, и объявить экземпляр
+// BattleInfo bInfo;
+
+#include "_colors.fos"
+#include "_macros.fos"
+#include "_msgstr.fos"
+#include "utils_for_array.fos"
+
+import bool AddWalkPlane(Critter& npc, uint entire, uint cut, bool run) from "npc_planes";
+import bool AddAttackPlane(Critter& npc, uint priority, uint critId) from "npc_planes";
+#define STAGE_NONE               (0) // Поединок не начинался
+#define STAGE_PREPARE            (1) // Идет прием заявок на участие. Известно время начала. На картах появляются наниматели
+#define STAGE_BEGIN              (2) // Начало поединка, персонажи помещаются на исходные позиции.
+#define STAGE_FIGHT              (3) // Открытие дверей во внутренний двор. Начало сражение.
+#define STAGE_FINISH             (4) // Открытие дверей во внешний мир, бой закончен
+
+#define _PlayerName              # (cr) (cr.IsPlayer() ? GetPlayerName(cr.Id) : "@msg DLG " + STR_NPC_NAME(cr.Stat[ ST_DIALOG_ID ], cr.GetProtoId()) + "@")
+
+
+#define ANSWER_CONFIRM_INVITE    (0)
+#define ANSWER_REJECT_INVITE     (1)
+#define ANSWER_DELAY_INVITE      (2)
+
+#define STR_PLAYER_JOINED        (7125) // Команда |@lex teamColor@@lex team@|@lex baseColor@ К сражению присоединяется |@lex teamColor@@lex name@.
+#define STR_KILL                 (7126) // Участник Испытания |@lex team1Color@@lex dead@|@lex baseColor@ убит участником по имени |@lex team2Color@@lex killer@.
+
+// #define DL #(s)                     (Log("" + s))
+#define DL                       # (s)
+
+interface IBattleTeamInviteCallback {
+    void OnInvite(Critter@ cr, bool& transit, BattleTeam@ team);
+    void OnTransit(Critter@ cr);
+}
+interface IBattleInfoStageChangedHandler {
+    void OnStageChanged(uint8 stage);
+}
+interface IBattleInfoCallBack {
+    void OnCritterDead(Critter& dead, Critter@ killer);
+}
+
+class BattleTeam
+{
+    uint8 Index;                   // Условный индекс команды, начинается с 0
+    uint  StartEntire;             // Спецгекс, на котором появляются игроки команды во время этапа STAGE_BEGIN
+    uint  StartMapIndex;           // Индекс карты среди карт локаций, на котором размещается команда
+    uint[]  Requests;              // Id персонажей, подавших заявку на участие в поединке в составе данной команды
+    uint[]  Players;               // Id персонажей, подтвердивших свое участие в поединке
+    uint TeamKills;                // Счетчик убийств, произведенных персонажами в составе группы
+    uint LastPeekedRequestId;      // Код персонажа для последней заявки в команде, по которой было отправлено приглашение, получен ответ.
+    bool LastRequestAccepted;
+    int  BattlePoints;             // Игровые очки, исходя из количества очков команды формируется призовой фонд
+    bool Winner;
+    uint Color;
+
+    BattleTeam()
+    {
+        Color=COLOR_LGRAY;
+    }
+
+    IBattleTeamInviteCallback@ CallBackInvite;
+
+    void SetInviteCallback(IBattleTeamInviteCallback@ callback)
+    {
+        @CallBackInvite=callback;
+    }
+
+    bool HasRequest(uint crId)
+    {
+        return (this.LastPeekedRequestId==crId || FindInArray(this.Requests, crId) >=0);
+    }
+
+    bool HasPlayer(uint crId)
+    {
+        return (FindInArray(this.Players, crId) >=0);
+    }
+
+    uint CountAlive()             // Подсчет персонажей команды, оставшихся вживых
+    {
+        uint     alive=0;
+        Critter@ player;
+        for(uint i=0, l=this.Players.length(); i<l; i++)
+        {
+            @player=GetCritter(this.Players[ i ]);
+            if(valid(player) && player.IsLife())
+                alive++;
+        }
+        return alive;
+    }
+
+    // Достает Id персонажа, подавшего заявку по порядку
+    // Одновременно удаляет его из массива
+    int PeekRequest()
+    {
+        DL("Peek request");
+        int crId=0;
+        while(crId==0)
+        {
+            if(this.Requests.length()==0)
+            {
+                crId=-1;
+                break;
+            }
+            crId=this.Requests[ 0 ];
+            this.Requests.removeFirst();
+            if(!valid(GetCritter(crId)))
+                crId=0;
+        }
+        this.LastPeekedRequestId=crId;
+        DL("founded crId=" + crId);
+        return crId;
+    }
+
+    bool SendTeamInvite()
+    {
+        this.LastRequestAccepted=false;
+        int crId=this.PeekRequest();
+        if(crId > -1)
+        {
+            Critter@ cr=GetCritter(crId);
+            if(valid(cr))
+            {
+                if(cr.IsPlayer())
+                {
+                    uint[] data={ this.Index, cr.Id };
+                    CreateTimeEvent(__FullSecond + __TimeMultiplier * 10, "e_CheckInvite", data, false);
+                    cr.ShowScreen(SCREEN_DIALOGBOX, 2, "answer_BattleInvite");
+                    cr.Say(SAY_DIALOGBOX_TEXT, "Внимание. Начинается поединок. Вы готовы принять участие?");
+                    cr.Say(SAY_DIALOGBOX_BUTTON(ANSWER_CONFIRM_INVITE), "Да");
+                    cr.Say(SAY_DIALOGBOX_BUTTON(ANSWER_REJECT_INVITE), "Нет, отказываюсь");
+                }
+                else
+                {
+                    this.LastRequestAccepted=true;
+                    bInfo.TeamInviteConfirmed();
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void ConfirmInvite()
+    {
+        this.LastRequestAccepted=true;
+        bInfo.TeamInviteConfirmed();
+    }
+
+    void RequestToPlayer(Location@ loc)
+    {
+        DL("Request confirmed");
+        if(!valid(loc))
+            return;
+        Map@ map=GetMap(this.StartMapIndex);      // loc.GetMapByIndex(StartMapIndex);
+        bool transit=true;
+        if(valid(map))
+        {
+            Critter@ cr=GetCritter(this.LastPeekedRequestId);
+            if(valid(cr))
+            {
+                if(!this.HasPlayer(this.LastPeekedRequestId))
+                    this.Players.insertLast(this.LastPeekedRequestId);
+                if(valid(this.CallBackInvite))
+                    this.CallBackInvite.OnInvite(cr, transit, this);
+                if(transit)
+                {
+                    DL("Transit critter 2 map"  + cr.Id);
+                    cr.TransitToMap(map.Id, this.StartEntire);
+                    if(valid(this.CallBackInvite))
+                        this.CallBackInvite.OnTransit(cr);
+                }
+            }
+        }
+    }
+
+}
+
+class BattleInfo
+{
+    uint  LocId;                  // Id локации, на которой идет поединок
+    uint8 Stage;                  // Текущая стадия события
+    uint8 MaxPlayers;
+    BattleTeam[] Teams;
+
+    IBattleInfoStageChangedHandler@ StageChangedHandler;
+    IBattleInfoCallBack@            Callback;
+
+    void SetStageHandler(IBattleInfoStageChangedHandler@ handler)
+    {
+        @StageChangedHandler=handler;
+    }
+
+    void SetCallBack(IBattleInfoCallBack@ callback)
+    {
+        @Callback=callback;
+    }
+
+    void AddTeam(uint entire, uint mapId, uint color, IBattleTeamInviteCallback@ callback)
+    {
+        BattleTeam@ t=BattleTeam();
+        t.StartMapIndex=mapId;
+        t.StartEntire=entire;
+        t.Index=this.Teams.length();
+        t.SetInviteCallback(callback);
+        t.Color=color;
+        this.Teams.insertLast(t);
+    }
+
+    bool HasRequest(uint crId)
+    {
+        for(uint i=0, l=this.Teams.length(); i<l; i++)
+        {
+            if(this.Teams[ i ].HasRequest(crId))
+                return true;
+        }
+        return false;
+    }
+
+    void AddRequest(uint8 team, uint crId)  // Индексация с нуля
+    {
+        if(!this.HasRequest(crId) && this.Teams.length() > 0 && (team + 1<=this.Teams.length()))
+        {
+            DL("Adding Request. Team#" + team + "; crId=" + crId);
+            if(!this.Teams[ team ].HasRequest(crId))
+                this.Teams[ team ].Requests.insertLast(crId);
+            DL("1->" + (this.Teams[ team ].HasRequest(crId) ? "has request" + crId : "no request" + crId));
+            crId=1;
+            DL("2->" + (this.Teams[ team ].HasRequest(crId) ? "has request" + crId : "no request" + crId));
+        }
+    }
+
+    BattleTeam@ GetCritterTeam(uint crId)
+    {
+        DL("get cr team: " + crId);
+        for(uint i=0, l=this.Teams.length(); i<l; i++)
+        {
+            if(this.Stage<STAGE_FIGHT && this.Teams[ i ].HasRequest(crId))
+                return this.Teams[ i ];
+            if(this.Teams[ i ].HasPlayer(crId))
+                return this.Teams[ i ];
+        }
+        DL("team invalid");
+        return null;
+    }
+
+    // false - рассылка провалилась
+    // true - найдены по одному персонажу в каждой команде
+    bool SendTeamsInvite()
+    {
+        // Порядок рассылки приглашений
+        // 1. В списках заявок на участие в каждой команде начинается поиск ПЕРВОГО существующего игрока
+        // 2. Если это игрок - ему отправляется приглашение, участие НПЦ сразу подтверждается
+        // 3. При каждом ответе игрока, если это согласие, проверяется, все ли команды получили по одному участнику. Если нет, ждем дальше.
+        // 4. Если каждая команда получила своего участника, отправляются следующие приглашения по той же схеме.
+        // TODO: После отправки каждого приглашения запускать эвенты-проверки, чтобы убедиться что ожидание не ушло в бесконечность.
+        int crId;
+        for(uint i=0, l=this.Teams.length(); i<l; i++)
+        {
+            if(!this.Teams[ i ].SendTeamInvite())
+                return false;                 // В одной из команд некому отправлять приглашение
+        }
+        return true;
+    }
+
+    void TeamInviteConfirmed()
+    {
+        // Подтверждение заявки одной из команд
+        for(uint i=0, l=this.Teams.length(); i<l; i++)
+        {
+            if(!this.Teams[ i ].LastRequestAccepted)         // Найдена команда, не подтвердившая последний запрос
+                return;
+            if(this.Teams[ i ].LastPeekedRequestId<0)      // В одной из команд кончились персонажи, подавшие заявку
+                return;
+        }
+        // Перенос согласившихся игроков на поле боя
+        for(uint i=0, l=this.Teams.length(); i<l; i++)
+        {
+            this.Teams[ i ].RequestToPlayer(GetLocation(this.LocId));
+            this.Teams[ i ].LastRequestAccepted=false;
+        }
+        // Следующая итерация 2ой, 3ий, четвертый участник в каждой команде и т.д.
+        this.SendTeamsInvite();
+    }
+
+    void Notify()     // Сообщение о смене этапа поединка
+    {
+        if(valid(this.StageChangedHandler))
+            StageChangedHandler.OnStageChanged(this.Stage);
+    }
+
+    void PrepareBattle()
+    {
+        this.Stage=STAGE_PREPARE;
+        this.Notify();
+        for(uint i=0, l=this.Teams.length(); i<l; i++)
+        {
+            this.Teams[ i ].Winner=false;
+            this.Teams[ i ].Requests.resize(0);
+            this.Teams[ i ].Players.resize(0);
+            this.Teams[ i ].TeamKills=0;
+            this.Teams[ i ].LastPeekedRequestId=0;
+            this.Teams[ i ].LastRequestAccepted=false;
+            this.Teams[ i ].BattlePoints=0;
+        }
+    }
+
+    void BeginBattle()
+    {
+        this.Stage=STAGE_BEGIN;
+        Location@ loc=GetLocation(this.LocId);
+        if(valid(loc))
+        {
+            Map@[] maps;
+            if(loc.GetMaps(maps) > 0)
+            {
+                for(uint i=0, l=maps.length(); i<l; i++)
+                {
+                    maps[ i ].SetEvent(MAP_EVENT_IN_CRITTER, "_BattleMapCritterIn");
+                }
+            }
+        }
+        this.SendTeamsInvite();
+        this.Notify();
+    }
+
+    void Fight()
+    {
+        this.Stage=STAGE_FIGHT;
+        this.Notify();
+        Location@ loc=GetLocation(this.LocId);
+        if(valid(loc))
+        {
+            Map@[] maps;
+            if(loc.GetMaps(maps) > 0)
+            {
+                for(uint i=0, l=maps.length(); i<l; i++)
+                {
+                    maps[ i ].SetEvent(MAP_EVENT_CRITTER_DEAD, "_BattleMapCritterDead");
+                }
+            }
+        }
+        // Для НПЦ добавляем всех игроков из других команд во врагов
+        Critter@ cr;
+        for(uint i=0, l=this.Teams.length(); i<l; i++)
+        {
+            for(uint j=0, k=this.Teams[ i ].Players.length(); j<k; j++)
+            {
+                @cr=GetCritter(this.Teams[ i ].Players[ j ]);
+                if(valid(cr) && cr.IsNpc())
+                {
+                    for(uint m=0, n=this.Teams.length(); m<n; m++)
+                    {
+                        if(i !=m)
+                        {
+                            for(uint x=0, z=this.Teams[ m ].Players.length(); x<z; x++)
+                            {
+                                cr.AddEnemyInStack(this.Teams[ m ].Players[ x ]);
+                                AddAttackPlane(cr, 0, this.Teams[ m ].Players[ x ]);
+                            }
+                        }
+                        AddWalkPlane(cr, this.Teams[ m ].StartEntire, 5, true);
+                    }
+                    cr.AddTimeEvent("cte_BattleNpcSearchForTarget", REAL_MINUTE(5), 0);
+                }
+            }
+        }
+    }
+
+    void CheckWinner()
+    {
+        // победитель известен, если число
+        uint activeTeams=0;
+        for(uint i=0, l=this.Teams.length(); i<l; i++)
+        {
+            if(this.Teams[ i ].CountAlive() > 0)
+                activeTeams++;
+        }
+        if(activeTeams==1)
+        {
+            for(uint i=0, l=this.Teams.length(); i<l; i++)
+            {
+                if(this.Teams[ i ].CountAlive() > 0)
+                {
+                    this.Teams[ i ].Winner=true;
+                    this.Teams[ i ].BattlePoints +=this.Teams[ i ].CountAlive();                 // Бонус к очкам за живых членов команды
+                }
+            }
+        }
+        if(activeTeams<2)       // может быть ни одного победителя, если все мертвы
+        {
+            this.Finish();
+        }
+
+    }
+
+    void Finish()
+    {
+        Critter@ cr;
+        this.Stage=STAGE_FINISH;
+        this.Notify();
+        Location@ loc=GetLocation(this.LocId);
+        if(valid(loc))
+        {
+            Map@[] maps;
+            if(loc.GetMaps(maps) > 0)
+            {
+                for(uint i=0, l=maps.length(); i<l; i++)
+                {
+                    maps[ i ].SetEvent(MAP_EVENT_CRITTER_DEAD, "");
+                }
+            }
+        }
+        for(uint i=0, l=this.Teams.length(); i<l; i++)
+        {
+            for(uint j=0, k=this.Teams[ i ].Players.length(); j<k; j++)
+            {
+                @cr=GetCritter(this.Teams[ i ].Players[ j ]);
+                if(valid(cr) && cr.IsNpc())
+                {
+                    // НПЦ возвращаются на домашние позиции, иначе карта не будет удалена да и вообще возможны проблемы
+                    cr.AddTimeEvent("cte_RemoveNpc", REAL_MINUTE(Random(1, 2)), 0);
+                }
+            }
+        }
+    }
+
+    BattleTeam@ GetWinnerTeam()
+    {
+        for(uint i=0, l=this.Teams.length(); i<l; i++)
+        {
+            if(this.Teams[ i ].Winner)
+                return this.Teams[ i ];
+        }
+        return null;
+    }
+}
+
+// Вспомогательные функции
+
+// Оповещения
+// Приглашение на участие
+void answer_BattleInvite(Critter& player, uint answerI, string& answerS)
+{
+    DL("Answer called. Answ " + answerI);
+    BattleTeam@ bt=bInfo.GetCritterTeam(player.Id);
+    if(valid(bt) && bt.LastPeekedRequestId==player.Id)
+    {
+        DL("team valid");
+        if(answerI==ANSWER_CONFIRM_INVITE)
+        {
+            DL("Invite confirmed");
+            bt.ConfirmInvite();
+            return;
+        }
+        bt.SendTeamInvite();
+    }
+}
+
+// Если по каким то причинам последняя заявка не получила ответа, или игрок слишком долго думает
+uint e_CheckInvite(uint[] @ values)
+{
+    BattleTeam@ bt=bInfo.Teams[ values[ 0 ] ];
+    uint        crId=values[ 1 ];
+    if(crId==bt.LastPeekedRequestId)
+    {
+        bt.SendTeamInvite();
+    }
+    return 0;
+}
+
+// Диалоги
+// Проверка стадии
+bool d_IsStage(Critter& player, Critter@ npc, int stage)
+{
+    return bInfo.Stage==uint8(stage);
+}
+
+// Может ли персонаж подать заявку
+bool d_CanRequestBattle(Critter& player, Critter@ npc)
+{
+    return d_IsStage(player, npc, STAGE_PREPARE);
+}
+
+// Игрок в составе любой из команд
+bool d_PlayerRequested(Critter& player, Critter@ npc)
+{
+    return bInfo.HasRequest(player.Id);
+}
+
+// Игрок не в составе
+bool d_PlayerNotRequested(Critter& player, Critter@ npc)
+{
+    return !bInfo.HasRequest(player.Id);
+}
+
+bool d_IsEnemy(Critter& player, Critter@ npc)
+{
+    BattleTeam@ tPlayer=bInfo.GetCritterTeam(player.Id);
+    BattleTeam@ tNpc=bInfo.GetCritterTeam(npc.Id);
+
+    return (bInfo.Stage >=STAGE_BEGIN && bInfo.Stage<=STAGE_FIGHT && valid(tPlayer) && valid(tNpc) && tPlayer.StartMapIndex==tNpc.StartMapIndex && tPlayer.Index !=tNpc.Index);
+}
+
+bool d_IsFriend(Critter& player, Critter@ npc)
+{
+    BattleTeam@ tPlayer=bInfo.GetCritterTeam(player.Id);
+    BattleTeam@ tNpc=bInfo.GetCritterTeam(npc.Id);
+
+    return (bInfo.Stage >=STAGE_BEGIN && bInfo.Stage<=STAGE_FIGHT && valid(tPlayer) && valid(tNpc) && tPlayer.StartMapIndex==tNpc.StartMapIndex && tPlayer.Index==tNpc.Index);
+}
+
+
+// Запись заявки на участие
+// team - индекс команды в поединке, начиная с 0
+void r_SaveRequest(Critter& player, Critter@ npc, int team)
+{
+    bInfo.AddRequest(uint8(team), player.Id);
+}
+
+// генерация лексем: Количество поданных заявок, за команду и всего
+// число заявок в команде пишется в виде @lex team1@
+// общее число заявок @lex total@
+void dlg_TeamCount(Critter& player, Critter@ npc, string@ lexems)
+{
+    if(!IS_DIALOG_GENERATED(lexems))
+        return;
+    lexems="";
+    uint total=0;
+    for(uint i=0, l=bInfo.Teams.length(); i<l; i++)
+    {
+        lexems=lexems + "$team" + i + bInfo.Teams[ i ].Requests.length();
+        total +=bInfo.Teams[ i ].Requests.length();
+    }
+    lexems=lexems + "$total" + total;
+}
+
+uint cte_RemoveNpc(Critter& cr, int identifier, uint& rate)
+{
+    if(cr.IsNpc())
+    {
+        uint16 hexX=0, hexY=0;
+        uint   mapId=0;
+        uint8  dir=0;
+        cr.GetHomePos(mapId, hexX, hexY, dir);
+        if(mapId > 0)
+        {
+            Map@ map=GetMap(mapId);
+            if(valid(map))
+            {
+                cr.TransitToMap(mapId, hexX, hexY, dir);
+                return 0;
+            }
+        }
+        // домашняя позиция не найдена или карта уже удалена
+        DeleteNpc(cr);
+    }
+    return 0;
+}
+
+uint cte_BattleNpcSearchForTarget(Critter& cr, int identifier, uint& rate)
+{
+    if(cr.IsLife() && cr.IsNoPlanes() && valid(bInfo))
+    {
+        BattleTeam@ team=bInfo.GetCritterTeam(cr.Id);
+        if(valid(team))
+        {
+            for(uint i=0, n=bInfo.Teams.length(); i<n; i++)
+            {
+                if(team.Index !=i)
+                {
+                    for(uint x=0, z=bInfo.Teams[ i ].Players.length(); x<z; x++)
+                    {
+
+                        cr.AddEnemyInStack(bInfo.Teams[ i ].Players[ x ]);
+                        AddAttackPlane(cr, 0, bInfo.Teams[ i ].Players[ x ]);
+                    }
+                }
+                AddWalkPlane(cr, bInfo.Teams[ i ].StartEntire, 5, true);
+            }
+        }
+    }
+    return REAL_MINUTE(1);
+}
+
+// Предметы
+// Дверь/контейнер, открываемые только в определенную стадию
+// Value1 - указывается минимальный номер этапа, начиная с которого контейнер/дверь будут открыты
+// Value2 - если это значение больше 0, контейнер доступен только для участников сражения
+// Value3 - ели значение больше 0, контейнер доступен только победителям
+#define STR_STAGE_ERROR     (7001)    // Невозможно использовать. Возможно, нужно дождаться следующего этапа сражения.
+#define STR_PLAYER_ERROR    (7002)    // Невозможно использовать. Доступ только для участников сражения.
+#define STR_WINNER_ERROR    (7003)    // Невозможно использовать. Доступ только для победителей.
+void _BattleDoorInit(Item& item, bool firstTime)
+{
+    item.SetEvent(ITEM_EVENT_SKILL, "_UseBattleDoor");
+}
+
+bool _UseBattleDoor(Item& item, Critter& cr, int skill)
+{
+    if(bInfo.Stage<item.Val1)
+    {
+        cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_STAGE_ERROR);
+        return true;
+    }
+    BattleTeam@ bt=bInfo.GetCritterTeam(cr.Id);
+    if(item.Val2 > 0)
+    {
+        if(!valid(bt))
+        {
+            cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_PLAYER_ERROR);
+            return true;
+        }
+    }
+    if(item.Val3 > 0)
+    {
+        if(!bt.Winner)
+        {
+            cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_WINNER_ERROR);
+            return true;
+        }
+    }
+    return false;
+}
+
+// Карты
+void _BattleMapCritterDead(Map& map, Critter& cr, Critter@ killer)
+{
+    // Убитый должен быть членом одной из команд, чтобы убийство пошло в зачет
+    BattleTeam@ btDead=bInfo.GetCritterTeam(cr.Id);
+    if(valid(bInfo.Callback))
+        bInfo.Callback.OnCritterDead(cr, killer);
+    if(!valid(btDead))
+        return;
+    if(valid(killer))
+    {
+        BattleTeam@ btKiller=bInfo.GetCritterTeam(killer.Id);
+        if(valid(btKiller))
+        {
+            btKiller.BattlePoints +=GetPoints(cr, killer);
+            PlayerDeadMessage(cr, killer, map);
+            btKiller.TeamKills++;
+        }
+    }
+    bInfo.CheckWinner();
+}
+
+void _BattleMapCritterIn(Map& map, Critter& cr)
+{
+    DL("critter in");
+    BattleTeam@ team=bInfo.GetCritterTeam(cr.Id);
+    DL("stage: " + bInfo.Stage);
+    if(valid(team) && bInfo.Stage==STAGE_BEGIN)
+    {
+        DL("get critters");
+        Critter@[] critters;
+        map.GetCritters(0, FIND_ALL | FIND_ONLY_PLAYERS, critters);
+        for(uint i=0, l=critters.length(); i<l; i++)
+        {
+            DL("messagin");
+            PlayerJoinedMessage(cr, critters[ i ]);
+        }
+
+    }
+}
+
+// Сообщения
+void PlayerJoinedMessage(Critter& cr, Critter@ crTo)
+{
+    DL("joined msg");
+    if(!valid(crTo))
+        return;
+    DL("Check team");
+    BattleTeam@ team=bInfo.GetCritterTeam(cr.Id);
+    if(!valid(team))
+        return;
+    string lexems="$baseColor" + COLOR_TEXT;
+    lexems +="$team" + (team.Index + 1) + "$teamColor" + team.Color;
+    lexems +="$name" + _PlayerName(cr);
+    DL(lexems);
+    crTo.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_PLAYER_JOINED, lexems);
+}
+
+void PlayerDeadMessage(Critter& crDead, Critter@ crKiller, Map@ map)
+{
+    if(!valid(map) || !valid(crKiller))
+        return;
+    BattleTeam@ teamDead=bInfo.GetCritterTeam(crDead.Id);
+    BattleTeam@ teamKill=bInfo.GetCritterTeam(crKiller.Id);
+    if(valid(teamDead) && valid(teamKill))
+    {
+        string lexems="$baseColor" + COLOR_TEXT;
+        lexems +="$team1Color" + teamDead.Color + "$dead" + _PlayerName(crDead);
+        lexems +="$team2Color" + teamKill.Color + "$killer" + _PlayerName(crKiller);
+        Critter@[] critters;
+        map.GetCritters(0, FIND_ALL | FIND_ONLY_PLAYERS, critters);
+        for(uint i=0, l=critters.length(); i<l; i++)
+        {
+            Critter@ cr=critters[ i ];
+            if(valid(cr))
+                cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_KILL, lexems);
+        }
+        DL(lexems);
+    }
+}
+
+string GetTeamPlayers(BattleTeam@ team)
+{
+    string teamText="";
+    if(valid(team))
+    {
+        Critter@ cr;
+        uint     l=bInfo.Stage >=STAGE_BEGIN ? team.Players.length() : team.Requests.length();
+        if(l==0)
+        {
+            teamText +="@msg TEXT 7127@";
+        }
+        else
+        {
+            for(uint i=0; i<l; i++)
+            {
+                @cr=GetCritter(bInfo.Stage >=STAGE_BEGIN ? team.Players[ i ] : team.Requests[ i ]);
+                if(valid(cr))
+                {
+                    teamText +=_PlayerName(cr) + " (" + cr.Stat[ ST_LEVEL ] + ")";
+                    if(cr.IsDead())
+                        teamText +="[Dead]";
+                    teamText +="\n";
+                }
+                else
+                {
+                    teamText +=GetPlayerName(team.Players[ i ]) + "[Offline]\n";
+                    // оффлайн персонаж
+                }
+            }
+        }
+    }
+    DL(teamText);
+    return teamText;
+}
+
+int GetPoints(Critter@ cr, Critter@ killer)
+{
+    if(!valid(cr) || !valid(killer))
+        return 0;
+    BattleTeam@ teamCr=bInfo.GetCritterTeam(cr.Id);
+    BattleTeam@ teamKiller=bInfo.GetCritterTeam(killer.Id);
+    if(!valid(teamCr) || !valid(teamKiller))
+        return -1;
+    int points=1;
+    if(killer.IsPlayer())
+        points++;
+    if(cr.IsPlayer())
+        points++;
+    if(killer.Stat[ ST_LEVEL ]<=cr.Stat[ ST_LEVEL ])
+        points +=3;
+    if(cr.Stat[ ST_LEVEL ] > 10)
+        points +=2;
+    if(cr.Stat[ ST_LEVEL ] > 20)
+        points +=3;
+    if(cr.Stat[ ST_LEVEL ] > 30)
+        points +=5;
+    if(killer.Stat[ ST_LUCK ] > 4)
+        points++;
+    // Максимум за одного убитого 17 очков
+    // Максимум за бой, если команда убила всех противников
+    // 17*3*6=306
+    // Чем меньше участников, чем ниже их уровень, тем ниже шансы получить что-то полезное
+    return (teamCr.Index==teamKiller.Index ? (-1) * points : points);
+}
+
+void test(Critter& crp, int id, int, int)
+{
+    Critter@ crDead=GetCritter(id);
+    string   lexems="$baseColor" + COLOR_TEXT;
+    lexems +="$team1Color" + COLOR_RED + "$dead" + _PlayerName(crDead);
+    lexems +="$team2Color" + COLOR_BLUE + "$killer" + _PlayerName(crp);
+    Critter@[] critters;
+    crp.GetMap().GetCritters(0, FIND_ALL | FIND_ONLY_PLAYERS, critters);
+    for(uint i=0, l=critters.length(); i<l; i++)
+    {
+        Critter@ cr=critters[ i ];
+        if(valid(cr))
+            cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_KILL, lexems);
+    }
+    DL(lexems);
+}

@@ -1,0 +1,77 @@
+[comment]
+23/09/09: rifleman17
+--------------------------------------
+Охранник, когда-то встречался с Избранным, тот помог ему в заварушке с местными бандюками. 
+Ему показалось, что в игроке он узнает избранного. Игрок может соврать, мол, да, я и есть избранный, если красноречия >59, охранник "проставляет" ему пузырь в качестве благодарности за помощь.
+
+чтобы игрок не получил тыщу пузырей - используется переменная name_mem_npc_player
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 NOT_ANSWER_CLOSE_DIALOG 1#
+2 1010d*stat p ST_INTELLECT > 3@
+2 2000 NOT_ANSWER_CLOSE_DIALOG 0#
+3 2010@
+3 3000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 3010#
+4 3020d*skill p SK_SPEECH < 60#
+5 3030d*skill p SK_SPEECH > 59@
+4 4000 NOT_ANSWER_CLOSE_DIALOG 0@
+5 5000 NOT_ANSWER_CLOSE_DIALOG 0#
+7 5010#
+6 5020@
+6 6000 NOT_ANSWER_CLOSE_DIALOG 0@
+7 7000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 7010d*var p name_mem_npc_player = 1#
+8 7020d*var p name_mem_npc_player = 0r*var p name_mem_npc_player = 1*item p 125 + 1@
+8 8000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 8010&
+
+[russ]
+{100}{}{Охранник}
+{200}{}{Вы видите охранника в броне. }
+{210}{}{Вы видите человека крепкого телосложения. Он смотрит на вас так, как будто пытается что-то вспомнить.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{только для норм интелекта}
+{2000}{}{[Охранник очень внимательно на вас смотрит, словно пытается что-то вспомнить]}
+{2010}{}{Ты чего на меня уставился?}
+{3000}{}{Это не ты себя Избранн@sex@|ым||ой| называл@sex@|||а|?}
+{3010}{}{Как@sex@|им||ой| так@sex@|им||ой| "избранн@sex@|ым||ой|"? Ты меня с кем-то путаешь. [Уйти]}
+{3020}{}{[Соврать] Да. Избранный - это я. А что, мы раньше встречались?}
+{3030}{}{[Соврать] Да. Избранный - это я. А что, мы раньше встречались?}
+{4000}{}{Ха. Нет, это не ты. Брешешь, @sex@|дружок||подруга|.}
+{5000}{}{Ты меня не помнишь? Ну конечно, столько времени прошло. Три года, пять лет? }
+{5010}{}{Что-то припоминаю...}
+{5020}{}{Извини, ошибка вышла, пошутил@sex@|||а| я.}
+{6000}{}{Хреновая шутка, @sex@|друг||подруга|. }
+{7000}{}{Я тебе напомню. Заварушка тут была. Бандиты местные шалили, нас с ребятами сильно прижало. Если бы не твоя винтовка, положили бы нас, как пить дать!}
+{7010}{}{Да. Точно, так и было.}
+{7020}{}{Да. Точно, так и было.}
+{8000}{}{Давно хотел тебя увидеть, поблагодарить. Возьми в знак признательности. [Протягивает бутылку выпивки]}
+{8010}{}{Спасибо друг! Удачи тебе!}
+
+[engl]
+{100}{}{the Security guard}
+{200}{}{you see the security guard in the reservation.}
+{210}{}{you see the person of a strong constitution. He looks at you as if tries to remember something.}
+{1000}{}{Predialogue installations}
+{1010}{}{only for norms intelekta}
+{2000}{}{[the Security guard very attentively looks at you, as if tries to remember something]}
+{2010}{}{You of that have stared at me?}
+{3000}{}{It not you of Izbrann@sex | ym || oh | называл@sex ||| and |?}
+{3010}{}{Kak@sex | it || oh | так@sex | it || oh | "избранн@sex | ym || oh |"? You confuse me to someone. [To leave]}
+{3020}{}{[to Tell lies] Yes. The elite is I. And what, we met earlier?}
+{3030}{}{[to Tell lies] Yes. The elite is I. And what, we met earlier?}
+{4000}{}{Ha. No, it not you. You tell lies, @sex | the friend || the girlfriend |.}
+{5000}{}{You do not remember me? Well certainly, so much time has passed. Three years, five years?}
+{5010}{}{Something I remember...}
+{5020}{}{Excuse, the error left, пошутил@sex ||| and | I.}
+{6000}{}{the Worthless joke, @sex | the friend || the girlfriend |.}
+{7000}{}{I will remind you. Zavarushka here was. Gangsters local plaid pranks, us with children has strongly pressed. If not your rifle, would put us, for sure!}
+{7010}{}{Yes. Precisely, and was.}
+{7020}{}{Yes. Precisely, and was.}
+{8000}{}{For a long time wanted you to see, thank. Take in acknowledgement. [Stretches a binge bottle]}
+{8010}{}{Thanks the friend! Good luck to you!}

@@ -1,0 +1,172 @@
+[comment]
+
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 D _var p dialog_state = 0 #
+4 1020 D _var p dialog_state = 1 D _var p dialog_state > 1 #
+10 1030 @
+2 2000 None 0 #
+65507 2010 R _var p dialog_state = 1 #
+3 2020 @
+3 3000 None 0 #
+5 3010 R _var p dialog_state = 3 #
+0 3020 R _var p dialog_state = 2 #
+0 3030 R _var p dialog_state = 1 @
+4 4000 None 0 #
+65507 4010 #
+0 4020 @
+5 5000 None 0 #
+6 5010 #
+7 5020 #
+0 5030 @
+6 6000 None 0 #
+7 6010 #
+0 6020 @
+7 7000 None 0 #
+6 7010 #
+12 7020 D _var p q_nov_robobrain = 0 #
+5 7030 D _var p dialog_state = 2 R _var p dialog_state = 3 #
+0 7040 D _var p dialog_state > 2 R _script maps_novato@r_AskFix 0  #
+0 7050 @
+8 8000 maps_novato@dlg_GetFixCost 0 #
+9 8010 #
+14 8020 D _script maps_novato@d_FixEnoughMoney 0  R _script maps_novato@r_Fix 0  #
+0 8030 @
+9 9000 None 0 @
+10 10000 None 0 #
+7 10010 #
+11 10020 D _item p PID_CYBERNETIC_BRAIN > 0 D _var p q_nov_robobrain > 0 D _var p q_nov_robobrain < 4 R _item p PID_CYBERNETIC_BRAIN - 1 R _item p PID_BOTTLE_CAPS + 50000 R _var p q_nov_robobrain = 4 #
+0 10030 @
+11 11000 None 0 #
+7 11010 #
+0 11020 @
+12 12000 None 0 #
+13 12010 R _var p q_nov_robobrain = 1 #
+0 12020 @
+13 13000 None 0 @
+14 14000 None 0 #
+7 14010 #
+0 14020 @
+15 15000 maps_novato@dlg_GetFixCost 0 #
+7 15010 #
+0 15020 @
+16 16000 maps_novato@dlg_GetFixCost 0 #
+7 16010 #
+0 16020 &
+
+[russ]
+{100}{}{Барт}
+{200}{}{Местный технарь.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{Игрок не знаком с Бартом.}
+{1020}{}{Игрок в ссоре с Бартом.}
+{1030}{}{Игрок знаком с Бартом}
+{2000}{}{Эй! Полегче, не назжай! Кто так@sex@|ой||ая|, че хотел@sex@|||а|?}
+{2010}{}{Щас ты у меня быстро поймешь, кто я так@sex@|ой||ая|, когда я тебя сапогом по жопе пну.}
+{2020}{}{Я @pname@. Просто осматриваюсь, недавно в городе.  Ты всех гостей так встречаешь?}
+{3000}{}{Извини, извини. Нервы ни к черту - работа меня с ума сводит. Я Барт, кстати. [Протягивает вам руку]}
+{3010}{}{[Протянуть руку] А чем ты занимаешься, Барт?}
+{3020}{}{[Протянуть руку] Приятно познакомится, Барт. Ну, мне пора...}
+{3030}{}{Ага, просто замечательно. Иди ка ты на хер, Барт.}
+{4000}{}{Че тебе надо, @sex@|мудило||коза|? Вали отсюда, пока я тебе жопу не надрал!}
+{4010}{}{Чего? Кажется, пора тебя уже наказать, кретин.}
+{4020}{}{Ну и ладно.}
+{5000}{}{Я - местный технарь. Лучший на побережье, уж поверь. Что бы там не говорили эти узкоглазые кретины из Сан-Франциско. Я бы им даже топор наточить не доверил. А ко мне люди аж с самого НКР приходят. Так-то. Вот от того и нервы шалят.}
+{5010}{}{И что ж нервного у тебя в работе? Сиди, паяй да винтики крути.}
+{5020}{}{Ясно. Я хотел@sex@|||a| спросить...}
+{5030}{}{Ясно. Ну, я пойду тогда.}
+{6000}{}{Ха! Да ты, похоже, в натуре не представляешь, где мы находимся, так ведь? Новато - город сталкеров. Последний рубеж между пустошью и безумием местного подземелья. Люди приходят сюда в поисках довоенных ништяков, но для этого им приходится спуститься под землю, где полно обезумевших гулей и рабочая охранная система, которая каким-то хером до сих пор не выключилась. Сюда приходит разная публика: новички, желающие легкой наживы наемники и просто психи. Представляешь, если собранное мной оружие даст осечку в самый ответственный момент? Для меня будет удачей, если такого клиента завалят и он не прийдет сюда по мою душу.}
+{6010}{}{Ясно. Барт, я вот че хотел@sex@|||а| спросить...}
+{6020}{}{Ясно. Ну, мне пора, Барт.}
+{7000}{}{Чего?}
+{7010}{}{Расскажи про Новато.}
+{7020}{}{Есть работа для меня?}
+{7030}{}{А чем ты занимаешься, Барт?}
+{7040}{}{Можешь починить мои вещи?}
+{7050}{}{Да не, ничего. Я пойду}
+{8000}{}{Что ты имеешь ввиду? @lex itemname@, что у тебя в руках? Да гавно вопрос, @lex cost@ монет и дело в шляпе.}
+{8010}{}{Да не, я про другую вещь.}
+{8020}{}{Договорились.}
+{8030}{}{Ммм... У меня сейчас нет такой сумы. Я позже подойду.}
+{9000}{}{Ну так возьми вещь в руки,  а то я не понимаю о чем ты.}
+{10000}{}{Привет, @pname@. Че хотел@sex@|||a|?}
+{10010}{}{Я хочу у тебя кое о чем спросить.}
+{10020}{}{Я достал@sex@|||a| твой кибермозг. Пришлось нехило попариться, надо сказать.}
+{10030}{}{Просто заш@sex@|ел||ла| поздороваться. Ну, пока.}
+{11000}{}{Нихрена ж себе... Не думал, что ты справишься. Черт подери, посмотри на эти имплантанты! Охренеть! Ну что ж, заслужил@sex@|||a| - держи свои бабки. И это.. если починить чего надо - не стесняйся, сделаю такую скидку, что даже мамаше своей никогда не делал.}
+{11010}{}{Спасибо, Барт. У меня к тебе есть вопрос.}
+{11020}{}{ Приятно иметь с тобой, Барт. Ну, пока.}
+{12000}{}{Работа. Да нет, хотя... Есть одна местная байка - якобы на нижних уровнях подземелья обитает какой-то не в меру разумный робомозг. Нет, речь не об этих тупорылых грудах метала с обезьяньим мозгом, которые чуть ли не на каждом охраняемом довоенном объекте есть. Таких я могу из тостера и кротокрыса собрать. Нет... Эта тварь, якобы, действительно разумна, способна вести осмысленный диалог. За такую штуку я бы не раздумывая дал тебе 50 штук и пожизненную скидку на мои  услуги. Только вот я сам не особо верю в эти басни - никто вроде еще не добирался до нижних уровней. Да если бы и добрался, вряд ли этот робомозг настолько дружелюбен, что решил поболтать с ними о жизни за чаркой виски. Но если уж тебе повезет - приводи его сюда. В принципе, мне одного только его мозга было бы достаточно.}
+{12010}{}{Я берусь.}
+{12020}{}{Да не, я не собираюся гоняться за призраками, рискуя своей жопой. Извини, Барт.}
+{13000}{}{Ну что ж, рад слышать, хех. Удачи.}
+{14000}{}{Ну вот, все в лучшем виде, забирай.}
+{14010}{}{Спасибо, Барт. Я хотел тебя еще кое о чем спросить...}
+{14020}{}{Спасибо, Барт. Ну, я пошел.}
+{15000}{}{Ты о чем? А... @lex itemname@? Нет, @sex@|друг||подруга| тут даже я безсилен - разве только на запчасти разобрать, авось что-то спасти еще можно...}
+{15010}{}{Ясно, жаль. У меня еще вопрос...}
+{15020}{}{Ясно, пока.}
+{16000}{}{@lex itemname@? Дык ведь тут и чинить нечего - состояние почти идеальное. Тряпочкой протереть, масла капнуть там, больше и делать нечего.}
+{16010}{}{А, ок. Тогда вопрос...}
+{16020}{}{Ладно, мне пора...}
+
+[engl]
+{100}{}{Bart}
+{200}{}{the Local technician.}
+{1000}{}{Predialogue installations}
+{1010}{}{the Player is not familiar with Bart.}
+{1020}{}{the Player in quarrel with Bart.}
+{1030}{}{the Player a sign with Bart}
+{2000}{}{Hey! Easier, not nazzhaj! Who так@sex | oh || aja |, che хотел@sex ||| and |?}
+{2010}{}{you at me quickly will understand Shchas, who I так@sex | oh || aja | when I on an ass will kick you with a boot.}
+{2020}{}{I @pname. Simply I look round, recently in a city. You so meet all visitors?}
+{3000}{}{Excuse, excuse. To hell - work me from mind reduces nerves. I Bart, by the way. [Gives a hand to you]}
+{3010}{}{[to give a hand] And than you are engaged, Bart?}
+{3020}{}{[to give a hand] will pleasantly get acquainted, Bart. Well, it is time to me...}
+{3030}{}{Aha, simply remarkably. Go ka you on her, Bart.}
+{4000}{}{Che is necessary to you, @sex | the prick || a goat |? Bring down from here, while I to you an ass not nadral!}
+{4010}{}{That? It seems, the cretin is time to punish already you.}
+{4020}{}{Well and it is fine.}
+{5000}{}{I am a local technician. The best at coast, believe. That these narrow-eyed cretins from San Francisco there would not speak. I it even to grind an axe have not entrusted. And to me people already with most NKR come. So. Here from that and nerves play pranks.}
+{5010}{}{Also what nervous at you in work? Sit, solder yes small screws twist.}
+{5020}{}{it is clear. I хотел@sex ||| a | to ask...}
+{5030}{}{it is clear. Well, I will go then.}
+{6000}{}{Ha! Yes you, seemingly, in nature do not represent, where we are, so after all? Novato - a city of stalkers. Last boundary between a heathland and madness of a local vault. People come here in search of pre-war nishtjakov, but for this purpose they should go down under the earth, where full gone mad gulej and working security system which any herom was not switched off till now. Different public here comes: the beginners, mercenaries wishing an easy money and it is simple loonies. You represent, if the weapon collected by me misfires at midpoint? For me will be good luck if such client will fill up also it not prijdet here on my soul.}
+{6010}{}{it is clear. Bart, I here che хотел@sex ||| and | to ask...}
+{6020}{}{it is clear. Well, it is time to me, Bart.}
+{7000}{}{That?}
+{7010}{}{Tell about Novato.}
+{7020}{}{There is a work for me?}
+{7030}{}{And than you are engaged, Bart?}
+{7040}{}{you Can repair my things?}
+{7050}{}{Yes not, anything. I will go}
+{8000}{}{That you mean? @lex itemname, what at you in hands? Yes gavno a question, @lex cost coins and it's in the bag.}
+{8010}{}{Yes not, I about other thing.}
+{8020}{}{Have agreed.}
+{8030}{}{Mmm... At me now is not present such sumy. I will approach later.}
+{9000}{}{Well so take a thing in hands, and I do not understand that about what you.}
+{10000}{}{Greetings, @pname. CHe хотел@sex ||| a |?}
+{10010}{}{I want at you which about what to ask.}
+{10020}{}{I достал@sex ||| a | your cyberbrain. It was necessary nehilo poparitsja, it is necessary to tell.}
+{10030}{}{it is simple заш@sex | ate || la | to greet. Well, while.}
+{11000}{}{Nihrena to itself... Did not think that you will consult. Damn it, look at these implants! Ohrenet! Well, заслужил@sex ||| a | - hold the grandmas. And it. If to repair that it is necessary - do not hesitate, I will give such discount, what even to the mummy never did.}
+{11010}{}{Thanks, Bart. I to you have a question.}
+{11020}{}{it is pleasant to have with you, Bart. Well, while.}
+{12000}{}{Work. Yes is not present, though... There is one local bajka - ostensibly at the bottom levels of a vault lives any immoderately reasonable robomozg. No, speech not about these tuporylyh heaps threw with a monkey's brain which almost on each protected pre-war object are. Such I can from a toaster and krotokrysa to collect. No... This creature, ostensibly, is really reasonable, capable to carry on intelligent dialogue. For such piece I without deliberating has given you 50 pieces and a lifelong discount for my services. Only here I not especially trust in these fables - anybody like did not reach yet the bottom levels. Yes if has reached, hardly this robomozg is so friendly that has decided to chat with them about life for charkoj whisky. But if to you will carry - result it here. Basically, me of one only its brain would be enough.}
+{12010}{}{I undertake.}
+{12020}{}{Yes not, I am not going to catch at shadows, risking the ass. Excuse, Bart.}
+{13000}{}{Well, is glad to hear, heh. Good luck.}
+{14000}{}{Well here, all in the best possible way, take away.}
+{14010}{}{Thanks, Bart. I wanted you still which about what to ask...}
+{14020}{}{Thanks, Bart. Well, I have gone.}
+{15000}{}{You about what? A. @lex itemname? No, @sex | the friend || the girlfriend | here even I bezsilen - unless only on spare parts to disassemble, perhaps something can be rescued still...}
+{15010}{}{it is clear, it is a pity. At me still a question...}
+{15020}{}{it is clear, while.}
+{16000}{}{@lex itemname? So after all here and there is nothing to repair - a condition almost ideal. A rag to wipe, oils to drip there, more and there is nothing.}
+{16010}{}{And, apprx. Then a question...}
+{16020}{}{it is fine, it is time to me...}

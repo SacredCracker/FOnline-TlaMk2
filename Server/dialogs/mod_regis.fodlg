@@ -1,0 +1,207 @@
+[comment]
+
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 D _var p name_mem_npc_player = 0 D _var p mod_vampire_reaction = 0 #
+14 1020 D _var p name_mem_npc_player = 1 D _var p mod_vampire_reaction = 0 #
+24 1030 D _var p mod_vampire_reaction = 1 #
+25 1040 D _var p mod_vampire_reaction = 2 @
+2 2000 None 0 #
+3 2010 @
+3 3000 None 0 #
+22 3010 @
+4 4000 None 0 #
+5 4010 #
+65507 4020 @
+5 5000 None 0 #
+6 5010 #
+65507 5020 @
+6 6000 None 0 #
+7 6010 #
+65507 6020 @
+7 7000 None 0 #
+8 7010 #
+65507 7020 #
+9 7030 D _param p SK_SPEECH > 99 @
+8 8000 None 0 #
+0 8010 D _var p npc_story = 0 R _param p ST_EXPERIENCE + 2800 R _var p npc_story = 1 R _var p mod_vampire_reaction = 1 #
+0 8020 D _var p npc_story > 0 @
+9 9000 None 0 #
+10 9010 D _param p SK_DOCTOR < 40 #
+11 9020 D _param p SK_DOCTOR } 40 D _param p SK_DOCTOR < 80 #
+12 9030 D _param p SK_DOCTOR } 80 @
+10 10000 None 0 #
+0 10010 R _var p name_mem_npc_player = 1 @
+11 11000 None 0 #
+0 11010 R _var p name_mem_npc_player = 1 @
+12 12000 None 0 #
+0 12010 R _var p name_mem_npc_player = 1 @
+13 13000 None 0 @
+14 14000 None 0 #
+11 14010 D _param p SK_DOCTOR } 40 D _param p SK_DOCTOR < 80 #
+12 14020 D _param p SK_DOCTOR } 80 #
+15 14030 D _item p PID_PARAMEDICS_BAG > 0 D _item p PID_SUPER_STIMPAK > 2 D _param p SK_DOCTOR } 40 #
+0 14040 @
+15 15000 None 0 #
+0 15010 R _item p PID_SUPER_STIMPAK - 3 R _script dialog@r_FadeOut 1 0 R _script q_modoc_vampire@r_TryCureVampire 1 0 @
+16 16000 None 0 #
+18 16010 R _var p mod_vampire_reaction = 2 @
+17 17000 None 0 #
+0 17010 R _param p ST_EXPERIENCE + 4500 R _var p mod_vampire_reaction = 1 @
+18 18000 None 0 #
+19 18010 D _var p q_mod_joe_vampire = 6 R _var p q_mod_joe_vampire = 9 R _var p mod_vampire_reaction = 2 R _param p PE_VAMPIRE_REGENERATION + 1 #
+23 18020 D _var p q_mod_joe_vampire = 6 R _var p q_mod_joe_vampire = 9 R _var p mod_vampire_reaction = 2 R _param p PE_VAMPIRE_ACCURACY + 1 #
+20 18030 D _param p SK_SPEECH > 108 D _var p q_mod_joe_vampire = 6 R _var p q_mod_joe_vampire = 9 R _var p mod_vampire_reaction = 2 R _param p PE_VAMPIRE_ACCURACY + 1 R _param p PE_VAMPIRE_REGENERATION + 1 @
+19 19000 None 0 #
+21 19010 @
+20 20000 None 0 #
+21 20010 @
+21 21000 None 0 #
+0 21010 R _param p ST_EXPERIENCE + 6000 @
+22 22000 None 0 #
+4 22010 @
+23 23000 None 0 #
+21 23010 @
+24 24000 None 0 @
+25 25000 None 0 &
+
+[russ]
+{100}{}{Эмиель Регис}
+{200}{}{Странный тип с совершенно не запоминающимся лицом.}
+{210}{}{Человек да человек. Таких в пустошах навалом.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{не знаком}
+{1020}{}{знаком}
+{1030}{}{Не исцелил.}
+{1040}{}{Исцелен вампир}
+{2000}{}{Я рад, что ты не стреляешь. Давай поговорим. Стреляй потом, если захочешь}
+{2010}{}{Ну давай поговорим. Ты кто?}
+{3000}{}{Меня зовут Эмиель Регис. Если ты об этом.}
+{3010}{}{А я @pname@. Слушай, я тут видел здоровенную летучую мышь на пастбище. И вроде она сюда полетела. Знаешь об этом  что-нибудь?}
+{4000}{}{Это. То, что меня нашли. Это был я. Мышь.}
+{4010}{}{Вона  как. Интересно. А поподробнее?}
+{4020}{}{Такие выродки должны быть уничтожены. Получай!}
+{5000}{}{Ну слушай, раз так. Я - вампир. Или, по другому, гемоглобинозависимый. Ну или больной гемофилией венценосных, если тебе известно такое выражение.  Мне приходится пить кровь, чтоб не умереть. }
+{5010}{}{Ого. Я знаю про вампиров. Вы зверски крутые, да?}
+{5020}{}{Я уничтожу твою болезнь. И ты умрешь вместе с ней!}
+{6000}{}{Чушь. Бабьи сказки. Я умею превращаться в летучую мышь, что довольно неприятно, кстати. Умею хорошо видеть в темноте, и прятаться от чужих глаз. Мне очень тяжело переносить дневной свет. Не думаю, что это очень круто.}
+{6010}{}{Да уж. Для этого не обязательно быть вампиром.}
+{6020}{}{Теперь я всё про тебя знаю, и уничтожу тебя!}
+{7000}{}{Как бы мне хотелось опять стать человеком. И жить нормальной жизнью, как все люди, а не прятаться по пещерам, как крыса последняя.}
+{7010}{}{Да , не позавидуешь тебе. Вообще-то меня отправил сюда ранчер, у которого ты на браминов нападаешь. Ты можешь это прекратить?}
+{7020}{}{Да, и эта пещера станет твоей могилой! Ты не обманешь меня!}
+{7030}{}{А это возможно? Снова стать человеком?}
+{8000}{}{Да, конечно. Я  не появлюсь там больше, даю слово.}
+{8010}{}{Ну и славно. Надеюсь на твоё слово. Пойду ранчера успокою.}
+{8020}{}{Ну и славно. Надеюсь на твоё слово. Пойду ранчера успокою.}
+{9000}{}{Я долго думал над этим. Ставил эксперименты, размышлял. Это можно сделать, если есть кое-какое обрудование и  у тебя есть способности доктора. Обладаешь  ты таким навыком?}
+{9010}{}{Эээ..Я как-то больше пострелять, морду набить. Не доктор, нет. }
+{9020}{}{Ну с обычными переломами справляюсь, вроде }
+{9030}{}{Хо, ты нашел, что искал. Я вполне себе доктор}
+{10000}{}{Тогда лучше не пробовать. Хочешь мне помочь -подучись.}
+{10010}{}{Понятно. Я вернусь.}
+{11000}{}{Ну можно попытаться, я вообще мужик рисковый. Думаю, мне поможет полная замена крови. Нужны будут три суперстимпака и сумка парамедика.}
+{11010}{}{Понятно. Я вернусь.}
+{12000}{}{Тогда точно справишься. Думаю, мне поможет полная замена крови. Нужны будут три суперстимпака и сумка парамедика.}
+{12010}{}{Понятно. Я вернусь.}
+{13000}{}{Не стреляй , человек. Давай поговорим!}
+{14000}{}{Как успехи? Все готово?}
+{14010}{}{Я подготовился, с обычными переломами справляюсь, вроде }
+{14020}{}{Я подготовился . Я вполне себе доктор }
+{14030}{}{Всё со мной. Говори , что делать.}
+{14040}{}{Я прорабатываю этот вопрос...}
+{15000}{}{Так, объясняю…}
+{15010}{}{Угу...}
+{16000}{}{[Сияет, как медный грош]  У нас всё получилось, отлично. Теперь я вернусь домой, к семье!}
+{16010}{}{Очень хорошо. Поздравляю!}
+{17000}{}{Ну не вышло. Ладно , что теперь. Прощай. Думаю мы больше не увидимся. То ранчо я трогать не стану. Иди...}
+{17010}{}{Прощай.}
+{18000}{}{Я  твой кровный должник. Давай в благодарность научу  чему-нибудь. Вот смотри, я могу научить тебя быстрее заживлять раны, или лучше видеть в темноте. Выбирай.}
+{18010}{}{Раны, говоришь? Это мне пригодится. Поучи меня.}
+{18020}{}{Всю жизнь было интересно, а что там люди в темноте делают. Научи меня видеть в темноте}
+{18030}{}{А что, тому и другому не можешь что ли?}
+{19000}{}{Как скажешь. Расслабься, мне нужно будет тебя загипнотизировать ненадолго…}
+{19010}{}{Ой...}
+{20000}{}{Да могу, конечно, просто было интересно, что ты выберешь. Научу и прятаться и восстанавливаться. Расслабься, мне нужно будет тебя загипнотизировать ненадолго…}
+{20010}{}{Ой...}
+{21000}{}{[Скалясь и довольно потирая руки] Ну вот и готово! Мой долг благодарности исполнен, и  я покидаю тебя. Думаю, мы больше не увидимся.}
+{21010}{}{Спасибо тебе. Прощай.}
+{22000}{}{[Сам себе] Да. Ну что ж, рано или поздно бы это случилось.}
+{22010}{}{Что именно?}
+{23000}{}{Как скажешь. Расслабься, мне нужно будет тебя загипнотизировать ненадолго…}
+{23010}{}{Ой...}
+{24000}{}{Просто оставь меня в покое. Я не принесу вреда этой ферме, я уже обещал.@@Уходи. Нам не о чем больше говорить.@@Тебе пора. Прощай.}
+{25000}{}{Рад видеть тебя снова!@@Если бы не твоя помощь, я...@@Еще раз благодарю тебя!@@Приветствую!}
+
+[engl]
+{100}{}{Emiel Regis}
+{200}{}{the Odd person with the absolutely not not remembered person.}
+{210}{}{the Person yes the person. Such in heathlands in bulk.}
+{1000}{}{Predialogue installations}
+{1010}{}{it is not familiar}
+{1020}{}{a sign}
+{1030}{}{has not cured.}
+{1040}{}{the vampire} Is cured
+{2000}{}{I am glad that you do not shoot. Give we will talk. Shoot then if you will want}
+{2010}{}{Well give we will talk. You who?}
+{3000}{}{My name is Emiel Regis. If you about it.}
+{3010}{}{And I @pname. Listen, I here saw a huge bat on a pasture. And like it here has departed. You know about it something?}
+{4000}{}{It. That have found me. It was I. The mouse.}
+{4010}{}{There as. Interesting. And is more detailed?}
+{4020}{}{Such degenerates should be destroyed. Receive!}
+{5000}{}{Well listen, time so. I am a vampire. Or, on another, gemoglobinozavisimyj. Well or a sick hemophilia crowned if you know such expression. I should suck blood not to die.}
+{5010}{}{Ogo. I know about vampires. You brutally abrupt, yes?}
+{5020}{}{I will destroy your illness. And you will die together with it!}
+{6000}{}{Bosh. Woman's fairy tales. I am able to turn to a bat that is unpleasant enough, by the way. I am able to see well in the dark, and to hide from another's eyes. It is very heavy to me to transfer a daylight. I do not think that it very abruptly.}
+{6010}{}{Yes. For this purpose it is not obligatory to be the vampire.}
+{6020}{}{Now I about you know all, and I will destroy you!}
+{7000}{}{As though I would like to become the person again. And to lead normal life as all people, instead of to hide on caves, as a rat last.}
+{7010}{}{Yes, you will not envy you. Generally me has sent here rancher at which you on braminov attack. You can stop it?}
+{7020}{}{Yes, and this cave becomes your tomb! You will not deceive me!}
+{7030}{}{And it is possible? Again to become the person?}
+{8000}{}{Yes, certainly. I will not appear there more, I pledge a word.}
+{8010}{}{Well and it is nice. I hope for your word. I will go ranchera I will calm.}
+{8020}{}{Well and it is nice. I hope for your word. I will go ranchera I will calm.}
+{9000}{}{I long thought over it. Put experiments, reflected. It can be made, if is some obrudovanie and you have abilities of the doctor. You possess such skill?}
+{9010}{}{Eee. I somehow to do some shooting more, a muzzle to fill. Not the doctor, no.}
+{9020}{}{Well with usual crises I consult, like}
+{9030}{}{Ho, you have found that searched. I quite to itself the doctor}
+{10000}{}{Then it is better not to try. You want to help me - study.}
+{10010}{}{it is clear. I will return.}
+{11000}{}{Well it is possible to try, I in general the muzhik brave. I think, I will be helped by full replacement of blood. Three will be necessary superstimpaka and a bag of the paraphysician.}
+{11010}{}{it is clear. I will return.}
+{12000}{}{Then you will precisely consult. I think, I will be helped by full replacement of blood. Three will be necessary superstimpaka and a bag of the paraphysician.}
+{12010}{}{it is clear. I will return.}
+{13000}{}{do not shoot, the person. Give we will talk!}
+{14000}{}{As successes? All is ready?}
+{14010}{}{I was prepared, with usual crises I consult, like}
+{14020}{}{I was prepared. I quite to itself the doctor}
+{14030}{}{All with me. Say what to do.}
+{14040}{}{I study this question...}
+{15000}{}{So, I explain …}
+{15010}{}{Ugu...}
+{16000}{}{[Shines, as a copper penny] At all of us it has turned out, perfectly. Now I will come back home, to a family!}
+{16010}{}{it is very good. I congratulate!}
+{17000}{}{Well did not leave. All right that now. Farewell. Think we will not meet any more. I will not begin to touch that ranch. Go...}
+{17010}{}{Farewell.}
+{18000}{}{I your blood debtor. Give in gratitude I will teach something. Here look, I can teach to heal faster you wounds, or it is better to see in the dark. Choose.}
+{18010}{}{Wounds, you speak? It is useful to me. Teach me.}
+{18020}{}{All life it was interesting, and that there people in the dark do. Teach me to see in the dark}
+{18030}{}{And what, whether to that and another you can that?}
+{19000}{}{As you will tell. Relax, I will need to hypnotise you for a short while …}
+{19010}{}{Oh...}
+{20000}{}{Yes I can, of course, simply was interesting that you will choose. I will teach and hide and be restored. Relax, I will need to hypnotise you for a short while …}
+{20010}{}{Oh...}
+{21000}{}{[Being shown and rubbing hands] Well here enough also it is ready! My debt of gratitude is executed, and I leave you. I think, we will not meet any more.}
+{21010}{}{Thanks you. Farewell.}
+{22000}{}{[to itself] Yes. Well, sooner or later it would happen.}
+{22010}{}{What exactly?}
+{23000}{}{As you will tell. Relax, I will need to hypnotise you for a short while …}
+{23010}{}{Oh...}
+{24000}{}{Simply leave me alone. I will not bring harm to this farm, I already promised. @@ leave. We have nothing to speak more. @@ it is time to you. Farewell.}
+{25000}{}{Is glad to see you again! @@ If not your help, I... @@ Once again I thank you! @@ I welcome!}

@@ -1,0 +1,243 @@
+[comment]
+Ваши комментарии / Your comments.
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 0 #
+11 1010 D _param p ST_INTELLECT < 4 #
+2 1020 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 #
+10 1030 D _var n name_mem_npc_player = 1 @
+2 2000 None 0 #
+3 2010 #
+0 2020 @
+3 3000 None 0 #
+14 3010 D _var p q_arroyo_letter_to_linnett = 1 D _item p PID_LETTER_TO_LIN > 0 #
+4 3020 #
+0 3030 @
+4 4000 None 0 #
+5 4010 #
+9 4020 #
+0 4030 @
+5 5000 None 0 #
+7 5010 #
+6 5020 #
+9 5030 #
+0 5040 @
+6 6000 None 0 #
+7 6010 #
+9 6020 #
+0 6030 @
+7 7000 None 0 #
+8 7010 #
+9 7020 #
+0 7030 @
+8 8000 None 0 #
+0 8010 @
+9 9000 None 0 #
+4 9010 #
+0 9020 @
+10 10000 None 0 #
+14 10010 D _var p q_arroyo_letter_to_linnett = 1 D _item p PID_LETTER_TO_LIN > 0 #
+15 10020 D _var p q_arroyo_letter_to_linnett > 1 D _param p REPUTATION_VAULT_CITY < 9 D or D _var p vc_knows_about_delivery = 1 D _param p REPUTATION_VAULT_CITY < 9 #
+17 10030 D _var p q_arroyo_letter_to_linnett > 1 D _param p REPUTATION_VAULT_CITY > 8 D _script dialog@d_NotTimeoutCheck 0  D _var p q_vc_letter_to_todd ! 1 D or D _var p vc_knows_about_delivery = 1 D _param p REPUTATION_VAULT_CITY > 8 D _script dialog@d_NotTimeoutCheck 0  D _var p q_vc_letter_to_todd ! 1 #
+18 10040 D _var p q_arroyo_letter_to_linnett > 1 D _param p REPUTATION_VAULT_CITY > 8 D _script dialog@d_TimeoutCheck 0  D _var p q_vc_letter_to_todd ! 1 D or D _var p vc_knows_about_delivery = 1 D _param p REPUTATION_VAULT_CITY > 8 D _script dialog@d_TimeoutCheck 0  D _var p q_vc_letter_to_todd ! 1 #
+22 10050 D _var p q_vc_letter_to_todd = 1 #
+25 10060 D _var p q_vc_letter_to_todd = 2 #
+4 10070 #
+0 10080 @
+11 11000 None 0 #
+12 11010 #
+0 11020 @
+12 12000 None 0 #
+13 12010 #
+0 12020 @
+13 13000 None 0 #
+0 13010 @
+14 14000 None 0 #
+0 14010 R _param p ST_EXPERIENCE + 4000 R _item p PID_BOTTLE_CAPS + 2150 R _item p PID_LETTER_TO_LIN - 1 R _var p q_arroyo_letter_to_linnett = 2 @
+15 15000 None 0 #
+16 15010 @
+16 16000 None 0 #
+0 16010 @
+17 17000 None 0 #
+0 17010 @
+18 18000 None 0 #
+19 18010 R _item p PID_LETTER_TO_TODD + 1 R _var p q_vc_letter_to_todd = 1 R _script dialog@r_TimeoutSet 1 168 #
+20 18020 R _item p PID_BOTTLE_CAPS + 200 R _item p PID_LETTER_TO_TODD + 1 R _var p q_vc_letter_to_todd = 1 R _script dialog@r_TimeoutSet 1 168 #
+21 18030 @
+19 19000 None 0 @
+20 20000 None 0 @
+21 21000 None 0 @
+22 22000 None 0 #
+23 22010 #
+0 22020 #
+24 22030 @
+23 23000 None 0 #
+0 23010 #
+0 23020 @
+24 24000 None 0 @
+25 25000 None 0 #
+0 25010 R _var p q_vc_letter_to_todd = 3 R _item p PID_BOTTLE_CAPS + 1800 &
+
+[russ]
+{100}{}{Проконсул Грегори}
+{200}{}{Вы видите Проконсула Грегори.}
+{210}{}{Вы видите мрачного бюрократа, узколицего и густобрового.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{дурак}
+{1020}{}{не знаком}
+{1030}{}{знаком}
+{2000}{}{Прошу прощения... Чем могу помочь?}
+{2010}{}{Кто вы?}
+{2020}{}{Просто осматриваюсь, спасибо.}
+{3000}{}{Я проконсул Грегори. Вы точно уверены, что не ошиблись дверью?}
+{3010}{}{У меня есть посылка для Первой Гражданки. Голодиск.}
+{3020}{}{Чем вы здесь занимаетесь?}
+{3030}{}{Просто осматриваюсь, спасибо.}
+{4000}{}{Я ПОМОЩНИК Первой гражданки. Я составляю для нее расписание встреч, провожу экзамены для претендентов на гражданство и обновляю все списки на сервере Города Убежища. Работа не маленькая, уверяю вас.}
+{4010}{}{Экзамен на гражданство?}
+{4020}{}{Могу ли я задать несколько вопросов?}
+{4030}{}{Понятно. Да, мне пора идти.}
+{5000}{}{Да, я отвечаю за проведение экзамена на гражданство для всех, кто желает стать гражданином Города Убежища.}
+{5010}{}{И в чем, собственно, состоит экзамен?}
+{5020}{}{А какие преимущества дает гражданство?}
+{5030}{}{Можно задать вам еще несколько вопросов?}
+{5040}{}{Понятно. Возможно, мы еще поговорим.}
+{6000}{}{Преимущества? Да просто оглянитесь вокруг... Город Убежища - самый безопасный и богатый город в пустошах. Граждане бесплатно получают медицинскую помощь, здесь в изобилии имеется еда и вода, нет преступности и сколько-нибудь серьезных болезней.}
+{6010}{}{И в чем, собственно, состоит экзамен?}
+{6020}{}{Можно задать вам еще несколько вопросов?}
+{6030}{}{Понятно. Возможно, мы еще поговорим.}
+{7000}{}{Это обширный экзамен, поделенный на несколько частей... высшая математика, космология и астрономия, дедуктивное мышление, сравнительное языкознание... ах, да, и еще всесторонний медицинский осмотр.}
+{7010}{}{Похоже, это непросто. Мне бы хотелось сдать экзамен, если можно.}
+{7020}{}{Понятно. Могу я задать вам еще несколько вопросов?}
+{7030}{}{Интересно. Спасибо, что уделили мне время.}
+{8000}{}{К сожалению сейчас вы не можете пройти экзамен. У нас тут слишком много работы и нет времени возиться с такими как вы. Подойдите позже.}
+{8010}{}{Очень жаль. До свидания.}
+{9000}{}{Полагаю да... что вы хотели бы узнать?}
+{9010}{}{Не могли бы вы повторить, что вы тут делаете?}
+{9020}{}{Да нет, ничего. Возможно, мы поговорим позже. }
+{10000}{}{Опять вы? Я могу помочь вам?}
+{10010}{}{У меня есть посылка для Первой Гражданки. Голодиск.}
+{10020}{}{Вы тут вроде письмами занимаетесь. Не надо ничего доставить?}
+{10030}{}{Вы тут вроде письмами занимаетесь. Не надо ничего доставить?}
+{10040}{}{Вы тут вроде письмами занимаетесь. Не надо ничего доставить?}
+{10050}{}{Не надо больше ничего доставить?}
+{10060}{}{Письмо доставлено, адресат очень рад и шлёт привет.}
+{10070}{}{Не могли бы вы повторить, что вы тут делаете?}
+{10080}{}{Да нет, ничего. Возможно, мы поговорим позже. }
+{11000}{}{Прошу прощения... Чем могу помочь?}
+{11010}{}{Зепа.}
+{11020}{}{Ходить не сюда.}
+{12000}{}{ЕЩЕ один заблудившийся слуга?! Я напишу жалобу на Баркуса, если он будет позволять им расхаживать тут... эй, ты... Кыш! Кыш!}
+{12010}{}{Кыштрелить тебя? Лан-на.}
+{12020}{}{Свидания!}
+{13000}{}{Похоже, вы слуги глупее с каждым днем.}
+{13010}{}{Буууу!!!}
+{14000}{}{Давайте его сюда. Хммм. Так. Тодд Стьюард. Вам положено... Тысяча восемьсот за доставку, двести за опасность маршрута, сто пятьдесят за важность, итого... Две тысячи сто пятьдесят. Распишитесь.}
+{14010}{}{[Забрать награду]}
+{15000}{}{Извините, но я вас не знаю. Это работа только для проверенных людей.}
+{15010}{}{А что я могу сделать, чтобы доказать свою пригодность?}
+{16000}{}{Поищите пока работу попроще. Если будут рекомендации от граждан, то я смогу вас нанять.}
+{16010}{}{Договорились.}
+{17000}{}{В данный момент ничего нет. Приходите попозже.}
+{17010}{}{Окей.}
+{18000}{}{Да, есть одна посылка, голодиск... От самой Первой Гражданки некому Тодду Стьюарду, из Арройо. Очень важная. Сумеете доставить?}
+{18010}{}{И не такое доставляли. Я просто супер-курьер.}
+{18020}{}{Конечно. Только пригодилось бы немного денег на дорогу.}
+{18030}{}{Не-не-не, вы что. Я не попрусь в те края. Это же Арройо! Мне говорили, там едят людей!}
+{19000}{}{Не повредите по дороге. Потом возвращайтесь за зарплатой.}
+{20000}{}{Хорошо, вот аванс. Не повредите по дороге. Остальная зарплата - как вернётесь.}
+{21000}{}{Не слышал ни разу. Ну как хотите.}
+{22000}{}{А что случилось с первой доставкой?}
+{22010}{}{Знаете... А она потерялась.}
+{22020}{}{Ммм, точно. Отнесу пока ту.}
+{22030}{}{А два письма сразу нельзя взять?}
+{23000}{}{У нас нет понятия "потерялась". Отыщите ту посылку и доставьте, иначе эта работа для вас закрыта навсегда. Даже если вам придётся перестрелять толпу рейдеров.}
+{23010}{}{Какие вы...}
+{23020}{}{Всё понятно. Будет сделано.}
+{24000}{}{Нет.}
+{25000}{}{Отлично. Вот ваша зарплата.}
+{25010}{}{[Забрать]}
+
+[engl]
+{100}{}{Proconsul Gregory}
+{200}{}{you see Proconsul Gregory.}
+{210}{}{you see the gloomy bureaucrat, uzkolitsego and gustobrovogo.}
+{1000}{}{Predialogue installations}
+{1010}{}{the fool}
+{1020}{}{it is not familiar}
+{1030}{}{a sign}
+{2000}{}{I Am sorry... Than I can help?}
+{2010}{}{Who you?}
+{2020}{}{Simply I look round, thanks.}
+{3000}{}{I proconsul Gregory. You are precisely assured, what were not mistaken a door?}
+{3010}{}{I have a parcel for the First Citizen. Golodisk.}
+{3020}{}{Than you here are engaged?}
+{3030}{}{Simply I look round, thanks.}
+{4000}{}{I the ASSISTANT to the First citizen. I make for it the schedule of meetings, I spend examinations for applicants for citizenship and I update all lists on the server of the City of the Refuge. Work not small, I assure you.}
+{4010}{}{Examination on citizenship?}
+{4020}{}{whether I Can set some questions?}
+{4030}{}{it is clear. Yes, it is time to me to go.}
+{5000}{}{Yes, I am responsible for examination carrying out on citizenship for all who wishes to become the citizen of the Refuge.}
+{5010}{}{And in what examination, actually, consists?}
+{5020}{}{And what advantages gives citizenship?}
+{5030}{}{Can set you some more questions?}
+{5040}{}{it is clear. Probably, we still will talk.}
+{6000}{}{Advantages? Yes simply look back around... The Refuge City - the most safe and rich city in heathlands. Citizens free of charge receive medical aid, here there is a meal and water much, there is no criminality and some serious illnesses.}
+{6010}{}{And in what examination, actually, consists?}
+{6020}{}{Can set you some more questions?}
+{6030}{}{it is clear. Probably, we still will talk.}
+{7000}{}{It is the extensive examination divided on some parts... Higher mathematics, kosmologija and astronomy, deductive thinking, comparative linguistics... Ah, yes, and still all-round medical inspection.}
+{7010}{}{It seems that it is uneasy. I would like to pass examination if it is possible.}
+{7020}{}{it is clear. I to you can set some more questions?}
+{7030}{}{it is interesting. Thanks that have found for me time.}
+{8000}{}{Unfortunately now you cannot pass examination. At us here it is too much work also there is no time to potter with such as you. Approach later.}
+{8010}{}{It is a pity. Good-bye.}
+{9000}{}{I Believe yes... What would you like to learn?}
+{9010}{}{you could not repeat, what you here do?}
+{9020}{}{Yes is not present, anything. Probably, we will talk later.}
+{10000}{}{Again you? I can help you?}
+{10010}{}{I have a parcel for the First Citizen. Golodisk.}
+{10020}{}{you here like letters are engaged. It is not necessary to deliver anything?}
+{10030}{}{you here like letters are engaged. It is not necessary to deliver anything?}
+{10040}{}{you here like letters are engaged. It is not necessary to deliver anything?}
+{10050}{}{it is not necessary to deliver more than anything?}
+{10060}{}{the Letter is delivered, the addressee is very glad and sends greetings.}
+{10070}{}{you could not repeat, what you here do?}
+{10080}{}{Yes is not present, anything. Probably, we will talk later.}
+{11000}{}{I Am sorry... Than I can help?}
+{11010}{}{Zepa.}
+{11020}{}{To go not here.}
+{12000}{}{ONE MORE lost the way servant?! I will write the complaint to Barkusa if he allows them to walk up and down here... Hey, you... Kysh! Kysh!}
+{12010}{}{Kyshtrelit you? To Lan Th.}
+{12020}{}{Appointments!}
+{13000}{}{It seems that you servants are sillier every day.}
+{13010}{}{Buuuu!!!}
+{14000}{}{Give it here. Hmmm. So. Todd Stjuard. It is necessary to you... One thousand eight hundred for the delivery, two hundred for danger of the route, hundred fifty for importance, total... Two thousand hundred fifty. Undersign.}
+{14010}{}{[to Take away an award]}
+{15000}{}{Excuse, but I do not know you. It is work only for the checked up people.}
+{15010}{}{And what I can make to prove the suitability?}
+{16000}{}{Look while for work easier. If there will be recommendations from citizens I can employ you.}
+{16010}{}{Have agreed.}
+{17000}{}{At present anything is not present. Come later.}
+{17010}{}{Okej.}
+{18000}{}{Yes, there is one parcel, golodisk... From the very first Citizen there is nobody Todd Stjuardu, from Arrojo. Very important. Will manage to deliver?}
+{18010}{}{And not such delivered. I simply super-courier.}
+{18020}{}{Certainly. Only it would be useful a few money for road.}
+{18030}{}{Not-not-not, you that. I will not be trampled in those edges. Same Arrojo! To me spoke, there eat people!}
+{19000}{}{do not damage on road. Then come back behind the salary.}
+{20000}{}{it is good, here advance payment. Do not damage on road. Other salary - as will return.}
+{21000}{}{did not hear never. Well as want.}
+{22000}{}{And what happens with the first delivery?}
+{22010}{}{Know... And it was lost.}
+{22020}{}{Mmm, precisely. I will carry while that.}
+{22030}{}{And two letters at once it is impossible to take?}
+{23000}{}{we do not have concept "was lost". Find that parcel and deliver, differently this work for you is closed for ever. Even if you should shoot down crowd of raiders.}
+{23010}{}{What you...}
+{23020}{}{All is clear. It will be made.}
+{24000}{}{No.}
+{25000}{}{it is excellent. Here your salary.}
+{25010}{}{[to Take away]}

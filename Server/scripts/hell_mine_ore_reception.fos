@@ -1,0 +1,43 @@
+// Author: marvi
+#include "_macros.fos"
+#include "hell_h.fos"//rifleman17
+
+
+#define DIALOG_HELL_MINE_ORE_RECEPTION (4452)
+#define STR_NO_URANIUM_RECEPTION	   (3030)
+
+
+bool s_ReceptionWindow(Critter& cr, Scenery& sc, int skill, Item@ item)
+{
+	uint itemCount = cr.CountItem(PID_URANIUM_ORE);
+	if (itemCount != 0)
+	{
+		RunDialog(cr, DIALOG_HELL_MINE_ORE_RECEPTION, sc.HexX, sc.HexY, false);
+	}
+	else
+	{
+		//cr.Say(SAY_NETMSG, "¬ы загл€дываете в проем в стене, но ничего интересного там не видите. ќттуда лишь исходит странный гул, идущий откуда-то снизу."); // STR_LOOK_AT_HOLE
+		cr.SayMsg(SAY_NETMSG,TEXTMSG_TEXT,STR_NO_URANIUM_RECEPTION);// riflenman17
+	}
+	return true;
+}
+
+//>>>>>>> rifleman17
+import void _DeletePlayerItem(Critter & cr, uint itemPid, bool deleteAll) from "hell_pipboys";
+import void _GrantMoney(Critter & cr, int sum, bool inCash) from "hell_pipboys";
+//<<<<<< rifleman17
+void r_TakeOre(Critter& player, Critter@ npc)
+{
+	// rifleman17
+	uint countUran = _CritCountItem(player, PID_URANIUM_ORE);
+	_DeletePlayerItem(player, PID_URANIUM_ORE, false);
+	_DeletePlayerItem(player, PID_ROCK, false);
+	if(countUran>0)
+	{
+		_GrantMoney(player, countUran*COST_ORE_URANIUM, false);
+	}
+}
+
+void r_ThrowRock(Critter& player, Critter@ npc)
+{
+}

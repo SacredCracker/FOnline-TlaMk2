@@ -1,0 +1,168 @@
+[comment]
+
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 D _var p q_newbie_gen_lubricant = 0 D _var p q_newbie_gen_bolt = 0 D _var p q_newbie_gen_ventilation = 0 D _var p q_newbie_gen_repair = 1 #
+3 1020 D _var p q_newbie_gen_lubricant = 1 D _var p q_newbie_gen_bolt = 0 D _var p q_newbie_gen_ventilation = 0 D _var p q_newbie_gen_repair = 1 #
+4 1030 D _var p q_newbie_gen_lubricant = 1 D _var p q_newbie_gen_bolt = 1 D _var p q_newbie_gen_ventilation = 0 D _var p q_newbie_gen_repair = 1 #
+5 1040 D _var p q_newbie_gen_lubricant = 0 D _var p q_newbie_gen_bolt = 0 D _var p q_newbie_gen_ventilation = 1 D _var p q_newbie_gen_repair = 1 #
+6 1050 D _var p q_newbie_gen_lubricant = 0 D _var p q_newbie_gen_bolt = 1 D _var p q_newbie_gen_ventilation = 1 D _var p q_newbie_gen_repair = 1 #
+7 1060 D _var p q_newbie_gen_lubricant = 1 D _var p q_newbie_gen_bolt = 1 D _var p q_newbie_gen_ventilation = 1 #
+8 1070 D _var p q_newbie_gen_bolt = 1 D _var p q_newbie_gen_ventilation = 0 D _var p q_newbie_gen_lubricant = 0 D _var p q_newbie_gen_repair = 1 #
+10 1080 D _var p q_newbie_gen_ventilation = 1 D _var p q_newbie_gen_bolt = 0 D _var p q_newbie_gen_lubricant = 1 D _var p q_newbie_gen_repair = 1 #
+12 1090 D _var p q_newbie_gen_repair = 5 #
+13 1100 D _var p q_newbie_gen_repair = 0 @
+2 2000 None 0 #
+0 2010 #
+3 2020 D _var p q_newbie_gen_lubricant = 0 D _item p PID_LUBRICANT > 0 R _var p q_newbie_gen_lubricant = 1 R _item p PID_LUBRICANT - 1 #
+8 2030 D _var p q_newbie_gen_bolt = 0 D _item p PID_WRENCH > 0 R _var p q_newbie_gen_bolt = 1 #
+9 2040 D _item p PID_WRENCH > 0 R _var p q_newbie_gen_repair = 5 R _script dialog@r_Kill 1 111 #
+5 2050 D _var p q_newbie_gen_ventilation = 0 R _var p q_newbie_gen_ventilation = 1 @
+3 3000 None 0 #
+4 3010 D _var p q_newbie_gen_bolt = 0 D _item p PID_WRENCH > 0 R _var p q_newbie_gen_bolt = 1 #
+9 3020 D _item p PID_WRENCH > 0 R _var p q_newbie_gen_repair = 5 R _script dialog@r_Kill 1 111 #
+10 3030 D _var p q_newbie_gen_ventilation = 0 R _var p q_newbie_gen_ventilation = 1 #
+0 3040 @
+4 4000 None 0 #
+0 4010 #
+7 4020 D _var p q_newbie_gen_ventilation = 0 R _var p q_newbie_gen_ventilation = 1 R _var p q_newbie_gen_repair = 2 @
+5 5000 None 0 #
+6 5010 D _var p q_newbie_gen_bolt = 0 D _item p PID_WRENCH > 0 R _var p q_newbie_gen_bolt = 1 #
+9 5020 D _item p PID_WRENCH > 0 R _var p q_newbie_gen_repair = 5 R _script dialog@r_Kill 1 111 #
+10 5030 D _var p q_newbie_gen_lubricant = 0 D _item p PID_LUBRICANT > 0 R _var p q_newbie_gen_lubricant = 1 R _item p PID_LUBRICANT - 1 #
+11 5040 D _param p ST_GENDER = 0 R _script dialog@r_Kill 1 111 #
+0 5050 @
+6 6000 None 0 #
+0 6010 #
+7 6020 D _item p PID_LUBRICANT > 0 D _var p q_newbie_gen_lubricant = 0 R _var p q_newbie_gen_lubricant = 1 R _var p q_newbie_gen_repair = 2 R _item p PID_LUBRICANT - 1 #
+11 6030 D _param p ST_GENDER = 0 R _script dialog@r_Kill 1 111 @
+7 7000 None 0 #
+11 7010 D _param p ST_GENDER = 0 R _script dialog@r_Kill 1 111 #
+0 7020 @
+8 8000 None 0 #
+4 8010 D _var p q_newbie_gen_lubricant = 0 D _item p PID_LUBRICANT > 0 R _var p q_newbie_gen_lubricant = 1 R _item p PID_LUBRICANT - 1 #
+6 8020 D _var p q_newbie_gen_ventilation = 0 R _var p q_newbie_gen_ventilation = 1 #
+0 8030 @
+9 9000 None 0 @
+10 10000 None 0 #
+0 10010 #
+11 10020 D _param p ST_GENDER = 0 R _script dialog@r_Kill 1 111 #
+7 10030 D _var p q_newbie_gen_bolt = 0 D _item p PID_WRENCH > 0 R _var p q_newbie_gen_repair = 2 R _var p q_newbie_gen_bolt = 1 #
+9 10040 D _item p PID_WRENCH > 0 R _var p q_newbie_gen_repair = 5 R _script dialog@r_Kill 1 111 @
+11 11000 None 0 @
+12 12000 None 0 @
+13 13000 None 0 &
+
+[russ]
+{100}{}{Генератор}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{не смазан, не затянут,не прочищен}
+{1020}{}{смазан, не затянут, не прочищен}
+{1030}{}{смазан, затянут, не прочищен}
+{1040}{}{не смазан, не затянут, прочищен}
+{1050}{}{не смазан, затянут, прочищен}
+{1060}{}{смазан, затянут, прочищен}
+{1070}{}{не смазан, затянут, не прочищен}
+{1080}{}{смазана, не затянута, прочищена}
+{1090}{}{СЛОМАНА}
+{1100}{}{не брал квест}
+{2000}{}{[Насосная установка дребежжит, некоторые части вот-вот отвалятся, а из недр доносится глуховатый скрежет, видимо, смазки осталось совсем мало. Со стороны вентиляционной решетки слышен легкий свист, она вся забита листьями и мусором]}
+{2010}{}{[Оставить установку в покое]}
+{2020}{}{[Отвинчиваете крышку бачка для масла и вливаете в него всю бутылку]}
+{2030}{}{[С небольшим усилием затягиваете гаечным ключом все разболтавшиеся болты]}
+{2040}{}{[Не жалея сил затягиваете болты, руководствуясь принципом "сила есть, ума не надо"]}
+{2050}{}{[Тщательно выковыриваете весь мусор, мешающий засасывать воздух в канал охлаждения]}
+{3000}{}{[Насосная установка дребежжит, некоторые части вот-вот отвалятся, но внутренние механизмы работают гладко. Со стороны вентиляционной решетки слышен легкий свист, она вся забита листьями и мусором]}
+{3010}{}{[С небольшим усилием затягиваете гаечным ключом все разболтавшиеся болты]}
+{3020}{}{[Не жалея сил затягиваете болты, руководствуясь принципом "сила есть, ума не надо"]}
+{3030}{}{[Тщательно выковыриваете весь мусор, мешающий засасывать воздух в канал охлаждения]}
+{3040}{}{[Оставить установку в покое]}
+{4000}{}{[На вид, насосная установка держится исправно и в близжайшие пару часов разваливаться не собирается. Внутренние механизмы работают беззвучно, будучи хорошо смазанными. Со стороны вентиляционной решетки слышен легкий свист, она вся забита листьями и мусором]}
+{4010}{}{[Оставить установку в покое]}
+{4020}{}{[Тщательно выковыриваете весь мусор, мешающий засасывать воздух в канал охлаждения]}
+{5000}{}{[Насосная установка дребежжит, некоторые части вот-вот отвалятся, а из недр доносится глуховатый скрежет, видимо, смазки осталось совсем мало. Со стороны вентиляционной решетки слышен мощный гул всасываемого воздуха]}
+{5010}{}{[С небольшим усилием затягиваете гаечным ключом все разболтавшиеся болты]}
+{5020}{}{[Не жалея сил затягиваете болты, руководствуясь принципом "сила есть, ума не надо"]}
+{5030}{}{[Отвинчиваете крышку бачка для масла и вливаете в него всю бутылку]}
+{5040}{}{[Завороженно глядя на манящее отверстие трубы, всасывающей воздух, просовываете пенис в отверстие решетки, надеясь получить удовольствие]}
+{5050}{}{[Оставить установку в покое]}
+{6000}{}{[На вид, насосная установка держится исправно и в близжайшие пару часов разваливаться не собирается, но из недр доносится глуховатый скрежет, видимо, смазки осталось совсем мало. Со стороны вентиляционной решетки слышен мощный гул всасываемого воздуха]}
+{6010}{}{[Оставить установку в покое]}
+{6020}{}{[Отвинчиваете крышку бачка для масла и вливаете в него всю бутылку]}
+{6030}{}{[Завороженно глядя на манящее отверстие трубы, всасывающей воздух, просовываете пенис в отверстие решетки, надеясь получить удовольствие]}
+{7000}{}{[На вид, насосная установка держится исправно и в близжайшие пару часов разваливаться не собирается. Внутренние механизмы работают беззвучно, будучи хорошо смазанными. Со стороны вентиляционной решетки слышен мощный гул всасываемого воздуха. Похоже, что ваша работа выполнена]}
+{7010}{}{[Завороженно глядя на манящее отверстие трубы, всасывающей воздух, просовываете пенис в отверстие решетки, надеясь получить удовольствие]}
+{7020}{}{[Оставить установку в покое]}
+{8000}{}{[На вид, насосная установка держится исправно и в близжайшие пару часов разваливаться не собирается. Из недр доносится глуховатый скрежет, видимо, смазки осталось совсем мало. Со стороны вентиляционной решетки слышен легкий свист, она вся забита листьями и мусором]}
+{8010}{}{[Отвинчиваете крышку бачка для масла и вливаете в него всю бутылку]}
+{8020}{}{[Тщательно выковыриваете весь мусор, мешающий засасывать воздух в канал охлаждения]}
+{8030}{}{[Оставить установку в покое]}
+{9000}{}{[Резьба срывается и отлетевшая железная часть сносит вам полчерепа]}
+{10000}{}{[Насосная установка дребежжит, некоторые части вот-вот отвалятся, но внутренние механизмы работают гладко. Со стороны вентиляционной решетки слышен мощный гул всасываемого воздуха]}
+{10010}{}{[Оставить установку в покое]}
+{10020}{}{[Завороженно глядя на манящее отверстие трубы, всасывающей воздух, просовываете пенис в отверстие решетки, надеясь получить удовольствие]}
+{10030}{}{[С небольшим усилием затягиваете гаечным ключом все разболтавшиеся болты]}
+{10040}{}{[Не жалея сил затягиваете болты, руководствуясь принципом "сила есть, ума не надо"]}
+{11000}{}{[Внезапно, вас присасывает к решетке. Вы с ужасом ощущаете как ваш пенис вырывает из тела, засасывая ваш живот и кишечник в нутро установки]}
+{12000}{}{[Вид установки довольно плачевный. Едва ли вам стоит показываться Стиву на глаза]}
+{13000}{}{[Установка гремит и скрежещет. Возможно, её стоило бы отремонтировать]}
+
+[engl]
+{100}{}{Pumping station}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{не смазан, не затянут,не прочищен}
+{1020}{}{смазан, не затянут, не прочищен}
+{1030}{}{смазан, затянут, не прочищен}
+{1040}{}{не смазан, не затянут, прочищен}
+{1050}{}{не смазан, затянут, прочищен}
+{1060}{}{смазан, затянут, прочищен}
+{1070}{}{не смазан, затянут, не прочищен}
+{1080}{}{смазана, не затянута, прочищена}
+{1090}{}{СЛОМАНА}
+{1100}{}{не брал квест}
+{2000}{}{[Pumping station trembles, some parts look like they are about to fall off, vague screeching can be heard from inside. Probably the oil has almost run out. A slight hissing sound comes from the ventilation grid, most of it is blocked with foliage and rubbish]}
+{2010}{}{[Leave the machinery as it is]}
+{2020}{}{[Unscrew the cap of oil tank and empty the bottle in it]}
+{2030}{}{[Gently tighten unscrewed bolts with your wrench]}
+{2040}{}{[Tighten unscrewed bolts with your wrench using maximum force, farting loudly in the process]}
+{2050}{}{[Thoroughly clear the rubbish that blocks air from getting to cooling system]}
+{3000}{}{[Pumping station trembles, some parts look like they are about to fall off, but the inner mechanisms work smoothly. A slight hissing sound comes from the ventilation grid, most of it is blocked with foliage and rubbish]}
+{3010}{}{[Gently tighten unscrewed bolts with your wrench]}
+{3020}{}{[Tighten unscrewed bolts with your wrench using maximum force, farting loudly in the process]}
+{3030}{}{[Thoroughly clear the rubbish that blocks air from getting to cooling system]}
+{3040}{}{[Leave the machinery as it is]}
+{4000}{}{[Pumping station looks reliable. At least it would last the next couple of hours. The inside mechanisms work smoothly, as if well lubricated. A slight hissing sound comes from the ventilation grid, most of it is blocked with foliage and rubbish]}
+{4010}{}{[Leave the machinery as it is]}
+{4020}{}{[Thoroughly clear the rubbish that blocks air from getting to cooling system]}
+{5000}{}{[Pumping station trembles, some parts look like they are about to fall off. Vague screeching can be heard from inside. Probably the oil has almost run out. Loud roaring of the sucked in air comes from the ventilation grid]}
+{5010}{}{[Gently tighten unscrewed bolts with your wrench]}
+{5020}{}{[Tighten unscrewed bolts with your wrench using maximum force, farting loud in the process]}
+{5030}{}{[Unscrew the cap of oil tank and empty the bottle in it]}
+{5040}{}{[Staring at the air intake pipe mesmerized, stick your penis through the grid in hope of experiencing breathtaking sensation]}
+{5050}{}{[Leave the machinery as it is]}
+{6000}{}{[Pumping station looks reliable. At least it would last the next couple of hours. But vague screeching can be heard from inside. Probably the oil has almost run out. Loud roaring of the sucked in air comes from the ventilation grid]}
+{6010}{}{[Leave the machinery as it is]}
+{6020}{}{[Unscrew the cap of oil tank and empty the bottle in it]}
+{6030}{}{[Staring at the air intake pipe mesmerized, stick your penis through the grid in hope of experiencing breathtaking sensation]}
+{7000}{}{[Pumping station looks reliable. At least it would last the next couple of hours. The inside mechanisms work smoothly, as if well lubricated. Loud roaring of the sucked in air comes from the ventilation grid. Looks like your work here is done]}
+{7010}{}{[Staring at the air intake pipe mesmerized, stick your penis through the grid in hope of experiencing breathtaking sensation]}
+{7020}{}{[Leave the machinery as it is]}
+{8000}{}{[Pumping station looks reliable. At least it would last the next couple of hours. Vague screeching can be heard from inside. Probably the oil has almost run out. A slight hissing sound comes from the ventilation grid, most of it is blocked with foliage and rubbish]}
+{8010}{}{[Unscrew the cap of oil tank and empty the bottle in it]}
+{8020}{}{[Thoroughly clear the rubbish that blocks air from getting to cooling system]}
+{8030}{}{[Leave the machinery as it is]}
+{9000}{}{[The threading breaks off and a huge metal piece smashes your head open]}
+{10000}{}{[Pumping station trembles, some parts look like they are about to fall off, but the inner mechanisms work smoothly. Loud roaring of the sucked in air comes from the ventilation grid]}
+{10010}{}{[Leave the machinery as it is]}
+{10020}{}{[Staring at the air intake pipe mesmerized, stick your penis through the grid in hope of experiencing breathtaking sensation]}
+{10030}{}{[Gently tighten unscrewed bolts with your wrench]}
+{10040}{}{[Tighten unscrewed bolts with your wrench using maximum force, farting loud in the process]}
+{11000}{}{[Suddenly you are stuck to the grid. Horrified you feel your penis part with your body, followed by your intestines sucked into the pump]}
+{12000}{}{[Pumping station is a sorry sight. You'd better not catch Steve's eye]}
+{13000}{}{[Pumping station trembles and screeches. It surely could use some maintenance]}
+

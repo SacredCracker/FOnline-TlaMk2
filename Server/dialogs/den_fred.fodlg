@@ -1,0 +1,105 @@
+[comment]
+Ваши комментарии / Your comments.
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 #
+3 1020 D _var n name_mem_npc_player = 1 @
+2 2000 None 0 #
+4 2010 D _var p q_den_jane_dolg = 1 D _var p den_jane_trader_fred = 0 R _var p den_jane_trader_fred = 1 R _item p PID_BOTTLE_CAPS + 500 #
+65506 2020 #
+0 2030 @
+3 3000 None 0 #
+4 3010 D _var p q_den_jane_dolg = 1 D _var p den_jane_trader_fred = 0 R _var p den_jane_trader_fred = 1 R _item p PID_BOTTLE_CAPS + 500 #
+9 3020 D _script dialog@d_TimeoutCheck 0  D _item n PID_STIMPAK < 1 #
+12 3030 D _script dialog@d_NotTimeoutCheck 0  D _item n PID_STIMPAK < 1 #
+8 3040 D _item n PID_STIMPAK > 0 #
+10 3050 D _item p PID_STIMPAK > 2 D _var p q_den_fred_stim = 1 R _item p PID_BOTTLE_CAPS + 600 R _item p PID_STIMPAK - 3 R _item n PID_STIMPAK + 3 R _param p ST_EXPERIENCE + 700 R _var p q_den_fred_stim = 2 #
+65506 3060 #
+0 3070 @
+4 4000 None 0 @
+5 5000 None 0 @
+8 6000 None 0 #
+8 6010 D _item p PID_BOTTLE_CAPS > 299 D _item n PID_STIMPAK > 1 R _item p PID_STIMPAK + 1 R _item p PID_BOTTLE_CAPS - 300 R _item n PID_STIMPAK - 1 #
+11 6020 D _item p PID_BOTTLE_CAPS > 299 D _item n PID_STIMPAK = 1 R _item n PID_STIMPAK - 1 R _item p PID_BOTTLE_CAPS - 300 R _item p PID_STIMPAK + 1 #
+0 6030 D _item p PID_BOTTLE_CAPS < 300 #
+0 6040 @
+9 7000 None 0 #
+0 7010 R _var p q_den_fred_stim = 1 R _script dialog@r_TimeoutSet 1 2 #
+0 7020 @
+10 8000 None 0 #
+0 8010 @
+11 9000 None 0 @
+12 10000 None 0 &
+
+[russ]
+{100}{}{Фред}
+{200}{}{Вы видите Фреда.}
+{210}{}{Фред, похоже, очень доволен своим элегантным костюмом.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{не знаком}
+{1020}{}{знаком}
+{2000}{}{Привет. Я Фред, занимаюсь продажей всяких вещей. Чем обязан?}
+{2010}{}{Меня прислал Джеймс за деньгами.}
+{2020}{}{Давай посмотрим, что у тебя есть.}
+{2030}{}{Мне пора.}
+{3000}{}{Снова ты. Чем могу помочь на этот раз?}
+{3010}{}{Меня прислал Джеймс за деньгами.}
+{3020}{}{У тебя стимпаки есть?}
+{3030}{}{У тебя стимпаки есть?}
+{3040}{}{У тебя стимпаки есть?}
+{3050}{}{У меня есть несколько стимпаков для тебя.}
+{3060}{}{Давай торговаться.}
+{3070}{}{Спасибо, пока ничего.}
+{4000}{}{Да верно, вот держи.}
+{5000}{}{В данное время у меня нет денег, чтобы выплатить долг. Зайди попозже.}
+{6000}{}{Должно быть, осталось немного. 300 монет за штуку. Желаешь купить?}
+{6010}{}{Давай. [Вы отдаете 300 монет]}
+{6020}{}{Давай. [Вы отдаете 300 монет]}
+{6030}{}{У меня не хватает денег.}
+{6040}{}{Мне уже хватит.}
+{7000}{}{Нет, закончились. Может ты принесешь мне хоть 3 штуки? Я заплачу тебе 600 монет.}
+{7010}{}{По рукам!}
+{7020}{}{Нет, не хочу тратить время.}
+{8000}{}{Отлично. Вот твои деньги. [Он дает вам 600 монет]}
+{8010}{}{[Выход]}
+{9000}{}{Всё, у меня больше нет.}
+{10000}{}{Нет, закончились. Приходи позже, я жду доставку.}
+
+[engl]
+{100}{}{Fred}
+{200}{}{You see Fred.}
+{210}{}{Looks like Fred is very proud of his elegant suit.}
+{1000}{}{Predialogue installations}
+{1010}{}{not aquainted}
+{1020}{}{aquainted}
+{2000}{}{Hi. I am Fred, i am selling different things. What do you need?}
+{2010}{}{I came from James, he wants you to pay for the goods now.}
+{2020}{}{Let me see what you have.}
+{2030}{}{Me go.}
+{3000}{}{This is you again. Can i help you?}
+{3010}{}{I came from James, he wants you to pay for the goods now.}
+{3020}{}{Do you have stimpaks?}
+{3030}{}{У тебя стимпаки есть?}
+{3040}{}{Do you have stimpaks?}
+{3050}{}{I have some stimpaks for you.}
+{3060}{}{Would you like to barter?}
+{3070}{}{Thank, it is all.}
+{4000}{}{Yeah, this is for you.}
+{5000}{}{I don't have enough money right now. Let me ask you a question instead.}
+{6000}{}{Yeap, i have. $300 for stimpak. Do you need?}
+{6010}{}{Yes. [$300]}
+{6020}{}{Yes. [$300]}
+{6030}{}{I don't have enough money.}
+{6040}{}{Enough.}
+{7000}{}{Нет, i do not have more. Can you give to me 3 stimpaks? I will pay $600.}
+{7010}{}{Okay.}
+{7020}{}{I'm not interested at all.}
+{8000}{}{Good. This is you money. [He pays $600]}
+{8010}{}{[Quit]}
+{9000}{}{Done, i don't have more.}
+{10000}{}{Come back later, i'm already waiting for a delivery.}

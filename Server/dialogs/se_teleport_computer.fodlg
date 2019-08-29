@@ -1,0 +1,63 @@
+[comment]
+
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 D _var p special_encounter_teleport = 1 #
+5 1020 D _var p special_encounter_teleport ! 1 @
+2 2000 None 0 #
+0 2010 #
+3 2020 D _param p SK_SCIENCE { 100 #
+4 2030 D _param p SK_SCIENCE > 100 #
+0 2040 R _script se_teleport@r_ChangeItems 3 52 53 0 R _var p special_encounter_teleport = 2 @
+3 3000 None 0 #
+0 3010 @
+4 4000 None 0 #
+0 4010 #
+0 4020 D _script se_teleport@d_CheckIsNotAnyCritterInPlace 2 52 53 R _script se_teleport@r_ChangeItems 3 52 53 1 R _var p special_encounter_teleport = 2 #
+0 4030 D _script se_teleport@d_CheckIsNpcInPlace 2 52 53 D or D _script se_teleport@d_CheckIsPlayerInPlace 2 52 53 R _script se_teleport@r_SwapCritters 2 52 53 R _var p special_encounter_teleport = 2 @
+5 5000 None 0 #
+0 5010 &
+
+[russ]
+{100}{}{Компьютер}
+{1000}{}{Predialogue installations}
+{1010}{}{...}
+{1020}{}{уже сделано}
+{2000}{}{Для тестирования телепортационного устройства установите на правой платформе (белая дверь) предметы общим весом не более 10 кг. Производите установку точно по центру платформы (отмечено крестом).}
+{2010}{}{[Выход]}
+{2020}{}{[Отключить контроль веса предметов]}
+{2030}{}{[Отключить контроль веса предметов]}
+{2040}{}{[Начать тестирование]}
+{3000}{}{Несанкционированный доступ. Запрещена настройка параметра телепортатора.}
+{3010}{}{[Выход]}
+{4000}{}{Контроль веса отключен. Для тестирования телепортационного устройства установите на платформе предметы, подлежащие телепортации.}
+{4010}{}{[Выход]}
+{4020}{}{[Начать тестирование]}
+{4030}{}{[Начать тестирование]}
+{5000}{}{[Терминал вышел из строя]}
+{5010}{}{[Выход]}
+
+[engl]
+{100}{}{the Computer}
+{1000}{}{Predialogue installations}
+{1010}{}{...}
+{1020}{}{it is already made}
+{2000}{}{For testing teleportatsionnogo devices establish on the right platform (a white door) subjects in gross weight no more than 10 kg. Make installation precisely on the platform centre (it is noted by a cross).}
+{2010}{}{[the Exit]}
+{2020}{}{[to Disconnect control of weight of subjects]}
+{2030}{}{[to Disconnect control of weight of subjects]}
+{2040}{}{[to Begin testing]}
+{3000}{}{Unapproved access. Parametre adjustment teleportatora is forbidden.}
+{3010}{}{[the Exit]}
+{4000}{}{weight Control is disconnected. For testing teleportatsionnogo devices establish on a platform the subjects which are subject to teleportation.}
+{4010}{}{[the Exit]}
+{4020}{}{[to Begin testing]}
+{4030}{}{[to Begin testing]}
+{5000}{}{[the Terminal has failed]}
+{5010}{}{[the Exit]}
+

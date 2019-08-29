@@ -1,0 +1,184 @@
+//	+++++++++++++++++++++++++++++++++++++++
+//	+ Методы, для управления группой нпц. +
+//	+++++++++++++++++++++++++++++++++++++++
+
+#include "entire.fos"
+
+#define TIME_TO_DELETE_MOBS                (REAL_SECOND(30)) // Время до удаления мобов.
+
+import bool AddAttackPlane(Critter& npc, uint priority, Critter& target) from "npc_planes";
+import bool AddWalkPlane(Critter& npc, uint priority, uint16 hexX, uint16 hexY, uint8 dir, bool run, uint cut) from "npc_planes";
+
+// Добавить группу НПЦ
+// map			- мапа
+// params		- набор дополнительных параметров криттера
+// x 			- координта x респа, если ентайр равен нулю
+// y			- координата у респа, если ентайр равен нулю
+// entire		- ентайр респа, если он задан не нулевым значением
+// dir 			- направление
+// params		- дополнительные параметры криттера
+// count		- количество криттеров
+Critter@[] addGroupNpc(Map& map, uint pid, int[] params , uint x, uint y, int entire, uint dir, uint count, string script)
+{
+	Critter@[] group;
+	
+	//Координаты
+	uint16 XSpawn=0;
+	uint16 YSpawn=0;
+	uint entNum=map.CountEntire(entire);
+	if(entire!=0) 
+	{
+		if(not map.GetEntireCoords(entire, Random(0,entNum-1), XSpawn, YSpawn))
+			{
+				return group;
+			}
+	}
+	else
+	{
+		XSpawn=x;
+		YSpawn=y;		
+	}
+
+	// Создание группы
+	Critter@ cr;
+	uint SaveX=XSpawn;
+	int8 attempt=0; //количество неудачных попыток создать моба
+	for(uint i=0, j=count;i<j;i++)
+	{
+		if(map.IsHexPassed(XSpawn, YSpawn))
+			@cr=map.AddNpc(pid, XSpawn, YSpawn, 5, params, null, script);
+		XSpawn++;
+		if(XSpawn>SaveX+5) 
+		{	
+			XSpawn=SaveX;
+			YSpawn++;
+		}
+
+		if(valid(cr))	group.insertLast(@cr);
+		else if(attempt<10)
+		{
+			i--;
+			map.GetEntireCoords(entire, Random(0,entNum-1), XSpawn, YSpawn);
+			attempt++;
+		}
+	}	
+	return group;
+}
+
+// Метод, обьединяющий две группы в одну. Возвращает единую группу.
+// При этом, нпц могут иметь разные команды.
+// group1 - первая группа
+// group2 - вторая группа
+Critter@[] uniteGroupNpc(Critter@[] group1, Critter@[] group2)
+{
+    Critter@[] newGroup;
+	
+	for(uint i=0, iMax=group1.length();i<iMax;i++)
+	{
+		newGroup.insertLast(@group1[i]);
+	}
+	
+	for(uint i=0, iMax=group2.length();i<iMax;i++)
+	{
+		newGroup.insertLast(@group2[i]);
+	}
+	
+	return newGroup;
+}
+
+//Метод задания передвижения группы.
+//
+//
+//
+//
+//
+//
+//
+void moveGroupsNpc (Map& map, Critter@[] group, uint x, uint y, int entire, uint dir, uint priority,  bool run) 
+{
+	//Координаты
+	uint16 XMove, YMove;
+	for(uint i=0, iMax=group.length(); i<iMax;i++)
+	{
+		if(entire!=0) 
+		{
+		uint entNum=map.CountEntire(entire);
+			if(not map.GetEntireCoords(entire, Random(0,entNum-1), XMove, YMove))
+			{
+				return;
+			}
+		}
+		else
+		{
+			XMove=x;
+			YMove=y;			
+		}		
+		AddWalkPlane(group[i], priority, XMove+i, YMove+i, dir, run, 1);
+	}
+}
+
+// Добавляет игроков в враги группе.
+// 
+// 
+void addEnemyGroupsNpc (Map& map, Critter@[] group) 
+{
+	Critter@[] players;
+	if(map.GetCritters(0,FIND_LIFE_AND_KO|FIND_ONLY_PLAYERS,players)>0)
+	{
+		for(uint i=0, iMax=group.length(); i<iMax; i++)
+		{
+			Critter@ cr=group[i];
+				for(uint j=0, iMax=players.length(); j<iMax; j++) 
+					AddAttackPlane(cr,0,players[j]);
+		}
+	}
+}
+
+// Переносит группу нпц, по заданым координатам заданой карты.
+//
+//
+//
+//
+void transitGroupsNpc (Map& map, Critter@[] group, uint x, uint y, int entire) 
+{
+	//Координаты
+	uint16 Xtransit, Ytransit;
+	if(entire!=0) 
+	{
+	uint entNum=map.CountEntire(entire);
+	if(not map.GetEntireCoords(entire, Random(0,entNum-1), Xtransit, Ytransit))
+		return;
+	}
+	else
+	{
+			Xtransit=x;
+			Ytransit=y;	
+	}
+	
+	for(uint i=0, iMax=group.length(); i<iMax; i++)
+		group[i].TransitToMap(map.Id, x,y, Random(0,5));
+}
+
+// Инициализация группы.
+void GroupInit(Critter@[] atackers)
+{
+	for(uint i=0, iMax=atackers.length(); i<iMax; i++)
+	{
+		atackers[i].SetEvent(CRITTER_EVENT_DEAD,"_CritterDead");
+	}
+}
+
+// Криттер умирает
+void _CritterDead(Critter& cr, Critter@ attacker)
+{
+	CreateTimeEvent(__FullSecond+TIME_TO_DELETE_MOBS,"e_DeleteSpawnedMob",cr.Id,true);
+}
+
+// Удаление криттера
+uint e_DeleteSpawnedMob(uint[]@ values)
+{
+	Critter @ mob=GetCritter(values[0]);
+	if (!valid(mob)) return 0;
+	DeleteNpc(mob);
+	return 0;
+}

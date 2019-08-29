@@ -1,0 +1,252 @@
+[comment]
+20 + квест сынишка
+30 + квест Разведка
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 @
+2 2000 None 0 #
+3 2010 D _param p ST_INTELLECT > 3 D _var p q_ncr_siege_terminate = 0 D _var p ncr_siege_camps_num > 0 D _param p ST_LEVEL > 4 #
+10 2020 D _param p ST_INTELLECT > 3 D _var p q_ncr_siege_terminate > 0 D _var p ncr_siege_kills_counter > 0 D _var p ncr_siege_kills_counter < 10 R _param p ST_EXPERIENCE + 3000 R _script ncr_siege@r_GrantPlayer 0  #
+11 2030 D _param p ST_INTELLECT > 3 D _var p q_ncr_siege_terminate = 2 R _var p q_ncr_siege_terminate = 3 R _param p ST_EXPERIENCE + 7000 R _item p PID_BOTTLE_CAPS + 3000 R _param p REPUTATION_NCR + 1 #
+20 2040 D _var p q_ncr_karlson_son = 1 #
+23 2050 D _item p PID_PK12_GAUSS_PISTOL > 0 D _var p q_ncr_karlson_son = 6 D _var p npc_story = 0 R _var p q_ncr_karlson_son = 8 R _item p PID_PK12_GAUSS_PISTOL - 1 R _param p ST_EXPERIENCE + 3000 R _item p PID_BOTTLE_CAPS + 200 R _var p npc_story = 1 #
+22 2060 D _var p q_ncr_karlson_son = 6 R _var p q_ncr_karlson_son = 7 R _param p ST_EXPERIENCE + 650 #
+30 2070 D _var p q_ncr_kyle_redd_recon = 0 D _param p KILL_MEN > 40 D _param p ST_INTELLECT > 3 #
+40 2080 D _var p q_ncr_kyle_redd_recon = 1 D _script ncr_common@d_CheckReddReconComplete 0  #
+44 2090 D _param p ST_INTELLECT > 3 D _var p scen_ranger = 1 D _var p scen_ranger_rank { 6000 D _script ncr_ratch@d_RatchTimeOutCheck 1 4293 R _script ncr_ratch@r_RatchTimeOutSet 2 4293 43000 R _var p q_ncr_hate_patrol = 0 @
+3 3000 None 0 #
+4 3010 @
+4 4000 None 0 #
+0 4010 #
+5 4020 @
+5 5000 None 0 #
+6 5010 @
+6 6000 None 0 #
+7 6010 @
+7 7000 None 0 #
+0 7010 #
+8 7020 @
+8 8000 None 0 #
+9 8010 @
+9 9000 None 0 #
+0 9010 R _var p q_ncr_siege_terminate = 1 #
+0 9020 @
+10 10000 None 0 #
+0 10010 @
+11 11000 None 0 #
+0 11010 @
+20 12000 None 0 #
+21 12010 @
+21 13000 None 0 #
+0 13010 R _var p q_ncr_karlson_son = 2 @
+22 14000 None 0 #
+0 14010 @
+23 15000 None 0 #
+0 15010 @
+30 16000 None 0 #
+0 16010 #
+31 16020 @
+31 17000 None 0 #
+0 17010 #
+32 17020 @
+32 18000 None 0 #
+33 18010 #
+34 18020 @
+33 19000 None 0 #
+0 19010 @
+34 20000 None 0 #
+35 20010 #
+36 20020 @
+35 21000 None 0 @
+36 22000 None 0 #
+0 22010 #
+37 22020 @
+37 23000 None 0 #
+38 23010 @
+38 24000 None 0 #
+0 24010 #
+39 24020 R _var p q_ncr_kyle_redd_recon = 1 R _script ncr_common@r_BeginReddReconQuest 0  @
+39 25000 None 0 #
+0 25010 @
+40 26000 None 0 #
+41 26010 @
+41 27000 None 0 #
+42 27010 R _var p q_ncr_kyle_redd_recon = 2 R _param p ST_EXPERIENCE + 5000 R _item p PID_BOTTLE_CAPS + 1000 @
+42 28000 None 0 #
+43 28010 @
+43 29000 None 0 #
+0 29010 R _param p REPUTATION_NCR + 1 #
+0 29020 @
+44 30000 None 0 #
+0 30010 &
+
+[russ]
+{100}{}{Сержант Кайл}
+{200}{}{Вы видите сержанта Кайла.}
+{210}{}{До вступления в рейнджеры Кайл был добродушным оптимистом. Но реалии воинской службы изменили его характер.}
+{210}{}{Сержант Кайл занимается подготовкой новобранцев. Новички его недолюбливают.}
+{1000}{}{Predialogue installations}
+{1010}{}{Answer text}
+{2000}{}{Новобранец?@@По какому вопросу?@@Кто так@sex@|ой||ая|? Зачем?@@Гражданский, здесь? Покинуть лагерь немедленно. }
+{2010}{}{Сержант, я слышал@sex@|||а| сообщение по радио от имени Элизы. Что-то о рейдерах...}
+{2020}{}{Сержант, я повидал@sex@|лся||ась| с рейдерами.}
+{2030}{}{Я уничтожил@sex@|||а| один из лагерей рейдеров.}
+{2040}{}{Сержант, я от Карлсона, он послал меня выяснить, что случилось с его сыном.}
+{2050}{}{Сержант, я забрал пистолет у мальчика.}
+{2060}{}{Сержант, мальчик потерял пистолет...}
+{2070}{}{Эй, сержант, я не тво@sex@|й||я| подопечн@sex@|ый||ая|, нечего на меня рявкать!}
+{2080}{}{Эй, сержант. Я насчет Реддинга..}
+{2090}{}{Сержант, сэр, рядовой @pname@ прибыл для получения указаний!}
+{3000}{}{Назови свое звание в Рейнджерах, @sex@|сынок||детка|?}
+{3010}{}{Я тебе не @sex@|сынок||детка|. Я просто хочу помочь.}
+{4000}{}{Ха! Эй, девчонки! [Орет в сторону шеренги новобранцев] Вот еще одно тело, собирается отправиться к рейдерам в логово! [Из шеренги раздаются смешки] Сделаем ставку, сколько этих псов пустыни оно увидит перед смертью? Одного? Двоих?}
+{4010}{}{Сами разбирайтесь с ними. [Уйти]}
+{4020}{}{Мне нужно убить пару рейдеров?}
+{5000}{}{[Кайл приближает свое лицо к вашему и орет] ПАРУ? Там их сотни! Ты сдохнешь, сдохнешь как и все остальные, мать твою! Уноси свои ноги из НКР, здесь слишком жарко для тебя! Понял@sex@|||а|? }
+{5010}{}{Спокойно, сержант. Я тоже могу кричать. Сколько я получу?}
+{6000}{}{Хм. Значит, хочешь попробовать? Ну посмотрим, на что ты способ@sex@|ен||на|. Короче. Объединенные силы рейдеров и работорговцев стягиваются к НКР. Они блокируют караванные пути и нападают на патрульных рейнджеров. }
+{6010}{}{Почему вы просто не зачистите их лагеря?}
+{7000}{}{Сейчас на это нет времени. Да и особой угрозы они не представляют, только раздражение. Поэтому мы даем шанс всякому сброду, вроде тебя, заработать.}
+{7010}{}{Я - не сброд. [Уйти]}
+{7020}{}{Ну и, сколько платишь?}
+{8000}{}{За каждого убитого рейдера получишь 400 монет. Больше трех кусков не заплачу, убей хоть сотню.}
+{8010}{}{И это все?}
+{9000}{}{Если полностью зачистишь лагерь, получишь еще 3 косых. Это все. Проваливай.}
+{9010}{}{Хорошо, я вернусь, когда покончу с рейдерами.}
+{9020}{}{Нет, это мне не подходит. }
+{10000}{}{Да, я в курсе. Ты получишь свои деньги.}
+{10010}{}{Спасибо, сержант. [Уйти]}
+{11000}{}{Я удивлен. Эй, салаги! Берите пример с это@sex@|го человека||й крошки|. Ты, @pname@! Отличная работа! Твоя награда. Не хочешь стать Рейнджером? Дай мне знать, если что.}
+{11010}{}{Я подумаю, спасибо, сэр. [Уйти]}
+{12000}{}{Ах, черт, сыном. Дьявол, этому сорванцу нужен ремень! Если бы я был его отцом, он бы у меня узнал, что такое Дисциплина!}
+{12010}{}{А в чем дело?}
+{13000}{}{Он стащил у рядового пистолет, черт подери! Забери пистолет, или я не посмотрю на то, кто его папочка. Всыплю!}
+{13010}{}{Ладно, я попробую. [Уйти]}
+{14000}{}{Проклятье, я так и думал. Вот сорванец! Завтра же отдам его папаше, пусть разберется с ним сам.}
+{14010}{}{Правильно! [Уйти]}
+{15000}{}{О! Ты сделал@sex@|||а| это! Отлично. Чертов пацан. Надо промыть мозг его высокопоставленному папаше. Возьми, на выпивку.}
+{15010}{}{Спасибо, сержант. [Уйти]}
+{16000}{}{Так какого брамина ты тут делаешь? Это армейское подразделение, здесь тебе не тут, 300 гекконов тебе в зад! Кругом! И нахрен отсюда, шагоооом! МАРШ!}
+{16010}{}{Да пошел ты... [Уйти]}
+{16020}{}{Эй, эй, полегче! Говорят, у тебя работа есть.}
+{17000}{}{Что там у меня есть, или чего там у меня нету, тебя, дурья башка, не касается. Не выводи меня на себя. Я не злопамятный, но зло сделать не забуду.}
+{17010}{}{Ты сам-то понимаешь, что за пургу несешь? [Уйти]}
+{17020}{}{Надули меня, по ходу. Нет тут возможности заработать.}
+{18000}{}{Стой. Заработать? А! Ты за этим чтоли? Копать умеешь? Лопата есть? }
+{18010}{}{Лопату легко достану. А что откопать нужно?}
+{18020}{}{Может и умею, но точно не буду. Посерьезнее задачки не придумаешь?}
+{19000}{}{Слушай меня. Берешь лопату. Дуешь в Пустошь. И копаешь себе могилу, идиот@sex@|||ка|!! Ха! Ха! Ха! Займись полезным делом, тля.}
+{19010}{}{Тьфу! [Уйти] }
+{20000}{}{А ты че, способ@sex@|ен||на| на что-то посерьезнее? Врешь, мясо. Ладно, проверим. Реддинг знаешь?}
+{20010}{}{Кто это?@@Что это?@@Коктейль чтоли такой?@@Знаю, это мой дружбан. Служили в месте в армии Повелителя.}
+{20020}{}{Ну, допустим. Дорогу точно найду.}
+{21000}{}{Тааак. Все. Домой, к мамочке, бегом!}
+{22000}{}{Дорогу он@sex@|||а| найдет, бу-га-га. Шутишь, да? Весельчак, значит? Ну слушай дальше, весельчак, дьявол тебя разбери.}
+{22010}{}{Нет, мне это надоело. Иди гавкай на своих рекрутов. [Уйти]}
+{22020}{}{Слушаю внимательно.}
+{23000}{}{Доберись до Реддинга. Исследуй окружающие квадраты. Мне нужен рапорт. Рейдеры, ребятки из Братства Стали или Анклава, есть они там? Или все тихо. Справишься?}
+{23010}{}{Легко. Сколько платишь?}
+{24000}{}{Плачу много. Штуку налички получишь. Если вернешься, ха. Не вернешься если - не заплачу. Понятно?}
+{24010}{}{Нет, это смешные деньги за такую работу. [Уйти]}
+{24020}{}{Ясно, сделаю.}
+{25000}{}{[Обращается к шеренге новобранцев]Эй, салаги, мля! Смотрите, какой сообразительный экземпляр попался. С первого раза в детали въехал@sex@|||а|. И почему я вам должен все в башку по десять раз вбивать? А ну, СМИРНО!}
+{25010}{}{Я пойду, пожалуй... [Уйти]}
+{26000}{}{Ну? Никак? Я знал, что от тебя не будет толку!}
+{26010}{}{Я разведал@sex@|||а| территорию вокруг Реддинга. Все чисто. Анклав, Братство, рейдеры не обнаружены.}
+{27000}{}{Ишь ты. Ну вы посмотрите, какие слова мы знаем. Территория, мля. Разведка, мля. Обнаружены, мля. Полный цугундер. Тебе череп не жмет с такими-то мозгами?}
+{27010}{}{Где обещанная плата?}
+{28000}{}{Сержант сказал, сержант дал. Уходи, пока не врезал. Не болтайся у меня между ногами. }
+{28010}{}{Ладно. Ухожу.}
+{29000}{}{И это. [Кайл вам подмигивает и говорит шепотом, чтобы не слышали новобранцы] Cпасибо, @sex@|браток||сестренка|. Мне очень нужны эти сведения.}
+{29010}{}{Не за что. Пока. [Уйти]}
+{29020}{}{Да пошел ты... [Уйти]}
+{30000}{}{Молчать, когда со мной разговариваешь! Значит так, рядовой. Раз уж ты теперь с нами, придется тебе поработать на благо Республики. Найди капрала Хейта в 21:00 здесь, на плацу. Ему нужны такие, как ты.}
+{30010}{}{Слушаюсь, сэр!}
+
+[engl]
+{100}{}{Sergeant Kajl}
+{200}{}{you see sergeant Kajla.}
+{210}{}{To the introduction into rangers of Kajl was the good-natured optimist. But realities of military service have changed its character.}
+{210}{}{Sergeant Kajl is engaged in preparation of recruits. Beginners dislike it.}
+{1000}{}{Predialogue installations}
+{1010}{}{Answer text}
+{2000}{}{the Recruit? @@ on what question? @@ who так@sex | oh || aja |? What for? @@ Civil, here? To leave camp immediately.}
+{2010}{}{the Sergeant, I слышал@sex ||| and | the message by radio on behalf of Elizy. Something about raiders...}
+{2020}{}{the Sergeant, I повидал@sex | lsja || as | with raiders.}
+{2030}{}{I уничтожил@sex ||| and | one of camps of raiders.}
+{2040}{}{the Sergeant, I from Carlson, it has sent me to find out that happens with his son.}
+{2050}{}{the Sergeant, I have taken away a pistol from the boy.}
+{2060}{}{the Sergeant, the boy has lost a pistol...}
+{2070}{}{Hey, the sergeant, I not тво@sex | j || I | подопечн@sex | yj || aja |, nothing to bellow at me!}
+{2080}{}{Hey, the sergeant. I about Reddinga.}
+{2090}{}{the Sergeant, the sir, ordinary @pname has arrived for reception of instructions!}
+{3000}{}{Name the rank in Rangers, @sex | the sonny || the child |?}
+{3010}{}{I to you not @sex | the sonny || the child |. I simply want to help.}
+{4000}{}{Ha! Hey, little girls! [One more body shouts towards a rank of recruits] Here, is going to go to raiders to a den! [From a rank snickers] are distributed we will count, how many these dogs of desert it will see before death? One? A two?}
+{4010}{}{understand with them. [To Leave]}
+{4020}{}{I need to kill pair of raiders?}
+{5000}{}{[Kajl approaches the person to yours and shouts] to STEAM? There their hundreds! You will die, will die as well as all the others, your mother! Carry away the feet from NKR, here too hot for you! Понял@sex ||| and |?}
+{5010}{}{it is quiet, the sergeant. I too can shout. How many I will receive?}
+{6000}{}{Hm. Means, you want to try? Well we will look, on what you способ@sex | en || on |. More shortly. Incorporated forces of raiders and rabotorgovtsev are pulled together to NKR. They block caravan tracks and attack patrol rangers.}
+{6010}{}{Why you simply do not smooth out their camp?}
+{7000}{}{Now on it there is no time. And they do not represent special threat, only irritation. Therefore we give chance to any crowd, like you, to earn.}
+{7010}{}{I - not crowd. [To leave]}
+{7020}{}{Well and, how many you pay?}
+{8000}{}{For each killed raider you will receive 400 coins. More than three pieces I will not begin to cry, kill though one hundred.}
+{8010}{}{Also it is all?}
+{9000}{}{If completely you will smooth out camp, you will receive 3 more slanting. It is all. Ruin.}
+{9010}{}{it is good, I will return, when I will finish raiders.}
+{9020}{}{No, it does not approach me.}
+{10000}{}{Yes, I in a course. You will receive the money.}
+{10010}{}{Thanks, the sergeant. [To leave]}
+{11000}{}{I am surprised. Hey, salagi! Follow an example with это@sex | go the person || j crumbs |. You, @pname! Excellent work! Your award. You do not want to become the Ranger? Let to me know, if that.}
+{11010}{}{I will think, thanks, the sir. [To leave]}
+{12000}{}{Ah, lines, the son. The devil, is necessary to this madcap a belt! If I was his father, he would learn from me that such Discipline!}
+{12010}{}{And what is the matter?}
+{13000}{}{It has pulled down at the private soldier a pistol, damn it! Take away a pistol, or I will not look at the one who its daddy. Vsyplju!}
+{13010}{}{it is fine, I will try. [To leave]}
+{14000}{}{Prokljate, I and thought. Here the madcap! Tomorrow I will give to its daddy, let will understand with it.}
+{14010}{}{it is correct! [To leave]}
+{15000}{}{About! You сделал@sex ||| and | it! Perfectly. The devil's boy. It is necessary to wash out a brain to its high-ranking daddy. Take, on binge.}
+{15010}{}{Thanks, the sergeant. [To leave]}
+{16000}{}{So what bramina you here do? This army division, here to you not here, 300 geckoes to you in back! Around! And nahren from here, shagoooom! The MARCH!}
+{16010}{}{Yes you have gone... [To Leave]}
+{16020}{}{Hey, hey, easier! Speak, at you work is.}
+{17000}{}{That there at me is, or that there at me is not present, you, durja a head, does not concern. Do not deduce me on itself. I not vindictive, but angrily will not forget to make.}
+{17010}{}{You understand, what for snowstorm bear? [To leave]}
+{17020}{}{Have inflated me, on a course. There is no here a possibility to earn.}
+{18000}{}{Stand. To earn? And! You behind it chtoli? You are able to dig? The shovel is?}
+{18010}{}{the Shovel I will easily get. And it is necessary what to dig out?}
+{18020}{}{Can and I am able, but precisely not I will. More seriously a problem you will not think up?}
+{19000}{}{Listen to me. You take a shovel. You blow in the Heathland. Also you dig to yourself a tomb, идиот@sex ||| ka |!! Ha! Ha! Ha! Be engaged in useful business, a plant louse.}
+{19010}{}{Fie! [To Leave]}
+{20000}{}{And you che, способ@sex | en || on | on something are more serious? You say lies, meat. All right, we will check up. Redding you know?}
+{20010}{}{Who it? @@ what is it? @@ the Cocktail chtoli the such? @@ I know, he/she is mine druzhban. Served in a place in army of the Master.}
+{20020}{}{Well, we will admit. Road I will precisely find.}
+{21000}{}{Taaak. All. Home, to mummy, run!}
+{22000}{}{Road он@sex ||| and | will find, bu-hectare-hectare. You joke, yes? The merry fellow, means? Well listen further, the merry fellow, a devil you disassemble.}
+{22010}{}{No, it has bothered me. Go bark at the recruits. [To leave]}
+{22020}{}{I Listen attentively.}
+{23000}{}{Reach Reddinga. Investigate surrounding squares. The official report is necessary to me. Raiders, children from the Steel or Enclave Brotherhood, are they there? Or all is silent. You will consult?}
+{23010}{}{it is easy. How many you pay?}
+{24000}{}{I Cry much. A piece nalichki you will receive. If you will return, ha. You will not return if - I will not begin to cry. Clearly?}
+{24010}{}{No, it is ridiculous money for such work. [To leave]}
+{24020}{}{it is clear, I will make.}
+{25000}{}{[Addresses to a rank of recruits] Hey, salagi, mlja! Look, what sharp copy has got. From the first in a detail въехал@sex ||| and |. And why I owe you all in a head on ten times drive in? And well, QUIETLY!}
+{25010}{}{I will go, perhaps... [To Leave]}
+{26000}{}{Well? In any way? I knew that from you will not be to sense!}
+{26010}{}{I разведал@sex ||| and | territory round Reddinga. All is pure. The enclave, the Brotherhood, raiders are not found out.}
+{27000}{}{See you. Well you look, we know what words. Territory, mlja. Investigation, mlja. Are found out, mlja. Full tsugunder. To you the skull does not press with such brains?}
+{27010}{}{Where the promised payment?}
+{28000}{}{the Sergeant has told, the sergeant has given. Leave, yet did not cut. Do not dangle at me between feet.}
+{28010}{}{it is fine. I leave.}
+{29000}{}{And it. [Kajl winks at you and speaks in a whisper that recruits] Cпасибо, @sex | bratok || the little sister | did not hear. These data are very necessary to me.}
+{29010}{}{there is nothing. While. [To Leave]}
+{29020}{}{Yes you have gone... [To Leave]}
+{30000}{}{To be silent, when to me you talk! The private soldier means so. Time you now with us, it is necessary to you to work for the Republic blessing. Find corporal Hejta at 21:00 here, on a parade-ground. To it are necessary such, as you.}
+{30010}{}{I Obey, the sir!}

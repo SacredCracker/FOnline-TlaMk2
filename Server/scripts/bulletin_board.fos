@@ -1,0 +1,540 @@
+// Author: rifleman17
+// Доска объявлений с возможностью оставлять сообщения
+
+#include "_macros.fos"
+#include "serializator.fos"
+
+#define GAME_WEEK #(week) (week*7*24*60*60)
+#define KEY       ("BBM")
+#define _Expired  #(msg) (msg.ReaderId==0 ? msg.WriteTime + GAME_WEEK(2)<__FullSecond : msg.WriteTime + GAME_WEEK(8)<__FullSecond)
+//#define DL#(s) (Log(s))
+#define DL#(s)
+class BBMessage
+{
+	uint Idx;
+	uint MapId;
+	uint WriterId;
+	uint ReaderId;
+	uint WriteTime;
+	string Message;
+}
+
+class BBMessenger
+{
+	BBMessenger()
+	{
+		this.MsgCount=0;
+	}
+	uint MsgCount;
+	BBMessage[] Messages;
+	
+	void ClearExpiredMessages()
+	{
+		for(uint i=0; i<this.MsgCount; i++)
+		{
+			if(_Expired(this.Messages[i]))
+			{
+				this.Messages.removeAt(i);
+				this.MsgCount=this.Messages.length();
+				i--;
+			}
+		}
+		
+	}
+	
+	void AddMessage(uint mapId, uint writer, uint reader, uint when, string message)
+	{
+		BBMessage msg;
+		msg.Idx=this.Messages.length();
+		msg.MapId=mapId;
+		msg.WriterId=writer;
+		msg.ReaderId=reader;
+		msg.WriteTime=(when==0 ? __FullSecond : when);
+		msg.Message=message;
+		this.Messages.insertLast(msg);
+		this.MsgCount=this.Messages.length();
+	}
+	
+	void Save()
+	{
+		ClearExpiredMessages();
+		uint[]   maps;
+		uint[]   writers;
+		uint[]   readers;
+		uint[]   writeTimes;
+		string[] messages;
+		if(IsAnyData(KEY))
+			EraseAnyData(KEY);
+		this.MsgCount=this.Messages.length();
+		DL("saving messages num " + this.MsgCount);
+		for(uint i=0; i<this.MsgCount; i++)
+		{
+			maps.insertLast(this.Messages[i].MapId);
+			writers.insertLast(this.Messages[i].WriterId);
+			readers.insertLast(this.Messages[i].ReaderId);
+			writeTimes.insertLast(this.Messages[i].WriteTime);
+			messages.insertLast(this.Messages[i].Message);			
+		}
+		Serializator save;
+		save.Set(this.MsgCount);
+		save.Set(maps);
+		save.Set(writers);
+		save.Set(readers);
+		save.Set(writeTimes);
+		save.Set(messages);
+		save.Save(KEY);		
+	}
+
+	void Load()
+	{
+		Serializator load;
+		if(!load.Load(KEY))
+			return;
+		uint[]   maps;
+		uint[]   writers;
+		uint[]   readers;
+		uint[]   writeTimes;
+		string[] messages;
+		load.Get(this.MsgCount);
+		load.Get(maps);
+		load.Get(writers);
+		load.Get(readers);
+		load.Get(writeTimes);
+		load.Get(messages);
+		DL("loading messages num " + this.MsgCount + " maps " + maps.length());
+		this.Messages.resize(0);
+		for(uint i=0; i<maps.length(); i++)
+		{
+			AddMessage(maps[i], writers[i], readers[i], writeTimes[i], messages[i]);
+		}
+		this.MsgCount=this.Messages.length();
+		ClearExpiredMessages();
+	}
+	
+	BBMessage@ GetMessage(uint idx)
+	{
+		if(idx<this.MsgCount)
+			return this.Messages[idx];
+		return null;
+	}
+	
+	BBMessage[] GetPrivateMessages(uint mapId, uint readerId)
+	{
+		BBMessage[] messages;
+		for(uint i=0; i<this.MsgCount; i++)
+		{
+			if(this.Messages[i].MapId==mapId && this.Messages[i].ReaderId==readerId)
+				messages.insertLast(this.Messages[i]);
+		}
+		return messages;
+	}
+	
+	BBMessage@ GetSelfMessage(uint mapId, uint writerId)
+	{
+		for(uint i=0; i<this.MsgCount; i++)
+		{
+			if(this.Messages[i].MapId==mapId && this.Messages[i].WriterId==writerId)
+				return this.Messages[i];
+		}
+		return null;
+	}
+	
+	void RemoveSelfMessages(uint mapId, uint writerId)
+	{
+		BBMessage@ msg=GetSelfMessage(mapId, writerId);
+		if(valid(msg))
+		{
+			this.Messages.removeAt(msg.Idx);
+		}
+		this.MsgCount=this.Messages.length();	
+		this.Reindex();
+	}
+	
+	void Reindex()
+	{
+		for(uint i=0; i<this.MsgCount; i++)
+			this.Messages[i].Idx=i;	
+	}
+	
+	BBMessage@ GetRandomMessage(uint mapId)
+	{
+		BBMessage @ msg;
+		uint counter=0;
+		while(counter<20 && this.Messages.length() > 0)
+		{
+			counter++;
+			@msg=this.Messages[Random(0, this.Messages.length() - 1)];
+			if(msg.ReaderId==0)
+				return msg;
+		}
+		return null;
+	}
+	
+	// readFrom - порядковый номер в уже отобранных публичных объявлениях
+	BBMessage[] GetPublicMessages(uint mapId, uint readFrom, uint count)
+	{
+		uint[] msgIds;
+		BBMessage[] messages;
+		for(uint i=0; i<this.MsgCount; i++)
+		{
+			if(this.Messages[i].ReaderId==0)
+				msgIds.insertLast(this.Messages[i].Idx);
+		}			
+		for(uint i=readFrom; i<readFrom + count && i<msgIds.length(); i ++)
+		{
+			messages.insertLast(this.Messages[msgIds[i]]);
+		}
+		return messages;
+	}
+	
+	uint CountPublicMessages(uint mapId)
+	{
+		uint count=0;
+		for(uint i=0; i<this.MsgCount; i++)
+			if(this.Messages[i].MapId==mapId && this.Messages[i].ReaderId==0)
+				count++;
+		return count;
+	}
+}
+
+BBMessenger Messenger;
+
+void StartMessenger()
+{
+	Messenger.Load(); 
+}
+
+void SaveMessengerData()
+{
+	Messenger.Save(); 
+}
+
+// Функционал для досок
+bool d_IsSelfMsg(Critter& cr, Critter@ npc)
+{
+	Map@ map=cr.GetMap();
+	if(valid(map))
+	{
+		return valid(Messenger.GetSelfMessage(map.Id, cr.Id));
+	}
+	return false;
+}
+
+bool d_NotSelfMsg(Critter& cr, Critter@ npc)
+{
+	return !d_IsSelfMsg(cr, npc);
+}
+
+bool d_IsPrivateMsg(Critter& cr, Critter@ npc)
+{
+	Map@ map=cr.GetMap();
+	if(valid(map))
+	{
+		return (Messenger.GetPrivateMessages(map.Id, cr.Id).length() > 0);
+	}
+	return false;
+}
+
+bool d_NotPrivateMsg(Critter& cr, Critter@ npc)
+{
+	return !d_IsPrivateMsg(cr, npc);
+}
+
+bool d_IsPrivateMsg(Critter& cr, Critter@ npc, int numMsg, int msgPerPage)
+{
+	Map@ map=cr.GetMap();
+	if(valid(map))
+	{
+		GameVar@ page=GetLocalVar(LVAR_bbmsg_page, cr.Id);
+		if(valid(page))
+		{
+			return Messenger.GetPrivateMessages(map.Id, cr.Id).length() > uint(page * msgPerPage + numMsg);
+		}
+	}
+	return false;
+}
+// @lex msg1@
+void dlg_PrivateMsg5(Critter& cr, Critter@ npc, string@ lexems)
+{
+	if(!IS_DIALOG_GENERATED(lexems)) 
+		return;
+	GameVar@ page=GetLocalVar(LVAR_bbmsg_page, cr.Id);
+	uint msgPerPage=5;
+	if(valid(page))
+	{
+		lexems="";
+		Map@ map=cr.GetMap();
+		BBMessage[] messages=Messenger.GetPrivateMessages(map.Id, cr.Id);
+		uint msg=1;
+		for(uint i=msgPerPage*page.GetValue(); i<messages.length(); i++)
+		{
+			lexems +="$msg" + msg + "" + GetPlayerName(messages[i].WriterId);
+			msg++;
+		}
+	}
+}
+
+void r_SetPrivateMsg(Critter& cr, Critter@ npc, int numMsg, int msgPerPage)
+{
+	GameVar@ page=GetLocalVar(LVAR_bbmsg_page, cr.Id);
+	GameVar@ msg=GetLocalVar(LVAR_bb_selected_msg, cr.Id);
+	if(valid(msg) && valid(page))
+	{
+		msg=Messenger.GetPrivateMessages(cr.GetMap().Id, cr.Id)[msgPerPage*page.GetValue() + numMsg].Idx;
+	}
+}
+
+void dlg_GetMsg(Critter& cr, Critter@ npc, string@ lexems)
+{
+	if(!IS_DIALOG_GENERATED(lexems)) 
+		return;
+	GameVar@ msg=GetLocalVar(LVAR_bb_selected_msg, cr.Id);
+	if(valid(msg))
+	{
+		BBMessage@ m=Messenger.GetMessage(msg.GetValue());
+		if(valid(m))
+			lexems="$fromWho" + GetPlayerName(m.WriterId) + "$msg" + m.Message;
+	}
+}
+
+
+bool d_IsPublicMsg(Critter& cr, Critter@ npc)
+{
+	return Messenger.CountPublicMessages(cr.GetMap().Id) > 0;
+}
+
+bool d_NotPublicMsg(Critter& cr, Critter@ npc)
+{
+	return !d_IsPublicMsg(cr, npc);
+}
+
+bool d_IsPublicMsg(Critter& cr, Critter@ npc, int numMsg, int msgPerPage)
+{
+	GameVar@ page=GetLocalVar(LVAR_bbmsg_page, cr.Id);
+	GameVar@ msg=GetLocalVar(LVAR_bb_selected_msg, cr.Id);
+	if(valid(msg) && valid(page))
+	{
+		return (Messenger.GetPublicMessages(cr.GetMap().Id, page.GetValue() * msgPerPage, msgPerPage + numMsg).length() > uint(numMsg));	
+	}
+	return false;
+}
+
+void r_SetPublicMsg(Critter& cr, Critter@ npc, int numMsg, int msgPerPage)
+{
+	GameVar@ page=GetLocalVar(LVAR_bbmsg_page, cr.Id);
+	GameVar@ msg=GetLocalVar(LVAR_bb_selected_msg, cr.Id);
+	if(valid(msg) && valid(page))
+	{
+		BBMessage[] messages=Messenger.GetPublicMessages(cr.GetMap().Id, page.GetValue() * msgPerPage, msgPerPage + numMsg);
+		if(messages.length() > uint(numMsg))
+		{
+			msg=messages[numMsg].Idx;
+		}
+	}
+}
+
+uint r_SetRandomMsg(Critter& cr, Critter@ npc)
+{
+	BBMessage@ msg=Messenger.GetRandomMessage(cr.GetMap().Id);
+	if(valid(msg))
+	{
+		GameVar@ m=GetLocalVar(LVAR_bb_selected_msg, cr.Id);
+		m=msg.Idx;
+		return 5;
+	}
+	return 8;
+}
+// @lex msg1@
+void dlg_PublicMsg5(Critter& cr, Critter@ npc, string@ lexems)
+{
+	if(!IS_DIALOG_GENERATED(lexems)) 
+		return;
+	GameVar@ page=GetLocalVar(LVAR_bbmsg_page, cr.Id);
+	uint msgPerPage=5;
+	if(valid(page))
+	{
+		lexems="";
+		Map@ map=cr.GetMap();
+		BBMessage[] messages=Messenger.GetPublicMessages(map.Id, page.GetValue()*5, 5);
+		uint msg=1;
+		for(uint i=0; i<messages.length(); i++)
+		{
+			lexems +="$msg" + msg + "" + GetPlayerName(messages[i].WriterId);
+			msg++;
+		}
+	}
+}
+
+// Альдо и запись текста игрока на доску объявлений
+#define ENTIRE_ALDO        (31) // Гекс, к которому подходит Альдо перед началом записи
+#define STR_CANT_REACH     (1) // Не могу к доске подобраться. Обожди, пока разойдутся все.
+#define STR_IN_PLACE       (2) // Давай, говори, чего писать будем... Буду записывать все, что скажешь, после слова "Начали"
+#define STR_FINISHED       (3) // Все готово, проверяй...
+#define DLG_NOTFOUND       (34) // Номер ветки диалога "нет таких..."
+#define DLG_FOUND          (35) // Хорошо, напишем персональное объявление... Пойдем со мной, продиктуешь.
+#define CTE_CLEAR_VARS     (26) // Событие очистки переменных. 
+#define CTE_CONFIRM_SAVE   (27)
+#define _RightKeyWord      #(text) (text.length()<KEYWORD.length() ? false : substring(text, 0, KEYWORD.length())==KEYWORD)
+#define KEYWORD           ("Начали")
+#define _MsgFromText       #(text) (substring(text, 6, text.length() - 1))
+import bool AddWalkPlane(Critter& npc, uint entire, uint cut, bool run) from "npc_planes";
+import bool AddMiscPlane(Critter& npc, uint priority, uint waitSecond, string@ funcName) from "npc_planes";
+import bool AddWalkPlane(Critter& npc, uint priority, uint16 hexX, uint16 hexY, uint8 dir, bool run, uint cut) from "npc_planes";
+
+uint dlg_GetReaderId(Critter& player, Critter@ npc, string@ lexems)
+{
+	if(!IS_DIALOG_SAY_MODE(lexems)) return 0;
+	uint playerId=GetPlayerId(lexems);
+	if(playerId==0)
+		return DLG_NOTFOUND;
+	GameVar@ readerId=GetLocalVar(LVAR_klam_aldo_reader_id, npc.Id);
+	if(!valid(readerId))
+		return DLG_NOTFOUND;
+	readerId=playerId;
+	return DLG_FOUND;
+}
+
+void r_MoveAldo(Critter& player, Critter@ npc)
+{
+	if(!valid(npc))
+		return;
+	GameVar@ aldoId=GetLocalVar(LMVAR_klam_aldo_id, npc.GetMap().Id);
+	GameVar@ status=GetLocalVar(LVAR_klam_aldo_busy, npc.Id);
+	GameVar@ playerId=GetLocalVar(LVAR_klam_aldo_listen_id, npc.Id); 
+	if(!valid(status) || !valid(aldoId))
+	{
+		return;
+	}
+	status=1;
+	if (!AddWalkPlane(npc, ENTIRE_ALDO, 0, false))
+	{
+		npc.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(npc.Stat[ST_DIALOG_ID], STR_CANT_REACH));
+		status=0;
+		return;
+	}
+	aldoId=npc.Id;
+	playerId=player.Id;
+	status=1;
+	npc.SetEvent(CRITTER_EVENT_PLANE_END, "_AldoPlaneEnd");
+	if(npc.GetTimeEvents(CTE_CLEAR_VARS, null, null, null)==0)
+		npc.AddTimeEvent("cte_ClearVars", REAL_MINUTE(10), CTE_CLEAR_VARS);
+}
+
+int _AldoPlaneEnd(Critter& cr, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem)
+{
+	GameVar@ status=GetLocalVar(LVAR_klam_aldo_busy, cr.Id);
+	if(valid(status) && status==1 && plane.Type==AI_PLANE_WALK && reason==REASON_SUCCESS)
+	{
+		status=2;
+		cr.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(cr.Stat[ST_DIALOG_ID],  STR_IN_PLACE));
+		AddTextListener (SAY_WHISP, KEYWORD, cr.GetMap().GetProtoId(), "listen_Messages");
+		AddMiscPlane(cr, 0, __FullSecond + REAL_MINUTE(2), "bulletin_board@plane_AldoFinished");
+		if(cr.GetTimeEvents(CTE_CLEAR_VARS, null, null, null)==0)
+			cr.AddTimeEvent("cte_ClearVars", REAL_MINUTE(10), CTE_CLEAR_VARS);
+		cr.SetEvent(CRITTER_EVENT_PLANE_END, "");
+		return PLANE_DISCARD;
+	}
+	return PLANE_RUN_GLOBAL;
+}
+
+void listen_Messages(Critter& player, string& text)
+{
+	Map@ map=player.GetMap();
+	if(valid(map))
+	{
+		GameVar@ aldoId=GetLocalVar(LMVAR_klam_aldo_id, map.Id);
+		if(valid(aldoId))
+		{
+			Critter@ cr=GetCritter(aldoId.GetValue());
+			if(valid(cr) && _RightKeyWord(text))
+			{
+				GameVar@ writerId=GetLocalVar(LVAR_klam_aldo_listen_id, cr.Id);
+				GameVar@ readerId=GetLocalVar(LVAR_klam_aldo_reader_id, cr.Id);
+				if(valid(writerId) && valid(readerId) && writerId==player.Id)
+				{
+					Messenger.RemoveSelfMessages(map.Id, player.Id);
+					Messenger.AddMessage(map.Id, writerId.GetValue(), readerId.GetValue(), 0, _MsgFromText(text));
+					ClearTempVariables(cr);
+					
+					cr.AddTimeEvent("cte_SayMsgSaved", __TimeMultiplier*2, CTE_CONFIRM_SAVE);
+				}
+			}
+		}
+	}
+}
+
+void plane_AldoFinished(Critter& cr)
+{
+	ClearTempVariables(cr);
+	cr.DropPlanes();
+}
+
+uint cte_SayMsgSaved(Critter& cr, int identifier, uint& rate)
+{
+	cr.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(cr.Stat[ST_DIALOG_ID],  STR_FINISHED));
+	uint16 hx=cr.HexX, hy=cr.HexY;
+	uint mapId=0;
+	uint8 dir=0;
+	cr.GetHomePos(mapId, hx, hy, dir);
+	AddWalkPlane(cr,0, hx, hy, dir, false, 0);
+	return 0;
+}
+
+uint cte_ClearVars(Critter& cr, int identifier, uint& rate)
+{
+	ClearTempVariables(cr);
+	return 0;
+}
+void ClearTempVariables(Critter& cr)
+{
+	GameVar@ status=GetLocalVar(LVAR_klam_aldo_busy, cr.Id);
+	if(valid(status) && status > 0)
+		status=0;
+	GameVar@ playerId=GetLocalVar(LVAR_klam_aldo_listen_id, cr.Id); 
+	if(valid(playerId))
+		playerId=0;
+	GameVar@ readerId=GetLocalVar(LVAR_klam_aldo_reader_id, cr.Id);
+		readerId=0;
+	EraseTextListener(SAY_NORM, KEYWORD, cr.GetMap().GetProtoId());
+	if(cr.GetTimeEvents(CTE_CLEAR_VARS, null, null, null) !=0)
+		cr.EraseTimeEvents(CTE_CLEAR_VARS);
+	cr.DropPlanes();
+}
+
+// debug
+void drop_planes(Critter& cr, int crId, int, int)
+{
+	Critter@ npc=GetCritter(crId);
+	if(valid(npc))
+	{
+		npc.DropPlanes();
+		return;
+	}
+	cr.Say(SAY_NETMSG, "cr invalid");
+}
+
+void add_public_msg(Critter& cr, int numMsg, int readerId, int writerId)
+{
+	if(!valid(cr.GetMap()))
+		return;
+	uint mapId=cr.GetMap().Id;
+	for(int i=0; i<numMsg; i++)
+	{
+		Messenger.AddMessage(mapId, (writerId==0 ? cr.Id : writerId), readerId, 0, "message #" + i);
+	}
+}
+
+void save(Critter& cr, int, int, int)
+{
+	Messenger.Save();
+}
+
+void load(Critter& cr, int, int, int)
+{
+	Messenger.Load();
+}
+
+void GetMsg(Critter& cr, int id, int, int)
+{
+	cr.Say(SAY_NETMSG, "Idx" + Messenger.Messages[id].Idx + " " + Messenger.Messages[id].Message);
+}

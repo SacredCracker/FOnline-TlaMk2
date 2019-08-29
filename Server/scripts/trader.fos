@@ -1,0 +1,279 @@
+// Author: cvet
+#include "_macros.fos"
+#include "trader_table.fos"
+
+import void SetDeterioration(Item& item, int deteriorationProcent) from "repair";
+import void InitRandomisationItem(Item& item, bool isCrafted, Critter& cr, string sufix) from "random_parameters_items";
+
+#define TABLE_TRADERS_COUNT                         (TradersCount)
+#define TABLE_ITEMS_COUNT                           (ItemsCount)
+#define TABLE_DIALOG_ID    #(traderIndex)           (TradersData[(traderIndex)])
+#define TABLE_REFRESH_HOUR #(traderIndex)           (TradersData[TABLE_TRADERS_COUNT+(traderIndex)])
+#define TABLE_SKILL        #(traderIndex)           (TradersData[TABLE_TRADERS_COUNT*2+(traderIndex)])
+#define TABLE_ITEM_PID     #(itemIndex)             (TradersData[TABLE_TRADERS_COUNT*3+(itemIndex)])
+#define TABLE_ITEM_COUNT   #(traderIndex,itemIndex) (TradersData[TABLE_TRADERS_COUNT*3+TABLE_ITEMS_COUNT+TABLE_ITEMS_COUNT*(traderIndex)+(itemIndex)])
+#define TABLE_ITEM_CHANCE  #(traderIndex,itemIndex) (ChanceData[TABLE_ITEMS_COUNT*(traderIndex)+(itemIndex)])
+#define TIMEOUT_MOTIVATOR                  	  (REAL_HOUR((Random(40,48)))
+#define TIMEOUT_MOTIVATOR_K9                  (REAL_HOUR((Random(34,40)))
+
+#define REFRESH_COUNT                         (6) // Количество появлений товара по умолчанию.
+#define REFRESH_COUNT_RANGE                   (2) // Разброс для количества появлений товара.
+#define REFRESH_TIME_RANGE                    (60) // Разброс времени каждого этапа респа торговца в процентах.
+
+// ~run debug id 0 0 0
+// ~run trader ctr 0 0 0
+void ctr(Critter& cr, int param0, int param1, int param2)
+{
+	Critter@ tr=GetCritter(param0);
+	if (!valid(tr)) return;
+	Item@[] items; 
+	tr.GetItems(SLOT_INV, items);
+	for(uint i=0, iMax=items.length(); i<iMax; i++)
+		DeleteItem(items[i]);
+}
+
+void _TraderInit(Critter& trader, bool firstTime)
+{
+	int traderIndex=GetTraderIndex(trader);
+	if(traderIndex >=0)
+	{
+		trader.StatBase[ST_TALK_DISTANCE]=5;
+		trader.StatBase[ST_REPLICATION_TIME]=30;
+		trader.SkillBase[SK_BARTER]  =TABLE_SKILL(traderIndex);
+		trader.ModeBase[MODE_NO_ITEM_GARBAGER]=1;
+		trader.ModeBase[MODE_NO_BARTER]  =0;
+		trader.ModeBase[MODE_NO_DROP]=1;
+		trader.ModeBase[MODE_NO_STEAL]   =1;
+		trader.ModeBase[MODE_NO_LOOT]=1;
+		trader.ModeBase[MODE_NO_ENEMY_STACK]=1;
+		traderItems(traderIndex);
+
+		if(trader.GetTimeEvents(CTE_TRADER, null, null, null)==0)
+		{
+			uint nextCall=UpdateItems(trader);
+			if(nextCall > 0) trader.AddTimeEvent("cte_UpdateItems", nextCall, CTE_TRADER);
+		}
+	}
+}
+
+// Возвращает масив с ПИДов предметов данного торговца и их количеств. Предметы с нулевыми количествами исключаются.
+void traderItems(int traderIndex)
+{
+	uint16[] traderPids;
+	uint16[] traderCounts;
+
+	uint index=0;
+	for(uint i=0, j=TABLE_ITEMS_COUNT; i<j; i++)
+	{
+		int pid=TABLE_ITEM_PID(i);
+		if(pid > 0)
+		{
+			int needCount=TABLE_ITEM_COUNT(traderIndex, i);
+			if(needCount > 0)
+			{
+				traderPids.resize(traderPids.length()+1);
+				traderCounts.resize(traderCounts.length()+1);
+				traderPids[index]=pid;
+				traderCounts[index]=needCount;
+				index++;				
+			}
+		}
+	}
+
+	for(uint i=0, iMax=traderPids.length(); i<iMax; i++)
+	{
+		uint j=Random(0, traderPids.length()-1);
+		uint16 bufer=traderPids[i];
+		traderPids[i]=traderPids[j];
+		traderPids[j]=bufer;
+		
+		bufer=traderCounts[i];
+		traderCounts[i]=traderCounts[j];
+		traderCounts[j]=bufer;
+	}
+	
+	uint16[] temp;
+	if(GetAnyData("trader_pids_"+traderIndex, temp))
+		EraseAnyData("trader_pids_"+traderIndex);
+	if(GetAnyData("trader_counts_"+traderIndex, temp))
+		EraseAnyData("trader_counts_"+traderIndex);	
+
+	SetAnyData("trader_pids_"+traderIndex, traderPids);		
+	SetAnyData("trader_counts_"+traderIndex, traderCounts);	
+}
+
+uint cte_UpdateItems(Critter& trader, int identifier, uint& rate)
+{
+	if(trader.IsDead()) return trader.Timeout[TO_REPLICATION] + REAL_MINUTE(1);
+	return UpdateItems(trader);
+}
+
+int GetTraderIndex(Critter& trader)
+{
+	int dialogId=trader.Stat[ST_DIALOG_ID];
+	if(dialogId > 0)
+	{
+		for(uint i=0, j=TABLE_TRADERS_COUNT; i<j; i++)
+		{
+			if(TABLE_DIALOG_ID(i)==dialogId) return i;
+		}
+	}
+	return -1;
+}
+
+bool itemIsWithVariety(uint16 pid, int traderIndex)
+{
+	for(uint i=0, j=TABLE_ITEMS_COUNT; i<j; i++)
+	{
+		int itemPid=TABLE_ITEM_PID(i);
+		int needCount=TABLE_ITEM_COUNT(traderIndex, i);
+		if(needCount>0 && itemPid==pid) return true;
+	}	
+	return false;
+}
+
+int getRealIndex(uint16 pid)
+{
+	for(uint i=0; i<TABLE_ITEMS_COUNT; i++)
+	{
+		int itemPid=TABLE_ITEM_PID(i);
+		if(pid==itemPid) return i;
+	}
+	return -1;
+}
+
+
+uint UpdateItems(Critter& trader)
+{
+	int traderIndex=GetTraderIndex(trader);
+	if(traderIndex<0) return 0;
+	
+	int rate=trader.StatBase[ST_TRADER_RATE];
+	
+	uint16[] traderPids;
+	uint16[] traderCounts;
+	GetAnyData("trader_pids_"+traderIndex, traderPids);
+	GetAnyData("trader_counts_"+traderIndex, traderCounts);
+	
+	uint16 allCount=traderPids.length();
+	int16 refreshCount=REFRESH_COUNT;
+	if(refreshCount<0) refreshCount=1;
+	uint16 count=allCount / refreshCount; //Количество товара на респ
+	uint16 rest=rate+1==refreshCount?(allCount % refreshCount):0;
+
+	if(refreshCount==rate)
+	{
+		trader.StatBase[ST_TRADER_RATE]=0;
+		rate=0;
+		traderItems(traderIndex);
+	}
+
+	// Delete
+	Item@[] items;
+	trader.GetItems(SLOT_INV, items);
+	for(uint i=0, iMax=items.length(); i<iMax; i++)
+		if (!itemIsWithVariety(items[i].GetProtoId(), traderIndex))
+		{
+			DeleteItem(items[i]);
+		}
+
+	for(int i=rate>0?((rate*count)):0, iMax=(((rate+1)*count)+rest<allCount)?(((rate+1)*count)+rest):allCount; i<iMax; i++)
+	{
+		int pid=traderPids[i];
+			
+		if(pid > 0)
+		{
+			uint needCount=traderCounts[i];
+			if(needCount > 0)
+			{
+				
+				// Обработка особо редких крафтерских предметов. Быдлокод привязанный к пидам и дублируется в farm_lacation.fos
+				// В дальнейшем необходимо универсализировать данную хуйню и отвязать от проверки на пиды.
+				// bydloCode on				
+				if(pid==PID_MOTIVATOR)
+				{
+					GameVar@ timeout_motivator=GetGlobalVar(GVAR_timeout_motivator);
+					if(valid(timeout_motivator))
+						if(uint(timeout_motivator.GetValue())<__FullSecond)
+						{
+							Item@ item=trader.AddItem(pid, needCount);
+							timeout_motivator=__FullSecond+REAL_HOUR(Random(22,32));
+						}
+				}
+				else if(pid==PID_K9_MOTIVATOR)
+				{
+					GameVar@ timeout_motivator_k9=GetGlobalVar(GVAR_timeout_motivator_k9);
+					if(valid(timeout_motivator_k9))
+						if(uint(timeout_motivator_k9.GetValue())<__FullSecond)
+						{
+							Item@ item=trader.AddItem(pid, needCount);
+							timeout_motivator_k9=__FullSecond+REAL_HOUR(Random(24,30));
+						}
+				}
+				else if(pid==PID_OIL_CAN_TRUE)
+				{
+					GameVar@ timeout_oil_can=GetGlobalVar(GVAR_timeout_oil_can);
+					if(valid(timeout_oil_can))
+						if(uint(timeout_oil_can.GetValue())<__FullSecond)
+						{
+							Item@ item=trader.AddItem(pid, needCount);
+							timeout_oil_can=__FullSecond+REAL_HOUR(Random(8,10));
+						}
+				}
+				// bydloCode off
+				else
+				{
+					uint oldCount=0;
+					for(uint m=0, mMax=items.length(); m<mMax; m++)
+						if(pid==items[m].GetProtoId())
+						{
+							if(items[m].IsStackable()) oldCount=items[m].GetCount();
+							else oldCount++;
+						}
+
+					ProtoItem@ pItem=GetProtoItem(pid);
+					if(oldCount<needCount)
+					{
+						Item@ item;
+						if (!pItem.Stackable || needCount<21)
+						{
+							for(uint c=0; c<needCount-oldCount; c++)
+									if(TABLE_ITEM_CHANCE(traderIndex, getRealIndex(pid))>Random(0,99))
+									{										
+										@item=trader.AddItem(pid, 1);
+										InitRandomisationItem(item, false, trader, "");
+										if(valid(item) && item.IsDeteriorable()) SetDeterioration(item, Random(5, 25)); // 5%..25% procent of deteoration
+									}
+						}
+						else if(TABLE_ITEM_CHANCE(traderIndex, getRealIndex(pid))>Random(0,99))
+								@item=trader.AddItem(pid, needCount-oldCount);
+					}
+					else
+					{
+						uint delCount=uint(oldCount-needCount);
+
+						
+						if(delCount>0)
+						{
+							if (!pItem.Stackable)
+							{
+								trader.DeleteItem(pid, delCount);
+							}
+							else
+							{
+								Item@ delItem=trader.GetItem(pid, -1);
+								if(valid(delItem)) delItem.SetCount(needCount>0?needCount:1);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	// Calculate next update time
+	int hour=TABLE_REFRESH_HOUR(traderIndex);	
+	if(hour<=0) hour=0;
+	uint respTime=((hour * 60 * 60) * Random(100-REFRESH_TIME_RANGE, REFRESH_TIME_RANGE+100) / 100)/refreshCount;
+	trader.StatBase[ST_TRADER_RATE]=rate+1;
+	return  respTime; // +- REFRESH_TIME_RANGE%
+}

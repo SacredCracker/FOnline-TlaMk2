@@ -1,0 +1,217 @@
+// Author: Cracker
+// Мелкие серверные тестовые скрипты.
+
+#include "_macros.fos"
+#include "_colors.fos"
+
+import void critter_attacked(Critter& cr, Critter& attacker) from "main";
+import void ExplodeEx(Map& map, uint16 hexX, uint16 hexY, uint16 effectPid, uint effectRadius, uint damage, uint damageType, uint damageRadius, uint ownerId) from "explode";
+import void QuakeScreen(Map& map) from "effects";
+import void InjureCritter(Critter& cr, uint dmg, uint dmgType, uint8 dir, uint attackerId) from "combat";
+
+/////////////////////////////////////////////////////////////////////////////////////
+//Фаерболл///////////////////////////////////////////////////////////////////////////
+void unsafe_CrackerFireball(Critter& cr, int hexX, int hexY, int p2, string@ p3, int[]@ p4)
+{
+  ExplodeEx(cr.GetMap(),hexX,hexY,PID_EXPLODE_ROCKET,3,3000,DAMAGE_EXPLODE,2,0);
+  QuakeScreen(cr.GetMap());
+} 
+
+/////////////////////////////////////////////////////////////////////////////////////
+//Самоубийство///////////////////////////////////////////////////////////////////////
+void unsafe_CrackerDead(Critter& cr, int p0, int p1, int p2, string@ p3, int[]@ p4)
+{
+ if(cr.StatBase[ST_CURRENT_HP]<=0) cr.ToDead(ANIM2_DEAD_EXPLODE,null);
+ else cr.Say(TEXTMSG_TEXT, "Команда доступна только при отрицательном значении НР");
+}
+/////////////////////////////////////////////////////////////////////////////////////
+// Телепортатор//////////////////////////////////////////////////////////////////////
+void unsafe_CrackerTeleport(Critter& cr, int hexX, int hexY, int p2, string@ p3, int[]@ p4)
+{
+  Map @ map=cr.GetMap();
+  cr.TransitToMap(map.Id, hexX, hexY, Random(0,5));
+} 
+/////////////////////////////////////////////////////////////////////////////////////
+//Убийство кликом мышки//////////////////////////////////////////////////////////////
+void unsafe_CrackerDeadClick(Critter& cr, int hexX, int hexY, int p2, string@ p3, int[]@ p4)
+{
+  if(cr.GetAccess() !=3) return;
+  Map @ map=cr.GetMap();
+  Critter@[] critters;
+  if(map.GetCrittersHex(hexX,hexY,1,FIND_LIFE_AND_KO,critters)==0) return;
+  for(uint i=0, iMax=critters.length(); i<iMax; i++)
+	{
+		Critter@ crit=critters[i];
+		crit.ToDead(ANIM2_DEAD_EXPLODE,null);
+		Log(cr.Name+" убивает "+crit.Name+" Командой deadclick.");
+	}
+} 
+/////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////
+void unsafe_Cracker2(Critter& cr, int hexX, int hexY, int p2, string@ p3, int[]@ p4)
+{
+  Map @ map=cr.GetMap();
+  map.SetText (hexX, hexY, 0, "Лол");
+     
+}
+
+void unsafe_Cracker1(Critter& cr, int hexX, int hexY, int p2, string@ p3, int[]@ p4)
+{
+  Map @ map=cr.GetMap();
+  map.SetText (hexX, hexY, COLOR_GREEN_RED, "Привет от Cracker");
+  map.AddItem(hexX, hexY,378,1);
+  map.RunEffect(PID_EXPLODE_PLASMA,hexX, hexY,1);
+}
+
+// Привет от Ктулхи не доделан. Нужен итем вида дерьма брамина.
+
+import bool AddWalkPlane(Critter& npc, uint priority, uint16 hexX, uint16 hexY, uint8 dir, bool run, uint cut) from "npc_planes";
+void unsafe_Cracker3(Critter& cr, int hexX, int hexY, int p2, string@ p3, int[]@ p4) 
+{
+  Map @ map=cr.GetMap();
+  Critter@[] critters;
+  if(map.GetCrittersHex(hexX,hexY,1,FIND_LIFE_AND_KO,critters)==0) return;
+  for(uint i=0, iMax=critters.length(); i<iMax; i++)
+	{
+		Critter@ crit=critters[i];
+	    Critter@ bram=map.AddNpc(10,crit.HexX+(Random(-5,5)),crit.HexY+(Random(-5,5)),(Random(0,5)),null,null,null);
+		AddWalkPlane(bram, 0, crit.HexX, crit.HexY, (Random(0,5)), true, 0);
+		bram.SetDir(GetDirection(bram.HexX, bram.HexY, crit.HexX, crit.HexY));	
+		uint16 len=map.GetPathLength(bram, crit.HexX, crit.HexY, cr.GetMultihex());
+		for(uint i=len,j=2;i>j;i++)
+		{
+		len=map.GetPathLength(bram, crit.HexX, crit.HexY, cr.GetMultihex());
+		}
+		if(len<=2)
+		{
+		crit.ToDead(ANIM2_DEAD_EXPLODE,null);
+		map.AddItem(crit.HexX, crit.HexY,873,1);
+		map.SetText (hexX, hexY, COLOR_LGREEN, "Привет от Ктулхи");
+		}
+		else return;
+	}
+}
+
+// Замеры айди локации и мапы:
+
+void mapId(Critter& cr,int,int,int)
+{
+	Log(""+cr.GetMap().Id);
+	return;
+}
+
+void locId(Critter& cr, int  , int  , int)
+{
+	Log(""+cr.GetMap().GetLocation().Id);
+	return;
+}
+/// Для тестов аи кламата \\\
+
+void test_klam_ai_1(Critter& cr, int p0, int p1, int)
+{
+	cr.TransitToMap(p0,p1);
+}
+
+void test_klam_ai_2(Critter& cr, int p0,int,int)
+{
+	cr.TransitToMap(GetCritter(p0).GetMap().Id,GetCritter(p0).HexX,GetCritter(p0).HexY,Random(0,5));
+}
+
+//////////////////////////////// 
+
+void test_class_file(string msg)
+{
+	file f;
+	if(f.open("city/klamath.city", "a")==0)
+	{
+		f.writeString("\n"+msg); 
+	}
+}
+
+class TestClass
+{
+	Critter@ heros;
+	uint16 Hx;
+	uint16 Hy;
+	
+	TestClass()
+	{
+	@ heros=null;
+	Hx=0;
+	Hy=0;
+	}
+}
+
+void test_class_creat(Critter& cr, int,int,int)
+{
+	TestClass tost;
+	@tost.heros=cr;
+	tost.Hx=cr.HexX;
+	tost.Hy=cr.HexY;
+}
+
+// ~run test_cracker test_class_creat 0 0 0
+
+void test_class_creat2(Critter& cr, int,int,int)
+{
+	TestClass tost;
+	@tost.heros=cr;
+	string msg=("tost.Hx="+tost.Hx+"cr.HexX="+cr.HexX);
+	
+	file f;
+	if(f.open("test/test_class.test", "a")==0)
+	{
+		f.writeString("\n"+msg); 
+	} 
+}
+
+void r_Dialog(Critter& cr, Critter&)
+{
+
+}
+
+void TestLoc(Critter& cr, int pidLoc, int mapIndex, int entnum)
+{
+	uint locId=CreateLocation(pidLoc, cr.WorldX, cr.WorldY, null);
+	Location@ loc=GetLocation(locId);
+	Map@ map=loc.GetMapByIndex(mapIndex);
+	if(valid(map)) cr.TransitToMap(map.Id, entnum);
+}
+
+void _Init(Critter& cr, bool)
+{
+	cr.SetEvent(CRITTER_EVENT_TALK,"_FuncName");
+}
+
+bool _FuncName(Critter& cr, Critter& player, bool attach, uint talkCount)
+{
+	Log(attach?"Вход":"Выход");
+	return true;
+}
+
+void CountTile(Critter& cr, int,int,int)
+{
+	uint16 hx=cr.HexX; uint16 hy=cr.HexY;
+	cr.GetMap().CountTile(hx,hy);
+	cr.Say(SAY_NETMSG, "Крыш на карте: "+hx+"\n Количество тайлов на карте "+hy);
+}
+
+void Roof(Critter& cr, int, int, int)
+{
+	bool IsRoof=false; 
+	if (!IsRoof)
+	{
+		for(uint x=0; x<2;x++)
+		{
+			for(uint y=0; y<2;y++)
+			{
+				IsRoof=cr.GetMap().IsRoof(cr.HexX+x,cr.HexY+y);
+				if(IsRoof) break;
+				IsRoof=cr.GetMap().IsRoof(cr.HexX-x,cr.HexY-y);
+				if(IsRoof) break;
+			}
+			if(IsRoof) break;
+		}
+	}
+	cr.Say(SAY_NETMSG, IsRoof?"Под крышей":"Нету крыши");
+}

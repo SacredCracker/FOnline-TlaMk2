@@ -1,0 +1,304 @@
+// Author: cvet
+#ifdef __CLIENT // Macro defined in client_main.fos
+#define Critter CritterCl
+#endif
+
+#include "_macros.fos"
+
+#ifndef __CLIENT
+import int NextLevelNeedExp(Critter& cr)  from "parameters";
+#endif
+
+bool PerkCheck(Critter& cr, uint perk) // Export
+{
+#define PROCESS_PERK0 #(perk,range,level) case perk: return(cr.ParamBase[perk]<range && cr.ParamBase[ST_LEVEL]>=level)
+#define PROCESS_PERK1 #(perk,range,level,demand0) case perk: return(cr.ParamBase[perk]<range && cr.ParamBase[ST_LEVEL]>=level && demand0)
+#define PROCESS_PERK2 #(perk,range,level,demand0,demand1) case perk: return(cr.ParamBase[perk]<range && cr.ParamBase[ST_LEVEL]>=level && demand0 && demand1)
+#define PROCESS_PERK3 #(perk,range,level,demand0,demand1,demand2) case perk: return(cr.ParamBase[perk]<range && cr.ParamBase[ST_LEVEL]>=level && demand0 && demand1 && demand2)
+#define PROCESS_PERK4 #(perk,range,level,demand0,demand1,demand2,demand3) case perk: return(cr.ParamBase[perk]<range && cr.ParamBase[ST_LEVEL]>=level && demand0 && demand1 && demand2 && demand3)
+#define PROCESS_PERK5 #(perk,range,level,demand0,demand1,demand2,demand3,demand4) case perk: return(cr.ParamBase[perk]<range && cr.ParamBase[ST_LEVEL]>=level && demand0 && demand1 && demand2 && demand3 && demand4)
+	switch(perk)
+	{
+	// Perks
+	PROCESS_PERK3(PE_ARMOR_BUSTER,        1, 18, cr.ParamBase[ST_AGILITY]>=8,      cr.ParamBase[ST_PERCEPTION]>=5,    cr.ParamBase[SK_THROWING]>=130);
+	PROCESS_PERK1(PE_AWARENESS,           1,  3, cr.ParamBase[ST_PERCEPTION]>=5   );
+	PROCESS_PERK1(PE_BONUS_HTH_ATTACKS,   1, 15, cr.ParamBase[ST_AGILITY]>=6      );
+	PROCESS_PERK2(PE_BONUS_HTH_DAMAGE,    3,  3, cr.ParamBase[ST_AGILITY]>=6,      cr.ParamBase[ST_STRENGTH]>=6     );
+	//PROCESS_PERK1(PE_BONUS_MOVE,        2,  6, cr.ParamBase[ST_AGILITY]>=5      );
+	PROCESS_PERK2(PE_BONUS_RANGED_DAMAGE, 2,  6, cr.ParamBase[ST_AGILITY]>=6,      cr.ParamBase[ST_LUCK]>=6         );
+	PROCESS_PERK3(PE_BONUS_RATE_OF_FIRE,  1, 15, cr.ParamBase[ST_AGILITY]>=7,      cr.ParamBase[ST_INTELLECT]>=6,    cr.ParamBase[ST_PERCEPTION]>=6);
+	PROCESS_PERK1(PE_EARLIER_SEQUENCE,    3,  3, cr.ParamBase[ST_PERCEPTION]>=6   );
+	PROCESS_PERK1(PE_FASTER_HEALING,      2,  3, cr.ParamBase[ST_ENDURANCE]>=5    );
+	PROCESS_PERK1(PE_MORE_CRITICALS,      3,  6, cr.ParamBase[ST_LUCK]>=6         );
+	PROCESS_PERK2(PE_RAD_RESISTANCE,      2,  6, cr.ParamBase[ST_ENDURANCE]>=6,    cr.ParamBase[ST_INTELLECT]>=4    );
+	PROCESS_PERK2(PE_TOUGHNESS,           3,  3, cr.ParamBase[ST_ENDURANCE]>=6,    cr.ParamBase[ST_LUCK]>=6         );
+	PROCESS_PERK2(PE_STRONG_BACK,         3,  3, cr.ParamBase[ST_STRENGTH]>=6,     cr.ParamBase[ST_ENDURANCE]>=6    );
+	PROCESS_PERK2(PE_SHARPSHOOTER,        1,  9, cr.ParamBase[ST_PERCEPTION]>=7,   cr.ParamBase[ST_INTELLECT]>=6    );
+	PROCESS_PERK2(PE_SILENT_RUNNING,      1,  6, cr.ParamBase[ST_AGILITY]>=6,      cr.ParamBase[SK_SNEAK]>=50       );
+	PROCESS_PERK3(PE_SURVIVALIST,         3,  3, cr.ParamBase[ST_ENDURANCE]>=6,    cr.ParamBase[ST_INTELLECT]>=6,    cr.ParamBase[SK_OUTDOORSMAN]>=40);
+  //PROCESS_PERK2(PE_MASTER_TRADER,       1,  9, cr.ParamBase[ST_CHARISMA]>=7,     cr.ParamBase[SK_BARTER]>=60      );
+	PROCESS_PERK1(PE_EDUCATED,            3,  6, cr.ParamBase[ST_INTELLECT]>=6    );
+	PROCESS_PERK4(PE_HEALER,              2,  3, cr.ParamBase[ST_PERCEPTION]>=7,   cr.ParamBase[ST_AGILITY]>=6,      cr.ParamBase[ST_INTELLECT]>=5,        cr.ParamBase[SK_FIRST_AID]>=40);
+	PROCESS_PERK3(PE_BETTER_CRITICALS,    1,  9, cr.ParamBase[ST_PERCEPTION]>=6,   cr.ParamBase[ST_LUCK]>=6,         cr.ParamBase[ST_AGILITY]>=4);
+	PROCESS_PERK3(PE_SLAYER,              1, 18, cr.ParamBase[ST_AGILITY]>=8,      cr.ParamBase[ST_STRENGTH]>=7,     cr.ParamBase[SK_UNARMED]>=80);
+	PROCESS_PERK3(PE_SNIPER,              1, 18, cr.ParamBase[ST_AGILITY]>=8,      cr.ParamBase[ST_PERCEPTION]>=8,   cr.ParamBase[SK_SMALL_GUNS]>=80);
+	PROCESS_PERK3(PE_SILENT_DEATH,        1, 15, cr.ParamBase[ST_AGILITY]>=8,     cr.ParamBase[SK_SNEAK]>=110,       cr.ParamBase[SK_UNARMED]>=80);
+	PROCESS_PERK1(PE_ACTION_BOY,          2, 12, cr.ParamBase[ST_AGILITY]>=5      );
+	PROCESS_PERK1(PE_LIFEGIVER,           2, 12, cr.ParamBase[ST_ENDURANCE]>=4    );
+	PROCESS_PERK1(PE_DODGER,              1,  9, cr.ParamBase[ST_AGILITY]>=6      );
+	//PROCESS_PERK1(PE_SNAKEATER,         2,  6, cr.ParamBase[ST_ENDURANCE]>=3    );
+	PROCESS_PERK2(PE_MR_FIXIT,            1, 12, cr.ParamBase[SK_REPAIR]>=40,      cr.ParamBase[SK_SCIENCE]>=40     );
+	PROCESS_PERK2(PE_MEDIC,               1, 12, cr.ParamBase[SK_FIRST_AID]>=40,   cr.ParamBase[SK_DOCTOR]>=40      );
+	PROCESS_PERK2(PE_MASTER_THIEF,        1, 12, cr.ParamBase[SK_STEAL]>=50,       cr.ParamBase[SK_LOCKPICK]>=50    );
+	PROCESS_PERK1(PE_SPEAKER,             1,  9, cr.ParamBase[SK_SPEECH]>=50      );
+	PROCESS_PERK0(PE_HEAVE_HO,            3,  6 );
+	PROCESS_PERK2(PE_PICKPOCKET,          1, 15, cr.ParamBase[ST_AGILITY]>=8,      cr.ParamBase[SK_STEAL]>=80);
+	PROCESS_PERK1(PE_GHOST,               1,  6, cr.ParamBase[SK_SNEAK]>=60       );
+	PROCESS_PERK0(PE_EXPLORER,            1,  9 );
+	PROCESS_PERK2(PE_PATHFINDER,          1, 15, cr.ParamBase[ST_ENDURANCE]>=6,    cr.ParamBase[SK_OUTDOORSMAN]>=40 );
+	PROCESS_PERK1(PE_SCOUT,               1,  3, cr.ParamBase[ST_PERCEPTION]>=7   );
+	PROCESS_PERK1(PE_RANGER,              1,  6, cr.ParamBase[ST_PERCEPTION]>=6   );
+	PROCESS_PERK1(PE_QUICK_POCKETS,       1,  3, cr.ParamBase[ST_AGILITY]>=5      );
+	PROCESS_PERK2(PE_SMOOTH_TALKER,       3,  3, cr.ParamBase[ST_INTELLECT]>=4,    cr.ParamBase[ST_INTELLECT]<10    );
+	PROCESS_PERK1(PE_SWIFT_LEARNER,       3,  3, cr.ParamBase[ST_INTELLECT]>=4    );
+	PROCESS_PERK0(PE_ADRENALINE_RUSH,     1,  3 );
+	PROCESS_PERK1(PE_CAUTIOUS_NATURE,     1,  3, cr.ParamBase[ST_PERCEPTION]>=6   );
+	PROCESS_PERK1(PE_BOOKWORM,            1,  3, cr.ParamBase[ST_INTELLECT]>=6    );
+	PROCESS_PERK2(PE_DEMOLITION_EXPERT,   1,  9, cr.ParamBase[ST_AGILITY]>=4,      cr.ParamBase[SK_TRAPS]>=75       );
+	PROCESS_PERK1(PE_GAMBLER,             1,  6, cr.ParamBase[SK_GAMBLING]>=50    );
+	PROCESS_PERK1(PE_GAIN_STRENGTH,       1, 12, cr.ParamBase[ST_STRENGTH]<15     );
+	PROCESS_PERK1(PE_GAIN_PERCEPTION,     1, 12, cr.ParamBase[ST_PERCEPTION]<15   );
+	PROCESS_PERK1(PE_GAIN_ENDURANCE,      1, 12, cr.ParamBase[ST_ENDURANCE]<15    );
+	PROCESS_PERK1(PE_GAIN_CHARISMA,       1, 12, cr.ParamBase[ST_CHARISMA]<15     );
+	PROCESS_PERK1(PE_GAIN_INTELLIGENCE,   1, 12, cr.ParamBase[ST_INTELLECT]<15    );
+	PROCESS_PERK1(PE_GAIN_AGILITY,        1, 12, cr.ParamBase[ST_AGILITY]<15      );
+	PROCESS_PERK1(PE_GAIN_LUCK,           1, 12, cr.ParamBase[ST_LUCK]<15         );
+	PROCESS_PERK2(PE_HARMLESS,            1,  6, cr.ParamBase[SK_STEAL]>=50,       cr.ParamBase[ST_KARMA]>=50       );
+	PROCESS_PERK0(PE_HERE_AND_NOW,        1,  9 );
+	//PROCESS_PERK1(PE_HTH_EVADE,           1, 12, cr.ParamBase[SK_UNARMED]>=75     );
+	PROCESS_PERK2(PE_KAMA_SUTRA_MASTER,   1,  3, cr.ParamBase[ST_ENDURANCE]>=5,    cr.ParamBase[ST_AGILITY]>=5      );
+	//PROCESS_PERK1(PE_KARMA_BEACON,        1,  9, cr.ParamBase[ST_CHARISMA]>=6     );
+	PROCESS_PERK2(PE_LIGHT_STEP,          1,  9, cr.ParamBase[ST_AGILITY]>=5,      cr.ParamBase[ST_LUCK]>=5         );
+	PROCESS_PERK1(PE_LIVING_ANATOMY,      1, 12, cr.ParamBase[SK_DOCTOR]>=60      );
+	PROCESS_PERK1(PE_MAGNETIC_PERSONALITY,1,  6, cr.ParamBase[ST_CHARISMA]<10     );
+	PROCESS_PERK2(PE_NEGOTIATOR,          1,  6, cr.ParamBase[SK_SPEECH]>=50,      cr.ParamBase[SK_BARTER]>=50      );
+	PROCESS_PERK0(PE_PACK_RAT,            1,  6 );
+	PROCESS_PERK1(PE_PYROMANIAC,          1,  9, cr.ParamBase[SK_BIG_GUNS]>=75    );
+	PROCESS_PERK1(PE_QUICK_RECOVERY,      1,  3, cr.ParamBase[ST_AGILITY]>=5      );
+	PROCESS_PERK1(PE_SALESMAN,            1,  6, cr.ParamBase[SK_BARTER]>=50      );
+	PROCESS_PERK1(PE_STONEWALL,           1,  6, cr.ParamBase[ST_STRENGTH]>=6     );
+	PROCESS_PERK0(PE_THIEF,               1,  3 );
+	PROCESS_PERK1(PE_WEAPON_HANDLING,     1, 12, cr.ParamBase[ST_AGILITY]>=5      );
+	PROCESS_PERK2(PE_REANIMATOR,    	  1, 21, cr.ParamBase[ST_AGILITY]>=5,      cr.ParamBase[SK_DOCTOR]>=120);
+	PROCESS_PERK1(PE_MYSTERIOUS_STRANGER, 1, 9, cr.ParamBase[ST_LUCK]>=4          );
+	PROCESS_PERK1(PE_FORTUNE_FINDER,      1, 6, cr.ParamBase[ST_LUCK]>=8          );
+	PROCESS_PERK1(PE_NIGHT_VISION,        1, 6, cr.ParamBase[ST_PERCEPTION]>=6    );
+	default: break;
+	}
+	return false;
+}
+
+#ifndef __CLIENT
+void PerkUp(Critter& cr, uint perk) // Export
+{
+#define PERKUP_STAT #(param,val) cr.StatBase[param]val
+#define PERKUP_SKILL #(param,val) cr.SkillBase[param]val; if(cr.SkillBase[param]>MAX_SKILL_VAL) cr.SkillBase[param]=MAX_SKILL_VAL
+	switch(perk)
+	{
+	// Perks
+	case PE_ARMOR_BUSTER: perkSt(cr, PE_ARMOR_BUSTER);
+	case PE_AWARENESS: perkSt(cr, PE_AWARENESS);/*Examining a target shows hitpoints, weapon and ammunition count*/ break;
+	case PE_BONUS_HTH_ATTACKS: perkSt(cr, PE_BONUS_HTH_ATTACKS);/*-1 Ap on HtH attacks*/ break;
+	case PE_BONUS_HTH_DAMAGE: PERKUP_STAT(ST_MELEE_DAMAGE,+=3); PERKUP_STAT(ST_THROWING_DAMAGE,+=3); perkSt(cr, PE_BONUS_HTH_DAMAGE); break;
+	//case PE_BONUS_MOVE: PERKUP_STAT(ST_MAX_MOVE_AP,+=2); perkSt(cr, PE_BONUS_MOVE); break;
+	case PE_BONUS_RANGED_DAMAGE: perkSt(cr, PE_BONUS_RANGED_DAMAGE);/*In calc damage +2 per range*/ break;
+	case PE_BONUS_RATE_OF_FIRE: perkSt(cr, PE_BONUS_RATE_OF_FIRE);/*-1 Ap on ranged attacks*/ break;
+	case PE_EARLIER_SEQUENCE: PERKUP_STAT(ST_SEQUENCE,+=2); perkSt(cr, PE_EARLIER_SEQUENCE); break;
+	case PE_FASTER_HEALING: PERKUP_STAT(ST_HEALING_RATE,+=6); perkSt(cr, PE_FASTER_HEALING); break;
+	case PE_MORE_CRITICALS: PERKUP_STAT(ST_CRITICAL_CHANCE,+=5); perkSt(cr, PE_MORE_CRITICALS); break;
+	case PE_RAD_RESISTANCE: PERKUP_STAT(ST_RADIATION_RESISTANCE,+=20); perkSt(cr, PE_RAD_RESISTANCE); break;
+	case PE_TOUGHNESS: PERKUP_STAT(ST_NORMAL_RESIST,+=4); PERKUP_STAT(ST_LASER_RESIST,+=4); PERKUP_STAT(ST_FIRE_RESIST,+=4); PERKUP_STAT(ST_PLASMA_RESIST,+=4); PERKUP_STAT(ST_ELECTRO_RESIST,+=4);PERKUP_STAT(ST_RADIATION_RESISTANCE,+=4); PERKUP_STAT(ST_EXPLODE_RESIST,+=4); perkSt(cr, PE_TOUGHNESS); break;
+	case PE_STRONG_BACK: PERKUP_STAT(ST_CARRY_WEIGHT,+=LBS_TO_GRAMM(50)); perkSt(cr, PE_STRONG_BACK); break;
+	case PE_SHARPSHOOTER: perkSt(cr, PE_SHARPSHOOTER); /*+2 perception on ranged attack*/ break;
+	case PE_SILENT_RUNNING: /*No steal off while running*/ perkSt(cr, PE_SILENT_RUNNING); break;
+	case PE_SURVIVALIST: PERKUP_SKILL(SK_OUTDOORSMAN,+=25); perkSt(cr, PE_SURVIVALIST); break;
+	//case PE_MASTER_TRADER: /*Barter k is zero on buy*/ perkSt(cr,); break;
+	case PE_EDUCATED: PERKUP_STAT(ST_UNSPENT_SKILL_POINTS,+=2); /*+2 skill points per range*/ perkSt(cr, PE_EDUCATED); break;
+	case PE_HEALER: /*Additional Hp bonus in scripts*/ perkSt(cr, PE_HEALER); break;
+	case PE_BETTER_CRITICALS: PERKUP_STAT(ST_MAX_CRITICAL,+=10); perkSt(cr, PE_BETTER_CRITICALS); break;
+	case PE_SLAYER: /*All unarmed and melee attacks is critical*/ perkSt(cr, PE_SLAYER); break;
+	case PE_SNIPER: /*All gun attacks is critical*/ perkSt(cr, PE_SNIPER); break;
+	case PE_SILENT_DEATH: /*Attack from sneak from back x2 damage*/ perkSt(cr, PE_SILENT_DEATH); break;
+	case PE_ACTION_BOY: PERKUP_STAT(ST_ACTION_POINTS,+=1); perkSt(cr, PE_ACTION_BOY); break;
+	case PE_LIFEGIVER: PERKUP_STAT(ST_MAX_LIFE,+=48); perkSt(cr, PE_LIFEGIVER); break;
+	case PE_DODGER: PERKUP_STAT(ST_ARMOR_CLASS,+=15); perkSt(cr, PE_DODGER); break;
+	//case PE_SNAKEATER: PERKUP_STAT(ST_POISON_RESISTANCE,+=25); perkSt(cr,); break;
+	case PE_MR_FIXIT: PERKUP_SKILL(SK_REPAIR,+=20); PERKUP_SKILL(SK_SCIENCE,+=20); perkSt(cr, PE_MR_FIXIT); break;
+	case PE_MEDIC: PERKUP_SKILL(SK_FIRST_AID,+=20); PERKUP_SKILL(SK_DOCTOR,+=20); perkSt(cr, PE_MEDIC); break;
+	case PE_MASTER_THIEF: PERKUP_SKILL(SK_STEAL,+=20); PERKUP_SKILL(SK_LOCKPICK,+=20); perkSt(cr, PE_MASTER_THIEF); break;
+	case PE_SPEAKER: PERKUP_SKILL(SK_SPEECH,+=40); perkSt(cr, PE_SPEAKER); break;
+	case PE_HEAVE_HO: /*+2 strength for throwing weapon*/ perkSt(cr, PE_HEAVE_HO); break;
+	case PE_PICKPOCKET: /*Ignore size and facing while stealing*/ perkSt(cr, PE_PICKPOCKET); break;
+	case PE_GHOST: /*+20% sneak on night*/ perkSt(cr, PE_GHOST); break;
+	case PE_EXPLORER: /*Higher chance of finding special places and people in random encounters*/ perkSt(cr, PE_EXPLORER); break;
+	case PE_PATHFINDER: /*+25% speed on global per range*/ perkSt(cr, PE_PATHFINDER); break;
+	case PE_SCOUT: /*This will increase the amount of the map you can see while exploring and make finding the special random encounters a little easier.*/ perkSt(cr, PE_SCOUT); break;
+	case PE_RANGER: PERKUP_SKILL(SK_OUTDOORSMAN,+=15); /*Fewer hostile random encounters*/ perkSt(cr, PE_RANGER); break;
+	case PE_QUICK_POCKETS: /*Inventory items move ap cost div 2*/ perkSt(cr, PE_QUICK_POCKETS); break;
+	case PE_SMOOTH_TALKER: /*+2 intellect on dialogs checks*/ perkSt(cr, PE_SMOOTH_TALKER); break;
+	case PE_SWIFT_LEARNER: /*+5% add experience per range*/ perkSt(cr, PE_SWIFT_LEARNER); break;
+	case PE_ADRENALINE_RUSH: /*+1 strength on<50% hp in battle*/ perkSt(cr, PE_ADRENALINE_RUSH); break;
+	case PE_CAUTIOUS_NATURE: /*+3 perception on encounter generate*/ perkSt(cr, PE_CAUTIOUS_NATURE); break;
+	case PE_BOOKWORM: /*50% more points on books reading*/ perkSt(cr, PE_BOOKWORM); break;
+	case PE_DEMOLITION_EXPERT: /*Used in explosion script*/ perkSt(cr, PE_DEMOLITION_EXPERT); break;
+	case PE_GAMBLER: PERKUP_SKILL(SK_GAMBLING,+=40); perkSt(cr, PE_GAMBLER); break;
+	case PE_GAIN_STRENGTH: PERKUP_STAT(ST_STRENGTH,++); perkSt(cr, PE_GAIN_STRENGTH); break;
+	case PE_GAIN_PERCEPTION: PERKUP_STAT(ST_PERCEPTION,++); perkSt(cr, PE_GAIN_PERCEPTION); break;
+	case PE_GAIN_ENDURANCE: PERKUP_STAT(ST_ENDURANCE,++); perkSt(cr, PE_GAIN_ENDURANCE); break;
+	case PE_GAIN_CHARISMA: PERKUP_STAT(ST_CHARISMA,++); perkSt(cr, PE_GAIN_CHARISMA); break;
+	case PE_GAIN_INTELLIGENCE: PERKUP_STAT(ST_INTELLECT,++); perkSt(cr, PE_GAIN_INTELLIGENCE); break;
+	case PE_GAIN_AGILITY: PERKUP_STAT(ST_AGILITY,++); perkSt(cr, PE_GAIN_AGILITY); break;
+	case PE_GAIN_LUCK: PERKUP_STAT(ST_LUCK,++); perkSt(cr, PE_GAIN_LUCK); break;
+	case PE_HARMLESS: PERKUP_SKILL(SK_STEAL,+=40); perkSt(cr, PE_HARMLESS); break;
+	case PE_HERE_AND_NOW: /*+1 level*/ cr.StatBase[ST_EXPERIENCE]+=NextLevelNeedExp(cr)-cr.ParamBase[ST_EXPERIENCE]; perkSt(cr, PE_HERE_AND_NOW); break;
+	//case PE_HTH_EVADE: /*+3 ac per 1 ap on end turn*/ perkSt(cr, PE_HTH_EVADE); break;
+	case PE_KAMA_SUTRA_MASTER: /*In dialogs*/ perkSt(cr, PE_KAMA_SUTRA_MASTER); break;
+	//case PE_KARMA_BEACON: /*Karma x2*/ perkSt(cr, PE_KARMA_BEACON); break;
+	case PE_LIGHT_STEP: /*50% less chance of setting off a trap*/ perkSt(cr, PE_LIGHT_STEP); break;
+	case PE_LIVING_ANATOMY: PERKUP_SKILL(SK_DOCTOR,+=20); /*Also +5 dmg*/ perkSt(cr, PE_LIVING_ANATOMY); break;
+	case PE_MAGNETIC_PERSONALITY: /*+1 people in group*/ perkSt(cr, PE_MAGNETIC_PERSONALITY); break;
+	case PE_NEGOTIATOR: PERKUP_SKILL(SK_SPEECH,+=20); PERKUP_SKILL(SK_BARTER,+=20); perkSt(cr, PE_NEGOTIATOR); break;
+	case PE_PACK_RAT: PERKUP_STAT(ST_CARRY_WEIGHT,+=LBS_TO_GRAMM(50)); perkSt(cr, PE_PACK_RAT); break;
+	case PE_PYROMANIAC: /*+5 damage on fire attack*/ perkSt(cr, PE_PYROMANIAC); break;
+	case PE_QUICK_RECOVERY: /* 1 ap for stending up*/ perkSt(cr, PE_QUICK_RECOVERY); break;
+	case PE_SALESMAN: PERKUP_SKILL(SK_BARTER,+=40); perkSt(cr, PE_SALESMAN); break;
+	case PE_STONEWALL: /*Reduction in chance to be knocked down during combat*/ perkSt(cr, PE_STONEWALL); break;
+	case PE_THIEF: PERKUP_SKILL(SK_SNEAK,+=10); PERKUP_SKILL(SK_LOCKPICK,+=10); PERKUP_SKILL(SK_STEAL,+=10); PERKUP_SKILL(SK_TRAPS,+=10); perkSt(cr, PE_THIEF); break;
+	case PE_WEAPON_HANDLING: /*In use weapon strength +3*/ perkSt(cr, PE_WEAPON_HANDLING); break;
+	case PE_REANIMATOR: perkSt(cr, PE_REANIMATOR); break;
+	case PE_NCR_PERCEPTION: PERKUP_STAT(ST_PERCEPTION,++); perkSt(cr, PE_NCR_PERCEPTION); break;
+	case PE_NCR_ENDURANCE: PERKUP_STAT(ST_ENDURANCE,++); perkSt(cr, PE_NCR_ENDURANCE); break;
+	case PE_NCR_BARTER: PERKUP_SKILL(SK_BARTER,+=5); perkSt(cr, PE_NCR_BARTER); break;
+	case PE_NCR_REPAIR: PERKUP_SKILL(SK_REPAIR,+=5); perkSt(cr, PE_NCR_REPAIR); break;
+	case PE_MYSTERIOUS_STRANGER: perkSt(cr, PE_MYSTERIOUS_STRANGER); break;
+	case PE_FORTUNE_FINDER: perkSt(cr, PE_FORTUNE_FINDER); break;
+	case PE_NIGHT_VISION: perkSt(cr, PE_NIGHT_VISION); break;
+	default: break;
+	}
+}
+
+void PerkDown(Critter& cr, uint perk) // Export
+{
+#define PERKDOWN_STAT #(param,val) cr.StatBase[param]val
+#define PERKDOWN_SKILL #(param,val) cr.SkillBase[param]val; if(cr.SkillBase[param]<-MAX_SKILL_VAL) cr.SkillBase[param]=-MAX_SKILL_VAL
+	switch(perk)
+	{
+	// Perks
+	case PE_ARMOR_BUSTER: break;
+	case PE_AWARENESS: break;
+	case PE_BONUS_HTH_ATTACKS: break;
+	case PE_BONUS_HTH_DAMAGE: PERKDOWN_STAT(ST_MELEE_DAMAGE,-=3); PERKDOWN_STAT(ST_THROWING_DAMAGE,-=3); break;
+	//case PE_BONUS_MOVE: PERKDOWN_STAT(ST_MAX_MOVE_AP,-=2); break;
+	case PE_BONUS_RANGED_DAMAGE: break;
+	case PE_BONUS_RATE_OF_FIRE: break;
+	case PE_EARLIER_SEQUENCE: PERKDOWN_STAT(ST_SEQUENCE,-=2); break;
+	case PE_FASTER_HEALING: PERKDOWN_STAT(ST_HEALING_RATE,-=6); break;
+	case PE_MORE_CRITICALS: PERKDOWN_STAT(ST_CRITICAL_CHANCE,-=5); break;
+	case PE_RAD_RESISTANCE: PERKDOWN_STAT(ST_RADIATION_RESISTANCE,-=20); break;
+	case PE_TOUGHNESS: PERKDOWN_STAT(ST_NORMAL_RESIST,-=4); PERKDOWN_STAT(ST_LASER_RESIST,-=4); PERKDOWN_STAT(ST_FIRE_RESIST,-=4); PERKDOWN_STAT(ST_PLASMA_RESIST,-=4); PERKDOWN_STAT(ST_ELECTRO_RESIST,-=4);PERKDOWN_STAT(ST_RADIATION_RESISTANCE,-=4); PERKDOWN_STAT(ST_EXPLODE_RESIST,-=4); break;
+	case PE_STRONG_BACK: PERKDOWN_STAT(ST_CARRY_WEIGHT,-=LBS_TO_GRAMM(50)); break;
+	case PE_SHARPSHOOTER: break;
+	case PE_SILENT_RUNNING: break;
+	case PE_SURVIVALIST: PERKDOWN_SKILL(SK_OUTDOORSMAN,-=25); break;
+	//case PE_MASTER_TRADER: break;
+	case PE_EDUCATED: PERKDOWN_STAT(ST_UNSPENT_SKILL_POINTS,-=2); break;
+	case PE_HEALER: break;
+	case PE_BETTER_CRITICALS: PERKDOWN_STAT(ST_MAX_CRITICAL,-=10); break;
+	case PE_SLAYER: break;
+	case PE_SNIPER: break;
+	case PE_SILENT_DEATH: break;
+	case PE_ACTION_BOY: PERKDOWN_STAT(ST_ACTION_POINTS,-=1); break;
+	case PE_LIFEGIVER: PERKDOWN_STAT(ST_MAX_LIFE,-=48); break;
+	case PE_DODGER: PERKDOWN_STAT(ST_ARMOR_CLASS,-=15); break;
+	//case PE_SNAKEATER: PERKDOWN_STAT(ST_POISON_RESISTANCE,-=25); break;
+	case PE_MR_FIXIT: PERKDOWN_SKILL(SK_REPAIR,-=20); PERKDOWN_SKILL(SK_SCIENCE,-=20); break;
+	case PE_MEDIC: PERKDOWN_SKILL(SK_FIRST_AID,-=20); PERKDOWN_SKILL(SK_DOCTOR,-=20); break;
+	case PE_MASTER_THIEF: PERKDOWN_SKILL(SK_STEAL,-=20); PERKDOWN_SKILL(SK_LOCKPICK,-=20); break;
+	case PE_SPEAKER: PERKDOWN_SKILL(SK_SPEECH,-=40); break;
+	case PE_HEAVE_HO: break;
+	case PE_PICKPOCKET: break;
+	case PE_GHOST: break;
+	case PE_EXPLORER: break;
+	case PE_PATHFINDER: break;
+	case PE_SCOUT: break;
+	case PE_RANGER: break;
+	case PE_QUICK_POCKETS: break;
+	case PE_SMOOTH_TALKER: break;
+	case PE_SWIFT_LEARNER: break;
+	case PE_ADRENALINE_RUSH: break;
+	case PE_CAUTIOUS_NATURE: break;
+	case PE_BOOKWORM: break;
+	case PE_DEMOLITION_EXPERT: break;
+	case PE_GAMBLER: PERKDOWN_SKILL(SK_GAMBLING,-=40); break;
+	case PE_GAIN_STRENGTH: PERKDOWN_STAT(ST_STRENGTH,--); break;
+	case PE_GAIN_PERCEPTION: PERKDOWN_STAT(ST_PERCEPTION,--); break;
+	case PE_GAIN_ENDURANCE: PERKDOWN_STAT(ST_ENDURANCE,--); break;
+	case PE_GAIN_CHARISMA: PERKDOWN_STAT(ST_CHARISMA,--); break;
+	case PE_GAIN_INTELLIGENCE: PERKDOWN_STAT(ST_INTELLECT,--); break;
+	case PE_GAIN_AGILITY: PERKDOWN_STAT(ST_AGILITY,--); break;
+	case PE_GAIN_LUCK: PERKDOWN_STAT(ST_LUCK,--); break;
+	case PE_HARMLESS: PERKDOWN_SKILL(SK_STEAL,-=40); break;
+	case PE_HERE_AND_NOW: break;
+	//case PE_HTH_EVADE: break;
+	case PE_KAMA_SUTRA_MASTER: break;
+	//case PE_KARMA_BEACON: break;
+	case PE_LIGHT_STEP: break;
+	case PE_LIVING_ANATOMY: PERKDOWN_SKILL(SK_DOCTOR,-=20); break;
+	case PE_MAGNETIC_PERSONALITY: break;
+	case PE_NEGOTIATOR: PERKDOWN_SKILL(SK_SPEECH,-=20); PERKDOWN_SKILL(SK_BARTER,-=20); break;
+	case PE_PACK_RAT: PERKDOWN_STAT(ST_CARRY_WEIGHT,-=LBS_TO_GRAMM(50)); break;
+	case PE_PYROMANIAC: break;
+	case PE_QUICK_RECOVERY: break;
+	case PE_SALESMAN: PERKDOWN_SKILL(SK_BARTER,-=40); break;
+	case PE_STONEWALL: break;
+	case PE_THIEF: PERKDOWN_SKILL(SK_SNEAK,-=10); PERKDOWN_SKILL(SK_LOCKPICK,-=10); PERKDOWN_SKILL(SK_STEAL,-=10); PERKDOWN_SKILL(SK_TRAPS,-=10); break;
+	case PE_WEAPON_HANDLING: break;
+	case PE_REANIMATOR: break;
+	case PE_NCR_PERCEPTION: PERKDOWN_STAT(ST_PERCEPTION,--); break;
+	case PE_NCR_ENDURANCE: PERKDOWN_STAT(ST_ENDURANCE,--); break;
+	case PE_NCR_BARTER: PERKDOWN_SKILL(SK_BARTER,-=5); break;
+	case PE_NCR_REPAIR: PERKDOWN_SKILL(SK_REPAIR,-=5); break;
+	case PE_MYSTERIOUS_STRANGER: break;
+	case PE_FORTUNE_FINDER: break;
+	case PE_NIGHT_VISION: break;
+	default: break;
+	}
+}
+
+// Статистика по перкам на сервере
+void perkSt(Critter& cr, uint perk)
+{
+	if (!cr.IsPlayer()) return;
+	
+	uint[] perkGlobalStat;
+	GetAnyData("perk_global_stat", perkGlobalStat);
+	perkGlobalStat[(perk-PERK_BEGIN)*2+1]+=1;
+	SetAnyData("perk_global_stat", perkGlobalStat);
+}
+
+
+#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+

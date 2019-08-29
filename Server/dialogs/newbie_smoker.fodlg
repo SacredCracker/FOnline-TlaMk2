@@ -1,0 +1,96 @@
+[comment]
+
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 D _var p q_newbie_smoker = 0 #
+8 1020 D _var p q_newbie_smoker = 1 D or D _var p q_newbie_smoker = 2 #
+9 1030 D _var p q_newbie_smoker = 3 @
+2 2000 None 0 #
+0 2010 #
+3 2020 #
+5 2030 R _script q_newbie_scripts@r_KnockDown 0  @
+3 3000 None 0 #
+0 3010 #
+4 3020 @
+4 4000 None 0 #
+6 4010 @
+6 5000 None 0 #
+0 5010 R _var p q_newbie_smoker = 1 #
+7 5020 D _param p SK_DOCTOR < 30 D _param p SK_FIRST_AID < 30 #
+11 5030 D _param p SK_DOCTOR > 29 D or D _param p SK_FIRST_AID > 29 R _param p ST_EXPERIENCE + 200 R _var p q_newbie_smoker = 2 #
+11 5040 D _item p PID_HEALING_POWDER > 0 R _item p PID_HEALING_POWDER - 1 R _param p ST_EXPERIENCE + 200 R _var p q_newbie_smoker = 2 @
+8 6000 None 0 #
+9 6010 D _item p PID_CIGARETTES > 0 D _var p q_newbie_smoker = 1 D or D _item p PID_CIGARETTES > 0 D _var p q_newbie_smoker = 2 R _item p PID_BOTTLE_CAPS + 50 R _param p ST_EXPERIENCE + 400 R _item p PID_CIGARETTES = 0 R _var p q_newbie_smoker = 3 #
+0 6020 @
+7 7000 None 0 @
+11 8000 None 0 #
+0 8010 @
+9 9000 None 0 @
+5 10000 None 0 @
+10 11000 None 0 &
+
+[russ]
+{100}{}{Охранник}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{не знакомы}
+{1020}{}{взял задание}
+{1030}{}{отдал сигареты}
+{2000}{}{Блин, тебе ещё что надо? Вали давай дальше.}
+{2010}{}{Тише, тише. Уже ухожу!}
+{2020}{}{Что-то ты нервный.}
+{2030}{}{У тебя что, ПМС? Попей клюквенного сока, ха-ха!}
+{3000}{}{Тебе какое на хрен дело? Неприятностей ищешь?}
+{3010}{}{Да ну тебя.}
+{3020}{}{Я тебе помочь хотел@sex@|||а|...}
+{4000}{}{Хм... Ну ладно... Ломает меня немного после вчерашней попойки, парочку сигарет бы засмолить, да потерял вчера все, нажравшись.}
+{4010}{}{А ты помнишь, где вчера тебя носило? Сходи, да поищи там.}
+{5000}{}{Да если бы и помнил, мне пост покидать нельзя! Если сможешь найти, подкину мелочишки.}
+{5010}{}{Окей, детектив @pname@ берется за дело!}
+{5020}{}{Может, ты хоть что-то помнишь, где ты мог потерять?}
+{5030}{}{Может, ты хоть что-то помнишь, где ты мог потерять? Давай, попробую облегчить тебе головную боль. [Аккуратно массируете виски охранника]}
+{5040}{}{Может, ты хоть что-то помнишь, где ты мог потерять? Попробуй понюхать целебный порошок, полегчает. [Даете охраннику порошок]}
+{6000}{}{Ну как, раздобыл@sex@|||а| курево?}
+{6010}{}{Ага, вот, держи.}
+{6020}{}{Ещё ищу!}
+{7000}{}{Нет, ничего не помню. Вали давай.}
+{8000}{}{Ох, так лучше. Помню, мы начали пить в развалинах неподалеку, а потом я пошел воды набрать на водокачку. Кажется, после мы пили на сидушках у кучи мусора на севере, потом пытались обоссать весь забор до юга... Еще вспоминается, как блевали на складе, а потом... чёрт... мы что-то делали в браминьем загоне... у меня ведь ширинка была испачкана в навозе... ох... Чего стоишь, рот раззявил@sex@|||а|?! Вали давай!}
+{8010}{}{Не волнуйтесь, скоро вернусь с сигаретами!}
+{9000}{}{Спасибо, что выручил@sex@|||а|. [Шепотом] Поговори с Томом, если хочешь выбраться отсюда.}
+{10000}{}{А ты шутни@sex@|к||ца| дохера? Сейчас язык отсохнет!}
+{11000}{}{@sex@|Проходи, не задерживайся.||Клевые титьки!|@@Чё пялишься? Я тебя не знаю.@@Ненавижу браминов.@@[С ненавистью смотрит в сторону загона]}
+
+[engl]
+{100}{}{Guard}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{не знакомы}
+{1020}{}{взял задание}
+{1030}{}{отдал сигареты}
+{2000}{}{What the hell do you want? Get lost.}
+{2010}{}{Easy, easy. I was already leaving!}
+{2020}{}{You're kinda jumpy.}
+{2030}{}{You got PMS or something? Drink some cranberry juice, ha-ha!}
+{3000}{}{Why the fuck would you care? Looking for trouble?}
+{3010}{}{Meh, I'm off.}
+{3020}{}{I just wanted to help...}
+{4000}{}{Hmm... All right... I got this terrible hangover. I sure could use some smokes, but I lost all of mine while I was drunk yesterday.}
+{4010}{}{Don't you remember where you were yesterday? Go look for them there.}
+{5000}{}{Even if I did, I still couldn't leave my post! If you could find my cigarettes, I'd give you some change.}
+{5010}{}{Excellent! Detective @pname@ is on the case!}
+{5020}{}{Maybe you have some idea where you could have left them?}
+{5030}{}{Maybe you have some idea where you could have left them? Let me ease your headache. [Massage his temples gently]}
+{5040}{}{Maybe you have some idea where you could have left them? Try sniffing some healing powder, it will ease your headache. [Give him healing powder]}
+{6000}{}{So did you get my smokes?}
+{6010}{}{Yeah, here you go.}
+{6020}{}{Still looking!}
+{7000}{}{No, I don't remember shit. Get going.}
+{8000}{}{Ooh, thats better. I recall we started drinking in the ruins nearby, then I went for some water to the pumping station. I think we went on drinking on the seats by the garbage pile to the north, then tried to piss all over the fence to the south... I also remember vomiting in the storehouse... Damn... We did something in the brahmin pen... The fly of my pants was all covered in shit... oh... Whatcha waiting for? Get going!}
+{8010}{}{Don't worry, I'll be back with the cigarettes in no time!}
+{9000}{}{Thanks for helping me out. [Whispers] Talk to Tom if you want to get out of this place.}
+{10000}{}{So you're a clown, huh? Well, you've come to the wrong circus!}
+{11000}{}{@sex@|Move along.||Nice boobs!|@@Whatcha looking at? I don't know you.@@I hate brahmins.@@[Looks towards the pen with hatred in his eyes]}
+

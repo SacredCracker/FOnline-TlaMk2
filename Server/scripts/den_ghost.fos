@@ -1,0 +1,187 @@
+// Author: marvi
+#include "_macros.fos"
+
+// dialogs
+#define DIALOG_den_ghost          (110)
+#define DIALOG_den_ghost_treasure (127)
+
+// dialog string numbers
+#define STRNUM_SCREAM             (1)
+#define STRNUM_STEAL              (2)
+#define STRNUM_STEAL_INJURE       (3)
+
+// ghost states
+#define GHOST_ALIVE               (0)
+#define GHOST_DEAD                (1)
+
+
+/*
+ Critter initialization
+*/
+void _GhostInit(Critter& ghost, bool firstTime)
+{
+	if(firstTime)
+	{
+		// set max possible HP
+		ghost.StatBase[ST_MAX_LIFE]=9999;
+		ghost.StatBase[ST_CURRENT_HP]=9999;
+		// and armor class
+		ghost.StatBase[ST_ARMOR_CLASS]=90;
+	}
+
+	// syncronize ghost actual state with var value
+	if(ghost.Cond==COND_DEAD && GetGhostIsDead()==GHOST_ALIVE)
+	{
+		ghost.ToLife();
+	}
+	else if(ghost.Cond !=COND_DEAD && GetGhostIsDead()==GHOST_DEAD)
+	{
+		ghost.ToDead(ANIM2_DEAD_BURN_RUN,null);
+	}
+
+	ghost.SetEvent(CRITTER_EVENT_ATTACKED, "_GhostAttacked");
+	ghost.SetEvent(CRITTER_EVENT_DEAD, "_GhostDead");
+	ghost.SetEvent(CRITTER_EVENT_RESPAWN, "_GhostRespawn");
+	ghost.SetEvent(CRITTER_EVENT_STEALING, "_GhostStealing");
+}
+
+//
+// Event Handlers
+//
+
+bool _GhostAttacked(Critter& ghost, Critter& attacker)
+{
+	// regenerate HP
+	ghost.StatBase[ST_CURRENT_HP]=ghost.Stat[ST_MAX_LIFE];
+
+	// scream to scary player
+	ghost.SayMsg(SAY_SHOUT_ON_HEAD, TEXTMSG_DLG,
+		DLGSTR(DIALOG_den_ghost, STRNUM_SCREAM));
+
+	// do nothing after attack
+	return true;
+}
+
+void _GhostDead(Critter& ghost, Critter@ killeer)
+{
+	// ghost killed not through quest dialog
+	if(GetGhostIsDead() !=GHOST_DEAD)
+	{
+		// ressurect ghost
+		CreateTimeEvent(__FullSecond + 60, "e_RessurectGhost", ghost.Id, false);
+	}
+}
+
+void _GhostRespawn(Critter& ghost)
+{
+	SetGhostIsDead(GHOST_ALIVE);
+}
+
+/*
+ Handles stealing from ghost.
+ Stealing attempt fails in any case with a chance for player to cripple right hand.
+*/
+void _GhostStealing(Critter& ghost, Critter& thief, bool success, Item& item, uint count)
+{
+	if(thief.IsPlayer())
+	{
+		int injureHandChance=20;
+		int injureHandRoll=Random(1, 100);
+
+		if(injureHandRoll<=injureHandChance)
+		{
+			thief.DamageBase[DAMAGE_RIGHT_ARM]=1;
+			thief.SayMsg(SAY_NETMSG, TEXTMSG_DLG,
+				DLGSTR(DIALOG_den_ghost, STRNUM_STEAL_INJURE));
+		}
+		else
+		{
+			thief.SayMsg(SAY_NETMSG, TEXTMSG_DLG,
+				DLGSTR(DIALOG_den_ghost, STRNUM_STEAL));
+		}
+	}
+}
+
+//
+// Dialog
+//
+
+/*
+ Instantly kills ghost
+*/
+void r_KillGhost(Critter& player, Critter@ ghost, int val)
+{
+	// confirm that ghost killed through quest dialog
+	SetGhostIsDead(GHOST_DEAD);
+	// kill ghost
+	ghost.ToDead(ANIM2_DEAD_BURN_RUN,null);
+	// run new dialog through time event
+	CreateTimeEvent(__FullSecond + 60, "e_RunTreasureDialog", player.Id, false);
+}
+
+//
+// Time Event Handlers
+//
+
+/*
+ Ressurects ghost
+*/
+uint e_RessurectGhost(uint[]@ values)
+{
+	Critter@ ghost=GetCritter(values[0]);
+	if (!valid(ghost))
+	{
+		return 0;
+	}
+
+	// try to ressurect ghost
+	if(ghost.ToLife())
+	{
+		return 0;
+	}
+	else
+	{
+		// restart event
+		return 2*60;
+	}
+}
+
+/*
+ Runs dialog about cursed treasure
+*/
+uint e_RunTreasureDialog(uint[]@ values)
+{
+	Critter@ player=GetCritter(values[0]);
+	if (!valid(player))
+	{
+		return 0;
+	}
+
+	RunDialog(player, DIALOG_den_ghost_treasure, player.HexX, player.HexY, false);
+
+	return 0;
+}
+
+//
+// Helper functions
+//
+
+/*
+ Gets variable 'den_ghost_is_dead'
+*/
+int GetGhostIsDead()
+{
+	GameVar@ isDead=GetGlobalVar(GVAR_den_ghost_is_dead);
+	if (!valid(isDead)) return -1;
+	return isDead.GetValue();
+}
+
+/*
+ Sets variable 'den_ghost_is_dead'
+*/
+void SetGhostIsDead(int value)
+{
+	GameVar@ isDead=GetGlobalVar(GVAR_den_ghost_is_dead);
+	if (!valid(isDead)) return;
+	isDead=value;
+}

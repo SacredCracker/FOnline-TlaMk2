@@ -1,0 +1,74 @@
+// Author: rifleman17
+// Knights Of The Wasteland special encounter scripts
+#include "_macros.fos"
+
+#define KOTW_HOLODISK              (63)
+#define BEER_BOTTLES               (20)
+#define BEER_WEIGHT                (20000) // 20 êã
+
+void _DeadInit(Critter& cr, bool firstTime)
+{
+	if (!cr.IsDead())
+		cr.ToDead(ANIM2_DEAD_LASER, null);
+	cr.StatBase[ST_REPLICATION_TIME]=-1;
+	if(firstTime)
+	{
+		Item@ holo=cr.AddItem(PID_HOLODISK, 1);
+		if(valid(holo))
+		{
+			holo.HolodiskNumber=KOTW_HOLODISK;
+			holo.Update();
+		}
+	}
+}
+
+void _DungeonInit(Map& map, bool firstTime)
+{
+	if (!firstTime)
+		return;
+
+	Item@[] chests;
+	if(map.GetItems(PID_CHEST, chests)>0)
+	{
+		for(uint i=0, iMax=chests.length(); i<iMax; i++)
+		{
+			for(uint j=0; j<BEER_BOTTLES-1; j++)
+				chests[i].AddItem(PID_KOTW_BEER, 1, j);
+		}
+	}
+	uint num=Random(0, chests.length()-1);
+	Item@ grail=chests[num].AddItem(PID_KOTW_GRAIL, 1, 1);
+	grail.SetScript("_GrailInit");
+	for(uint i=0, iMax=chests.length(); i<iMax; i++)
+	{
+		if(i==num) continue;
+		chests[i].AddItem(PID_KOTW_BEER, 1, BEER_BOTTLES);
+	}
+}
+
+void _GrailInit(Item& item, bool firstTime)
+{
+	item.SetEvent(ITEM_EVENT_USE, "_GrailUse");
+}
+
+bool _GrailUse(Item& item, Critter& cr, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+
+	if (!valid(onCritter) && !valid(onItem) && !valid(onScenery))
+	{
+		cr.StatBase[ST_CURRENT_HP]=cr.Stat[ST_MAX_LIFE];
+		cr.DamageBase[DAMAGE_EYE]=0;
+		cr.DamageBase[DAMAGE_RIGHT_ARM]=0;
+		cr.DamageBase[DAMAGE_LEFT_ARM]=0;
+		cr.DamageBase[DAMAGE_RIGHT_LEG]=0;
+		cr.DamageBase[DAMAGE_LEFT_LEG]=0;
+		DeleteItem(item);
+		return true;
+	}
+	return false;
+}
+
+void r_InfoMessage(Critter & player, Critter @ none, int num)
+{
+	player.SayMsg(SAY_NETMSG, TEXTMSG_DLG, DLGSTR(DIALOG_se_kotw_console1, num));
+}

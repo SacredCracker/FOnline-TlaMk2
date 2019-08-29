@@ -1,0 +1,207 @@
+[comment]
+
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+3 1010 D _param p ST_INTELLECT < 4 #
+2 1020 D _param p ST_INTELLECT > 3 D _var p redd_mine_nuggets < 15 #
+22 1030 D _var p redd_mine_nuggets > 14 @
+2 2000 None 0 #
+0 2010 #
+4 2020 #
+6 2030 #
+15 2040 D _script sf_common@d_CheckNowHourMore 1 21 D or D _script sf_common@d_CheckNowHourLess 1 9 #
+16 2050 D _script sf_common@d_CheckNowHourLess 1 22 D _script sf_common@d_CheckNowHourMore 1 8 D _var p redd_mines_player_thief = 0 D _param p ST_LEVEL > 2 D _script ncr_ratch@d_NotRatchTimeOutCheck 1 4308 #
+17 2060 D _script sf_common@d_CheckNowHourLess 1 22 D _script sf_common@d_CheckNowHourMore 1 8 D _var p redd_mines_player_thief = 0 D _param p ST_LEVEL < 3 #
+18 2070 D _script sf_common@d_CheckNowHourLess 1 22 D _var p redd_mines_player_thief = 1 #
+19 2080 D _script sf_common@d_CheckNowHourLess 1 22 D _script sf_common@d_CheckNowHourMore 1 8 D _var p redd_mines_player_thief = 0 D _param p ST_LEVEL > 2 D _script ncr_ratch@d_RatchTimeOutCheck 1 4308 @
+3 3000 None 0 #
+0 3010 @
+4 4000 None 0 #
+5 4010 @
+5 5000 None 0 #
+5 5010 #
+6 5020 @
+6 6000 None 0 #
+7 6010 #
+9 6020 #
+10 6030 #
+12 6040 @
+7 7000 None 0 #
+8 7010 @
+8 8000 None 0 #
+6 8010 #
+0 8020 @
+9 9000 None 0 #
+0 9010 #
+6 9020 @
+10 10000 None 0 #
+11 10010 @
+11 11000 None 0 #
+6 11010 #
+0 11020 @
+12 12000 None 0 #
+13 12010 @
+13 13000 None 0 #
+14 13010 @
+14 14000 None 0 #
+6 14010 #
+0 14020 @
+15 15000 None 0 #
+0 15010 @
+16 16000 None 0 #
+0 16010 @
+17 17000 None 0 #
+0 17010 @
+18 18000 None 0 #
+0 18010 @
+19 19000 None 0 #
+20 19010 @
+20 20000 None 0 #
+21 20010 @
+21 21000 None 0 #
+0 21010 #
+0 21020 R _script redd_mines@r_SendPlayerToMines 0  R _var p redd_mine_nuggets = 0 R _script ncr_ratch@r_RatchTimeOutSet 2 4308 4320 @
+22 22000 None 0 #
+0 22010 R _script redd_mines@r_PayPlayer 0  #
+0 22020 &
+
+[russ]
+{100}{}{Эндрю}
+{200}{}{Вы видите: Эндрю.}
+{210}{}{Эндрю следит за работой шахтеров. Ранее работал в центре распределения слуг в Городе-Убежище.}
+{1000}{}{Predialogue installations}
+{1010}{}{лоу инт}
+{1020}{}{норм инт}
+{1030}{}{вышел из шахты}
+{2000}{}{Зачем пожаловал@sex@|||а|, любезн@sex@|ный||ная|?}
+{2010}{}{Просто проходил@sex@|||а| рядом.}
+{2020}{}{Что нужно сделать, чтобы стать шахтером?}
+{2030}{}{У меня есть вопросы по поводу шахты.}
+{2040}{}{Я хочу спуститься в шахты.}
+{2050}{}{Я хочу спуститься в шахты.}
+{2060}{}{Я хочу спуститься в шахты.}
+{2070}{}{Я хочу спуститься в шахты.}
+{2080}{}{Я хочу спуститься в шахты.}
+{3000}{}{Нам не о чем с тобой говорить. Найди себе другого собеседника, тупица.}
+{3010}{}{Арггх! }
+{4000}{}{Ничего особенного. Сдаешь вещи, получаешь инструменты, спускаешься в шахту.  Добываешь золото, сдаешь, выходишь на свободу, получаешь наличные. Проще не бывает!}
+{4010}{}{Я могу выйти в любой момент, когда захочу?}
+{5000}{}{Э... Нет. Мы должны быть уверены, что каждый шахтер приносит пользу Городу-Убежищу... Ммм, то есть, Реддингу. Поэтому в шахтах действуют суточные нормы. Каждый должен добыть как минимум 15 самородков. Иначе его не выпустят на поверхность.}
+{5010}{}{Понятно, запомню на будущее.}
+{5020}{}{Есть еще что-то, что мне нужно знать, если я захочу стать шахтером?}
+{6000}{}{Спрашивай, что тебя интересует, постараюсь ответить.}
+{6010}{}{Какие правила или законы действуют в шахте?}
+{6020}{}{А все-таки, что будет, если кто-то, не я, а кто-то другой, украдет золото из шахты?}
+{6030}{}{Как мне выйти из забоя?}
+{6040}{}{Сколько платят за один самородок?}
+{7000}{}{Правила просты: не разжигать конфликтов с другими шахтерами, не спорить с регуляторами, сдавать все найденное золото. Проносить любые посторонние предметы на территорию шахты строго запрещено. Если следовать этим правилам - у тебя не будет никаких проблем.}
+{7010}{}{А если я все таки нарушу одно из правил?}
+{8000}{}{[Мрачнеет] В таком случае регуляторы будут вынуждены применить самые жесткие меры. Эти шахты - источник благополучия и уверенности для Города-Убежища и Реддинга. Мы не можем позволить, чтобы в забое творился беспредел.}
+{8010}{}{Понятно, у меня еще вопрос.}
+{8020}{}{Это все, что мне нужно было узнать.}
+{9000}{}{Этому "кому-то" сильно не поздоровится. [Ухмыляется] Шахты напичканы следящим видеооборудованием, мы сразу заметим злоумышленника. Регуляторы выбьют из него украденные самородки, рано или поздно.}
+{9010}{}{Понятно. Мне пора идти.}
+{9020}{}{Есть еще вопросы..}
+{10000}{}{После того, как выполнишь дневную норму, можешь покинуть шахты в любой момент. Самородки сдавать на выходе. Вещи, которые оставишь на входе, а также оплату работы получишь у меня.}
+{10010}{}{А не обманите?}
+{11000}{}{Не говори чепухи. Мы ценим тех, кто помогает работать в шахте. Тем более, что основная рабочая сила, шахтеры Реддинга, последнее время подвержены хроническому унынию, и от их работы мало толку.}
+{11010}{}{Ясно. Я еще хочу спросить.}
+{11020}{}{На сегодня достаточно. Мне пора, удачи.}
+{12000}{}{За каждый самородок ты получишь 50 банкнот той шахты, в которой работаешь.}
+{12010}{}{Банкнот? Каких еще банкнот? Что за ерунда, неужели нельзя платить обычной звонкой монетой?}
+{13000}{}{Увы, правила запрещают нам расплачиваться с наемными шахтерами наличными. Только банкноты, но это неплохо, это те же деньги, ты всегда легко обналичишь любую сумму.}
+{13010}{}{И где же я смогу их обналичить?}
+{14000}{}{Например, у кассира Казино Реддинга. Они принимают банкноты наших шахт и обменивают их на игровые фишки или наличные.}
+{14010}{}{Все равно, как-то это неправильно... Есть другой вопрос.}
+{14020}{}{Мне пора. Увидимся в другой раз.}
+{15000}{}{Ты опоздал@sex@|||а|. Приходи завтра, после девяти, сегодня мы уже не спускаем лифт в шахту.}
+{15010}{}{Жаль, я надеял@sex@|ся||ась| заработать...}
+{16000}{}{Вынужден тебе отказать. Работа в шахтах негативно сказывается на здоровье шахтера. Если будешь спускаться в шахту слишком часто, это сильно тебе навредит. Приходи через пару дней.}
+{16010}{}{Не буду спорить. Увидимся.}
+{17000}{}{[Прищуривается и смотрит на вас оценивающе] Спуститься в щахты... Я так не думаю... Это тебе не крыс убивать, это серьезная работа, и требования высокие. Набирайся опыта и приходи потом.}
+{17010}{}{Что за ерунда? Я в себе уверен@sex@|||а|! И знаю, что справлюсь. А, черт с тобой!}
+{18000}{}{Я помню тебя. У тебя хватило наглости вернуться сюда, после того случая? Мы не даем работу ворам. Убирайся, или я позову регуляторов.}
+{18010}{}{Ухожу, забудь.}
+{19000}{}{Понимаю, решил@sex@|||а| срубить легких деньжат? Ты сильно ошибаешься, если так думаешь. Работа в шахте - тяжелый, изматывающий труд. }
+{19010}{}{Ну и что? Вам нужны шахтеры или нет?}
+{20000}{}{Шахтеры нужны... Эти лодыри из старого Реддинга не справляются. Приходится нанимать кого попало, вроде тебя. Помни, что шахта - это не пикник в парке. Пока не выполнишь дневную норму, на поверхность охрана тебя не пропустит. Все еще хочешь поработать?}
+{20010}{}{Да, за этим я и здесь. }
+{21000}{}{Хорошо. Вещи твои пока побудут у меня. Заберешь, когда выйдешь на поверхность. Ты получишь инструменты, чтобы работать в шахте.}
+{21010}{}{О, ничего себе! Мы так не договаривались.}
+{21020}{}{Да, меня это устраивает.}
+{22000}{}{Ага, вот и ты. Хорошо. Хочешь прямо сейчас забрать свои вещи и оплату? Или заглянешь позже?}
+{22010}{}{Сейчас.}
+{22020}{}{Потом.}
+
+[engl]
+{100}{}{Andrew}
+{200}{}{You see: Andrew.}
+{210}{}{Andrew manages miners' work. He used to work in Vault City Servant Allocation Center.}
+{1000}{}{Predialogue installations}
+{1010}{}{лоу инт}
+{1020}{}{норм инт}
+{1030}{}{вышел из шахты}
+{2000}{}{What can I do for you, dear @sex@|sir||madam|?}
+{2010}{}{I was just passing by.}
+{2020}{}{What do I got to do to become a miner?}
+{2030}{}{I've got questions about the mine.}
+{2040}{}{I'd like to go down to the mines.}
+{2050}{}{I'd like to go down to the mines.}
+{2060}{}{I'd like to go down to the mines.}
+{2070}{}{I'd like to go down to the mines.}
+{2080}{}{I'd like to go down to the mines.}
+{3000}{}{We have nothing to talk about. Find yourself another company, dimwit.}
+{3010}{}{Arrgh!}
+{4000}{}{Nothing difficult. You hand in your stuff for storage, get the tools, go down to the mine. You mine gold, give it in, go out and get your wages. It's as simple as it can get!}
+{4010}{}{I can get out anytime I want?}
+{5000}{}{Err... No. We have to ensure that every miner is of use to Vault City... Err... I mean Redding. That's why a daily norms are introduced. Every worker has to mine at least 15 nuggets. Otherwise he is not allowed to the surface.}
+{5010}{}{I'll keep that in mind.}
+{5020}{}{Is there anything else I should know to be a miner?}
+{6000}{}{Ask what's on your mind, I'll try to clear things up.}
+{6010}{}{What rules or regulations are there in the mine?}
+{6020}{}{What would happen if somebody, not me, steals gold from the mine?}
+{6030}{}{How do I get back fro the mine?}
+{6040}{}{How much do I get for a nugget?}
+{7000}{}{The rules are simple: do not initiate conflicts with other miners, do not contradict the regulators, give in all acquired gold. It's strictly forbidden to smuggle any outside objects into the mine. If you follow these rules, there won't be any trouble.}
+{7010}{}{What if I break one of the rules?}
+{8000}{}{[His face grows grim] In this case the regulators will have to apply harsh measures to you. These mines are a source of prosperity and stability for Vault City and Redding. We cannot afford any outrage.}
+{8010}{}{I see. I've got another question.}
+{8020}{}{That's all I wanted to know.}
+{9000}{}{This "somebody" will have a hard time. [Grins] The mines are stuffed with surveillance equipment, we'll spot the violator instantly. And the regulators will kick the nuggets out of him sooner or later.}
+{9010}{}{I see. I'd better be going.}
+{9020}{}{I got some other questions.}
+{10000}{}{After you've met the daily norm, you can get out anytime. You give in the nuggets at the exit. You can collect your stuff and earnings here at my office.}
+{10010}{}{Won't you cheat me?}
+{11000}{}{Don't talk nonsense. We value those who help us maintain work in the mine. Considering the principal labor force, Redding miners, are subject to constant depression and there's not much use of them lately.}
+{11010}{}{I see. I want to ask soething else.}
+{11020}{}{That's it for today. I got to go. See you.}
+{12000}{}{For every nugget you'll get 50 notes of the mine you are working in.}
+{12010}{}{Notes? What notes? What the hell, why can't you pay in good old money?}
+{13000}{}{I'm sorry, but the regulations forbid us to pay wage workers in cash. Only the notes, but it's still the same money, you can always cash them in.}
+{13010}{}{Where can I cash them in?}
+{14000}{}{Redding Casino cashier, for instance. They exchange our mines' notes for chips or cash.}
+{14010}{}{There's still something wrong about it... I got another question.}
+{14020}{}{I got to go. See you some other time.}
+{15000}{}{You're too late. Come tomorrow after 9 AM, the elevator does not go down today.}
+{15010}{}{What a pity, I was hoping to earn some money...}
+{16000}{}{I'm afraid I have to turn you down. Work in the mines is harmful for miner's health. If you go down to the mines too often it will damage you irreparably. Come back in a couple of days.}
+{16010}{}{I won't argue. See you.}
+{17000}{}{[Looks at you appraisingly] Go down to the mines, huh? I don't think so... It's not some rat killing, it's a serious job and the requirements are high. Gain more experience and come back later.}
+{17010}{}{What the hell? I'm quite confident I'll cope with it. Nah, to hell with you!}
+{18000}{}{I remember you. So, you are bold enough to come back here after that incident? We don't provide jobs to thieves. Get out before I call in the guards.}
+{18010}{}{Forget it, I'm leaving.}
+{19000}{}{I get it. Decided to get some easy money? Well, you're dead wrong if you think so. Work in the mines is an arduous tiring toil.}
+{19010}{}{So what? Do you need miners or not?}
+{20000}{}{Yes, we do need miners... These slackers from Redding can't cope with anything. We have to hire anyone, like you. Remember, miner's work is not just a walk in the park. Unless you meet the daily norm the guards won't let you out. Do you still want to work?}
+{20010}{}{Yeah, that's why I'm here. }
+{21000}{}{All right. I'll keep your stuff for the time being. You'll get it back when you return to the surface. You'll get your working tools in the mine.}
+{21010}{}{Wow, that's not what I had in mind!}
+{21020}{}{Yes, that fits me.}
+{22000}{}{Here you are. All right. Will you take your belongings and wages now or come back later?}
+{22010}{}{Now.}
+{22020}{}{Later.}

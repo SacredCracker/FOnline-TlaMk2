@@ -1,0 +1,196 @@
+// Author: cvet
+
+#include "_macros.fos"
+#include "_msgstr.fos"
+#include "_vars.fos"
+
+#define deteriorateresist		    (7622)
+#define TIMEOUT_MLT 				(1)
+#define DEFAULT_MAX_REPAIR_COUNT	(300)
+
+import int GetBonusParametr(Item& item, uint16 type) from "random_parameters_items";
+
+
+bool TryRepairItem(Critter& cr, Item& item) // Export
+{
+	if(not item.IsDeteriorable()) return true;
+
+	if(cr.Timeout[TO_BATTLE]>0)
+	{
+		cr.SayMsg(SAY_NETMSG,TEXTMSG_GAME,STR_TIMEOUT_BATTLE_WAIT);
+		return true;
+	}
+
+	if(cr.Timeout[TO_SK_REPAIR]>int(REAL_MINUTE(30)))
+	{
+		cr.SayMsg(SAY_NETMSG,TEXTMSG_GAME,STR_SKILL_WEARINESS);
+		return true;
+	}
+	
+	GameVar@ brokenWear=GetLocalVar(LIVAR_max_repair_count,item.Id);
+	if(not valid(brokenWear)) return false;
+	
+	// Ремонт
+	int tmpDet=item.Deterioration;	// Предыдущее состояние износа
+	
+	// Восстановлению не подлежит
+	if(FLAG(item.BrokenFlags,BI_ETERNAL) || FLAG(item.BrokenFlags,BI_NOTRESC) || item.GetProtoId()==PID_MULTI_TOOL || item.GetProtoId()==PID_SUPER_TOOL_KIT)
+	{
+		cr.SayMsg(SAY_NETMSG,TEXTMSG_GAME,STR_DETERIORATION_NO_RESC);
+		return true;
+	}
+	
+	int maxRepairCount = (item.Proto.MaxRepairCount>0)?(item.Proto.MaxRepairCount*10):DEFAULT_MAX_REPAIR_COUNT;
+
+	// Больше ремонтировать этот предмет не выйдет (максимум ремонтов)
+	if(brokenWear.GetValue()>=maxRepairCount)
+	{
+		cr.SayMsg(SAY_NETMSG,TEXTMSG_GAME, STR_MAX_REPAIR_COUNT);
+		return true;
+	}
+
+	// Repair
+	int repair=cr.Skill[SK_REPAIR];
+	uint8 mode=0;
+	uint16 activePid=cr.GetSlotProto(SLOT_HAND1,mode).ProtoId;
+	if(activePid==PID_MULTI_TOOL)
+	{
+		repair+=25;
+		if(Random(0,30)==0) cr.DeleteItem(PID_MULTI_TOOL,1);
+	}
+	else if(activePid==PID_SUPER_TOOL_KIT)
+	{
+		repair+=50;
+		if(Random(0,30)==0) cr.DeleteItem(PID_SUPER_TOOL_KIT,1);
+	}
+
+	// Repair
+	if(FLAG(item.BrokenFlags,BI_BROKEN))
+	{
+		if(FLAG(item.BrokenFlags,BI_HIGHBROKEN)) repair-=100; //было 150
+		else if(FLAG(item.BrokenFlags,BI_NORMBROKEN)) repair-=75; //было 100
+		else if(FLAG(item.BrokenFlags,BI_LOWBROKEN)) repair-=25; // было 50
+
+		repair-=item.BrokenCount*50/MAX_BROKENS; //было 100
+		repair=CLAMP(repair,6,95);
+
+		if(repair>=Random(1,100))
+		{
+			if(FLAG(item.BrokenFlags,BI_HIGHBROKEN)) cr.StatBase[ST_EXPERIENCE]+=420;
+			else if(FLAG(item.BrokenFlags,BI_NORMBROKEN)) cr.StatBase[ST_EXPERIENCE]+=360;
+			else if(FLAG(item.BrokenFlags,BI_LOWBROKEN)) cr.StatBase[ST_EXPERIENCE]+=280;
+			
+			item.Deterioration=MAX_DETERIORATION-MAX_DETERIORATION/Random(90,100); // Устанавливаем 90-99% износа
+			UNSETFLAG(item.BrokenFlags,BI_BROKEN);
+			cr.SayMsg(SAY_NETMSG,TEXTMSG_GAME,STR_DETERIORATION_REPAIR_SUCC);
+		}
+		else
+		{
+			item.BrokenCount++;
+			if(item.BrokenCount>=MAX_BROKENS) SETFLAG(item.BrokenFlags,BI_NOTRESC);
+			cr.SayMsg(SAY_NETMSG,TEXTMSG_GAME,STR_DETERIORATION_REPAIR_FAIL);
+		}
+	}
+	// Service
+	else
+	{
+		if(FLAG(item.BrokenFlags,BI_SERVICE)) repair-=25;
+		repair-=item.BrokenCount*50/MAX_BROKENS;
+		repair=CLAMP(repair,6,95);
+
+		if(repair>=Random(1,100))
+		{
+			SETFLAG(item.BrokenFlags,BI_SERVICE);
+			
+			brokenWear=brokenWear.GetValue()+item.Deterioration/100;	// Сохраняем количество отремонтированных процентов
+			
+			if(maxRepairCount>brokenWear.GetValue())
+				item.Deterioration=0;
+			else item.Deterioration = maxRepairCount-brokenWear.GetValue();
+
+			cr.SayMsg(SAY_NETMSG,TEXTMSG_GAME,STR_DETERIORATION_SERVICE_SUCC);
+			cr.StatBase[ST_EXPERIENCE]+=Random(50,60)+/*FLAG(item.BrokenFlags,BI_SERVICE)?25:0+*/item.BrokenCount*25;
+		}
+		else
+		{
+			DeteriorateItem(cr,item,MAX_DETERIORATION/Random(20,25));
+			cr.SayMsg(SAY_NETMSG,TEXTMSG_GAME,STR_DETERIORATION_SERVICE_FAIL);
+		}
+	}
+
+	//Таймаут
+	item.Update();
+	if (((tmpDet-item.Deterioration)/100)>0)
+	cr.TimeoutBase[TO_SK_REPAIR]=cr.Timeout[TO_SK_REPAIR]+__FullSecond+REAL_SECOND(TIMEOUT_MLT)*(tmpDet-item.Deterioration)/100;
+	else cr.TimeoutBase[TO_SK_REPAIR]=cr.Timeout[TO_SK_REPAIR]+__FullSecond+REAL_SECOND(120);
+	
+	//Log("Repaired:" + (tmpDet-item.Deterioration)/100);
+	return true;
+}
+ 
+void drop(Critter& cr, int base, int, int)
+{
+	
+	cr.TimeoutBase[TO_SK_REPAIR]=__FullSecond+REAL_SECOND(1);
+	
+}
+
+void DeteriorateItem(Critter& cr, Item& item, int deteriorationCount) // Export
+{
+	if(deteriorationCount<=0 || not item.IsDeteriorable() || FLAG(item.BrokenFlags,BI_ETERNAL) || FLAG(item.BrokenFlags,BI_BROKEN)) return;
+
+	int DeteriorateResist=GetBonusParametr(item, 7622);
+	item.Deterioration+=deteriorationCount/(DeteriorateResist>0?(DeteriorateResist+1):1);
+	if(item.Deterioration>=MAX_DETERIORATION)
+	{
+		item.Deterioration=MAX_DETERIORATION;
+		item.BrokenCount++;
+		//SetItemCost(item);
+		int brokenLvl=Random(0,item.BrokenCount/(MAX_BROKENS/4));
+
+		if(item.BrokenCount>=MAX_BROKENS || brokenLvl>=3) SETFLAG(item.BrokenFlags,BI_NOTRESC);
+		else if(brokenLvl==2) SETFLAG(item.BrokenFlags,BI_HIGHBROKEN);
+		else if(brokenLvl==1) SETFLAG(item.BrokenFlags,BI_NORMBROKEN);
+		else SETFLAG(item.BrokenFlags,BI_LOWBROKEN);
+		cr.SayMsg(SAY_NETMSG,TEXTMSG_GAME,STR_DETERIORATION_WEAPON_BROKEN);
+	}
+
+	item.Update();
+}
+
+void SetDeterioration(Item& item, int deteriorationProcent) // Export
+{
+	if(not item.IsDeteriorable()) return;
+	UNSETFLAG(item.BrokenFlags,BI_BROKEN);
+	deteriorationProcent=CLAMP(deteriorationProcent,0,100);
+	item.Deterioration=MAX_DETERIORATION*deteriorationProcent/100;
+	item.BrokenCount=MAX_BROKENS*deteriorationProcent/100;
+	if(deteriorationProcent==100) SETFLAG(item.BrokenFlags,BI_BROKEN);
+	item.Update();
+}
+
+int GetDeteriorationProcent(Item& item) // Export
+{
+	if(not item.IsDeteriorable()) return 0;
+	if(FLAG(item.BrokenFlags,BI_BROKEN)) return 100;
+	int value=item.Deterioration*100/MAX_DETERIORATION;
+	return CLAMP(value,0,100);
+}
+
+/*void SetItemCost(Item& item)
+{	
+	//item.Cost=item.Proto.Cost * CLAMP(100 - GetDeteriorationProcent(item), 5, 100)/ 100;
+	int wearPercent=GetDeteriorationProcent(item);
+	if(wearPercent==100)
+	{
+		item.Cost=uint(item.Proto.Cost / 3);
+	}
+	else if(wearPercent > 75)
+	{
+		item.Cost=uint(2 * item.Proto.Cost / 3);
+	}
+	else
+	{
+		item.Cost=0;
+	}	
+}*/

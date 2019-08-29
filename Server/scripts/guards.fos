@@ -1,0 +1,123 @@
+// Author: heX, Ra, Cracker
+// Универсальный скрипт поведения охраны
+
+#include "_macros.fos"
+#include "utils_for_array.fos"
+#include "pids_groups.fos"
+#include "guards_h.fos"
+
+import bool AddAttackPlane(Critter& npc, uint priority, uint critId, bool run) from "npc_planes";
+import bool AddPickPlane(Critter& npc, uint priority, Item@ item, uint useItemId, bool toOpen) from "npc_planes";
+import bool AddAttackPlane(Critter& npc, uint priority, Critter& target, bool run) from "npc_planes";
+import bool AddAttackPlane(Critter& npc, uint priority, Critter& target, int minHp, bool run) from "npc_planes";
+import bool AddWalkPlane(Critter& npc, uint priority, int identifier, uint identifierExt, uint16 hexX, uint16 hexY, uint8 dir, bool run, uint cut) from "npc_planes";
+
+class CGuards
+{
+	int Dialog;						// Номер диалога откуда беруться сообщения
+	int SaveZoneGameVar;			// Идентификатор переменной, обозначающая что игрок находится в охраняемой зоне
+	
+	// инициализация
+	CGuards()
+	{
+		Dialog=0;
+		SaveZoneGameVar=0;
+	}
+	
+	// ОБРАБОТКА ВХОДЯЩИХ СООБЩЕНИЙ
+	// Сообщения, универсальные для всех типов охранников
+	/*void EventOnMessage(Critter& cr, Critter& fromCr, int message, int value)
+	{
+		// Убить меня
+		if(message==MESSAGE_KILL_ME)
+		{
+			// Если на карте предполагается охраняемая зона, то проверить находится ли в ней криттер
+			GameVar@ var=GetLocalVar(SaveZoneGameVar, value);
+			if(valid(var))
+				if(var.GetValue()==0)
+					return;
+			AddAttackPlane(cr, 0, value, true);
+			return;
+		}
+	}
+	
+	// Сообщения получаемые охранной турелью
+	void EventOnMessageToTurretGuards(Critter& cr, Critter& fromCr, int message, int value)
+	{
+		EventOnMessage(cr, fromCr, message, value);
+	}
+	
+	// Сообщения получаемые охранной собакой
+	void EventOnMessageToDogGuards(Critter& cr, Critter& fromCr, int message, int value)
+	{
+		EventOnMessage(cr, fromCr, message, value);
+	}*/
+
+	// Сообщения получаемые охранником
+	void EventOnMessageToGumanoidGuards(Critter& cr, Critter& fromCr, int message, int value)
+	{		
+		// Убить меня
+		if(message==MESSAGE_KILL_ME)
+		{
+			NpcPlane@ plane=CreatePlane();
+			plane.Type=AI_PLANE_ATTACK;
+			plane.Priority=AI_PLANE_ATTACK_PRIORITY;
+			plane.Attack_TargId=fromCr.Id;
+			plane.Attack_MinHp=__DeadHitPoints;
+			plane.Attack_IsGag=false;
+			plane.Attack_GagHexX=0;
+			plane.Attack_GagHexY=0;
+			plane.Attack_LastHexY=fromCr.HexY;
+			plane.Attack_LastHexX=fromCr.HexX;
+			plane.Run=true;
+			cr.AddPlane(plane);
+			return;
+		}
+		
+		// Я несу нелегальные предметы
+		if(message==MSG_IM_HAVE_ILLEGAL_ITEMS)
+		{
+			AddAttackPlane(cr, 0, value, true);
+			Critter @ target=GetCritter(value);
+			if (!valid(target)) return;
+			if(target.IsNpc()) return;
+			if(Random(0,4)==1) cr.SayMsg(SAY_SHOUT, TEXTMSG_TEXT, STR_NO_ILLEGAL_ITEMS, GetPlayerName(value));
+			return;
+		}
+
+		if(message==MSG_CANCEL_PICKUP)
+		{
+			NpcPlane@[] planes;
+			uint count=cr.GetPlanes(planes);
+			if(count==0) return ;
+			uint erased=0;
+			for(uint i=0; i<count; i++)
+				if(planes[i].Identifier==PLANE_LOOT && planes[i].IdentifierExt==uint(value) && cr.ErasePlane(i-erased)) erased++;
+
+			if(cr.GetPlanes(PLANE_LOOT, value, planes)==0) return;
+			for(uint i=0, iMax=planes.length(); i<iMax; i++)
+				if(valid(planes[i]))
+					cr.ErasePlane(i);
+			return;
+		}
+		
+		// Я заблокировал двери
+		if(message==MESSAGE_I_AM_BLOCK_DOOR)
+		{
+			if(Random(0,4)==1) cr.SayMsg(SAY_SHOUT, TEXTMSG_DLG, DLGSTR(cr.Stat[ST_DIALOG_ID], 9));
+			return;
+		}
+	}
+}
+
+// СОБЫТИЯ
+void _EventGumanoidGuardInit(Critter& npc, bool firstTime)
+{
+	npc.SetEvent(CRITTER_EVENT_MESSAGE,"ce_GuardOnMessage");		// Реакция на полученное сообщение
+}
+
+// Охранник гуманоид получил сообщение
+void ce_GuardOnMessage(Critter& crit, Critter& fromCrit, int message, int value)
+{
+	Guard.EventOnMessageToGumanoidGuards(crit, fromCrit, message, fromCrit.Id);
+}

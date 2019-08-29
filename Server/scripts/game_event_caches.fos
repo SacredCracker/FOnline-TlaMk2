@@ -1,0 +1,195 @@
+// Author rifleman17
+// Энкаунтер квест, периодически доступный. В караванах попадается охранник, который за деньги продает карту с координатами запертого ящика.
+#include "_macros.fos"
+#include "_msgstr.fos"
+
+import string GetCode(Item& item) from "electronic_lock";
+import void   GenerateCode(Item& item) from "electronic_lock";
+
+// Game event
+uint e_StatusOn(uint[] @ values)
+{
+    GameVar@ status=GetGlobalVar(GVAR_game_event_caches);
+    status=1;
+    return 0;
+}
+
+// Выдача карты
+void r_GiveCart(Critter& player, Critter@ npc)
+{
+    Item@ item=player.AddItem(PID_MAP, 1);
+    if(valid(item))
+    {
+        GenerateCode(item);
+        item.Info=2;
+        item.Val1=Random(0, parameters.length() - 1);
+        item.Val2=10;
+        item.SetLexems("$location@msg gm " + STR_GM_NAME(parameters[ item.Val1 ][ 0 ][ 0 ]) + "@$code" + GetCode(item));
+        item.SetScript("_TreasureMapInit");
+        item.Update();
+        GameVar@ qItem=GetLocalVar(LIVAR_is_quest_item, item.Id);
+        if(valid(qItem))
+            qItem=1;
+    }
+}
+
+void _TreasureMapInit(Item& item, bool firstTime)
+{
+    item.SetEvent(ITEM_EVENT_FINISH, "_TreasureMapFinish");
+}
+
+void _TreasureMapFinish(Item& item, bool deleted)
+{
+    if(deleted && IsAnyData("ELock_" + item.Id))
+        EraseAnyData("ELock_" + item.Id);
+}
+
+const uint16[] containerPids={ 42, 43, 44, 66, 67, 68, 69, 70, 128, 129, 130, 131, 132, 133, 134, 135, 157, 180, 188, 189 };
+
+void PlaceLoot2Container(Map& map, Critter& cr)
+{
+    Location@ loc=map.GetLocation();
+    if(valid(loc))
+    {
+        GameVar@ isEnc=GetLocalVar(LLVAR_is_encounter, loc.Id);
+        GameVar@ checked=GetLocalVar(LLVAR_cache_checked, loc.Id);
+        if(valid(isEnc) && isEnc==1 && valid(checked) && checked==0)
+        {
+            Item@[] items;
+            Item@[] containers;
+            Item@ container;
+            if(cr.GetItems(-1, items) > 0)
+            {
+                for(uint i=0, l=items.length(); i<l; i++)
+                {
+                    Item@ item=items[ i ];
+                    if(valid(item) && item.GetProtoId()==PID_MAP)
+                    {
+                        GameVar@ isQuestItem=GetLocalVar(LIVAR_is_quest_item, item.Id);
+                        if(isQuestItem==1)
+                        {
+                            checked=1;
+                            // карта найдена, теперь проверяем, что карта подходит и есть контейнеры из списка
+                            // если карт несколько, остальные игнорируются
+                            @container=GetValidContainer(loc);
+                            Location@ locWhere=GetLocationByPid(parameters[ item.Val1 ][ 0 ][ 0 ], 0);
+                            if(valid(container) && valid(locWhere) && GlobalDistance(locWhere, loc)<__GlobalMapZoneLength * 2)
+                            {
+                                isQuestItem=0;
+                                CreateTimeEvent(__FullSecond + REAL_HOUR(1), "e_DeleteItem", item.Id, true);
+                                container.Val0=item.Id;
+                                container.Val2=0;
+                                container.SetScript("electronic_lock@_LockedInit");
+                                for(uint i=0, l=parameters[ item.Val1 ][ 1 ].length(); i<l; i++)
+                                {
+                                    container.AddItem(parameters[ item.Val1 ][ 1 ][ i ], parameters[ item.Val1 ][ 1 ][ i + 1 ], 0);
+                                    i++;
+                                }
+                                cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 7115);
+                            }
+
+                        }
+                        return;
+                    }
+                }
+            }
+        }
+    }
+}
+
+uint GlobalDistance(Location@ loc1, Location@ loc2)
+{
+    if(!valid(loc1) || !valid(loc2))
+        return 0;
+    return DISTANCE(loc1.WorldX, loc1.WorldY, loc2.WorldX, loc2.WorldY);
+}
+
+uint e_DeleteItem(uint[] @ values)
+{
+    Item@ item=GetItem(values[ 0 ]);
+    if(valid(item))
+        DeleteItem(item);
+    return 0;
+}
+
+
+Item@ GetValidContainer(Location& loc)
+{
+    Map@ map;
+    Item@[] containers;
+    Item@[] validContainers;
+    for(uint i=0, l=loc.GetMapCount(); i<l; i++)
+    {
+        @map=loc.GetMapByIndex(i);
+        if(valid(map))
+            map.GetItemsByType(ITEM_TYPE_CONTAINER, containers);
+    }
+    for(uint i=0, l=containers.length(); i<l; i++)
+    {
+        if(containerPids.find(containers[ i ].GetProtoId()) >=0)
+            validContainers.insertLast(containers[ i ]);
+    }
+    if(validContainers.length()==0)
+        return null;
+    return validContainers[ Random(0, validContainers.length() - 1) ];
+}
+
+uint[][][] parameters=
+{
+    {
+        { LOCATION_Arroyo },
+        { PID_LEATHER_JACKET, 1, PID_DESERT_EAGLE, 1, PID_44_MAGNUM_JHP, 100, PID_BOTTLE_CAPS, 500, PID_STIMPAK, 5 }
+    },
+    {
+        { LOCATION_Arroyo },
+        { PID_SAWED_OFF_SHOTGUN, 1, PID_SHOTGUN_SHELLS, 1, PID_44_MAGNUM_JHP, 100, PID_BOTTLE_CAPS, 500, PID_STIMPAK, 3 }
+    },
+    {
+        { LOCATION_Klamath },
+        { PID_LEATHER_JACKET, 1, PID_HUNTING_RIFLE, 1, PID_223_FMJ, 50, PID_BOTTLE_CAPS, 800, PID_NUKA_COLA, 2, PID_GAMMA_GULP_BEER, 1 }
+    },
+    {
+        { LOCATION_Den },
+        { PID_LEATHER_JACKET, 1, PID_LOUISVILLE_SLUGGER, 1, PID_COOKIE, 1, PID_BOTTLE_CAPS, 1000, PID_BOOZE, 2, PID_STIMPAK, 5 }
+    },
+    {
+        { LOCATION_Redding },
+        { PID_LEATHER_ARMOR_MK_II, 1, PID_ASSAULT_RIFLE, 1, PID_5MM_AP, 300, PID_BOTTLE_CAPS, 1200, PID_STIMPAK, 5, PID_ANTIDOTE, 2 }
+    },
+    {
+        { LOCATION_Modoc },
+        { PID_LEATHER_ARMOR, 1, PID_14MM_PISTOL, 1, PID_14MM_AP, 100, PID_BOTTLE_CAPS, 1000, PID_STIMPAK, 5, PID_HEALING_POWDER, 2, PID_BOTTLE_EMPTY, 3 }
+    },
+    /*{
+        { LOCATION_BarterGround },
+        { PID_LEATHER_ARMOR_MK_II, 1, PID_SNIPER_RIFLE, 1, PID_223_FMJ, 100, PID_BOTTLE_CAPS, 3000, PID_STIMPAK, 10, PID_BUFFOUT, 1 },
+    },
+    {
+        { LOCATION_BarterGround },
+        { PID_CURED_LEATHER_ARMOR, 1, PID_COMBAT_KNIFE, 1, PID_CATTLE_PROD, 1, PID_BOTTLE_CAPS, 1500, PID_STIMPAK, 5, PID_JET, 10, PID_BOTTLE_AMMIAK, 2 }
+    },*/
+    {
+        { LOCATION_NewReno },
+        { PID_METAL_ARMOR, 1, PID_COMBAT_SHOTGUN, 1, PID_SHOTGUN_SHELLS, 300, PID_BOTTLE_CAPS, 1500, PID_STIMPAK, 5, PID_POWER_FIST, 1 }
+    },
+    {
+        { LOCATION_BrokenHills },
+        { PID_METAL_ARMOR_MK_II, 1, PID_223_PISTOL, 1, PID_223_FMJ, 100, PID_BOTTLE_CAPS, 1600, PID_STIMPAK, 5, PID_SUPER_STIMPAK, 2, PID_SPIKED_KNUCKLES, 1 }
+    },
+    {
+        { LOCATION_Gecko },
+        { PID_BLACK_ROBE, 1, PID_FN_FAL, 1, PID_EXPLOSIVE_ROCKET, 10, PID_BOTTLE_CAPS, 1500, PID_STIMPAK, 5, PID_ROCKET_LAUNCHER, 1 }
+    },
+    {
+        { LOCATION_VaultCity },
+        { PID_TESLA_ARMOR, 1, PID_INDEPENDENT, 1, PID_FRAG_GRENADE, 10, PID_BOTTLE_CAPS, 1500, PID_STIMPAK, 10, PID_MENTATS, 4 }
+    },
+    {
+        { LOCATION_NCR },
+        { PID_COMBAT_ARMOR, 1, PID_MINIGUN, 1, PID_5MM_AP, 500, PID_BOTTLE_CAPS, 3500, PID_SUPER_STIMPAK, 5, PID_MENTATS, 2, PID_PLASMA_GRENADE, 5 }
+    },
+    {
+        { LOCATION_SanFrancisco },
+        { PID_BROTHERHOOD_COMBAT_ARMOR, 1, PID_FLAMER, 1, PID_FLAMETHROWER_FUEL_MK_II, 10, PID_BOTTLE_CAPS, 4500, PID_SUPER_STIMPAK, 5, PID_RAD_X, 3, PID_2MM_EC_AMMO, 200, PID_PK12_GAUSS_PISTOL, 1 }
+    }
+};

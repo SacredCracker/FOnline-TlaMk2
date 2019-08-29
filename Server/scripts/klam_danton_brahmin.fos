@@ -1,0 +1,101 @@
+// Author: Тринитротолуол
+
+// Для квеста "Сгубить браминов".
+// Выдает Дантон.
+// Увести за собой и убить двоих браминов (с пастбища Эйдена). При этом есть шанс, равный 100%-(удача*10),
+// что игрока поймает на горячем Эйден. Дальше – несколько вариантов: либо сдать Дантона, либо убежать, либо бой,
+// либо убедить Эйдена отпустить игрока.
+
+import bool AddWalkPlane(Critter& npc, uint priority, uint16 hexX, uint16 hexY, uint8 dir, bool run, uint cut) from "npc_planes";
+
+#include "_macros.fos"
+#include "map_klamath_h.fos"
+
+//----------------------------------------------------------------------------
+void InitBrahmin(Map& map, bool firstTime)
+{
+
+}
+
+//------------------------- Игровые события ----------------------------------
+uint e_Follow(uint[]@ values) // следовать за игроком
+{
+	Critter@ cow=GetCritter(values[0]);   if(not valid(cow)) { Log("ERROR: npc not valid"); return 0; }
+	uint16 x=0, y=0;
+	if(not ProccesingValues(values[1], values[2], cow, x, y)) { EndFollow(values[1], cow); return 0; }
+
+	values[2]++;
+	cow.ErasePlane(AI_PLANE_WALK, true);
+	AddWalkPlane(cow, AI_PLANE_WALK_PRIORITY + 2, x, y, 6, false, 3);
+
+	CreateTimeEvent(__FullSecond + 60, "e_Follow", values, true);
+	return 0;
+}
+
+//------------------------ Диалоговые функции ---------------------------------
+void r_FollowForPlayer(Critter& player, Critter@ cow)
+{
+	if(not valid(cow)) return;
+	if(not cow.IsNpc()) return;
+
+	cow.ModeBase[MODE_NO_HOME]=1;
+
+	uint[] param={cow.Id, player.Id, 0};
+	CreateTimeEvent(__FullSecond + 60, "e_Follow", param, true);
+}
+
+void r_ChangeDir(Critter& player, Critter@ cow)
+{
+	if(not valid(cow)) return;
+	if(not cow.IsNpc()) return;
+
+	cow.SetHomePos(cow.HexX, cow.HexY, player.Dir);
+}
+
+//------------------------------ Триггеры --------------------------------------
+void t_StopTrigger(Critter& cow, Scenery& trigger, bool entered, uint8 dir)
+{
+	if(cow.Stat[ST_NPC_ROLE] !=ROLE_COWS) return;
+	if(cow.Mode[MODE_NO_HOME] !=0) return;
+
+	cow.ClearEnemyStack();
+	cow.ErasePlane(-1, true);
+}
+
+//--------------------------- Инструментарий------------------------------------
+void EndFollow(uint playerId, Critter@ cow)
+{
+	uint state=GetQuestState(playerId);
+	if(state !=2 && state !=4) return;
+	SetQuestState(playerId, state - 1);
+
+	cow.ModeBase[MODE_NO_HOME]=0;
+}
+
+bool ProccesingValues(uint playerId, uint time, Critter@ cow, uint16& resultX, uint16& resultY)
+{
+	Map@ mapCow=cow.GetMap();             if(not valid(mapCow)) { Log("ERROR: map not valid"); return false; }
+
+	Critter@ player=GetCritter(playerId);
+	if(not valid(player)) 					return false; // игрок ушел в оффлайн
+	Map@ mapPlayer=player.GetMap();
+	if(not valid(mapPlayer))                return false; // игрок ушел на глобал
+	if(mapCow.Id !=mapPlayer.Id) return false; // игрок ушел на другую карту
+	if(time >=60)                          return false; // ограничение, по времени, на следование брамина за игроком
+	resultX=player.HexX;
+	resultY=player.HexY;
+	return true;
+}
+
+void SetQuestState(uint playerId, uint state)
+{
+	GameVar@ var=GetLocalVar(LVAR_q_klam_danton_bramin, playerId);   if(not valid(var)) { Log("ERROR: not valid GameVar №" + LVAR_q_klam_danton_bramin); return; }
+
+	var=state;
+}
+
+uint GetQuestState(uint playerId)
+{
+	GameVar@ var=GetLocalVar(LVAR_q_klam_danton_bramin, playerId);    if(not valid(var)) { Log("ERROR: not valid GameVar №" + LVAR_q_klam_danton_bramin); return 0; }
+	return var.GetValue();
+}

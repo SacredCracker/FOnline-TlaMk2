@@ -1,0 +1,51 @@
+// Author: cvet
+// Coast generic encounters
+// Rain processed
+#include "_macros.fos"
+
+
+void _CoastInit(Map& map, bool firstTime)
+{
+	map.SetLoopTime(0,Random(5000,15000));
+	map.SetData(0,1);
+	if(Random(0,20)==0) map.SetRain(Random(1,255));
+	map.SetEvent(MAP_EVENT_LOOP_0,"_CoastLoop0");
+}
+
+void _CoastLoop0(Map& map)
+{
+	if(map.GetRain()==0)
+	{
+		// Try begin rain
+		if(Random(0,50)==0) map.SetRain(5);
+	}
+	else
+	{
+		// Process rain
+		bool rainUp=(map.GetData(0)!=0);
+		int capacity=map.GetRain();
+
+		if(rainUp) capacity+=30;
+		else capacity-=30;
+
+		if(capacity>255) // Max capacity
+		{
+			capacity=255;
+			map.SetData(0,0);
+		}
+		else if(capacity<0) // Min capacity, turn off
+		{
+			capacity=0;
+			map.SetData(0,1);
+		}
+		map.SetRain(capacity);
+	}
+}
+
+
+
+
+
+
+
+

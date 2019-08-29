@@ -1,0 +1,474 @@
+// Author: rifleman17
+// —крипт патрульных дл€ некоей локации
+// используетс€ с помощью #include
+// ѕеред инклудом необходимо добавить дефайн с определением имени скрипта  #define SCRIPTNAME- требуетс€ в misc-планах
+
+#include "_macros.fos"
+#include "_npc_pids.fos"
+#include "_teams.fos"
+#include "_dialogs.fos"
+
+#define DL #(str)
+//#define DL #(str) Log(str);
+import bool GetNearEntire(Map& map, int number, uint16& hx, uint16& hy) from "entire";
+import bool AddMiscPlane(Critter& npc, uint priority, uint waitSecond, string@ funcName) from "npc_planes";
+import bool AddWalkPlane(Critter& npc, uint priority, int identifier, uint identifierExt, uint16 hexX, uint16 hexY, uint8 dir, bool run, uint cut) from "npc_planes";
+import bool AddAttackPlane(Critter& npc, uint priority, Critter& target, bool run) from "npc_planes";
+
+#define PLANE_MOVENEXT_PATROL_POINT				(49)
+#define MAX_DIST_TOBEGIN_PATROL					(4)
+#define PLAYER_ALARM_RADIUS						(6)
+
+class Patroller
+{
+	Patroller()
+	{}
+	uint DialogId;
+	uint ProtoId;
+	uint BagId;
+	uint TeamId;
+	uint AiPacket;
+	uint PowerLvl;
+	uint Id;
+
+	Critter @ GetPatroller (Map & map, uint x, uint y)
+	{
+		int[] params={ST_DIALOG_ID, DialogId, ST_BAG_ID, BagId, ST_TEAM_ID, TeamId, ST_AI_ID, AiPacket,
+			ST_LEVEL, CLAMP(this.PowerLvl*5,1,24), MODE_NO_HOME, 1};
+		Critter @ cr=map.AddNpc(this.ProtoId, x, y, Random(0,5), params, null, null);
+		if (!valid(cr)) return null;
+
+		this.Id=cr.Id;
+		cr.ShowCritterDist1=PLAYER_ALARM_RADIUS;
+		cr.SetScript("_PatrollerInit");
+		return cr;
+	}
+}
+
+void _PatrollerInit(Critter & cr, bool firstTime)
+{
+	if (!firstTime)
+	{
+		DeleteNpc(cr);
+		return;
+	}
+	cr.SetEvent(CRITTER_EVENT_SHOW_CRITTER_1, "_ShowCritter1");
+	cr.SetEvent(CRITTER_EVENT_PLANE_END, "_PatrollerPlaneEnd");
+	cr.SetEvent(CRITTER_EVENT_DEAD, "_PatrollerDead");
+	cr.SetEvent(CRITTER_EVENT_TALK, "_PatrollerTalk");
+	cr.SetEvent(CRITTER_EVENT_ATTACK, "_PatrollerAttack");
+	cr.SetEvent(CRITTER_EVENT_PLANE_BEGIN, "_PatrollerPlaneBegin");
+	cr.SetEvent(CRITTER_EVENT_SMTH_USE_SKILL, "_SmthUseSkill");
+	cr.SetEvent(CRITTER_EVENT_SMTH_USE_ITEM, "_SmthUseItem");
+
+}
+
+// точка патрулировани€
+class PatrolPoint
+{
+	// конструктор
+	PatrolPoint(Map & map, uint eHexNum, uint waitMinutes)
+	{
+		this.MapId=map.Id;
+		this.EHexNum=eHexNum;
+		this.WaitMinutes=waitMinutes;
+	}
+
+	uint EHexNum; // номер Entire гекса
+	uint WaitMinutes; // врем€, которое ждет патрульный в данной точке патрулировани€
+	uint MapId;// ид карты, на каторой устроен патруль
+
+	Map @ PatrolMap()
+	{
+		Map@ map=GetMap(this.MapId);
+		if(valid(map))
+		{
+			return map;
+		}else{
+			Log("Patrol map not found. Id " + this.MapId);
+			return null;
+		}
+	}
+	// ближайша€ свободна€ точка р€дом с гексом патрульной точки
+	bool GetNearPatrolPoint(uint& x, uint& y)
+	{
+		Map @map=GetMap(this.MapId);
+		if (!valid(map)) return false;
+
+		uint16 x_=0, y_=0;
+		bool result=GetNearEntire(map, this.EHexNum, x_, y_);
+		x=x_;
+		y=y_;
+		return result;
+	}
+}
+//маршрут патрулировани€
+class PatrolRoute
+{
+	PatrolRoute()
+	{
+		this.curIndex=0;
+	}
+
+	void AddPoint(PatrolPoint& p)
+	{
+		this.curIndex=0;
+		this.points.insertLast(p);
+	}
+
+
+	PatrolPoint[] points;
+
+	uint curIndex;
+
+	PatrolPoint @ CurPoint()
+	{
+		if(this.points.length()==0) return null;
+
+		return this.points[this.curIndex<this.points.length()?this.curIndex:0];
+	}
+
+	void MoveNextPoint()
+	{
+		this.curIndex=(this.curIndex+1<this.points.length()?this.curIndex+1:0);
+	}
+
+}
+
+class PatrolInfo
+{
+	PatrolInfo()
+	{
+		this.AlivePatrollers=0;
+	}
+
+	PatrolRoute Route; // маршрут патрулировани€
+	Patroller[] Patrollers; // нпц-патрульные
+	uint[] AcceptedPlayers; // игроки, которым разрешено находитьс€ здесь.
+	uint AlivePatrollers; // число живых патрульных
+
+	void AddPatroller(uint dialog, uint pid, uint bag, uint team, uint ai, uint lvl)
+	{
+		Patroller@ p=Patroller();
+
+		if (!valid(p)) return;
+
+		p.DialogId=dialog;
+		p.ProtoId=pid;
+		p.BagId=bag;
+		p.TeamId=team;
+		p.AiPacket=ai;
+		p.PowerLvl=lvl;
+
+		this.Patrollers.insertLast(p);
+	}
+
+	void MovePatrol()
+	{
+		for(uint i=0, iMax=this.Patrollers.length(); i<iMax; i++)
+		{
+			Critter @ cr=GetCritter(this.Patrollers[i].Id);
+			if (!valid(cr)) continue;
+			if (!cr.IsLife()) continue;
+			this.MovePatroller(cr);
+
+		}
+	}
+
+	void MovePatroller(Critter & cr)
+	{
+		PatrolPoint @ p=this.Route.CurPoint();
+		if (!valid(p)) return;
+		uint x=0;
+		uint y=0;
+		if(p.GetNearPatrolPoint(x,y))
+		{
+			cr.ErasePlane(AI_PLANE_MISC,true);
+			AddWalkPlane(cr, 0, PLANE_MOVENEXT_PATROL_POINT, 0, x, y, Random(0,5), false, 1);
+		}
+	}
+
+	void BeginPatrol()
+	{
+		this.EndPatrol();
+		this.AcceptedPlayers.resize(0);
+		if(this.Route.points.length()==0)
+		{
+			Log("Begin patrol failed. Route empty");
+			return;
+		}
+
+		if(this.Patrollers.length()==0)
+		{
+			Log("Begin patrol failed. 0 patrollers setted up");
+			return;
+		}
+
+		Map @ map=this.Route.CurPoint().PatrolMap();
+		if (!valid(map)) return;
+
+		uint x=0; uint y=0;
+		for(uint i=0, iMax=this.Patrollers.length(); i<iMax; i++)
+		{
+			if(this.Route.CurPoint().GetNearPatrolPoint(x,y))
+			{
+				this.Patrollers[i].GetPatroller(map, x, y);
+				this.AlivePatrollers++;
+			}
+		}
+	}
+
+	void EndPatrol()
+	{
+		for(uint i=0, iMax=this.Patrollers.length(); i<iMax; i++)
+		{
+			if(this.Patrollers[i].Id!=0)
+			{
+				Critter @ pat=GetCritter(this.Patrollers[i].Id);
+				if(valid(pat))
+				{
+					if(pat.IsNpc())
+					{
+						DeleteNpc(pat);
+						this.Patrollers[i].Id=0;
+					}
+				}
+			}
+		}
+	}
+
+	bool CheckAllPatrollersAtPoint()
+	{
+		PatrolPoint @ p=pInfo.Route.CurPoint();
+		if (!valid(p)) return false;
+		uint x=0; uint y=0;
+		if (!p.GetNearPatrolPoint(x, y)) return false;
+
+		for(uint i=0, iMax=this.Patrollers.length(); i<iMax; i++)
+		{
+			Critter @cr=GetCritter(this.Patrollers[i].Id);
+			if (!valid(cr)) continue;
+			if (!cr.IsLife()) continue;
+			// проверку на совпадение карты можно не делать
+			if(GetDistantion(x,y, cr.HexX, cr.HexY)>MAX_DIST_TOBEGIN_PATROL)
+			{
+				if(cr.IsNoPlanes()) this.MovePatroller(cr);
+				return false;
+			}
+		}
+		return true;
+	}
+
+	// криттер=патрульный
+	bool IsPatroller(Critter & cr)
+	{
+		for(uint i=0, iMax=this.Patrollers.length(); i<iMax; i++)
+		{
+			if(cr.Id==this.Patrollers[i].Id) return true;
+		}
+		return false;
+	}
+
+	void AcceptPlayer(Critter & player)
+	{
+		for(uint i=0, iMax=this.AcceptedPlayers.length(); i<iMax; i++)
+		{
+			if(this.AcceptedPlayers[i]==player.Id)
+			{
+				return;//уже записан
+			}
+		}
+		this.AcceptedPlayers.insertLast(player.Id);
+	}
+
+	// игроку разрешили тут находитьс€
+	bool IsPlayerAccepted(Critter & player)
+	{
+		for(uint i=0, iMax=this.AcceptedPlayers.length(); i<iMax; i++)
+		{
+			if(this.AcceptedPlayers[i]==player.Id)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+}
+
+// глоб переменна€ уровн€ скрипта
+PatrolInfo pInfo;
+/* ********************* —обыти€ патрульных *********************** */
+void _ShowCritter1(Critter& cr, Critter& showCrit)
+{
+	if(showCrit.IsNpc()) return;
+	if(pInfo.IsPlayerAccepted(showCrit)) return;
+	NpcPlane @[] planes;
+	cr.GetPlanes(planes);
+	for(uint i=0, iMax=planes.length(); i<iMax; i++)
+	{
+		if(planes[i].Type==AI_PLANE_ATTACK)
+		{
+			return;
+		}
+	}
+
+	_FoundPlayer(cr);
+	DL("saw player");
+	//AddMiscPlane(cr, AI_PLANE_PATROL_PRIORITY*5, __FullSecond+pInfo.Route.CurPoint().WaitMinutes*60, "_FoundPlayer");
+
+	Critter @[] talkers;
+	for(uint i=0, iMax=pInfo.Patrollers.length(); i<iMax; i++)
+	{
+		Critter @ pat=GetCritter(pInfo.Patrollers[i].Id);
+		if (!valid(pat)) continue;
+		@ talkers;
+		if(pat.GetTalkedPlayers(talkers)>0)
+		{
+			for(uint j=0, jMax=talkers.length(); j<jMax;j++)
+			{
+				if(talkers[j].Id==showCrit.Id)
+				{
+					DL("someone already talked to player");
+					return;
+				}
+			}
+		}
+	}
+	showCrit.Wait(0);
+	RunDialog(showCrit,cr,true);
+}
+
+// Npc misc plane script
+void plane_MiscWait(Critter& npc)
+{
+
+	if(pInfo.CheckAllPatrollersAtPoint())
+	{
+		pInfo.Route.MoveNextPoint();
+		pInfo.MovePatrol();
+	}else{
+		AddMiscPlane(npc, AI_PLANE_PATROL_PRIORITY, __FullSecond+pInfo.Route.CurPoint().WaitMinutes*60, SCRIPTNAME+"@plane_MiscWait");
+	}
+
+}
+
+void _FoundPlayer(Critter& cr)
+{
+	cr.ErasePlane(AI_PLANE_MISC,true);
+	cr.ErasePlane(AI_PLANE_WALK,true);
+}
+
+void _PatrollerDead(Critter& cr, Critter@ killer)
+{
+	DeleteNpc(cr);
+}
+
+void _SmthUseItem(Critter& cr, Critter& fromCr, Item& item, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+	if(fromCr.IsNpc()) return;
+
+	uint pid=item.GetProtoId();
+
+	if(pid==PID_DYNAMITE||pid==PID_PLASTIC_EXPLOSIVES||pid==PID_MINE)
+	{
+		AddAttackPlane(cr, 0, fromCr, false);
+	}
+}
+
+void _SmthUseSkill(Critter& cr, Critter& fromCr, int skill, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+	if (!valid(onCritter)) return;
+	if(skill==SK_STEAL)
+	{
+		AddAttackPlane(cr, 0, fromCr, false);
+	}
+}
+
+// начинаетс€ или заканчиваетс€ диалог с игроком
+bool _PatrollerTalk(Critter& cr, Critter& player, bool attach, uint talkCount)
+{
+	if (!attach)
+	{
+		for(uint i=0, iMax=pInfo.Patrollers.length(); i<iMax; i++)
+		{
+			Critter @ pat=GetCritter(pInfo.Patrollers[i].Id);
+			if (!valid(pat)) continue;
+			// если хот€ бы один патрульный с кем то разговаривает, патруль не идет дальше
+			if(pat.GetTalkedPlayers(null)>0) return true;
+
+		}
+		//все разговоры закончены, следующа€ точка патрулировани€
+		pInfo.MovePatrol();
+	}else{
+		if(talkCount>2) return false;
+	}
+
+	return true;
+}
+
+int _PatrollerPlaneBegin(Critter& cr, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem)
+{
+	if(plane.Type==AI_PLANE_ATTACK&&plane.Priority==AI_PLANE_ATTACK_PRIORITY)
+	{
+		bool hasTarger=false;
+		Critter @ target=GetCritter(plane.Attack_TargId);
+		if (!valid(target)) return PLANE_RUN_GLOBAL;
+		for(uint i=0, iMax=pInfo.Patrollers.length(); i<iMax; i++)
+		{
+			if(pInfo.Patrollers[i].Id==cr.Id) continue;
+			hasTarger=false;
+			Critter @ pat=GetCritter(pInfo.Patrollers[i].Id);
+			if(valid(pat))
+			{
+				NpcPlane @[] planes;
+				pat.GetPlanes(planes);
+				for(uint i=0, iMax=planes.length(); i<iMax; i++)
+				{
+					if(planes[i].Type==AI_PLANE_ATTACK &&planes[i].Attack_TargId==target.Id)
+					{
+						hasTarger=true;
+					}
+				}
+
+				DL("план добавлен");
+				if (!hasTarger) AddAttackPlane(pat, AI_PLANE_ATTACK_PRIORITY+1, target, false);
+			}
+		}
+	}
+	return PLANE_RUN_GLOBAL;
+}
+
+bool _PatrollerAttack(Critter& cr, Critter& target)
+{
+	return false;
+}
+
+int _PatrollerPlaneEnd(Critter& cr, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem)
+{
+	DL("Plane end/reason^"+reason + " id "+plane.Identifier+" plane x="+plane.Walk_HexX+"plane y="+plane.Walk_HexY);
+	if(plane.Identifier==PLANE_MOVENEXT_PATROL_POINT)
+	{
+		PatrolPoint @ p=pInfo.Route.CurPoint();
+		if (!valid(p)) return PLANE_RUN_GLOBAL;
+
+		if(reason==REASON_SUCCESS)
+		{
+			AddMiscPlane(cr, AI_PLANE_PATROL_PRIORITY, __FullSecond+p.WaitMinutes*60, SCRIPTNAME+"@plane_MiscWait");
+		}else{
+			uint x=plane.Walk_HexX;
+			uint y=plane.Walk_HexY;
+			if(p.GetNearPatrolPoint(x, y))
+			{
+				plane.Walk_HexX=x;
+				plane.Walk_HexY=y;
+				DL("Can't end patrol plane. Reason:" + reason+"hex x:"+x+"; y="+y);
+				return PLANE_KEEP;
+			}
+		}
+	}
+
+	return PLANE_RUN_GLOBAL;
+}
+
+/* *ƒиалоги. ѕомните - нужно указывать им€ своего скрипта, в котором
+включен файл patrol_h, а не самого хидера */

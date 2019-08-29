@@ -1,0 +1,741 @@
+#include "_dialogs.fos"
+#include "_macros.fos"
+#include "_ai.fos"
+#include "_bags.fos"
+#include "_npc_pids.fos"
+#include "_teams.fos"
+
+
+
+#define MESSAGE_CARAVANEER_GOTO_HOME				(212) // проводник отправит это сообщение, если двигает к домашней позиции
+#define NPC_ROLE_CARAVAN_BOSS						(117)// босс каравана
+#define NPC_ROLE_CARAVAN_GUIDE						(118)// проводник
+#define NPC_ROLE_CARAVAN_GUARD						(119)// охранник каравана(НПЦ)
+
+#define NpcRole 					StatBase[ST_NPC_ROLE]
+#define CrvId 						StatBase[ST_VAR0]
+#define Reaction 					StatBase[ST_VAR1]
+#define NervosityLvl 				StatBase[ST_VAR2]
+#define IdleCount					StatBase[ST_VAR3]
+
+// типовые фразы
+
+#define PHRASE_BORING								(2) // охранник заскучал
+#define PHRASE_ATTACKED     						(5) // фраза если охранник атакован
+#define PHRASE_LOW_HP       						(6) // фраза если у охранника осталось мало хп
+#define PHRASE_KILL_SOMEONE 						(7) // фраза при убийстве охранником кого-либо
+// задачи
+
+#define PLANE_GOTO_HOME								(405)// гвард идет на новое место дислокации
+#define MSG_WHERE_IS_DA_LEADER						(211) // номер сообщения, которое отправляет охранник, когда хочет приблизиться к караванщику
+
+/* ---------------------- imports ----------------------*/
+import bool AddAttackPlane(Critter& npc, uint priority, Critter& target) from "npc_planes";
+import bool AddAttackPlane(Critter& npc, uint priority, uint critId) from "npc_planes";
+import bool AddWalkPlane(Critter& npc, uint priority, uint16 hexX, uint16 hexY, uint8 dir, bool run, uint cut) from "npc_planes";
+import bool AddMiscPlane(Critter& npc, uint priority, uint waitSecond, string@ funcName) from "npc_planes";
+import bool AddWalkPlane(Critter& npc, uint priority, int identifier, uint identifierExt, uint16 hexX, uint16 hexY, uint8 dir, bool run, uint cut) from "npc_planes";
+/*---------------------- получение нескольких нпц-охранников ----------------------*/
+/*
+CaravanGuardInfo [] GetNpcGuards(uint guardsNum)
+{
+	CaravanGuardInfo[] availableGuards;
+	 // Отец Петреску
+	availableGuardsю.insertLast(CaravanGuardInfo(
+			NPC_PID_ElronologistMale//NPC_PID_HolyMan //Pid
+		,	DIALOG_crvg_petresku	//dialogId
+		,	"caravan@_PetreskuInit" //scriptId
+		,	AIPACKET_PARTY_SULIK_BERSERK //aiPack
+		,	BAG_Empty //bagId
+		,	TEAM_QuestNpc //teamId
+		,	20//level
+		,	2//reaction
+		,	0//isNervous
+	));//
+		 // Mazzy
+	availableGuards.insertLast(CaravanGuardInfo(
+			NPC_PID_Nightkin //Pid
+		,	DIALOG_crvg_mazzy	//dialogId
+		,	"caravan@_MazzyInit" //scriptId
+		,	AIPACKET_PARTY_LENNY_BERSERK //aiPack
+		,	BAG_Empty //bagId
+		,	TEAM_QuestNpc //teamId
+		,	9//level
+		,	3
+		,	0//isNervous
+	));//
+		 // Бомбермен
+	availableGuards.insertLast(CaravanGuardInfo(
+			NPC_PID_ToughMaleThug//NPC_PID_MaleTrapper //Pid
+		,	DIALOG_crvg_bomberman	//dialogId
+		,	"caravan@_BomberInit" //scriptId
+		,	AIPACKET_SPORE_PLANT  //aiPack
+		,	BAG_Empty //bagId
+		,	TEAM_QuestNpc //teamId
+		,	12//level
+		,	1//reaction
+		,	3//isNervous
+	));//
+			 // Анаферон
+	availableGuards.insertLast(CaravanGuardInfo(
+			NPC_PID_FemaleHunter//NPC_PID_PrimitiveFemale //Pid
+		,	DIALOG_crvg_anaferon	//dialogId
+		,	"caravan@_AnaferonInit" //scriptId
+		,	AIPACKET_PARTY_VIC_DEFENSIVE //aiPack
+		,	BAG_Empty //bagId
+		,	TEAM_QuestNpc //teamId
+		,	8//level
+		,	2//reaction
+		,	0	//isNervous
+	));//
+
+		 // Находчивый Василий
+	availableGuards.insertLast(CaravanGuardInfo(
+			NPC_PID_ToughMaleThug//NPC_PID_MaleTrapper //Pid
+		,	DIALOG_crvg_vasiliy	//dialogId
+		,	"caravan@_VasyaInit" //scriptId
+		,	AIPACKET_BOUNTY_HUNTER //aiPack
+		,	BAG_Empty //bagId
+		,	TEAM_QuestNpc //teamId
+		,	8//level
+		,	3//reaction
+		,	0//isNervous
+	));//
+
+		 // Киллелпролол
+	availableGuards.insertLast(CaravanGuardInfo(
+			NPC_PID_NCRRangerMale //Pid
+		,	DIALOG_crvg_killerlolpro	//dialogId
+		,	"caravan@_KillerInit" //scriptId
+		,	AIPACKET_BOUNTY_HUNTER  //aiPack
+		,	BAG_Empty //bagId
+		,	TEAM_QuestNpc //teamId
+		,	25//level
+		,	1//reaction
+		,	2//isNervous
+	));//
+
+		 // Зомби
+	availableGuards.insertLast(CaravanGuardInfo(
+			NPC_PID_ToughGhoul //Pid
+		,	DIALOG_crvg_zombie	//dialogId
+		,	"caravan@_ZombieInit" //scriptId
+		,	AIPACKET_PARTY_SULIK_CUSTOM //aiPack
+		,	BAG_Empty //bagId
+		,	TEAM_QuestNpc //teamId
+		,	15//level
+		,	4//reaction
+		,	0//isNervous
+	));//
+		 // Рэт
+	availableGuards.insertLast(CaravanGuardInfo(
+			NPC_PID_ToughFemaleThug//NPC_PID_PressGangFemale //Pid
+		,	DIALOG_crvg_rat	//dialogId
+		,	"caravan@_RatInit" //scriptId
+		,	AIPACKET_PARTY_MACRAE_AGGRESSIVE //aiPack
+		,	BAG_Empty //bagId
+		,	TEAM_QuestNpc //teamId
+		,	12//level
+		,	1//reaction
+		,	0//isNervous
+	));//
+	if(guardsNum>availableGuards.length()){guardsNum=availableGuards.length();}
+	CaravanGuardInfo []chosenGuards;
+	uint chosenOne=0;
+
+	for(uint i=1; i<=guardsNum; i++)
+	{
+		chosenOne=Random(0, availableGuards.length()-1);
+		chosenGuardsю.insertLast(availableGuards[chosenOne]);
+		availableGuards.removeAt(chosenOne);
+	}
+	return chosenGuards;
+}*/
+// пытается сказать фразу в кассу к происходящему событию
+// с учетом уровня "нервозности" гарда
+// чем выше уровень нервозности, тем выше шанс
+// guard - охранник
+// msgId - номер строки в диалоге охранника
+// boost - увеличивает вероятность
+// если фраза сказана - функция вернет true, иначе false
+bool _SayNervous(Critter& guard, uint msgID, uint boost)
+{
+	DL2("try say nrv" + DLGSTR(guard.Stat[ST_DIALOG_ID],msgID));
+	if(Random(guard.NervosityLvl+boost, 6)>=5)
+	{
+		guard.SayMsg(SAY_NORM_ON_HEAD,TEXTMSG_DLG,DLGSTR(guard.Stat[ST_DIALOG_ID],msgID));
+		return true;
+	}
+	return false;
+}
+// охранник подходит к проводнику
+void _MoveToCaravanLeader(Critter & guard, Critter & leader, uint radius)
+{
+	uint16 hx=leader.HexX;
+	uint16 hy=leader.HexY;
+	Map @ map=guard.GetMap();
+	if (!valid(map)) return;
+
+	if(GetFreeHex(map, radius, hx, hy))
+	{
+		bool run=false;
+		if ((Random (1,3))==1){run=true;}
+		AddWalkPlane(guard, AI_PLANE_WALK_PRIORITY, PLANE_GOTO_HOME, 0, hx, hy, Random(1,5), run, 1);
+	}
+}
+/*-------------------- -----обработка------   -------------------*/
+// Охранник на локации, и ничего особенного не делает _GuardIdle
+// иногда говорит случайную фразу из диалога
+void _GuardIdle(Critter& guard)
+{
+	CaravanInfo@ ci=_GetCaravan(guard.CrvId);
+	// Удаление охранника, если он непонятно где завис
+	// Охранники должны существовать только в момент движения или остановки каравана на энке
+	if(valid(ci))
+	{
+		if(ci.CaravanStatus==CRV_STATUS_BEFORE_START||ci.CaravanStatus==CRV_STATUS_PREPARE||ci.CaravanStatus==CRV_STATUS_END)
+		{
+			DL("kill caravan guard");
+			DeleteNpc(guard);
+			return;
+		}
+	}
+	if(valid(guard.GetMap()))
+	{
+
+		if(guard.IdleCount>=20)
+		{
+			DL2("NextPhrase");
+			if(_SayNervous(guard,PHRASE_BORING,3))
+			{
+				guard.IdleCount=0;
+				guard.SendMessage(MSG_WHERE_IS_DA_LEADER, guard.Id, MESSAGE_TO_ALL_ON_MAP);
+
+				return;
+			}
+		}
+		guard.IdleCount+=guard.NervosityLvl;
+		guard.IdleCount+=1;
+		return;
+
+	}else{
+
+		if(guard.IdleCount>0)
+		{
+			guard.IdleCount=0;
+		}
+
+	}
+}
+// Пришло сообщение отправленное с помощью Critter::SendMessage.
+void _GuardOnMessage(Critter& guard, Critter& fromCr, int message, int value)
+{
+	if(message==MESSAGE_CARAVANEER_GOTO_HOME)
+	{
+		if ((fromCr.NpcRole==NPC_ROLE_CARAVAN_GUIDE) && (fromCr.CrvId==guard.CrvId))
+		{
+			//import bool AddMiscPlane(Critter& npc, uint priority, uint waitSecond, string@ funcName) from "npc_planes";
+			guard.IdleCount=0;
+			AddMiscPlane(guard,AI_PLANE_MISC_PRIORITY,guard.Reaction*60, "caravan@plane_MiscGoHomePos");
+
+		}
+	}
+
+}
+
+// завершение выполнения некоего плана охранником
+int _GuardPlaneEnd(Critter& guard, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem)
+{
+	// нпц без проблем дошел до домашней позиции
+	if(plane.Identifier==PLANE_GOTO_HOME && reason==REASON_SUCCESS)
+	{
+		guard.SetHomePos(guard.HexX , guard.HexY, Random(1,5));
+	}
+	//guard.Say(SAY_NORM_ON_HEAD, "reason=" +reason);
+	// у нпц проблемы - не может дойти до домашней позиции
+	else if(plane.Identifier==PLANE_GOTO_HOME)
+	{
+		if(reason==REASON_HEX_TOO_FAR||
+			reason==REASON_HEX_BUSY||
+			reason==REASON_HEX_BUSY_RING||
+			reason==REASON_DEADLOCK||
+			reason==REASON_TRACE_FAIL||
+			reason==REASON_POSITION_NOT_FOUND||
+			reason==REASON_FIND_PATH_ERROR)
+		{
+			AddMiscPlane(guard, AI_PLANE_MISC_PRIORITY, guard.Reaction*60, "caravan@plane_MiscGoHomePos");
+		}
+	}
+
+	return PLANE_RUN_GLOBAL;
+}
+
+// убит ктото
+void _SomeCritterDead(Critter& guard, Critter& fromCrit, Critter@ killer)
+{
+	if (!valid(killer)){return;}
+	if(killer.Id==guard.Id)
+	{
+		guard.SayMsg(SAY_NORM_ON_HEAD,TEXTMSG_DLG,DLGSTR(guard.Stat[ST_DIALOG_ID],PHRASE_KILL_SOMEONE));
+
+		return;
+	}
+}
+// атакован кем-то
+bool _GuardAttacked(Critter& guard, Critter& attacker)
+{
+
+	if(	guard.StatBase[ST_CURRENT_HP]*3<guard.Stat[ST_MAX_LIFE])
+	{
+		_SayNervous(guard, PHRASE_LOW_HP, 3);
+	}else{
+		_SayNervous(guard, PHRASE_ATTACKED, 0);
+	}
+
+	return false;
+}
+
+// охранник обворован
+void _GuardStealing(Critter& cr, Critter& thief, bool success, Item& item, uint count)
+{
+	if(success&&thief.IsPlayer())
+	{
+		AddAttackPlane(cr,0,thief);
+		if (!cr.CheckEnemyInStack(thief.Id)) cr.AddEnemyInStack(thief.Id);
+	}
+}
+
+// убит патрульный ГУ
+void _VCPatrolDead (Critter& cr, Critter@ killer)
+{
+	CaravanInfo@ ci=_GetCaravan(cr.CrvId);
+	if(valid(ci))
+	{
+		if(ci.CaravanStatus==CRV_STATUS_ON_ENCOUNTER)
+		{
+			for(uint i=0, iMax=ci.Caravaneers.length(); i<iMax; i++)
+			{
+				Critter@ player=GetCritter(ci.Caravaneers[i]);
+				if(valid(player) && player.IsPlayer())
+				{
+					GameVar@ counter=GetLocalVar(LVAR_vc_dead_patrollers, player.Id);
+					if(valid(counter))
+						counter=counter.GetValue() + 1;
+				}
+			}
+		}
+	}
+}
+/*-------------------------специфические обработки-------------------------*/
+// Находчивый Василий нервно шарится по округе гораздо чаще, чем остальные
+void e_VasyaIdle(Critter& guard)
+{
+	if(guard.IsNoPlanes())
+	{
+		if(guard.IdleCount%3==1&&guard.IsFree())
+		{
+
+			guard.SendMessage(MSG_WHERE_IS_DA_LEADER, guard.Id, MESSAGE_TO_ALL_ON_MAP);
+		}
+
+	}
+
+	_GuardIdle(guard);
+}
+/*-------------------------планы---------------------------------*/
+// охранник подходит ближе к проводнику, если у него нет других целей
+void plane_MiscGoHomePos(Critter& guard)
+{
+
+	guard.SendMessage(MSG_WHERE_IS_DA_LEADER, guard.Id, MESSAGE_TO_ALL_ON_MAP);
+
+}
+
+/*-------------------------инициализация-------------------------*/
+void _DefaultGuardInit(Critter& guard, bool firstTime)
+{
+	if(guard.IsDead())
+	{
+		DeleteNpc(guard);
+		return;
+	}
+	if (!firstTime)
+	{
+	  if (!valid(guard.GetMap()))
+	  {
+			DL("Critter on global. Trying transit to home pos");
+			uint mapId=0;
+			uint16 x=0;
+			uint16 y=0;
+			uint8 dir=0;
+			guard.GetHomePos (mapId, x, y, dir);
+			guard.TransitToMap(mapId, x, y, dir);
+			DL("kill guard");
+			DeleteNpc(guard);
+			return;
+	  }
+	}
+	//void _FuncName(Critter& cr, Critter& fromCr, int message, int value)
+	guard.SetEvent(CRITTER_EVENT_MESSAGE,"_GuardOnMessage");
+	guard.SetEvent(CRITTER_EVENT_PLANE_END,"_GuardPlaneEnd");
+	guard.SetEvent(CRITTER_EVENT_SMTH_DEAD,"_SomeCritterDead");
+	guard.SetEvent(CRITTER_EVENT_ATTACKED,"_GuardAttacked");
+	guard.SetEvent(CRITTER_EVENT_IDLE,"_GuardIdle");
+
+	// охранников не ограбить
+	guard.ModeBase[MODE_NO_STEAL]=1;
+	// торговать они не будут
+	guard.ModeBase[MODE_NO_BARTER]=1;
+	guard.ModeBase[MODE_NO_LOOT]=0;
+	// из мертвых не встанут
+	guard.StatBase[ST_REPLICATION_TIME]=-1;
+}
+
+// тоже, но бесконечные патроны
+void _DefaultGuardInitUnlimAmmo(Critter& guard, bool firstTime)
+{
+	guard.ModeBase[MODE_UNLIMITED_AMMO]=1;
+	_DefaultGuardInit(guard, firstTime);
+}
+
+void _VCPatrolInit(Critter& guard, bool firstTime)
+{
+	guard.ModeBase[MODE_UNLIMITED_AMMO]=1;
+	_DefaultGuardInit(guard, firstTime);
+	guard.SetEvent(CRITTER_EVENT_DEAD, "_VCPatrolDead");
+}
+
+// Патрульные для квеста Патруль Рейнджеров
+void _NcrRangerPatrolInit(Critter& guard, bool firstTime)
+{
+	GameVar @ qVar=GetLocalVar(LVAR_q_ncr_hate_patrol, guard.Id);
+	if(valid(qVar))
+	{
+		qVar=2;
+	}
+
+	guard.StatBase[ST_MAX_LIFE]=Random(150,250);
+	guard.StatBase[ST_CURRENT_HP]=guard.Stat[ST_MAX_LIFE];
+	guard.StatBase[ST_EXPLODE_RESIST]=Random(50,90);
+	guard.StatBase[ST_NORMAL_RESIST]=Random(20,50);
+	guard.ModeBase[MODE_UNLIMITED_AMMO]=1;
+	_DefaultGuardInit(guard, firstTime);
+}
+/*-------------------------специфическая-------------------------*/
+void _BomberInit(Critter& guard, bool firstTime)
+{
+	if(firstTime)
+	{
+		//#define PID_FRAG_GRENADE                    (25) //Grouped
+		Item@ item=guard.AddItem(PID_FRAG_GRENADE, 14);
+		//guard.MoveItem(item.Id,1,SLOT_HAND2);
+		guard.SetFavoriteItem(SLOT_HAND1,PID_FRAG_GRENADE);
+		//#define PID_STIMPAK                         (40)
+		guard.AddItem(PID_STIMPAK, 10);
+		//#define PID_CROWBAR                         (20)
+		guard.AddItem(PID_CROWBAR, 1);
+		//#define PID_DYNAMITE                        (51) //Has timer
+		guard.AddItem(PID_DYNAMITE, 1);
+		//#define PID_LEATHER_ARMOR                   (1)
+		Item @ item1=guard.AddItem(PID_LEATHER_ARMOR, 1);
+		guard.SetFavoriteItem(SLOT_ARMOR,PID_LEATHER_ARMOR);
+		guard.MoveItem(item1.Id,1,SLOT_ARMOR);
+	}
+
+	guard.SkillBase[SK_THROWING]=300;
+
+	// default init
+	_DefaultGuardInit(guard,firstTime);
+
+	guard.ModeBase[MODE_NO_BARTER]=0;
+	guard.ModeBase[MODE_UNLIMITED_AMMO]=1;
+}
+void _AnaferonInit(Critter& guard, bool firstTime)
+{
+
+	if(firstTime)
+	{
+		//PID_HUNTING_RIFLE
+		Item@ item=guard.AddItem(PID_HUNTING_RIFLE, 1);
+		guard.SetFavoriteItem(SLOT_HAND1,PID_HUNTING_RIFLE);
+		//guard.MoveItem(item.Id,1,SLOT_HAND2);
+		//#define PID_223_FMJ                         (34)
+		guard.AddItem(PID_223_FMJ, 50);
+		//#define PID_COMBAT_KNIFE                    (236)
+		guard.AddItem(PID_COMBAT_KNIFE, 1);
+		//#define PID_LEATHER_ARMOR                   (1)
+		Item@ item1=guard.AddItem(PID_LEATHER_ARMOR, 1);
+		guard.MoveItem(item1.Id,1,SLOT_ARMOR);
+		guard.SetFavoriteItem(SLOT_ARMOR,PID_LEATHER_ARMOR);
+		//#define PID_HEALING_POWDER                  (273)
+		guard.AddItem(PID_HEALING_POWDER, 6);
+		//#define PID_STIMPAK                         (40)
+		guard.AddItem(PID_STIMPAK, 2);
+	}
+
+
+
+	// default init
+	_DefaultGuardInit(guard,firstTime);
+	guard.ModeBase[MODE_UNLIMITED_AMMO]=1;
+}
+void _VasyaInit(Critter& guard, bool firstTime)
+{
+	if(firstTime)
+	{
+		//#define PID_ASSAULT_RIFLE                   (23)
+		Item@ item=guard.AddItem(PID_ASSAULT_RIFLE, 1);
+		//guard.MoveItem(item.Id,1,SLOT_HAND1);
+		guard.SetFavoriteItem(SLOT_HAND1,PID_ASSAULT_RIFLE);
+		//#define PID_SPIKED_KNUCKLES                 (234)
+		guard.AddItem(PID_SPIKED_KNUCKLES, 1);
+		//#define PID_5MM_JHP                         (35)
+		guard.AddItem(PID_5MM_JHP, 100);
+		//#define PID_JET              (259)
+		guard.AddItem(PID_JET, 10);
+		//#define PID_STIMPAK                         (40)
+		guard.AddItem(PID_STIMPAK, 5);
+		//#define PID_BEER                            (124)
+		guard.AddItem(PID_BEER, 1);
+		//#define PID_BOOZE                           (125)
+		guard.AddItem(PID_BOOZE, 1);
+		//#define PID_METAL_ARMOR                     (2)
+		Item@ item1=guard.AddItem(PID_METAL_ARMOR, 1);
+		guard.SetFavoriteItem(SLOT_ARMOR,PID_METAL_ARMOR);
+		guard.MoveItem(item1.Id,1, SLOT_ARMOR);
+		//#define PID_LIGHTER                         (101) //Zippo
+		guard.AddItem(PID_LIGHTER, 1);
+		//#define PID_CIGARETTES                      (541) //Сигареты
+		guard.AddItem(PID_CIGARETTES, 1);
+	}
+	// default init
+	_DefaultGuardInit(guard,firstTime);
+	// поторговать с Василием? легко!
+	guard.ModeBase[MODE_NO_BARTER]=0;
+	guard.SetEvent(CRITTER_EVENT_IDLE,"e_VasyaIdle");
+}
+void _KillerInit(Critter& guard, bool firstTime)
+{
+	if(firstTime)
+	{
+		//#define PID_PLASMA_RIFLE                    (15)
+		guard.AddItem(PID_PLASMA_RIFLE, 1);
+		//#define PID_TURBO_PLASMA_RIFLE              (233)
+		Item@ item=guard.AddItem(PID_TURBO_PLASMA_RIFLE, 1);
+		guard.MoveItem(item.Id,0,SLOT_HAND2);
+		guard.SetFavoriteItem(SLOT_HAND1,PID_TURBO_PLASMA_RIFLE);
+
+		//
+		//#define PID_PLASMA_PISTOL_EXT_CART          (406)
+		guard.AddItem(PID_PLASMA_PISTOL_EXT_CART, 1);
+		//#define PID_SUPER_SLEDGE                    (115)
+		guard.AddItem(PID_SUPER_SLEDGE, 1);
+		//#define PID_SMALL_ENERGY_CELL               (38)
+		guard.AddItem(PID_SMALL_ENERGY_CELL, 100);
+		//#define PID_MICRO_FUSION_CELL               (39)
+		guard.AddItem(PID_MICRO_FUSION_CELL, 100);
+		//#define PID_COMBAT_ARMOR_MK_II              (381)
+		Item@ item1=guard.AddItem(PID_COMBAT_ARMOR_MK_II, 1);
+		guard.SetFavoriteItem(SLOT_ARMOR,PID_COMBAT_ARMOR_MK_II);
+		//guard.MoveItem(item1.Id,0, SLOT_ARMOR);
+		//#define PID_SUPER_STIMPAK
+		guard.AddItem(PID_SUPER_STIMPAK, 15);
+		//#define PID_JET                             (259)
+		guard.AddItem(PID_JET, 4);
+		//#define PID_PSYCHO                          (110)
+		guard.AddItem(PID_PSYCHO, 2);
+
+	}
+	guard.SkillBase[SK_ENERGY_WEAPONS]=280;
+	guard.SkillBase[SK_MELEE_WEAPONS]=200;
+	guard.PerkBase[PE_BETTER_CRITICALS]=Random(0,1);	
+	guard.PerkBase[PE_SNIPER]=1;
+	guard.ModeBase[MODE_NO_LOOT]=0;
+	
+
+	// default init
+	_DefaultGuardInit(guard,firstTime);
+}
+void _ZombieInit(Critter& guard, bool firstTime)
+{
+	if(firstTime)
+	{
+		//#define PID_10MM_SMG                        (9)PID_10MM_JHP
+		Item@ item=guard.AddItem(PID_10MM_SMG, 1);
+		guard.SetFavoriteItem(SLOT_HAND1,PID_WAKIZASHI_BLADE);
+		guard.SetFavoriteItem(SLOT_HAND2,PID_WAKIZASHI_BLADE);
+		//guard.MoveItem(item.Id,1,SLOT_HAND1);
+		guard.AddItem(PID_10MM_JHP, 5);
+		//#define PID_WAKIZASHI_BLADE                 (522) x2
+		Item@ item1=guard.AddItem(PID_WAKIZASHI_BLADE, 2);
+		//guard.MoveItem(item1.Id,1,SLOT_HAND2);
+		//#define PID_PSYCHO                          (110)
+		guard.AddItem(PID_PSYCHO, 10);
+		//#define PID_JET                             (259)
+		guard.AddItem(PID_JET, 10);
+		//#define PID_STIMPAK                         (40)
+		guard.AddItem(PID_STIMPAK, 10);
+		// никакую броню зомби носить не может
+		//#define PID_ADVANCED_POWER_ARMOR            (348)
+		//Item@ item2=guard.AddItem(PID_ADVANCED_POWER_ARMOR, 1);
+		//guard.SetFavoriteItem(SLOT_ARMOR,PID_ADVANCED_POWER_ARMOR);
+		//guard.MoveItem(item2.Id,1,SLOT_ARMOR);
+	}
+
+	guard.StatBase[ST_NORMAL_RESIST]=100;
+	guard.StatBase[ST_LASER_RESIST]=100;
+	guard.StatBase[ST_FIRE_RESIST]=100;
+	guard.StatBase[ST_PLASMA_RESIST]=100;
+	guard.StatBase[ST_ELECTRO_RESIST]=100;
+	guard.StatBase[ST_EMP_RESIST]=100;
+	guard.SkillBase[SK_MELEE_WEAPONS]=300;
+	guard.PerkBase[PE_SLAYER]=1;
+	guard.PerkBase[PE_BETTER_CRITICALS]=1;
+
+		// default init
+	_DefaultGuardInit(guard,firstTime);
+}
+void _MazzyInit(Critter& guard, bool firstTime)
+{
+	if(firstTime)
+	{
+		//#define PID_SPIKED_KNUCKLES                 (234)
+		Item@ item=guard.AddItem(PID_SPIKED_KNUCKLES, 1);
+		guard.SetFavoriteItem(SLOT_HAND1,PID_SPIKED_KNUCKLES);
+		guard.MoveItem(item.Id,0,SLOT_HAND1);
+	}
+
+	// default init
+	_DefaultGuardInit(guard,firstTime);
+}
+void _RatInit(Critter& guard, bool firstTime)
+{
+	if(firstTime)
+		{
+		//#define PID_INDEPENDENT                     (353) XL703 5mm
+		Item@ item=guard.AddItem(PID_INDEPENDENT, 1);
+		guard.SetFavoriteItem(SLOT_HAND1,PID_INDEPENDENT);
+		//guard.MoveItem(item.Id,1,SLOT_HAND2);
+		//#define PID_5MM_JHP                         (35)
+		guard.AddItem(PID_5MM_JHP, 50);
+		//#define PID_223_PISTOL                      (241)
+		guard.AddItem(PID_223_PISTOL, 1);
+		//#define PID_223_FMJ                         (34)
+		guard.AddItem(PID_223_FMJ, 30);
+		//#define PID_HK_G11E                         (391)  // 4.7mm Caseless
+		guard.AddItem(PID_HK_G11E, 1);
+		//#define PID_4_7MM_CASELESS                  (359)
+		guard.AddItem(PID_4_7MM_CASELESS, 50);
+		//#define PID_STIMPAK                         (40)
+		guard.AddItem(PID_STIMPAK, 5);
+		//#define PID_SHOVEL                          (289) //Лопата
+		guard.AddItem(PID_SHOVEL, 1);
+		//#define PID_SUPER_STIMPAK
+		guard.AddItem(PID_SUPER_STIMPAK, 1);
+		//#define PID_METAL_ARMOR_MK_II               (380)
+		Item@ item1=guard.AddItem(PID_METAL_ARMOR_MK_II, 1);
+		guard.SetFavoriteItem(SLOT_ARMOR,PID_METAL_ARMOR_MK_II);
+		guard.MoveItem(item1.Id,1,SLOT_ARMOR);
+	}
+
+	// default init
+	_DefaultGuardInit(guard,firstTime);
+}
+void _PetreskuInit(Critter& guard, bool firstTime)
+{
+	if(firstTime)
+	{
+		//PID_DESERT_EAGLE
+		//#define PID_44_MAGNUM_JHP                   (31)
+		//#define PID_SUPER_STIMPAK                   (144)
+		//#define PID_JET                             (259)
+		//#define PID_PURPLE_ROBE                  (524) //PID_BRIDGEKEEPERS_ROBE
+		Item@ item=guard.AddItem(PID_DESERT_EAGLE, 1);
+		//guard.MoveItem(item.Id,1,SLOT_HAND2);
+		//guard.AddItem(PID_44_MAGNUM_JHP, 20);
+		guard.AddItem(PID_SUPER_STIMPAK, 10);
+		guard.AddItem(PID_JET, 10);
+		Item@ item1=guard.AddItem(PID_PURPLE_ROBE, 1);
+		guard.SetFavoriteItem(SLOT_ARMOR,PID_PURPLE_ROBE);
+		guard.MoveItem(item1.Id,1,SLOT_ARMOR);
+	}
+	guard.PerkBase[PE_BONUS_HTH_DAMAGE]=1;
+	guard.PerkBase[PE_LIVING_ANATOMY]=1;
+	guard.PerkBase[PE_SILENT_DEATH]=1;
+	guard.PerkBase[PE_SLAYER]=1;
+	guard.PerkBase[PE_BETTER_CRITICALS]=1;
+	guard.StatBase[ST_CRITICAL_CHANCE]=120;
+	guard.SkillBase[SK_UNARMED]=300;
+	guard.StatBase[ST_STRENGTH]=10;
+
+	_DefaultGuardInit(guard,firstTime);
+}
+void _BHCaravanGuardInit(Critter& guard, bool firstTime)
+{
+	 _DefaultGuardInitUnlimAmmo(guard, firstTime);
+	// охранников не ограбить
+	guard.ModeBase[MODE_NO_STEAL]=0;
+	guard.ModeBase[MODE_NO_LOOT]=0;
+	guard.SetEvent(CRITTER_EVENT_STEALING,"_GuardStealing");
+}
+// */
+/* ************************************* Поведение караванщика ************************************** */
+void _AmplifyCaravaneer(Critter & cr)
+{
+	DL("Critter level="+cr.Stat[ST_LEVEL]);
+	_AmplifyCaravaneer(cr, uint(cr.Stat[ST_LEVEL]/6));
+}
+void _AmplifyCaravaneer(Critter & cr, uint lvl)
+{
+	DL("amplify called"+lvl);
+	cr.StatBase[ST_AGILITY]=CLAMP(cr.StatBase[ST_AGILITY]+lvl*1,5,10);
+	cr.StatBase[ST_MAX_LIFE]=CLAMP(50*lvl,100,780);
+	cr.StatBase[ST_CURRENT_HP]=cr.Stat[ST_MAX_LIFE];
+	cr.StatBase[ST_LASER_RESIST]=CLAMP(cr.StatBase[ST_LASER_RESIST]+lvl*20,30,250);
+	cr.StatBase[ST_FIRE_RESIST]=CLAMP(cr.StatBase[ST_FIRE_RESIST]+lvl*20,30,250);
+	cr.StatBase[ST_PLASMA_RESIST]=CLAMP(cr.StatBase[ST_PLASMA_RESIST]+lvl*20,30,250);
+	cr.StatBase[ST_ELECTRO_RESIST]=CLAMP(cr.StatBase[ST_ELECTRO_RESIST]+lvl*20,30,250);
+	cr.StatBase[ST_EXPLODE_RESIST]=CLAMP(cr.StatBase[ST_EXPLODE_RESIST]+lvl*20,30,250);
+	cr.StatBase[ST_NORMAL_RESIST]=CLAMP(cr.StatBase[ST_ELECTRO_RESIST]+lvl*20,30,250);
+}
+// настройка поведения караванщика
+void _SetEvents(Critter & cr, uint model)
+{
+	switch (model)
+	{
+		// трус
+		case MODEL_CRVNR_COWARD:
+			cr.StatBase[ST_AI_ID]=AIPACKET_PRIMITIVE_COWARD;
+			cr.SetEvent(CRITTER_EVENT_ATTACKED,"e_CowardAttacked");
+			break;
+		default:
+			break;
+	}
+}
+
+bool e_CowardAttacked(Critter& cr, Critter& attacker)
+{
+	// если здоровье нпц<95%
+	//cr.Say(SAY_NORM_ON_HEAD,"my health="+ cr.StatBase[ST_CURRENT_HP] + " max hp="+cr.StatBase[ST_MAX_LIFE]);
+	if(cr.StatBase[ST_MAX_LIFE]*75>cr.StatBase[ST_CURRENT_HP]*100)
+	{
+
+		uint16 hx=cr.HexX;
+		uint16 hy=cr.HexY;
+		_NpcEraseAllPlanes(cr);
+
+		if(GetFreeHex(cr.GetMap(), 25, hx, hy))
+		{
+			AddWalkPlane(cr, AI_PLANE_WALK_PRIORITY*10,  hx, hy, Random(1,5), true, 1);
+			AddMiscPlane(cr,AI_PLANE_WALK_PRIORITY*10-1,__FullSecond+Random(0,1)*60,"caravan@plane_MiscWaitInAttack");
+		}
+
+
+		return true;
+	}
+	return false;
+}
+// караванщик отбегает и ждет несколько минут
+void plane_MiscWaitInAttack(Critter& cr)
+{
+}

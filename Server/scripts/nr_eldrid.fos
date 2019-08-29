@@ -1,0 +1,135 @@
+// Author: Ra
+// Скрипт апдейтов оружия у Елдриджа
+
+#include "_macros.fos"
+#include "_defines.fos"
+#include "random_parameters_items.fos"
+
+// Определяет какое именно оружие у игрока
+uint r_CheckWeaponType(Critter& player, Critter@ npc)
+{
+	Item@ realWeapon=_CritGetItemHand(player);
+	if(not valid(realWeapon)) return 10; // нет ствола в руках
+
+	// Тяжелое оружие
+	if(realWeapon.Proto.Weapon_Skill_0==SK_BIG_GUNS) return 15;
+
+	// Энергетическое оружие
+	if(realWeapon.Proto.Weapon_Skill_0==SK_ENERGY_WEAPONS) return 16;
+
+	// Другое не легкое оружие
+	if(realWeapon.Proto.Weapon_Skill_0!=SK_SMALL_GUNS) return 17;
+	
+	// Гвоздомет
+	if(realWeapon.GetProtoId()==PID_NAILGUN) return 17;
+
+	// Гаус винтовка или пистолет
+	if(realWeapon.GetProtoId()==PID_PK12_GAUSS_PISTOL || realWeapon.GetProtoId()==PID_M72_GAUSS_RIFLE) 
+		return 12;
+
+	// Крупнокалиберное
+	if(realWeapon.Proto.Weapon_Perk==WEAPON_PERK_BETTER_CRITICALS) return 13;
+
+	// Снайперское
+	if(realWeapon.Proto.Weapon_Perk==WEAPON_PERK_SCOPE_RANGE) return 14;
+	
+	return 11; // по умолчанию
+}
+
+// Формирование ветки с названием оружия (@lex item_name@)
+void dlg_PrepareNameWeapon(Critter& player, Critter@ npc, string@ lexems)
+{
+	if(not IS_DIALOG_GENERATED(lexems)) return;
+	
+	Item@ realWeapon=_CritGetItemHand(player);
+	if(not valid(realWeapon)) return;
+	
+	lexems="$item_name@msg ITEM " + realWeapon.GetProtoId()*100 + "@";
+}
+
+// Проверка, есть ли у игрока нужная сумма
+// unicumMul=2 для двойной суммы и т.д.
+bool d_CheckMoney(Critter& player, Critter@ npc, int unicumMul)
+{
+	Item@ realWeapon=getRealWeapon(player);
+	if(not valid(realWeapon)) return false;
+	Item@ money=player.GetItem(PID_BOTTLE_CAPS, -1);
+	if(not valid(money)) return false;
+	if(money.GetCount()<getCost(realWeapon)* uint(unicumMul)) return false;
+	return true;
+}
+
+void r_DelMoney(Critter& player, Critter@ npc, int unicumMul)
+{
+	Item@ realWeapon=getRealWeapon(player);
+	Item@ money=player.GetItem(PID_BOTTLE_CAPS, -1);
+	if(not valid(money)) return;
+	if(money.GetCount()<=getCost(realWeapon) * uint(unicumMul))
+	{
+		DeleteItem(money);
+		return;
+	}
+	money.SetCount(money.GetCount()-getCost(realWeapon)* uint(unicumMul));
+}
+
+// Формирование ветки с ценой обычного апгрейда (@lex cost@)
+void dlg_PrepareCost(Critter& player, Critter@ npc, string@ lexems)
+{
+	if(not IS_DIALOG_GENERATED(lexems)) return;
+
+	Item@ realWeapon=getRealWeapon(player);
+	if(not valid(realWeapon)) return;
+
+	lexems +="$cost" + (getCost(realWeapon));
+}
+
+// Формирование ветки с ценой дорогого апгрейда (@lex cost@)
+void dlg_PrepareUnicumCost(Critter& player, Critter@ npc, string@ lexems)
+{
+	if(not IS_DIALOG_GENERATED(lexems)) return;
+
+	Item@ realWeapon=getRealWeapon(player); 
+	if(not valid(realWeapon)) return;
+
+	lexems +="$cost" + (getCost(realWeapon)*2);
+}
+
+uint getCost(Item@ weapon)
+{
+	return weapon.Cost!=0?weapon.Cost:weapon.Proto.Cost;
+}
+
+// Проверка возможности данного бонуса
+bool d_CheckPosUpgrade(Critter& player, Critter@ npc, int valNum)
+{
+	Item@ realWeapon=getRealWeapon(player);
+	if(not valid(realWeapon)) return false;
+	
+	GameVar@ bonusState=GetLocalVar(valNum, realWeapon.Id);
+	if(not valid(bonusState)) return false;
+	if(bonusState.GetValue()>0) return false; 	// Проверка, есть ли уже такой бонус у оружия
+	return true;
+}
+
+// Установка бонуса оружия в диалоге, если есть локальная переменная, характеризирующая наличие бонуса
+void r_SetBonusWeapon(Critter& player, Critter@ npc, int bonusType, int valNum, int valueStat)
+{
+	Item@ realWeapon=getRealWeapon(player);
+	if(not valid(realWeapon)) return;
+	if(valNum<1) return;
+	
+	GameVar@ bonusState=GetLocalVar(valNum, realWeapon.Id);
+	if(not valid(bonusState)) return;
+	if(bonusState.GetValue()>0) return; 	// Проверка, есть ли уже такой бонус у оружия
+	bonusState=valueStat;
+	
+	setBonusWeapon(realWeapon, bonusType, valueStat>1?1:0, true);
+}
+
+Item@ getRealWeapon(Critter@ cr)
+{
+	Item@ realWeapon=cr.GetItem(0, SLOT_HAND1); 
+	if(not valid(realWeapon)) return null;
+    if(realWeapon.CritSlot!=SLOT_HAND1) return null;
+	return realWeapon;
+}

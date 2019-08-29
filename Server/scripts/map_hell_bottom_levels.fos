@@ -1,0 +1,62 @@
+//Моб скрипт + радиация, которая не трогает мобов.
+//Сделан для нижних уровней, но пока используется и на шахтах в т.ч.
+
+#include "_macros.fos"
+#include "map_radiation.fos"
+#include "hell_level1.fos"
+
+import void ActivateMobScript(Map& map) from "mob";
+
+void _MapInit(Map& map, bool firstTime)
+{
+	ActivateMobScript(map);
+	map.SetLoopTime(0,RADIATION_LOOP);
+	map.SetData(0,RADIATION_DOSE_MIN);
+	map.SetData(1,RADIATION_DOSE_MAX);
+	map.SetEvent(MAP_EVENT_LOOP_0,"_MapLoopHell");
+}
+
+void _BottomLevelInit(Map& map, bool firstTime)
+{
+	map.SetLoopTime(0,RADIATION_LOOP);
+	map.SetData(0,RADIATION_DOSE_MIN);
+	map.SetData(1,RADIATION_DOSE_MAX);
+	map.SetEvent(MAP_EVENT_LOOP_0,"_MapLoopHell");
+}
+
+void _MinesInit(Map& map, bool firstTime)
+{
+	map.SetLoopTime(0,RADIATION_LOOP);
+	map.SetLoopTime(2, 30000);
+	map.SetData(0,RADIATION_DOSE_MIN*60);
+	map.SetData(1,RADIATION_DOSE_MAX*25);
+	map.SetEvent(MAP_EVENT_LOOP_0,"_MapLoopHell");
+}
+
+void _MapLoopHell(Map& map)
+{
+	AffectRadiationToPlayers(map,0);
+	map.SetLoopTime(0,RADIATION_LOOP);
+}
+
+void AffectRadiationToPlayers(Map& map, int value)
+{
+	if(value==0) value=Random(map.GetData(0),map.GetData(1));
+
+	Critter@[] critters;
+	map.GetCritters(0,FIND_LIFE_AND_KO|FIND_ONLY_PLAYERS,critters);
+	for(uint i=0,j=critters.length();i<j;i++) AffectRadiation(critters[i],value);
+}
+
+void _GurthrualInit(Critter& npc, bool firstTime)
+{
+	npc.StatBase[ST_TALK_DISTANCE] = 10;
+	npc.ModeBase[MODE_NO_LOOT] = 0;
+	npc.ModeBase[MODE_NO_STEAL] = 0;
+	npc.ModeBase[MODE_NO_DROP] = 0;
+	npc.PerkBase[PE_MORE_CRITICALS] = 3;
+	npc.PerkBase[PE_BETTER_CRITICALS] = 1;
+	npc.SkillBase[SK_UNARMED] += 150;
+	npc.StatBase[ST_ACTION_POINTS] += 6;
+	npc.StatBase[ST_KILL_EXPERIENCE] = 5000;
+}

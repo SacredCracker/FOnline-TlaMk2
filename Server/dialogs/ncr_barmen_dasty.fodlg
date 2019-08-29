@@ -1,0 +1,416 @@
+[comment]
+Ваши комментарии / Your comments.
+40 и дальше - квест на доставку еды шерифу для низкой инты
+65 и дальше - квест "найти шпиона для сантьяго"
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 0 #
+7 1010 D _param p ST_INTELLECT < 4 #
+2 1020 D _param p ST_INTELLECT > 3 @
+2 2000 None 0 #
+65506 2010 #
+6 2020 #
+0 2030 #
+20 2040 D _var p ncr_dusty_party_status_char = 0 D _var p ncr_dusty_party_status_global < 2 #
+31 2050 D _var p ncr_dusty_rotgut_counter > 19 D _var p ncr_dusty_beer_gamma_counter > 19 D _var p ncr_dusty_party_status_char = 1 R _var p ncr_dusty_party_status_global = 2 R _var p ncr_dusty_party_status_char = 2 #
+26 2060 D _var p ncr_dusty_party_status_global = 1 D _var p ncr_dusty_party_status_char = 1 D _var p ncr_dusty_beer_gamma_counter < 20 D _var p ncr_dusty_rotgut_counter < 20 #
+26 2070 D _var p ncr_dusty_party_status_char = 1 D _var p ncr_dusty_party_status_global = 1 D _var p ncr_dusty_rotgut_counter > 19 D _var p ncr_dusty_beer_gamma_counter < 20 #
+26 2080 D _var p ncr_dusty_party_status_char = 1 D _var p ncr_dusty_party_status_global = 1 D _var p ncr_dusty_rotgut_counter < 20 D _var p ncr_dusty_beer_gamma_counter > 19 #
+65 2090 D _var p q_ncr_santiaga_find_spy_status > 0 D _var p q_ncr_santiaga_find_spy_status < 17 #
+200 2100 D _param p ST_LEVEL > 1 D _param p ST_INTELLECT > 3 D _param p ST_KARMA > 0 D _param p SK_SPEECH > 50 @
+5 3000 None 0 #
+65506 3010 #
+0 3020 @
+6 4000 None 0 #
+5 4010 #
+49 4020 D _var p npc_story = 0 R _var p npc_story = 1 @
+7 5000 None 0 #
+0 5010 #
+65506 5020 #
+40 5030 D _var p ncr_dusty_food_delivery_status = 0 #
+44 5040 D _var p ncr_dusty_food_delivery_status < 3 D _var p ncr_dusty_food_delivery_status > 0 @
+20 6000 None 0 #
+21 6010 @
+21 7000 None 0 #
+22 7010 @
+22 8000 None 0 #
+23 8010 #
+0 8020 @
+23 9000 None 0 #
+24 9010 @
+24 10000 None 0 #
+25 10010 R _var p ncr_dusty_party_status_char = 1 R _var p ncr_dusty_party_status_global = 1 #
+0 10020 @
+25 11000 None 0 @
+26 12000 None 0 #
+0 12010 #
+27 12020 D _var p ncr_dusty_rotgut_counter < 20 D _item p PID_ROT_GUT > 0 R _item p PID_ROT_GUT - 1 R _var p ncr_dusty_rotgut_counter + 1 R _item p PID_BOTTLE_CAPS + 50 R _param p ST_EXPERIENCE + 250 #
+29 12030 D _var p ncr_dusty_rotgut_counter > 19 D _item p PID_ROT_GUT > 0 #
+28 12040 D _var p ncr_dusty_beer_gamma_counter < 20 D _item p PID_GAMMA_GULP_BEER > 0 R _item p PID_GAMMA_GULP_BEER - 1 R _var p ncr_dusty_beer_gamma_counter + 1 R _item p PID_BOTTLE_CAPS + 30 R _param p ST_EXPERIENCE + 250 #
+30 12050 D _var p ncr_dusty_beer_gamma_counter > 19 D _item p PID_GAMMA_GULP_BEER > 0 @
+27 13000 None 0 @
+28 14000 None 0 @
+29 15000 None 0 @
+30 16000 None 0 @
+31 17000 None 0 #
+48 17010 D _var p ncr_captain_flirt_status_char = 1 D _var p ncr_dorothy_gamma_status_char = 2 D _var p ncr_dumont_brkradio_status_char = 10 D _var p ncr_mira_trouble_status_char = 4 R _param p REPUTATION_NCR + 1 @
+40 18000 None 0 #
+41 18010 @
+41 19000 None 0 #
+42 19010 #
+0 19020 @
+42 20000 None 0 #
+0 20010 #
+43 20020 R _var p ncr_dusty_food_delivery_status = 1 R _item p PID_IGUANA_ON_A_STICK + 1 @
+43 21000 None 0 @
+44 22000 None 0 #
+45 22010 D _var p ncr_dusty_food_delivery_status = 1 #
+47 22020 D _var p ncr_dusty_food_delivery_status = 2 R _item p PID_REAL_BOTTLE_CAPS + 2 R _param p ST_EXPERIENCE + 1500 R _var p ncr_dusty_food_delivery_status = 3 #
+46 22030 D _var p ncr_dusty_food_delivery_status = 2 R _param p ST_EXPERIENCE + 500 R _var p ncr_dusty_food_delivery_status = 3 @
+45 23000 None 0 @
+46 24000 None 0 @
+47 25000 None 0 @
+48 26000 None 0 #
+0 26010 @
+49 27000 None 0 #
+0 27010 #
+50 27020 D _item p PID_BOTTLE_CAPS > 199 D _param p SK_SPEECH > 99 R _item p PID_BOTTLE_CAPS - 200 @
+50 28000 None 0 #
+0 28010 #
+51 28020 @
+51 29000 None 0 #
+52 29010 @
+52 30000 None 0 #
+53 30010 @
+53 31000 None 0 #
+54 31010 @
+54 32000 None 0 #
+55 32010 @
+55 33000 None 0 #
+0 33010 #
+56 33020 @
+56 34000 None 0 #
+57 34010 @
+57 35000 None 0 #
+58 35010 @
+58 36000 None 0 #
+0 36010 #
+59 36020 @
+59 37000 None 0 #
+60 37010 @
+60 38000 None 0 #
+61 38010 @
+61 39000 None 0 #
+62 39010 @
+62 40000 None 0 #
+63 40010 @
+63 41000 None 0 #
+0 41010 R _param p ST_EXPERIENCE + 800 R _param p REPUTATION_NCR + 1 R _script dialog@r_InfoMessage 1 1 @
+65 42000 None 0 #
+66 42010 @
+66 43000 None 0 #
+67 43010 #
+68 43020 @
+67 44000 None 0 @
+68 45000 None 0 #
+69 45010 @
+69 46000 None 0 #
+70 46010 @
+70 47000 None 0 #
+0 47010 @
+200 48000 dialog@dlg_ForSearching 0 #
+0 48010 #
+201 48020 @
+201 49000 None 0 #
+0 49010 #
+202 49020 D _item p PID_BOTTLE_CAPS > 149 R _item p PID_BOTTLE_CAPS - 150 @
+202 50000 dialog@dlg_TrySearching 0 #
+0 50010 &
+
+[russ]
+{100}{}{Дасти}
+{200}{}{Вы видите туповатого парня, протирающего стакан.}
+{210}{}{Это бармен.}
+{210}{}{Это грубого вида парень, с кривым носом и мятыми ушами, как будто он занимался боксом раньше.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{тупой}
+{1020}{}{Ответ}
+{2000}{}{Чем могу помочь?}
+{2010}{}{Выпить.}
+{2020}{}{Что происходит в городе?}
+{2030}{}{До свидания.}
+{2040}{}{Что-то у тебя вид какой-то унылый, Дасти. Проблемы?}
+{2050}{}{Дасти, насчет твоей "вечеринки"...}
+{2060}{}{Дасти, насчет твоей "вечеринки"...}
+{2070}{}{Дасти, насчет твоей "вечеринки"...}
+{2080}{}{Дасти, насчет твоей "вечеринки"...}
+{2090}{}{Дасти, привет! Говорят, бармены ничего не упускают. Ответишь на вопрос?}
+{2100}{}{Слушай, я хотел@sex@|||а| спросить, ты не видел одного человека?@@Слушай, я хотел@sex@|||а| узнать, ты ничего не слышал об одном человеке?@@Я ищу одного человека, ничего не слышал о нем?}
+{3000}{}{Не хотите выпить?}
+{3010}{}{Конечно.}
+{3020}{}{Нет.}
+{4000}{}{Если вам нужны неприятности, то идите пить например в Сырую Кожу. Если нужна работа, обратитесь к Бастеру или Даппо.}
+{4010}{}{Спасибо.}
+{4020}{}{А у тебя, Дасти, как дела?}
+{5000}{}{Чем могу помочь?}
+{5010}{}{Агу-агу! [Уйти]}
+{5020}{}{Твоя наливать! Моя пить!}
+{5030}{}{Работать! [Со свирепым видом постучать себя по груди] Крышки! Жрать! Работать!}
+{5040}{}{[Подмигнуть Дасти] Э! Крышки мне!}
+{6000}{}{[Махнул рукой] Эх... А тебе-то, что...}
+{6010}{}{Возможно,я сумею помочь?}
+{7000}{}{Хм, может быть... Тут, значит, такое дело, @sex@|друг||подруга|. Эти жулики, из правительства, собираются у меня закатить какой-то "фуршет". Я, конечно, не против. Только есть одно "но"...}
+{7010}{}{Продолжай.}
+{8000}{}{Дело в том, что у меня сейчас есть некие напряги с поставками выпивки. Нет, обычного бухла, его всегда завались. А вот с Рот Гутом и Гаммой плохо.}
+{8010}{}{Ты хочешь, чтобы я тебе помог доставить выпивку? Кто твой поставщик?}
+{8020}{}{Пить - вредно для здоровья. Пусть водичкой канапе запивают. Бывай, Дасти [Уйти] }
+{9000}{}{Не все так просто, @pname@. Был бы у меня надежный поставщик, я бы давно уже к нему обратился.}
+{9010}{}{Ну и где мне брать это пойло?}
+{10000}{}{Не знаю... Может в городе поспрашивать... Мне нужно по ящику Гаммы и Рот Гута. Но я заплачу тебе за каждую бутылку!}
+{10010}{}{По рукам! Помогу тебе не ударить в грязь лицом.}
+{10020}{}{Знаешь Дасти, нет у меня времени на поиски выпивки. [Уйти]}
+{11000}{}{Спасибо! Ты меня выручишь!}
+{12000}{}{Ну как, удалось найти что-нибудь?}
+{12010}{}{В процессе, но пока порадовать тебя ничем не могу. [Уйти]}
+{12020}{}{Да, у меня есть бутылка Рот Гута.}
+{12030}{}{Да, у меня есть бутылка Рот Гута.}
+{12040}{}{Да, у меня есть бутылка пива Гамма Бир.}
+{12050}{}{Да, у меня есть бутылка пива Гамма Бир.}
+{13000}{}{Отлично! За каждую бутылку Рот Гута я плачу 50 монет. Хорошая цена. Спасибо!}
+{14000}{}{Отлично! За каждую бутылку пива Гамма я плачу  30 монет. Хорошая цена. Спасибо!}
+{15000}{}{Нет, спасибо, Ретгут я весь собрал. А вот Гамма мне не помешала бы.}
+{16000}{}{Нет, спасибо, гамму я всю собрал. Рот Гута не хватает}
+{17000}{}{Все, приятель, спасибо за помощь! Выпивки теперь хватает.}
+{17010}{}{Да уж, заставил ты меня побегать по городу!}
+{18000}{}{Рад видеть тебя, мой безмозглый друг. Для тебя есть работа. Если конечно ты пообещаешь, что не сожрешь все сам по дороге.}
+{18010}{}{Работать! [Дико помотать головой] Жрать нельзя моя работать! Ты платить крышки?}
+{19000}{}{[Бармен с явным сомнением смотрит на вас и бормочет про себя] Жрать моя нельзя работать. Хм. Куда ставить запятую... Ну ладно. Рискнем. 
+Я заплачу тебе 2 [показывает 1 палец] монеты, если ты отнесешь жратву шерифу. И запомни. Шерифу нужна еда, а не кости и мусор, как в прошлый раз. Понял?}
+{19010}{}{[Cделать умное лицо]Рггачарггр!! 2 - мало крышек. СТО [Показать 3 пальца] - много крышек!}
+{19020}{}{Обман! Вокруг пальца. Не проведешь! [Уйти]}
+{20000}{}{Сто? За сто монет я сам схожу к шерифу. 5 монет - это все, что я могу предложить [Показывает 2 пальца] Получишь деньги, как вернешься от шерифа.}
+{20010}{}{5 Крышек мало! Уважать нужно! [Сплюнуть и уйти]}
+{20020}{}{5 Крышек! Давай жратву. Носить шерифу быстро. Крышки забирать быстро-быстро.}
+{21000}{}{Ну вот и договорились. Смотри, не растеряй еду по дороге. }
+{22000}{}{[Бармен очень внимательно смотрит в ваши глаза] Отнес еду шерифу? Все в порядке? Ничего не потерял? Точно?}
+{22010}{}{Шериф злой! Есть не хочет! Ругается!}
+{22020}{}{[Сделать обиженный вид] Относить быстро. Зря ты говорить. Шериф сыт!}
+{22030}{}{[Развести руками] Шериф сыт. Моя жрать! Вкусно! Дай еще!}
+{23000}{}{Ничего не знаю. Снова иди к шерифу. Постарайся ему понравиться. [Громко ржет]}
+{24000}{}{Сам все сожрал?? Вот ведь обжора. Зачем я только тебе поверил. Надо бы с тебя содрать деньги за обед, ну да черт с тобой. Уходи с глаз моих!}
+{25000}{}{Вот молодец! Твоя честно заработанная награда. Только учти. Узнаю, что ты меня обманул@sex@|||а| - ты об этом пожалеешь.}
+{26000}{}{Да, но я очень ценю твою помощь, @sex@|приятель||подруга|!}
+{26010}{}{Увидимся. [Уйти]}
+{27000}{}{Неплохо, неплохо. Выпьешь?}
+{27010}{}{Спасибо, настроения пить нет. Увидимся. [Уйти]}
+{27020}{}{Наливай! Сдачи не нужно![Положить на прилавок 200 монет]}
+{28000}{}{[Присвистывает и забирает деньги] Это чего "мы" сегодня такие добрые? [Протягивает стакан]}
+{28010}{}{Сам@sex@|||а| не пойму. [Выпить залпом и уйти]}
+{28020}{}{Ничего особенного. Просто настроение хорошее. Какие новости?}
+{29000}{}{Да ничего особенного. У нас здесь относительно тихо. Не то, что раньше, ух!}
+{29010}{}{А раньше, чего, весело было?}
+{30000}{}{Ну, гм, всякое случалось. Чего стоит, например, та же история про убийство сына президента.}
+{30010}{}{Что за чушь? Видел я его сына. У рейджеров торчит, хулиган малолетний.}
+{31000}{}{Кого ты видел@sex@|||а|?!? А... Я не о Карлсоне сейчас. О Танди. Она раньше президентом была...}
+{31010}{}{Угу, я слышал@sex@|||а|. Но она умерла уже давно?}
+{32000}{}{Ага. А знаешь, почему?}
+{32010}{}{Говорят, возраст. Ей уже было чуть ли не сто лет.}
+{33000}{}{Не без этого, конечно. Но вообще со здоровьем у Танди, на удивление, все было в порядке. А вот когда ее сына, Хосса, убил Избранный, она сразу начала сдавать.}
+{33010}{}{Ладно, мне это не интересно, пока. [Уйти]}
+{33020}{}{Что? Избранный? Я о нем наслышан@sex@|||а|. Он убил сына Президента? Как это произошло?}
+{34000}{}{Я все видел собственными глазами. }
+{34010}{}{Расскажешь?}
+{35000}{}{Хосс был довольно мерзким типом, совсем не похожим на свою мать. Вечно торчал в моем баре.}
+{35010}{}{Пил?}
+{36000}{}{Да, пил много. Как напьется, начинал посетителей задирать. И до драки доходило нередко. На его выходки полиция смотрела сквозь пальцы, еще бы. Ведь Хосс - сын Танди!}
+{36010}{}{Ладно, мне пора. [Уйти]}
+{36020}{}{И однажды он нарвался на Избранного?}
+{37000}{}{Да, типа того. Избранный заглянул ко мне промочить горло. Ну тут его все знали, многие сбежались посмотреть на живую легенду.}
+{37010}{}{Давай ближе к делу, Дасти.}
+{38000}{}{Хосс, как всегда, сидел в баре, синий в дугу. Когда он увидел Избранного, подвалил к нему и отпустил несколько сальных шуточек.}
+{38010}{}{И что сделал Избранный?}
+{39000}{}{Избранный презрительно бросил какую-то фразу и отвернулся от сына Танди. Не знаю, что он там сказал, но Хосс просто взбесился. Он схватил стул и разбил его о спину Избранного.}
+{39010}{}{Интересно, что он ему сказал... Дальше?}
+{40000}{}{А дальше все... Избранный развернулся, невозмутимый, как будто его и не трогал никто, и влепил Хоссу в челюсть. Сын Танди отлетел к стене и больше не поднялся... Потом сказали, получил кровоизлияние в мозг и скончался на месте.}
+{40010}{}{Ого!}
+{41000}{}{Жесть какая, представляешь? А ведь Хосс обычно сидел вот за этим столиком... Как раз, с тобой рядом...}
+{41010}{}{Кошмар. Ладно, мне пора, пока. [Уйти]}
+{42000}{}{Запросто, что ты хочешь знать?}
+{42010}{}{Ты в последнее время никого подозрительного поблизости не видел?}
+{43000}{}{Подозрительного кого? Что ты имеешь в виду?}
+{43010}{}{Например, чудовищных муравьев-переростков, пожирающих девственниц на улицах города...}
+{43020}{}{Новых людей в городе, незнакомцев, кого-то в этом духе.}
+{44000}{}{Ухты! Не видел, минутку, пойду посмотрю...}
+{45000}{}{Да регулярно кто-то появляется.}
+{45010}{}{Например? }
+{46000}{}{Да их тут толпы шарятся. Все похожи друг на друга, но есть и отличия.}
+{46010}{}{Чем похожи? Это бандиты? }
+{47000}{}{Какие-то дикари в синих костюмах с цифрами на спине... О. У тебя тоже такой костюмчик?}
+{47010}{}{Не важно, бывай, Дасти. [Уйти]}
+{48000}{}{Кто тебя интересует?..@@Назови имя...@@Кого ты ищешь?..}
+{48010}{}{Я лучше пойду.}
+{48020}{}{Где я могу найти этого человека?}
+{49000}{}{Эта информация стоит денег... за полторы сотни я расскажу тебе то что знаю.}
+{49010}{}{Я лучше пойду.}
+{49020}{}{По рукам, вот деньги.}
+{50000}{}{Так, кто тебя интересует?..@@Напомни имя...@@Кого ты ищешь?..}
+{50010}{}{Ну, я пойду...}
+{100000001}{}{Теперь вы знаете, что произошло с сыном Танди.}
+{100000200}{}{Не знаю никакого @lex Victim@, ничего о нём не @lex BarmanGen@.}
+{100000201}{}{Эй, да ты у нас шутни@sex@|к||ца|!..@@Шутить удумал@sex@|||а|?!}
+{100000202}{}{@lex Victim@... Конечно знаю, только @lex Gender@ сейчас где-то по пустоши скитается.}
+{100000203}{}{@lex Victim@? Да здесь @lex Gender@ где-то... @lex Place@.}
+{100000204}{}{@lex Victim@ говоришь? @lex Place@. Знаешь это место? Так вот, @lex Gender@ там был.}
+{100000205}{}{@lex Victim@? Не знаю, но от людей @lex BarmanGen@. @lex Place@. Знаешь где это? Так вот, @lex Gender@ там был.}
+{100000206}{}{Как же, знаю-знаю... @lex Place@, слышал@sex@|||а| о таком местечке? Так вот, @lex Gender@ там сейчас.}
+{100000207}{}{он}
+{100000208}{}{она}
+{100000209}{}{слышал}
+{100000210}{}{слышала}
+{100000211}{}{Да, я знаю @lex Victim@, что ты хочешь узнать?@@Я знаю @lex Victim@, что тебя интересует?}
+
+[engl]
+{100}{}{Dasti}
+{200}{}{you see tupovatogo the guy wiping a glass.}
+{210}{}{It is the barman.}
+{210}{}{It is a rough kind the guy, with a curve nose and crushed ears as though he was engaged in boxing earlier.}
+{1000}{}{Predialogue installations}
+{1010}{}{stupid}
+{1020}{}{the Answer}
+{2000}{}{Than I can help?}
+{2010}{}{to Drink.}
+{2020}{}{That occurs in a city?}
+{2030}{}{Good-bye.}
+{2040}{}{Something at you a kind any sad, Dasti. Problems?}
+{2050}{}{Dasti, about your "party"...}
+{2060}{}{Dasti, about your "party"...}
+{2070}{}{Dasti, about your "party"...}
+{2080}{}{Dasti, about your "party"...}
+{2090}{}{Dasti, greetings! Speak, barmen miss nothing. You will answer a question?}
+{2100}{}{Listen, I хотел@sex ||| and | to ask, you did not see one person? @@ listen, I хотел@sex ||| and | to learn, you heard nothing about one person? @@ I search for one person, heard nothing about it?}
+{3000}{}{do not want to drink?}
+{3010}{}{Certainly.}
+{3020}{}{No.}
+{4000}{}{If troubles go are necessary to you to drink for example in the Crude Skin. If work is necessary, address to Basseterre or Dappo.}
+{4010}{}{Thanks.}
+{4020}{}{And at you, Dasti, how are you doing?}
+{5000}{}{Than I can help?}
+{5010}{}{Agu-agu! [To Leave]}
+{5020}{}{Yours to pour! Washing to drink!}
+{5030}{}{to Work! [With a furious kind to knock themselves on a breast] Covers! To guzzle! To work!}
+{5040}{}{[to Wink Dasti] E! Covers to me!}
+{6000}{}{[Eh has given up as a bad job]... And you that...}
+{6010}{}{it is possible, I will manage to help?}
+{7000}{}{Hm, can be... Here, means, such business, @sex | the friend || the girlfriend |. These swindlers, from the government, are going to go at me into any "buffet table". I, of course, not against. Only there is one "but"...}
+{7010}{}{Continue.}
+{8000}{}{The matter is that I now have certain pressures with binge deliveries. No, a usual booze, it fill always up. And here with Rot Gutom and Scale badly.}
+{8010}{}{You want, that I to you have helped to deliver binge? Who your supplier?}
+{8020}{}{to Drink - it is unhealthy. Let vodichkoj canapes wash down. Happen, Dasti [to Leave]}
+{9000}{}{Not all so is simple, @pname. There would be at me a reliable supplier, I already to it would address for a long time.}
+{9010}{}{Well and where me to take this swill?}
+{10000}{}{I do not know... Can ask in a city... It is necessary For me on the Scale and Rot Guta box. But I will begin to cry to you for each bottle!}
+{10010}{}{A bargain! I Will help you not to strike in a dirt the person.}
+{10020}{}{you Know Dasti, there is no at me time for binge searches. [To leave]}
+{11000}{}{Thanks! You will gain me!}
+{12000}{}{Well as, it was possible to find something?}
+{12010}{}{In process but while please you I can with nothing. [To leave]}
+{12020}{}{Yes, I have Rot Guta bottle.}
+{12030}{}{Yes, I have Rot Guta bottle.}
+{12040}{}{Yes, I have a bottle of beer of Gamma Bir.}
+{12050}{}{Yes, I have a bottle of beer of Gamma Bir.}
+{13000}{}{it is excellent! For Rot Guta each bottle I cry 50 coins. The good price. Thanks!}
+{14000}{}{it is excellent! For each bottle of beer Scale I cry 30 coins. The good price. Thanks!}
+{15000}{}{No, thanks, Retgut I weigh has collected. And here the Scale would not prevent me.}
+{16000}{}{No, I all have collected thanks, scale. The mouth of Guta does not suffice}
+{17000}{}{Everything, the friend, thanks for the help! Binges suffice now.}
+{17010}{}{Yes, you have forced me to run about on a city!}
+{18000}{}{my brainless friend Is glad to see you. For you there is a work. If certainly you promise that will not gobble up all on road.}
+{18010}{}{to Work! [Wildly pomotat a head] to Guzzle it is impossible washing to work! You to pay covers?}
+{19000}{}{[the Barman with obvious doubt looks at you and mutters about itself] to Guzzle washing it is impossible to work. Hm. Where to put a comma... Well it is fine. We will risk. 
+I will begin to cry to you 2 [shows 1 finger] coins if you carry a grub to the sheriff. Also remember. The meal, instead of bones and garbage, as is necessary last time to the sheriff. Has understood?}
+{19010}{}{[Cделать a clever face] Rggacharggr!! 2 - there are not enough covers. HUNDRED [to Show 3 fingers] - it is a lot of covers!}
+{19020}{}{the Deceit! Round a finger. You will not spend! [To leave]}
+{20000}{}{Hundred? For hundred coins I descend to the sheriff. 5 coins are everything that I can offer [Shows 2 fingers] Will receive money as you will return from the sheriff.}
+{20010}{}{5 Covers a little! It is necessary to respect! [To Spit out and leave]}
+{20020}{}{5 Covers! Give a grub. To carry to the sheriff quickly. Covers to take away quickly-quickly.}
+{21000}{}{Well here also have agreed. Look, do not lose meal on road.}
+{22000}{}{[the Barman very attentively looks in your eyes] Has carried meal to the sheriff? Everything is all right? Has lost nothing? Precisely?}
+{22010}{}{the Sheriff malicious! Is does not want! Swears!}
+{22020}{}{[to Make the offended kind] to Carry quickly. In vain you to speak. The sheriff is full!}
+{22030}{}{[to Make a helpless gesture] the Sheriff is full. Washing to guzzle! It is tasty! Give still!}
+{23000}{}{I know Nothing. Again go to the sheriff. It try to be pleasant to it. [Loudly neighs]}
+{24000}{}{all has gobbled up?? Here after all the glutton. What for I only to you have believed. It would be necessary to tear off from you money for a dinner, well the hell with you. Leave from my eyes!}
+{25000}{}{Here well done Your fairly earned award. Only consider. I learn that you обманул@sex ||| and | - you will regret me about it.}
+{26000}{}{Yes, but I very much appreciate your help, @sex | the friend || the girlfriend |!}
+{26010}{}{we Will meet. [To leave]}
+{27000}{}{it is quite good, quite good. You will drink?}
+{27010}{}{Thanks, moods to drink are not present. We will meet. [To leave]}
+{27020}{}{Pour! Delivery it is not necessary! [To Put on a counter of 200 coins]}
+{28000}{}{[Whistles and takes away money] It of that "we" today such kind? [Stretches a glass]}
+{28010}{}{Sam@sex ||| and | I will not understand. [To drink off and leave]}
+{28020}{}{Anything especial. The mood good is simple. What news?}
+{29000}{}{Yes anything especial. At us here it is rather silent. Not that earlier, uh!}
+{29010}{}{And earlier that, it was cheerful?}
+{30000}{}{Well, h'm, everyone happened. That there is, for example, a same history about murder of the son of the president.}
+{30010}{}{That for bosh? Saw I his son. At rejdzherov sticks out, the hooligan juvenile.}
+{31000}{}{Whom you видел@sex ||| and |?!? A. I not about Carlson now. About Tandi. It the president was earlier...}
+{31010}{}{Ugu, I слышал@sex ||| and |. But she has died for a long time already?}
+{32000}{}{Aha. And you know, why?}
+{32010}{}{Speak, age. To it already was almost hundred years.}
+{33000}{}{Not without it, certainly. But in general with health at Tandi, marvellously, all was as it should be. And here when her son, Hossa, has killed the Elite, it has started to hand over at once.}
+{33010}{}{it is fine, it is not interesting to me, while. [To Leave]}
+{33020}{}{That? The elite? I about it наслышан@sex ||| and |. It has killed the son of the President? How it has occurred?}
+{34000}{}{I all saw own eyes.}
+{34010}{}{you Will tell?}
+{35000}{}{Hoss was enough stinker completely not similar to mother. Eternally stuck out in my bar.}
+{35010}{}{Saws?}
+{36000}{}{Yes, drank much. As will get drunk, started visitors to lift up. And fight reached quite often. The police winked at its tricks, still. After all Hoss - son Tandi!}
+{36010}{}{it is fine, it is time to me. [To Leave]}
+{36020}{}{And once it has run on Selected?}
+{37000}{}{Yes, that type. The elite has glanced to me to have a drink. Well here all knew it, many have run together to look at a live legend.}
+{37010}{}{Give keep to the point, Dasti.}
+{38000}{}{Hoss, as always, sat in a bar, dark blue in an arch. When he has seen the Elite, has come to it and has released some grease jokes.}
+{38010}{}{Also what has made the Elite?}
+{39000}{}{the Elite has contemptiously thrown any phrase and has turned away from son Tandi. I do not know that he there has told, but Hoss was simply enraged. It has seized a chair and has broken it about a back of the Elite.}
+{39010}{}{it is interesting that he to it has told... Further?}
+{40000}{}{And further all... The Elite it was developed, unperturbable as though it both was not touched by anybody, and has put Hossu in a jaw. Son Tandi has flown away to a wall and has not risen any more... Have then told, has received a hemorrhage in a brain and has died on the spot.}
+{40010}{}{Ogo!}
+{41000}{}{the Tin what, you represent? And after all Hoss usually sat here at this little table... Just, with you nearby...}
+{41010}{}{the Nightmare. All right, it is time to me, while. [To Leave]}
+{42000}{}{Easily, what you want to know?}
+{42010}{}{You anybody suspicious nearby did not see recently?}
+{43000}{}{Suspicious whom? What do you mean?}
+{43010}{}{For example, the monstrous ants-overages devouring virgins on city streets...}
+{43020}{}{New people in a city, strangers, someone in this spirit.}
+{44000}{}{Ukhta! Did not see, minute, I will go I will look...}
+{45000}{}{Yes regularly someone appears.}
+{45010}{}{For example?}
+{46000}{}{Yes them here crowds are rummaged. All are similar against each other, but there are also differences.}
+{46010}{}{Than are similar? They are gangsters?}
+{47000}{}{Any savages in dark blue suits with figures on a back... The Island At you too such suit?}
+{47010}{}{it is not important, happen, Dasti. [To Leave]}
+{48000}{}{Who you interests?. @@ name... @@ for Whom you search?.}
+{48010}{}{I will better go.}
+{48020}{}{Where I can find this person?}
+{49000}{}{This information costs money... For one and a half hundreds I will tell to you that that I know.}
+{49010}{}{I will better go.}
+{49020}{}{On hands, here money.}
+{50000}{}{So who you interests?. @@ remind a name... @@ for Whom you search?.}
+{50010}{}{Well, I will go...}
+{100000001}{}{Now you know that has occurred to son Tandi.}
+{100000200}{}{I do not know any @lex Victim, anything about it not @lex BarmanGen.}
+{100000201}{}{Hey, yes you at us шутни@sex | to || tsa |!. @@ to Joke удумал@sex ||| and |?!}
+{100000202}{}{@lex Victim... Certainly I know, only @lex Gender now somewhere on a heathland wanders.}
+{100000203}{}{@lex Victim? Yes here @lex Gender somewhere... @lex Place.}
+{100000204}{}{@lex Victim you speak? @lex Place. You know this place? And so, @lex Gender there was.}
+{100000205}{}{@lex Victim? I do not know, but from people @lex BarmanGen. @lex Place. You know where it? And so, @lex Gender there was.}
+{100000206}{}{As, I know-know... @lex Place, слышал@sex ||| and | about such place? And so, @lex Gender there now.}
+{100000207}{}{it}
+{100000208}{}{it}
+{100000209}{}{heard}
+{100000210}{}{heard}
+{100000211}{}{Yes, I know @lex Victim, what you want to learn? @@ I know @lex Victim, what you interests?}

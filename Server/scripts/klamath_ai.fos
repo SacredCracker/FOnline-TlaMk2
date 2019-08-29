@@ -1,0 +1,985 @@
+/*Autor Cracker
+
+Улучшение аи жителей Кламата. Оживление города.
+
+1 - Мирные жители. Во время крупных нападений должны убегать домой.
+2 - Торговцы. В случае если их личная охрана не справляется убегают в безопасную комнату, пробуют там закрытся. Товар и выручку по возможности прячут.
+3 - 	1.Охрана. В данном случае это трапперы. Иногда должны уходить на охоту. Зашищяют только если видят. Раций нету, переговор вести не могут. 
+		2.Команда трапперов - команда трапперов, которые будут работать сообща, и возможно помогать игроку с высокким красноречием, если тот попросит, выполнять квест на защиту браминов. (ну или сами выполнять будут если никто не возьмет кввест)
+4 - Остальные   - 1. Зеваки. Если есть на что посмотреть будут наблюдать. Если слишком опасно ведут себя как жители. 
+                - 2. Дети. Бегают, играют, ночью удаляются спать (посути уходят с локации). Если видят ничейную вещицу стараются подобрать (потом возможно будут хвастатся перед другими детьми).
+                - 3. Гости. - 1. Авантюристы Иногда заходят в город, по возможности разное поведение.
+						    - 2. Мобы. Изредко могут заходить в город, дабы придать какое-то разнообразие.
+                            - 3. Торговец. - 1. Одинокий, возможно с невесомой охранной. Ассортимент довольно маленький. Маленкий шанс чего-то полезного.
+                                           - 2. Караван. Ходит по расписанию. Охрана от мелкой до крепкой. Закупают в городе шкуры\броню. Ассортимент разнообразный. Шанс чего-то полезного чуть выше чем у торговца.
+                           
+						    - 4. Бандиты. - 1.Бандиты, миролюбивы. Не атакуют сразу. поднимают ценные вещи, убивают тех кто поднял первый.
+                                          - 2.Рейдеры. Плохо вооружены. Нападают на город.
+                            
+							- 4.Монстры   - 1. Гекконы. Преймущественно водятся на охотничьих угодиях, сбиваются в стаи. Убегают от радскорпионов. не атакуют если чуют яд скорпионов (большое количество хвостов и противоядий в инвентаре)
+                                          - 2. Радскорпионы. Малочислены, водятся в охотничьих угодиях. Охотятся на гекконов.
+                                          - 3. Крысы. Водятся в подвалах. Возможны набеги на алею.
+
+
+Справочные данные:
+
+Locations.cfg :
+[Area 2]
+name  =Klamath
+size  =24
+map_0 =klamath*          9
+map_1 =klamath_mall*     10
+map_2 =klamath_trap*     13
+map_3 =klamath_graz*     14
+map_4 =klamath_canyon*   8
+map_5 =repl_bank_klamath 211
+map_6 =klamath_toilet    11
+map_7 =klamath_ratcv1    81
+map_8 =klamath_ratcv2    82
+map_9 =klamath_ratcv3    83
+entrance  =3
+visible   =1
+auto_garbage =0		
+
+_maps.fos :
+
+#define LOCATION_Klamath                            (2)
+
+#define MAP_KLAMATH									(9)
+#define MAP_KLAMATH_LAND							(13)
+								  
+*/
+
+#include "city.fos"
+
+#define CFG_POS_GUEST	(333)	//  !!Не меняйте, если не знаете что это!!
+#define CFG_KILL_GECKONS(353)	//  !!Не меняйте, если не знаете что это!!
+
+
+#define DANGER_HOME (5) // Уровень опасности при котором отправляем всех домой.
+#define DANGER_CRITTER (5) // при этом значение персонаж становится угрозой, от него убегаем.
+
+#define ID_MAP_KLAMATH	(4)
+#define ID_MAP_KLAMATH_LAND	(6)
+
+#define ENTIRI_TRANSIT_LAND (400) // Ентайри перехода Угодья-Кламат
+#define AI_TRAPERS (12) // АИ пакет трапперов.
+#define AI_GEKKON	(26) // АИ пакет гекконов.
+#define AI_GUEST_SLAVER		(16) // АИ гостя работорговца.
+
+#define MILISECOND_IS_MINUTE	(1000*60) //перевод милисекунд в минуты. 
+#define TIME_GUEST			(30) // Время вызова гостей в минутах.
+
+
+// Логирование.
+#define LOGIROVANIE (1)
+
+void L(string msg)
+{
+	if(LOGIROVANIE==1) 
+	{
+		test_class_file(msg);
+		//Log(msg);
+	}
+}
+
+//общие данные.
+
+uint lvlDanger=0; //Уровень опасности в городе.  
+uint CritterDangerId=0; // Айди криттера преступника.
+
+uint[] CrittersDangerIds; //Сюда будут заносится все айди нарушителей порядка, позже нпц будут держатся от них подальше, охрана по возможности будет их выпроваживать из города.
+
+uint16 DangerHexX=0;	// Координаты последнего источника опасности по оси X
+uint16 DangerHexY=0;	// Координаты последнего источника опасности по оси Y
+
+uint[] GuardsIdGrup1; // Первая группа трапперов.
+
+int8 KillGeckons=20;
+
+int8 chance=2;
+uint8 chanceHunting=244;
+
+uint8 chanceGuest=2;
+
+bool klamatth_cfg()
+{
+	//KillGeckons=
+	return true;
+}
+
+void Hazard() 
+{	
+	if(lvlDanger>0)
+	{
+	lvlDanger -=1;
+	DangerHexX=0;
+	DangerHexY=0;
+	}
+}
+
+void transit(Critter& cr, int, int tim, int)
+{
+	int dang=lvlDanger;
+	lvlDanger=dang+tim;
+	Log("Уровень опасности="+dang+"+"+tim+"="+lvlDanger);
+}
+
+// Тригеры для перехода нпц по локациям.
+// Тригер для перехода нпц на охотничьи угодья и обратно.
+
+void t_TransitLand(Critter& cr, Scenery& trigger, bool entered, uint8 dir)
+{
+	if(cr.StatBase[ST_AI_ID]==AI_TRAPERS && cr.IsNpc() && entered)
+	{
+	if(ID_MAP_KLAMATH==cr.GetMap().Id)
+		{
+			cr.ModeBase[MODE_NO_HOME]=1;
+			cr.TransitToMap(ID_MAP_KLAMATH_LAND,1);
+			cr.DropPlanes();
+			cr.StatBase[ST_VAR9]=KillGeckons;
+			GameVar@ movGVq=GetLocalVar(LVAR_move_enteri,cr.Id);
+			//uint movGV=movGVq.GetValue();
+			movGVq=0;
+		}
+		else if(cr.GetMap().Id==ID_MAP_KLAMATH_LAND)
+		{
+			cr.ModeBase[MODE_NO_HOME]=0;
+			cr.TransitToMap(ID_MAP_KLAMATH,1);
+			cr.DropPlanes();
+			cr.StatBase[ST_VAR9]=0;
+			if(cr.StatBase[ST_NPC_PATROL_ID]==0)
+			{
+				Patrol(cr,cr.StatBase[ST_NPC_PATROL_ID], 50, 50 , 0, 0, 0, 10, 1, true, false);
+			}
+			else Patrol(cr,cr.StatBase[ST_NPC_PATROL_ID], 0, 0 , 0, 10, 1, 1, 1, false, false);	
+			
+		}
+	}
+}
+
+
+// 1 Мирные жители.
+
+void _CytInit(Critter& cr, bool firstTime)
+{
+
+}
+
+
+// 2 Торговцы.
+
+// 3.1 Охрана.
+
+
+void _GuardInit(Critter& guard, bool firstTime)
+{
+	guard.SetEvent(CRITTER_EVENT_DEAD, "_DeadGuard");
+	guard.SetEvent(CRITTER_EVENT_SMTH_ATTACK, "_Protection");
+	guard.SetEvent(CRITTER_EVENT_IDLE, "_GuardPatrol");
+	guard.StatBase[ST_AI_ID]=AI_TRAPERS;
+	// Генерация статов трапперов
+	guard.StatBase[ST_MAX_LIFE]=Random(60,120);
+	guard.StatBase[ST_CURRENT_HP]=guard.StatBase[ST_MAX_LIFE];
+	guard.SkillBase[SK_MELEE_WEAPONS]=Random(120,160);
+	// Перки охоты:
+	guard.PerkBase[PE_HUNTER]=2;
+	if(guard.StatBase[ST_REPLICATION_TIME]==0) guard.StatBase[ST_REPLICATION_TIME]=60*30;
+	guard.SetEvent(CRITTER_EVENT_SMTH_DEAD,"_GuardSmthDead");
+}
+
+void _GuardSmthDead(Critter& cr, Critter& fromCr, Critter@ killer)
+{
+	if(fromCr.StatBase[ST_AI_ID]==AI_GEKKON && cr.Id==killer.Id)
+	{
+	
+	}
+}
+
+void ChangeChance(Critter&cr,int p0,int p1,int)
+{
+	if(p0==0) chance=p1;
+	else if(p0==1) chanceHunting=p1;
+	else if(p0==2) KillGeckons=p1;
+	else if(p0==3) 
+	{
+	if(p1>0) chanceGuest=p1;
+	else chanceGuest=1;
+	}
+}
+
+bool Enemy(Critter& cr)
+{
+	//Log(""+CITY_AGGRES_BEGIN+""+cr.StatBase[ST_NPC_ROLE_CITY]+"<="+CITY_AGGRES_BEGIN+" && "+"");
+	if(ENEMY(cr.StatBase[ST_NPC_ROLE_CITY])) return true;
+	return false;
+}
+
+void _GuardPatrol(Critter& cr)
+{
+	// Если находимся в Кламате, то патрулируем или идем на охоту. 
+	if(ID_MAP_KLAMATH==cr.GetMap().Id)
+	{
+		//Вначале смотрим, есть ли рядом враг.
+		Critter@[] enemys;
+		if(cr.GetMap().GetCrittersHex(cr.HexX,cr.HexY,20,FIND_LIFE_AND_KO,enemys)!=0)
+		{
+			for(uint i=0,j=enemys.length();i<j;i++)
+			{
+				if(Enemy(enemys[i]))
+				{
+				L("Убиваем");
+				AddAttackPlane(cr, enemys.length()-i, enemys[i]);
+				}
+			}
+		}
+	
+		if(lvlDanger >=DANGER_HOME) 
+		{
+			if(cr.StatBase[ST_NPC_PATROL_ID]==0)
+			{
+				Patrol(cr,cr.StatBase[ST_NPC_PATROL_ID], 50, 50 , 0, 0, 1, 1, 1, true, false);
+			}
+			else Patrol(cr,cr.StatBase[ST_NPC_PATROL_ID], 0, 0 , 0, 10, 1, 1, 1, false, false);
+		}
+		else if(0>lvlDanger && lvlDanger<DANGER_HOME)	
+		{
+			if(cr.StatBase[ST_NPC_PATROL_ID]==0)
+			{
+				Patrol(cr,cr.StatBase[ST_NPC_PATROL_ID], 50, 50 , 0, 0, 0, 5, 1, true, false);
+			}
+				else Patrol(cr,cr.StatBase[ST_NPC_PATROL_ID], 0, 0 , 0, 10, 0, 5, 1, false, false);
+		}
+		else if(0==lvlDanger) 
+		{ 
+			if(Random(1,chanceHunting)!=1)
+			{
+				if(cr.StatBase[ST_NPC_PATROL_ID]==0)
+				{
+					Patrol(cr,cr.StatBase[ST_NPC_PATROL_ID], 50, 50 , 0, 0, 0, chance, 1, true, false);
+				}
+				else Patrol(cr,cr.StatBase[ST_NPC_PATROL_ID], 0, 0 , 0, 10, 1, chance, 1, false, false);	
+			}
+			else 
+			{
+			// Зовем друзей на охоту.
+			
+				Critter@[] crits;
+	
+				uint16 hX=0; uint16 hY=0;
+				GetEntireFreeHex(cr.GetMap(),ENTIRI_TRANSIT_LAND,hX,hY);
+				if(cr.GetMap().GetCrittersHex(cr.HexX,cr.HexY,20,FIND_ALL,crits)!=0)
+				{
+					for(uint i=0,j=crits.length();i<j;i++)
+					{
+						if(crits[i].StatBase[ST_AI_ID]==AI_TRAPERS)
+						{
+							crits[i].SetHomePos(hX,hY,Random(0,5));
+						}
+					}
+					cr.SetHomePos(hX,hY,Random(0,5));
+				} 
+			}	
+		} 
+	}
+	// Если на локации угодий, то охотимся, или уходим в Кламат.
+	else if(ID_MAP_KLAMATH_LAND==cr.GetMap().Id)
+	{
+		int8 ChanceHunting=chanceHunting + cr.StatBase[ST_VAR9];
+		if((Random(0,cr.StatBase[ST_VAR9])==0) || cr.StatBase[ST_VAR9]!=KillGeckons)
+		{
+			uint16 hX=0; uint16 hY=0;
+			GetEntireFreeHex(cr.GetMap(),ENTIRI_TRANSIT_LAND,hX,hY);
+			AddWalkPlane(cr, 1, hX,hY, Random(0,5), false, 0);
+		}
+		else
+		{
+		 Critter@[] crits;
+		
+			if(cr.GetMap().GetCrittersHex(cr.HexX,cr.HexY,20,FIND_ALL,crits)!=0)
+			{
+				for(uint i=0,j=crits.length();i<j;i++)
+				{		
+					if(crits[i].StatBase[ST_AI_ID]!=AI_GEKKON) i++;
+					else 
+					{
+						Critter@ geckon=crits[i];
+						AddAttackPlane(cr, 0, geckon);
+						AddAttackPlane(geckon, 0, cr); // Натрявляем геккона на траппера.
+						return;
+					} 
+				}
+				
+			}
+			else AddWalkPlane(cr, 1, Random(0,cr.GetMap().GetWidth()),Random(0,cr.GetMap().GetHeight()), Random(0,5), false, 0);
+		}
+	} 
+}
+
+void _Protection(Critter& cr, Critter& fromCr, Critter& target)
+{
+	// Охраняем в Кламате.
+	if(ID_MAP_KLAMATH==cr.GetMap().Id)
+	{
+
+		if(fromCr.IsPlayer() && target.IsNpc())
+		{
+			// Игрок атакует нпц, скорее всего нпц это житель города, поэтому вмешиваемся.
+			if (!ENEMY(target.StatBase[ST_NPC_ROLE_CITY])) AddAttackPlane(cr, lvlDanger, fromCr);
+		}	
+		else if(fromCr.IsNpc() && target.IsNpc())
+		{
+			//Нпц атакует нпц, такое может быть только при атаке. (Доделать после введения атак)
+			if(ENEMY(fromCr.StatBase[ST_NPC_ROLE_CITY])) AddAttackPlane(cr, lvlDanger, fromCr);
+
+		} 
+		else if(fromCr.IsNpc() && target.IsPlayer()) // Нпц атакует игрока.
+		{
+			// Если нпц участник набега, то помогаем игроку.
+			if(ENEMY(fromCr.StatBase[ST_NPC_ROLE_CITY]))
+			{
+				AddAttackPlane(cr, lvlDanger, fromCr);
+			} 
+		}
+		else if(fromCr.IsPlayer() && target.IsPlayer()) //Игрок атакует игрока.
+		{
+			if(target.Reputation[REPUTATION_KLAMATH]<=0) return;
+			AddAttackPlane(cr, lvlDanger, target);
+		}
+		
+	}
+	else if(ID_MAP_KLAMATH_LAND==cr.GetMap().Id)
+	{
+		if(fromCr.IsNpc())
+		{
+			if(fromCr.StatBase[ST_AI_ID]==AI_TRAPERS)
+			AddAttackPlane(cr, 1, target);
+		}
+	}
+	return;
+}
+
+void _DeadGuard(Critter& cr, Critter@ killer)
+{
+	if(cr.GetMap().Id==ID_MAP_KLAMATH)
+	{
+		if (!valid(killer))
+		{
+			DangerHexX=cr.HexX;
+			DangerHexY=cr.HexY;
+			lvlDanger+=4;
+			return;
+		}
+		else if(killer.IsPlayer())
+		{
+			DangerHexX=cr.HexX;
+			DangerHexY=cr.HexY;
+			CritterDangerId=killer.Id;	
+			CrittersDangerIds.insertLast(killer.Id);	
+			lvlDanger+=4;
+			//Log("Уровень опасности в Кламате="+lvlDanger);
+			//Log("Убийца id="+CritterDangerId);
+		}
+	}
+}
+
+//4.1 Зеваки.
+
+void _GawkerInit(Critter& gawker, bool firstTime)
+{
+	gawker.SetEvent(CRITTER_EVENT_IDLE, "_LetsLook");
+	gawker.ModeBase[MODE_NO_HOME]=1;
+	gawker.SetEvent(CRITTER_EVENT_SMTH_ATTACK, "_Ignor");
+}
+
+void _Ignor(Critter& cr,Critter& ,Critter&)
+{
+	return;
+}
+
+void _LetsLook(Critter& cr)
+{
+	if(lvlDanger >=1 && lvlDanger<DANGER_HOME)
+	{
+		AddWalkPlane(cr, 0, DangerHexX+(Random(-5,5)) , DangerHexY+(Random(-5,5)), Random(0,5), true, 0);
+		cr.ModeBase[MODE_NO_HOME]=1;
+	}
+	else cr.ModeBase[MODE_NO_HOME]=0;
+}
+
+//4.2 Дети.
+
+// 4.3 Гости
+
+
+void _KlamInit(Map& map, bool firstTime)
+{
+	/*if(LOGIROVANIE==1)
+	{
+	Critter@[] crits;
+	map.GetCrittersHex(50,50,250,FIND_ALL,crits);
+	string msg=("\n****Гости Кламата.****\n Параметры карты:\n Ширина: "+map.GetWidth()+"\n Высота: "+map.GetHeight()+"\n Количество нпц на карте: "+crits.length()+"\n");
+	L(""+msg);
+	}
+	uint16  ms=60000;
+	map.SetLoopTime(0,ms); 
+	map.SetEvent(MAP_EVENT_LOOP_0,"_KlamathLoop");
+	//CreateTimeEvent(GetNearFullSecond(0,0,0,1,20,0),"e_InvitGuest", map.Id, true); // Пригалашаем гостей.*/
+}
+
+void _KlamathLoop(Map& map)
+{
+	/*Hazard();
+	get_position_file_klamath(4);
+	L("Уровень опасности "+lvlDanger);
+	if(logging_file_klamath(333)==1)
+	{
+	_GuestKlamath(map);
+	}*/
+}
+
+uint countGuest=0;
+
+void _GuestKlamath(Map& map)
+{
+	
+	if(Random(0,100)<80) 
+	{
+	L("№"+countGuest+" Нету гостей");
+	countGuest+=1;
+	return;
+	}
+	L("№"+countGuest+"Гости есть");
+	bool beast=/*true; */ Random(0,1)==1?true:false; // Животные или нет.
+	//bool group=true; //false; // Гость один, или нет.
+	
+	uint16 PidGuest=0;
+	
+	if(beast) // Подбираем животное.
+	{
+		L("№"+countGuest+"Животные");
+		switch(Random(0,2)) 
+		{
+			case 0: if(Random(0,100)>10)
+					{
+						switch(Random(0,3)) //Геккон
+						{
+							case 0: PidGuest=NPC_PID_SmallSilverGecko; break;
+							case 1: PidGuest=NPC_PID_ToughSilverGecko; break;
+							case 2: PidGuest=NPC_PID_GoldenGecko; break;
+							case 3: PidGuest=NPC_PID_ToughGoldenGecko; break;						
+						}
+						L("№"+countGuest+"Геккон");
+						uint16 hX=0; uint16 hY=0;
+						if(GetEntireFreeHex(map,21,hX,hY)==false)
+						{
+						countGuest+=1;
+						return;
+						}
+						int[] params={ST_NPC_ROLE_CITY,CITY_animals_geckon, ST_REPLICATION_TIME, -1, MODE_NO_HOME, 1};
+						Critter@ Guest=map.AddNpc(PidGuest,hX,hY,Random(0,5),params,null,"_GuestInit");
+					}
+					else
+					{
+						uint groupSize=Random(2,7);
+						L("№"+countGuest+" "+groupSize+" гекконов");
+						for(uint i=0; i<groupSize; i++)
+						{
+						
+							switch(Random(0,3)) 
+							{
+								case 0: PidGuest=NPC_PID_SmallSilverGecko; break;
+								case 1: PidGuest=NPC_PID_ToughSilverGecko; break;
+								case 2: PidGuest=NPC_PID_GoldenGecko; break;
+								case 3: PidGuest=NPC_PID_ToughGoldenGecko; break;						
+							}
+						
+							uint16 hX=0; uint16 hY=0;
+			
+							if(GetEntireFreeHex(map,21,hX,hY)==false)
+							{
+							return;
+							}
+							int[] params={ST_NPC_ROLE_CITY,CITY_animals_geckon, ST_REPLICATION_TIME, -1, MODE_NO_HOME, 1};
+							Critter@ Guest=map.AddNpc(PidGuest,hX,hY,Random(0,5),params,null,"_GuestInit");
+						}
+						countGuest+=1;
+					}
+					break;
+			
+			case 1: if(Random(0,100)>10)
+					{		
+						switch(Random(0,4)) //Скорпион
+						{
+							case 0: PidGuest=NPC_PID_SmallRadscorpion; break;
+							case 1: PidGuest=NPC_PID_SmallRadscorpion2; break;
+							case 2: PidGuest=NPC_PID_LargeRadscorpion; break;
+							case 3: PidGuest=NPC_PID_LargeRadscorpion2; break;
+							case 4: PidGuest=NPC_PID_LargeRadscorpion3; break;
+						}
+						L("№"+countGuest+" Скорпионы");
+						uint16 hX=0; uint16 hY=0;
+						if(GetEntireFreeHex(map,21,hX,hY)==false)
+						{
+						countGuest+=1;
+						return;
+						}
+						int[] params={ST_NPC_ROLE_CITY,CITY_animals_radscorpion, ST_REPLICATION_TIME, -1, MODE_NO_HOME, 1};
+						Critter@ Guest=map.AddNpc(PidGuest,hX,hY,Random(0,5),params,null,"_GuestInit");
+					}
+					else
+					{
+						uint groupSize=Random(2,7);
+						L("№"+countGuest+" "+groupSize+" скорпионов");
+						for(uint i=0; i<groupSize; i++)
+						{
+						
+							switch(Random(0,4)) 
+							{
+								case 0: PidGuest=NPC_PID_SmallRadscorpion; break;
+								case 1: PidGuest=NPC_PID_SmallRadscorpion2; break;
+								case 2: PidGuest=NPC_PID_LargeRadscorpion; break;
+								case 3: PidGuest=NPC_PID_LargeRadscorpion2; break;
+								case 4: PidGuest=NPC_PID_LargeRadscorpion3; break;						
+							}
+						
+							uint16 hX=0; uint16 hY=0;
+			
+							if(GetEntireFreeHex(map,21,hX,hY)==false)
+							{
+							countGuest+=1;
+							return;
+							}
+							int[] params={ST_NPC_ROLE_CITY,CITY_animals_radscorpion, ST_REPLICATION_TIME, -1, MODE_NO_HOME, 1};
+							Critter@ Guest=map.AddNpc(PidGuest,hX,hY,Random(0,5),params,null,"_GuestInit");
+						}
+					}
+					break;
+			
+			case 2: if(Random(0,100)>10)
+					{		
+						switch(Random(0,7)) //Крысы, насекомые.
+						{
+							case 0: PidGuest=NPC_PID_RegularRat; break;
+							case 1: PidGuest=NPC_PID_Rat; break;
+							case 2: PidGuest=NPC_PID_RegularPigRat; break;
+							case 3: PidGuest=NPC_PID_ToughPigRat; break;
+							case 4: PidGuest=NPC_PID_Molerat; break;
+							case 5: PidGuest=NPC_PID_GreaterMolerat; break;
+							case 6: PidGuest=NPC_PID_MutatedMolerat; break;
+							case 7: PidGuest=NPC_PID_Ant; break;
+						}
+						L("№"+countGuest+" Крысы и насекомые");
+						uint16 hX=0; uint16 hY=0;
+						if(GetEntireFreeHex(map,21,hX,hY)==false)
+						{
+						countGuest+=1;
+						return;
+						}
+						int[] params={ST_NPC_ROLE_CITY,CITY_animals_rat, ST_REPLICATION_TIME, -1, MODE_NO_HOME, 1};
+						Critter@ Guest=map.AddNpc(PidGuest,hX,hY,Random(0,5),params,null,"_GuestInit");
+					}
+					else 
+					{
+						uint groupSize=Random(2,7);
+						L("№"+countGuest+" "+groupSize+" крыс и скорпионов");
+						for(uint i=0; i<groupSize; i++)
+						{
+						
+							switch(Random(0,7)) 
+							{
+								case 0: PidGuest=NPC_PID_RegularRat; break;
+								case 1: PidGuest=NPC_PID_Rat; break;
+								case 2: PidGuest=NPC_PID_RegularPigRat; break;
+								case 3: PidGuest=NPC_PID_ToughPigRat; break;
+								case 4: PidGuest=NPC_PID_Molerat; break;
+								case 5: PidGuest=NPC_PID_GreaterMolerat; break;
+								case 6: PidGuest=NPC_PID_MutatedMolerat; break;
+								case 7: PidGuest=NPC_PID_Ant; break;						
+							}
+							
+							uint16 hX=0; uint16 hY=0;
+			
+							if(GetEntireFreeHex(map,21,hX,hY)==false) 
+							{
+							countGuest+=1;
+							return;
+							}
+							int[] params={ST_NPC_ROLE_CITY,CITY_animals_rat, ST_REPLICATION_TIME, -1, MODE_NO_HOME, 1};
+							Critter@ Guest=map.AddNpc(PidGuest,hX,hY,Random(0,5),params,null,"_GuestInit");
+						}
+					}
+					break;
+		}
+		
+	}
+	else	// Люди
+	{
+		L("№"+countGuest+" Люди");
+		if(Random(1,2)==1) // Если 1, то мирные. Если 2, то агрессивные.
+		{
+			L("№"+countGuest+" Агресивные");
+			switch (Random(0,0))
+				{
+					case 0: if(Random(0,100)>10)
+					{		
+						switch(Random(0,1)) 
+						{
+							case 0: PidGuest=NPC_PID_BanditMale; break;
+							case 1: PidGuest=NPC_PID_BanditFemale; break;
+						}
+						L("№"+countGuest+" Бандит");
+						uint16 hX=0; uint16 hY=0;
+						if(GetEntireFreeHex(map,21,hX,hY)==false) 
+						{
+						countGuest+=1;
+						return;
+						}
+						int[] params={ST_NPC_ROLE_CITY,CITY_enemy, ST_REPLICATION_TIME, -1, MODE_NO_HOME, 1};
+						Critter@ Guest=map.AddNpc(PidGuest,hX,hY,Random(0,5),params,null,"_GuestInit");
+					}
+					else
+					{
+						uint groupSize=Random(2,7);
+						L("№"+countGuest+" "+groupSize+" бандитов");
+						for(uint i=0; i<groupSize; i++)
+						{
+						
+							switch(Random(0,1)) 
+							{
+								case 0: PidGuest=NPC_PID_BanditMale; break;
+								case 1: PidGuest=NPC_PID_BanditFemale; break;					
+							}
+						
+							uint16 hX=0; uint16 hY=0;
+			
+							if(GetEntireFreeHex(map,21,hX,hY)==false) 
+							{
+							countGuest+=1;
+							return;
+							}
+							int[] params={ST_NPC_ROLE_CITY,CITY_enemy, ST_REPLICATION_TIME, -1, MODE_NO_HOME, 1};
+							Critter@ Guest=map.AddNpc(PidGuest,hX,hY,Random(0,5),params,null,"_GuestInit");
+						}
+					}
+					break;
+				}
+		}
+		else
+		{
+		
+		}
+	}
+	countGuest+=1;
+	return;
+}
+
+void _GuestInit(Critter& cr, bool firstTime)
+{
+	uint32 GuestPid=cr.GetProtoId();
+	
+	cr.SetEvent(CRITTER_EVENT_IDLE, "_GuestIdle");
+	cr.SetEvent(CRITTER_EVENT_DEAD,"_DeletNpcDead");
+}
+
+void _DeletNpcDead(Critter& cr, Critter@ killer)
+{
+	//cr.Wait(50); 
+	cr.SetEvent(CRITTER_EVENT_IDLE, "_GuestDead");	 //DeleteNpc(cr);
+}
+
+void _GuestDead(Critter& cr)
+{
+	DeleteNpc(cr);
+}
+
+void _GuestIdle(Critter& cr)
+{
+	Critter@[] crits;
+		
+	if(cr.GetMap().GetCrittersHex(cr.HexX,cr.HexY,30,FIND_ALL,crits)!=0)
+		{
+			for(uint i=0,j=crits.length();i<j;i++)
+			{		
+				if(crits[i].StatBase[ST_NPC_ROLE_CITY]!=cr.StatBase[ST_NPC_ROLE_CITY]) 
+				{
+					Critter@ enemy=crits[i];
+					AddAttackPlane(cr, 0, enemy);
+					//if(enemy.StatBase[ST_AI_ID]==AI_TRAPERS) AddAttackPlane(enemy, 0, cr); 
+					return;
+				} 
+			}
+				
+		}
+	else
+	{
+	AddWalkPlane(cr, 1, Random(0,cr.GetMap().GetWidth()), Random(0,cr.GetMap().GetHeight()), Random(0,5), Random(0,1)==1?true:false, 0);
+	}
+}
+
+int get_position_file_klamath(int numberLine)
+{
+	file f;
+	int pos=0;
+	string msg;
+	if(f.open("city/klamath.cfg", "r")==0)
+	{		
+		for(int i=0; i<numberLine; i++)
+		{
+			f.readLine(msg);
+			pos=f.getPos();
+			//Log(""+pos+" Строка "+i);
+		}
+	}
+	return (pos);
+}
+
+int logging_file_klamath(int pos)
+{
+	file f;
+	if(f.open("city/klamath.cfg", "r")==0)
+	{		
+		string msg;
+		string msgb;
+		int msgp=0;
+		f.setPos(pos);
+		f.readLine(msg);
+		uint j=0;
+		for(uint i=0, iMax=msg.length(); i<iMax; i++)
+		{
+			if(msg[i]=='=')	j=i;
+			else msgb=substring(msg, j, msg.length()-j);
+		}
+		msgb=substring(msgb, 2, 1);
+		StrToInt(msgb, msgp);
+		return msgp; 
+	}
+	return 0;
+} 
+
+#define REFRIGERATOR_HEXX	(90)
+#define REFRIGERATOR_HEXY	(55)
+#define REFRIGERATOR_PROTO_ID	(42)
+
+#define ST_BRAHMIN_ID	(ST_VAR0)
+#define ST_STAGE		(ST_VAR1)
+#define ST_COUNT_BRAHMIN (ST_VAR2)
+#define ST_TYPE_WORK (ST_VAR3) // 0 - ничего не делает, 1 - торгует , 2 убивает брахминов, 3 делает валяное мясо, 4 идет покупать брахмина.
+
+#define ENTIRE_BRAHMIN_START_GENERATION	(78) // Номер ентайри гекса на котором появляются начальные брахмины.
+
+// Мясник Кламат
+void _ButcherInit(Critter& cr, bool firstTime)
+{
+	// Генератор характеристик
+	cr.StatBase[ST_NPC_ROLE_CITY]=CITY_klamath_butcher;
+	cr.PerkBase[PE_BUTCHER]=1;
+	cr.StatBase[ST_TYPE_WORK]=2;
+	cr.StatBase[ST_BRAHMIN_ID]=0;
+	cr.StatBase[ST_STAGE]=0;
+	
+	cr.SetEvent(CRITTER_EVENT_IDLE, "_ButcherIdle");
+	cr.SetEvent(CRITTER_EVENT_PLANE_END,"_EndPlaneButcher");
+	
+	if(firstTime)
+	{
+		uint countBh=Random(2,5);
+		// Создаем браминов для мясника, и заносим их в ST_COUNT_BRAHMIN, чтобы мясник знал сколько у него брахминов.
+		for(uint i=0; i<countBh;i++)
+		{			
+			uint16 hX=0; uint16 hY=0;
+			
+			if(GetEntireFreeHex(cr.GetMap(),ENTIRE_BRAHMIN_START_GENERATION,hX,hY)==false) continue;
+			int[] params={ST_NPC_ROLE_CITY,CITY_klamath_brahmin_butchers,ST_AI_ID,0, ST_REPLICATION_TIME, -1, MODE_NO_HOME, 0, ST_DIALOG_ID, 5055, ST_BAG_ID,137};
+			cr.GetMap().AddNpc(114,hX,hY,Random(0,5),params,null,"");
+			cr.StatBase[ST_COUNT_BRAHMIN]=countBh;
+		}
+	}
+}
+
+void _ButcherIdle(Critter& cr)
+{
+	if(cr.StatBase[ST_TYPE_WORK]==2)
+	{
+		if(cr.StatBase[ST_STAGE]==0 && cr.StatBase[ST_COUNT_BRAHMIN]!=0)
+		{
+			if(Random(0,100)!=10)
+			{
+				Critter@[] crits;
+				
+				if(cr.GetMap().GetCrittersHex(cr.HexX,cr.HexY,30,FIND_ALL,crits)!=0)
+				{
+					for(uint i=0; i<=crits.length(); i++)
+					{
+						if(crits[i].StatBase[ST_BODY_TYPE]==BT_BRAHMIN && crits[i].StatBase[ST_NPC_ROLE_CITY]==CITY_klamath_brahmin_butchers)
+						{
+							//Заносим айди брахмина для того чтобы не потерять его.
+							cr.StatBase[ST_BRAHMIN_ID]=crits[i].Id;	
+							PlaneKillBrahmin(cr, crits[i]);
+							return;
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+bool PlaneKillBrahmin(Critter& butch, Critter& brah)
+{
+	if(butch.StatBase[ST_STAGE]==0)
+	{
+		//Critter@ brah=GetCritter(butch.StatBase[ST_BRAHMIN_ID]);
+		//Двигаем определитель стадии.
+		butch.StatBase[ST_STAGE]=1;
+		//Выключаем режим дома и режим торговли.
+		butch.ModeBase[MODE_NO_HOME]=1;
+		butch.ModeBase[MODE_NO_BARTER]=1;
+		/* Последовательность действий:
+		1) подойти к брахмину 2) оглушить 3) Разделать на мясо 4) Вернутся домой с мясом 5)Положить мясо в холодильник
+		*/
+		// Мясник должен подойти к брахмину.
+		NpcPlane@ penalty_walk_brahmin=CreatePlane();
+		penalty_walk_brahmin.Type=AI_PLANE_WALK;
+		penalty_walk_brahmin.Identifier=IDENTIFIER_KLAMATH_BUTCHER;
+		penalty_walk_brahmin.IdentifierExt=IDENTIFIEREXT_PENALTY_WALK_BRAHMIN;
+		penalty_walk_brahmin.Priority=AI_PLANE_WALK_PRIORITY;
+		penalty_walk_brahmin.Walk_HexX=brah.HexX;
+		penalty_walk_brahmin.Walk_HexY=brah.HexX;
+		penalty_walk_brahmin.Walk_Dir=GetDirection(penalty_walk_brahmin.Walk_HexX, penalty_walk_brahmin.Walk_HexY, brah.HexX, brah.HexY);
+		penalty_walk_brahmin.Run=false;
+		penalty_walk_brahmin.Walk_Cut=1;
+		// Создаем наследник плана, (оглушение брахмина происходит через скрипт брамина).
+		NpcPlane@ penalty_kill_brahmin=CreatePlane();
+		@penalty_kill_brahmin.SetChild(penalty_walk_brahmin); 
+		penalty_kill_brahmin.Type=AI_PLANE_ATTACK;
+		penalty_kill_brahmin.Priority=AI_PLANE_ATTACK_PRIORITY;
+		penalty_kill_brahmin.Identifier=IDENTIFIER_KLAMATH_BUTCHER;
+		penalty_kill_brahmin.IdentifierExt=IDENTIFIEREXT_PENALTY_KILL_BRAHMIN;
+		penalty_kill_brahmin.Attack_TargId=brah.Id;
+		penalty_kill_brahmin.Attack_MinHp=__DeadHitPoints;
+		penalty_kill_brahmin.Attack_IsGag=false;
+		penalty_kill_brahmin.Attack_GagHexX=0;
+		penalty_kill_brahmin.Attack_GagHexY=0;
+		penalty_kill_brahmin.Attack_LastHexX=brah.HexX;
+		penalty_kill_brahmin.Attack_LastHexY=brah.HexY;
+		penalty_kill_brahmin.Run=false;
+		// Необходимо отловить в _EndPlaneButcher по индефикаторам и отправить его домой.
+		
+		return butch.AddPlane(penalty_kill_brahmin);
+	}
+	else if(butch.StatBase[ST_STAGE]==2)
+	{
+		// Относим мясо в шкаф. Шкаф нужно закрывать на ключ. Открыть пока может только этот нпц.
+		
+		uint16 refx=REFRIGERATOR_HEXX;
+		uint16 refy=REFRIGERATOR_HEXY;
+		
+		Item@ ref=butch.GetMap().GetItem(refx, refy, REFRIGERATOR_PROTO_ID);
+		
+		uint keyId=_CritEyesDoorId(butch.Id);
+		//ref.LockerId=keyId;
+		//ref.LockerComplexity=70;
+		ref.Update();
+		
+		// Заставляем мясника положить мясо в холодильник. Для этого нужно подойти к холодильнику.
+		NpcPlane@ penalty_meat_home=CreatePlane(); 
+		penalty_meat_home.Type=AI_PLANE_PICK;
+		penalty_meat_home.Priority=AI_PLANE_PICK_PRIORITY;
+		penalty_meat_home.Identifier=IDENTIFIER_KLAMATH_BUTCHER;
+		penalty_meat_home.IdentifierExt=18;
+		penalty_meat_home.Pick_HexX=ref.HexX;
+		penalty_meat_home.Pick_HexY=ref.HexY;
+		penalty_meat_home.Pick_Pid=ref.GetProtoId();
+		penalty_meat_home.Pick_UseItemId=0;
+		penalty_meat_home.Pick_ToOpen=true;
+		penalty_meat_home.Run=false;
+		//Log("Ложим мясо");
+		return butch.AddPlane(penalty_meat_home);
+	}
+	return false;
+}
+
+// Перехват планов на окончании планов Мясника.
+int _EndPlaneButcher(Critter& crit, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem)
+{
+	if(plane.Identifier==IDENTIFIER_KLAMATH_BUTCHER)
+	{
+		if(plane.IdentifierExt==IDENTIFIEREXT_PENALTY_KILL_BRAHMIN)
+		{
+			//Log("Тест");
+			
+			// Ищем брахмина;
+			Critter@[] crits;
+			
+			uint brahminId=crit.StatBase[ST_BRAHMIN_ID];
+			
+			//Critter@ brah=GetCritter(brahminId);
+			//if (!valid(brah)) return (-1);
+			if(crit.GetMap().GetCrittersHex(crit.HexX,crit.HexY,30,FIND_ALL,crits)!=0)
+			{
+				uint brahminId=crit.StatBase[ST_BRAHMIN_ID];
+				for(uint i=0; i<=crits.length(); i++)
+				{
+					uint critsId=crits[i].Id;
+					if(critsId==brahminId)
+					{
+						Item@ meat=crits[i].GetItem(PID_MEAT, SLOT_INV);
+						if(!valid(meat)) return -1;
+						crits[i].MoveItem (meat.Id,meat.GetCount(), SLOT_GROUND);
+						/*if(crit.PickItem(crits[i].HexX,crits[i].HexY,PID_MEAT)==false)
+							{
+							crit.Wait(500);
+							if(crit.PickItem(crits[i].HexX,crits[i].HexY,PID_MEAT)==false)
+							{
+								crit.StatBase[ST_CURRENT_AP]=crit.StatBase[ST_ACTION_POINTS];
+								if(crit.PickItem(crits[i].HexX,crits[i].HexY,PID_MEAT)==false) return 0;
+							}
+						}*/
+						AddPickPlane(crit, 0, meat, 0, false);
+						//crit.ModeBase[MODE_NO_HOME]=0;
+						//crit.ModeBase[MODE_NO_BARTER]=0;
+						crit.StatBase[ST_STAGE]=2;
+						PlaneKillBrahmin(crit, crit);
+					}
+				}
+			}
+		}
+		else if(plane.IdentifierExt==18)
+		{
+			//Log("Тест2");
+			Item@ meat=crit.GetItem(PID_MEAT, SLOT_INV);
+			if(!valid(meat)) return -1;
+			uint16 refx=REFRIGERATOR_HEXX;
+			uint16 refy=REFRIGERATOR_HEXY;
+			
+			Item@ ref=crit.GetMap().GetItem(refx, refy, REFRIGERATOR_PROTO_ID);
+			if(!valid(ref)) return -1;
+			
+			ref.AddItem (meat.GetProtoId(), meat.GetCount(), crit.Id);
+			
+			crit.DeleteItem(meat.GetProtoId(), meat.GetCount());
+			
+			//ref.Update();
+			//if(!valid(meat)) return 0;
+			//meat.Update();
+			
+			crit.ModeBase[MODE_NO_HOME]=0;
+			crit.ModeBase[MODE_NO_BARTER]=0;
+			crit.StatBase[ST_STAGE]=0;
+			
+			NpcPlane@ closed_ref=CreatePlane(); 
+			closed_ref.Type=AI_PLANE_PICK;
+			closed_ref.Priority=AI_PLANE_PICK_PRIORITY;
+			closed_ref.Pick_HexX=ref.HexX;
+			closed_ref.Pick_HexY=ref.HexY;
+			closed_ref.Pick_Pid=ref.GetProtoId();
+			closed_ref.Pick_UseItemId=0;
+			closed_ref.Pick_ToOpen=true;
+			closed_ref.Run=false;	
+
+			crit.AddPlane(closed_ref);
+		}
+	}
+	return reason;
+}

@@ -1,0 +1,20 @@
+// Auhtor: Zerg's
+// Скрипт не выполняет своих функций. Нужно будет переделать
+#include "_macros.fos"
+
+
+void _MapInit(Map& map, bool firstTime)
+{
+    Critter@[] critters;
+    map.GetCritters(0, FIND_LIFE|FIND_ONLY_NPC, critters);
+    for(uint i=0, iMax=critters.length(); i<iMax; i++)
+    {
+        critters[i].StatBase[ST_REPLICATION_TIME]=-1;
+        critters[i].ModeBase[MODE_NO_LOOT]=1;
+    }
+}
+
+void _VBoyInit(Critter& npc, bool firstTime)
+{
+    npc.StatBase[ST_BODY_TYPE]=CRTYPE_VAULT_BOY;
+}

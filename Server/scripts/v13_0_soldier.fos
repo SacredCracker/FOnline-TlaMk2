@@ -1,0 +1,132 @@
+// Name: v13_0_soldier
+// Author: Sufir
+// Edited by:
+
+// Uses
+#include "_macros.fos"
+#include "pids_groups.fos"
+#include "v13_0_guard_h.fos"
+#include "v13_guard_lib.fos"
+import bool AddAttackPlane(Critter& npc, uint priority, uint critId, int minHp) from "npc_planes";
+import bool AddAttackPlane(Critter& npc, uint priority, uint critId) from "npc_planes";
+import uint EraseAttackPlane(Critter& npc, uint critId) from "npc_planes";
+
+// Defines
+uint	CurGuardian	=5002372;
+int		GuardDlg	=1909;
+uint16	GuardX		=69,
+		GuardY		=72,
+		GuardDir	=3;
+
+
+void _SoldierInit(Critter& soldier, bool firstTime)
+{
+
+	soldier.ModeBase[ MODE_NO_SUPPLY ]=1;
+	soldier.SetEvent(CRITTER_EVENT_MESSAGE,			"_SoldierGetMessage");
+	soldier.SetEvent(CRITTER_EVENT_SMTH_DROP_ITEM,		"_SoldierMined");
+	soldier.SetEvent(CRITTER_EVENT_SMTH_DEAD,			"_GuardianDead");
+	soldier.SetEvent(CRITTER_EVENT_ATTACKED,			"_FriendlyFire");
+	soldier.SetEvent(CRITTER_EVENT_ATTACK,				"_FriendlyFire");
+	soldier.SetEvent(CRITTER_EVENT_PLANE_BEGIN,		"_FriendlyFirePlane");
+
+}
+
+
+void _SoldierGetMessage(Critter& soldier, Critter& fromCr, int message, int value)
+{
+
+	if(!soldier.IsLife()) return;
+	if(soldier.Id==fromCr.Id) return;
+	if(!fromCr.IsSeenBy(soldier)) return;
+	Critter@ player=GetCritter(value);
+	if(!valid(player)) return;
+	if(!player.IsPlayer()) return;
+	if(message==MSG_V13_GUARD_ALARM){
+		AddAttackPlane(soldier, 0, player.Id, (player.StatBase[ST_CHARISMA] * 1.5));
+		//soldier.AddEnemyInStack(player.Id);
+	} else if(message==MSG_V13_GUARD_KILL){
+		AddAttackPlane(soldier, 0, player.Id);
+	}
+	return;
+
+}
+
+
+// Если солдат обнаружил закладывающего взрывчатку игрока - атакуем его.
+void _SoldierMined(Critter& soldier, Critter& dropper, Item& item)
+{
+
+	if(!soldier.IsNoPlanes()) return;
+	if(!valid(dropper)) return;
+	if(!dropper.IsPlayer()) return;
+	if(!dropper.IsLife()) return;
+
+	// Заминировать нас не так-то просто, нужно быть действительно мастером и удачливым ловкачем.
+	if(IsMined(soldier, item, dropper, soldier.StatBase[ST_PERCEPTION] * 20, Pids_MiscActiveExplosions)) {
+		AddAttackPlane(soldier, 0, dropper.Id);
+	}
+
+}
+
+
+// Если сержант на КПП убит, один из солдат займёт его место, если хоть один из солдат жив.
+void _GuardianDead(Critter& soldier, Critter& guardian, Critter@ killer)
+{
+
+	uint CurMap=0;
+	uint16 X=0, Y=0;
+	uint8 Dir=0;
+	if(!soldier.IsLife()) return;
+	if(guardian.Id==CurGuardian) {
+		soldier.StatBase[ST_NPC_ROLE]=ROLE_GUARDIAN;
+		guardian.StatBase[ST_NPC_ROLE]=ROLE_SOLDIER;
+		CurGuardian=soldier.Id;
+		soldier.GetHomePos(CurMap, X, Y, Dir);
+		guardian.SetHomePos(X, Y, Dir);
+		soldier.SetHomePos(GuardX, GuardY, GuardDir);
+		guardian.StatBase[ST_DIALOG_ID]=soldier.Stat[ST_DIALOG_ID];
+		soldier.StatBase[ST_DIALOG_ID]=GuardDlg;
+		guardian.SetScript("v13_0_soldier@_SoldierInit");
+		soldier.SetScript("v13_0_guard@_GuardInit");
+	} else {
+		if(valid(killer)) AddAttackPlane(soldier, 0, killer.Id);
+	}
+
+}
+
+
+// Если NPC атакован одним из "своих" - не атакуем его.
+int _FriendlyFirePlane(Critter& guardian, NpcPlane& plane, int reason, Critter@ some, Item@ someItem)
+{
+
+	if(plane.Type==AI_PLANE_ATTACK) {
+		Critter@ target=::GetCritter(plane.Attack_TargId);
+		if(valid(target) && target.StatBase[ST_NPC_ROLE]==ROLE_GUARDIAN || target.StatBase[ST_NPC_ROLE]==ROLE_SOLDIER){
+			return PLANE_DISCARD;
+		}
+	}
+	return PLANE_RUN_GLOBAL;
+
+}
+
+
+
+// Если NPC атакован одним из "своих" - не атакуем его.
+bool _FriendlyFire(Critter& guardian, Critter& attacker)
+{
+
+	if(guardian.IsNpc() && attacker.IsNpc()){
+		if(guardian.StatBase[ST_NPC_ROLE]==ROLE_GUARDIAN || guardian.StatBase[ST_NPC_ROLE]==ROLE_SOLDIER){
+			guardian.Wait(5000);
+			attacker.Wait(5000);
+			if(guardian.CheckEnemyInStack(attacker.Id)) guardian.EraseEnemyFromStack (attacker.Id);
+			if(attacker.CheckEnemyInStack(guardian.Id)) attacker.EraseEnemyFromStack (guardian.Id);
+			EraseAttackPlane(attacker, guardian.Id);
+			EraseAttackPlane(guardian, attacker.Id);
+			return true;
+		}
+	}
+	return false;
+
+}

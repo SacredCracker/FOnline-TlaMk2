@@ -1,0 +1,476 @@
+// Author: rifleman17
+// Скрипты для квестовой локации "лаборатория хабологов".
+#include "_macros.fos"
+#include "_animation.fos"
+
+#define ENTIRE_HONOMER        (43) // Место спавна проводника.
+#define NPCPID_HONOMER        (279)
+#define ENTIRE_LAB_ENTER      (1) // Место, куда приходит нпц с сопровождающим
+#define CTE_CLEAR_FOLLOWER    (121) 
+#define LAB_WORLD_X           (532) 
+#define LAB_WORLD_Y           (1435) 
+#define DIALOG_GUARD          (2)
+#define ROLE_GUARD            (18)
+#define ENTIRE_DOOR_NEAR      (19) // Гекс перед дверью, на котором будет переходить хономер перед ее открытием
+#define ENTIRE_REPAIR         (20) // Гекс на котором Хономер останавливается для ремонта
+#define ENTIRE_DOOR           (21) // Гекс под дверью
+#define MSG_DIALOG_END        (4023)
+#define ROLE_START_DIALOG     (22) // Роль нпц, который затевает обсуждение произошедшего
+#define PID_DOOR              (2019)
+#define STR_ALARM             (8030)
+#define STR_OPEN              (8031)
+#define MSG_OPEN              (4024) 
+#define ENTIRE_HELL           (242)
+
+//#define DL #(s) (Log("" + s))
+#define DL #(s)
+import bool GetNearEntire(Map& map, int number, uint16& hx, uint16& hy) from "entire";
+import void _NpcMessage(Critter& cr, Critter& fromCr, int message, int value) from "npc_dialog";
+import void BeginDialog(Critter& cr, int dialog) from "npc_dialog";
+import bool _GuardedItemSkill(Item& item, Critter& cr, int skill) from "item";
+import bool IsLocalNpc(Critter@ cr, Map@ map) from "npc_revenge";
+import bool AddAttackPlane(Critter& npc, uint priority, Critter& target) from "npc_planes";
+
+// Квест "Секретная лаборатория хабологов".
+bool d_IsHonomerNear(Critter& player, Critter@ npc)
+{
+	Map@ map=player.GetMap();
+	Critter@[] critters;
+	if(map.GetCritters(NPCPID_HONOMER, FIND_LIFE|FIND_ONLY_NPC, critters) > 0)
+	{
+		for(uint i=0, iMax=critters.length(); i<iMax; i++)
+		{
+			if(critters[i].Stat[ST_DIALOG_ID]==DIALOG_sf_honomer)
+				return true;
+		}
+	}
+	return false;
+}
+
+bool d_NoHonomerNear(Critter& player, Critter@ npc)
+{
+	return !d_IsHonomerNear(player, npc);
+}
+
+// Добавление проводника на карту sf_hubb.
+void AddNewHonomer()
+{	
+	Map@ map=GetMapByPid(MAP_sf_hubb, 0);
+	uint16 hx=0;
+	uint16 hy=0;
+	if(valid(map) && GetNearEntire(map, ENTIRE_HONOMER, hx, hy))
+	{
+		Critter@[] critters;
+		map.GetCritters(NPCPID_HONOMER, FIND_ALL|FIND_ONLY_NPC, critters);
+		for(uint i=0, iMax=critters.length(); i<iMax; i++)
+		{
+			if(critters[i].Stat[ST_DIALOG_ID]==DIALOG_sf_honomer)
+				return;
+		}
+		int[] params={ST_DIALOG_ID, DIALOG_sf_honomer};
+		map.AddNpc(NPCPID_HONOMER, hx, hy, Random(0,5), params, null, "_HonomerInit");
+	}
+}
+
+void _HonomerInit(Critter& cr, bool firstTime)
+{
+	cr.SetEvent(CRITTER_EVENT_GLOBAL_PROCESS, "_HonomerGlobalProcess");
+	cr.SetEvent(CRITTER_EVENT_FINISH, "_HonomerFinish");
+	cr.SetEvent(CRITTER_EVENT_DEAD, "_HonomerDead");
+	cr.SetEvent(CRITTER_EVENT_IDLE, "_HonomerIdle");
+	cr.SetEvent(CRITTER_EVENT_MESSAGE, "_HonomerMessage");
+	cr.SetEvent(CRITTER_EVENT_PLANE_END, "_HonomerPlaneEnd");
+}
+
+void _HonomerMessage(Critter& cr, Critter& fromCr, int message, int value)
+{
+	if(value==2|| value==4)
+	{
+		_NpcMessage(cr, fromCr, message, value);
+	}
+}
+
+int _HonomerPlaneEnd(Critter& cr, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem)
+{
+	if(cr.IsNoPlanes() && d_HonomerInLab(cr, cr))
+	{
+		uint16 hx=0, hy=0;
+		Map@ map=cr.GetMap();
+		if(valid(map) && map.GetEntireCoords(ENTIRE_DOOR_NEAR, 0, hx, hy))
+		{
+			if(hx==cr.HexX && hy==cr.HexY)
+			{
+				// Хономер стоит перед дверью
+				// Открываем дверь и даем план на продвижение к компу
+				map.GetEntireCoords(ENTIRE_DOOR, 0, hx, hy);
+				Item@ door=map.GetItem(hx, hy, PID_DOOR);
+				if(valid(door))
+				{
+					door.LockerOpen();
+					CreateTimeEvent(__FullSecond + __TimeMultiplier*10, "item@e_AutoCloseDoor", door.Id, true);
+				}
+				if(map.GetEntireCoords(ENTIRE_REPAIR, 0, hx, hy))
+				{
+					cr.SetHomePos(hx, hy, 0);
+				}
+				return PLANE_RUN_GLOBAL;
+			}
+		}
+		if(valid(map) && map.GetEntireCoords(ENTIRE_REPAIR, 0, hx, hy))
+		{
+			if(plane.Type !=AI_PLANE_MISC)
+			{
+				if(hx==cr.HexX && hy==cr.HexY)
+				{
+					BeginDialog(cr, 4);
+				}
+			}
+			else
+			{
+				if(Random(1,3)==1)
+					_CritAnimateUse(cr);
+			}
+		}
+	}
+	return PLANE_RUN_GLOBAL;
+}
+
+void _HonomerDead(Critter& cr, Critter@ killer)
+{
+	_HonomerIdle(cr);
+}
+
+bool _HonomerGlobalProcess(Critter& cr, int type, Item@ car, float& x, float& y, float& toX, float& toY, float& speed, uint& encounterDescriptor, bool& waitForAnswer)
+{	
+	if(type !=GLOBAL_PROCESS_START_FAST && type !=GLOBAL_PROCESS_START)
+	{
+		bool ok=false;
+		Critter@[] group=cr.GetGlobalGroup();
+		GameVar@ playerId=GetLocalVar(LVAR_sf_honomer_playerid, cr.Id);
+
+		if(valid(playerId)) // Проверка что игрок в группе с нпц
+		{
+			Critter@ player=GetCritter(playerId.GetValue());
+			if(valid(player))
+			{
+				for(uint i=0, iMax=group.length(); i<iMax; i++)
+				{
+					if(group[i].Id==player.Id)
+					{
+						ok=true;
+						break;
+					}
+				}
+			}
+		}
+		if (!ok)
+		{		
+			// Нет игрока в группе
+			DeleteNpc(cr);
+			return true;
+		}
+	}
+	
+	if(type !=GLOBAL_PROCESS_MOVE)
+	{
+		GameVar@ locId=GetLocalVar(LVAR_q_sf_escort_location, cr.Id);
+		if(valid(locId))
+		{
+			Location@ loc=GetLocation(locId.GetValue());
+			if(valid(loc))
+			{
+				if(loc.WorldX==x && loc.WorldY==y)
+				{
+					Map@ map=loc.GetMapByIndex(1);
+					cr.TransitToMap(map.Id, ENTIRE_LAB_ENTER, true);
+					loc.AutoGarbage=true;
+					cr.SetEvent(CRITTER_EVENT_IDLE, "_HonomerIdle");
+					GameVar@ pId=GetLocalVar(LVAR_sf_honomer_playerid, cr.Id);
+					if(valid(pId) && pId.GetValue() > 0)
+					{
+						GameVar@ qVar=GetLocalVar(LVAR_q_sf_ahs7_escort, pId.GetValue());
+						if(valid(qVar) && qVar==2)
+						{
+							qVar=3;
+							Critter@ player=GetCritter(pId.GetValue());
+							if(valid(player))
+								player.StatBase[ST_EXPERIENCE] +=3000;
+						}
+					}
+					BeginDialog(cr, DIALOG_GUARD);
+				}
+				else
+				{
+					speed=GLOBAL_MAP_BASE_SPEED;
+					toX=loc.WorldX;
+					toY=loc.WorldY;
+				}
+				return true;
+			}	
+		}
+		// не найдена локация или переменная
+		// такого произойти не может, но на всякий случай...
+		DeleteNpc(cr);
+		return true;
+	}
+	return false;
+}
+
+void _HonomerIdle(Critter& cr)
+{
+	uint16 x=0;
+	uint16 y=0;
+	uint mapId=0;
+	uint8 dir=0;
+	cr.GetHomePos(mapId, x, y, dir);
+	if(valid(cr.GetMap()) && cr.GetMap().Id !=mapId)
+	{
+		cr.SetHomePos(cr.HexX, cr.HexY, 0);
+	}
+	cr.SetEvent(CRITTER_EVENT_IDLE, "");
+}
+
+void _HonomerFinish(Critter& cr, bool deleted)
+{
+	if(deleted)
+	{
+		AddNewHonomer();
+	}
+}
+
+bool d_HonomerInLab(Critter& player, Critter@ npc)
+{
+	Map@ map=npc.GetMap();
+	return (valid(map) && (map.GetLocation().GetProtoId()==LOCATION_Quest_Hub_Lab));		
+}
+
+bool d_NotHonomerInLab(Critter& player, Critter@ npc)
+{
+	return !d_HonomerInLab(player, npc);
+}
+
+bool d_IsMyFollower(Critter& player, Critter@ npc)
+{
+	GameVar@ playerId=GetLocalVar(LVAR_sf_honomer_playerid, npc.Id);
+	return (valid(playerId) && playerId.GetValue()==int(player.Id));
+}
+
+bool d_NotMyFollower(Critter& player, Critter@ npc)
+{
+	return !d_IsMyFollower(player, npc);
+}
+
+void r_SetFollower(Critter& player, Critter@ npc)
+{
+	GameVar@ playerId=GetLocalVar(LVAR_sf_honomer_playerid, npc.Id);
+	if(valid(playerId))
+	{
+		playerId=player.Id;
+		// Через игровой день сбрасываем Id
+		if(npc.GetTimeEvents(CTE_CLEAR_FOLLOWER, null, null, null) > 0)
+			npc.EraseTimeEvents(CTE_CLEAR_FOLLOWER);
+		npc.AddTimeEvent("cte_ClearFollower", 60*60*24, CTE_CLEAR_FOLLOWER, 0);
+	}
+}
+
+uint cte_ClearFollower(Critter& cr, int identifier, uint& rate)
+{
+	GameVar@ playerId=GetLocalVar(LVAR_sf_honomer_playerid,  cr.Id);
+	if(valid(playerId))
+		playerId=0;
+	return 0;
+}
+
+void r_Travel(Critter& player, Critter@ npc)
+{
+	GameVar@ locNpc=GetLocalVar(LVAR_q_sf_escort_location, npc.Id);
+	GameVar@ locPlayer=GetLocalVar(LVAR_q_sf_escort_location, player.Id);
+	if (!valid(locNpc) || !valid(locPlayer))
+		return;
+	Location@ loc;
+	if(locPlayer > 0)
+		@loc=GetLocation(locPlayer.GetValue());
+	if (!valid(loc))
+	{
+		uint locId=CreateLocation(LOCATION_Quest_Hub_Lab, LAB_WORLD_X, LAB_WORLD_Y, null);
+		if(locId==0)
+			return;
+		@loc=GetLocation(locId);
+		loc.Visible=false;
+		loc.AutoGarbage=false;
+	}
+	locNpc=loc.Id;
+	locPlayer=loc.Id;
+	Critter @[] grp;
+	grp.insertLast(@npc);
+	grp.insertLast(@player);
+	npc.TransitToGlobal(grp);		
+}
+
+void AttackPlayer(Critter& target)
+{
+	Map@ map=target.GetMap();
+	if (!valid(map))
+		return;
+	Location@ loc=map.GetLocation();
+	uint maps=loc.GetMapCount();
+	Critter@[] critters;
+	for(uint i=0; i<maps; i++)
+	{
+		@map=loc.GetMapByIndex(i);
+		@critters;
+		map.GetCritters(0, FIND_ALL|FIND_ONLY_NPC, critters);
+		for(uint i=0, iMax=critters.length(); i<iMax; i++)
+		{
+			Critter@ cr=critters[i];
+			if(valid(cr) && IsLocalNpc(cr, map) && !cr.CheckEnemyInStack(target.Id))
+			{
+				cr.AddEnemyInStack(target.Id);
+				AddAttackPlane(cr, 0, target);
+			}
+		}
+	}
+}
+
+// Охранник лабы
+void _DoorGuardInit(Critter& cr, bool firstTime)
+{	
+	cr.SetEvent(CRITTER_EVENT_MESSAGE, "_DoorGuardMessage");
+	cr.SetEvent(CRITTER_EVENT_ATTACKED, "_HubAttacked");
+	cr.StatBase[ST_NPC_ROLE]=ROLE_GUARD;
+}
+bool _HubAttacked(Critter& cr, Critter& attacker)
+{
+	AttackPlayer(cr);
+	return false;
+}
+void _DoorGuardMessage(Critter& cr, Critter& fromCr, int message, int value)
+{
+	if(value==2)
+		_NpcMessage(cr, fromCr, message, value);
+	if(message==MSG_DIALOG_END && value==2)
+	{
+		uint16 hx=0, hy=0, x=0, y=0;		
+		uint8 d=0;
+		uint mapId=0;
+		fromCr.GetHomePos(mapId, x, y, d);
+		if(cr.GetMap().GetEntireCoords(ENTIRE_DOOR_NEAR, 0, hx, hy) && hx !=x && hy !=y && hx > 0 && hy > 0)
+				fromCr.SetHomePos(hx, hy, 0);
+	}
+}
+
+// Дверь
+void _DoorInit(Item& item, bool firstTime)
+{
+	item.SetEvent(ITEM_EVENT_SKILL, "_DoorSkill");
+}
+
+bool _DoorSkill(Item& item, Critter& cr, int skill)
+{
+	if(cr.IsPlayer() && cr.Mode[MODE_HIDE]==0)
+		return _GuardedItemSkill(item, cr, skill);
+	return false;
+}
+
+// Лаборанты 
+void _HubInit(Critter& cr, bool firstTime)
+{
+	if(cr.Stat[ST_NPC_ROLE]==ROLE_START_DIALOG)
+		cr.SetEvent(CRITTER_EVENT_MESSAGE, "_HubMessage");
+	cr.SetEvent(CRITTER_EVENT_ATTACKED, "_HubAttacked");
+}
+
+void _HubMessage(Critter& cr, Critter& fromCr, int message, int value)
+{
+	if(value==3)
+		_NpcMessage(cr, fromCr, message, value);
+}
+
+// Начало диалога между хабологами, когда игрок наступит на триггер
+void t_NpcDialog(Critter& player, Scenery& trigger, bool entered, uint8 dir)
+{
+	Map@ map=player.GetMap();
+	Critter@ cr=player.GetMap().GetNpc(ROLE_START_DIALOG, FIND_LIFE|FIND_ONLY_NPC,0);
+	if(valid(cr) && cr.Stat[ST_VAR7]==0 && cr.IsNoPlanes())
+	{
+		cr.StatBase[ST_VAR7]=1;
+		BeginDialog(cr, 3);		
+	}
+}
+
+// Автоматическое закрытие двери, если Хономер вышел
+void t_CloseDoor(Critter& cr, Scenery& trigger, bool entered, uint8 dir)
+{
+	if(cr.IsNpc() && cr.Stat[ST_DIALOG_ID]==DIALOG_sf_honomer)
+	{
+		Map@ map=cr.GetMap();
+		GameVar@ inside=GetLocalVar(LMVAR_sf_lab_honomer_inside, map.Id);
+		if(valid(inside) && inside==0)
+		{
+			inside=1;
+			uint16 hx=0, hy=0;
+			if(map.GetEntireCoords(ENTIRE_DOOR, 0, hx, hy))
+			{
+				Item@ door=map.GetItem(hx, hy, PID_DOOR);
+				if(valid(door))
+				{
+					door.LockerClose();
+				}
+			}
+		}
+	}
+	// TODO: сделать открытие двери, если игрок наступил на триггер, дверь закрыта, и игрок в робе
+}
+
+// Если игрок не в робе наступил на триггер, будет атакован
+void t_Attack(Critter& cr, Scenery& trigger, bool entered, uint8 dir)
+{
+	if(cr.Mode[MODE_HIDE] > 0)
+		return;
+	uint pid=0;
+	Item@ item=_CritGetItemArmor(cr);
+	if(valid(item))
+		pid=item.GetProtoId();
+	if(cr.IsPlayer() && pid !=PID_PURPLE_ROBE 
+					 && pid !=PID_KEEPBRIGE_ROBE 
+					 && pid !=PID_BLACK_ROBE)
+	{
+		Map@ map=cr.GetMap();
+		GameVar@ failed=GetLocalVar(LVAR_sf_lab_failed, cr.Id);
+		if(valid(map) && valid(failed) && failed==0)
+		{
+			AttackPlayer(cr);
+			Critter@[] critters;
+			if(map.GetCrittersHex(trigger.HexX, trigger.HexY, map.GetWidth(), FIND_ONLY_NPC|FIND_LIFE, critters) > 0)
+			{
+				critters[0].SayMsg(SAY_SHOUT, TEXTMSG_TEXT, STR_ALARM);
+			}
+		}
+	}
+}
+
+bool d_InRobe(Critter& cr, Critter@ npc)
+{
+	uint pid=0;
+	Item@ item=_CritGetItemArmor(cr);
+	if(valid(item))
+		pid=item.GetProtoId();
+	return (pid==PID_PURPLE_ROBE || pid==PID_KEEPBRIGE_ROBE || pid==PID_BLACK_ROBE);
+}
+
+bool d_NotRobe(Critter& player, Critter@ npc)
+{
+	return !d_InRobe(player, npc);
+}
+
+void r_ShowHell(Critter& player, Critter@ npc)
+{
+	Map@ map=GetMapByPid(MAP_replication_hell, 0);
+	if(valid(map))
+	{
+		uint16 hx=0, hy=0;
+		if(map.GetEntireCoords(ENTIRE_HELL, 0, hx, hy))
+			player.ViewMap(map, 50, hx, hy, 5);
+
+	}
+}

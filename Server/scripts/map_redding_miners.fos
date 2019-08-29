@@ -1,0 +1,125 @@
+#include "_macros.fos"
+#include "_teams.fos"
+
+import void _SetupCaravanLeader(uint idCaravan, Critter & leader) from "caravan";
+/************************************** Проводник караванов Савинелли ****************************************************/
+void _SavinelInit(Critter & cr, bool firstTime)
+{
+	cr.StatBase[ST_VAR0]=2;
+	//Log("Проводник караванов Савинелли Id="+cr.Id);
+	_SetupCaravanLeader(2, cr);
+}
+
+/************************************** Проводник караванов Стенвелл *****************************************************/
+void _StanwellInit(Critter & cr, bool firstTime)
+{
+	cr.StatBase[ST_VAR0]=3;
+	cr.StatBase[ST_TEAM_ID]=TEAM_QuestNpc;
+	//Log("Проводник караванов Стенвелл Id="+cr.Id);
+	_SetupCaravanLeader(3, cr);
+}
+
+/*************************************** Проводник караванов Бен Вейд ****************************************************/
+void _WadeInit(Critter & cr, bool firstTime)
+{
+	cr.StatBase[ST_VAR0]=1;
+	//Log("Проводник караванов Бен Вейд Id="+cr.Id);
+	_SetupCaravanLeader(1, cr);
+}
+
+/**************************** Экстренное возвращение каравана Стенвелла **************************************************/
+import bool d_IsCaravanStatus(Critter& player, Critter@ npc, int status) from "caravan";
+import void PrepareCaravan(uint CaravanId) from "caravan";
+import void StartCaravan(uint CaravanId) from "caravan";
+
+void r_PrepareCaravan(Critter & player, Critter @ npc)
+{
+	if (!valid(npc)) return;
+	if(npc.IsDead()) return;
+	if(d_IsCaravanStatus(player, npc, 1)) return;
+	PrepareCaravan(3);
+	CreateTimeEvent(__FullSecond+4*60*60, "e_StartCaravan", npc.Id, true);
+
+}
+
+uint e_StartCaravan(uint[]@ values)
+{
+	StartCaravan(3);
+	return 0;
+}
+
+/*************************************************** MISC ****************************************************************/
+void DL(string s)
+{
+	//Log(s);
+}
+
+#define SCRIPTNAME                           "map_redding_miners"// имя скрипта для patrol_h
+
+#include "patrol_h.fos"
+#include "_ai.fos"
+#include "_bags.fos"
+
+import uint GetNearFullSecond(uint16 year, uint16 month, uint16 day, uint16 hour, uint16 minute, uint16 second) from "time";
+
+#define NPC_PID_ReddPatrolRegulator          (498)
+
+#define ENTIRE_LEFT_ENTRANCE                 (156)
+#define ENTIRE_RIGHT_ENTRANCE                (157)
+#define ENTIRE_CENTER                        (158)
+#define ENTIRE_BEFORE_ANDERSON               (159)
+#define ENTIRE_EXIT_TO_MINES                 (160)
+#define ENTIRE_TREVOR                        (161)
+
+
+import void PowerNpc(Critter & cr) from "redding_common";
+
+void _MapInit(Map & map, bool firstTime)
+{
+	Critter @[] npc;
+	map.GetCritters(0,FIND_ALL|FIND_ONLY_NPC, npc);
+	for(uint i=0, iMax=npc.length(); i<iMax; i++)
+	{
+		Critter @ cr=npc[i];
+		if(valid(cr))
+		{
+			if(cr.Stat[ST_TEAM_ID]==TEAM_Police||cr.Stat[ST_DIALOG_ID]==DIALOG_redd_anderson)
+			{
+				PowerNpc(cr);
+			}
+		}
+	}
+
+	pInfo=PatrolInfo();
+	DL("here");
+	pInfo.Route.AddPoint(PatrolPoint(map, ENTIRE_LEFT_ENTRANCE, 14));
+	pInfo.Route.AddPoint(PatrolPoint(map, ENTIRE_TREVOR, 4));
+	pInfo.Route.AddPoint(PatrolPoint(map, ENTIRE_CENTER, 4));
+	pInfo.Route.AddPoint(PatrolPoint(map, ENTIRE_BEFORE_ANDERSON, 4));
+	pInfo.Route.AddPoint(PatrolPoint(map, ENTIRE_EXIT_TO_MINES, 4));
+	pInfo.Route.AddPoint(PatrolPoint(map, ENTIRE_RIGHT_ENTRANCE, 24));
+	pInfo.AddPatroller(DIALOG_redd_patrol, NPC_PID_ReddPatrolRegulator, BAG_SF_Caravan_GrandMasterTraderMale, TEAM_Police , AIPACKET_BOUNTY_HUNTER, 30);
+	pInfo.AddPatroller(DIALOG_redd_patrol, NPC_PID_ReddPatrolRegulator, BAG_RDRC_BHCaravan_BigGunGuardMale, TEAM_Police , AIPACKET_BOUNTY_HUNTER, 30);
+	pInfo.AddPatroller(DIALOG_redd_patrol, NPC_PID_ReddPatrolRegulator, BAG_SF_Band2_ElronologistMale2, TEAM_Police , AIPACKET_BOUNTY_HUNTER, 30);
+
+	uint time=GetNearFullSecond(0,0,0,6,0,0);
+	CreateTimeEvent(time,"e_BeginPatrol",false);
+
+}
+
+uint e_BeginPatrol(uint[]@ values)
+{
+	pInfo.BeginPatrol();
+	pInfo.MovePatrol();
+	uint time=GetNearFullSecond(0,0,0,5,55,0);
+	CreateTimeEvent(time,"e_EndPatrol",false);
+	return 0;
+}
+
+uint e_EndPatrol(uint[]@ values)
+{
+	pInfo.EndPatrol();
+	uint time=GetNearFullSecond(0,0,0,21,0,0);
+	CreateTimeEvent(time,"e_BeginPatrol",false);
+	return 0;
+}

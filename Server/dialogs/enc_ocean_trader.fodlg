@@ -1,0 +1,477 @@
+[comment]
+
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 D _var p enc_ocean_trader_familiar = 0 D _param p ST_KARMA < 120 D _param p ST_INTELLECT }4 R _var p enc_ocean_trader_familiar = 1 #
+25 1020 D _var p enc_ocean_trader_familiar = 0 D _param p ST_KARMA }120 D _param p ST_INTELLECT }4 R _var p enc_ocean_trader_familiar = 1 #
+23 1030 D _var p enc_ocean_trader_familiar = 2 D _param p ST_INTELLECT }4 R _var p trade_was = 0 #
+36 1040 D _var p enc_ocean_trader_familiar = 1 D _param p ST_INTELLECT }4 R _var p trade_was = 0 #
+24 1050 D _var p enc_ocean_trader_familiar = 3 D _param p ST_INTELLECT }4 R _var p trade_was = 0 #
+35 1060 D _var p enc_ocean_trader_familiar = 4 D _param p ST_INTELLECT }4 D _var p click_counter { 12 R _var p click_counter + 1 #
+35 1070 D _var p click_counter > 12 R _var p enc_ocean_trader_familiar = 5 #
+30 1080 D _var p enc_ocean_trader_familiar = 5 D _param p ST_INTELLECT }4 R _script dialog@r_Attack 1 16 #
+26 1090 D _var p enc_ocean_trader_familiar = 0 D _param p ST_INTELLECT < 4 #
+28 1100 D _var p enc_ocean_trader_familiar = 3 D _param p ST_INTELLECT < 4 R _var p enc_ocean_trader_familiar = 4 #
+29 1110 D _var p enc_ocean_trader_familiar = 4 D _param p ST_INTELLECT < 4 R _var p enc_ocean_trader_familiar = 5 #
+30 1120 D _var p enc_ocean_trader_familiar = 5 D _param p ST_INTELLECT < 4 R _script dialog@r_Attack 1 16 @
+2 2000 None 1 #
+3 2010 #
+4 2020 R _var p enc_ocean_trader_familiar = 2 #
+30 2030 D _param p ST_LEVEL < 6 R _script dialog@r_Attack 1 16 R _var p enc_ocean_trader_familiar = 5 #
+15 2040 D _param p ST_LEVEL }6 #
+5 2050 #
+5 2060 @
+25 3000 None 1 #
+3 3010 #
+4 3020 R _var p enc_ocean_trader_familiar = 2 #
+30 3030 D _param p ST_LEVEL < 6 R _script dialog@r_Attack 1 16 R _var p enc_ocean_trader_familiar = 5 #
+15 3040 D _param p ST_LEVEL }6 #
+5 3050 #
+5 3060 @
+3 4000 None 1 #
+6 4010 #
+4 4020 R _var p enc_ocean_trader_familiar = 2 #
+30 4030 D _param p ST_LEVEL < 6 R _script dialog@r_Attack 1 16 R _var p enc_ocean_trader_familiar = 5 #
+15 4040 D _param p ST_LEVEL }6 #
+5 4050 @
+4 5000 None 1 #
+7 5010 D _param p SK_SPEECH < 40 #
+7 5020 D _param p SK_SPEECH }40 #
+31 5030 R _var p enc_ocean_trader_familiar = 3 #
+5 5040 @
+5 6000 None 1 #
+65506 6010 D _var p trade_was = 0 R _var p trade_was = 1 #
+31 6020 D _var p trade_was = 0 R _var p enc_ocean_trader_familiar = 3 #
+65506 6030 D _var p trade_was = 1 #
+18 6040 #
+37 6050 D _var p trade_was = 1 @
+6 7000 None 1 #
+4 7010 D _param p SK_SPEECH { 60 R _var p enc_ocean_trader_familiar = 2 #
+4 7020 D _param p SK_SPEECH > 60 R _var p enc_ocean_trader_familiar = 2 #
+31 7030 R _var p enc_ocean_trader_familiar = 3 #
+32 7040 R _var p enc_ocean_trader_familiar = 3 @
+7 8000 None 1 #
+9 8010 #
+8 8020 @
+8 9000 None 1 #
+9 9010 #
+17 9020 #
+0 9030 #
+5 9040 @
+9 10000 None 1 #
+10 10010 #
+0 10020 @
+10 11000 None 1 #
+11 11010 #
+0 11020 @
+11 12000 None 1 #
+12 12010 #
+0 12020 @
+12 13000 None 1 #
+13 13010 #
+0 13020 @
+13 14000 None 1 #
+14 14010 #
+0 14020 @
+14 15000 None 1 #
+17 15010 R _var p trade_was = 0 #
+30 15020 D _param p ST_LEVEL < 6 R _script dialog@r_Attack 1 16 R _var p enc_ocean_trader_familiar = 5 #
+15 15030 D _param p ST_LEVEL }6 #
+19 15040 #
+5 15050 D _var p trade_was = 0 #
+37 15060 D _var p trade_was = 1 @
+15 16000 Attack 1 #
+16 16010 #
+16 16020 #
+65507 16030 R _script dialog@r_Attack 1 16 R _var p enc_ocean_trader_familiar = 5 #
+0 16040 R _var p enc_ocean_trader_familiar = 3 @
+16 17000 Attack 1 #
+65507 17010 R _script dialog@r_Attack 1 16 R _var p enc_ocean_trader_familiar = 5 #
+34 17020 R _script dialog@r_Attack 1 16 R _var p enc_ocean_trader_familiar = 5 #
+0 17030 R _var p enc_ocean_trader_familiar = 5 @
+17 18000 None 1 #
+65506 18010 D _var p trade_was = 0 R _var p trade_was = 1 #
+18 18020 D _var p trade_was = 0 #
+0 18030 #
+65506 18040 D _var p trade_was = 1 #
+0 18050 D _var p trade_was = 1 @
+18 19000 None 1 #
+19 19010 #
+22 19020 #
+7 19030 #
+39 19040 #
+17 19050 R _var p trade_was = 0 #
+0 19060 @
+19 20000 None 1 #
+20 20010 #
+18 20020 #
+0 20030 @
+20 21000 None 1 #
+21 21010 #
+18 21020 #
+0 21030 @
+21 22000 None 1 #
+18 22010 #
+0 22020 @
+22 23000 None 1 #
+18 23010 #
+0 23020 @
+39 24000 None 1 #
+18 24010 #
+0 24020 @
+23 25000 None 1 #
+18 25010 #
+17 25020 R _var p trade_was = 0 #
+0 25030 @
+24 26000 None 1 #
+18 26010 #
+17 26020 R _var p trade_was = 0 #
+30 26030 D _param p ST_LEVEL < 6 R _script dialog@r_Attack 1 16 R _var p enc_ocean_trader_familiar = 5 #
+15 26040 D _param p ST_LEVEL }6 #
+0 26050 @
+26 27000 None 1 #
+27 27010 #
+27 27020 @
+27 28000 None 1 #
+28 28010 R _var p enc_ocean_trader_familiar = 3 #
+28 28020 R _var p enc_ocean_trader_familiar = 3 #
+30 28030 R _var p enc_ocean_trader_familiar = 5 R _script dialog@r_Attack 1 16 @
+28 29000 None 1 @
+29 30000 None 1 @
+30 31000 None 1 @
+31 32000 None 1 @
+32 33000 None 1 @
+33 34000 None 1 @
+34 35000 None 1 @
+35 36000 None 1 @
+37 37000 None 1 @
+36 38000 None 1 #
+18 38010 #
+38 38020 R _var p enc_ocean_trader_familiar = 2 #
+17 38030 R _var p trade_was = 0 #
+0 38040 @
+38 39000 None 1 #
+18 39010 #
+17 39020 R _var p trade_was = 0 #
+37 39030 &
+
+[russ]
+{100}{}{Кристофер}
+{200}{}{Вы видите: моряк.}
+{210}{}{Крепкий стареющий мужчина с изветренной кожей.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{Первое знакомство - нейтрал.}
+{1020}{}{Первое знакомство - высокая карма.}
+{1030}{}{Знакомы полностью.}
+{1040}{}{Знакомы не совсем}
+{1050}{}{Недолюбливает.}
+{1060}{}{Раздражён.}
+{1070}{}{Раздражён и сейчас разозлит.}
+{1080}{}{Поссорились.}
+{1090}{}{Первое знакомство - низкая инта.}
+{1100}{}{Низкая инта - недолюбливает.}
+{1110}{}{Низкая инта - раздражён.}
+{1120}{}{Низкая инта - разозлил.}
+{2000}{}{Привет! Не ожидал, что встречу ещё одного морского путешественника! Добро пожаловать на моё судно! Меня зовут Кристофер.}
+{2010}{}{Судно, хах? Я думал@sex@|||а|, что ты потерпел крушение.}
+{2020}{}{А меня - @pname@. Куда держишь путь, Кристофер?}
+{2030}{}{Это ограбление, сука! Быстро выкладывай всё, что есть, иначе я выпотрошу твою собаку!}
+{2040}{}{Это ограбление, сука! Быстро выкладывай всё, что есть, иначе я выпотрошу твою собаку!}
+{2050}{}{Привет, привет. Меня зовут @pname@. Но мне уже действительно надо плыть - я просто пристал@sex@|||а| поздороваться.}
+{2060}{}{Привет, спасибо. Но я уже отправляюсь дальше - просто хотел@sex@|||а| посмотреть, что это за хрень плывёт.}
+{3000}{}{Ооо, какие дела, да это же сам@sex@|||а| @pname@! Слышал о тебе - говорят, ты помог@sex@|||ла| на материке многим людям. Добро пожаловать на моё судно! Меня зовут Кристофер.}
+{3010}{}{Судно, хах? Я думал@sex@|||а|, что ты потерпел крушение.}
+{3020}{}{А меня - @pname@. Куда держишь путь, Кристофер?}
+{3030}{}{Да, я @pname@, но по воскресениям я - морской пират. Быстро выкладывай всё, что есть, иначе я выпотрошу твою собаку!}
+{3040}{}{Да, я @pname@, но по воскресениям я - морской пират. Быстро выкладывай всё, что есть, иначе я выпотрошу твою собаку!}
+{3050}{}{Привет, привет. Да, это я. Но мне уже действительно надо плыть - я просто пристал@sex@|||а| поздороваться.}
+{3060}{}{Привет, спасибо. Но я уже отправляюсь дальше - просто хотел@sex@|||а| посмотреть, что это за хрень плывёт.}
+{4000}{}{Эй, не смей обижать моё корыто, @sex@|чувак||подруга|! Это называется плот и плавает оно получше, чем твоя ржавая хренотень!}
+{4010}{}{Окей, окей, извини. А куда ты направляешься на этом своём "плоту"?}
+{4020}{}{Эй, не принимай это так серьёзно, я просто шучу. Так вот, меня зовут @pname@. Куда держишь путь, Кристофер?}
+{4030}{}{Лучше-не лучше, но оно сейчас перестанет плавать совсем, если ты не отдашь мне свои деньги.}
+{4040}{}{Лучше-не лучше, но оно сейчас перестанет плавать совсем, если ты не отдашь мне свои деньги.}
+{4050}{}{Ну раз ты не терпишь крушение, то мне нечего тут делать, пока!}
+{5000}{}{Очень прятно, @pname@. Возможно, в это сложно будет поверить, но я путешествую на саму Аляску! Если ты не знаешь - это очень далеко на север. Там почти нет людей, а море сковано льдами.}
+{5010}{}{И какого хрена тебя понесло в такую даль?}
+{5020}{}{О, это очень интересно. И какую же вы цель преследуете, отправляясь в столь дальнее путешествие?}
+{5030}{}{Льдами, да? Лёд бывает только в холодильнике, идиот! Я валю с твоей лодки, ты, псих, похоже.}
+{5040}{}{Очень интересно, да. Но мне пора! Пока!}
+{6000}{}{Эй! Стой! Ты что, не знаешь, что все морские путешественники должны чем-нибудь обменяться, если встретятся?}
+{6010}{}{Ну давай посмотрим, что у тебя есть...}
+{6020}{}{Я не заинтересован@sex@|||а|.}
+{6030}{}{Покажи-ка товар ещё раз, у тебя там есть интересные штучки...}
+{6040}{}{Я вообще передумал@sex@|||а| уходить - хотел@sex@|||а| спросить кое о чём...}
+{6050}{}{Ну всё, теперь мне пора.}
+{7000}{}{Я не могу рассказывать подобных вещей человеку, чьего имени я даже не знаю!}
+{7010}{}{Меня зовут @pname@.}
+{7020}{}{О, прошу прощения, где мои манеры? Меня зовут @pname@. Простите, что не представил@sex@|ся||ась| сразу.}
+{7030}{}{Хрен тебе, а не имя.}
+{7040}{}{Прошу прощения, но из-за своих убеждений я не могу просто так раскрывать своё имя.}
+{8000}{}{О, это долгая история. Хочешь услышать её всю?}
+{8010}{}{Валяй.}
+{8020}{}{Не, давай вкратце.}
+{9000}{}{В общем, я поймал радиосигнал с одного поселения с Аляски. Оказалось, что там тоже живут люди, и у них нет мутаций. С тех пор я плаваю туда-сюда вдоль берега. Вожу всякое барахло оттуда, привожу им семена растений отсюда и прочую ерунду.}
+{9010}{}{О, это интересно. Давай лучше полную историю.}
+{9020}{}{Барахло, говоришь? А можно у тебя что-нибудь купить?}
+{9030}{}{Прикольно. Ну ладно, мне пора, было интересно пообщаться.}
+{9040}{}{Прикольно. Ну ладно, мне пора, было интересно пообщаться.}
+{10000}{}{Начну издалека. Родился я в Сан-Франциско, жил среди рыбаков, учился вязать снасти, да смотрел, как плавают лодки. Потом подрабатывал в магазине у Лау Чоу, чинил рации да всякую электронику.}
+{10010}{}{[Далее]}
+{10020}{}{Хватит, я передумал@sex@|||а|.}
+{11000}{}{И было у меня, значит, своё радио. Ловил иногда чужие переговоры и слушал во время работы, чтобы не так скучно было. И один раз нарвался на чью-то передачу... Там говорили: "Привет! Это говорит Аркадия! Идите к нам! У нас есть еда, и тут нет мутаций!"}
+{11010}{}{[Далее]}
+{11020}{}{Это очень интересно, но мне пора идти.}
+{12000}{}{Эта передача повторялась каждый день... Оказалось, что это какой-то город на Аляске, где тоже сохранилась жизнь. Они рассказывали ещё много чего интересного, но мой передатчик был слишком слабым для того, чтобы им ответить...}
+{12010}{}{[Далее]}
+{12020}{}{У меня нет времени слушать сказки.}
+{13000}{}{И у меня родилась мечта: отправиться в Аркадию. Я уже ходил в море с рыбаками и мог бы пройти довольно большое расстояние на лодке вдоль берега. Но я боялся зависеть от ветра и идти под парусом, поэтому я приступил к постройке "Энтерпрайза". Это плот, на котором ты сейчас стоишь.}
+{13010}{}{[Далее]}
+{13020}{}{Мы сейчас в милях от берега. Ты просто заблудился в море и бредишь. Я не чувствую себя в безопасности на этом плоту, пока.}
+{14000}{}{И на "Энтерпрайзе" я добрался-таки до Аркадии! Город действительно был, и там были люди! Это были потомки военных, которые пережили падение ракет в бункере. С едой у них было на самом деле туго, но зато в округе у них валялись тонны военного хлама с Великой Войны. Выйдешь в поле, копнёшь - и вот тебе образец продвинутого оружия, за который Братство глотку перегрызёт.}
+{14010}{}{[Далее]}
+{14020}{}{Сейчас ты точно брешешь. Пока, я не хочу слушать твои сказки.}
+{15000}{}{Аркадийцы снабдили меня подарками, и я отправился домой. Продав их артефакты в Сан-Франциско, я смог снарядить вторую экспедицию. Сейчас я постоянно хожу в походы к ним. Вожу туда семена растений и прочую ерунду, привожу довоенные технологии. Я стал одним из основных поставщиков оружия в Сан-Франциско. Подумываю расширить бизнес.}
+{15010}{}{Это очень круто. А можно у тебя что-нибудь купить?}
+{15020}{}{Теперь передай мне, пожалуйста, весь товар, если не хочешь, чтобы я подорвал@sex@|||а| твоё судёнышко.}
+{15030}{}{Теперь передай мне, пожалуйста, весь товар, если не хочешь, чтобы я подорвал@sex@|||а| твоё судёнышко.}
+{15040}{}{Хм. А не расскажешь, где находится эта Аркадия?}
+{15050}{}{Спасибо за историю, очень интересно. Успехов в плаваниях, мне пора своей дорогой.}
+{15060}{}{Спасибо за историю, очень интересно. Успехов в плаваниях, мне пора своей дорогой.}
+{16000}{}{[Моряк испуганно смотрит на Вас. Вы готовы поклясться, что не видели настолько испуганного человека никогда в жизни]}
+{16010}{}{Эй, ты чего?}
+{16020}{}{Что, страшно?!}
+{16030}{}{[Атаковать]}
+{16040}{}{Эй, расслабься, я пошутил@sex@|||а|.}
+{17000}{}{Н-н-не убивайте меня, а? Видите, я последние три года провёл в основном вдали от Калифорнии и так и не успел записаться на эту репликацию... Сейчас там люди не боятся друг друга убивать, а мне страшно умирать...}
+{17010}{}{Ух ты. Вот свезло, так свезло. Всегда мечтал@sex@|||а| убить кого-нибудь *по-настоящему*. [Атаковать]}
+{17020}{}{Ты мне нужен, расслабься. Просто передай весь свой товар.}
+{17030}{}{Ух. Ну ладно. В другой раз. Живи пока, хе-хе.}
+{18000}{}{Вот, смотри.@@Вот, что у меня есть на продажу.@@Взгляни, у меня есть кое-какие редкие штучки.@@Тебе повезло - я как раз везу партию товара из Аркадии.@@Выбирай. Эксклюзив.}
+{18010}{}{[Бартер]}
+{18020}{}{Слушай, хрен с ним, с товаром, меня тут один вопрос интересует...}
+{18030}{}{Я на самом деле передумал@sex@|||а| торговать, мне пора. Удачи!}
+{18040}{}{Покажи-ка ещё раз товар...}
+{18050}{}{Это всё, спасибо.}
+{19000}{}{Что ты хочешь узнать?@@Что тебя интересует?@@Ну спрашивай.@@Задавай свой вопрос, помогу, чем смогу.}
+{19010}{}{Поделишься координатами Аркадии?}
+{19020}{}{Какие планы на будущее?}
+{19030}{}{Расскажи ещё раз, как ты стал путешественником.}
+{19040}{}{Классная собака у тебя, Кристофер. Откуда она у тебя такая?}
+{19050}{}{К чёрту, покажи лучше товары.}
+{19060}{}{На самом деле мне ничего не надо. Пока!}
+{20000}{}{Эээ, нет. Это коммерческий секрет! [Улыбается] Думаю со временем основать компанию, заняться перевозками. Не хотелось бы конкуренции. Да и появления пиратов тоже.}
+{20010}{}{Но это же достояние человечества! Люди должны знать о том, что где-то ещё есть выжившие... Мы должны развиваться, обмениваться знаниями.}
+{20020}{}{Понятно. Спрошу ещё кое о чём...}
+{20030}{}{Ясно, спасибо за ответ. Пока!}
+{21000}{}{Этот край слишком богат и слишком плохо защищён. Я не хочу, чтобы аркадийцам вдруг свалилась на голову какая-нибудь НКР с заявлением о том, что это их исконная территория. Я рассказал им о Калифорнии - что дальше делать, они сами решат.}
+{21010}{}{А за деньги?}
+{21020}{}{Понятно. Спрошу ещё кое о чём...}
+{21030}{}{Ясно, спасибо за ответ. Пока!}
+{22000}{}{Нет.}
+{22010}{}{Понятно. Спрошу ещё кое о чём...}
+{22020}{}{Ясно, спасибо за ответ. Пока!}
+{23000}{}{Хочу исследовать морской путь в Китай. Говорят, что если плыть далеко-далеко на Запад, то рано или поздно наткнёшься на землю. Ещё слышал, что Земля шар, и со временем вообще можешь вернуться туда, откуда приплыл. Не знаю, правда ли.}
+{23010}{}{Ух ты. Хотел@sex@|||а| ещё вот что узнать...}
+{23020}{}{Ну, удачи в путешествиях!}
+{24000}{}{Привёз с севера. Её зовут Америка. С ней гораздо веселей плавать.}
+{24010}{}{Понятно. Спрошу ещё кое о чём...}
+{24020}{}{Ясно, это всё, что я хотел@sex@|||а знать|. Пока!}
+{25000}{}{Привет! Снова ты, @pname@?@@Как дела, @pname@?@@Чем могу помочь на этот раз, @pname@?@@Какого чёрта ты тут опять делаешь? Шучу, рад видеть на своей лодке, @pname@.}
+{25010}{}{Эй, Крис, я тебя тут хотел@sex@|||а| спросить кое о чём...}
+{25020}{}{Покажи-ка ещё раз свой товар...}
+{25030}{}{Просто хотел взглянуть на тебя ещё раз. Успехов!}
+{26000}{}{Снова ты? Чего надо?@@Какого чёрта ты тут опять делаешь?@@Рад снова видеть тебя на своей лодке. Шучу. Какого хрена тебе надо?@@Незванный гость хуже патруля Анклава у дверей Убежища. Чего припёр@sex@|ся||лась|?}
+{26010}{}{Эй, Крис, я тебя тут хотел@sex@|||а| спросить кое о чём...}
+{26020}{}{Покажи-ка ещё раз свой товар...}
+{26030}{}{Что грубишь, а? Грубый? Я тебе покажу грубого! Выкладывай товар на землю, быстро, иначе я расстреляю тебя и твою собаку, и лодку твою, и бабушку!}
+{26040}{}{Что грубишь, а? Грубый? Я тебе покажу грубого! Выкладывай товар на землю, быстро, иначе я расстреляю тебя и твою собаку, и лодку твою, и бабушку!}
+{26050}{}{Ммм. Да, нахрена ты мне нужен, и в самом деле...}
+{27000}{}{Привет! Не ожидал, что встречу ещё одного морского путешественника! Добро пожаловать на моё судно! Меня зовут Кристофер.}
+{27010}{}{Бунга-бунга!}
+{27020}{}{Атата!}
+{28000}{}{О, чёрт!}
+{28010}{}{Чорт?}
+{28020}{}{ОЧЁРТ!}
+{28030}{}{ЭТО ЧЁЁЁРРРТ! [Попытаться спихнуть его ногой с лодки]}
+{29000}{}{Убирайся отсюда, иначе я спущу на тебя собаку!}
+{30000}{}{Я сказал, убирайся!}
+{31000}{}{Америка, фас!}
+{32000}{}{Ну и проваливай!}
+{33000}{}{Горд@sex@|ый||ая|? Ну и проваливай!}
+{34000}{}{Убирайся к чёрту с моей лодки!}
+{35000}{}{Сейч... Америка, стой! Не надо!}
+{36000}{}{Вали к чёрту.@@Отчаливай, быстро.@@Чтобы я тебя больше тут не видел.@@Ты думаешь, что я всё ещё хочу с тобой разговаривать?@@Уходи.@@Иди к чёрту.@@Иди нахрен.@@Вали.@@Проваливай.@@У тебя есть минута на то, чтобы покинуть мою лодку.}
+{37000}{}{Удачного плавания!}
+{38000}{}{Привет! Снова ты?@@Как дела?@@Чем могу помочь на этот раз?@@Чем могу помочь, путешественник?@@Добрый день, путник.}
+{38010}{}{Эй, Крис, я тебя тут хотел@sex@|||а| спросить кое о чём...}
+{38020}{}{Я не представил@sex@|ся||ась| в прошлый раз - меня зовут @pname@.}
+{38030}{}{Покажи-ка ещё раз свой товар...}
+{38040}{}{Просто хотел взглянуть на тебя ещё раз. Успехов!}
+{39000}{}{Очень приятно, @pname@. Так чем могу помочь?}
+{39010}{}{Хотел@sex@|||а| спросить кое о чём...}
+{39020}{}{Можно взглянуть ещё раз на ваши товары?}
+{39030}{}{Да ничем на самом деле. Удачи!}
+
+[engl]
+{100}{}{Christopher}
+{200}{}{you see: the seaman.}
+{210}{}{the Strong growing old man with изветренной a skin.}
+{1000}{}{Predialogue installations}
+{1010}{}{the First acquaintance - нейтрал.}
+{1020}{}{the First acquaintance - a high karma.}
+{1030}{}{Are familiar completely.}
+{1040}{}{Are familiar not absolutely}
+{1050}{}{Dislikes.}
+{1060}{}{It is angry.}
+{1070}{}{It is angry and now will anger.}
+{1080}{}{Have quarrelled.}
+{1090}{}{the First acquaintance - low инта.}
+{1100}{}{Low инта - dislikes.}
+{1110}{}{Low инта - it is angry.}
+{1120}{}{Low инта - has angered.}
+{2000}{}{Greetings! Did not expect that a meeting of one more sea traveller! Welcome to my vessel! My name is Christopher.}
+{2010}{}{the Vessel, хах? I думал@sex ||| and | that you was wrecked.}
+{2020}{}{And me - @pname. Where you head, Christopher?}
+{2030}{}{This robbery, a bough! Quickly spread everything that is, differently I will draw your dog!}
+{2040}{}{This robbery, a bough! Quickly spread everything that is, differently I will draw your dog!}
+{2050}{}{Greetings, greetings. My name is @pname. But I already really should float - I simply пристал@sex ||| and | to greet.}
+{2060}{}{Greetings, thanks. But I already go further - simply хотел@sex ||| and | to look that it for хрень floats.}
+{3000}{}{Ooo, what affairs, yes same сам@sex ||| and | @pname! Heard about you - speak, you помог@sex ||| ла | on continent to many people. Welcome to my vessel! My name is Christopher.}
+{3010}{}{the Vessel, хах? I думал@sex ||| and | that you was wrecked.}
+{3020}{}{And me - @pname. Where you head, Christopher?}
+{3030}{}{Yes, I @pname, but on revivals I am a sea pirate. Quickly spread everything that is, differently I will draw your dog!}
+{3040}{}{Yes, I @pname, but on revivals I am a sea pirate. Quickly spread everything that is, differently I will draw your dog!}
+{3050}{}{Greetings, greetings. Yes, it I. But I already really should float - I simply пристал@sex ||| and | to greet.}
+{3060}{}{Greetings, thanks. But I already go further - simply хотел@sex ||| and | to look that it for хрень floats.}
+{4000}{}{Hey, do not dare to offend my trough, @sex | the dude || the girlfriend |! It is called a raft and it floats better, than your rusty хренотень!}
+{4010}{}{Okej, окей, excuse. And where you go on this to "raft"?}
+{4020}{}{Hey, do not accept it so seriously, I simply joke. And so, my name is @pname. Where you head, Christopher?}
+{4030}{}{it is better better-not, but it now will cease to float absolutely if you do not give me the money.}
+{4040}{}{it is better better-not, but it now will cease to float absolutely if you do not give me the money.}
+{4050}{}{Well time you are not wrecked, I have nothing to do here, so long!}
+{5000}{}{very much прятно, @pname. Probably, it will be difficult to believe in it, but I travel to Alaska! If you do not know it is very far on the north. There there are not enough people, and the sea is held down by ices.}
+{5010}{}{And what horse-radish you has incurred in such distance?}
+{5020}{}{About, it is very interesting. And what you aim pursue, going to so distant travel?}
+{5030}{}{Ices, yes? Ice happens only in the refrigerator, the idiot! I bring down from your boat, you, the loony, similar.}
+{5040}{}{it is very interesting, yes. But it is time to me! So long!}
+{6000}{}{Hey! Stop! You that, do not know, what all sea travellers should exchange something if will meet?}
+{6010}{}{Well give we will look that at you is...}
+{6020}{}{I not заинтересован@sex ||| and |.}
+{6030}{}{Show the goods once again, you there have interesting features...}
+{6040}{}{I in general передумал@sex ||| and | to leave - хотел@sex ||| and | to ask which about what...}
+{6050}{}{Well everything, is time now to me.}
+{7000}{}{I cannot tell similar things to the person, I at all do not know whose name!}
+{7010}{}{My name is @pname.}
+{7020}{}{About, I am sorry, where my manners? My name is @pname. Forgive, what not представил@sex | ся || ась | at once.}
+{7030}{}{the Horse-radish to you, instead of a name.}
+{7040}{}{I Am sorry, but because of the belief I cannot is simple so to open the name.}
+{8000}{}{About, it is long history. You want to hear it all?}
+{8010}{}{Drag.}
+{8020}{}{Not, give in brief.}
+{9000}{}{in general, I have caught a radio signal from one settlement from Alaska. It has appeared that there too there live people, and they do not have mutations. Since then I float there-here along coast. I drive everyone барахло therefrom, I result it seeds of plants from here and other nonsense.}
+{9010}{}{About, it is interesting. Give better full history.}
+{9020}{}{Barahlo, you speak? And it is possible to buy from you something?}
+{9030}{}{it is cool. Well it is fine, it is time to me, it was interesting to communicate.}
+{9040}{}{it is cool. Well it is fine, it is time to me, it was interesting to communicate.}
+{10000}{}{I Will begin from apart. I was born in San Francisco, veins among fishermen, learnt to knit tackles, yes looked, how boats float. Then earned additionally in shop at Lau Chou, repaired portable radio sets yes any electronics.}
+{10010}{}{[Further]}
+{10020}{}{Will suffice, I передумал@sex ||| and |.}
+{11000}{}{Also was at me, means, the radio. Caught sometimes another's negotiations and listened in an operating time that not so it was boring. Also has once run into someone's transfer... There spoke: "Greetings! It tells Arcady! Go to us! We have a meal, and here there are no mutations!"}
+{11010}{}{[Further]}
+{11020}{}{It is very interesting, but it is time to me to go.}
+{12000}{}{This transfer repeated every day... It has appeared that it is any city on Alaska where life too has remained. They told more many that interesting, but my transmitter was too weak to answer...}
+{12010}{}{[Further]}
+{12020}{}{I do not have time to listen to fairy tales.}
+{13000}{}{And at me the dream was born: to go in Arcady. I already went to the sea with fishermen and could pass big enough distance by a boat along coast. But I was afraid to depend on a wind and to go under a sail, therefore I have started "Enterprise" construction. It is a raft on which you now stand.}
+{13010}{}{[Further]}
+{13020}{}{We now in miles from coast. You have simply lost the way in the sea and rave. I do not feel in safety on it to a raft, while.}
+{14000}{}{And on "Enterprise" I have reached to Arcadys! The city really was, and there there were people! It were descendants of military men who have worried falling of rockets in the bunker. With meal at them was actually hardly, but in district at them tons of military stuff from Great War rolled. You will leave in the field, you will dig - and here to you the sample of the advanced weapon, for which the Brotherhood to a drink перегрызёт.}
+{14010}{}{[Further]}
+{14020}{}{Now you precisely tell lies. While, I do not want to listen to your fairy tales.}
+{15000}{}{Arkadijtsy have supplied me with gifts, and I have gone home. Having sold their artefacts in San Francisco, I could equip the second expedition. Now I constantly go to campaigns to them. I drive there seeds of plants and other nonsense, I result pre-war technologies. I became one of the basic suppliers of the weapon in San Francisco. I think to expand business.}
+{15010}{}{It very abruptly. And it is possible to buy from you something?}
+{15020}{}{Now transfer me, please, all goods if you do not want, that I подорвал@sex ||| and | your little craft.}
+{15030}{}{Now transfer me, please, all goods if you do not want, that I подорвал@sex ||| and | your little craft.}
+{15040}{}{Hm. Instead of you will tell, where there is this of Arcady?}
+{15050}{}{Thanks for history, very interesting. Successes in swimmings, it is time to me the road.}
+{15060}{}{Thanks for history, very interesting. Successes in swimmings, it is time to me the road.}
+{16000}{}{[the Seaman scaredly looks at you. You are ready to swear that did not see so scared person never in life]}
+{16010}{}{Hey, you of that?}
+{16020}{}{That, terribly?!}
+{16030}{}{[to Attack]}
+{16040}{}{Hey, relax, I пошутил@sex ||| and |.}
+{17000}{}{do not kill me, and? See, I have spent last three years basically far from California and and have not had time to register in this репликацию... Now there people are not afraid to kill each other, and it is terrible to me to die...}
+{17010}{}{Uh you. Here has brought, so has brought. Always мечтал@sex ||| and | to kill somebody *po-nastojashchemu*. [To Attack]}
+{17020}{}{You are necessary to me, relax. Simply transfer all goods.}
+{17030}{}{Uh. Well it is fine. Another time. Live while, he-he.}
+{18000}{}{Here, look. @@ here that at me is on sale. @@ look, I have some rare features. @@ to you has carried - I just carry a consignment of goods from Arcadys. @@ choose. An exclusive.}
+{18010}{}{[Barter]}
+{18020}{}{Listen, a horse-radish with it, with the goods, me here one question interests...}
+{18030}{}{I actually передумал@sex ||| and | to trade, it is time to me. Good luck!}
+{18040}{}{Show once again the goods...}
+{18050}{}{It is everything, thanks.}
+{19000}{}{That you want to learn? @@ that you interests? @@ well ask. @@ ask the question, I will help, than to a smog.}
+{19010}{}{you Will share co-ordinates Arcadys?}
+{19020}{}{What plans for the future?}
+{19030}{}{Tell once again as you became the traveller.}
+{19040}{}{the Class dog at you, Christopher. Whence it at you such?}
+{19050}{}{To hell, show better the goods.}
+{19060}{}{Actually it is necessary nothing to me. So long!}
+{20000}{}{Eee, no. It is a commercial secret! [Smiles] I Think in due course to base the company, to be engaged in transportations. It would not be desirable a competition. And occurrences of pirates too.}
+{20010}{}{But the same property of mankind! People should know that somewhere else there are survived... We should develop, exchange knowledge.}
+{20020}{}{it is clear. I will ask still which about what...}
+{20030}{}{it is clear, thanks for the answer. So long!}
+{21000}{}{This edge is too rich and is too badly protected. I do not want, that аркадийцам have suddenly fallen down a head any НКР with the statement that is their primordial territory. I have told it about California - what further to do, they will solve.}
+{21010}{}{And for money?}
+{21020}{}{it is clear. I will ask still which about what...}
+{21030}{}{it is clear, thanks for the answer. So long!}
+{22000}{}{No.}
+{22010}{}{it is clear. I will ask still which about what...}
+{22020}{}{it is clear, thanks for the answer. So long!}
+{23000}{}{I Want to investigate a sea way to China. It is said that if to float far-far on the West sooner or later you will come across the earth. Still heard that the Earth a sphere, and in due course in general you can return there, whence has come. I do not know, whether truth.}
+{23010}{}{Uh you. Хотел@sex ||| and | still here what to learn...}
+{23020}{}{Well, good luck in travel!}
+{24000}{}{Has brought from the north. Her name is America. With it to float much more cheerfully.}
+{24010}{}{it is clear. I will ask still which about what...}
+{24020}{}{it is clear, it is everything that I хотел@sex ||| and the nobility |. So long!}
+{25000}{}{Greetings! Again you, @pname? @@ As affairs, @pname? @@ Than I can help this time, @pname? @@ What the hell you here again do? I joke, is glad to see by the boat, @pname.}
+{25010}{}{Hey, Chris, I you here хотел@sex ||| and | to ask which about what...}
+{25020}{}{Show once again the goods...}
+{25030}{}{Simply wanted to look at you once again. Successes!}
+{26000}{}{Again you? That it is necessary? @@ What the hell you here again do? @@ to see glad again you by the boat. I joke. What horse-radish it is necessary to you? @@ Nezvannyj the visitor is worse than patrol of the Enclave at Refuge doors. That припёр@sex | ся || лась |?}
+{26010}{}{Hey, Chris, I you here хотел@sex ||| and | to ask which about what...}
+{26020}{}{Show once again the goods...}
+{26030}{}{That you are rude, and? Rough? I will show you the rough! Spread the goods on the earth, quickly, differently I will shoot you both your dog, and your boat, and the grandmother!}
+{26040}{}{That you are rude, and? Rough? I will show you the rough! Spread the goods on the earth, quickly, differently I will shoot you both your dog, and your boat, and the grandmother!}
+{26050}{}{Mmm. Yes, нахрена you are necessary to me, and really...}
+{27000}{}{Greetings! Did not expect that a meeting of one more sea traveller! Welcome to my vessel! My name is Christopher.}
+{27010}{}{Bunga-bunga!}
+{27020}{}{Atata!}
+{28000}{}{About, lines!}
+{28010}{}{Chort?}
+{28020}{}{ОЧЁРТ!}
+{28030}{}{IT ЧЁЁЁРРРТ! [To try to get rid his foot from a boat]}
+{29000}{}{Be cleaned from here, differently I will lower on you a dog!}
+{30000}{}{I have told, be cleaned!}
+{31000}{}{America, фас!}
+{32000}{}{Well also ruin!}
+{33000}{}{Gord@sex | ый || ая |? Well also ruin!}
+{34000}{}{Be cleaned to hell from my boat!}
+{35000}{}{Sejch... America, stop! it is not necessary!}
+{36000}{}{Bring down to hell. @@ sail away, quickly. @@ that I you more here did not see. @@ you think, what I still want to talk to you? @@ leave. @@ go to the devil. @@ go нахрен. @@ Bring down. @@ ruin. @@ you have a minute on leaving my boat.}
+{37000}{}{Successful swimming!}
+{38000}{}{Greetings! Again you? @@ how are you doing? @@ Than I can help this time? @@ than I can help, the traveller? @@ good afternoon, the traveller.}
+{38010}{}{Hey, Chris, I you here хотел@sex ||| and | to ask which about what...}
+{38020}{}{I not представил@sex | ся || ась | last time - my name is @pname.}
+{38030}{}{Show once again the goods...}
+{38040}{}{Simply wanted to look at you once again. Successes!}
+{39000}{}{it is very pleasant, @pname. So than I can help?}
+{39010}{}{Hotel@sex ||| and | to ask which about what...}
+{39020}{}{It is possible to look once again at your goods?}
+{39030}{}{Yes anything actually. Good luck!}

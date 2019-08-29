@@ -1,0 +1,16 @@
+#include "_macros.fos"
+
+
+void _MapInit(Map &map, bool firstTime)
+{
+
+    Critter @ [] critters;
+    map.GetCritters(0,FIND_LIFE|FIND_ONLY_NPC, critters);
+    
+    for(uint i = 0; i<critters.length();i++)
+    {
+            critters[i].ModeBase[MODE_NO_ENEMY_STACK] = 1;
+            critters[i].StatBase[ST_RADIATION_RESISTANCE] = 500;
+    }
+
+}

@@ -1,0 +1,1240 @@
+#include "_macros.fos"
+#include "_teams.fos"
+#include "_bags.fos"
+#include "worldmap_h.fos"
+#include "_msgstr.fos"
+
+import bool AddAttackPlane(Critter& npc, uint priority, Critter& target) from "npc_planes";
+import void GenerateItems(Map& map, Critter@[]@  grp) from "encounter_items";
+import void GenerateCavernEncounter(Map@ map, Critter@[]@ critters) from "cave_mobs";
+import void initEvents(Map& map, bool firstTime) from "events_in_encaunter";
+
+uint[][] PositionDirs={
+	{0}, // POSITION_NONE
+// Steps Path 1       Path 2
+	{1, 4,3,2,1,0,5, 2,3,4,5,0,1}, // POSITION_SURROUNDING
+	{1, 5,0,1,2,3,4, 1,0,5,4,3,2}, // POSITION_HUDDLE
+	{1, 4,           2}, // POSITION_WEDGE
+	{1, 5,           1}, // POSITION_CONE
+	{2, 1,2,         4,5}, // POSITION_DOUBLE_LINE
+	{2, 1,2,         4,5} // POSITION_STRAIGHT_LINE
+};
+
+class CCheck
+{
+	uint Type;
+	uint Index;
+	uint8 Operator;
+	int Value;
+	int ValueMin;
+	int ValueMax;
+	
+	CCheck()
+	{
+		Type=0;
+		Index=0;
+		Operator=0;
+		Value=0;
+	}
+
+	void Set(uint type, uint index, uint8 operator, int value)
+	{
+		Type=type;
+		Index=index;
+		Operator=operator;
+		Value=value;
+	}
+}
+
+class CEncounterObject
+{
+	uint ObjectType;
+	uint16 Pid; // Proto id
+	uint DialogId;
+	string ScriptName;
+	uint DistanceLength; // Distance from players
+	CEncounterObject@[] Childs; // Items in inventory or container
+	CCheck[] Checks;
+	// Only for critter
+	uint RatioValue;
+	bool IsDead;
+	// Only for item
+	uint Minimum;
+	uint Maximum;
+	uint InvSlot;
+
+	CEncounterObject()
+	{
+		ObjectType=0;
+		Pid=0;
+		DialogId=0;
+		ScriptName="";
+		DistanceLength=0;
+		RatioValue=0;
+		IsDead=false;
+		Minimum=0;
+		Maximum=0;
+		InvSlot=0;
+	}
+
+	CEncounterObject@ NewCheck(uint type, uint index, uint8 operator, int value)
+	{
+		Checks.grow(1);
+		Checks.last().Set(type,index,operator,value);
+		return this;
+	}
+
+	CEncounterObject@ Dialog(uint dialog){DialogId=dialog; return this;}
+	CEncounterObject@ Script(string& script){ScriptName=script; return this;}
+	CEncounterObject@ Distance(uint distance){DistanceLength=distance; return this;}
+	CEncounterObject@ CheckRandom(int value){NewCheck(CHECK_RANDOM,0,0,value); return this;}
+	CEncounterObject@ CheckParamLeader(uint index, uint8 operator, int value){NewCheck(CHECK_PARAM_LEADER,index,operator,value); return this;}
+	CEncounterObject@ CheckIsPlayer(){NewCheck(CHECK_IS_PLAYER,0,0,0); return this;}	
+	CEncounterObject@ CheckParam(uint index, uint8 operator, int value){NewCheck(CHECK_PARAM,index,operator,value); return this;}
+	CEncounterObject@ CheckParamAny(uint index, uint8 operator, int value){NewCheck(CHECK_PARAM_ANY,index,operator,value); return this;}
+	CEncounterObject@ CheckLVar(uint index, uint8 operator, int value){NewCheck(CHECK_LVAR,index,operator,value); return this;}
+	CEncounterObject@ CheckLVarAny(uint index, uint8 operator, int value){NewCheck(CHECK_LVAR_ANY,index,operator,value); return this;}
+	CEncounterObject@ CheckParam(uint index, uint8 operator, int value){NewCheck(CHECK_PARAM,index,operator,value); return this;}
+	CEncounterObject@ CheckGVar(uint index, uint8 operator, int value){NewCheck(CHECK_GVAR,index,operator,value); return this;}
+	CEncounterObject@ CheckHour(uint8 operator, int value){NewCheck(CHECK_HOUR,0,operator,value); return this;}
+	CEncounterObject@ Ratio(uint ratio){RatioValue=ratio; return this;}
+	CEncounterObject@ Dead(bool dead){IsDead=dead; return this;}
+	//CEncounterObject@ Minimum(uint minimum){Minimum=minimum; return this;}
+	//CEncounterObject@ Maximum(uint maximum){Maximum=maximum; return this;}
+	CEncounterObject@ Slot(uint slot){InvSlot=slot; return this;}
+
+	CEncounterObject@ AddItem(uint16 pid, uint min, uint max, uint slot)
+	{
+		CEncounterObject new_child;
+		Childs.insertLast(@new_child);
+		new_child.Pid=pid;
+		new_child.Minimum=min;
+		new_child.Maximum=max;
+		new_child.InvSlot=slot;
+		return this;
+	}
+}
+
+class CEncounterGroup
+{
+	uint TeamNum;
+	uint Position;
+	uint Spacing;
+	uint Distance;
+	CEncounterObject[] Objects;
+
+	CEncounterGroup()
+	{
+		TeamNum=0;
+		Position=0;
+		Spacing=0;
+		Distance=0;
+	}
+
+	CEncounterObject@ NewObject()
+	{
+		Objects.grow(1);
+		return Objects.last();
+	}
+
+	CEncounterObject@ AddCritter(uint16 pid)
+	{
+		CEncounterObject@ obj=NewObject();
+		obj.ObjectType=ENCOUNTER_OBJECT_CRITTER;
+		obj.Pid=pid;
+		return obj;
+	}
+
+	CEncounterObject@ AddItem(uint16 pid)
+	{
+		CEncounterObject@ obj=NewObject();
+		obj.ObjectType=ENCOUNTER_OBJECT_ITEM;
+		obj.Pid=pid;
+		return obj;
+	}
+}
+
+class CHidingPlace
+{
+	uint16 LocPid;
+	uint32 Cost;
+	//string ScriptName;
+	
+	CHidingPlace()
+	{
+		LocPid=0;
+		Cost=8000;
+		//ScriptName="";
+	}
+	
+	CHidingPlace@ LocationPid(uint16 locationPid){LocPid=locationPid; return this;}
+	CHidingPlace@ LocationCost(uint16 cost){Cost=cost; return this;}
+}
+
+class CEncounter
+{
+	uint Chance;
+	uint StrNum;
+	uint16 LocPid;
+	bool IsSpecial;
+	uint[] Groups;
+	uint[] RatioMin;
+	uint[] RatioMax;
+	uint[] Actions;
+	CCheck[] Checks;
+
+	CEncounter()
+	{
+		Chance=0;
+		StrNum=0;
+		LocPid=0;
+		IsSpecial=false;
+	}
+
+	CEncounter@ AddGroup(uint group, uint ratioMin, uint ratioMax)
+	{
+		Groups.grow(1);
+		RatioMin.grow(1);
+		RatioMax.grow(1);
+		Groups.last()=group;
+		RatioMin.last()=ratioMin;
+		RatioMax.last()=ratioMax;
+		return this;
+	}
+
+	CEncounter@ Fighting(uint fromGroup, uint toGroup)
+	{
+		Actions.insertLast(fromGroup);
+		Actions.insertLast(toGroup);
+		Actions.insertLast(ACTION_FIGHTING);
+		return this;
+	}
+
+	CEncounter@ NewCheck(uint type, uint index, uint8 operator, int value)
+	{
+		Checks.grow(1);
+		Checks.last().Set(type,index,operator,value);
+		return this;
+	}
+
+	CEncounter@ LocationPid(uint16 locationPid){LocPid=locationPid; return this;}
+	CEncounter@ Special(bool special){IsSpecial=special; return this;}
+	CEncounter@ CheckRandom(int value){NewCheck(CHECK_RANDOM,0,0,value); return this;}
+	CEncounter@ CheckParamLeader(uint index, uint8 operator, int value){NewCheck(CHECK_PARAM_LEADER,index,operator,value); return this;}
+	CEncounter@ CheckIsPlayer(){NewCheck(CHECK_IS_PLAYER,0,0,0); return this;}
+	CEncounter@ CheckParamAny(uint index, uint8 operator, int value){NewCheck(CHECK_PARAM_ANY,index,operator,value); return this;}
+	CEncounter@ CheckLVar(uint index, uint8 operator, int value){NewCheck(CHECK_LVAR,index,operator,value); return this;}
+	CEncounter@ CheckLVarAny(uint index, uint8 operator, int value){NewCheck(CHECK_LVAR_ANY,index,operator,value); return this;}
+	CEncounter@ CheckParam(uint index, uint8 operator, int value){NewCheck(CHECK_PARAM,index,operator,value); return this;}
+	CEncounter@ CheckGVar(uint index, uint8 operator, int value){NewCheck(CHECK_GVAR,index,operator,value); return this;}
+	CEncounter@ CheckHour(uint8 operator, int value){NewCheck(CHECK_HOUR,0,operator,value); return this;}
+	CEncounter@ AssignLVar(uint index, uint8 operator, int value){NewCheck(ASSIGN_LVAR,index,operator,value); return this;}
+}
+
+/*class CHidingPlaceTable
+{
+	CHidingPlace[] HidingPlace;
+
+	CHidingPlace@ AddHidingPlace(uint16 cost)
+	{
+		HidingPlace.grow(1);
+		HidingPlace.last().Cost=cost;
+		return @HidingPlace.last();
+	}
+}*/
+
+class CEncounterTable
+{
+	uint16[] LocationPids;
+	CEncounter[] Encounters;
+	CHidingPlace[] HidingPlace;
+
+	void AddLocationPid(uint16 locationPid)
+	{
+		LocationPids.insertLast(locationPid);
+	}
+
+	CEncounter@ AddEncounter(uint chance, uint strNum)
+	{
+		Encounters.grow(1);
+		Encounters.last().Chance=chance;
+		Encounters.last().StrNum=strNum;
+		return @Encounters.last();
+	}
+	
+	CHidingPlace@ AddHidingPlace(uint32 cost)
+	{
+		HidingPlace.grow(1);
+		HidingPlace.last().Cost=cost;
+		return @HidingPlace.last();
+	}
+}
+
+class CZone
+{
+	int Difficulty;
+	uint Terrain;
+	uint MorningChance;
+	uint AfternoonChance;
+	uint NightChance;
+	CEncounterTable@ Table;
+
+	CZone()
+	{
+		Difficulty=0;
+		Terrain=0;
+		MorningChance=0;
+		AfternoonChance=0;
+		NightChance=0;
+		@Table=null;
+	}
+}
+
+CEncounterGroup[] EncounterGroups(GROUP_MAX);
+CEncounterTable[] EncounterTables(TABLE_MAX);
+CZone@[] WorldmapGround(ZONE_COUNT_X*ZONE_COUNT_Y);
+CZone@[] WorldmapWater(ZONE_COUNT_X*ZONE_COUNT_Y);
+
+//
+// Zone
+//
+
+void SetZone(uint zx, uint zy, uint table, int difficulty, uint terrain, uint morningChance, uint afternoonChance, uint nightChance)
+{
+	CZone@ zone=CZone();
+	@zone.Table=EncounterTables[table];
+	zone.Difficulty=difficulty;
+	zone.Terrain=terrain;
+	zone.MorningChance=morningChance;
+	zone.AfternoonChance=afternoonChance;
+	zone.NightChance=nightChance;
+
+	if(terrain!=TERRAIN_Water)
+		@WorldmapGround[zy*ZONE_COUNT_X+zx]=zone;
+	else
+		@WorldmapWater[zy*ZONE_COUNT_X+zx]=zone;
+}
+
+void SetZone(uint zx, uint zy, uint table, int difficulty, uint terrain, uint chance)
+{
+	SetZone(zx,zy,table,difficulty,terrain,chance,chance,chance);
+}
+
+//
+// Tables
+//
+
+void AddTableToAllTables(CEncounterTable& globalTable)
+{
+	for(uint i=0;i<TABLE_MAX;i++)
+	{
+		if(i!=TABLE_Ocean1_O && i!=TABLE_Ocean2_O)
+		{
+			CEncounterTable@ table=EncounterTables[i];
+
+			for(uint j=0;j<globalTable.LocationPids.length();j++)
+			{
+				table.LocationPids.grow(1);
+				table.LocationPids.last()=globalTable.LocationPids[j];
+			}
+	
+			for(uint j=0;j<globalTable.Encounters.length();j++)
+			{
+				table.Encounters.grow(1);
+				table.Encounters.last()=globalTable.Encounters[j];
+			}
+		}
+	}
+}
+
+//
+// Checks
+//
+
+bool CheckCompare(int val1, uint8 operator, int val2)
+{
+	if(operator=='>') return val1>val2;
+	if(operator=='<') return val1<val2;
+	if(operator=='=') return val1==val2;
+	Log("Unknown operator.");
+	return false;
+}
+
+bool CheckCompareAnyParam(CCheck& check, Critter@[]& critters)
+{
+	for(uint i=0,j=critters.length();i<j;i++)
+	{
+		if(CheckCompare(critters[i].Param[check.Index],check.Operator,check.Value))
+			return true;
+	}
+	return false;
+}
+
+bool CheckCompareAnyVar(CCheck& check, Critter@[]& critters)
+{
+	for(uint i=0,j=critters.length();i<j;i++)
+	{
+		GameVar@ lvar=GetLocalVar(check.Index, critters[i].Id);
+		if(valid(lvar))
+		{
+			if(CheckCompare(lvar.GetValue(), check.Operator, check.Value))
+				return true;
+		}
+	}
+	return false;
+}
+
+bool CheckCompareHour(int val1, int val2, int val3)
+{ 
+	if(val2>val3) return (val1>val2 || val1<val3);
+	if(val2<val3) return (val1>val2 && val1<val3);
+	
+	/*if(operator=='>') return val1>val2;
+	if(operator=='<') return val1<val2;
+	if(operator=='=') return val1==val2;*/
+	Log("Unknown operator.");
+	return false;
+}
+
+void CheckAssignVar(GameVar& val1, uint8 operator, int val2)
+{
+	if(operator=='=') val1=val2;
+	else if(operator=='+') val1+=val2;
+	else if(operator=='-') val1-=val2;
+	else if(operator=='*') val1*=val2;
+	else if(operator=='/') val1/=val2;
+	else Log("Unknown operator.");
+}
+
+bool CheckChecks(CCheck[]& checks, Critter@[]& critters)
+{	
+	bool checkOk=false;
+	for(int i=0,j=checks.length();i<j;i++)
+	{
+		CCheck@ check=checks[i];
+		switch(check.Type)
+		{
+		case CHECK_IS_PLAYER: if(critters[0].IsNpc()) return false; break;
+		case CHECK_RANDOM: if(Random(1,100)>check.Value) return false; break;
+		case CHECK_HOUR: if(not CheckCompareHour(__Hour,check.ValueMin,check.ValueMax)) return false; break;
+		case CHECK_PARAM: for(uint i=0,j=critters.length();i<j;i++) if(not CheckCompare(critters[i].Param[check.Index],check.Operator,check.Value)) return false; break;
+		case CHECK_PARAM_LEADER: if(not CheckCompare(critters[0].Param[check.Index],check.Operator,check.Value)) return false; break;
+		case CHECK_PARAM_ANY: if(not CheckCompareAnyParam(check, critters)) return false; break;
+		case CHECK_LVAR:
+			// Log("Checking var"+check.Index);
+			for(uint i=0,j=critters.length();i<j;i++)
+			{
+				GameVar@ lvar=GetLocalVar(check.Index,critters[i].Id);
+				if(not valid(lvar))
+				{
+					// Log("Local var not found.");
+					return false;
+				}
+				// Log("Var val"+lvar.GetValue()+"cr id");
+				if(not CheckCompare(lvar.GetValue(),check.Operator,check.Value)) return false;
+			}
+			break;
+			case CHECK_LVAR_ANY: if(not CheckCompareAnyVar(check, critters)) return false; break;
+		case CHECK_GVAR:
+			{
+				GameVar@ gvar=GetGlobalVar(check.Index);
+				if(not valid(gvar))
+				{
+					// Log("Global var not found.");
+					return false;
+				}
+				if(not CheckCompare(gvar.GetValue(),check.Operator,check.Value)) return false;
+			}
+			break;
+		default:
+			continue;
+		}
+	}
+	return true;
+}
+
+void AssignChecks(CCheck[]& checks, Critter@[]& critters)
+{
+	for(int i=0,j=checks.length();i<j;i++)
+	{
+		CCheck@ check=checks[i];
+		if(check.Type==ASSIGN_LVAR)
+		{
+			for(uint i=0,j=critters.length();i<j;i++)
+			{
+				GameVar@ lvar=GetLocalVar(check.Index,critters[i].Id);
+				CheckAssignVar(lvar,check.Operator,check.Value);
+			}
+		}
+	}
+}
+
+//
+// Stored founded encounters
+//
+
+#define FOUNDED_ENCOUNTER_LIVE_TIME       (REAL_MINUTE(10)) // 10 real minutes
+class CFoundedEncounter
+{
+	uint Index;
+	uint16[] LocationPids;
+	CEncounter@ Encounter;
+	bool IsGenerated;
+	uint FullSecond;
+	uint PositionX;
+	uint PositionY;
+	uint OwnerId;
+	bool OwnerGroup;
+	bool TurnBased;
+	uint LocationId;
+	bool IsWater;
+	uint16 StartHexX;
+	uint16 StartHexY;
+	bool[] DirBusy;
+	uint AskChance;
+
+	CFoundedEncounter()
+	{
+		Index=0;
+		@Encounter=null;
+		IsGenerated=false;
+		FullSecond=0;
+		PositionX=0;
+		PositionY=0;
+		OwnerId=0;
+		OwnerGroup=false;
+		TurnBased=false;
+		LocationId=0;
+		IsWater=false;
+		StartHexX=0;
+		StartHexY=0;
+		DirBusy.resize(6);
+	}
+}
+
+CFoundedEncounter[] FoundedEncounters(1000);
+uint FoundedEncountersLastIndex=0;
+
+CFoundedEncounter@ CreateFoundedEncounter(bool isWater, uint x, uint y, CEncounter@ encounter, uint16[]& locationPids, uint ownerId, bool ownerGroup)
+{
+	for(int i=0,j=FoundedEncounters.length();i<j;i++)
+	{
+		CFoundedEncounter@ ge=FoundedEncounters[i];
+		if(ge.Index==0 || __FullSecond-ge.FullSecond>=FOUNDED_ENCOUNTER_LIVE_TIME+REAL_MINUTE(1))
+		{
+			FoundedEncountersLastIndex++;
+			ge.Index=FoundedEncountersLastIndex;
+			ge.LocationPids=locationPids;
+			@ge.Encounter=encounter;
+			ge.IsGenerated=false;
+			ge.FullSecond=__FullSecond;
+			ge.PositionX=x;
+			ge.PositionY=y;
+			ge.OwnerId=ownerId;
+			ge.OwnerGroup=ownerGroup;
+			ge.LocationId=0;
+			ge.IsWater=isWater;
+			for(uint k=0;k<6;k++) ge.DirBusy[k]=false;
+			return ge;
+		}
+	}
+
+	// Grow buffer and refind
+	FoundedEncounters.resize(FoundedEncounters.length()*2);
+	return CreateFoundedEncounter(isWater,x,y,encounter,locationPids,ownerId,ownerGroup);
+}
+
+CFoundedEncounter@ GetFoundedEncounter(uint index)
+{
+	for(int i=0,j=FoundedEncounters.length();i<j;i++)
+	{
+		CFoundedEncounter@ ge=FoundedEncounters[i];
+		if(ge.Index==index) return ge;
+	}
+	return null;
+}
+
+CFoundedEncounter@ GetNearFoundedEncounter(bool isWater, Critter@[]@ group, uint x, uint y, uint radius)
+{
+	int combatMode=group[0].Mode[MODE_DEFAULT_COMBAT];
+	for(int i=0,j=FoundedEncounters.length();i<j;i++)
+	{
+		CFoundedEncounter@ ge=FoundedEncounters[i];
+		if(ge.Index==0) continue;
+		if(ge.TurnBased && combatMode==COMBAT_MODE_REAL_TIME) continue;
+		/*if(not ge.TurnBased && combatMode==COMBAT_MODE_TURN_BASED) continue;*/
+		if(ge.IsWater!=isWater) continue;
+		if(__FullSecond-ge.FullSecond>=FOUNDED_ENCOUNTER_LIVE_TIME) continue;
+		if(not ge.IsGenerated) continue;
+		if(valid(ge.Encounter) && ge.Encounter.IsSpecial && not CheckChecks(ge.Encounter.Checks,group)) continue;
+		if(uint(sqrt(float(POW2(ge.PositionX-x)+POW2(ge.PositionY-y))))>radius) continue;
+		if(group[0].Id==ge.OwnerId) continue;
+		if(not valid(GetLocation(ge.LocationId))) continue;
+
+		return ge;
+	}
+	return null;
+}
+
+uint GetFreeDir(bool[]& dirBysy)
+{
+	// Try find random
+	uint dir=Random(0,5);
+	if(not dirBysy[dir])
+	{
+		dirBysy[dir]=true;
+		return dir;
+	}
+
+	// Try find any free
+	for(uint i=0;i<6;i++)
+	{
+		if(not dirBysy[i])
+		{
+			dirBysy[i]=true;
+			return i;
+		}
+	}
+
+	// Any busy
+	return Random(0,5);
+}
+
+void RotatePosition(uint toDir, uint[]& positionsDirs)
+{
+	for(uint i=1,j=positionsDirs.length();i<j;i++) // Skip Steps
+	{
+		positionsDirs[i]+=toDir;
+		if(positionsDirs[i]>5) positionsDirs[i]-=6;
+	}
+}
+
+void MovePositionPoint(Map& map, uint16& pointX, uint16& pointY, uint[]& positionDirs, uint pathIndex, uint count, uint spacing)
+{
+	uint steps=positionDirs[0];
+	uint pathLen=(positionDirs.length()-1)/2;
+	count*=steps;
+	count%=pathLen;
+	if(steps>1)
+	{
+		for(uint i=0;i<spacing;i++)
+		{
+			for(uint j=0;j<steps;j++)
+			{
+				uint dir=positionDirs[1+pathLen*pathIndex+count+j];
+				map.MoveHexByDir(pointX,pointY,dir,1);
+			}
+		}
+	}
+	else
+	{
+		uint dir=positionDirs[1+pathLen*pathIndex+count];
+		map.MoveHexByDir(pointX,pointY,dir,spacing);
+	}
+}
+
+void ParseEncounterObject(CEncounterObject@ obj, Map@ map, uint16 posX, uint16 posY, uint8 reversDir, Critter@[]& crittersGrouop, uint teamId)
+{
+	if(obj.ObjectType==ENCOUNTER_OBJECT_CRITTER)
+	{
+		if(not map.IsHexPassed(posX,posY))
+			for(uint i=0; i<10; i++)
+			{
+				posX+=1;
+				if(map.IsHexPassed(posX,posY+Random(-1,1))) break;
+				if(i==9) return;
+			}
+
+		int[] items;
+		if(obj.Childs.length()>0)
+		{
+			for(uint i=0,j=obj.Childs.length();i<j;i++)
+			{
+				CEncounterObject@ child=obj.Childs[i];
+				uint count=Random(child.Minimum,child.Maximum);
+				if(count>0)
+				{
+					items.insertLast(child.Pid);
+					items.insertLast(count);
+					items.insertLast(child.InvSlot);
+				}
+			}
+		}
+
+		int[] params={ST_DIALOG_ID,obj.DialogId,
+						ST_BAG_ID,BAG_Empty,
+						ST_TEAM_ID,teamId,
+						ST_REPLICATION_TIME,-1,
+						MODE_ENCAUNTER_MOB, 1};
+		Critter@ npc=map.AddNpc(obj.Pid,posX,posY,reversDir,params,items,obj.ScriptName);
+		
+		//Log("Добавлен НПЦ");
+		//Critter@ merc=map.AddNpc(497, posX, posY, reversDir, null, null, null);
+		//merc.MercBase[MERC_MASTER_DIST]=6;
+		//Merc2Player(cr, merc, 4); // Охранник по умолчанию. Защищает хозяина
+		if(not valid(npc)) return;
+
+		if(obj.IsDead)
+		{
+			npc.ToDead(Random(0,1)==0?ANIM2_DEAD_FRONT:ANIM2_DEAD_BACK,null);
+		}
+		else
+		{
+			crittersGrouop.insertLast(@npc);
+		}
+	}
+	else if(obj.ObjectType==ENCOUNTER_OBJECT_ITEM)
+	{
+		Item@ item=map.AddItem(posX,posY,obj.Pid,1);
+		if(not valid(item)) return;
+
+		if(obj.Childs.length()>0 && item.GetType()==ITEM_TYPE_CONTAINER)
+		{
+			for(uint i=0,j=obj.Childs.length();i<j;i++)
+			{
+				CEncounterObject@ child=obj.Childs[i];
+				uint count=Random(child.Minimum,child.Maximum);
+				if(count>0) item.AddItem(child.Pid,count,0);
+			}
+		}
+	}
+	else
+	{
+		Log("Unknown object type<"+obj.ObjectType+">.");
+	}
+}
+
+void ActionFighting(Critter@[]& npcL, Critter@[]& npcR)
+{
+	for(int i=0,j=npcL.length();i<j;i++)
+	{
+		Critter@ nl=npcL[i];
+		bool nlIsNpc=nl.IsNpc();
+		for(int k=0,l=npcR.length();k<l;k++)
+		{
+			Critter@ nr=npcR[k];
+			if(nlIsNpc)
+			{
+				AddAttackPlane(nl,0,nr);
+				nl.AddEnemyInStack(nr.Id);
+				nl.Wait(Random(4000,5000));
+			}
+			if(nr.IsNpc())
+			{
+				AddAttackPlane(nr,0,nl);
+				nr.AddEnemyInStack(nl.Id);
+				nr.Wait(Random(4000,5000));
+			}
+		}
+	}
+}
+
+Map@ GenerateEncounter(CFoundedEncounter@ fe, Critter@[]@ critters)
+{
+	CEncounter@ encounter=fe.Encounter;
+	uint16 locPid=(valid(encounter)?encounter.LocPid:0);
+	if(locPid==0) locPid=fe.LocationPids[Random(0,fe.LocationPids.length()-1)];
+
+	fe.LocationId=CreateLocation(locPid,fe.PositionX,fe.PositionY,null);
+	if(fe.LocationId==0)
+	{
+		Log("CreateLocation fail, location pid<"+locPid+">.");
+		return null;
+	}
+
+	Location@ location=GetLocation(fe.LocationId);
+	if(not valid(location))
+	{
+		Log("GetLocation fail.");
+		return null;
+	}
+	GameVar@ isEncounter=GetLocalVar(LLVAR_is_encounter, fe.LocationId);
+	if(valid(isEncounter))
+	{
+		isEncounter=1;
+	}
+	// Генерация итемов на всех картах энкаунтера
+	for(uint i=0,l=location.GetMapCount();i<l;i++)
+	{
+		Map@ m=location.GetMapByIndex(i);
+		if(valid(m))
+		{
+			GenerateItems(m,critters);
+			if(i>0)
+			{
+				GenerateCavernEncounter(m,critters);
+			}
+		}
+	}
+
+	Map@ map=location.GetMapByIndex(0);
+	if(not valid(map))
+	{
+		Log("GetMapByIndex fail.");
+		return null;
+	}
+	
+	if(map.GetScriptId()==0)
+		map.SetScript("events_in_encaunter@initEvents");
+
+	uint16 startX=0,startY=0;
+	if(not map.GetEntireCoords(0,0,startX,startY))
+	{
+		Log("Default entire not found.");
+		return null;
+	}
+	fe.StartHexX=startX;
+	fe.StartHexY=startY;
+
+	if(not valid(encounter)) // Empty map
+	{
+		fe.IsGenerated=true;
+		return map;
+	}
+	
+	Critter@ leader=critters[0];
+	Critter@[][] crittersGrouops(encounter.Groups.length());
+
+	uint bufer=0;
+	uint bufer2=0;
+	
+	for(uint i=0,j=encounter.Groups.length();i<j;i++)
+	{
+		uint groupNum=encounter.Groups[i];
+
+		if(groupNum==GROUP_Player)
+		{
+			Critter@[]@ crGroup=crittersGrouops[i];
+			crGroup.resize(critters.length());
+			for(uint k=0,l=critters.length();k<l;k++) @crGroup[k]=critters[k];
+			continue;
+		}
+
+		if(groupNum>=GROUP_MAX)
+		{
+			Log("Invalid group number.");
+			continue;
+		}
+
+		CEncounterGroup@ group=EncounterGroups[groupNum];
+		
+		uint ratio=Random(encounter.RatioMin[i],encounter.RatioMax[i]);
+		uint distance=group.Distance;
+		if(distance==0) distance=7+leader.Stat[ST_PERCEPTION]+leader.Perk[PE_CAUTIOUS_NATURE]*3;
+		uint teamId=group.TeamNum;
+		if(teamId==0) teamId=TEAM_Mob0+i;
+
+		uint position=group.Position;
+		uint spacing=group.Spacing;
+		if(position==POSITION_SURROUNDING) spacing=leader.Stat[ST_PERCEPTION]+leader.Perk[PE_CAUTIOUS_NATURE]*3;
+
+		uint[] positionDirs=PositionDirs[position];
+		uint steps=positionDirs[0];
+		uint dirsCount=0;
+
+		uint freeDir=GetFreeDir(fe.DirBusy);
+		if(freeDir!=0) RotatePosition(freeDir,positionDirs);
+		uint reversDir=freeDir+3;
+		if(reversDir>5) reversDir-=6;
+
+		// Get start point for group
+		uint16[] pointX={startX,startY};
+		uint16[] pointY={startX,startY};
+		if(position!=POSITION_NONE)
+		{
+			uint16 hx=pointX[0],hy=pointY[0];
+			map.MoveHexByDir(pointX[0],pointY[0],freeDir,position!=POSITION_SURROUNDING?distance:spacing);
+			map.GetHexCoord(hx,hy,pointX[0],pointY[0],0.0f,0); // Check for barrier
+			pointX[1]=pointX[0];
+			pointY[1]=pointY[0];
+			MovePositionPoint(map,pointX[1],pointY[1],positionDirs,1,0,spacing);
+		}
+
+		bool trigger=false;
+		uint realCount=0;
+	
+		for(uint k=0,l=group.Objects.length();k<l;k++)
+		{
+			CEncounterObject@ obj=group.Objects[k];
+
+			if(not CheckChecks(obj.Checks,critters)) continue;
+		    uint otherDistance=obj.DistanceLength;
+
+			bufer+=(obj.RatioValue*ratio/10)%10;
+			bufer2+=(obj.RatioValue*ratio)%10;
+			//Log("bufer: "+bufer);
+			//Log("bufer2: "+bufer2);
+			uint count=obj.RatioValue*ratio/100;
+			if(bufer2>=10)
+			{
+				bufer+=bufer2/10;
+				bufer2=bufer2%10;
+				//Log("bufer2 после взятия остатка: "+bufer2);
+			}			
+			if(bufer>=10)
+			{				
+				//10*(30+10)/1000
+				count+=bufer/10;
+				bufer=bufer%10;
+				//Log("bufer после взятия остатка: "+bufer);
+			}
+			
+			if(obj.RatioValue==0) count=1;
+			realCount+=count;
+			
+			uint16 oldPosX=startX,oldPosY=startY;
+			
+			uint scatter=ratio>5?ratio:5;
+			
+			uint16 posX,posY;
+			posX=startX+Random(-scatter,scatter);
+			posY=startY+Random(-scatter,scatter);
+
+			for(uint n=0;n<count;n++)
+			{
+				uint16 posX,posY;
+				if(otherDistance>0 || position==POSITION_NONE)
+				{
+					posX=startX+Random(-scatter,scatter);
+					posY=startY+Random(-scatter,scatter);
+					map.MoveHexByDir(posX,posY,freeDir,otherDistance>0?otherDistance:distance);
+				}
+				else
+				{
+					uint pathIndex=dirsCount%2;
+					posX=pointX[pathIndex]+(position==POSITION_SURROUNDING?Random(-3,0):0);
+					posY=pointY[pathIndex]+(position==POSITION_SURROUNDING?Random(-3,0):0);
+					MovePositionPoint(map,pointX[pathIndex],pointY[pathIndex],positionDirs,pathIndex,dirsCount,spacing);
+					dirsCount++;
+				}
+
+				map.GetHexCoord(oldPosX,oldPosY,posX,posY,0.0f,0); // Check for barrier
+				oldPosX=posX;
+				oldPosY=posY;
+				ParseEncounterObject(obj,map,posX,posY,reversDir,crittersGrouops[i],teamId);
+			}
+		}
+	}
+
+	for(uint i=0,j=encounter.Actions.length();i<j;i+=3)
+	{
+		uint fromGroup=encounter.Actions[i];
+		uint toGroup=encounter.Actions[i+1];
+		uint action=encounter.Actions[i+2];
+
+		if(action==ACTION_FIGHTING && fromGroup<crittersGrouops.length() && toGroup<crittersGrouops.length())
+			ActionFighting(crittersGrouops[fromGroup],crittersGrouops[toGroup]);
+	}
+
+	fe.IsGenerated=true;
+	return map;
+}
+
+//
+// Imports
+//
+// void FindEncounter(Critter@[]@ critters, uint zx, uint zy) return foundedEncounterIndex
+// bool InviteToEncounter(uint foundedEncounterIndex, Critter@[]@ critters) invite critters to encounter
+// void WorldmapInit() call on start server
+
+/*const int[] ScanOffsX={-1,0,1,-1,0,1,-1,0,1};
+const int[] ScanOffsY={-1,0,1,-1,0,1,-1,0,1};
+void ScanZone(Critter& cr, uint zx, uint zy)
+{
+	uint zoneX=cr.WorldX/__GlobalMapZoneLength;
+	uint zoneY=cr.WorldY/__GlobalMapZoneLength;
+
+	cr.SetFog(zoneX,zoneY,FOG_NONE);
+	cr.SetFog(zoneX-1,zoneY-1,FOG_SELF);
+	cr.SetFog(zoneX  ,zoneY-1,FOG_SELF);
+	cr.SetFog(zoneX+1,zoneY-1,FOG_SELF);
+	cr.SetFog(zoneX-1,zoneY  ,FOG_SELF);
+	cr.SetFog(zoneX+1,zoneY  ,FOG_SELF);
+	cr.SetFog(zoneX-1,zoneY+1,FOG_SELF);
+	cr.SetFog(zoneX  ,zoneY+1,FOG_SELF);
+	cr.SetFog(zoneX+1,zoneY+1,FOG_SELF);
+
+	for(int ox=-1;ox<2;ox++)
+	{
+		for(int oy=-1;oy<2;oy++)
+		{
+
+		}
+	}
+}*/
+
+void FindEncounter(Critter@[]& group, Item@ car, uint x, uint y, uint& encounterDescriptor, bool& waitForAnswer, bool empty)
+{
+	encounterDescriptor=0;
+	waitForAnswer=false;
+
+	uint zx=x/ZONE_LENGTH;
+	uint zy=y/ZONE_LENGTH;
+	if(zx>=ZONE_COUNT_X || zy>=ZONE_COUNT_Y)
+	{
+		//Log("Invalid zones coordinates."); in faction mod size is greather than ZONE_COUNT_X, ZONE_COUNT_Y.
+		return;
+	}
+
+	bool isWater=(GetGlobalMapRelief(x,y)==0);
+	int walkType=(valid(car)?car.Proto.Car_MovementType:GM_WALK_GROUND);
+	bool walkWaterOrFly=(walkType==GM_WALK_WATER || walkType==GM_WALK_FLY);
+	if(walkType==GM_WALK_GROUND && isWater) return;
+
+	CZone@ zone=(isWater?WorldmapWater[zy*ZONE_COUNT_X+zx]:WorldmapGround[zy*ZONE_COUNT_X+zx]);
+	if(not valid(zone)) return;
+	Critter@ leader=group[0];
+
+	// Create empty map
+	if(empty)
+	{
+		CFoundedEncounter@ fe=CreateFoundedEncounter(isWater,x,y,null,zone.Table.LocationPids,leader.Id,group.length()>1);
+		if(not valid(fe)) return;
+		waitForAnswer=false;
+		encounterDescriptor=fe.Index;
+		return;
+	}
+
+	// Check chance
+	uint chance;
+	if(IS_MORNING(__Hour)) chance=zone.MorningChance;
+	if(IS_AFTERNOON(__Hour)) chance=zone.AfternoonChance;
+	else chance=zone.NightChance;
+	
+	Item@ sensor=_CritGetItemHand(leader);
+	if(valid(sensor)) 
+		if(sensor.GetProtoId()==PID_ACTIVE_MOTION_SENSOR) chance*=2;
+	if(uint(Random(1,100))>chance) return;
+
+	// Try find already founded encounter
+	CFoundedEncounter@ feAlready=GetNearFoundedEncounter(isWater,group,x,y,ZONE_LENGTH/2);
+	if(valid(feAlready))
+	{
+		int outdoorsman=leader.Skill[SK_OUTDOORSMAN];
+		for(uint16 i=1, iMax=group.length(); i<iMax;i++)
+		{
+			if(group[i].Skill[SK_OUTDOORSMAN]<outdoorsman)
+				outdoorsman=group[i].Skill[SK_OUTDOORSMAN];
+		}
+		int minSkil=outdoorsman;
+		outdoorsman+=zone.Difficulty;
+		outdoorsman=CLAMP(outdoorsman,6,95);
+		if(CLAMP(outdoorsman,6,95)>=Random(1,100) || walkWaterOrFly)
+		{
+			uint8 say=feAlready.TurnBased?SAY_ENCOUNTER_TB:SAY_ENCOUNTER_RT;
+			if(valid(feAlready.Encounter))
+			{
+				leader.SayMsg(say,TEXTMSG_GM,feAlready.OwnerGroup?STR_QUESTION_WITH_PLAYERS:STR_QUESTION_WITH_PLAYER,
+					"$who @msg gm "+feAlready.Encounter.StrNum+"@$player"+GetPlayerName(feAlready.OwnerId));
+			}
+			else
+			{
+				leader.SayMsg(say,TEXTMSG_GM,feAlready.OwnerGroup?STR_QUESTION_ONLY_PLAYERS:STR_QUESTION_ONLY_PLAYER,
+					"$player"+GetPlayerName(feAlready.OwnerId));
+			}
+			waitForAnswer=true;
+			
+			if(not walkWaterOrFly)
+			{
+				GameVar@ outdoorsmaTimeout=GetLocalVar(LVAR_outdoorsman_timeout, leader.Id);
+				GameVar@ outdoorsmanDiv=GetLocalVar(LVAR_outdoorsman_div, leader.Id);
+				if(valid(outdoorsmaTimeout) && valid(outdoorsmanDiv))
+				{
+					if(uint(outdoorsmaTimeout.GetValue()) > __FullSecond)
+						outdoorsmanDiv+=1;
+					else outdoorsmanDiv-=2*(__FullSecond-outdoorsmaTimeout.GetValue())/TIMEOUT_OUTDOORSMAN;
+					if(outdoorsmanDiv.GetValue()<1) outdoorsmanDiv=1;
+					outdoorsmaTimeout=__FullSecond+TIMEOUT_OUTDOORSMAN;
+					
+					if(minSkil<=95) leader.StatBase[ST_EXPERIENCE]+=(100-minSkil-zone.Difficulty)*NUMERATOR_OUTDOORSMAN/(NUMERATOR_OUTDOORSMAN-1+outdoorsmanDiv.GetValue());
+					else leader.StatBase[ST_EXPERIENCE]+=(5-zone.Difficulty)*NUMERATOR_OUTDOORSMAN/(NUMERATOR_OUTDOORSMAN-1+outdoorsmanDiv.GetValue());
+				}
+			}
+		}
+
+		for(uint i=0,j=group.length();i<j;i++) group[i].Say(SAY_FLASH_WINDOW,"");
+		encounterDescriptor=feAlready.Index;
+		return;
+	}
+
+	// Try find new encounter
+	int luck=0;
+	for(uint i=0,j=group.length();i<j;i++) luck+=group[i].Stat[ST_LUCK];
+	luck/=group.length();
+
+	int roll=Random(0,100)+luck-5+2*leader.Perk[PE_EXPLORER]+leader.Perk[PE_RANGER]+leader.Perk[PE_SCOUT];
+	if(roll<0) roll=0;
+	int maxRoll=0;
+
+	CEncounter[]@ encounters=zone.Table.Encounters;
+	CEncounter@[] encountersThru(encounters.length());
+	for(uint i=0,j=encounters.length();i<j;i++)
+	{
+		CEncounter@ enc=encounters[i];
+		if(CheckChecks(enc.Checks,group))
+		{
+			maxRoll+=enc.Chance;
+			@encountersThru[i]=encounters[i];
+		}
+		else
+		{
+			@encountersThru[i]=null;
+		}
+	}
+
+	roll=roll*maxRoll/100;
+	for(uint i=0,j=encountersThru.length();i<j;i++)
+	{
+		CEncounter@ enc=encountersThru[i];
+
+		if(not valid(enc)) continue;
+		if(uint(roll)>enc.Chance && i<j-1)
+		{
+			roll-=enc.Chance;
+			continue;
+		}
+
+		CFoundedEncounter@ fe=CreateFoundedEncounter(isWater,x,y,enc,zone.Table.LocationPids,leader.Id,group.length()>1);
+		if(not valid(fe)) return;
+
+		int outdoorsman=leader.Skill[SK_OUTDOORSMAN];
+		for(uint16 i=1, iMax=group.length(); i<iMax;i++)
+		{
+			if(group[i].Skill[SK_OUTDOORSMAN]<outdoorsman)
+				outdoorsman=group[i].Skill[SK_OUTDOORSMAN];
+		}
+		int minSkil=outdoorsman;
+		outdoorsman+=zone.Difficulty;
+		outdoorsman=CLAMP(outdoorsman,6,95);
+		if(outdoorsman>=Random(1,100) || walkWaterOrFly)
+		{
+			leader.SayMsg(SAY_ENCOUNTER_ANY,TEXTMSG_GM,STR_QUESTION,"$who @msg gm "+enc.StrNum+"@");
+			waitForAnswer=true;
+
+			if(not walkWaterOrFly)
+			{
+				GameVar@ outdoorsmaTimeout=GetLocalVar(LVAR_outdoorsman_timeout, leader.Id);
+				GameVar@ outdoorsmanDiv=GetLocalVar(LVAR_outdoorsman_div, leader.Id);
+				if(valid(outdoorsmaTimeout) && valid(outdoorsmanDiv))
+				{
+					if(uint(outdoorsmaTimeout.GetValue()) > __FullSecond)
+						outdoorsmanDiv+=1;
+					else outdoorsmanDiv-=2*(__FullSecond-outdoorsmaTimeout.GetValue())/TIMEOUT_OUTDOORSMAN;
+					if(outdoorsmanDiv.GetValue()<1) outdoorsmanDiv=1;
+					outdoorsmaTimeout=__FullSecond+TIMEOUT_OUTDOORSMAN;
+					
+					if(minSkil<=95) leader.StatBase[ST_EXPERIENCE]+=(100-minSkil-zone.Difficulty)*NUMERATOR_OUTDOORSMAN/(NUMERATOR_OUTDOORSMAN-1+outdoorsmanDiv.GetValue());
+					else leader.StatBase[ST_EXPERIENCE]+=(5-zone.Difficulty)*NUMERATOR_OUTDOORSMAN/(NUMERATOR_OUTDOORSMAN-1+outdoorsmanDiv.GetValue());
+				}
+			}
+		}
+
+		for(uint i=0,j=group.length();i<j;i++) group[i].Say(SAY_FLASH_WINDOW,"");
+		encounterDescriptor=fe.Index;
+		break;
+	}
+}
+
+void InviteToEncounter(Critter@[]& group, Item@ car, uint encounterDescriptor, int combatMode, uint& mapId, uint16& hexX, uint16& hexY, uint8& dir)
+{
+	mapId=0;
+
+	CFoundedEncounter@ fe=GetFoundedEncounter(encounterDescriptor);
+	if(not valid(fe))
+	{
+		Log("GetFoundedEncounter fail.");
+		return;
+	}
+
+	bool isGenerated=fe.IsGenerated;
+	Map@ map=null;
+	if(isGenerated)
+	{
+		Location@ location=GetLocation(fe.LocationId);
+		if(not valid(location))
+		{
+			// Log("Location not found.");
+			return;
+		}
+
+		@map=location.GetMapByIndex(0);
+	}
+	else
+	{
+		@map=GenerateEncounter(fe,group);
+	}
+
+	if(not valid(map))
+	{
+		Log("Map not found.");
+		return;
+	}
+
+	/*if(not isGenerated && combatMode==COMBAT_MODE_TURN_BASED) //|| (combatMode==COMBAT_MODE_ANY && Random(0,1)==0)))
+	{
+	    map.SetTurnBasedAvailability(true);
+		fe.TurnBased=true;
+	}*/
+	
+	Critter@ leader=group[0];
+	mapId=map.Id;
+	hexX=fe.StartHexX;
+	hexY=fe.StartHexY;
+	if(isGenerated)
+	{
+		if(valid(car))
+		{
+			// Place critters near his car
+			hexX=uint16(-1);
+			hexY=uint16(-1);
+		}
+		else
+		{
+			dir=GetFreeDir(fe.DirBusy);
+			map.MoveHexByDir(hexX,hexY,dir,leader.Stat[ST_PERCEPTION]+leader.Perk[PE_CAUTIOUS_NATURE]*3);
+			dir+=3;
+			if(dir>5) dir-=6;
+		}
+	}
+	else
+	{
+		if(valid(car))
+		{
+			// Place critters near his car
+			hexX=uint16(-1);
+			hexY=uint16(-1);
+		}
+
+		dir=Random(0,5);
+	}
+
+	if(isGenerated || valid(fe.Encounter))
+	{
+		for(uint i=0,j=group.length();i<j;i++)
+		{
+			Critter@ cr=group[i];
+			if(not isGenerated)
+				cr.SayMsg(SAY_NETMSG,TEXTMSG_GM,STR_VIEW,"$who @msg gm "+fe.Encounter.StrNum+"@");
+			else if(valid(fe.Encounter))
+				cr.SayMsg(SAY_NETMSG,TEXTMSG_GM,fe.OwnerGroup?STR_VIEW_WITH_PLAYERS:STR_VIEW_WITH_PLAYER,"$who @msg gm "+fe.Encounter.StrNum+"@$player"+GetPlayerName(fe.OwnerId));
+			else
+				cr.SayMsg(SAY_NETMSG,TEXTMSG_GM,fe.OwnerGroup?STR_VIEW_ONLY_PLAYERS:STR_VIEW_ONLY_PLAYER,"$player"+GetPlayerName(fe.OwnerId));
+		}
+	}
+	if(valid(fe.Encounter)) AssignChecks(fe.Encounter.Checks,group);
+}
+
+uint GetGlobalMapRelief(uint x, uint y)
+{
+	// Used low four bits of image
+	// Zero is water
+	return GetImageColor(IMAGE_RELIEF,x,y)&0xF;
+}
+
+#include "hiding_place_dlg.fos"
+
+void WorldmapInit()
+{
+	LoadImage(IMAGE_RELIEF,"relief_tla.png",1,PT_SERVER_MAPS);
+	#include "worldmap_init.fos"
+}

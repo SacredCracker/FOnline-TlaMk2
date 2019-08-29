@@ -1,0 +1,484 @@
+// Author: Тринитротолуол
+
+// Пасти браминов.
+// Циклический, одиночный.
+// Примитивный квест. Стоять на пастбище указанное кол-во времени. С некоей долей вероятности на
+// браминов будут нападать волки, кротокрыссы и прочая живность. Необходимо защитить браминов.
+// Выдает Торр.
+
+// Количество и уровень мобов зависит от уровня игрока.
+// Если квест взят, то атака на браминов начинается во время, которое задано в скрипте.
+// И будет происходить вне зависимости от того пришел игрок на зашиту или нет.
+// Квест выдается в заданный интервал времени.
+// Мобы создаются не все сразу, а порциями, с интервалом в 1 минуту. Количество за один раз зависит от
+// кол-ва ентаеров. После окончания квеста мобы убегают с карты.
+// Скрипт полностью адаптирован к рестартам.
+
+import bool AddAttackPlane(Critter& npc, uint priority, Critter& target) from "npc_planes";
+import bool AddWalkPlane(Critter& npc, uint priority, uint16 hexX, uint16 hexY, uint8 dir, bool run, uint cut) from "npc_planes";
+import bool AddMiscPlane(Critter& npc, uint priority, uint waitSecond, string@ funcName) from "npc_planes";
+import uint GetNearFullSecond(uint16 year, uint16 month, uint16 day, uint16 hour, uint16 minute, uint16 second) from "time";
+
+#include "_macros.fos"
+#include "_npc_pids.fos"
+#include "_teams.fos"
+#include "_bags.fos"
+
+#include "map_klamath_h.fos"
+
+//Время (в часах) начала/конца атак. Нумерация часов от 1 до 24 (24 часа==0 часов).
+#define QUEST_TIME_START           (24)
+#define QUEST_TIME_END             (5)
+
+//Время выдачи квеста. Нумерация часов от 1 до 24 (24 часа==0 часов).
+#define ISSUANCE_TIME_START        (8)
+#define ISSUANCE_TIME_END          (22)
+
+#define ROLE_MOBS                  (239)
+
+#define ENTIRE_GROUPS              {10, 11, 12, 13}
+
+#define COW_COUNT				   (6)  //количество браминов
+#define MAX_MOBS_COUNT             (64) //максимум живых мобов на карте
+
+#define FINISH_SUCCESS_TIME_OUT    (0)
+#define FINISH_FAIL_ALL_COW_DEAD   (1)
+
+#define ANY_DATA_NAME			   ("KlamCowboy")
+
+#define DEF_PLAYER_LEVEL		   (5) //уровень по умолчанию
+
+#define MSG_DOGS				   {2500, 2501, 2502, 2503, 2504, 2505, 2506, 2507}
+
+//Для удобства ребалансировки
+uint GetTimeSpawn() { return Random(30, 40) * 60; } //Время между атаками (это время и еще +10)
+uint GetMobLevel(uint playerLevel) { playerLevel *=0.5; return CLAMP(playerLevel, 2, 30); } //Уровень мобов
+uint GetMobCount(uint playerLevel) { return playerLevel / 3 + 3; } //Количество мобов за одну атаку
+uint GetExp(uint cowDead) //Опыта за выполнение
+{
+	uint bonus=0;
+	if(cowDead==0) bonus=900;
+	return uint(1800 * (1 - double(cowDead) / double(COW_COUNT))) + bonus;
+}
+
+//В случае рестарта значения восcтанавливаются
+uint MobsCount;      //Общее количество живых мобов на карте
+uint8 CowsDeadCount; //Количество умерших браминов
+
+//Номер события, которое завершает квест. Потеря значения в случае рестарта не критично.
+uint FinishEventNum;
+
+//------------------------- Скриптовые функции --------------------------------
+void InitCowboy(Map& map, bool firstTime)
+{
+	CreateTimeEvent(GetNearFullSecond(0, 0, 0, QUEST_TIME_START, 0, 0), "e_StartAtack", map.Id, false);
+
+	FinishEventNum=0;
+	CowsDeadCount=0;
+
+	Critter@[] Cows;
+	GetNpc(map, Cows, ROLE_COWS, FIND_ALL);
+	for(uint i=0, iMax=Cows.length(); i<iMax; i++)
+	{
+		Cows[i].SetEvent(CRITTER_EVENT_DEAD, "_CowDead");
+		if(Cows[i].IsDead()) CowsDeadCount++;
+	}
+
+	Critter@[] Dogs;
+	GetNpc(map, Dogs, ROLE_DOGS, FIND_ALL);
+	for(uint i=0, iMax=Dogs.length(); i<iMax; i++)
+		Dogs[i].SetEvent(CRITTER_EVENT_SHOW_CRITTER, "_DogSeeMob");
+
+	Critter@[] Mobs;
+	GetNpc(map, Mobs, ROLE_MOBS, FIND_LIFE_AND_KO);
+	for(uint i=0, iMax=Mobs.length(); i<iMax; i++)
+	{
+		Mobs[i].SetEvent(CRITTER_EVENT_IDLE, "_MobIdle");
+		Mobs[i].SetEvent(CRITTER_EVENT_DEAD, "_MobDead");
+		Mobs[i].SetEvent(CRITTER_EVENT_SHOW_CRITTER, "_MobSeeCritter");
+	}
+	MobsCount=Mobs.length();
+}
+
+//------------------ Обработчики игровых событий -------------------------------
+//Каждые 24 часа запускает процесс атаки на браминов. Если квест никем не взят, то атаки не будет.
+//После рестарта восстанавливается в initCowboy.
+uint e_StartAtack(uint[]@ values)
+{
+	if(GetQuestGlobalState()<=0) return GetNearFullSecond(0, 0, 0, QUEST_TIME_START, 0, 0) - __FullSecond;
+
+	Map@ map=GetMap(values[0]);  if(not valid(map)) { Log("ERROR: map not valid "); return 0; }
+
+	//К началу квеста воскрешаем мертвых браминов.
+	CowsDeadCount=0;
+	Critter@[] Cows;
+	GetNpc(map, Cows, ROLE_COWS, FIND_DEAD);
+	for(uint i=0, iMax=Cows.length(); i<iMax; i++)
+	{
+		if(not Cows[i].IsDead()) continue;
+		uint[] param={Cows[i].Id, 0};
+		CreateTimeEvent(__FullSecond + 60, "e_CowToLife", param, true);
+	}
+
+	FinishEventNum=CreateTimeEvent(GetNearFullSecond(0, 0, 0, QUEST_TIME_END, 0, 0), "e_FinishQuest", true);
+	CreateTimeEvent(__FullSecond + GetTimeSpawn(), "e_SpawnMobsLoop", values[0], true);
+	SetQuestState(2);
+
+	return GetNearFullSecond(0, 0, 0, QUEST_TIME_START, 0, 0) - __FullSecond;
+}
+
+//Отвечает за начало спавна мобов
+//Сохраняется в базе. Рестарт не страшен.
+uint e_SpawnMobsLoop(uint[]@ values)
+{
+	if(GetQuestGlobalState()<=0) return 0;
+
+	Map@ map=GetMap(values[0]);  if(not valid(map)) { Log("ERROR: map not valid"); return 0; }
+
+	//Собаки предупреждают о начале атаки
+	Critter@[] Dogs;
+	GetNpc(map, Dogs, ROLE_DOGS, FIND_LIFE_AND_KO);
+	for(uint i=0, iMax=Dogs.length(); i<iMax; i++)
+	{
+		Dogs[i].StatBase[ST_VAR0]=0;
+		CreateTimeEvent(__FullSecond + Random(1, 3) * 60, "e_DogAlert", Dogs[i].Id, false);
+	}
+
+	uint16 playerLevel=GetPlayerLevel();
+
+	//Случайно выбираем тип мобов и стартовые точки, и запускаем процесс спавна
+	uint[] params={values[0]};
+	params=SelectEntsAndMobs(params);
+	params.resize(params.length() + 4);
+	params[params.length() - 4]=GetMobLevel(playerLevel);
+	params[params.length() - 3]=GetMobCount(playerLevel);
+	params[params.length() - 2]=0;
+	params[params.length() - 1]=0;
+	CreateTimeEvent(__FullSecond + 10 * 60, "e_SpawnMobs", params, true);
+
+	return GetTimeSpawn();
+}
+
+//Событие - создает мобов на каждом енте заданой группы, событие откладывается на 2 минуты
+//покаместь не будет достаточное количество мобов. Если их хватает событие рандомно переносится.
+//Сохраняется в базе. Впринципе этого можно и не делать. Шанс что рестарт оборвет событие мал,
+//да и если оборвет ничего критического не случится.
+uint e_SpawnMobs(uint[]@ values)
+{
+	if(GetQuestGlobalState()<=0) return 0;
+
+	Map@ map=GetMap(values[0]);  if(not valid(map)) { Log("ERROR: map not valid"); return 0; }
+
+	uint entGroup=values[1];
+	uint npcPid=values[2];
+	uint dialogId=values[3];
+	uint mobLevel=values[4];
+	uint maxCount=values[5];
+	uint mobsSpawnCount=values[6]; //мобов созданно
+	uint limit=values[7]; //всего попыток создания мобов (что-бы не зациклилось)
+
+	uint entCount=map.CountEntire(entGroup);
+	for(uint i=0; i<entCount; i++)
+	{
+		limit++;
+		if(limit >=maxCount * 2) return 0;
+		if(MobsCount >=MAX_MOBS_COUNT) return 0;
+
+		Critter@ mob=SpawnMob(map, entGroup, i, npcPid, 2, dialogId, mobLevel);
+		if(not valid(mob)) continue;
+
+		mobsSpawnCount++;
+		if(mobsSpawnCount >=maxCount) return 0; //Создание мобов указанного типа окончено
+	}
+
+	values[6]=mobsSpawnCount;
+	values[7]=limit;
+
+	CreateTimeEvent(__FullSecond + 60, "e_SpawnMobs", values, true);
+	return 0;
+}
+
+//Собаки начинают гавкать
+//Рестарт обрывает это событие.
+uint e_DogAlert(uint[]@ values)
+{
+	Critter@ dog=GetCritter(values[0]);
+	if(not valid(dog)) { Log("ERROR: critter not valid"); return 0; }
+	if(not dog.IsNoPlanes()) return Random(1, 3);
+
+	dog.MoveRandom();
+	dog.Wait(Random(2000, 4000));
+	uint[] msg=MSG_DOGS;
+	dog.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_TEXT, msg[Random(0, msg.length() - 1)]);
+
+	dog.StatBase[ST_VAR0]++;
+	if(dog.StatBase[ST_VAR0] >=3) return 0;
+	return Random(1, 3) * 60;
+}
+
+//Завершает квест.
+//Сохраняется в базе. Рестарт не страшен.
+uint e_FinishQuest(uint[]@ values)
+{
+	FinishQuest(FINISH_SUCCESS_TIME_OUT);
+	return 0;
+}
+
+//Мертвого моба нужно удалить, но не сразу же после смерти
+//Сохраняется в базе. Рестарт не страшен.
+uint e_DeleteMobs(uint[]@ values)
+{
+	Critter@ mob=GetCritter(values[0]);  if(not valid(mob)) { Log("ERROR: critter not valid"); return 0; }
+
+	if(mob.Stat[ST_NPC_ROLE] !=ROLE_MOBS) return 0; //на всякий случай
+	DeleteNpc(mob);
+	return 0;
+}
+
+//Воскрешает браминов. Событие нужно, потому-что есть вероятность что брамин не воскреснит.
+//Всего 10 попыток воскресить брамина. Если все 10 провалились, то брамин остается мертвым и
+//счетчик мертвых браминов увеличивается на 1.
+//Сохраняется в базе. Рестарт не страшен.
+uint e_CowToLife(uint[]@ values)
+{
+	Critter@ cow=GetCritter(values[0]);  if(not valid(cow)) { Log("ERROR: critter not valid"); return 0; }
+	Map@ map=cow.GetMap();               if(not valid(map)) { Log("ERROR: map not valid"); return 0; }
+
+	if(map.IsHexPassed(cow.HexX, cow.HexY))
+	{
+		cow.ToLife();
+		return 0;
+	}
+
+	values[1]++;
+
+	//если неудалось воскресить
+	if(values[1] >=10)
+	{
+		CowsDeadCount=map.GetNpcCount(ROLE_COWS, FIND_DEAD);
+		return 0;
+	}
+
+	CreateTimeEvent(__FullSecond + 60, "e_CowToLife", values, true);
+	return 0;
+}
+
+//------------------------ Обработчики событий -------------------------------
+void _MobDead(Critter& mob, Critter@ killer)
+{
+	CreateTimeEvent(__FullSecond + GetTimeSpawn(), "e_DeleteMobs", mob.Id, true);
+	MobsCount--;
+}
+
+//Если моб свободен и квест завершен, отправляем его обратно в пустошь
+void _MobIdle(Critter& mob)
+{
+	if(GetQuestGlobalState()<=0)
+	{
+		AddWalkPlane(mob, AI_PLANE_WALK_PRIORITY, mob.StatBase[ST_VAR2], mob.StatBase[ST_VAR3], Random(0,5), true, Random(0,1));
+		AddMiscPlane(mob, AI_PLANE_MISC_PRIORITY, 0, "klam_cowboy@plane_GoodByeMob");
+	}
+	else
+	{
+		Map@ map=mob.GetMap();   if(not valid(map)) { Log("ERROR: map not valid"); return; }
+
+		MobSetAtackPlane(map, mob);
+	}
+}
+
+void _CowDead(Critter& cow, Critter@ killer)
+{
+	if(GetQuestGlobalState()<=0) return;
+
+	CowsDeadCount++;
+
+	if(CowsDeadCount >=COW_COUNT) FinishQuest(FINISH_FAIL_ALL_COW_DEAD);
+}
+
+void _MobSeeCritter(Critter& mob, Critter& showCrit)
+{
+	if(showCrit.Stat[ST_NPC_ROLE]==ROLE_MOBS) return;
+
+	mob.AddEnemyInStack(showCrit.Id);
+}
+
+void _DogSeeMob(Critter& dog, Critter& mob)
+{
+	if(mob.Stat[ST_NPC_ROLE] !=ROLE_MOBS) return;
+
+	dog.AddEnemyInStack(mob.Id);
+}
+//------------------------- Диалоговые функции -------------------------------
+//Квест доступен или нет
+//master - игрок
+bool d_VerifyTime(Critter& master, Critter@ slave, int val)
+{
+	bool result=VerifyTime(ISSUANCE_TIME_START, ISSUANCE_TIME_END);
+	if(val==0) return not result;
+	else return result;
+}
+
+//Дает квест
+//master - игрок
+void r_StartQuest(Critter& master, Critter@ slave, int val)
+{
+	if(not valid(slave)) return;
+	if(master.IsNpc())   return;
+
+	SetQuestGlobalState(master.Id);
+	SetQuestState(1);
+	SetPlayerLevel(master.Stat[ST_LEVEL]);
+}
+
+void r_AddExperience(Critter& master, Critter@ slave)
+{
+	if(not valid(slave)) return;
+	if(master.IsNpc())   return;
+
+	GameVar@ var=GetLocalVar(LVAR_q_klam_torr_cowboy, master.Id);    if(not valid(var)) { Log("ERROR: not valid GameVar №" + LVAR_q_klam_torr_cowboy); return; }
+	int16 cowDeadCount=var.GetValue() - 4;
+	if(cowDeadCount<0 || cowDeadCount > COW_COUNT) { Log("WARNING: quest var bad value"); return; }
+
+	master.StatBase[ST_EXPERIENCE]+=GetExp(cowDeadCount);
+	var=0;
+}
+
+//----------------------------- misk plane -----------------------------------
+void plane_GoodByeMob(Critter& mob)
+{
+	if(mob.Stat[ST_NPC_ROLE] !=ROLE_MOBS) return;
+	DeleteNpc(mob);
+}
+
+//--------------------------- Инструментарий ---------------------------------
+//Добавляет и посылает на убой указанного моба.
+Critter@ SpawnMob(Map& map, uint8 entGroup, uint8 entNum, uint16 npcPid, uint8 dir, uint dialog, uint level)
+{
+	uint16 x=0, y=0;
+	if(not map.GetEntireCoords(entGroup, entNum, x, y))
+		{ Log("ERROR: GetEntireCoords " + entGroup + ":" + entNum); return null; }
+
+	int[] params={ST_DIALOG_ID, dialog, ST_TEAM_ID, TEAM_Mob0, ST_BAG_ID, BAG_Empty, ST_LEVEL, level,
+		ST_VAR2, x, ST_VAR3, y, ST_NPC_ROLE, ROLE_MOBS, ST_REPLICATION_TIME, -1};
+	Critter@ mob=map.AddNpc(npcPid, x, y, dir, params, null, null); if(not valid(mob)) { Log("ERROR: critter not valid"); return null; }
+
+	MobSetAtackPlane(map, mob);
+	mob.SetEvent(CRITTER_EVENT_IDLE, "_MobIdle");
+	mob.SetEvent(CRITTER_EVENT_DEAD, "_MobDead");
+	mob.SetEvent(CRITTER_EVENT_SHOW_CRITTER, "_MobSeeCritter");
+	MobsCount++;
+
+	return mob;
+}
+
+//Агрит моба
+void MobSetAtackPlane(Map& map, Critter& mob)
+{
+	uint count=map.GetNpcCount(ROLE_COWS, FIND_LIFE_AND_KO);
+	if(count==0) { FinishQuest(FINISH_FAIL_ALL_COW_DEAD); return; }
+
+	Critter@ cow=map.GetNpc(ROLE_COWS, FIND_LIFE_AND_KO, Random(0, count - 1));   if(not valid(cow)) { Log("ERROR: critter not valid"); return; }
+	AddAttackPlane(mob, AI_PLANE_ATTACK_PRIORITY, cow);
+}
+
+//Выбор мобов и точек респа
+uint[] SelectEntsAndMobs(uint[] arr)
+{
+	arr.resize(arr.length() + 3);
+	uint8[] ent=ENTIRE_GROUPS;
+	uint16[] pid={NPC_PID_WildDog, NPC_PID_Molerat, NPC_PID_LargeRadscorpion, NPC_PID_ToughSilverGecko};
+	uint[] dialog={DIALOG_mob_dog, DIALOG_mob_mole_rat, DIALOG_mob_large_scorp, DIALOG_mob_silver_gecko};
+	uint mobsTypeNum=Random(0, pid.length() - 1);
+	arr[arr.length() - 3]=ent[Random(0, ent.length() - 1)];
+	arr[arr.length() - 2]=pid[mobsTypeNum];
+	arr[arr.length() - 1]=dialog[mobsTypeNum];
+	return arr;
+}
+
+//Дописывает массив указаными криттерами
+uint GetNpc(Map@ map, Critter@[]@ arr, int npcRole, int findType)
+{
+	uint findCount=0;
+	uint count=map.GetNpcCount(npcRole, findType);
+	for(uint i=0; i<count; i++)
+	{
+		Critter@ cr=map.GetNpc(npcRole, findType, i);  if(not valid(cr)) { Log("ERROR: critter not valid"); continue; }
+		findCount++;
+		arr.resize(arr.length() + 1);
+		@arr[arr.length() - 1]=cr;
+	}
+	return findCount;
+}
+
+//Проверяет текущий час, он между заданым временем или нет
+bool VerifyTime(uint8 timeStart, uint8 timeFinish)
+{
+	if(timeStart==timeFinish) return true;
+	if(timeStart==24) timeStart=0;
+	if(timeFinish==24) timeFinish=0;
+	uint8 hour=__Hour;
+	if(timeStart > timeFinish)
+	{
+		timeFinish +=24;
+		if(timeStart > hour) hour +=24;
+	}
+
+	if ((hour >=timeStart)&&(hour<timeFinish)) return true;
+
+	return false;
+}
+
+//Вызывается при окончании квеста.
+void FinishQuest(uint8 state)
+{
+	if(GetQuestGlobalState()<=0) return;
+
+	switch(state)
+	{
+		case FINISH_FAIL_ALL_COW_DEAD:
+			if(FinishEventNum !=0) EraseTimeEvent(FinishEventNum);
+			SetQuestState(3);
+			break;
+		case FINISH_SUCCESS_TIME_OUT:
+			SetQuestState(4 + CowsDeadCount);
+			break;
+	}
+
+	FinishEventNum=0;
+	SetQuestGlobalState(0);
+}
+
+void SetQuestGlobalState(int status)
+{
+	GameVar@ quest=GetGlobalVar(GVAR_klam_cowboy);   if(not valid(quest)) { Log("ERROR: not valid GameVar №" + GVAR_klam_cowboy); return;}
+	quest=status;
+}
+
+int GetQuestGlobalState()
+{
+	GameVar@ quest=GetGlobalVar(GVAR_klam_cowboy);   if(not valid(quest)) { Log("ERROR: not valid GameVar №" + GVAR_klam_cowboy); return -1;}
+	return quest.GetValue();
+}
+
+void SetQuestState(uint state)
+{
+	uint playerId=GetQuestGlobalState();
+	if(playerId<=0) return;
+	GameVar@ var=GetLocalVar(LVAR_q_klam_torr_cowboy, playerId);    if(not valid(var))    { Log("ERROR: not valid GameVar №" + LVAR_q_klam_torr_cowboy); return; }
+
+	var=state;
+}
+
+void SetPlayerLevel(uint16 level)
+{
+	uint16[] param={level};
+	if(not SetAnyData(ANY_DATA_NAME, param))  Log("WARNING: set any data fail");
+}
+
+uint16 GetPlayerLevel()
+{
+	uint16[] param;
+	if(not GetAnyData(ANY_DATA_NAME, param))   { Log("WARNING: get any data fail"); return DEF_PLAYER_LEVEL;}
+	if(param.length()==0)                    { Log("WARNING: array length==0"); return DEF_PLAYER_LEVEL;}
+	return param[0];
+}

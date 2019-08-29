@@ -1,0 +1,228 @@
+[comment]
+rifleman17
+
+Доставка скорпионьих хвостов для доктора Юбилея
+
+Доктор просит персонажа раздобыть ему 5 хвостов скорпиона. За это он платит 50 монет + бутылку противоядия.
+Если игрок будет отравлен, когда принесет сдавать хвосты - доктор снимает отравление
+Если у игрока навык "Доктор" > 100 - он может попросить альтернативную плату - 4 шприца.
+Также игрок получает 100 экспы.
+
+Существует переменная-счетчик, в которой сохраняются количество раз выполнения квеста игроком
+Когда значение переменной становится выше контрольного значения, для игрока становятся доступны несколько бонус-наград
+Качество бонусов зависит от навыка доктора и санитара игрока. Для врача максимум счетчика = 15, для неврача = 9
+
+-----------------------------------------------
+Доктор	Санитар	Цена	Наименование предмета
+-----------------------------------------------
+0	0	3	Стимпак
+50	50	3	Противоядие
+100	0	5	Баффаут
+0	100	5	Ментат
+125	100	10	Рад-Х
+100	125	10	Рад-Авей
+150	150	15	Психо
+-----------------------------------------------
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 0 #
+7 1010 D _param p ST_INTELLECT < 4 #
+2 1020 D _param p ST_INTELLECT > 3 @
+2 2000 None 0 #
+4 2010 #
+3 2020 D _script dialog@d_NotTimeoutOk 0  #
+0 2030 #
+10 2040 D _script dialog@d_TimeoutOk 0  #
+14 2050 D _var p ncr_jubiley_tails_status = 1 D _item p PID_SCORPION_TAIL > 4 R _var p ncr_jubiley_tails_status = 2 R _item p PID_SCORPION_TAIL - 5 R _param p ST_EXPERIENCE + 400 R _item p PID_BOTTLE_CAPS + 50 R _item p PID_ANTIDOTE + 1 R _script dialog@r_SetUniqTO 1 60 #
+12 2060 D _var p ncr_jubiley_tails_status = 1 D _item p PID_SCORPION_TAIL > 4 D _param p SK_DOCTOR > 50 R _var p ncr_jubiley_tails_status = 2 R _item p PID_SCORPION_TAIL - 5 R _param p ST_EXPERIENCE + 400 R _item p PID_HYPODERMIC_NEEDLE + 4 R _script dialog@r_SetUniqTO 1 60 #
+20 2070 D _var p q_redd_doc_radio > 0 D _var p q_redd_doc_radio < 5 D _var p q_redd_doc_radio_jubiley = 1 @
+3 3000 None 0 #
+0 3010 #
+15 3020 D _var p ncr_jubiley_tails_counter > 0 D _var p ncr_jubiley_tails_counter < 5 #
+16 3030 D _var p ncr_jubiley_tails_counter > 4 @
+4 4000 None 0 #
+5 4010 #
+6 4020 #
+0 4030 @
+5 5000 None 0 #
+0 5010 D _item p PID_BOTTLE_CAPS > 99 R _item p PID_BOTTLE_CAPS - 100 R _item n PID_BOTTLE_CAPS + 100 R _script dialog@r_ToHeal 0  #
+0 5020 @
+6 6000 None 0 #
+0 6010 D _item p PID_BOTTLE_CAPS > 399 R _item p PID_BOTTLE_CAPS - 400 R _item n PID_BOTTLE_CAPS + 400 R _param p PE_DAMAGE_EYE = 0 R _param p PE_DAMAGE_RIGHT_ARM = 0 R _param p PE_DAMAGE_LEFT_ARM = 0 R _param p PE_DAMAGE_RIGHT_LEG = 0 R _param p PE_DAMAGE_LEFT_LEG = 0 #
+0 6020 @
+7 7000 None 0 #
+5 7010 #
+0 7020 @
+10 8000 None 0 #
+11 8010 @
+11 9000 None 0 #
+0 9010 #
+0 9020 D _param p SK_DOCTOR > 79 D _var p ncr_jubiley_tails_counter > 14 R _var p ncr_jubiley_tails_status = 1 #
+0 9030 D _param p SK_DOCTOR > 79 D _var p ncr_jubiley_tails_counter < 15 R _var p ncr_jubiley_tails_status = 1 R _var p ncr_jubiley_tails_counter + 1 #
+0 9040 D _param p SK_DOCTOR < 80 D _var p ncr_jubiley_tails_counter < 9 R _var p ncr_jubiley_tails_status = 1 R _var p ncr_jubiley_tails_counter + 1 #
+0 9050 D _param p SK_DOCTOR < 80 D _var p ncr_jubiley_tails_counter > 8 R _var p ncr_jubiley_tails_status = 1 @
+12 10000 None 0 #
+13 10010 D _param p ST_POISONING_LEVEL > 0 R _param p ST_POISONING_LEVEL = 0 #
+0 10020 D _param p ST_POISONING_LEVEL = 0 @
+13 11000 None 0 #
+0 11010 @
+14 12000 None 0 #
+13 12010 D _param p ST_POISONING_LEVEL > 0 R _param p ST_POISONING_LEVEL = 0 #
+0 12020 D _param p ST_POISONING_LEVEL = 0 @
+15 13000 None 0 @
+16 14000 None 0 #
+17 14010 D _var p ncr_jubiley_tails_counter > 2 R _var p ncr_jubiley_tails_counter - 3 R _item p PID_STIMPAK + 1 #
+17 14020 D _var p ncr_jubiley_tails_counter > 2 D _param p SK_DOCTOR > 49 D _param p SK_FIRST_AID > 49 R _var p ncr_jubiley_tails_counter - 3 R _item p PID_ANTIDOTE + 1 #
+17 14030 D _var p ncr_jubiley_tails_counter > 4 D _param p SK_DOCTOR > 99 R _var p ncr_jubiley_tails_counter - 5 R _item p PID_BUFFOUT + 1 #
+17 14040 D _var p ncr_jubiley_tails_counter > 4 D _param p SK_FIRST_AID > 99 R _var p ncr_jubiley_tails_counter - 5 R _item p PID_MENTATS + 1 #
+17 14050 D _var p ncr_jubiley_tails_counter > 9 D _param p SK_FIRST_AID > 99 D _param p SK_DOCTOR > 124 R _var p ncr_jubiley_tails_counter - 10 R _item p PID_RAD_X + 1 #
+17 14060 D _var p ncr_jubiley_tails_counter > 9 D _param p SK_FIRST_AID > 124 D _param p SK_DOCTOR > 99 R _var p ncr_jubiley_tails_counter - 10 R _item p PID_RADAWAY + 1 #
+17 14070 D _var p ncr_jubiley_tails_counter > 14 D _param p SK_DOCTOR > 149 D _param p SK_FIRST_AID > 149 R _var p ncr_jubiley_tails_counter - 15 R _item p PID_PSYCHO + 1 #
+0 14080 @
+17 15000 None 0 @
+20 16000 None 0 #
+0 16010 #
+21 16020 D _script redding_common@d_CheckRadio 0  D _var p q_redd_doc_radio_jubiley = 1 D _item p PID_RADIO } 1 R _item p PID_RADIO - 1 R _var p q_redd_doc_radio_jubiley = 0 R _var p q_redd_doc_radio + 1 R _param p ST_EXPERIENCE + 1500 @
+21 17000 None 0 #
+0 17010 D _var p q_redd_doc_radio ! 5 #
+0 17020 D _var p q_redd_doc_radio = 5 R _script redding_common@r_Broadcast 0  &
+
+[russ]
+{100}{}{Доктор}
+{200}{}{Вы видите старого, благодушного вида человека.}
+{210}{}{Это доктор Юбилей.}
+{210}{}{Это старый человек с убеленной сединой головой и немного подслеповатыми глазами.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{тупой}
+{1020}{}{ответ -}
+{2000}{}{Что я могу для вас сделать?}
+{2010}{}{Вы можете вылечить меня?}
+{2020}{}{Мне нужна работа. Есть что-нибудь?}
+{2030}{}{Нет, ничего.}
+{2040}{}{Мне нужна работа. Есть что-нибудь?}
+{2050}{}{Я принес@sex@|||ла| хвосты, Док. Гони монеты.@@Это было несложно, Док. Для человека с моим опытом убить скорпиона не сложнее, чем муху прихлопнуть.@@Слушай док, награду неплохо бы увеличить. Скорпионы лезли из всех дыр. Я чудом остал@sex@|ся||ась| в живых.@@В следующий раз я хорошо подумаю, прежде чем соглашаться. Эти чертовы скорпы меня почти достали. Где обещаная плата?}
+{2060}{}{Док, я принес@sex@|||ла| хвосты. Я только подумал@sex@|||а|, может, вместо платы ты со мной поделишься инструментами? 3-4 шприца меня вполне устроят в качестве платы.@@5 хвостов, как было оговорено. Но деньги мне не нужны. У тебя есть лишние шприцы? Я возьму их в качестве платы.}
+{2070}{}{Привет, я от Джонсона, Реддинг.}
+{3000}{}{Не думаю.}
+{3010}{}{Все равно спасибо.}
+{3020}{}{Док, я притащил@sex@|||а| тебе уже чертову уйму этих хвостов. Возможно, у тебя найдутся какие-то лишние таблетки?@@Мне нужен какой-то стимул, чтобы продолжать снабжать тебя хвостами. Поделись химией, док?@@Юбилей, мы уже давно сотрудничаем. Если хочешь сотрудничество продолжить, гони колеса!}
+{3030}{}{Док, я притащил@sex@|||а| тебе уже чертову уйму этих хвостов. Возможно, у тебя найдутся какие-то лишние таблетки?@@Мне нужен какой-то стимул, чтобы продолжать снабжать тебя хвостами. Поделись химией, док?@@Юбилей, мы уже давно сотрудничаем. Если хочешь сотрудничество продолжить, гони колеса!}
+{4000}{}{Что вас беспокоит?}
+{4010}{}{Кажется это лишь небольшая царапина...}
+{4020}{}{Кажется у меня что-то сломано.}
+{4030}{}{Нет ничего, это была шутка.}
+{5000}{}{Да это точно, ничего серьезного. С вас всего 100 монет.}
+{5010}{}{Хорошо, вот деньги. [Вы отдаете 100 монет]}
+{5020}{}{У меня нет столько денег.}
+{6000}{}{Я могу это исправить за 400 монет.}
+{6010}{}{Хорошо, вот деньги. [Вы отдаете 400 монет]}
+{6020}{}{У меня нет столько денег.}
+{7000}{}{Что я могу для вас сделать?}
+{7010}{}{Вава бобо!}
+{7020}{}{Агу-агу!}
+{8000}{}{Слушай, @pname@, ты ведь часто бываешь в Пустоши. У меня заканчиваются запасы ингридиентов для приготовления противоядий. Если ты принесешь мне несколько хвостов радскорпионов, я не останусь в долгу.@@В последнее время стало сложнее достать хвосты скорпионов. Но без яда скорпиона не сварить противоядие. Мы могли бы заключить с тобой деловое соглашение. Ты приносишь мне хвосты этих тварей, а я тебе хорошо плачу.@@На противоядия всегда хороший спрос. Я могу производить их больше, проблем со сбытом быть не должно.Но меня останавливает недостаточное количество яда скорпионов. Лучший способ добыть яд - извлечь его из хвоста скорпиона. Приноси мне хвосты, я скуплю все, что у тебя будут.}
+{8010}{}{Без проблем, Док. Сколько я получу?@@Пустошь кишит скорпами, Док. Я притащу тебе целую кучу этих хвостов. А сколько ты платишь?@@Думаю, мы договоримся, Юбилей. Остается уточнить, по какой цене ты купишь у меня хвосты?@@Да легко, доктор. Если цена будет нормальной, я тебя завалю этими долбаными хвостами.}
+{9000}{}{Ты приносишь мне 5 хвостов скорпиона, я даю тебе бутылку противоядия и 50 монет сверху. Годится?@@За каждые 5 хвостов получишь противоядие и 50 монет.@@Думаю, 50 монет за 5 штук - приличная цена. К тому же я тебе дам бутылку противоядия.}
+{9010}{}{Док, ты не шаришь. Эти скорпы - страшные коварные твари. А хвосты у них весят как чертов холодильник. Слишком мало ты готов заплатить. [Уйти]@@Доктор, я терпеть не могу пещеры со скорпионами. У меня там клауздро.. кластродро... куласгро.. в общем, фобия развивается! Сам выпрашивай у скорпов их хвосты. [Уйти]@@Прости, Док, но мне это не интересно. [Уйти]@@Возможно, как-нибудь в другой раз, доктор. Сейчас я слишком занят@sex@|||а|. [Уйти]}
+{9020}{}{Я согласен. Цена подходящая. [Уйти]@@Ок, Док. Считай, что твои проблемы с запасами яда решены. [Уйти]@@Ты сделаешь ведро противоядия, Док. Я скоро вернусь с этими хвостами. [Уйти]@@Док, а тебе не жалко бедных скорпионов? Эти милые зверушки не любят расставаться с хвостами... Ну да ладно, деньги мне нужны. [Уйти]}
+{9030}{}{Я согласен. Цена подходящая. [Уйти]@@Ок, Док. Считай, что твои проблемы с запасами яда решены. [Уйти]@@Ты сделаешь ведро противоядия, Док. Я скоро вернусь с этими хвостами. [Уйти]@@Док, а тебе не жалко бедных скорпионов? Эти милые зверушки не любят расставаться с хвостами... Ну да ладно, деньги мне нужны. [Уйти]}
+{9040}{}{Я согласен. Цена подходящая. [Уйти]@@Ок, Док. Считай, что твои проблемы с запасами яда решены. [Уйти]@@Ты сделаешь ведро противоядия, Док. Я скоро вернусь с этими хвостами. [Уйти]@@Док, а тебе не жалко бедных скорпионов? Эти милые зверушки не любят расставаться с хвостами... Ну да ладно, деньги мне нужны. [Уйти]}
+{9050}{}{Я согласен. Цена подходящая. [Уйти]@@Ок, Док. Считай, что твои проблемы с запасами яда решены. [Уйти]@@Ты сделаешь ведро противоядия, Док. Я скоро вернусь с этими хвостами. [Уйти]@@Док, а тебе не жалко бедных скорпионов? Эти милые зверушки не любят расставаться с хвостами... Ну да ладно, деньги мне нужны. [Уйти]}
+{10000}{}{Конечно, коллега, без проблем! Благодарю за сотрудничество.@@Это равноценна замена, @pname@. Забирай эти шприцы, если они тебе нужнее.}
+{10010}{}{С тобой приятно иметь дело, Юбилей. [Уйти]@@Если будут еще какие-то просьбы, обращайся. [Уйти]@@Ок, спасибо, я к тебе еще загляну на днях. [Уйти]}
+{10020}{}{С тобой приятно иметь дело, Юбилей. [Уйти]@@Если будут еще какие-то просьбы, обращайся. [Уйти]@@Ок, спасибо, я к тебе еще загляну на днях. [Уйти]}
+{11000}{}{Минуточку.. Я сразу не заметил, что они зацепили тебя@sex@|, мой друг|||. Ну ничего, сейчас мы быстренько снимем отравление.@@Осторожно, @pname@! Похоже, что один из скорпионов добрался до тебя. Выпей эту микстуру - она исцелит от отравления.}
+{11010}{}{Cпасибо, Док. Еще увидимся. [Уйти]
+}
+{12000}{}{Отлично, @pname@! Вот, как и обещал, 50 монет и противоядие.@@Очень вовремя ты доставил эти хвосты. Твоя плата - противоядие и монеты.@@Спасибо, вот и плата, как договаривались.}
+{12010}{}{С тобой приятно иметь дело, Юбилей. [Уйти]@@Если будут еще какие-то просьбы, обращайся. [Уйти]@@Ок, спасибо, я к тебе еще загляну на днях. [Уйти]}
+{12020}{}{С тобой приятно иметь дело, Юбилей. [Уйти]@@Если будут еще какие-то просьбы, обращайся. [Уйти]@@Ок, спасибо, я к тебе еще загляну на днях. [Уйти]}
+{13000}{}{У меня в данный момент нет ничего, что я мог бы тебе предложить.@@Я не могу с тобой делиться медикаментами, и даже продать ничего особенного не могу. Я должен лечить жителей НКР, без лекарств это невозможно.@@Не сейчас. Зайди позже, может что-то и появится.}
+{14000}{}{Думаю, это справедливо. Что бы ты хотел@sex@|||а| получить?@@Твоя правда. Без этих хвостов у меня были бы проблемы с производством противоядий. Какие медикаменты тебя интересуют?@@Я ценю твою помощь. Что тебе нужно?}
+{14010}{}{Я возьму стимпак.@@Не откажусь от стимулятора.@@Стимуляторы есть?}
+{14020}{}{Противоядие.@@Антидот давай.@@Противоядие мне пригодится.}
+{14030}{}{Баффаут возьму.@@Мне нужно много сил, чтобы таскать эти хвосты. Давай Баффаут.@@Баффауты остались еще?}
+{14040}{}{Ментаты нигде не могу достать. Поделишься?@@Мне нужен ментат.@@Давай упаковку ментата.}
+{14050}{}{Что-нибудь против радиации... Рад-Х например.@@Рад-икс.@@Рад-икс повышает сопротивление организма радиации, так? Тогда мне нужен Рад-Икс.}
+{14060}{}{Рад-авей мне пригодится.@@Заберу рад-авей. Часто приходится выводить радиактивную дрянь из организма.@@Рад-авей.}
+{14070}{}{Психо.@@Давай психо, а то его хрен достанешь.@@Мне нужен Психо.}
+{14080}{}{Мне ничего не нужно, док. [Уйти]@@В следующий раз, Юбилей, удачи. [Уйти]}
+{15000}{}{Без проблем, @pname@. Только рад тебе помочь.@@Забирай. Надеюсь, мы только укрепим наше сотрудничество.@@Надеюсь, медикаменты тебе пригодятся.}
+{16000}{}{От этого коновала? Ха. Ну и чего Безболезненный Джонсон хочет от старого доктора Юбилея?}
+{16010}{}{Прошу прощения, срочные дела. Вернусь через минуту.}
+{16020}{}{[Отдать рацию] Он предлагает собраться докторам на одном радиоканале, 1717, у него есть какие-то вопросы к вам.}
+{17000}{}{Хорошо, посмотрим. }
+{17010}{}{Мне пора, прощайте.}
+{17020}{}{Мне пора, прощайте.}
+
+[engl]
+{100}{}{the Doctor}
+{200}{}{you see an old, complacent kind of the person.}
+{210}{}{It is the doctor Anniversary.}
+{210}{}{It is the old person with a head hoary with age and a bit weak-sighted eyes.}
+{1000}{}{Predialogue installations}
+{1010}{}{stupid}
+{1020}{}{the answer-}
+{2000}{}{That I can make for you?}
+{2010}{}{you can cure me?}
+{2020}{}{work is necessary To me. There is something?}
+{2030}{}{No, anything.}
+{2040}{}{work is necessary To me. There is something?}
+{2050}{}{I принес@sex ||| la | tails, Dock. Drive coins. @@ it was simple, Dock. For the person with my experience to kill a scorpion it is not more difficult, than a fly to slam. @@ listen to dock, an award not bad to increase. Scorpions climbed from all holes. I by miracle остал@sex | sja || as | in the live. @@ next time I will well think before to agree. These devil's skorpy have almost got me. Where obeshchanaja a payment?}
+{2060}{}{Dock, I принес@sex ||| la | tails. I only подумал@sex ||| and |, can, instead of a payment you will share tools with me? 3-4 syringes quite will suit me as a payment. @@ 5 tails as it has been stipulated. But money is not necessary to me. You have superfluous syringes? I will take them as a payment.}
+{2070}{}{Greetings, I from Johnson, Redding.}
+{3000}{}{I do not think.}
+{3010}{}{All the same thanks.}
+{3020}{}{Dock, I притащил@sex ||| and | to you already chertovu a great lot of these tails. Probably, you will have any superfluous tablets? @@ any stimulus is necessary to me to continue to supply you with tails. Share chemistry, dock? @@ anniversary, we co-operate for a long time already. If you want to continue cooperation, drive wheels!}
+{3030}{}{Dock, I притащил@sex ||| and | to you already chertovu a great lot of these tails. Probably, you will have any superfluous tablets? @@ any stimulus is necessary to me to continue to supply you with tails. Share chemistry, dock? @@ anniversary, we co-operate for a long time already. If you want to continue cooperation, drive wheels!}
+{4000}{}{That disturbs you?}
+{4010}{}{It seems it is only small scratch...}
+{4020}{}{something Seems at me is broken.}
+{4030}{}{There is nothing, it was the joke.}
+{5000}{}{Yes it is exact, anything serious. From you only 100 coins.}
+{5010}{}{it is good, here money. [You give 100 coins]}
+{5020}{}{I do not have so much money.}
+{6000}{}{I can correct it for 400 coins.}
+{6010}{}{it is good, here money. [You give 400 coins]}
+{6020}{}{I do not have so much money.}
+{7000}{}{That I can make for you?}
+{7010}{}{Vava bobo!}
+{7020}{}{Agu-agu!}
+{8000}{}{Listen, @pname, you after all often happen in the Heathland. At me stocks ingridientov for preparation of antidotes come to an end. If you bring to me some tails radskorpionov, I will not be in debt. @@ recently it became more difficult to get tails of scorpions. But without poison of a scorpion not to weld antidote. We could enter into with you the business agreement. You bring to me tails of these creatures, and I to you well cry. @@ on antidotes always good demand. I can make them more, problems with sale should not be. But I am am stopped by insufficient quantity of poison of scorpions. The best way to extract poison - to take it from a tail of a scorpion. Bring to me tails, I buy up everything that at you will be.}
+{8010}{}{Without problems, Dock. How many I will receive? @@ the heathland teems skorpami, Dock. I will drag to you the whole heap of these tails. And how many you pay? @@ I think, we will agree, Anniversary. It is necessary to specify, at what price you will buy from me tails? @@ yes it is easy, the doctor. If the price is normal, I will fill up you with these fucking tails.}
+{9000}{}{You bring to me 5 tails of a scorpion, I give you a bottle of antidote and 50 coins from above. Suits? @@ for each 5 tails you will receive antidote and 50 coins. @@ I think, 50 coins for 5 pieces - the decent price. Besides I will give you an antidote bottle.}
+{9010}{}{Dock, you do not rummage. These skorpy - terrible artful creatures. And tails at them weigh as the devil's refrigerator. Too little you are ready to pay. [To leave] @@ the Doctor, I hate caves with scorpions. At me there klauzdro. klastrodro... kulasgro. In general, the phobia develops! Itself elicit at skorpov their tails. [To leave] @@ Forgive, Dock, but it is not interesting to me. [To leave] @@ it is possible, somehow another time, the doctor. Now I too занят@sex ||| and |. [To Leave]}
+{9020}{}{I agree. The price approaching. [To leave] @@ Ok, the Dock. Consider that your problems with poison stocks are solved. [To leave] @@ You will make an antidote bucket, Dock. I will soon return with these tails. [To leave] @@ Dock, and it is not a pity to you of poor scorpions? These lovely animals do not like to leave tails... Well it is fine, money is necessary to me. [To leave]}
+{9030}{}{I agree. The price approaching. [To leave] @@ Ok, the Dock. Consider that your problems with poison stocks are solved. [To leave] @@ You will make an antidote bucket, Dock. I will soon return with these tails. [To leave] @@ Dock, and it is not a pity to you of poor scorpions? These lovely animals do not like to leave tails... Well it is fine, money is necessary to me. [To leave]}
+{9040}{}{I agree. The price approaching. [To leave] @@ Ok, the Dock. Consider that your problems with poison stocks are solved. [To leave] @@ You will make an antidote bucket, Dock. I will soon return with these tails. [To leave] @@ Dock, and it is not a pity to you of poor scorpions? These lovely animals do not like to leave tails... Well it is fine, money is necessary to me. [To leave]}
+{9050}{}{I agree. The price approaching. [To leave] @@ Ok, the Dock. Consider that your problems with poison stocks are solved. [To leave] @@ You will make an antidote bucket, Dock. I will soon return with these tails. [To leave] @@ Dock, and it is not a pity to you of poor scorpions? These lovely animals do not like to leave tails... Well it is fine, money is necessary to me. [To leave]}
+{10000}{}{Certainly, the colleague, without problems! I thank for cooperation. @@ it replacement, @pname is equivalent. Take away these syringes if they to you it is more necessary.}
+{10010}{}{it is pleasant to deal With you, Anniversary. [To leave] @@ If there will be still any requests, address. [To leave] @@ Ok, thanks, I to you still will glance one of these days. [To leave]}
+{10020}{}{it is pleasant to deal With you, Anniversary. [To leave] @@ If there will be still any requests, address. [To leave] @@ Ok, thanks, I to you still will glance one of these days. [To leave]}
+{11000}{}{Minute. I have not noticed at once that they have hooked тебя@sex |, my friend |||. Well anything, now we fast will remove a poisoning. @@ it is careful, @pname! It seems that one of scorpions has reached you. Drink this mixture - it will cure of a poisoning.}
+{11010}{}{Cпасибо, Dock. Still we will meet. [To leave]
+}
+{12000}{}{it is excellent, @pname! Here, as well as promised, 50 coins and antidote. @@ very much in time you delivered these tails. Your payment - antidote and coins. @@ thanks, here and a payment as agreed.}
+{12010}{}{it is pleasant to deal With you, Anniversary. [To leave] @@ If there will be still any requests, address. [To leave] @@ Ok, thanks, I to you still will glance one of these days. [To leave]}
+{12020}{}{it is pleasant to deal With you, Anniversary. [To leave] @@ If there will be still any requests, address. [To leave] @@ Ok, thanks, I to you still will glance one of these days. [To leave]}
+{13000}{}{I do not have at present anything that I could offer you. @@ I cannot share with you medicines, and even sell anything especial I can not. I should treat inhabitants NKR, without medicines it is impossible. @@ Not now. Come later, something can and will appear.}
+{14000}{}{I Think, it is fair. What you хотел@sex ||| and | to receive? @@ your truth. Without these tails I would have problems with manufacture of antidotes. What medicines you interest? @@ I appreciate your help. What it is necessary for you?}
+{14010}{}{I will take stimpak. @@ I will not refuse a stimulator. @@ stimulators are?}
+{14020}{}{Antidote. @@ an antipillbox give. @@ antidote is useful to me.}
+{14030}{}{Baffaut I will take. @@ I need many forces to drag these tails. Give Baffaut. @@ Baffauty remained still?}
+{14040}{}{Mentaty I can not get anywhere. You will share? @@ to me it is necessary mentat. @@ Give packing mentata.}
+{14050}{}{Something against radiation... It is glad e for example. @@ it is glad-iks. @@ it is glad-iks raises resistance of an organism of radiation, so? Then to me it is necessary It is glad-iks.}
+{14060}{}{It is glad-avej to me it is useful. @@ I Will take away it is glad-avej. Often it is necessary to deduce radiaktivnuju rubbish from an organism. @@ it is glad-avej.}
+{14070}{}{Psiho. @@ Give psiho, and that its horse-radish you will get. @@ Psiho is necessary to me.}
+{14080}{}{it is necessary nothing For me, dock. [To leave] @@ Next time, Anniversary, good luck. [To leave]}
+{15000}{}{Without problems, @pname. Only it is glad to you to help. @@ take away. I hope, we only will strengthen our cooperation. @@ I Hope, medicines will be useful to you.}
+{16000}{}{From it konovala? Ha. Well and that Painless Johnson wants from the old doctor of Anniversary?}
+{16010}{}{I Am sorry, urgent affairs. I will return in a minute.}
+{16020}{}{[to Give a portable radio set] It suggests to gather to doctors on one radio channel, 1717, it has any questions to you.}
+{17000}{}{it is good, we will look.}
+{17010}{}{it is time To me, farewell.}
+{17020}{}{it is time To me, farewell.}

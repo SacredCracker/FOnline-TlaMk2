@@ -1,0 +1,308 @@
+[comment]
+Ваши комментарии / Your comments.
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 #
+3 1020 D _var n name_mem_npc_player = 1 @
+2 2000 None 0 #
+30 2010 @
+3 3000 None 0 #
+18 3010 D _var p q_den_jane_radio = 1 #
+5 3020 #
+6 3030 #
+16 3040 D _var p klam_vic_fixit_trash = 0 D _var p q_den_smitty_fixit = 2 #
+32 3050 D _var p q_den_smitty_ammo = 1 D _param p SK_SCIENCE > 39 R _var p q_den_smitty_ammo = 3 #
+33 3060 D _var p q_den_smitty_ammo = 1 D _param p SK_SCIENCE < 40 #
+0 3070 #
+34 3080 D _var p q_vc_valery_mail = 1 @
+4 4000 None 0 #
+5 4010 #
+6 4020 #
+0 4030 @
+5 5000 None 0 #
+8 5010 #
+9 5020 #
+10 5030 #
+4 5040 @
+6 6000 None 0 #
+65506 6010 #
+0 6020 @
+7 7000 None 0 #
+8 7010 #
+9 7020 #
+10 7030 #
+0 7040 @
+8 8000 None 0 #
+7 8010 #
+0 8020 @
+9 9000 None 0 #
+7 9010 #
+11 9020 #
+12 9030 #
+0 9040 @
+10 10000 None 0 #
+13 10010 #
+14 10020 #
+15 10030 #
+7 10040 #
+0 10050 @
+11 11000 None 0 #
+7 11010 #
+0 11020 @
+12 12000 None 0 #
+7 12010 #
+0 12020 @
+13 13000 None 0 #
+14 13010 #
+15 13020 #
+0 13030 @
+14 14000 None 0 #
+15 14010 #
+0 14020 @
+15 15000 None 0 #
+14 15010 #
+0 15020 @
+16 16000 None 0 #
+17 16010 D _item p PID_BOTTLE_CAPS > 1999 R _item n PID_BOTTLE_CAPS + 2000 R _item p PID_BOTTLE_CAPS - 2000 R _item p PID_PUMP_PARTS + 1 #
+0 16020 @
+17 17000 None 0 #
+0 17010 @
+18 18000 None 0 #
+19 18010 D _item p PID_VIC_RADIO > 9 R _var p q_den_jane_radio = 3 R _item p PID_VIC_RADIO - 10 R _item p PID_RADIO + 2 R _item n PID_RADIO - 2 #
+0 18020 @
+19 19000 None 0 @
+30 20000 None 0 #
+31 20010 @
+31 21000 None 0 #
+6 21010 @
+32 22000 None 0 @
+33 23000 None 0 @
+34 24000 None 0 #
+35 24010 D _script vcity_common@d_HasMail 0  R _item p PID_POSTMAN_LETTER = 0 R _var p q_vc_valery_mail = 2 #
+36 24020 D _script vcity_common@d_NoMail 0  D _var p vc_mail_remembered = 1 R _var p q_vc_valery_mail = 2 #
+37 24030 D _script vcity_common@d_NoMail 0  R _param p REPUTATION_KLAMATH - 1 #
+0 24040 @
+35 25000 None 0 #
+38 25010 @
+36 26000 None 0 #
+38 26010 @
+37 27000 None 0 @
+38 28000 None 0 #
+39 28010 #
+0 28020 @
+39 29000 None 0 #
+40 29010 @
+40 30000 None 0 #
+41 30010 @
+41 31000 None 0 #
+0 31010 R _param p REPUTATION_KLAMATH + 2 R _param p ST_EXPERIENCE + 5000 R _param p ST_KARMA + 20 R _param p SK_SMALL_GUNS + 10 R _script dialog@r_InfoMessage 1 1 &
+
+[russ]
+{100}{}{Вик}
+{200}{}{Вы видите Вика, торговца.}
+{200}{}{Вы видите мужчину среднего возраста, похож на одного из странствующих торговцев.}
+{210}{}{Это Вик, торговец старинными вещами.}
+{210}{}{Вик, торговец старинными вещами, он выглядит довольно пожилым и повидавшим виды человеком.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{не знаком}
+{1020}{}{знаком}
+{2000}{}{Приветствую, странник! Я - Вик, занимаюсь продажей редких вещей. Ищешь что-нибудь?}
+{2010}{}{Какого хрена ты тут делаешь, Вик? Разве ты не должен быть с Избранным? И кстати, где он есть?}
+{3000}{}{Рад тебя видеть снова. Какое дело тебя привело ко мне?}
+{3010}{}{Вик. Я вот принес@sex@|||ла| парочку приборов, не посмотришь что можно сделать?}
+{3020}{}{Говорят, ты много путешествовал. Что можешь интересного рассказать?}
+{3030}{}{Давай посмотрим, что у тебя есть на продажу.}
+{3040}{}{Вик, у тебя всякой рухляди много должно быть, может завалялись запчасти для робота Мистер Хенди?}
+{3050}{}{Вик ты вроде умный, не знаешь как изготавливаются патроны?}
+{3060}{}{Вик ты вроде умный, не знаешь как изготавливаются патроны?}
+{3070}{}{Я наверное позже зайду. До встречи, Вик!}
+{3080}{}{Вик, знаешь,  Вэлери просила тебе письмо передать…}
+{4000}{}{Что-то еще?}
+{4010}{}{Говорят, ты много путешествовал. Что можешь интересного рассказать?}
+{4020}{}{Давай посмотрим, что у тебя есть на продажу.}
+{4030}{}{Нет спасибо, мне пора бежать. Увидимся, Вик!}
+{5000}{}{Дай подумать... со мной столько всего случалось, всего сразу и не упомнишь. Интересует что-то особенное?}
+{5010}{}{Расскажи каких людей ты встречал?}
+{5020}{}{Какие опасности подстерегали тебя в путешествиях?}
+{5030}{}{Можешь рассказать о городах, где ты бывал?}
+{5040}{}{Нет спасибо. Думаю мне нужно что-то другое от тебя.}
+{6000}{}{Хорошо, сейчас посмотрим, что я могу тебе предложить.}
+{6010}{}{[Обмен]}
+{6020}{}{Хватит покупок, Вик. Мне пора.}
+{7000}{}{Что тебе еще рассказать?}
+{7010}{}{Расскажи каких еще людей ты встречал?}
+{7020}{}{Какие опасности подстерегали тебя в путешествиях?}
+{7030}{}{Можешь рассказать о городах, где ты бывал?}
+{7040}{}{Спасибо за информацию, Вик. Мне пора.}
+{8000}{}{Я встречал множество нормальных людей, но рекомендую всегда быть начеку. Иногда попадаются довольно отмороженные парни.}
+{8010}{}{Расскажи мне еще что-нибудь.}
+{8020}{}{Это все, что мне хотелось узнать. Прощай.}
+{9000}{}{Сами по себе путешествия утомляют, если у тебя нет транспорта. Кроме этого, грабители и дикие звери всегда представляют опасность, если увидят какой ты лакомый кусочек.}
+{9010}{}{Расскажи мне еще что-нибудь.}
+{9020}{}{Грабители?}
+{9030}{}{Звери?}
+{9040}{}{Это все, что мне хотелось узнать. Прощай.}
+{10000}{}{Я был во многих местах в деревнях, мелких поселках и довольно крупных городах. Как торговцу, мне больше всего понравились Нью Рено и Сан-Фран.}
+{10010}{}{Ты бывал в деревнях? А какие-нибудь есть рядом?}
+{10020}{}{Расскажи про Нью Рено.}
+{10030}{}{А что с этим Сан-Франом?}
+{10040}{}{Расскажи мне еще что-нибудь.}
+{10050}{}{Это все, что мне хотелось узнать. Прощай.}
+{11000}{}{Да грабители, отщепенцы, убийцы и прочий сброд. Рядом с Клэматом еще более-менее спокойно, но если продвинуться на юг к Нью-Рено и дальше, можно спокойно получить пулю в лоб за просто так.}
+{11010}{}{Возьму это на заметку. Хочу, чтобы ты еще рассказал что-нибудь.}
+{11020}{}{Как-то мне стало не по себе от твоих слов. Пожалуй пойду.}
+{12000}{}{О да! Снаружи очень опасно, везде эти чертовы мутанты, черт их побери! Без хорошей защиты от радиации и от яда далеко суваться не советую.}
+{12010}{}{Возьму это на заметку. Хочу, чтобы ты еще рассказал что-нибудь.}
+{12020}{}{Как-то мне стало не по себе от твоих слов. Пожалуй пойду.}
+{13000}{}{В нескольких днях пути отсюда в ущелье находится деревня Арройо, из которой Избранный был родом. Где-то далеко на юго-западе от Дена должна быть деревня Сулика, моего старого знакомого другана.}
+{13010}{}{Это интересно. Расскажи про Нью-Рено.}
+{13020}{}{Расскажи про Сан-Франциско.}
+{13030}{}{Это все что мне нужно было узнать. Прощай.}
+{14000}{}{Нью-Рено - это столица криминального мира. Много оружия, секса и наркотиков. Это настоящий город греха.}
+{14010}{}{Расскажи про Сан-Франциско.}
+{14020}{}{Спасибо за информацию. Пожалуй мне пора уходить.}
+{15000}{}{Сан-Франциско - очень населенный город, поэтому там очень распространена торговля. Добраться до него очень не просто, надо идти очень далеко на юг вдоль береговой линии. Но я предпочитаю ходить туда обходными путями.}
+{15010}{}{Это интересно. Расскажи про Нью-Рено.}
+{15020}{}{Спасибо за информацию. Пожалуй мне пора уходить.}
+{16000}{}{Да у меня как раз есть суперзапчасть для такого типа робота. Стоит всего 2000. Берешь?}
+{16010}{}{Дороговато, но думаю это того стоит. [Вы отсчитываете 2000 монет]}
+{16020}{}{У меня нет столько денег.}
+{17000}{}{Отлично, осталась как раз последняя запчасть. [Вик отдает вам какой-то сверток] А теперь спасибо за покупку, магазин закрывается.}
+{17010}{}{Эй стой! [Вы открываете сверток, а там куча мусора] Какого черта??? Буду надеяться, что торговец не обманул...}
+{18000}{}{Давай посмотрим. Парочку? [У Вика вытягиваются глаза по мере появления на столе кучи из раздолбанных раций] Эмм... Слушай, я починю две. Остальные я возьму в качестве компенсации.}
+{18010}{}{Ух... По рукам! Чини, кудесник...}
+{18020}{}{Я починю их позже.}
+{19000}{}{[Вик долго копается, кажется прошло полдня] Вот твои рации. Готово!}
+{20000}{}{Да неплохо мы вместе с ним раньше путешествовали, с тех пор как он меня вытащил из передряги и до тех пор пока он не пропал... Эй, а у меня такое чувство, будто ты меня уже знаешь откуда-то.}
+{20010}{}{Упс... знаешь, я кажется просто сказал@sex@|||а| свои мысли вслух. Так ты вернулся к оседлой жизни?}
+{21000}{}{Вообще-то да, я решил почему бы снова не вернуться к торговле. Иногда, так сказать, делаю вылазки из дома, толкаю дикарям блестящие побрекушки.. хе-хе-хе! Но и для серьезного клиента у меня всегда найдется товар.}
+{21010}{}{Что у тебя есть?}
+{22000}{}{Конечно знаю! [Он читал вам лекцию минут 30 и вы, кажется, все это запомнили]}
+{23000}{}{Конечно знаю! [Вик рассказал вам целую лекцию о создании патронов, но у вас слишком маленький багаж научных знаний, чтобы все это понять и осмыслить]}
+{24000}{}{Господи, да неужели. Вот уж не ожидал. Давай скорее.}
+{24010}{}{[Передаете письмо Вику]}
+{24020}{}{Понимаешь, она просила его передать на словах.. [Буква-в-букву пересказываете содержимое письма ]}
+{24030}{}{Прости, Вик, я потерял его}
+{24040}{}{Минутку, я сразу вернусь. [Выход]}
+{25000}{}{[Вик нетерпеливо хватает письмо  и начинает читать]}
+{25010}{}{...}
+{26000}{}{[Вик слушает, замерев и стараясь не пропустить ни слова]}
+{26010}{}{...}
+{27000}{}{И ты пришел, чтобы мне это заявить? А ну иди, отсюда, видеть тебя не хочу.}
+{28000}{}{[Всхлипывает и вытирает глаза] Ну надо же. Представь, она ведь мне слова доброго не сказала со дня смерти матери, а тут такое…И увидеть меня хочет, я уж и не надеялся… [Его лицо светлеет] Слушай, передай ей,  передай, что я … нет, не надо. Просто скажи, что я непременно, слышишь, непременно приеду к ней! [Вздыхает] И что я люблю её…}
+{28010}{}{Конечно, Вик, конечно. Не  сомневайся, обязательно передам.}
+{28020}{}{Без проблем.}
+{29000}{}{И знаешь еще что? Ещё никто на свете не заставлял меня так радоваться. А у тебя получилось. Я хочу отблагодарить тебя. Есть одна вещь, которой меня научил житель убежища, ты знаешь, о ком  я…}
+{29010}{}{[Внимательно слушаете]}
+{30000}{}{Ты  ведь часто попадаешь в острые ситуации, тебе это непременно пригодится. Вот смотри, все люди, которых я встречал, обращаются с оружием, будь то пистолет или винтовка, сходным образом, но тут есть одна хитрость…}
+{30010}{}{Ну надо же, вроде просто, но сам бы сроду не додумался. Спасибо.}
+{31000}{}{Тебе спасибо. Всегда буду рад тебя видеть.}
+{31010}{}{До встречи, Вик}
+{100000001}{}{После разговора с Виком вы улучшили свои знания об обращении с огнестрельным оружием.}
+
+[engl]
+{100}{}{Vic}
+{200}{}{You see Vic, the trader.}
+{200}{}{You see a middle-aged man, probably travelling trader.}
+{210}{}{This is Vic, trader specialising in selling rare items.}
+{210}{}{Vic, the trader, he looks like an experienced man.}
+{1000}{}{Predialogue installations}
+{1010}{}{it is not familiar}
+{1020}{}{a sign}
+{2000}{}{I Welcome, the wanderer! I am Vick, I am engaged in sale of rare things. You search for something?}
+{2010}{}{What horse-radish you here do, Vick? Unless you should not be with the Selected works? And by the way, where it is?}
+{3000}{}{to see glad you again. What business has resulted you in me?}
+{3010}{}{Vick. I here have brought a couple of devices, will not look that it is possible to make?}
+{3020}{}{Speak, you travelled much. What you can interesting tell?}
+{3030}{}{Give we will look that at you is on sale.}
+{3040}{}{Vick, at you any stuff should be much, can spare parts for the robot Mr. Hendi were overlooked?}
+{3050}{}{Vick you like clever, do not know as cartridges are made?}
+{3060}{}{Vick you like clever, do not know as cartridges are made?}
+{3070}{}{I probably will come later. To a meeting, Vick!}
+{3080}{}{Vick, you know, Veleri asked the letter to transfer to you …}
+{4000}{}{Something else?}
+{4010}{}{Speak, you travelled much. What you can interesting tell?}
+{4020}{}{Give we will look that at you is on sale.}
+{4030}{}{There are no thanks, it is time to me to run. We will meet, Vick!}
+{5000}{}{let think... With me so much all happened, all at once and will not remember. Something interests especial?}
+{5010}{}{Tell what people you met?}
+{5020}{}{What dangers trapped you on travel?}
+{5030}{}{you Can tell about cities where you happened?}
+{5040}{}{There are no thanks. I think to me something is necessary another from you.}
+{6000}{}{it is good, now we will look that I can offer you.}
+{6010}{}{[the Exchange]}
+{6020}{}{purchases, Vick Will suffice. It is time to me.}
+{7000}{}{That to you still to tell?}
+{7010}{}{Tell what else people you met?}
+{7020}{}{What dangers trapped you on travel?}
+{7030}{}{you Can tell about cities where you happened?}
+{7040}{}{Thanks for the information, Vick. It is time to me.}
+{8000}{}{I met set of normal people, but I recommend to be always on the alert. Freezed enough guys Sometimes come across.}
+{8010}{}{Tell to me still something.}
+{8020}{}{It is everything that I would like to learn. Farewell.}
+{9000}{}{In itself travel tyre, if you do not have transport. Besides, robbers and wild animals always represent danger if will see what you a titbit.}
+{9010}{}{Tell to me still something.}
+{9020}{}{Robbers?}
+{9030}{}{Animals?}
+{9040}{}{It is everything that I would like to learn. Farewell.}
+{10000}{}{I was in many places in villages, small settlements and there is enough big cities. As the dealer me most of all liked Nju of Renault and the Dignity-fran.}
+{10010}{}{You happened in villages? And any is nearby?}
+{10020}{}{Tell about Nju of Renault.}
+{10030}{}{And what with it the Dignity-franom?}
+{10040}{}{Tell to me still something.}
+{10050}{}{It is everything that I would like to learn. Farewell.}
+{11000}{}{Yes robbers, turncoats, murderers and other crowd. Near to Klematom it is still more or less quiet but if to promote on the south to Nju-Reno and further, it is possible to receive easy a bullet in a forehead for simple so.}
+{11010}{}{I will note it. I want, that you have still told something.}
+{11020}{}{Somehow to me became not on itself from your words. Perhaps I will go.}
+{12000}{}{About yes! Outside very dangerously, everywhere these devil's mutants, their lines poberi! Without good protection against radiation and against poison far suvatsja I do not advise.}
+{12010}{}{I will note it. I want, that you have still told something.}
+{12020}{}{Somehow to me became not on itself from your words. Perhaps I will go.}
+{13000}{}{In several days of travelling from here in gorge there is a village Arrojo from which the Elite it came. Somewhere away in the southwest from Dena there should be a village Sulika, my old familiar friend.}
+{13010}{}{It is interesting. Tell about Nju-Reno.}
+{13020}{}{Tell about San Francisco.}
+{13030}{}{It is all that I needed to learn. Farewell.}
+{14000}{}{Nju-Reno is a capital of the criminal world. It is a lot of weapon, sex and drugs. It is the present city of a sin.}
+{14010}{}{Tell about San Francisco.}
+{14020}{}{Thanks for the information. Perhaps it is time to me to leave.}
+{15000}{}{San Francisco - very occupied city, therefore trade there is very extended. To reach it very much it is not simple, it is necessary to go very far on the south along a coastal line. But I prefer to go there roundabout ways.}
+{15010}{}{It is interesting. Tell about Nju-Reno.}
+{15020}{}{Thanks for the information. Perhaps it is time to me to leave.}
+{16000}{}{Yes at me just is superzapchast for of this kind the robot. Costs only 2000. You take?}
+{16010}{}{Dorogovato, but I think it of that costs. [You count 2000 coins]}
+{16020}{}{I do not have so much money.}
+{17000}{}{it is excellent, there was just last zapchast. [Vick gives you any parcel]. And now thanks for purchase, shop are closed.}
+{17010}{}{Hey stop! [you open a parcel, and there a heap of garbage] What the hell??? I will hope that the dealer has not deceived...}
+{18000}{}{Vremja:60000 Is not present ответа:Завершить dialogue / Close dialog}
+{18010}{}{A bargain! Repair, the magician...}
+{18020}{}{I will repair them later.}
+{19000}{}{[Vick long digs, it seems has passed half-day]. Here your portable radio sets. It is ready!}
+{20000}{}{Yes it is quite good we together with it travelled earlier, since it has pulled out me from a scrape and until then while it was not gone... Hey, and at me such feeling as if you already know me whence.}
+{20010}{}{Ups... You know, I seem simply have told the thoughts aloud. So you have returned to settled life?}
+{21000}{}{Generally yes, I have decided why again not to return to trade. Sometimes, so to say, I do sorties of the house, I push to savages shining pobrekushki. he-he-he! But also for the serious client I always will have goods.}
+{21010}{}{That at you is?}
+{22000}{}{Certainly I know! [He gave to you lecture of minutes 30 and you all seems it have remembered.]}
+{23000}{}{Certainly I know! [Vick has told to you the whole lecture about creation of cartridges, but at you too small luggage of scientific knowledge that all it to understand and comprehend.]}
+{24000}{}{My God, yet really. Here did not expect. Give more likely.}
+{24010}{}{[Transfer the letter to Vick]}
+{24020}{}{you Understand, she asked it to transfer in words. [A letter - in - a letter retell letter contents]}
+{24030}{}{Forgive, Vick, I has lost it}
+{24040}{}{Minute, I will return at once. [An exit]}
+{25000}{}{[Vick impatiently suffices the letter and starts to read]}
+{25010}{}{}
+{26000}{}{[Vick listens, having stood and trying not to pass words]}
+{26010}{}{}
+{27000}{}{And you have come, that to me it to declare? And well go from here, to see you I do not want. [An exit]}
+{28000}{}{[Sobs and wipes eyes] Well it is necessary. Present, she after all to me of a word kind has not told from the date of death of mother, and here such … And to see me wants, I and did not hope … [His face brightens] Listen, transfer to it, tell that I … was not present, it is not necessary. Simply tell that I am indispensable, hear, by all means I will arrive to it! [Sighs] And that I love it …}
+{28010}{}{Certainly, Vick, certainly. Do not doubt, I will necessarily transfer.}
+{28020}{}{Without problems. [An exit]}
+{29000}{}{Also you know still that? Still anybody on light did not force me so to rejoice. And at you it has turned out. I want to thank you. There is one thing to which I was taught by the inhabitant of a refuge, you know, about whom I …}
+{29010}{}{[Attentively listen]}
+{30000}{}{You after all often get to critical situations, it by all means is useful to you. Here look, all people whom I met, handle the weapon, whether it be the pistol or a rifle, similar image, but here is one cunning …}
+{30010}{}{Well it is necessary, like simple, but itself never would guess. Thanks.}
+{31000}{}{to You thanks. I will be always glad you to see.}
+{31010}{}{To a meeting, Vick}

@@ -1,0 +1,496 @@
+// Author: cvet
+#include "_macros.fos"
+#include "entire.fos"
+#include "_msgstr.fos"
+#include "_defines.fos"
+
+import void DropDrugEffects(Critter& cr) from "drugs";
+import void DropPoison(Critter& cr) from "poison";
+import void DropRadiation(Critter& cr) from "radiation";
+import void PlayVideo(Critter& cr, string& videoName, bool canStop) from "media";
+import void newbieReplicateCritter(Critter& cr) from "q_newbie_scripts";
+import void hellReplicateCritter(Critter& cr) from "replication_hell";
+import void FindEncounter(Critter@[]& group, Item@ car, uint x, uint y, uint& encounterDescriptor, bool& waitForAnswer, bool empty) from "worldmap";
+import void InviteToEncounter(Critter@[]& group, Item@ car, uint encounterDescriptor, int combatMode, uint& mapId, uint16& hexX, uint16& hexY, uint8& dir) from "worldmap";
+import bool NeedReplicateCritterToBattle(Critter& cr) from "purgatory";
+
+const uint16 HellMapPid=MAP_replication_hell;
+const uint16[] ReplicatorsMapPids={MAP_replication1,MAP_replication2,MAP_replication3,MAP_replication4};
+uint ReplicatorPos=0;
+
+Map@ GetStartReplicatorMap()
+{
+	return GetMapByPid(ReplicatorsMapPids[0],0);
+}
+
+Map@ GetNearReplicatorMap(Critter& cr)
+{
+	Map@ nearMap=null;
+	int nearDist=0;
+	
+	if(cr.Stat[ST_REPLICATION_MONEY]>0)
+	{
+	for(uint i=0, iMax=ReplicatorsMapPids.length(); i<iMax; i++)
+	{
+		Map@ map=GetMapByPid(ReplicatorsMapPids[i],0);
+		if(valid(map))
+		{
+			Location@ loc=map.GetLocation();
+			int dx=int(cr.WorldX)-int(loc.WorldX);
+			int dy=int(cr.WorldY)-int(loc.WorldY);
+			int dist=int(sqrt(dx*dx+dy*dy));
+
+			if(not valid(nearMap) || dist<nearDist)
+			{
+				@nearMap=map;
+				nearDist=dist;
+			}
+		}
+	}
+	}
+	else
+	{
+	Map@ map=::GetMapByPid(HellMapPid,0);
+	if(valid(map))
+		{
+		Location@ loc=map.GetLocation();
+			if(not valid(nearMap))
+			{
+				@nearMap=map;
+			}		
+		}	
+	}
+	return nearMap;
+}
+
+void SetStartLocation(Critter& cr) // Export
+{
+	Map@ replicator=GetStartReplicatorMap();
+	if(not valid(replicator)) return;
+	uint zoneX=cr.WorldX/__GlobalMapZoneLength;
+	uint zoneY=cr.WorldY/__GlobalMapZoneLength;
+	cr.SetFog(zoneX  ,zoneY  ,FOG_FULL);
+	cr.SetFog(zoneX-1,zoneY-1,FOG_FULL);
+	cr.SetFog(zoneX  ,zoneY-1,FOG_FULL);
+	cr.SetFog(zoneX+1,zoneY-1,FOG_FULL);
+	cr.SetFog(zoneX-1,zoneY  ,FOG_FULL);
+	cr.SetFog(zoneX+1,zoneY  ,FOG_FULL);
+	cr.SetFog(zoneX-1,zoneY+1,FOG_FULL);
+	cr.SetFog(zoneX  ,zoneY+1,FOG_FULL);
+	cr.SetFog(zoneX+1,zoneY+1,FOG_FULL);
+
+	cr.TransitToMap(replicator.Id,ENTIRE_REPLICATION);
+
+	cr.SetKnownLoc(true,replicator.GetLocation().Id);
+	uint16 replPid=replicator.GetLocation().GetProtoId();
+	if(replPid==LOCATION_Replication1)
+	{
+		cr.SetKnownLoc(false,LOCATION_Den);
+		cr.SetKnownLoc(false,LOCATION_Klamath);
+	}
+	else if(replPid==LOCATION_Replication2)
+	{
+		cr.SetKnownLoc(false,LOCATION_Modoc);
+	}
+	else if(replPid==LOCATION_Replication3)
+	{
+		cr.SetKnownLoc(false,LOCATION_Redding);
+	}
+	else if(replPid==LOCATION_Replication4)
+	{
+		cr.SetKnownLoc(false,LOCATION_BrokenHills);
+		cr.SetKnownLoc(false,LOCATION_NewReno);
+	}
+
+	zoneX=cr.WorldX/__GlobalMapZoneLength;
+	zoneY=cr.WorldY/__GlobalMapZoneLength;
+	cr.SetFog(zoneX  ,zoneY  ,FOG_NONE);
+	cr.SetFog(zoneX-1,zoneY-1,FOG_HALF);
+	cr.SetFog(zoneX  ,zoneY-1,FOG_HALF);
+	cr.SetFog(zoneX+1,zoneY-1,FOG_HALF);
+	cr.SetFog(zoneX-1,zoneY  ,FOG_HALF);
+	cr.SetFog(zoneX+1,zoneY  ,FOG_HALF);
+	cr.SetFog(zoneX-1,zoneY+1,FOG_HALF);
+	cr.SetFog(zoneX  ,zoneY+1,FOG_HALF);
+	cr.SetFog(zoneX+1,zoneY+1,FOG_HALF);
+}
+
+void SetReplicationTime(Critter& cr) // Export
+{
+	int replTime=cr.Stat[ST_REPLICATION_TIME];
+	if(replTime<0) return; // No respawn
+	if(replTime==0) // Take default values
+	{
+		if(cr.IsPlayer())
+		{
+			replTime=cr.Stat[ST_LEVEL]*5-cr.Stat[ST_REPLICATION_MONEY]/4000;
+			if(replTime<25) replTime=25;
+			if(replTime>210) replTime=210;
+			
+			// Репликация на базе "Феникс"
+			Location@ loc=GetLocationByPid(250,0);
+			if(valid(loc))
+			{
+				int phoenixOwner=loc.GetMapByIndex(0).GetData(0);
+				if(phoenixOwner==cr.Param[ST_FRACTION] && phoenixOwner>0)
+				{
+					replTime=35;
+				}
+			}			
+		}
+		else replTime=Random(90,120); // 90-120 minutes
+	}
+
+	if(cr.IsPlayer()) replTime*=REAL_SECOND(1);
+	else replTime*=REAL_MINUTE(1);
+	cr.TimeoutBase[TO_REPLICATION]=__FullSecond+replTime;
+}
+
+void ReplicateCritter(Critter& cr) // Export
+{		
+	// Репликация на начальной локации
+	GameVar@ newbieRedemptionVar=GetLocalVar(LVAR_q_newbie_redemption, cr.Id);
+	if(newbieRedemptionVar.GetValue()<20 && cr.IsPlayer() && __NewbieLocationIsActive)
+	{
+		newbieReplicateCritter(cr);
+		return;
+	}
+	
+	// В Аду с отработкой
+	GameVar@ playerIsInHell=GetLocalVar(LVAR_player_is_in_hell, cr.Id);
+	if(playerIsInHell.GetValue()>0 && cr.IsPlayer())
+	{
+		hellReplicateCritter(cr);
+		return;
+	}
+
+	// Check car
+	Item@[] cars;
+	cr.GetItemsByType(ITEM_TYPE_CAR, cars);
+	if(cars.length() > 0)
+	{
+		// Transit to random encounter
+		bool transferred=false;
+		uint encounterDescriptor=uint(-1);
+		bool waitForAnswer=false;
+		FindEncounter(cr.GetGlobalGroup(), cars[0], cr.WorldX, cr.WorldY, encounterDescriptor, waitForAnswer, true);
+		if(encounterDescriptor!=uint(-1))
+		{
+			uint mapId=0;
+			uint16 hexX=0;
+			uint16 hexY=0;
+			uint8 dir=0;
+			InviteToEncounter(cr.GetGlobalGroup(), cars[0], encounterDescriptor, COMBAT_MODE_ANY, mapId, hexX, hexY, dir);
+			if(mapId!=0 && cr.TransitToMap(mapId,hexX,hexY,dir))
+				transferred=true;
+		}
+
+		// Encounter not founded or transfer fail, delete cars
+		if(!transferred)
+		{
+			for(uint i=0;i<cars.length();i++)
+				DeleteItem(cars[i]);
+		}
+
+		// Continue dead
+		cr.TimeoutBase[TO_REPLICATION]=__FullSecond+REAL_MINUTE(1);
+		return;
+	}	
+	
+	dropAllItem(cr);
+	
+	Map@ dieMap=cr.GetMap();
+	Map@ map=null;
+	uint16 hx=0,hy=0, mapId=0;
+	
+	if(cr.IsPlayer())
+	{
+		bool customReplMap=false;
+		if(cr.Stat[ST_NEXT_REPLICATION_MAP]>0)
+		{
+			customReplMap=NeedReplicateCritterToBattle(cr);
+		}
+		
+		if(customReplMap)
+			@map=GetMap(cr.Stat[ST_NEXT_REPLICATION_MAP]);
+		else
+			@map=GetNearReplicatorMap(cr);
+		
+		// Репликация на базе "Феникс"
+		Location@ loc=GetLocationByPid(250,0);
+		if(valid(loc) && not customReplMap)
+		{
+			int phoenixOwner=loc.GetMapByIndex(0).GetData(0);
+			if(phoenixOwner==cr.Param[ST_FRACTION] && phoenixOwner>0)
+			{
+				PhoenixReplication(cr);
+				return;
+			}
+		}
+
+		if(not valid(map) || not GetEntireFreeHex(map,(customReplMap ? cr.Stat[ST_NEXT_REPLICATION_ENTIRE] : ENTIRE_REPLICATION),hx,hy))
+		{
+			// Continue dead
+			cr.TimeoutBase[TO_REPLICATION]=__FullSecond+REAL_MINUTE(1);
+			return;
+		}
+		
+		if(!customReplMap)		
+		{
+			cr.StatBase[ ST_REPLICATION_COUNT ]++;
+			cr.StatBase[ST_REPLICATION_MONEY]-=cr.Stat[ST_REPLICATION_COST];
+			
+			if(cr.Stat[ST_REPLICATION_MONEY]>=100) 
+			_CritAddItem(cr,PID_RADIO,1); // Add radio		
+
+			GameVar@ hidingPleace=GetLocalVar(LVAR_hiding_place_location, cr.Id);
+			if(cr.Stat[ST_REPLICATION_MONEY]>=100 && (hidingPleace.GetValue()<1 && cr.Stat[ST_LEVEL]<9))
+			_CritAddItem(cr,PID_LOC_BUG,1);
+		}
+		else
+        {
+            // Очистка данных по нестандартной репликации
+            cr.StatBase[ ST_NEXT_REPLICATION_MAP ]=0;
+            cr.StatBase[ ST_NEXT_REPLICATION_ENTIRE ]=0;
+        }
+	}
+	else
+	{
+		cr.DropPlanes();
+		cr.ClearEnemyStackNpc();
+		cr.StatBase[ST_LAST_WEAPON_ID]=0;
+		@map=cr.GetMap();
+		if(not valid(map)) // On global, delete
+		{
+			DeleteNpc(cr);
+			return;
+		}
+		hx=cr.HexX;
+		hy=cr.HexY;
+
+		if(cr.Stat[ST_DEAD_BLOCKER_ID]!=0)
+		{
+			Item@ block=GetItem(cr.Stat[ST_DEAD_BLOCKER_ID]);
+			if(valid(block)) DeleteItem(block);
+			cr.StatBase[ST_DEAD_BLOCKER_ID]=0;
+		}
+
+		if(not map.IsHexPassed(hx,hy))
+		{
+			bool founded=false;
+			for(int x=-1;x<=1;x++)
+			{
+				for(int y=-1;y<=1;y++)
+				{
+					if(x==0 && y==0) continue; // Skip direct position
+
+					if(__MapHexagonal)
+					{
+						if ((hx%2)==1 && ((x==-1 && y==1) || (x==1 && y==1))) continue;
+						if ((hx%2)==0 && ((x==-1 && y==-1) || (x==1 && y==-1))) continue;
+					}
+
+					if(map.IsHexPassed(hx+x,hy+y))
+					{
+						hx+=x;
+						hy+=y;
+						founded=true;
+						break;
+					}
+				}
+				if(founded) break;
+			}
+
+			if(not founded)
+			{
+				// Continue dead
+				cr.TimeoutBase[TO_REPLICATION]=__FullSecond+REAL_MINUTE(1);
+				return;
+			}
+		}
+	}
+
+	cr.TransitToMap(map.Id,hx,hy,Random(0,5));
+	cr.DamageBase[DAMAGE_EYE]=0;
+	cr.DamageBase[DAMAGE_RIGHT_ARM]=0;
+	cr.DamageBase[DAMAGE_LEFT_ARM]=0;
+	cr.DamageBase[DAMAGE_RIGHT_LEG]=0;
+	cr.DamageBase[DAMAGE_LEFT_LEG]=0;
+	if(cr.Stat[ST_NEXT_CRTYPE]>0)
+	{
+		cr.ChangeCrType(cr.Stat[ST_NEXT_CRTYPE]);
+		cr.StatBase[ST_BASE_CRTYPE]=cr.Stat[ST_NEXT_CRTYPE];
+		cr.StatBase[ST_NEXT_CRTYPE]=0;
+	}
+	cr.ToLife();
+	cr.StatBase[ST_CURRENT_HP]=cr.Stat[ST_MAX_LIFE];
+	cr.StatBase[ST_CURRENT_AP]=cr.Stat[ST_ACTION_POINTS]*100;
+	DropPoison(cr);
+	DropRadiation(cr);
+	DropDrugEffects(cr);
+	//cr.StatBase[ST_COUNT_DRUGS]=0;
+	cr.DropTimers();
+
+	for(uint i=TIMEOUT_BEGIN;i<=TIMEOUT_END;i++) 
+		if(i!=TO_KARMA_VOTING && i!=TO_SK_REPAIR && i!=TO_SK_SCIENCE) cr.TimeoutBase[i]=0;
+	
+	// "Игрок вышел из охраняемой зоны мк2"
+	GameVar@ safezonevarden=GetLocalVar(LVAR_safe_zone_entered_den, cr.Id);
+	safezonevarden=0;	
+	
+	// Очищаем предыдущий таймаут на восстановление статов, если он был
+	uint[] value;
+	if(cr.GetTimeEvents(CTE_RECOVERY, value, value, value) !=0)
+		cr.EraseTimeEvents(CTE_RECOVERY);
+
+	// Прерываем функцию, если на счету есть деньги, или это не игрок
+	if(cr.IsNpc() || cr.Stat[ST_REPLICATION_MONEY] > 0)
+		return;
+		
+	// Повреждение конечностей, при отрицательном счете репликации
+	if(cr.Stat[ST_LEVEL]>9)
+	{
+		int RandomAffectedLimb=Random(0,100) + cr.Stat[ST_LUCK]*2 - cr.Perk[PE_JINXED_II]*10 + CLAMP((__LevelCap-cr.Stat[ST_LEVEL]),0,30);
+		if(RandomAffectedLimb<30)	cr.DamageBase[DAMAGE_EYE]=1;
+		else if(RandomAffectedLimb<40) cr.DamageBase[DAMAGE_RIGHT_ARM]=1;
+		else if(RandomAffectedLimb<50) cr.DamageBase[DAMAGE_LEFT_ARM]=1;
+		else if(RandomAffectedLimb<60) cr.DamageBase[DAMAGE_RIGHT_LEG]=1;
+		else if(RandomAffectedLimb<70) cr.DamageBase[DAMAGE_LEFT_LEG]=1;
+	}
+
+	cr.StatBase[ST_CURRENT_AP]=-cr.Stat[ST_ACTION_POINTS]*500;
+	cr.ToKnockout(KNOCKOUT_ANIM2_DEFAULT(true),0,cr.HexX,cr.HexY);
+		
+	// Статы на -1
+	for(uint i=ST_STRENGTH_EXT;i<=ST_AGILITY_EXT;i++)
+		cr.StatBase[i]=-1;
+		
+	// Запускаем таймэвент на их восстановление
+		cr.AddTimeEvent("cte_Recovery", REAL_MINUTE(Random(2,3)*3-CLAMP((__LevelCap-cr.Stat[ST_LEVEL])/5,0,8)), CTE_RECOVERY, 0);
+}
+
+void PhoenixReplication(Critter& cr)
+{
+	Location@ loc=GetLocationByPid(250,0);
+	if(valid(loc))
+	{
+		cr.TransitToMap(loc.GetMapByIndex(2).Id,242);
+		cr.DamageBase[DAMAGE_EYE]=0;
+		cr.DamageBase[DAMAGE_RIGHT_ARM]=0;
+		cr.DamageBase[DAMAGE_LEFT_ARM]=0;
+		cr.DamageBase[DAMAGE_RIGHT_LEG]=0;
+		cr.DamageBase[DAMAGE_LEFT_LEG]=0;
+		if(cr.Stat[ST_NEXT_CRTYPE]>0)
+		{
+			cr.ChangeCrType(cr.Stat[ST_NEXT_CRTYPE]);
+			cr.StatBase[ST_BASE_CRTYPE]=cr.Stat[ST_NEXT_CRTYPE];
+			cr.StatBase[ST_NEXT_CRTYPE]=0;
+		}
+		cr.ToLife();
+		cr.StatBase[ST_CURRENT_HP]=cr.Stat[ST_MAX_LIFE];
+		cr.StatBase[ST_CURRENT_AP]=cr.Stat[ST_ACTION_POINTS]*100;
+		DropPoison(cr);
+		DropRadiation(cr);
+		DropDrugEffects(cr);
+		//cr.StatBase[ST_COUNT_DRUGS]=0;
+		cr.DropTimers();
+		
+		// Убираем откат статов, если криттер респился на пустыре
+		uint[] value;
+		if(cr.GetTimeEvents(CTE_RECOVERY, value, value, value) !=0)
+			cr.EraseTimeEvent(CTE_RECOVERY);
+		
+		//Делаем прибавку к некоторым статам
+		cr.StatBase[ST_STRENGTH_EXT] +=1;
+		cr.StatBase[ST_AGILITY_EXT] +=1;
+		cr.StatBase[ST_PERCEPTION_EXT] +=1;
+	
+		for(uint i=TIMEOUT_BEGIN;i<=TIMEOUT_END;i++) if(i!=TO_KARMA_VOTING) cr.TimeoutBase[i]=0;
+	}
+	else cr.TimeoutBase[TO_REPLICATION]=__FullSecond+REAL_MINUTE(1);
+}
+
+//
+// Turret
+//
+void _TurretInit(Critter& turret, bool firstTime)
+{
+	turret.StatBase[ST_PERCEPTION]=10;
+	turret.SkillBase[SK_BIG_GUNS]=300;
+	turret.SkillBase[SK_ENERGY_WEAPONS]=300;
+	turret.ModeBase[MODE_NO_ENEMY_STACK]=1;
+	turret.ModeBase[MODE_UNLIMITED_AMMO]=1;
+}
+
+//
+// Hubologist
+//
+void _HubologistInit(Critter& hubologist, bool firstTime)
+{
+	hubologist.ModeBase[MODE_NO_ENEMY_STACK]=1;
+}
+
+uint cte_Recovery(Critter& cr, int identifier, uint& rate)
+{
+	for(uint i=ST_STRENGTH_EXT;i<=ST_AGILITY_EXT;i++)
+		cr.StatBase[i]++;
+
+	return 0;
+}
+
+void t_inCake(Critter& cr, Scenery& trigger, bool entered, uint8 dir)
+{
+	uint16 toX=cr.HexX;
+	uint16 toY=cr.HexY;
+	if(toX==52)
+	{
+		toX+=10;
+		toY+=26;
+	}
+	else if(toX==48)
+	{
+		toX+=12;
+		toY+=26;
+	}
+	else
+	{
+		toX+=13;
+		toY+=27;
+	}
+	cr.TransitToHex(cr.HexX, cr.HexY+1,cr.Dir);
+	cr.ToKnockout(KNOCKOUT_ANIM2_DEFAULT(false),0,toX, toY);
+    cr.TransitToHex(cr.HexX+7, cr.HexY+7,cr.Dir);	
+	Map@ map=cr.GetMap();
+	map.PlaySound("DeadBack.ogg", cr.HexX, cr.HexY, 25);	
+	cr.ToDead(ANIM2_DEAD_PRONE_FRONT,null);
+}
+
+void dropAllItem(Critter& cr)
+{
+	if(_CritCanDropItemsOnDead(cr))
+	{
+		Map@ dropMap=cr.GetMap();
+		Item@[] items;
+		cr.GetItems(-1,items);
+
+		// Disable drop of hidden items and delete gag items (sandbags)
+		for(uint i=0, iMax=items.length(); i<iMax; i++)
+		{
+			if(FLAG(items[i].Flags,ITEM_GAG))
+			{
+				DeleteItem(items[i]);
+				@items[i]=null;
+			}
+			else if(FLAG(items[i].Flags,ITEM_HIDDEN))
+			{
+				@items[i]=null;
+			}
+		}
+
+		// Drop
+		if(valid(dropMap))
+			MoveItems(items,dropMap,cr.HexX,cr.HexY);
+		else
+			DeleteItems(items);
+	}
+}

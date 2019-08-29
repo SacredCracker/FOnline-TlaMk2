@@ -1,0 +1,418 @@
+[comment]
+
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+38 1010 D _var p arroyo_doc_healing = 1 #
+37 1020 D _var p arroyo_doc_healing = 2 #
+2 1030 D _var p arroyo_doc_healing = 0 D _param p ST_INTELLECT > 3 D _var p name_mem_npc_player = 0 #
+2 1040 D _var p name_mem_npc_player = 1 D _var p click_counter < 10 D _var p arroyo_doc_healing = 0 D _param p ST_INTELLECT > 3 R _var p click_counter + 1 #
+19 1050 D _var p arroyo_doc_healing = 0 D _param p ST_INTELLECT > 3 D _var p name_mem_npc_player = 1 D _var p click_counter } 10 #
+21 1060 D _var p arroyo_doc_healing = 0 D _param p ST_INTELLECT < 4 @
+37 2000 None 0 @
+38 3000 None 0 @
+2 4000 None 1 #
+14 4010 D _var p name_mem_npc_player = 0 R _var p name_mem_npc_player = 1 #
+18 4020 D _param p ST_INTELLECT > 3 D _param p ST_INTELLECT < 5 D _var p name_mem_npc_player = 1 D _param p ST_LUCK > 5 D _var n name_mem_npc_player = 0 R _item p PID_MENTATS + 1 R _param p ST_EXPERIENCE + 350 R _var n name_mem_npc_player = 1 #
+16 4030 D _var p name_mem_player_npc = 0 R _var p name_mem_player_npc = 1 #
+16 4040 D _var p name_mem_player_npc = 1 #
+3 4050 #
+9 4060 R _var p trade_was = 0 #
+0 4070 D _var p loyality > 4 R _var p loyality = 4 R _param p REPUTATION_ARROYO - 1 #
+0 4080 D _var p loyality = 4 #
+0 4090 @
+3 5000 None 1 #
+4 5010 D _script dialog@d_IsToHeal 0  R _var p arroyo_doc_healing = 1 #
+6 5020 D _param p DAMAGE_LEFT_ARM = 1 D _param p DAMAGE_RIGHT_ARM = 0 #
+6 5030 D _param p DAMAGE_LEFT_ARM = 0 D _param p DAMAGE_RIGHT_ARM = 1 #
+6 5040 D _param p DAMAGE_RIGHT_ARM = 1 D _param p DAMAGE_LEFT_ARM = 1 #
+6 5050 D _param p DAMAGE_LEFT_LEG = 1 D _param p DAMAGE_RIGHT_LEG = 0 #
+6 5060 D _param p DAMAGE_LEFT_LEG = 0 D _param p DAMAGE_RIGHT_LEG = 1 #
+7 5070 D _param p DAMAGE_RIGHT_LEG = 1 D _param p DAMAGE_LEFT_LEG = 1 R _var p arroyo_doc_healing = 2 #
+6 5080 D _param p DAMAGE_EYE = 1 #
+10 5090 D _param p DAMAGE_RADIATED > 0 R _script dialog@r_DropRadiation 0  #
+10 5100 D _param p DAMAGE_POISONED > 0 R _param p ST_POISONING_LEVEL = 0 R _param p DAMAGE_POISONED = 0 #
+0 5110 @
+4 6000 None 0 #
+5 6010 #
+0 6020 @
+6 7000 None 0 #
+5 7010 R _var p arroyo_doc_healing = 2 #
+0 7020 R _var p arroyo_doc_healing = 2 @
+7 8000 None 0 #
+0 8010 R _script dialog@r_TransitToMap 2 2 99 #
+8 8020 #
+8 8030 @
+5 9000 None 0 @
+8 10000 None 0 @
+9 11000 None 1 #
+65506 11010 D _param p ST_INTELLECT > 3 R _var p trade_was = 1 #
+65506 11020 D _param p ST_INTELLECT > 3 D _var p trade_was = 1 #
+0 11030 D _param p ST_INTELLECT > 3 D _var p trade_was = 0 #
+0 11040 D _param p ST_INTELLECT > 3 D _var p trade_was = 1 #
+65506 11050 D _param p ST_INTELLECT < 4 R _var p trade_was = 1 #
+0 11060 D _param p ST_INTELLECT < 4 @
+10 12000 None 0 @
+13 13000 None 0 @
+14 14000 None 1 #
+16 14010 #
+3 14020 D _script dialog@d_IsLife 2 911 2 D _script dialog@d_IsLife 2 912 2 #
+35 14030 D _script dialog@d_IsDead 2 912 2 D or D _script dialog@d_IsDead 2 911 2 #
+9 14040 R _var p trade_was = 0 #
+15 14050 @
+15 15000 None 0 @
+16 16000 None 1 #
+17 16010 #
+3 16020 #
+9 16030 R _var p trade_was = 0 #
+15 16040 @
+17 17000 None 1 #
+0 17010 #
+3 17020 #
+9 17030 R _var p trade_was = 0 #
+0 17040 @
+18 18000 None 1 #
+0 18010 #
+3 18020 #
+9 18030 R _var p trade_was = 0 @
+19 19000 None 1 #
+20 19010 #
+16 19020 #
+3 19030 #
+9 19040 R _var p trade_was = 0 #
+0 19050 D _var p loyality > 4 R _var p loyality = 4 #
+0 19060 D _var p loyality = 4 R _param p REPUTATION_ARROYO - 1 #
+0 19070 @
+20 20000 None 1 #
+0 20010 #
+3 20020 #
+9 20030 R _var p trade_was = 0 #
+0 20040 @
+21 21000 None 1 #
+26 21010 #
+9 21020 R _var p trade_was = 0 #
+22 21030 #
+24 21040 #
+25 21050 D _var p loyality > 4 R _var p loyality = 4 R _param p REPUTATION_ARROYO - 1 #
+25 21060 D _var p loyality = 4 @
+22 22000 None 1 #
+23 22010 #
+0 22020 @
+23 23000 None 0 #
+26 23010 #
+9 23020 R _var p trade_was = 0 #
+0 23030 @
+24 24000 None 0 @
+25 25000 None 0 @
+26 26000 None 1 #
+34 26010 D _param p DAMAGE_RIGHT_ARM = 1 D _param p DAMAGE_LEFT_ARM = 0 D or D _param n DAMAGE_LEFT_ARM = 1 D _param n DAMAGE_RIGHT_ARM = 0 #
+34 26020 D _param n DAMAGE_RIGHT_ARM = 1 D _param n DAMAGE_LEFT_ARM = 1 #
+34 26030 D _param n DAMAGE_RIGHT_LEG = 1 D _param n DAMAGE_LEFT_LEG = 0 D or D _param n DAMAGE_LEFT_LEG = 1 D _param n DAMAGE_RIGHT_LEG = 0 #
+34 26040 D _param n DAMAGE_RIGHT_LEG = 1 D _param n DAMAGE_LEFT_LEG = 1 #
+34 26050 D _param n DAMAGE_EYE = 1 #
+30 26060 D _param n DAMAGE_POISONED > 0 #
+31 26070 D _param n DAMAGE_RADIATED > 0 R _script dialog@r_DropRadiation 0  #
+32 26080 D _param n DAMAGE_RADIATED > 0 R _var p arroyo_doc_healing = 1 #
+25 26090 @
+28 27000 None 0 @
+29 28000 None 1 #
+0 28010 #
+0 28020 @
+30 29000 None 0 #
+0 29010 R _param p ST_POISONING_LEVEL = 0 R _param p DAMAGE_POISONED = 0 @
+31 30000 None 0 @
+32 31000 None 0 #
+0 31010 #
+33 31020 @
+33 32000 None 0 @
+34 33000 None 1 #
+0 33010 R _var p arroyo_doc_healing = 2 #
+33 33020 R _var p arroyo_doc_healing = 2 @
+35 34000 None 1 #
+9 34010 D _param n ST_INTELLECT > 3 R _var p trade_was = 0 #
+9 34020 D _param n ST_INTELLECT < 4 R _var p trade_was = 0 #
+0 34030 D _param n ST_INTELLECT > 3 #
+0 34040 D _param n ST_INTELLECT < 4 #
+36 34050 D _param n ST_INTELLECT > 3 @
+36 35000 None 0 &
+
+[russ]
+{100}{}{Док}
+{200}{}{Вы видите: Док}
+{210}{}{Это - доктор. Да.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{Отправили на перевязку, а он вернулся.}
+{1020}{}{Отправили на операцию, а он не хочет.}
+{1030}{}{Первое знакомство/доктор не знает имени.}
+{1040}{}{Заходил пару раз, доктор знает имя.}
+{1050}{}{Частый пациент, доктор знает имя.}
+{1060}{}{Низкий интеллект.}
+{2000}{}{Я вроде отправил тебя к Рейчел.}
+{3000}{}{Я вроде отправил тебя к Франческе.}
+{4000}{}{Привет. Чем могу помочь?}
+{4010}{}{Привет. Меня зовут @pname@. А кто вы?}
+{4020}{}{Привет. Меня зовут @pname@. А кто вы?}
+{4030}{}{А вы чем тут занимаетесь?}
+{4040}{}{Напомните, вы чем тут занимаетесь?}
+{4050}{}{Доктор, мне нужна медицинская помощь.}
+{4060}{}{Я хочу купить медикаментов.}
+{4070}{}{Помоги себе, а я в порядке.}
+{4080}{}{Помоги себе, а я в порядке.}
+{4090}{}{Ничем, спасибо.}
+{5000}{}{Что стряслось?@@В чём проблема?@@Давайте глянем, что с вами не так.@@Посмотрим, смогу ли я помочь.}
+{5010}{}{Меня ранили, я истекаю кровью.}
+{5020}{}{У меня что-то с левой рукой, подозреваю перелом.}
+{5030}{}{Моя правая рука похожа на кусок говна.}
+{5040}{}{У меня ни одна рука не работает.}
+{5050}{}{Я не могу опереться на левую ногу.}
+{5060}{}{У меня неполадки с правой ногой.}
+{5070}{}{Доктор, я не могу ходить!}
+{5080}{}{Мне повредили глаз, я нихрена не вижу.}
+{5090}{}{Док, я облучил@sex@|ся||ась|!}
+{5100}{}{Меня укусил скорпион, сейчас у меня кружится голова и вообще хреново.}
+{5110}{}{На самом деле мне ничего не надо, извините.}
+{6000}{}{Обратитесь к моей помощнице, Франческе, она вас перевяжет.}
+{6010}{}{Что, бесплатно?}
+{6020}{}{Спасибо, доктор!}
+{7000}{}{Пройдите в операционную, там моя помощница Рейчел залатает вас.}
+{7010}{}{Что, бесплатно?}
+{7020}{}{Спасибо, доктор!}
+{8000}{}{Пройдите в операционную, там моя помощница Рейчел залатает вас. Хотя давайте я вам помогу дойти...}
+{8010}{}{[Пройти]}
+{8020}{}{Спасибо, но пару метров я могу пройти и так.}
+{8030}{}{Не прикасайся ко мне, старый извращенец! Я сам@sex@|||а|!}
+{9000}{}{Да, мы не берём денег с нуждающихся.}
+{10000}{}{Рейчел, сейчас к тебе кто-то приползёт!}
+{11000}{}{Давайте поторгуем...}
+{11010}{}{[Бартер]}
+{11020}{}{Покажите товар ещё раз...}
+{11030}{}{На самом деле мне надо идти.}
+{11040}{}{Мне пора.}
+{11050}{}{[Торговать]}
+{11060}{}{Пока!}
+{12000}{}{Давайте я сделаю вам укол... Готово.}
+{13000}{}{ПОМОГИТЕ!!!}
+{14000}{}{Очень приятно, @pname@. Меня зовут Доктор Марк Бромптон. Можешь называть меня просто Док.}
+{14010}{}{А вы чем тут занимаетесь?}
+{14020}{}{Доктор, да? Мне нужна медицинская помощь.}
+{14030}{}{Доктор, да? Мне нужна медицинская помощь.}
+{14040}{}{Я хочу купить медикаментов.}
+{14050}{}{Понятно. Ну, я просто осматривал@sex@|ся||ась|. Если что - буду знать, куда приходить! До свидания, доктор!}
+{15000}{}{До свидания.}
+{16000}{}{Лечу больных, чем ещё может заниматься доктор. Говорите быстрей, с чем пришли, у меня ещё две ампутации сегодня.@@Лечу больных, чем ещё может заниматься доктор. Пациентов много, укусы гекко в основном.@@Лечу больных, чем ещё может заниматься доктор. Пациентов много - туземцы учатся обращаться с огнестрельным оружием, люди Убежища - охотиться. У первых ступни постоянно прострелены, у вторых сплошные укусы.@@Лечу больных, чем ещё может заниматься доктор. Пациентов много. То ноготь оторвало, то ногу. У каждого своё.}
+{16010}{}{А ногу пришить сможете?}
+{16020}{}{Доктор, мне нужна помощь.}
+{16030}{}{Я хочу купить лекарств. У вас это можно сделать?}
+{16040}{}{Понятно. Ну, спасибо за информацию!}
+{17000}{}{Приносите - посмотрим. Не всякую ногу всюду пришить можно... К голове, например, особенно тяжело пришивается. А лапу геккона ни разу пришить не удавалось - отторжение.}
+{17010}{}{Знаете, мне что-то неуютно тут, выйду подышать воздухом...}
+{17020}{}{Доктор, а у меня это, проблема!}
+{17030}{}{Давайте я лучше куплю у вас набор "собери себя сам"...}
+{17040}{}{Буду иметь ввиду, до скорого!}
+{18000}{}{[Доктор прищуривает один глаз и внимательно на Вас смотрит] Вот, возьмите это, помогает при проблемах с памятью. [Протягивает упаковку Ментнатов]}
+{18010}{}{О! Спасибо, доктор!}
+{18020}{}{Спасибо, доктор! Но я не за этим. Мне нужна медицинская помощь.}
+{18030}{}{Спасибо! Я бы хотел@sex@|||а| купить ещё медикаментов.}
+{19000}{}{Привет. Это снова вы, @pname@? Чем могу помочь?}
+{19010}{}{О, док, вы помните моё имя? У вас хорошая память!}
+{19020}{}{Напомните, вы чем тут занимаетесь?}
+{19030}{}{Доктор, мне нужна медицинская помощь.}
+{19040}{}{Я хочу купить медикаментов.}
+{19050}{}{Помоги себе, а я в порядке.}
+{19060}{}{Помоги себе, а я в порядке.}
+{19070}{}{Ничем, спасибо.}
+{20000}{}{Да. Злоупотреблял когда-то ментнатами.}
+{20010}{}{Хм. Я, наверное, поищу другого доктора...}
+{20020}{}{Ладно, неважно. Я вообще приш@sex@|ёл||ла| с проблемой...}
+{20030}{}{О! А можно у вас прикупить чего-нибудь из магических снадобий?}
+{20040}{}{Ммм. Ясно. Мне пора.}
+{21000}{}{Привет. [Внимательно на Вас смотрит] Ооо. Я доктор. Док-тор. Умею лечить. Чем тебе помочь? Только не шуми, а то я отправлю тебя лечиться к шаману.}
+{21010}{}{Дока, больно.}
+{21020}{}{Дока, продай порошки.}
+{21030}{}{Дока, расскажи сказку.}
+{21040}{}{Ууу. Ух.}
+{21050}{}{АААА! Аааа! Аааа! А!}
+{21060}{}{АААА! Аааа! Аааа! А!}
+{22000}{}{Ползёт как-то Глаз по Пустоши. А навстречу ему Нога. Глаз говорит: "Нога, давай путешествовать вместе?" Нога отвечает: "Давай". Залез Глаз на Ногу, и стали они путешествовать. И Глазу ползать не надо, и Ноге видно, куда идёт. ...не смешно, зато про медину.}
+{22010}{}{Дока, расскажи ещё!}
+{22020}{}{Спасибо!}
+{23000}{}{Всё, кончились сказки. Так тебе надо чем-нибудь помогать?}
+{23010}{}{Дока, мне тут больно.}
+{23020}{}{Дока, продай порошки.}
+{23030}{}{Не. Спасибо за сказку!}
+{24000}{}{Ну раз тебе ничего не надо, то на сегодня закончим.}
+{25000}{}{...}
+{26000}{}{Ммм, что не так, дорог@sex@|ой мой||ая моя|?}
+{26010}{}{Ручка.}
+{26020}{}{Ручки...}
+{26030}{}{Ножка.}
+{26040}{}{Ножки...}
+{26050}{}{Глазик.}
+{26060}{}{Кака блевати... От скорпиёни.}
+{26070}{}{Моя прыгать по зелёный лужа... Сейчас нет волосы и лезет кожа.}
+{26080}{}{Я в@sex@|есь||ся| в крови.}
+{26090}{}{Ничего! Хи-хи.}
+{27000}{}{Пока, симулянт.}
+{28000}{}{Так... Скушай вот этот порошок... И вот эту таблеточку... И запей водой. Всё. Готово, скоро отпустит.}
+{28010}{}{Спасибо!}
+{28020}{}{900 монет...}
+{29000}{}{Вот, выпей это.}
+{29010}{}{Спасибо!}
+{30000}{}{Давай сделаем укольчик... Готово.}
+{31000}{}{Видишь, стоит симпатичная девушка? Это Франческа. Ступай к ней, она тебя перевяжет.}
+{31010}{}{Спасибо!}
+{31020}{}{Дока, а сколько ты брать золота?}
+{32000}{}{Нисколько, мы не берём с нуждающихся.}
+{33000}{}{У, это серьёзно. Пройди вон в ту комнатку, обратись к моей помощнице Рейчел. Она вставит всё как было.}
+{33010}{}{Спасибо!}
+{33020}{}{Дока, а сколько ты брать золота?}
+{34000}{}{Извини, мою помощницу убили, я не могу тебе сейчас помочь. Надо подождать, пока она вернётся. Ух, как быстро меняется время... Вернётся с того света. Лет пять назад меня бы дико напугала подобная фраза. Так вот. Извини.}
+{34010}{}{Доктор, продайте хотя бы обезболивающего...}
+{34020}{}{Дока, продавать хоть порошки...}
+{34030}{}{О, чёрт. Ну, будем надеяться, что она придёт скоро.}
+{34040}{}{Моя уходить к шаман!}
+{34050}{}{Ну спасибо, доктор. Пока она вернётся, я сам@sex@|||а| уже отправлюсь туда...}
+{35000}{}{В каньоне к западу отсюда живёт шаман... Рекомендую.}
+
+[engl]
+{100}{}{Doc}
+{200}{}{You see: Doc}
+{210}{}{It's a doctor. Yeah.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{Отправили на перевязку, а он вернулся.}
+{1020}{}{Отправили на операцию, а он не хочет.}
+{1030}{}{Первое знакомство/доктор не знает имени.}
+{1040}{}{Заходил пару раз, доктор знает имя.}
+{1050}{}{Частый пациент, доктор знает имя.}
+{1060}{}{Низкий интеллект.}
+{2000}{}{I remember sending you to Rachel.}
+{3000}{}{I remember sending you to Francesca.}
+{4000}{}{Hello. How can I help you?}
+{4010}{}{Hello there, my name is @pname@. And who are you?}
+{4020}{}{Hello there, my name is @pname@. And who are you?}
+{4030}{}{What do you do here?}
+{4040}{}{Remind me what you do here.}
+{4050}{}{Doctor, I need medical help.}
+{4060}{}{I want to buy some medical supplies.}
+{4070}{}{Help yourself, I'm OK.}
+{4080}{}{Help yourself, I'm OK.}
+{4090}{}{Nothing, thank you.}
+{5000}{}{What's up?@@What's the problem?@@Let's have a look.@@Let's see if I can help.}
+{5010}{}{I've been wounded, I'm bleeding.}
+{5020}{}{There's something wrong with my left arm. A fracture or something.}
+{5030}{}{My right arm looks like shit.}
+{5040}{}{I can't move my arms.}
+{5050}{}{I can't stand on my left foot.}
+{5060}{}{There's something wrong with my left leg.}
+{5070}{}{Doctor, I can't walk!}
+{5080}{}{My eyes are hurt, I can't see shit.}
+{5090}{}{Doc, I am radiated!}
+{5100}{}{I was bitten by a scorpion, my head swells and I feel like crap.}
+{5110}{}{I don't realy need anything, sorry for disturbing you.}
+{6000}{}{Ask my nurse, Francesca. She'll dress the wound.}
+{6010}{}{What, for free?}
+{6020}{}{Thanks, Doctor!}
+{7000}{}{Proceed to the operating room, my assistant Rachel will patch you up.}
+{7010}{}{What, for free?}
+{7020}{}{Thanks, Doctor!}
+{8000}{}{Proceed to the operating room, my assistant Rachel will patch you up. Wait, let me help you there...}
+{8010}{}{[Come]}
+{8020}{}{Thank you, but I can make it on my own.}
+{8030}{}{Don't touch me you perv! I can do it myself!}
+{9000}{}{Yes, we don't charge those in need.}
+{10000}{}{Rachel, someone's crawling to you!}
+{11000}{}{Let's trade...}
+{11010}{}{[Barter]}
+{11020}{}{Show me what' you've got once again...}
+{11030}{}{Actually I got to go.}
+{11040}{}{I got to go.}
+{11050}{}{[Barter]}
+{11060}{}{See you!}
+{12000}{}{I'll give you an injection... That's it.}
+{13000}{}{HELP!!!}
+{14000}{}{Nice to meet you, @pname@. I am Dr. Mark Brompton. You can just call me Doc.}
+{14010}{}{What do you do here?}
+{14020}{}{A doctor? I need medical help.}
+{14030}{}{A doctor? I need medical help.}
+{14040}{}{I want to buy some medicine.}
+{14050}{}{I see. Well, I was just poking around. I know where to come if something happens now! Goodbye, Doctor!}
+{15000}{}{Goodbye.}
+{16000}{}{I treat patients, what else can a doctor do. State your business, I have two amputations to perform.@@I treat people, what else can a doctor do. I got a lot of patents, gecko bites mostly.@@I heal the sick, what else can a doctor do. I got a lot of patients: tribals learning to handle firearms, vault dwellers learning to hunt. The former always have their feet shot up, the latter are bitten.@@I treat patients, what else can a doctor be doing. A lot of patients. Some have a torn off nail, Some have a torn off leg. Everyone has his own troubles.}
+{16010}{}{Can you sew a leg back on?}
+{16020}{}{Doctor, I need help.}
+{16030}{}{I want to buy some medicine. can I do it here?}
+{16040}{}{I see. Thanks for the info!}
+{17000}{}{Bring it it and we'll have a look! Not every leg can be sewn... It's the most difficult to saw it to the head, for instance. I never succeeded in sewing gecko's paw - rejection of the transplant.}
+{17010}{}{You know what, I feel kind of dizzy, I'll go out for some fresh air...}
+{17020}{}{Doctor, I have kind of a problem!}
+{17030}{}{I'd rather buy "Body of Patient Construction Kit" from you...}
+{17040}{}{I'll keep that in mind. Goodbye!}
+{18000}{}{[Doctor screws up his eyes and looks at you thoroughly] Here. It helps memory problems. [Hands you a pack of Mentats]}
+{18010}{}{Oh! Thanks, Doctor!}
+{18020}{}{Thanks, Doctor! But it's not what I came for. I need medical help.}
+{18030}{}{Thank you! I'd like to buy some more medicine.}
+{19000}{}{Hello. It's you again, @pname@? How may I help you?}
+{19010}{}{Oh, Doc, you remember my name? You've got good memory!}
+{19020}{}{Remind me, what do you do here?}
+{19030}{}{Doctor, I need medical help.}
+{19040}{}{I want to buy some medical supplies.}
+{19050}{}{Help yourself, I'm OK.}
+{19060}{}{Help yourself, I'm OK.}
+{19070}{}{Nothing, thanks.}
+{20000}{}{Yes. I abused some medicine.}
+{20010}{}{Hmm, I'd rather look for another doctor...}
+{20020}{}{Never mind. I came here with a problem...}
+{20030}{}{Oh! Can I buy some of your magic potions?}
+{20040}{}{Hmm. I see. Bye.}
+{21000}{}{Hello. [looks at you thoroughly] Oh. I'm a doctor. Doc-tor. I can heal. How can I help? Just don't make noise, or I'll send you back to your sorcerer.}
+{21010}{}{Doca, hurts.}
+{21020}{}{Doca, sell potions.}
+{21030}{}{Doca, tell tale.}
+{21040}{}{Uuuh. Uh.}
+{21050}{}{АААА! Аааа! Аааа! А!}
+{21060}{}{АААА! Аааа! Аааа! А!}
+{22000}{}{Eye crawls around the wasteland and meets Leg. Eye says: "Leg, let's travel together?" Leg answers: "Okay". Eye climbs upon Leg, and they start traveling together. Now Eye doesn't have to crawl, and Leg sees where it is going. ...It's not funny, but it's about medicine.}
+{22010}{}{Doca, tell more!}
+{22020}{}{Thanks!}
+{23000}{}{Enough with tales. So do you need any help or not?}
+{23010}{}{Doca, it hurt.}
+{23020}{}{Doca, sell potions.}
+{23030}{}{No. Thanks for tale!}
+{24000}{}{Well, if you don't need help, let's call it a day.}
+{25000}{}{...}
+{26000}{}{What's wrong with you, my dear?}
+{26010}{}{Hand.}
+{26020}{}{Hands...}
+{26030}{}{Foot.}
+{26040}{}{Feet...}
+{26050}{}{Eye.}
+{26060}{}{Throw up vomit... bite scorpion.}
+{26070}{}{Me wash in green puddle... Now me no hair and skin go off.}
+{26080}{}{Me blood no stop.}
+{26090}{}{Nuttin. He-he.}
+{27000}{}{So long, malingerer.}
+{28000}{}{Fine. Have this powder... And this pill... Now wash it down with water. That's it, you'll feel relieved soon.}
+{28010}{}{Thank you!}
+{28020}{}{$900...}
+{29000}{}{Here, drink this.}
+{29010}{}{Thanks!}
+{30000}{}{I'll give you a shot... That's it.}
+{31000}{}{See that nice girl? It's Francesca. Go to her, she'll dress your wounds.}
+{31010}{}{Thank you!}
+{31020}{}{Doca, how much gold you take?}
+{32000}{}{Nothing. We don't charge the needy.}
+{33000}{}{Oh, it's serious. Go to that room, talk to Rachel. She'll put you back together.}
+{33010}{}{Thanks!}
+{33020}{}{Doca, how much gold you take?}
+{34000}{}{Sorry, my assistant was killed, I can't help you now. You'll have to wait until she comes back. Oh, it's strange times we are living in. Comes back from the dead... Five years ago this phrase would give me the creeps.}
+{34010}{}{At least sell me some painkillers...}
+{34020}{}{Doca, sell potions...}
+{34030}{}{Damn. Let's hope she comes back soon.}
+{34040}{}{Me go to sorcerer!}
+{34050}{}{Thank you very much, doctor. Before she comes, I'll be there myself...}
+{35000}{}{A sorcerer lives in a canyon west fom here... I recommend you go to him.}
+

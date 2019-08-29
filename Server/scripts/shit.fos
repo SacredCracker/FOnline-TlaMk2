@@ -1,0 +1,53 @@
+#include "_macros.fos"
+
+import void _TemplateAnimalInit(Critter& an, bool firstTime) from "processing_role_city";
+
+#define MO				(102000)	// Moo...
+#define SHIT_COMPLIT	(100031)	//Вы убрали дерьмо. Уже хватит.
+
+void _BrahminInit(Critter& cr, bool firstTime)
+{
+	_TemplateAnimalInit(cr,firstTime);
+	cr.SetEvent(CRITTER_EVENT_IDLE, "_BrahminIdle");
+}
+
+void _BrahminIdle(Critter& cr)
+{
+	if(cr.IsLife()) spawn_shit(cr);
+}
+
+void _ShovelInit(Item& item, bool firstTime)
+{
+	item.SetEvent(ITEM_EVENT_USE ,"_ShovelUse");  
+} 
+
+bool _ShovelUse(Item& item, Critter& crit, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+	if(!valid(onItem)) return false;
+	if(onItem.GetProtoId() !=PID_SHIT) return false;
+	GameVar @ status=GetLocalVar(LVAR_newbie_shit, crit.Id);
+	if(!valid(status)) return false;
+	if(status.GetValue()!=1) return false;	
+	GameVar @ count=GetLocalVar(LVAR_newbie_shit_shoveling, crit.Id);
+	if (!valid(count)) return false;
+	if(count.GetValue()<20)	count +=1;
+	else return false;
+	int shitleft=(10-count.GetValue());
+	if(shitleft>0)	crit.Say(SAY_NETMSG,"Вы убрали дерьмо. Осталось: "+shitleft);
+	else crit.SayMsg(SAY_NETMSG,TEXTMSG_TEXT,SHIT_COMPLIT);
+	DeleteItem (onItem);
+	return true;
+}
+
+void spawn_shit(Critter& cr)
+{	
+	if(cr.Timeout[TO_SK_REPAIR]>0 || Random(0,3)!=2) return; // не гадим очень часто
+	Map@ map=cr.GetMap();
+	if(!valid(map)) return;
+	if(map.GetItems (PID_SHIT,null)>30) return;
+	cr.SayMsg(SAY_EMOTE_ON_HEAD,TEXTMSG_TEXT,MO);
+	map.AddItem(cr.HexX,cr.HexY,PID_SHIT,1);
+	cr.MoveRandom (); 
+	cr.TimeoutBase[TO_SK_REPAIR]=cr.Timeout[TO_SK_REPAIR]+__FullSecond+REAL_SECOND(60)*1;
+}
+

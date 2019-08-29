@@ -1,0 +1,99 @@
+/// Decraft
+/// Author: Kamex, Ra 
+
+#include "_macros.fos"
+#include "_msgstr.fos"
+#include "_defines.fos"
+
+#include "decraft_table.fos"
+
+#define DC_EXPPERITEM 	(10)
+#define DC_MINSKILL 	(40) // Минимальный процент навыка, при котором уже доступен декрафт данного предмета
+
+// Возвращает индекс предмета по пиду
+uint16 GetIndexByPid(uint16 pid)
+{
+	// находим в таблице по пиду.
+	for(uint16 i=0, iMax=DecraftInit.length(); i<iMax; i++)		// находим в таблице по пиду.
+		if(pid==DecraftInit[i][0][0]) return i;
+	
+	return uint16(-1);	// Нет в таблице
+}
+
+// Возвращает массив пидов предметов и их количеств, которые можно декрафтить из данного предмета
+uint16[][] elementaryComponentPids(uint16 pid)
+{
+	uint16[][] result;	
+	uint16 index=GetIndexByPid(pid);
+	if(index>DC_COUNTS_ITEM) return result;
+
+	uint16 countItemLength=DecraftInit[index][0].length();
+	
+	if(countItemLength !=DecraftInit[index][1].length())
+	{
+		Log("Bad decraft recipe.\n index: "+index);
+		return result;
+	}
+	
+	result.resize(2);
+	result[0].resize(countItemLength-1);
+	result[1].resize(countItemLength-1);
+	
+	for(uint i=1, iMax=DecraftInit[index][0].length(); i<iMax; i++)
+	{
+		result[0][i-1]=DecraftInit[index][0][i];
+		result[1][i-1]=DecraftInit[index][1][i];
+	}
+	return result;
+}
+
+#ifndef __CLIENT
+// Вызов декрафта предмета с фикс-боя 
+void unsafe_DecraftItem(Critter& player, int itemId, int, int, string@, int[]@) // Export
+{
+	Item@ item =player.GetItemById(itemId);
+	if(not valid(item)) return;	
+	decraftItem(player, item);
+}
+
+bool decraftItem(Critter& player, Item@ item)
+{
+	// В боевом таймауте декрафтить нельзя
+	if(player.Timeout[TO_BATTLE]>0)
+	{
+		player.SayMsg(SAY_NETMSG,TEXTMSG_GAME,STR_TIMEOUT_BATTLE_WAIT);
+		return false;
+	}
+
+	// Если таймаут на науку больше 30 минут, то декрафтить нельзя
+	if(player.Timeout[TO_SK_SCIENCE]>int(REAL_MINUTE(30)))
+	{
+		player.SayMsg(SAY_NETMSG,TEXTMSG_GAME,STR_SKILL_WEARINESS);
+		return false;
+	}
+	
+	if(item.Accessory!=ACCESSORY_CRITTER) return false; // проверка на нахождение в инвентаре
+
+	// Получаем список компонентов
+	uint16[][] components=elementaryComponentPids(item.GetProtoId());	
+	
+	uint16 countComponents=components[0].length();
+	// Если такого предмета нет в списке декрафта
+	if(countComponents<1) return false;	
+
+	// Декрафт
+	for(uint i=1; i<countComponents; i++)
+	{
+		Item@ component=player.AddItem(components[0][i], components[1][i]);	
+	}
+	
+	DeleteItem(item);
+	
+	// Начисление опыта без привязки к количеству!
+	player.StatBase[ST_EXPERIENCE]+=DC_EXPPERITEM;
+	player.TimeoutBase[TO_SK_SCIENCE]=player.Timeout[TO_SK_SCIENCE]+__FullSecond+REAL_SECOND(40);
+	player.SayMsg(SAY_NETMSG,TEXTMSG_TEXT, STR_DECRAFTED);
+	
+	return true;
+}
+#endif // !__CLIENT

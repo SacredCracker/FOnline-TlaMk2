@@ -1,0 +1,72 @@
+// Author: Тринитротолуол, heX, rifleman17
+
+// Для удобства последующей заскриптовки карты, квесты "Пасти браминов", "Сгубить браминов"
+// и "Отнести мясо псам" вынесены в отдельные файлы.
+
+#include "_macros.fos"
+#include "_npc_pids.fos"
+#define STR_ROBOT_ITEM_SEE         (1)
+
+#define ENTRANCE_TORR     (3)
+#define ENTRANCE_NORTH     (4)
+#define ENTRANCE_TRAP_WEST     (5)
+#define ENTRANCE_TRAP_SOUTH     (6)
+#define ENTRANCE_CANYON     (7)
+
+import bool GetEntireFreeHex(Map& map, int number, uint16& hx, uint16& hy) from "entire";
+
+bool entrance_Klamath(Location& klamath, Critter@[]& critters, uint8 entrance)
+{
+	Critter@ leader=critters[0];
+	if(entrance==ENTRANCE_TORR ||entrance==ENTRANCE_TRAP_SOUTH) return leader.Skill[SK_OUTDOORSMAN]>=100;
+	else if(entrance==ENTRANCE_NORTH || entrance==ENTRANCE_TRAP_WEST) return leader.Skill[SK_OUTDOORSMAN]>=50;
+		else if(entrance==ENTRANCE_CANYON) return leader.Skill[SK_OUTDOORSMAN]>=150;
+        return true;
+}
+
+
+
+import void InitCowboy(Map& map, bool firstTime) from "klam_cowboy";
+import void InitDantonKilling(Map& map, bool firstTime) from "klam_danton_killing";
+import void ActivateMobScript(Map& map) from "mob";
+import void _CollectorInit(Critter& cr, bool firstTime) from "collector";
+
+void _KlamathGrazInit(Map& map, bool firstTime)
+{
+	InitCowboy(map, firstTime);
+}
+
+void _KlamathTrapInit(Map& map, bool firstTime)
+{
+	ActivateMobScript(map);
+	InitDantonKilling(map, firstTime);
+}
+
+// Использование вакцины в квесте на прививку браминов
+void _BrahmaInit(Critter& cr, bool firstTime)
+{
+	cr.SetEvent(CRITTER_EVENT_SMTH_USE_ITEM, "_BrahmaSmthUseItem");
+}
+
+void _BrahmaSmthUseItem(Critter& cr, Critter& fromCr, Item& item, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+	if(valid(onCritter) && onCritter.Id==cr.Id && fromCr.IsPlayer() && item.GetProtoId()==PID_VACCINE)
+		RunDialog(fromCr, cr, true);
+}
+
+
+void _RobotInit(Critter& cr, bool firstTime)
+{
+	_CollectorInit(cr, firstTime);
+	cr.SetEvent(CRITTER_EVENT_PLANE_BEGIN, "_RobotPlaneBegin");
+}
+
+int _RobotPlaneBegin(Critter& cr, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem)
+{
+	if(plane.Type==AI_PLANE_PICK && uint(cr.Stat[ST_VAR2])<__FullSecond)
+	{
+		cr.StatBase[ST_VAR2]=__FullSecond + __TimeMultiplier * 5;
+		cr.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR (cr.Stat[ST_DIALOG_ID],1));
+	}	
+	return PLANE_RUN_GLOBAL;
+}

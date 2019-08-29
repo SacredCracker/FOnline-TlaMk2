@@ -1,0 +1,308 @@
+[comment]
+Ваши комментарии / Your comments.
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _param p ST_INTELLECT > 3 D _var p name_mem_npc_player = 0 R _var p name_mem_npc_player = 1 #
+3 1020 D _script caravan@d_CaravanEndedOrNotStarted 0  D _param p ST_INTELLECT > 3 D _script caravan@d_PlayerHasNoCaravanFailures 0  D _var p name_mem_npc_player = 1 D _var p q_mod_aureliano_caravan_escort ! 8 D _var p q_mod_aureliano_caravan_escort ! 10 #
+8 1030 D _param p ST_INTELLECT < 4 #
+10 1040 D _script caravan@d_NotHasPlayerRequest 0  D _script caravan@d_NotIsFullParty 0  D _script caravan@d_IsCaravanStatus 1 1 D _script caravan@d_PlayerHasNoCaravanFailures 0  D _param p ST_INTELLECT > 3 D _var p name_mem_npc_player = 1 #
+36 1050 D _script caravan@d_NotHasPlayerRequest 0  D _script caravan@d_IsFullParty 0  D _script caravan@d_IsCaravanStatus 1 1 D _param p ST_INTELLECT > 3 D _script caravan@d_PlayerHasNoCaravanFailures 0  D _var p name_mem_npc_player = 1 #
+30 1060 D _script caravan@d_PlayerHasNoCaravanFailures 0  D _script caravan@d_IsCaravanStatus 1 1 D _param p ST_INTELLECT > 3 D _var p name_mem_npc_player = 0 D _script caravan@d_NotIsFullParty 0  R _var p name_mem_npc_player = 1 #
+33 1070 D _var p name_mem_npc_player = 0 D _script caravan@d_IsCaravanStatus 1 1 D _param p ST_INTELLECT > 3 D _script caravan@d_IsFullParty 0  D _script caravan@d_PlayerHasNoCaravanFailures 0  R _var p name_mem_npc_player = 1 #
+95 1080 D _script caravan@d_IsCaravanStatus 1 1 D _script caravan@d_HasPlayerRequest 0  D _param p ST_INTELLECT > 3 D _script caravan@d_PlayerHasNoCaravanFailures 0  #
+98 1090 D _param p ST_INTELLECT > 3 D _script caravan@d_IsCaravanStatus 1 4 D _script caravan@d_PlayerHasNoCaravanFailures 0  #
+100 1100 D _var p q_mod_aureliano_caravan_escort = 7 #
+101 1110 D _var p q_mod_aureliano_caravan_escort = 4 #
+102 1120 D _var p q_mod_aureliano_caravan_escort = 3 #
+103 1130 D _var p q_mod_aureliano_caravan_escort = 5 #
+103 1140 D _var p q_mod_aureliano_caravan_escort = 6 #
+105 1150 D _var p q_mod_aureliano_caravan_escort = 8 D or D _var p q_mod_aureliano_caravan_escort = 10 @
+2 2000 None 0 #
+5 2010 #
+6 2020 #
+7 2030 #
+0 2040 @
+3 3000 None 0 #
+5 3010 #
+6 3020 #
+0 3030 @
+5 4000 None 0 #
+7 4010 #
+6 4020 #
+0 4030 @
+6 5000 None 0 #
+5 5010 #
+3 5020 #
+0 5030 #
+9 5040 @
+7 6000 None 0 #
+6 6010 #
+0 6020 @
+8 7000 None 0 #
+65507 7010 #
+0 7020 @
+9 8000 None 0 #
+11 8010 @
+10 9000 None 0 #
+0 9010 #
+35 9020 D _script caravan@d_NotHasPlayerRequest 0  R _script caravan@r_PutPlayerRequest2Info 0  R _var p q_mod_aureliano_caravan_escort = 1 @
+11 10000 None 0 #
+0 10010 #
+5 10020 @
+30 11000 None 0 #
+31 11010 #
+0 11020 #
+32 11030 @
+31 12000 None 0 #
+0 12010 @
+32 13000 None 0 #
+0 13010 #
+35 13020 D _script caravan@d_NotPlayerHired 0  R _var p q_mod_aureliano_caravan_escort = 1 R _script caravan@r_PutPlayerRequest2Info 0  @
+33 14000 None 0 #
+31 14010 #
+0 14020 @
+35 15000 None 0 #
+0 15010 @
+36 16000 None 0 #
+0 16010 #
+37 16020 D _var p q_mod_aureliano_caravan_escort = 11 @
+37 17000 None 0 #
+0 17010 #
+0 17020 D _script caravan@d_NotHasPlayerRequest 0  R _script caravan@r_PutPlayerRequest2Info 0  R _var p q_mod_aureliano_caravan_escort = 1 @
+95 18000 None 0 #
+96 18010 @
+96 19000 None 0 #
+0 19010 @
+98 20000 None 0 #
+0 20010 #
+99 20020 D _script caravan@d_HasPlayerRequest 0  @
+99 21000 None 0 #
+0 21010 R _script caravan@r_ContinueCaravan 0  @
+100 22000 None 0 #
+107 22010 @
+101 23000 None 0 #
+108 23010 #
+110 23020 @
+102 24000 None 0 #
+0 24010 @
+103 25000 None 0 #
+109 25010 #
+0 25020 @
+105 26000 None 0 #
+0 26010 D _var p q_mod_aureliano_caravan_escort ! 11 R _item p PID_BOTTLE_CAPS + 1000 R _script dialog@r_QuestReward1 0  R _var p q_mod_aureliano_caravan_escort = 11 @
+107 27000 None 0 @
+108 28000 None 0 @
+109 29000 None 0 #
+0 29010 #
+0 29020 @
+110 30000 None 0 #
+0 30010 R _var p q_mod_aureliano_caravan_escort = 0 &
+
+[russ]
+{100}{}{Хосе Аурелиано}
+{200}{}{Вы видите высокого усатого  мужчину с широченными плечами.}
+{210}{}{Перед вами Хосе Аурелиано, он заведует караванами, идущими в Гекко.}
+{210}{}{Очень крупный мужчина. А уж усищи....}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{не знаком. Караван не начинался, норм инт. Провалов квеста раньше не было.}
+{1020}{}{знаком караван не начинался, норм инт. Провалов квеста раньше не было}
+{1030}{}{низкий интеллект}
+{1040}{}{знаком - доступен квест на караван. Норм инт. Не было провалов. Группа не полная}
+{1050}{}{знаком - доступен квест на караван. Норм инт. Не было провалов. Группа полная}
+{1060}{}{незнаком. Доступен квест на караван. Норм инт, не было провалов. Группа неполная}
+{1070}{}{незнаком. Квест доступен, но группа полная. Норм инт}
+{1080}{}{игрок в составе каравана. Караван еще не вышел из точки старта. Норм инт. У игрока не было провалов данного каравана}
+{1090}{}{караван на энкаунтере, все спокойно. Норм инт. Реплика для всех,  а не только игрока с квестом. У игрока не было провалов}
+{1100}{}{Провал: игрок убил караванщика на энкаунтере}
+{1110}{}{Провал: игрок покинул караван во время маршрута. Норм инт}
+{1120}{}{Провал: игрок нападал на караван или пытался ограбить}
+{1130}{}{Провал: игрок погиб во время каравана}
+{1140}{}{Провал: проводника убили во время каравана, кто-то кроме игрока}
+{1150}{}{Успех: игрок выполнил квест Пришел в геко . Норм инт}
+{2000}{}{Привет. Меня зовут Хосе Аурелиано. Я вожу караван в Гекко. В нашем городке мало народу, потому мне не помешает  надежный человек для охраны груза. Хочешь пойти с нами?}
+{2010}{}{Тебе нужен охранник, да?}
+{2020}{}{А что это за караван? }
+{2030}{}{Когда пойдете?}
+{2040}{}{Не думаю, что это для меня. До свидания. }
+{3000}{}{Да, в чем дело?}
+{3010}{}{Тебе нужен охранник, да?}
+{3020}{}{Чем вы торгуете?}
+{3030}{}{Нет, ничего. До свидания.}
+{4000}{}{Мне нужны охранники, я вроде так и сказал. Приходи , если захочешь получить работу. }
+{4010}{}{А во сколько?}
+{4020}{}{Чем вы торгуете?}
+{4030}{}{Я пожалуй пойду. До свидания.}
+{5000}{}{Ну, мы гоним браминов, например. Говорят, раньше у них была одна голова и они назывались коровами. Отсюда произошло название кОрован.}
+{5010}{}{Это интересно. Говоришь, вам нужны охранники?}
+{5020}{}{Хочу спросить еще кое-что.}
+{5030}{}{Хмм. Ясно. До свидания.}
+{5040}{}{Вона как? Кто бы мог подумать.  А кроме браминов, что еще везете?}
+{6000}{}{Мы выходим в 12 часов ровно. Если все еще будет нужна работа, подойди  ко мне заранее.}
+{6010}{}{Понятно. Так что вы перевозите?}
+{6020}{}{Это все, что мне нужно было знать. До свидания.}
+{7000}{}{Айяяй. Как тебя сюда занесло?}
+{7010}{}{Моя убивать! Твоя страдать! [Атака]}
+{7020}{}{Фу, тебе! [Уйти]}
+{8000}{}{Ну всё, что на земле растет  - репу, морковь, маис, бататы...}
+{8010}{}{А что ж тогда не назвать бататан, раз бататы везете?}
+{9000}{}{Вовремя ты появил@sex@|ся||ась|. Выходим сегодня в 12 часов. Плачу 1000, когда доберемся до места. Что скажешь?}
+{9010}{}{Нет, мне это не интересно.[Уйти]}
+{9020}{}{Ладно, я с тобой.}
+{10000}{}{Так, Ты умничать будешь или хочешь получить работу?}
+{10010}{}{А не пошел бы ты, дядя.}
+{10020}{}{Да, конечно,мне нужна работа, если тебе нужен охранник.}
+{11000}{}{Привет. Меня зовут Хосе Аурелиано. Я вожу караван в Гекко. Если хочешь заработать, то ты обратил@sex@|ся||ась| по адресу. И у меня есть место в караване для опытного охранника.}
+{11010}{}{А что перевозит твой караван?}
+{11020}{}{Нет, не хочу. [Уйти]}
+{11030}{}{Сколько заплатишь?}
+{12000}{}{Да, я проводник, и мой караван укомплектован. Для тебя места нет.}
+{12010}{}{Ладно, пока. [Уйти]}
+{13000}{}{Я плачу 1000 каждому охраннику. Деньги получишь, когда прибудем на место. Соглашайся.}
+{13010}{}{Я подумаю. [Уйти]}
+{13020}{}{Неплохие деньги за такую работу. Я соглас@sex@|ен||на|.}
+{14000}{}{Ты кто? Не помню тебя. В любом случае не важно, я очень занят.}
+{14010}{}{А чем занят то? Ты проводник каравана?}
+{14020}{}{Увидимся. [Уйти]}
+{15000}{}{Отлично. Отправляемся в 12 часов. Будь рядом.}
+{15010}{}{Договорились.@@Буду неподалеку. @@Ясно.}
+{16000}{}{На сегодня все охранники наняты. Приходи в другой раз.}
+{16010}{}{Ладно, забудь. [Уйти]}
+{16020}{}{Но, может, не придет кто?}
+{17000}{}{Хм. Да, всякое бывает. Будь здесь на всякий случай, если что. В 12 часов все решится. Если попадешь в мою охрану, получишь 1000 монет, как закончим.}
+{17010}{}{Мне не подходит. Походу, слишком дешево ты ценишь свой караван. [Уйти]}
+{17020}{}{Хорошо, подожду здесь. [Уйти]}
+{18000}{}{Не путайся под ногами. Скоро выходим.}
+{18010}{}{Долго ждать еще?}
+{19000}{}{В 12 часов будь рядом, чтобы я тебя видел. Опоздавших ждать не буду.}
+{19010}{}{Поскорей бы уже.[Уйти]@@Ясно. [Уйти]@@Хорошо, подождем. [Уйти]}
+{20000}{}{И не лень им каждый раз на нас нападать.@@мы всегда готовы дать отмашку бандитам @@Зря это вы затеяли!@@Ну, вы сами напросились. Чур, не обижаться!}
+{20010}{}{Не бери в голову. [Уйти]}
+{20020}{}{Хватит здесь торчать, погнали дальше?}
+{21000}{}{Да, самое время. Идем потихоньку.}
+{21010}{}{Все готовы. Можно выходить.}
+{22000}{}{Держись подальше от меня, я не хочу тебя видеть.}
+{22010}{}{Че за дела?!}
+{23000}{}{Ты бросил@sex@|||а| мой караван и теперь явил@sex@|ся||ась| вымаливать себе работу? Вон отсюда!}
+{23010}{}{Эй, полегче!}
+{23020}{}{Клянусь, это вышло само собой и не по моей воле. Больше такого не повториться. А работа мне нужна.}
+{24000}{}{Бандитам нет места в моем караване.}
+{24010}{}{Ну и пошел ты! [Уйти]}
+{25000}{}{Слушай, @sex@|друг||подруга|, ну есть правило - не довел караван - не получил деньги. Всегда так было.}
+{25010}{}{Э, минутку. Меня там приложили, в твоем караване, и ты не хочешь платить?}
+{25020}{}{ А, ладно. [Уйти]}
+{26000}{}{А, это ты? Ну что ж, вполне неплохо.  Вот твоя плата. Будешь еще с нами ходить?}
+{26010}{}{Спасибо, я подумаю. [Уйти]}
+{27000}{}{Тебя предупредили. Теперь вон отсюда к чертовой матери.}
+{28000}{}{Я сказал - вон. А это ознчает - иди в жопу!}
+{29000}{}{Но работа-то твоя не сделана. За что ж платить. Хочешь, запишись еще раз.}
+{29010}{}{Нет уж, ну вас к бабаю. [Уйти]}
+{29020}{}{Да, я подумаю.}
+{30000}{}{Да? Ну попробуй еще раз записаться. Посмотрим, что из этого выйдет.}
+{30010}{}{Я еще вернусь.}
+
+[engl]
+{100}{}{Hose}
+{200}{}{You see a man with greasy hairs. He covered with dust.}
+{210}{}{You see a low, nervous guy with slicked back hair.}
+{1000}{}{Predialogue installations}
+{1010}{}{it is not familiar}
+{1020}{}{a sign}
+{1030}{}{the fool}
+{1040}{}{10 sign - the quest on a caravan is accessible. Norms int}
+{1050}{}{a sign - the quest on a caravan is accessible. Norms int. There were no failures. Group full}
+{1060}{}{it is unfamiliar. The quest on a caravan is accessible. Norms int, there were no failures.}
+{1070}{}{it is unfamiliar. The quest is accessible, but group full.}
+{1080}{}{the player as a part of a caravan. The caravan did not leave yet a start point}
+{1090}{}{a caravan on enkauntere, all is quiet. Norms int}
+{1100}{}{the Failure: the player has killed the caravaneer on enkauntere}
+{1110}{}{the Failure: the player has left a caravan during a route. Norms int}
+{1120}{}{the Failure: the player attacked a caravan or tried to plunder}
+{1130}{}{the Failure: the player was lost during a caravan}
+{1140}{}{the Failure: a conductor have killed during a caravan, someone except the player}
+{1150}{}{Success: the player has executed a quest for the first time}
+{2000}{}{Greetings. My name is Savinelli. I operate a caravan between Nju-Reno and Reddingom. Reliable protection is always necessary to us. We leave a city of 21 numbers of each month. If you want to go with us, come here 21 numbers.}
+{2010}{}{the security guard, yes is necessary to You?}
+{2020}{}{Than you trade?}
+{2030}{}{Why you wait to 21 numbers?}
+{2040}{}{I do not think that it for me. Good-bye.}
+{3000}{}{Yes, I listen?}
+{3010}{}{the security guard, yes is necessary to You?}
+{3020}{}{Than you trade?}
+{3030}{}{No, anything. Good-bye.}
+{4000}{}{protection for a caravan is usually necessary To us, but I am now yet ready to go. I will be ready 21st. Come then if you will want to get a job.}
+{4010}{}{And when 21st?}
+{4020}{}{Than you trade?}
+{4030}{}{I perhaps will go. Good-bye.}
+{5000}{}{Well, we generally take, uf, the medical goods - yes, it so - in Nju-Reno, and we change them in Reddinge for gold.}
+{5010}{}{It is interesting. You speak, security guards are necessary to you?}
+{5020}{}{I Want to ask still something.}
+{5030}{}{Hmm. Clearly. Good-bye.}
+{5040}{}{There as? Who could think. And except braminov, what carry?}
+{6000}{}{I do not know, how many these devil's navvies will work to collect gold party. We leave 21st, it is not important that will occur. Approach to me if you will want to get a job.}
+{6010}{}{it is clear. So you transport?}
+{6020}{}{It is everything that it was necessary for me the nobility. Good-bye.}
+{7000}{}{Vremja:60000 Is not present ответа:Завершить dialogue}
+{7010}{}{Washing to kill! You to suffer! [Attack]}
+{7020}{}{Faugh, you! [To leave]}
+{8000}{}{Well everything that on the earth grows - turnip, carrots, a maize, bataty...}
+{8010}{}{And what then not to name batatan, time bataty carry?}
+{9000}{}{10 sign - the quest on a caravan is accessible. Norms int}
+{9010}{}{No, it is not interesting to me. [To leave]}
+{9020}{}{it is fine, I with you.}
+{10000}{}{So, You will philosophise or want to get a job?}
+{10010}{}{Instead of you would go, the uncle.}
+{10020}{}{Yes, of course, work if the security guard is necessary to you is necessary to me.}
+{11000}{}{it is unfamiliar. The quest on a caravan is accessible. Norms int, there were no failures.}
+{11010}{}{And what transports your caravan?}
+{11020}{}{No, I do not want. [To leave]}
+{11030}{}{How many you will pay?}
+{12000}{}{Not now. All questions set in other day.}
+{12010}{}{it is fine, while. [To Leave]}
+{13000}{}{I cry one and a half slanting to each security guard. Money you will receive, when we will arrive into place. Well, make the decision, at me a cloud of affairs.}
+{13010}{}{I will think. [To leave]}
+{13020}{}{Quite good money. I соглас@sex | en || on |.}
+{14000}{}{You who? I do not remember you. Anyway it is not important, I am very occupied.}
+{14010}{}{And than it is occupied that? You a caravan conductor?}
+{14020}{}{we Will meet. [To leave]}
+{15000}{}{it is excellent. We go at 15 o'clock. Be a number.}
+{15010}{}{Have agreed. [To leave] @@ I Will be nearby. [To Leave] @Ясно. [To Leave]}
+{16000}{}{Where you potter? For today goljak, all places are occupied. I not the Red Cross to drag behind myself a fucking cloud of cretins to which safe transition through the Heathland is necessary.}
+{16010}{}{it is fine, forget. [To leave]}
+{16020}{}{But, can, who will not come?}
+{17000}{}{Hm. Yes, everyone happens. Be here just in case if that, I will let know. At 15 o'clock all will dare. If you will get to my protection, you will receive 1500 coins as we will finish.}
+{17010}{}{To me does not approach. To a campaign, too cheaply you appreciate the caravan. [To leave]}
+{17020}{}{it is good, I will wait here. [To Leave]}
+{18000}{}{the player as a part of a caravan. The caravan did not leave yet a start point}
+{18010}{}{Long to wait still?}
+{19000}{}{At 15 o'clock be a number that I you saw. Late I will not wait.}
+{19010}{}{is faster already. [To Leave] @@ it is clear. [To leave] @@ it is good, we will wait. [To leave]}
+{20000}{}{the text on enkauntere}
+{20010}{}{do not get into the head. [To leave]}
+{20020}{}{Will suffice here to stick out, have sent on errands further?}
+{21000}{}{Yes, it is a high time. Perhaps it was the setup, and still children now will drive.}
+{21010}{}{All are ready. It is possible to leave.}
+{22000}{}{the player has killed the caravaneer on enkauntere}
+{22010}{}{Che for affairs?!}
+{23000}{}{the player has thrown a caravan}
+{23010}{}{Hey, easier!}
+{23020}{}{I Swear, it left by itself and not on my will. More such not to repeat. And work is necessary to me.}
+{24000}{}{the player attacked a caravan, tried to kill or plunder}
+{24010}{}{Robbers? I to you will remember it! [To leave]}
+{25000}{}{the player was lost during a caravan}
+{25010}{}{E, minute. Me there have put, in your caravan, and you do not want to pay?}
+{25020}{}{And, all right. [To leave]}
+{26000}{}{the caravan was at the end of the resources appointments, the player did a quest for the first time}
+{26010}{}{Thanks, I will think. [To leave]}
+{27000}{}{You have warned. Now from here to hell.}
+{28000}{}{I have told-. You not only желторот@sex | yj || aja |, but also глух@sex | oh || aja |?}
+{29000}{}{Close a mouth. I knew, it was necessary to employ the pro. Give, ruin from here, a useless bag of a shit.}
+{29010}{}{Well you and the freak, Savinelli. [To Leave]}
+{29020}{}{Yes, I will think.}
+{30000}{}{Yes? Well try to register once again. We will look that from this leaves.}
+{30010}{}{I still will return.}
+

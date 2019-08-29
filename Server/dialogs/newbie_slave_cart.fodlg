@@ -1,0 +1,228 @@
+[comment]
+
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 D _param p ST_INTELLECT > 3 D _var p q_newbie_sex = 0 D _var p newbie_harvest = 0 D _var p newbie_shit = 0 D _var p q_newbie_brahmin = 0 D or D _param p ST_INTELLECT > 3 D _var p q_newbie_sex = 0 D _var p newbie_harvest = 0 D _var p newbie_shit = 0 D _var p q_newbie_brahmin = 3 #
+39 1020 D _param p ST_INTELLECT < 4 D _var p q_newbie_brahmin = 0 D _var p q_newbie_sex = 0 D _var p newbie_shit = 0 D _var p newbie_harvest = 0 D or D _param p ST_INTELLECT > 3 D _var p q_newbie_sex = 0 D _var p newbie_harvest = 0 D _var p newbie_shit = 0 D _var p q_newbie_brahmin = 3# #
+21 1030 D _var p newbie_harvest > 0 D or D _var p newbie_shit > 0 D or D _var p q_newbie_sex > 0 D or D _var p q_newbie_brahmin > 0 @
+2 2000 None 1 #
+3 2010 #
+0 2020 #
+12 2030 D _var p q_newbie_cart_meat = 0 D _var p q_newbie_lubricant_deliver = 1 R _var p q_newbie_cart_meat = 1 R _item p PID_MEAT_JERKY + 4 @
+3 3000 None 1 #
+4 3010 D _param p ST_STRENGTH > 3 D _script q_newbie_firewood@r_CheckQuestPossibility 1 0 #
+5 3020 D _var p newbie_shit = 0 #
+7 3030 D _var p q_newbie_sex = 0 D _param p ST_CHARISMA > 2 D or D _var p q_newbie_sex = 0 D _param p TRAIT_SEX_APPEAL = 1 #
+8 3040 D _var p q_newbie_brahmin = 0 #
+0 3050 #
+10 3060 D _param p ST_STRENGTH < 4 D _script q_newbie_firewood@r_CheckQuestPossibility 1 0 #
+11 3070 D _var p q_newbie_sex = 0 D _param p TRAIT_SEX_APPEAL = 0 D _param p ST_CHARISMA < 3 @
+4 4000 None 1 #
+0 4010 R _item p PID_AXE + 1 R _script q_newbie_firewood@r_InitQuest 1 0 #
+3 4020 #
+0 4030 @
+5 5000 None 1 #
+0 5010 D _var p newbie_shit = 0 R _var p newbie_shit = 1 R _item p PID_SHOVEL + 1 R _var p newbie_shit_shoveling = 0 #
+3 5020 #
+0 5030 @
+7 6000 None 1 #
+0 6010 D _param p ST_INTELLECT > 3 R _var p q_newbie_sex = 1 R _item p PID_RED_CONDOM + 1 #
+3 6020 D _param p ST_INTELLECT > 3 #
+0 6030 D _param p ST_INTELLECT > 3 #
+0 6040 D _param p ST_INTELLECT < 4 R _var p q_newbie_sex = 1 R _item p PID_RED_CONDOM + 1 @
+8 7000 None 0 #
+0 7010 R _var p q_newbie_brahmin = 1 R _script newb_brahmin@r_addBrahmin 0  #
+3 7020 #
+0 7030 @
+21 8000 None 1 #
+22 8010 D _item p PID_SHOVEL > 0 D _var p newbie_shit_shoveling } 10 R _var p newbie_shit = 0 R _item p PID_SHOVEL = 0 R _var p newbie_shit_shoveling = 0 R _item p PID_BOTTLE_CAPS + 50 R _param p ST_EXPERIENCE + 350 #
+23 8020 D _var p newbie_shit = 1 D _item p PID_SHOVEL < 1 R _var p newbie_shit = 0 R _param p ST_CURRENT_HP = 0 R _script q_newbie_scripts@r_KnockDown 0  #
+22 8030 D _var p q_newbie_sex = 2 R _var p q_newbie_sex = 0 R _item p PID_BOTTLE_CAPS + 70 R _param p ST_EXPERIENCE + 450 #
+22 8040 D _item p PID_MEAT } 6 D _var p q_newbie_brahmin = 2 R _item p PID_MEAT = 0 R _param p ST_EXPERIENCE + 200 R _item p PID_BOTTLE_CAPS + 50 R _var p q_newbie_brahmin = 3 #
+45 8050 D _var p q_newbie_brahmin = 2 D _item p PID_MEAT < 6 D or D _script newb_brahmin@d_CheckBrahminInv 0  D _var p q_newbie_brahmin = 1 R _var p q_newbie_brahmin = 3 R _param p ST_CURRENT_HP = 1 #
+44 8060 D _var p newbie_harvest = 1 D _item p PID_AXE = 0 D _item p PID_FIREWOOD < 10 R _script q_newbie_firewood@r_Result 1 0 R _param p ST_CURRENT_HP = 0 #
+44 8070 D _var p newbie_harvest = 1 D _item p PID_AXE = 0 D _item p PID_FIREWOOD > 9 R _script q_newbie_firewood@r_Result 1 0 R _item p PID_FIREWOOD = 0 R _param p ST_EXPERIENCE + 125 R _param p ST_CURRENT_HP = 0 #
+22 8080 D _var p newbie_harvest = 1 D _item p PID_FIREWOOD > 9 D _item p PID_AXE > 0 R _script q_newbie_firewood@r_Result 1 1 R _item p PID_FIREWOOD = 0 R _item p PID_AXE - 1 @
+22 9000 None 1 @
+23 10000 None 0 @
+40 11000 None 0 #
+22 11010 D _var p newbie_harvest = 1 D _item p PID_AXE > 0 D _item p PID_FIREWOOD > 9 R _item p PID_FIREWOOD = 0 R _script q_newbie_firewood@r_Result 1 1 R _item p PID_AXE - 1 #
+44 11020 D _item p PID_AXE = 0 D _var p newbie_harvest = 1 R _param p ST_CURRENT_HP = 0 R _script q_newbie_firewood@r_Result 1 0 #
+22 11030 D _item p PID_SHOVEL > 0 D _var p newbie_shit_shoveling } 10 R _item p PID_SHOVEL = 0 R _var p newbie_shit = 0 R _item p PID_BOTTLE_CAPS + 40 R _param p ST_EXPERIENCE + 350 R _var p newbie_shit_shoveling = 0 #
+23 11040 D _var p newbie_shit = 1 D _item p PID_SHOVEL = 0 R _param p ST_CURRENT_HP = 0 R _var p newbie_shit = 0 R _param p ST_EXPERIENCE + 200 R _script q_newbie_scripts@r_KnockDown 0  #
+22 11050 D _var p q_newbie_sex = 2 R _var p q_newbie_sex = 0 R _item p PID_BOTTLE_CAPS + 70 R _param p ST_EXPERIENCE + 450 #
+0 11060 @
+41 12000 None 0 @
+42 13000 None 0 @
+44 14000 None 0 @
+10 15000 None 0 @
+11 16000 None 0 @
+39 17000 None 0 #
+41 17010 D _script q_newbie_firewood@r_CheckQuestPossibility 1 0 D _var p newbie_harvest = 0 #
+42 17020 D _var p newbie_shit = 0 R _var p newbie_shit_shoveling = 0 R _var p newbie_shit = 1 R _item p PID_SHOVEL + 1 #
+7 17030 D _var p q_newbie_sex = 0 #
+0 17040 @
+12 18000 None 0 #
+0 18010 #
+13 18020 D _param p ST_STRENGTH > 7 R _item p PID_MEAT_JERKY + 2 #
+14 18030 D _item p PID_BOTTLE_CAPS > 19 R _item p PID_MEAT_JERKY + 2 R _item p PID_BOTTLE_CAPS - 20 #
+15 18040 D _param p ST_CHARISMA > 3 D or D _param p SK_SPEECH > 24 R _item p PID_MEAT_JERKY + 2 @
+13 19000 None 0 @
+14 20000 None 0 @
+15 21000 None 0 @
+45 22000 Attack 0 &
+
+[russ]
+{100}{}{Карт}
+{200}{}{Вы видите холеного раба.}
+{210}{}{Вы видите холеного раба Карта. Похоже он пришел к успеху.}
+{1000}{}{Predialogue installations}
+{1010}{}{умный }
+{1020}{}{тупой}
+{1030}{}{Одно из заданий выполнено}
+{2000}{}{Чего тебе?@@Что, еще поработать захотелось?}
+{2010}{}{Работы не найдется?}
+{2020}{}{Пожалуй, я потом зайду.}
+{2030}{}{Меня прислал Стив, говорит, что провизия заканчивается и ты должен передать ему вяленого мяса.}
+{3000}{}{Работа всякая всегда есть. Зависит от твоих возможностей. Это может быть рубка леса, чистка загонов, забой браминов. Также есть кое что особенное. [Помигивает вам] Что ты умеешь?}
+{3010}{}{Рубить деревья.}
+{3020}{}{Говна покидать.}
+{3030}{}{Я бы попробовал@sex@|||а| что нибудь особенное.}
+{3040}{}{Забивать браминов. Люблю кишки, кровищщу.}
+{3050}{}{Что-то мне расхотелось работать.}
+{3060}{}{Рубить деревья.}
+{3070}{}{Я бы попробовал@sex@|||а| что нибудь особенное.}
+{4000}{}{Отличный выбор. Держи топор. А теперь, ноги в руки и на лесоповал. Ты должен набрать 10 вязанок дров.}
+{4010}{}{Хорошо. [Вы берете топор]@@Окей. [Вы берете топор]@@Ладно. [Вы берете топор]}
+{4020}{}{Напомни, какая там еще работа имеется?@@Что там еще за работа была?}
+{4030}{}{С другой стороны, может, я потом поработаю.@@Что-то не охота мне работать.@@Нет, пожалуй, я пойду.@@Тьфу. Возможно, как-нибудь потом.}
+{5000}{}{А, любишь с навозом повозиться? Держи лопату. Потеряешь - будешь работать на одни лекарства! Не забудь про загоны в общей пещере и неподалеку от водонасосной станции.}
+{5010}{}{Ладно, давай лопату. [Берете лопату]@@Давай ее сюда. [Берете лопату]@@ Ну что ж, давай покидаем говнецо. [Берете лопату]}
+{5020}{}{Напомни, какая там еще работа имеется?@@Что там еще за работа была?}
+{5030}{}{С другой стороны, может, я потом поработаю.@@Что-то не охота мне работать.@@Нет, пожалуй, я пойду.@@Тьфу. Возможно, как-нибудь потом.}
+{6000}{}{Думаю, твой ротик может сослужить нашему начальнику неплохую службу. Иди прямо к нему. Называй его исключительно Властелином. И еще, на всякий случай возьми этот презерватив.}
+{6010}{}{Кхем. Сейчас посмотрим на этого властелина. Давай сюда свой гандон.@@[Молча берете презерватив и уходите]@@Раз-два-три-четыре-пять, я и гандон идем искать! [Берете презерватив]}
+{6020}{}{Напомни, какая там еще работа имеется?@@Что там еще за работа была?}
+{6030}{}{С другой стороны, может, я потом поработаю.@@Что-то не охота мне работать.@@Нет, пожалуй, я пойду.@@Тьфу. Возможно, как-нибудь потом.}
+{6040}{}{[Чавкаете и размазываете слюни по лицу]}
+{7000}{}{Хорошо. Вот брамин, отведи его к косоглазому... кхм... Суню. За скотину отвечаешь головой!}
+{7010}{}{Всё понял, веду рогатую тварь к Суню, несу мясо обратно.}
+{7020}{}{Напомни, какая там еще работа имеется?@@Что там еще за работа была?}
+{7030}{}{Я пожалуй займусь еще чем нибудь.}
+{8000}{}{Ну, и как оно прошло?@@Выполнил@sex@|||а| работу?@@На какой стадии выполнение работы находишься?}
+{8010}{}{Дерьмо успешно убрано, сэр!}
+{8020}{}{К сожалению, при уборке дерьма, произошел неприятный инцидент и лопата пропала где-то в навозной куче.}
+{8030}{}{Пенис Властелина надраен до блеска!}
+{8040}{}{Я принес мясо.}
+{8050}{}{Я потерял мясо.@@Мясо?...ой , я кажется его потерял.}
+{8060}{}{Я потерял топор, можешь дать другой?}
+{8070}{}{Вот дрова, но топор я потерял.}
+{8080}{}{Забирай дрова.}
+{9000}{}{Отлично. Вот твоя награда. Продолжай в том же духе.@@Отличная работа.@@Хорошо.}
+{10000}{}{Скотина! [Со всей силы бьет вас в живот ногой]@@Это что еще за хрень?! [Пробивает вам мощный удар в голову]}
+{11000}{}{Ну как, дубинушка, справил@sex@|||а|ся с работенкой?}
+{11010}{}{Моя запилить дрова!}
+{11020}{}{Насяльника, моя пашла молоть-колотить деревья, а там пижамы-пижамы и бац! Бац! И нету топора...}
+{11030}{}{Моя почистила говняну кучу.}
+{11040}{}{Товарисъ насяльника моя плохая, осеньема плохая. Моя смотреть по сторонам и вдруг пропала лопатка!}
+{11050}{}{Моя присла от больсова насяльника. Все осенема болит.}
+{11060}{}{Уходить.}
+{12000}{}{Как говорится, сила есть - ума не надо. Вот, держи топор. Потеряешь - голову снесу!}
+{13000}{}{Вот твоя лопата. Потеряешь - будешь работать на одни лекарства!}
+{14000}{}{Да я тебе за него голову проломлю!@@Как же я теперь отчитаюсь перед хозяевами!?}
+{15000}{}{[Критически осматривает вас] Хиловат@sex@|||а| ты что-то, найди себе занятие попроще.}
+{16000}{}{[Критически осматривает вас] Прости, не вышел@sex@|||а| ты рожей. Наш Властелин таким не рад.}
+{17000}{}{Это еще чего за дубина стоеросовая? А ну, иди работай! Выбирай, что будешь делать, - рубить лес, загоны чистить или что нибудь особенное?}
+{17010}{}{Моя рубить!}
+{17020}{}{Грести гавно!}
+{17030}{}{Хотеть секаса!}
+{17040}{}{Работа плоха! Моя гулять!}
+{18000}{}{Хах, вот прожорливый ниггер! Этот гребанный троглодит каждый день присылает своих посыльных, чёрт, но отказывать ему нельзя, начальник Сэм его уважает... Но у меня нет сейчас лишник шести кусков мяса, могу дать только четыре. Так что, еще пару тебе придется найти самому.}
+{18010}{}{Эх, придется поднапрячься.}
+{18020}{}{Карт, у меня нет времени бегать, искать ссаные куски мяса. Просто давай оставшееся мясо и ни у кого не будет не приятностей. Если ты понимаешь, о чем я.}
+{18030}{}{Как на счет небольшого взноса в фонд корма браминов? Думаю, я бы смог пожертвовать двадцать монет.}
+{18040}{}{Карт, дружище, у меня сейчас действительно нет времени разыскивать это мясо. Давай не будем бодаться, сегодня ты мне поможешь, завтра я чем подсоблю...}
+{19000}{}{[Смотрит вам в глаза с неприязнью] Хорошо. Забирай.}
+{20000}{}{Да, несчастные животные совсем исхудали в последнее время. Я принимаю твой щедрый дар в эти непростые времена!}
+{21000}{}{Ладно, не случится ничего страшного, если дам тебе еще мяса...}
+{22000}{}{Да я тебе за него голову проломлю!@@Как же я теперь отчитаюсь перед хозяевами!?}
+
+[engl]
+{100}{}{Cart}
+{200}{}{You see a sleek slave.}
+{210}{}{You see a sleek slave Cart. Looks like he's quite successful.}
+{1000}{}{Predialogue installations}
+{1010}{}{умный }
+{1020}{}{тупой}
+{1030}{}{Одно из заданий выполнено}
+{2000}{}{What do you want?@@You come for work or what?}
+{2010}{}{Do you have any work that needs to be done?}
+{2020}{}{I'd rather come later.}
+{2030}{}{Steve sent me. He says he's running out of provisions and you must send him some smoked meat.}
+{3000}{}{We always have work. Depends on what you can do. It can be wood chopping, pen cleaning, brahmin slaughtering. Or something special. [Winks at you] So what will it be?}
+{3010}{}{Chopping wood.}
+{3020}{}{Cleaning shit.}
+{3030}{}{I'd try something special.}
+{3040}{}{Slaughter. I love blood and guts.}
+{3050}{}{I don't really feel like working.}
+{3060}{}{Chopping wood.}
+{3070}{}{I'd try something special.}
+{4000}{}{Nice. Here's the axe. Now get your ass to the lumbering. You must bring 10 bundles of wood.}
+{4010}{}{Fine. [Take the axe]@@Okay. [Take the axe]@@All right. [Take the axe]}
+{4020}{}{Remind me, what else you've got?@@What other work do you have?}
+{4030}{}{On the other hand maybe I'll work later.@@I'm not in the mood for work.@@I'd rather go.@@Maybe some other time.}
+{5000}{}{Like to mess around with crap, huh? Take the shovel. You lose it - you work to pay doctor's bill for the rest of your days! Don't forget about pens in the cave and near the water pump.}
+{5010}{}{All right. [Take the shovel]@@Give it to me. [Take the shovel]@@Well, let's throw some shit around. [Take the shovel]}
+{5020}{}{Remind me, what else you've got?@@What other work do you have?}
+{5030}{}{On the other hand maybe I'll work later.@@I'm not in the mood for work.@@I'd rather go.@@Maybe some other time.}
+{6000}{}{I think your mouth will be of a good service to our chief. Go straight to him. Call him Overlord exclusively. And take this condom, just in case.}
+{6010}{}{Ahem. Let's have a look at this Overlord. Gimme the condom.@@[Take the condom and leave]@@One-two-three-four, pants are gonna hit the floor! [Take the condom]}
+{6020}{}{Remind me, what else you've got?@@What other work do you have?}
+{6030}{}{On the other hand maybe I'll work later.@@I'm not in the mood for work.@@I'd rather go.@@Maybe some other time.}
+{6040}{}{[You champ and spread saliva over your face]}
+{7000}{}{Fine. Here's the brahmin, take it to that chink... ahem... Sung. Your pathetic life depends on this cow!}
+{7010}{}{I get it. I take this bag of bones to Sung and bring back the meat.}
+{7020}{}{Remind me, what else you've got?@@What other work do you have?}
+{7030}{}{I'd rather do something else.}
+{8000}{}{So, how did it go?@@Have you finished the work?@@How close are you to finishing?}
+{8010}{}{The shit is taken care of, sir!}
+{8020}{}{An accident occurred during fecal maintenance, and now the shovel is missing somewhere in the manure pile.}
+{8030}{}{Overlord's penis is so polished it shines!}
+{8040}{}{I brought the meat.}
+{8050}{}{I lost the meat.@@Meat? Oh... Looks like I've lost it.}
+{8060}{}{I lost my axe, can you give me another one?}
+{8070}{}{Here's the wood, but I lost the axe.}
+{8080}{}{Take the wood.}
+{9000}{}{Fine. Here's your reward. Keep up the good work.@@Good job.@@Excellent.}
+{10000}{}{You damn shithead! [Hits you in the stomach with his foot]@@What the fuck did I tell ya?! [Hits you forcefully in the head]}
+{11000}{}{So did you cope with your work, dummy?}
+{11010}{}{Me chop wood!}
+{11020}{}{Masta, me go to wood, and than bang bang! Boom! No more axe...}
+{11030}{}{Me clean shit pile.}
+{11040}{}{Me bad, very bad. Me look away and then shovel gone!}
+{11050}{}{Me come from big chief. Me hurts.}
+{11060}{}{Me go.}
+{12000}{}{What God gave you in strength, he took away in smarts. Here's the axe. You better lose your friggin' head than this!}
+{13000}{}{Here's your shovel. You lose it - you work to pay doctor's bill for the rest of your life!}
+{14000}{}{I'll break your head for it!@@How am I supposed to account for it!?}
+{15000}{}{[Looks at you appraisingly] You seem too feeble, find yourself an easier work.}
+{16000}{}{[Looks at you appraisingly] Sorry, but you don't look like our Overlord's type.}
+{17000}{}{What's this retard over here? Go to work, you dumb fuck! What will you do: Chop wood, clean pens or something special?}
+{17010}{}{Me chop!}
+{17020}{}{Me clean shit!}
+{17030}{}{Want sex!}
+{17040}{}{Work bad! Me no want!}
+{18000}{}{Heh, that gluttonous nigger! He sends his fucking messengers every single day. But I can't deny him, chief Sam respects him... Only I don't have extra 6 pieces of meat. I can only spare 4. You'll have to find the remaining pieces yourself.}
+{18010}{}{Hmm, I guess I'll have to think of something.}
+{18020}{}{Cart, I don't have time for this shit. Just give me the remaining meat and nobody gets any trouble. If you catch my drift.}
+{18030}{}{How about a small donation to the Brahmin Aid Fund? I could spare $20.}
+{18040}{}{Cart, my friend. I'm really pressed for time right now. Let's not make it difficult. You help me today and maybe I'll cover your as tomorrow...}
+{19000}{}{[Looks into your eyes with hostility] Fine. Take it.}
+{20000}{}{Yeah, poor creatures sure lost some weight lately. I accept your generous donation!}
+{21000}{}{All right, It won't hurt if I give you some more meat...}
+{22000}{}{Yes I to you for it will break a head! @@ as I will report now to owners!?}

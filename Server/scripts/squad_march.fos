@@ -1,0 +1,551 @@
+#ifndef _SQUAD_MARCH_
+#define _SQUAD_MARCH_
+
+// Система отдачи приказов, выполнения для нпц и контроля выполнения для игроков
+//  Приказы на перемещения по карте
+
+#include "_macros.fos"
+#include "serializator.fos"
+
+#define ORDER_TYPE_POS           (0)
+#define ORDER_TYPE_MOVE          (1)
+#define ORDER_TYPE_DIR           (2)
+#define ORDER_TYPE_ARM           (3)
+#define MAX_EXECUTE_TRIES        (10) // Максимальное число попыток выполнить приказ. Приказ не выполняется, если у нпц есть еще хоть какие-то планы
+#define RECHECK_TIME             (REAL_SECOND(5)) // Время последующей проверки при провале выполнения приказа.
+#define _MarchKey #(crId) ("MarchQueue_"+crId)
+#define _CommanderKey #(crId) ("MarchCommander_"+crId)
+#define PID_UNARMED              (0) //1000)
+//#define DL #(s) (Log(s))
+#define DL #(s)
+#define STR_LOOSE                     (5917) // Вы что-то сделали не так. Задание провалено.
+
+import bool AddWalkPlane(Critter& npc, uint priority, uint16 hexX, uint16 hexY, uint8 dir, bool run, uint cut) from "npc_planes";
+
+class MarchOrder                 // Вспомогательный класс. Приказ криттеру на выполнение некоторых действий
+{
+	uint8  Type;                 // Тип приказа
+	uint16 HexX;                 // Точка, в которой должен стоять игрок. Ось икс
+	uint16 HexY;                 // Точка, в которой должен стоять игрок. Ось игрек
+	uint8  Steps;                // Число шагов, которые нужно сделать
+	uint8  Dir;                  // Направление, в котором должен смотреть игрок
+	bool   Armed;                // Вооружен
+	bool   Run;                  // Бежать во время перемещения
+	uint   TimeCheck;            // Относительное время проверки, когда игрок должен выполнить приказ TODO: Удалить это время
+	uint   TimeNext;             // Относительное время отдачи следующего приказа
+
+	void Save(string key)
+	{
+		Serializator save;
+		save.Set(this.Type);
+		save.Set(this.HexX);
+		save.Set(this.HexY);
+		save.Set(this.Steps);
+		save.Set(this.Dir);
+		save.Set(this.Armed);
+		save.Set(this.Run);
+		save.Set(this.TimeCheck);
+		save.Set(this.TimeNext);
+		save.Save(key);
+	}
+
+	void Load(string key)
+	{
+		Serializator load;
+		if (!load.Load(key))
+		{
+			Log("Can't load MarchOrder. Key: "+key);
+			return;
+		}
+		load.Get(this.Type);
+		load.Get(this.HexX);
+		load.Get(this.HexY);
+		load.Get(this.Steps);
+		load.Get(this.Dir);
+		load.Get(this.Armed);
+		load.Get(this.Run);
+		load.Get(this.TimeCheck);
+		load.Get(this.TimeNext);
+	}
+
+	void Erase(string key)
+	{
+		if(IsAnyData(key))
+			EraseAnyData(key);
+	}
+
+	string ToString()
+	{
+		string s="MarchOrder";
+		s +="\n type     : " +(this.Type==ORDER_TYPE_POS ? "ORDER_TYPE_POS" :
+									(this.Type==ORDER_TYPE_MOVE ? "ORDER_TYPE_MOVE" :
+										(this.Type==ORDER_TYPE_DIR ? "ORDER_TYPE_DIR" : "ORDER_TYPE_ARM")));
+		s +="\n HexX     : " + this.HexX;
+		s +="\n HexY     : " + this.HexY;
+		s +="\n Steps    : " + this.Steps;
+		s +="\n Dir      : " + this.Dir;
+		s +="\n Armed    : " + (this.Armed ? "true" : "false");
+		s +="\n Run      : " + (this.Run ? "true" : "false");
+		s +="\n TimeCheck: " + this.TimeCheck;
+		s +="\n TimeNext : " + this.TimeNext;
+		return s;
+	}
+}
+
+// Формулировки приказов
+// Приказ ЗАНЯТЬ ПОЗИЦИЮ
+MarchOrder@ DefineSetPosition(uint16 hexX, uint16 hexY, uint8 dir, bool run, uint timeCheck, uint timeNext)
+{
+	MarchOrder@ order=MarchOrder();
+	order.Type=ORDER_TYPE_POS;
+	order.HexX=hexX;
+	order.HexY=hexY;
+	order.Dir =dir;
+	order.Run =run;
+	order.TimeCheck=timeCheck;
+	order.TimeNext =timeNext;
+	return order;
+}
+
+// Приказ ПЕРЕМЕСТИТЬСЯ
+MarchOrder@ DefineMove(uint8 steps,  uint8 dir, bool run, uint timeCheck, uint timeNext)
+{
+	MarchOrder@ order=MarchOrder();
+	order.Type=ORDER_TYPE_MOVE;
+	order.Steps  =steps;
+	order.Dir =dir;
+	order.Run =run;
+	order.TimeCheck=timeCheck;
+	order.TimeNext =timeNext;
+	return order;
+}
+
+// Приказ ПОВОРОТ
+MarchOrder @ DefineDirection(uint8 dir, uint timeCheck, uint timeNext)
+{
+	MarchOrder@ order=MarchOrder();
+	order.Type=ORDER_TYPE_DIR;
+	order.Dir =dir;
+	order.TimeCheck=timeCheck;
+	order.TimeNext =timeNext;
+	return order;
+}
+
+// Приказ ВЗЯТЬ/УБРАТЬ ОРУЖИЕ
+MarchOrder @ DefineArmWeapon(bool armed, uint timeCheck, uint timeNext)
+{
+	MarchOrder@ order=MarchOrder();
+	order.Type=ORDER_TYPE_ARM;
+	order.Armed  =armed;
+	order.TimeCheck=timeCheck;
+	order.TimeNext =timeNext;
+	return order;
+}
+
+// Класс для реализации строевой подготовки. Несколько последовательных приказов для каждого криттера.
+// Определяющий параметр - Id криттера, у одного криттера - только одна очередь приказов
+class MarchQueue
+{
+	MarchQueue(Critter& cr)
+	{
+		this.OrderCurrent=-1;
+		this.CritterId=cr.Id;
+		this.Auto=false;
+	}
+
+	MarchQueue(uint crId)
+	{
+		this.OrderCurrent=-1;
+		this.CritterId=crId;
+		this.Auto=false;
+	}
+
+	bool         Auto;          // Признак: все приказы назначаются автоматически, с помощью time_events
+	uint         CritterId;     // Исполнитель приказа
+	int8         OrderCurrent;  // Текущий номер приказа
+	MarchOrder[] Orders;        // Приказы в порядке выполнения
+
+	void AddOrder(MarchOrder@ order)
+	{
+		if(valid(order))
+		{
+			this.Orders.insertLast(order);
+		}
+	}
+
+	void Save()
+	{
+		if(this.CritterId==0)
+			return;
+		string key=_MarchKey(this.CritterId);
+		uint orders=this.Orders.length();
+		DL("orders saved:" + orders);
+		Serializator save;
+		save.Set(this.Auto);
+		save.Set(this.CritterId);
+		save.Set(this.OrderCurrent);
+		save.Set(orders);
+		for(uint i=0; i<orders; i++)
+		{
+			this.Orders[i].Save(key+i);
+		}
+		save.Save(key);
+	}
+
+	void Load()
+	{
+		string key=_MarchKey(this.CritterId);
+		if (!IsAnyData(key))
+			return;
+		Serializator load;
+		if (!load.Load(key))
+		{
+			return;
+		}
+		uint orders=0;
+		load.Get(this.Auto);
+		load.Get(this.CritterId);
+		load.Get(this.OrderCurrent);
+		load.Get(orders);
+		this.Orders.resize(0);
+		for(uint i=0; i<orders; i++)
+		{
+			MarchOrder@ o=MarchOrder();
+			o.Load(key+i);
+			this.AddOrder(o);
+		}
+	}
+
+	void Erase()
+	{
+		string key=_MarchKey(this.CritterId);
+		uint orders=this.Orders.length();
+		for(uint i=0; i<orders; i++)
+		{
+			this.Orders[i].Erase(key+i);
+		}
+		if(IsAnyData(key))
+			EraseAnyData(key);
+		Critter@ cr=GetCritter(this.CritterId);
+		if(valid(cr) && cr.IsNpc())
+			cr.ModeBase[MODE_NO_HOME]=0;
+	}
+
+	// Подтверждает выполнение текущего приказа неким криттером. В результате подтверждения координаты
+	//  предыдущего приказа приравниваются к текущему положению криттера
+	void ConfirmOrder()
+	{
+		if(this.OrderCurrent<0)
+			return;
+		Critter@ cr=GetCritter(this.CritterId);
+		if (!valid(cr))
+			return;
+		MarchOrder@ order=this.Orders[OrderCurrent];
+		if (!valid(order))
+			return;
+		order.HexX=cr.HexX;
+		order.HexY=cr.HexY;
+		order.Dir =cr.Dir;
+		this.Save();
+	}
+
+	// Проверяет что все условия приказа выполнены
+	bool CheckOrderCompleted()
+	{
+		if(this.OrderCurrent<0)
+			return true;
+		Critter@ cr=GetCritter(this.CritterId);
+		if (!valid(cr))
+			return false;
+		MarchOrder@ order=this.Orders[this.OrderCurrent];
+		if (!valid(order))
+			return false;
+		Item@ weapon;
+		switch(order.Type)
+		{
+			case ORDER_TYPE_POS:
+				return (cr.HexX==order.HexX && cr.HexY==cr.HexY);
+			case ORDER_TYPE_MOVE:
+				if(this.OrderCurrent==0) // первый шаг, исходная координата неизвестна
+				{
+					return true;
+				}
+				else
+				{
+					MarchOrder@ orderPrev=this.Orders[OrderCurrent-1];
+					if (!valid(orderPrev))
+						return true;
+					uint16 hx=orderPrev.HexX;
+					uint16 hy=orderPrev.HexY;
+					Map@ map=cr.GetMap();
+					if (!valid(map))
+						return true;
+					map.MoveHexByDir(hx, hy, order.Dir, order.Steps);
+					return (cr.HexX==hx && cr.HexY==hy);
+				}
+			case ORDER_TYPE_DIR:
+				return (cr.Dir==order.Dir);
+			case ORDER_TYPE_ARM:
+				@weapon=_CritGetItemHand(cr);
+				if(valid(weapon))
+				{
+					if(order.Armed)
+					{
+						return !weapon.Proto.Weapon_IsUnarmed;
+					}
+					else
+					{
+						return weapon.Proto.Weapon_IsUnarmed;
+					}
+				}
+				return !order.Armed;
+			default:
+				break;
+		}
+		return false;
+	}
+
+	void ExecuteOrder()
+	{
+		Critter@ cr=GetCritter(this.CritterId);
+		if (!valid(cr) || cr.IsPlayer())
+			return; // Игроком выполнить приказ с помощью скрипта нельзя, разумеется
+		cr.ModeBase[MODE_NO_HOME]=1;
+		MarchOrder@ order=this.Orders[OrderCurrent];
+		if (!valid(order))
+			return;
+		Map@ map=cr.GetMap();
+		if (!valid(map))
+			return;
+		DL(order.ToString());
+		Item@ weapon;
+		ProtoItem@ proto;
+		Item@[] weapons;
+		uint16 hx=0;
+		uint16 hy=0;
+		uint pid1=0;
+		uint pid2=0;
+		switch(order.Type)
+		{
+			case ORDER_TYPE_POS:
+				AddWalkPlane(cr, 0, order.HexX, order.HexY, order.Dir, order.Run, 0);
+				break;
+			case ORDER_TYPE_MOVE:
+				if(this.OrderCurrent==0) // первый шаг, исходная координата неизвестна
+				{
+					break;
+				}
+				else
+				{
+					MarchOrder@ orderPrev=this.Orders[OrderCurrent-1];
+					if (!valid(orderPrev))
+						return;
+					hx=orderPrev.HexX;
+					hy=orderPrev.HexY;
+					map.MoveHexByDir(hx, hy, order.Dir, order.Steps);
+					AddWalkPlane(cr, 0, hx, hy, order.Dir, order.Run, 0);
+					break;
+				}
+			case ORDER_TYPE_DIR:
+				cr.SetDir(order.Dir);
+				break;
+			case ORDER_TYPE_ARM:
+				@weapon=_CritGetItemHand(cr);
+				if(order.Armed)
+				{
+					if(valid(weapon) && !weapon.Proto.Weapon_IsUnarmed)
+						break; // В руках оружие
+					pid1=cr.GetFavoriteItem(SLOT_HAND1);
+					// Проверяем, что у нпц в другом слоте
+					pid2=cr.GetFavoriteItem(SLOT_HAND2);
+					@proto=GetProtoItem(pid2);
+					if (!valid(proto) || proto.Type !=ITEM_TYPE_WEAPON)
+					{
+						if(cr.GetItemsByType(ITEM_TYPE_WEAPON, weapons) > 0)
+						{
+
+							for(uint i=0, iMax=weapons.length(); i<iMax; i++)
+							{
+								if(weapons[i].GetType()==ITEM_TYPE_WEAPON && !weapons[i].Proto.Weapon_IsUnarmed)
+									pid2=weapons[i].GetProtoId();
+							}
+						}
+					}
+					cr.SetFavoriteItem(SLOT_HAND1, pid2);
+					cr.SetFavoriteItem(SLOT_HAND2, pid1);
+				}
+				else
+				{
+					if(valid(weapon) && !weapon.Proto.Weapon_IsUnarmed)
+					{
+						pid1=weapon.GetProtoId();
+						// Проверяем, что у нпц в другом слоте
+						pid2=cr.GetFavoriteItem(SLOT_HAND2);
+						@proto=GetProtoItem(pid2);
+						if (!valid(proto) || proto.Type==ITEM_TYPE_WEAPON)
+							pid2=PID_UNARMED; // Убирание оружия - имитируем с помощью выбора любимым оружием рукопашного удара
+						cr.DropPlanes();
+						cr.SetFavoriteItem(SLOT_HAND1, pid2);
+						cr.SetFavoriteItem(SLOT_HAND2, pid1);
+					}
+				}
+				break;
+			default:
+				break;
+		}
+	}
+
+	void NextOrder()
+	{
+		if(this.Orders.length()==0)
+			return;
+		uint newIndex=this.OrderCurrent + 1;
+		MarchOrder@ order;
+		if(newIndex >=this.Orders.length())
+		{
+			@order=this.Orders[this.OrderCurrent];
+			if(order.TimeNext==0)
+			{
+				this.Erase(); // Выполнение всех приказов закончено
+				return;
+			}
+			else
+			{
+				newIndex=0; // Повторяем заново
+			}
+		}
+		this.OrderCurrent=newIndex;
+		this.Save();
+		if(this.Auto)
+		{
+			ExecuteOrder();
+			@order=this.Orders[this.OrderCurrent];
+			if(valid(order))
+			{
+				uint[] values={this.CritterId, 0};
+				CreateTimeEvent(__FullSecond + order.TimeNext,  "e_NextOrder",  values, false);
+			}
+		}
+	}
+}
+
+ // Атоматическая проверка, что приказ выполнен для НПЦ с очередью приказов с установленным флагом Auto
+ // Проверяется, что план выполнен, у НПЦ нет других планов, если это верно, отдается следующий приказ
+ // иначе делается MAX_EXECUTE_TRIES попыток выполнить приказ
+ // если приказ не выполним, очередь приказов отменяется
+uint e_NextOrder(uint[]@ values)
+{
+	DL("next order");
+	Critter@ cr=GetCritter(values[0]);
+	if (!valid(cr) || values[1]>=MAX_EXECUTE_TRIES || !cr.IsNpc())
+	{
+		return 0;
+	}
+	MarchQueue@ march=MarchQueue(cr);
+	values[1]++;
+	if(cr.IsNoPlanes() && valid(march) && march.CheckOrderCompleted())
+	{
+		march.ConfirmOrder();
+		march.NextOrder();
+		return 0;
+	}
+	return RECHECK_TIME;
+}
+
+class SquadCommander
+{
+	SquadCommander(Critter & cr)
+	{
+		this.CommanderId=cr.Id;
+	}
+
+	uint CommanderId;
+	uint[] Squad;
+
+	void Save()
+	{
+		string key=_CommanderKey(this.CommanderId);
+		Serializator save;
+		save.Set(this.CommanderId);
+		save.Set(this.Squad);
+		save.Save(key);
+	}
+
+	void Load()
+	{
+		string key=_CommanderKey(this.CommanderId);
+		if (!IsAnyData(key))
+			return;
+		Serializator load;
+		if (!load.Load(key))
+		{
+			return;
+		}
+		load.Get(this.CommanderId);
+		load.Get(this.Squad);
+	}
+
+	void Erase()
+	{
+		string key=_CommanderKey(this.CommanderId);
+		for(uint i=0, iMax=this.Squad.length(); i<iMax; i++)
+		{
+			MarchQueue@ q=MarchQueue(this.Squad[i]);
+			if(valid(q))
+			{
+				q.Load();
+				q.Erase();
+			}
+		}
+		if(IsAnyData(key))
+			EraseAnyData(key);
+	}
+
+	bool CheckCommandExecuted() // Проверка только для игроков
+	{
+		for(uint i=0, iMax=this.Squad.length(); i<iMax; i++)
+		{
+			MarchQueue@ q=MarchQueue(this.Squad[i]);
+			q.Load();
+			Critter@ cr=GetCritter(this.Squad[i]);
+			if (!valid(cr) || !valid(q))
+			{
+				return false;
+			}
+			if(cr.IsPlayer() && !q.CheckOrderCompleted())
+			{
+				cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_LOOSE);
+				return false;
+
+			}
+		}
+		return true;
+	}
+
+	void Command(uint strNum) // strNum - номер строки из диалога
+	{
+		Critter@ cr=GetCritter(this.CommanderId);
+		if(valid(cr) && strNum >=0)
+			cr.SayMsg(SAY_SHOUT, TEXTMSG_DLG, DLGSTR(cr.Stat[ST_DIALOG_ID], strNum));
+		for(uint i=0, iMax=this.Squad.length(); i<iMax; i++)
+		{
+			MarchQueue@ q=MarchQueue(this.Squad[i]);
+			q.Load();
+			if(valid(q))
+			{
+				q.ConfirmOrder();
+				q.Save();
+				DL("ci=" + q.OrderCurrent);
+				q.NextOrder();
+				q.Save();
+				Critter@ c=GetCritter(q.CritterId);
+				if (!valid(c))
+					return;
+				if(c.IsNpc())
+					q.ExecuteOrder();
+			}
+		}
+	}
+}
+
+#endif // _SQUAD_MARCH_

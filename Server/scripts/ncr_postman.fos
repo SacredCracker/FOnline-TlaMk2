@@ -1,0 +1,361 @@
+// Author: rif leman17
+
+#include "_macros.fos"
+#include "_msgstr.fos"
+
+#define LOC_PID_MIN 				(1)// начало диапазона кодов прототипов локаций
+#define LOC_PID_MAX 				(LOCATION_PrimalTribe)// конец диапазона кодов прототипов локаций
+#define BASE_LOC_PID1				(LOCATION_Vault15)//9 - эталонная начальная точка маршрута - используется при расчете экспы
+#define BASE_LOC_PID2				(LOCATION_NCR) //10 - эталонная конечная точка маршрута - используется при расчете экспы
+#define BASE_XP_LVL1				(500) // эталонная экспа первого уровня
+#define BASE_XP_LVL2				(750)
+#define BASE_XP_LVL3				(950)
+#define BASE_XP_LVL4				(1200)
+#define LOC_NAME #(mapId)   		((mapId + 100) * 1000)// поиск названия локации в файле FOGM.msg
+//#define NPC_NAME #(dialogId, protoId)   		(STR_NPC_NAME(dialogId, protoId))// поиск имени НПЦ в файле FODLG.msg
+
+
+// Почтальон выдает квест доставить письмо случайному адресату(нпц). Опыт рассчитывается в зависимости от расстояния между локацией, на которой стоит почтальон и локацией получателя.
+// Чем выше уровень игрока, тем больше экспы он получит (и денег)
+// можно отказаться от награды - персонаж не получит опыта и денег, но заработает +1 к карме
+// на выдачу письма вешается таймаут. Величина таймаута зависит от навыка красноречия игрока.
+// за базу был выбран коэффициент на основе выражения:  0 красноречия=20 дней, 300 красноречия=5 дней
+
+#define TIME_Q #(speechLvl)			((20 -(12*speechLvl/300))*60*24)// расчет таймаута в минутах в зависисмоти от навыка красноречия
+
+// случайное письмо
+// startLoc - код прототипа стартовой локации (чтобы не было доставления письма в ту же локацию, этот прототип исключается из возможных вариантов)
+LetterInfo@ GetRandomLetterInfo(uint startLoc)
+{
+	uint locPid=startLoc;
+	while (locPid==startLoc)
+	{
+		locPid=uint(Random(LOC_PID_MIN, LOC_PID_MAX));
+		if (!LOCATION_IS_CITY(locPid) || locPid==LOCATION_Navarro || locPid==LOCATION_Vault15)
+			locPid=startLoc;
+	}
+	Location@ loc=GetLocationByPid(locPid, 0);
+	if (!valid(loc) || loc.GetMapCount()==0)
+		return null;
+	Map@[] maps;
+	loc.GetMaps(maps);
+	Map@ map=maps[uint(Random(0, uint(maps.length()-1)))];
+	Critter@[] critters;
+	if(map.GetCritters(0, FIND_LIFE|FIND_ONLY_NPC, critters)==0)
+		return null;
+	Critter@ cr=critters[Random(0, critters.length()-1)];
+	if(cr.Stat[ST_DIALOG_ID]==0)
+		return null;
+	switch (cr.Stat[ST_BODY_TYPE])
+	{
+		case BT_MEN:
+			break;
+		case BT_WOMEN:
+			break;
+		case BT_CHILDREN:
+			break;
+		case BT_SUPER_MUTANT:
+			break;
+		case BT_GHOUL:
+			break;
+		default:
+			return null;
+	}
+	LetterInfo@ li=LetterInfo();
+	li.NpcDidRec=uint(cr.Stat[ST_DIALOG_ID]);
+	li.LocPidRec=locPid;
+	li.MapPidRec=map.GetProtoId();
+	//Log("new letter. Dialog:" + li.NpcDidRec + "; локация:" + li.LocPidRec + "Карта: " + li.MapPidRec);
+	return li;
+}
+
+// получает новое описание письма
+// locPid - код локации, в которой начинаетсся квест
+// playerId - id игрока
+LetterInfo@ GetNewLetterInfo(uint locPid, uint playerId)
+{
+	uint numTry;
+	numTry=10;// максимально число попыток составить описание нового письма
+	for(uint i=0; i<numTry; i++)
+	{
+		LetterInfo@ li=GetRandomLetterInfo(locPid);
+		if(valid(li))
+		{
+			li.PlayerID=playerId;
+			li.LocPidStart=locPid;
+			return li;
+		}
+	}
+	return null;
+}
+
+// Описание предмета - квестовое письмо для квеста "почтальон"
+class LetterInfo
+{
+	LetterInfo()
+	{
+
+	}
+	// создает экземпляр описания письма на основе итема
+	LetterInfo(Item& item)
+	{
+		this.LocPidStart=item.Val1;
+		this.LocPidRec=item.Val2;
+		this.MapPidRec=item.Val3;
+		this.NpcDidRec=item.Val4;
+		this.PlayerID =item.Val5;
+		this.NpcProRec=item.Val6;
+	}
+
+	// pidLocS - PID локации на которой выдан квест
+	// pidLocE - PID локации, на которой стоит нпц-получатель
+	// pidMapE - PID карты, на которой стоит нпц получатель
+	// didNpcE - номер диалога НПЦ-получателя
+	// idPlayer - код игрока, выполняющего квест
+	LetterInfo(uint pidLocS, uint pidLocE, uint pidMapE, uint didNpcE, uint pidNpcE, uint idPlayer)
+	{
+		this.LocPidStart=pidLocS;
+		this.LocPidRec=pidLocE;
+		this.MapPidRec=pidMapE;
+		this.NpcDidRec=didNpcE;
+		this.NpcProRec=pidNpcE;
+		this.PlayerID=idPlayer;
+	}
+
+	uint LocPidStart;	//PID локации, на которой выдается квест
+	uint LocPidRec; 	//PID локации, где расположен получатель
+	uint MapPidRec;		//PID карты, на которой расположен получатель
+	uint NpcDidRec;		//PDialogID нпц-получателя
+	uint NpcProRec;		//Прототип получателя
+	uint PlayerID;		//Id игрока, выполняющего квест
+
+	// сохраняет описание письма в итеме
+	void SetItemLetterInfo(Item& item)
+	{
+		if(item.GetProtoId() !=PID_POSTMAN_LETTER){return;}
+
+		item.Val1=this.LocPidStart;
+		item.Val2=this.LocPidRec;
+		item.Val3=this.MapPidRec;
+		item.Val4=this.NpcDidRec;
+		item.Val5=this.PlayerID;
+		item.Val6=this.NpcProRec;
+		item.SetLexems(this.GetLetterLexems());
+		item.Update();
+	}
+
+	// лексемы для адреса/получателя письма
+	string GetLetterLexems()
+	{
+		return "$reciever@msg DLG " + STR_NPC_NAME(this.NpcDidRec, this.NpcProRec) + "@$location@msg GM "+ LOC_NAME(this.LocPidRec)+"@";
+	}
+
+	// рассчитывает количество опыта за выполнение квеста, в зависимости от уровня персонажа
+	// lvl - уровень персонажа
+	// playerID - Id персонажа
+	uint GetExperience(uint lvl, uint playerID)
+	{
+		// квест взял другой игрок
+		if(playerID !=this.PlayerID){return 0;}
+		// определение базы для расчета ХР
+		uint baseXP=0;
+		switch (uint(lvl/10))
+		{
+			case 0:// игроки ниже 10 ур
+				baseXP=BASE_XP_LVL1;
+				break;
+			case 1:// игроки 10..19 ур
+				baseXP=BASE_XP_LVL2;
+				break;
+			case 2:// игроки 20+ ур
+				baseXP=BASE_XP_LVL3;
+				break;
+			default:
+				baseXP=0;
+				break;
+		}
+		if(lvl > 29)
+			baseXP=BASE_XP_LVL4;
+		// за базовое расстояние взят маршрут НКР-Волт15
+		// для него нет проверки деления на ноль
+		return uint((uint(baseXP*MeasureDist(this.LocPidStart, this.LocPidRec)/MeasureDist(uint(BASE_LOC_PID1), uint(BASE_LOC_PID2)))/100)*100);
+	}
+} // LetterInfo
+
+//вспомогательная функция - измеряет расстояние между двумя локациями с указанием прототипов локаций
+float MeasureDist(uint pidLocFrom, uint pidLocTo)
+{
+	Location@ fromLoc=GetLocationByPid(pidLocFrom, 0);
+	Location@ toLoc=GetLocationByPid(pidLocTo, 0);
+	if (!valid(toLoc) || !valid(fromLoc))
+		return 0;
+	return sqrt(POW2(toLoc.WorldX-fromLoc.WorldX)+POW2(toLoc.WorldY - fromLoc.WorldY));
+}
+
+// использование письма на криттера
+bool _OnMailUseOnCritter(Item& item, Critter& cr, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+	if (!valid(onCritter) || onCritter.IsDead())
+		return false;
+	LetterInfo@li=LetterInfo(item);
+	Map@ map=onCritter.GetMap();
+	if (!valid(map))
+		return false;
+	Location@ loc=map.GetLocation();
+	if (!valid(loc))
+		return false;
+	if (!valid(li) || uint(onCritter.StatBase[ST_DIALOG_ID]) !=li.NpcDidRec ||
+		!cr.IsPlayer() || onCritter.CheckEnemyInStack(cr.Id) || li.LocPidRec !=loc.GetProtoId())
+		return false;
+	//if(cr.Id !=li.PlayerID){return false;} сдать письмо может любой
+	// нужный нам нпц - тот самый, что прописан в итеме. Нужно открывать диалог получателя письма.
+	// но диалог, открытый RunDialog'ом не имеет ссылки на нпц, поэтому сохраняем Id криттера нпц в специальную переменную
+	GameVar@ crVar=GetLocalVar(LVAR_ncr_mail_reciever_id, cr.Id);
+	if (!valid(crVar)){return false;}
+
+	crVar=onCritter.Id;
+
+	RunDialog(cr, DIALOG_q_mail_reciever, onCritter.HexX, onCritter.HexY, false);
+
+	return true;
+
+}
+
+// выброшенное письмо. Отменено, выброшенные письма тоже можно сдать
+void _OnItemDrop(Item& item, Critter& cr)
+{
+	// если игрок выбрасывает письмо, переключаем квестовую переменную и стираем информацию о почтальоне
+	// можно было бы и не стирать, но в этом случае игрок может накопить тонну конвертов и потом их сдавать оптом - мгновенная прокачка до космических высот
+	GameVar@qVar=GetLocalVar(LVAR_q_mail_delivery, cr.Id);
+	if(valid(qVar) && qVar.GetValue()==1) qVar=2;
+	LetterInfo@ li=LetterInfo(item);
+	if(li.PlayerID==cr.Id)
+	{
+		li.PlayerID=0;
+		li.SetItemLetterInfo(item);
+	}
+}
+
+// инициализация письма
+void _LetterInit(Item& letter, bool firstTime)
+{
+	LetterInfo@ li=LetterInfo(letter);
+	// letter.SetEvent(ITEM_EVENT_DROP, "_OnItemDrop"); отменено
+	letter.SetEvent(ITEM_EVENT_USE, "_OnMailUseOnCritter");
+	letter.Update();
+}
+
+//**************************************Диалоги*******************************************//
+// диалог с почтальоном, фраза в которой он называет адрес и получателя
+void dlg_GenLetter2Postman(Critter& player, Critter@ postman, string@ lexems)
+{
+	if(IS_DIALOG_END(lexems) or IS_DIALOG_SAY_MODE(lexems))
+		return;
+	// устанавливаем почтальону запрет на воровство игроком, чтобы не крали письма в надежде сдать тучу сразу
+	postman.ModeBase[MODE_NO_STEAL]=1;
+	postman.ModeBase[MODE_NO_BARTER]=1;
+	postman.ModeBase[MODE_NO_DROP]=1;
+	Item@ item;
+	LetterInfo@ li;
+	if(postman.CountItem(PID_POSTMAN_LETTER)==0)
+	{
+		@item=postman.AddItem(PID_POSTMAN_LETTER, 1);
+		@li=GetNewLetterInfo(postman.GetMap().GetLocation().GetProtoId(), player.Id);
+		li.SetItemLetterInfo(item);
+		item.SetScript("ncr_postman@_LetterInit");
+	}
+	else
+	{
+		@item=postman.GetItem(PID_POSTMAN_LETTER, -1);
+		@li=LetterInfo(item);
+	}	
+	lexems=li.GetLetterLexems();
+}
+
+// функция для использования в диалоге
+// передача письма, которое уже есть в инвентаре почтальона игроку
+void r_GiveLetter(Critter& player, Critter@ postman)
+{
+	Item@ letter=postman.GetItem(PID_POSTMAN_LETTER, -1);
+	if (!valid(letter))
+		return;
+	MoveItem(letter,1,player);
+}
+
+// награждение игрока
+void r_GrantPlayer(Critter& player, Critter@ npc_null, int needMoney)
+{
+	//npc_null - null, поскольку диалог открыт скриптом без выбора нпц
+	GameVar@ crVar=GetLocalVar(LVAR_ncr_mail_reciever_id, player.Id);
+	if (!valid(crVar) || crVar.GetValue()==0)
+		return;
+	Critter@ npc=GetCritter(crVar.GetValue());
+	crVar=0;
+	if (!valid(npc) || !npc.IsLife() || player.CountItem(PID_POSTMAN_LETTER)==0)
+		return;
+
+	// писем может быть несколько, нам нужно именно наше
+	Item@[] items;
+	player.GetItems(-1, items);
+	for(uint i=0, iMax=items.length(); i < iMax; i++)
+	{
+		Item@ letter=items[i];
+		if (!valid(letter))
+			continue;
+		if(letter.GetProtoId()==PID_POSTMAN_LETTER)
+		{
+			LetterInfo@li=LetterInfo(letter);
+			if (!valid(li))
+				continue;
+			if(li.NpcDidRec==uint(npc.StatBase[ST_DIALOG_ID]))
+			{
+				// получатель правильный - письмо можно удалять
+				DeleteItem(letter);
+				// если игрок правильный и у него активен квест - > (1, 2) он получит экспу
+				// иначе только деньги
+				if(li.PlayerID==player.Id)
+				{
+					GameVar@qVar=GetLocalVar(LVAR_q_mail_delivery, player.Id);
+					if(valid(qVar) && qVar.GetValue() > 0 && qVar.GetValue()<3) qVar=3;
+				}
+				// все проверки закончены, итем удален
+				// выдаем награду
+				uint xp=li.GetExperience(player.Stat[ST_LEVEL], player.Id);
+				player.StatBase[ST_EXPERIENCE] +=xp;
+				if(needMoney > 0) player.AddItem(PID_BOTTLE_CAPS, xp !=0 ? CLAMP(uint(xp/2), 0, 2000) : 250);
+				return;// выход из цикла и метода
+			}
+		}
+	}
+}
+
+import bool d_RatchTimeOutCheck(Critter& player, Critter@ npc, int v0) from "ncr_ratch";
+import void r_RatchTimeOutSet(Critter& player, Critter@ npc , int v0, int v1) from "ncr_ratch";
+
+// проверка: таймаут пустой или свободен
+bool d_QTimeOutOK(Critter& player, Critter@ postman)
+{
+	return d_RatchTimeOutCheck(player, postman, LVAR_ncr_mail_timeout);
+}
+
+// таймаут занят
+bool d_NotQTimeOutOK(Critter& player, Critter@ postman)
+{
+	return !d_QTimeOutOK(player, postman);
+}
+
+// установка таймаута
+void r_SetQTimeOut(Critter& player, Critter@ postman)
+{
+	r_RatchTimeOutSet(player, postman, LVAR_ncr_mail_timeout, int(TIME_Q(player.Skill[SK_SPEECH])));
+}
+
+
+
+
+
+
+
+
+
+

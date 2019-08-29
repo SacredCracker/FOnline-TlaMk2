@@ -1,0 +1,55 @@
+[comment]
+
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+4 1010 D _script q_newbie_scripts@d_QTimeout 0  #
+6 1020 D _var p q_newbie_poor_slave = 2 #
+3 1030 @
+3 2000 None 0 #
+4 2010 D _item p PID_BOX_OF_DOUGHNUTS > 0 D or D _item p PID_BOX_OF_NOODLES > 0 R _item p PID_BOX_OF_DOUGHNUTS = 0 R _item p PID_BOX_OF_NOODLES = 0 R _script q_newbie_scripts@r_QSetTimeout 0  R _param p ST_EXPERIENCE + 560 #
+5 2020 D _var p q_newbie_poor_slave = 0 R _script q_newbie_scripts@r_SpawnFood 0  R _var p q_newbie_poor_slave = 1 #
+5 2030 D _var p q_newbie_poor_slave = 1 #
+0 2040 R _var p q_newbie_poor_slave = 2 R _param p ST_KARMA - 5 @
+4 3000 None 0 @
+5 4000 None 0 @
+6 5000 None 0 &
+
+[russ]
+{100}{}{Рабыня}
+{200}{}{Вы видите молодую девушку. Она еле стоит на ногах.}
+{210}{}{Эта рабыня судя по виду уже несколько дней сидит в клетке без еды.}
+{1000}{}{Predialogue installations}
+{1010}{}{ветка таймаута}
+{1020}{}{провален квест}
+{1030}{}{ветка начала квеста}
+{2000}{}{Еда... у тебя есть еда?..@@*бредит* Еда... мм я ... мм..едаа...}
+{2010}{}{Да, вот, держи.@@Ух.. Бедолага. Вот немного еды.}
+{2020}{}{Нет, но я могу поискать.@@Принесу, если найду.}
+{2030}{}{Я еще не нашел еду.@@Пока нет.}
+{2040}{}{Отвали.@@Нам тут всем несладко.@@Подыхай голодный, я то тут при чем?}
+{3000}{}{Ух.. моя наелся!!@@Моя хочет спать..@@Моя доволен..}
+{4000}{}{Моя видел как охранники складывали еду в коробки.@@Твоя смотреть в коробках, там еда...}
+{5000}{}{Твоя злой! Уходи!!@@Твоя лепешка брамина!!}
+
+[engl]
+{100}{}{Female slave}
+{200}{}{You see a young girl. She can hardly stand.}
+{210}{}{Judging by her looks, this slave has been sitting here with no food for quite a while.}
+{1000}{}{Predialogue installations}
+{1010}{}{ветка таймаута}
+{1020}{}{провален квест}
+{1030}{}{ветка начала квеста}
+{2000}{}{Food... Do you have any food?..@@*delirious* Food... mmm I... mm...eat...}
+{2010}{}{Yeah, here you go.@@You poor thing, here's some food.}
+{2020}{}{No, but I can try to find some.@@I'll get you food if I find some.}
+{2030}{}{Haven't found it yet.@@Not yet.}
+{2040}{}{Screw off.@@We're all hungry here.@@I don't care if you starve.}
+{3000}{}{Uh... me full!!@@Me want sleep..@@Me satisfied..}
+{4000}{}{Me notice guards put food in boxes.@@Look in boxes, food there...}
+{5000}{}{You evil, go way!!@@You brahmin turd!!}
+

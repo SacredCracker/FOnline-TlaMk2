@@ -1,0 +1,931 @@
+//////////// TabaK. Управление фракциями ////////////////////
+
+bool OrgExist(string& name)
+{
+	uint n=0;
+	for(uint n=0, nMax=OrgList.length();n<nMax;n++)
+	{
+		if(strlwr(OrgList[n])==strlwr(name)) return true;
+	}
+	return false;
+}
+
+uint AddOrg(string@ name)
+{
+	for(uint n=0, nMax=OrgList.length(); n<nMax; n++)
+	{
+		if(OrgList[n]=="DELETED")
+		{
+			OrgList[n]=name;
+			uint[] stats;
+			for(uint8 m=0; m<FR_ANYDATA_SIZE; m++)
+			{
+				if(m==FR_REPUTATION) stats.insertLast(1000);
+				else stats.insertLast(0);
+			}
+			SetAnyData(name, stats);
+			OrgOrder.insertLast(n);
+			file f;
+			if(f.open("./fractions/fractions.lst", "w") >=0) 
+			{
+				f.writeString(join(OrgList, "\n")); 
+				f.close();
+			}
+			uint[] values={0,0};
+			e_OrgOrder_Update(values);
+			return n+1;
+		}
+	}
+	file f;
+	OrgList.insertLast(name);
+	if(f.open("./fractions/fractions.lst", "a") >=0)
+	{
+		f.writeString(name+"\n");
+		f.close();
+	}
+	else return 0;
+	uint[] stats;
+	for(uint8 n=0; n<FR_ANYDATA_SIZE; n++)
+	{
+		if(n==FR_REPUTATION) stats.insertLast(1000);
+		else stats.insertLast(0);
+	}
+	SetAnyData(name, stats);
+	OrgOrder.insertLast(OrgList.length());
+	return OrgList.length();
+}
+
+string GetOrgName(uint num)
+{
+	if(num<1 || num>OrgList.length()) return "ERROR";
+	else return OrgList[num-1];
+}
+
+bool AddPlayerOrg(uint id, uint frId)
+{
+	string path="./fractions/";
+	Critter@ player=GetCritter(id);
+	if (!valid(player))
+	{
+		Log("игрок не найден");
+		return false;
+	}
+	string orgName=GetOrgName(frId);
+	if (!valid(orgName))
+	{
+		Log("организация не найдена");
+		return false;
+	}
+	file f;
+	if(f.open(path + orgName+ ".lst", "a") >=0)
+	{
+		f.writeString(GetPlayerName(player.Id)+"|"+player.Param[ST_FR_LEADERSHIP]+"\n");
+		f.close();
+		ChangeOrgStat(frId, FR_POPULATION, 1);
+		player.ParamBase[ST_FRACTION]=frId;
+		ProcessFactionStats(player, false);
+		return true;
+	}
+	else Log("Не удалось создать файл!");
+	return false;
+}
+
+string@[] GetOrgPlayersList(string@ orgName)
+{
+	string@[] players;
+	string str;
+	file f;
+	if(f.open("./fractions/"+orgName+".lst", "r")>=0)
+	{
+		f.readString(f.getSize(), str);
+		f.close();
+		players=splitEx(str, "\n");
+		if(players.last().length()<2) players.removeLast();
+		uint16 n=0;
+		while(n<players.length())
+		{
+			players[n]=substring(players[n], 0, findFirst(players[n], "|"));
+			n++;
+		}
+	}
+	else Log("Файл фракции "+orgName+" не найден");
+	return players;
+}
+
+string@[] GetOrgPlayersByAccess(string@ orgName, string access)
+{
+	string@[] players;
+	string@[] sendPlayers;
+	string str;
+	file f;
+	if(f.open("./fractions/"+orgName+".lst", "r")>=0)
+	{
+		f.readString(f.getSize(), str);
+		f.close();
+		players=splitEx(str, "\n");
+		if(players.last().length()<2) players.removeLast();
+		for(uint16 n=0, nMax=players.length(); n<nMax; n++)
+		{
+			if(substring(players[n], players[n].length()-1, 1)==access)
+			{
+			sendPlayers.insertLast(substring(players[n], 0, findFirst(players[n], "|")));
+			}
+		}
+	}
+	else Log("Файл фракции "+orgName+" не найден");
+	return sendPlayers;
+}
+int8 DismissPlayerOrg(string@ name, Critter& boss)
+{
+// -1 - недостаточно прав; 0 - игрок не найден; 1 - игрок уволен.
+	file f;
+	string str;
+	if (!valid(boss)) return 0;
+	uint frId=boss.Param[ST_FRACTION];
+	string org=GetOrgName(frId);
+	if (!valid(org)) return 0;
+	string@[] players;
+	if(f.open("./fractions/"+org+".lst", "r") >=0)
+	{
+		f.readString(f.getSize(), str);
+		f.close();
+		players=splitEx(str, "\n");
+		if(players.last().length()<2) players.removeLast();
+		uint16 n=0;
+		while(n!=players.length())
+		{
+			if(name==substring(players[n], 0, findFirst(players[n], "|")))
+			{
+				int val=0;
+				StrToInt(substring(players[n], findFirst(players[n], "|")+1, 1), val);
+				if( val>=boss.Param[ST_FR_LEADERSHIP])
+				{
+					return -1;
+				}
+				else
+				{
+					Critter@ victim=GetPlayer(name);
+					if(valid(victim))
+					{
+						victim.AddTimeEvent("DelayMsg", 1, CTE_MESSAGE_DELAY, 2);
+						victim.ParamBase[ST_FRACTION]=0;
+						victim.ParamBase[ST_FR_LEADERSHIP]=0;
+						victim.ParamBase[ST_LAST_FRACTION_QUIT]=__FullSecond;
+					}
+					players.removeAt(n);
+					string newFile=join(players, "\n");
+					newFile+="\n";
+					if(f.open("./fractions/"+org+".lst", "w") >=0)
+					{
+						f.writeString(newFile);
+						f.close();
+						ChangeOrgStat(frId, FR_POPULATION, -1);
+					}
+					return 1;
+				}
+			}
+			n++;
+		}		
+	}
+	return 0;
+}
+
+void RemovePlayerOrg(string@ name, string orgName)
+{
+	file f;
+	string str;
+	f.open("./fractions/"+orgName+".lst", "r");
+	f.readString(f.getSize(), str);
+	f.close();
+	string@[]@ players=splitEx(str, "\n");
+	uint16 toRemove;
+	for(uint16 n=0, nMax=players.length(); n<nMax; n++)
+	{
+		if(name==substring(players[n], 0, findFirst(players[n], "|"))) toRemove=n;
+	}
+	players.removeAt(toRemove);
+	f.open("./fractions/"+orgName+".lst", "w");
+	f.writeString(join(players, "\n")+"\n");
+	f.close();
+	Critter@ player=GetPlayer(name);
+	if(valid(player))
+	{
+		ProcessFactionStats(player, true);
+		player.ParamBase[ST_FRACTION]=0;
+		player.ParamBase[ST_FR_LEADERSHIP]=0;
+		player.ParamBase[ST_LAST_FRACTION_QUIT]=__FullSecond;
+	}
+}
+
+int8 ChangePlayerAccessOrg(string@ name, Critter& boss, bool increase)
+{
+	// -1 - У игрока уже есть нужный уровень доступа, 0 - игрок не найден, 1 - удачная смена прав.
+	if (!valid(boss)) return 0;
+	string str;
+	file f;
+	string org=GetOrgName(boss.Param[ST_FRACTION]);
+	if (!valid(org)) return 0;
+	string@[] players;
+	if(f.open("./fractions/"+org+".lst", "r") >=0)
+	{
+		f.readString(f.getSize(), str);
+		f.close();
+		players=splitEx(str, "\n");
+		if(players.last().length()<2) players.removeLast();
+	}
+	if (!valid(players[0])) return 0;
+	uint n=1;
+	while(n!=players.length())
+	{
+		if(name==substring(players[n], 0, findFirst(players[n], "|")))
+		{
+			int accLevel=0;
+			StrToInt(substring(players[n], findFirst(players[n], "|")+1, 1), accLevel);
+			if(increase)
+			{
+				if(accLevel>0) return -1;
+				Critter@ cr=GetPlayer(name);
+				if(valid(cr))
+				{
+					cr.ParamBase[ST_FR_LEADERSHIP]=1;
+					cr.AddTimeEvent("DelayMsg", 1, CTE_MESSAGE_DELAY, 0);
+				}
+				players[n]=name+"|1";
+			}
+			else
+			{
+				if(accLevel==0) return -1;
+				Critter@ cr=GetPlayer(name);
+				if(valid(cr))
+				{
+					cr.ParamBase[ST_FR_LEADERSHIP]=0;
+					cr.AddTimeEvent("DelayMsg", 1, CTE_MESSAGE_DELAY, 1);
+				}
+				players[n]=name+"|0";
+			}
+			string newFile=join(players, "\n");
+			newFile+="\n";
+			if(f.open("./fractions/"+org+".lst", "w") >=0)
+				{
+					f.writeString(newFile);
+					f.close();
+				}
+			return 1;
+		}
+		n++;
+	}
+	return 0;
+}
+bool AddFactionLoc(uint frId, uint16 locId)
+{
+	uint[] stats=GetOrgStats(frId);
+	for(uint n=FR_LOCATIONS_START; n<=FR_LOCATIONS_END;n++)
+	{
+		if(stats[n]==0)
+		{
+			stats[n]=int(locId);
+			SetOrgStats(frId, stats);
+			return true;
+		}
+	}
+	return false;
+}
+
+void RemoveFactionLoc(uint frId, uint16 locId)
+{
+	uint[] stats=GetOrgStats(frId);
+	for(uint n=FR_LOCATIONS_START; n<=FR_LOCATIONS_END;n++)
+	{
+		if(stats[n]==locId)
+		{
+			stats[n]=0;
+			SetOrgStats(frId, stats);
+			return;
+		}
+	}
+}
+
+//Синхронизируем фракционные квесты и локации.
+void ProcessFactionStats(Critter& player, bool quitOrg)
+{
+	uint[] stats=GetOrgStats(player.Param[ST_FRACTION]);
+	if(quitOrg)
+	{
+		GameVar@ quest=GetLocalVar(LVAR_q_nov_mutants, player.Id);
+		quest=0;
+		@quest=GetLocalVar(LVAR_q_salvatore_supply, player.Id);
+		quest=0;
+		@quest=GetLocalVar(LVAR_q_wright_supply, player.Id);
+		quest=0;
+		@quest=GetLocalVar(LVAR_q_kill_miron, player.Id);
+		quest=0;
+		player.ParamBase[KARMA_MAN_MORDINO]=0;
+		player.ParamBase[KARMA_MAN_SALVATORE]=0;
+		player.ParamBase[KARMA_MAN_BISHOP]=0;
+		player.ParamBase[KARMA_MAN_WRIGHT]=0;
+		for(uint n=FR_LOCATIONS_START; n<=FR_LOCATIONS_END;n++)
+		{
+			if(stats[n]!=0) player.UnsetKnownLoc(true, stats[n]);
+		}
+	}
+	else
+	{
+		GameVar@ quest=GetLocalVar(LVAR_q_nov_mutants, player.Id);
+		quest=stats[FR_QUEST_MUTANTS];
+		@quest=GetLocalVar(LVAR_q_salvatore_supply, player.Id);
+		quest=stats[FR_SALVATORE_SUPPLY];
+		@quest=GetLocalVar(LVAR_q_wright_supply, player.Id);
+		quest=stats[FR_WRIGHT_SUPPLY];
+		@quest=GetLocalVar(LVAR_q_kill_miron, player.Id);
+		quest=stats[FR_KILL_MIRON];
+		switch(stats[FR_NR_FAMILY])
+		{
+			case 1:player.ParamBase[KARMA_MAN_MORDINO]=1;break;
+			case 2:player.ParamBase[KARMA_MAN_SALVATORE]=1;break;
+			case 3:player.ParamBase[KARMA_MAN_BISHOP]=1;break;
+			case 4:player.ParamBase[KARMA_MAN_WRIGHT]=1;break;
+			default:break;
+		}
+		for(uint n=FR_LOCATIONS_START; n<=FR_LOCATIONS_END;n++)
+		{
+			if(stats[n]!=0) player.SetKnownLoc(true, stats[n]);
+		}
+	}
+}
+
+
+void IdentifyPlayerOrg(Critter& player)
+{
+	if(player.Param[ST_FRACTION]>int(OrgList.length()) || GetOrgName(player.Param[ST_FRACTION])=="DELETED")
+	{
+		Log("Игрок приписан к несуществующей фракции - обнуляем");
+		player.ParamBase[ST_FRACTION]=0;
+		player.ParamBase[ST_FR_LEADERSHIP]=0;
+		return;
+	}
+	string org=GetOrgName(player.Param[ST_FRACTION]);
+	file f;
+	string str;
+	string@[] players;
+	if(f.open("./fractions/"+org+".lst", "r") >=0)
+	{
+		f.readString(f.getSize(), str);
+		f.close();
+		players=splitEx(str, "\n");
+		for(uint n=0, nMax=players.length(); n<nMax;n++)
+		{
+			if(GetPlayerName(player.Id)==substring(players[n], 0, findFirst(players[n], "|")))
+			{
+				int accLevel=0;
+				StrToInt(substring(players[n], findFirst(players[n], "|")+1, 1), accLevel);
+				if(accLevel>player.Param[ST_FR_LEADERSHIP])
+				{
+					player.AddTimeEvent("DelayMsg", REAL_SECOND(5), CTE_MESSAGE_DELAY, 0);
+					Log("Повышаем права пользователя");
+					player.ParamBase[ST_FR_LEADERSHIP]=accLevel;
+				}
+				if(accLevel<player.Param[ST_FR_LEADERSHIP])
+				{
+					player.AddTimeEvent("DelayMsg", REAL_SECOND(5), CTE_MESSAGE_DELAY, 1);
+					Log("понижаем права пользователя");
+					player.ParamBase[ST_FR_LEADERSHIP]=accLevel;
+				}
+				ProcessFactionStats(player, false);
+				return;
+			}
+		}
+		/*if(f.open("./fractions/Logs/"+GetPlayerName(player.Id)+"_deleted.txt", "w") >=0)
+		{
+			f.writeString("Игрок "+GetPlayerName(player.Id)+ " не был найден в списках фракции "+GetOrgName(player.Param[ST_FRACTION])+"\nСписок членов: \n");
+			for(uint n=0, nMax=players.length(); n<nMax; n++)
+			{
+				f.writeString((n+1)+")"+substring(players[n], 0, findFirst(players[n], "|"))+"\n");
+			}
+			f.close();
+		}*/
+		player.AddTimeEvent("DelayMsg", REAL_SECOND(5), CTE_MESSAGE_DELAY, 2);
+		player.ParamBase[ST_FRACTION]=0;
+		player.ParamBase[ST_FR_LEADERSHIP]=0;
+		ProcessFactionStats(player, true);
+	}
+	else Log("Ошибка! Файл фракции не найден!");
+}
+
+uint DelayMsg(Critter& cr, int identifier, uint& rate)
+{
+	if (!valid(cr)) return 0;
+	cr.ShowScreen(SCREEN_DIALOGBOX, 0, "");
+	switch(rate)
+	{
+		case 0: cr.SayMsg(SAY_DIALOGBOX_TEXT, TEXTMSG_GAME, 14072);break;
+		case 1: cr.SayMsg(SAY_DIALOGBOX_TEXT, TEXTMSG_GAME, 14073);break;
+		case 2: cr.SayMsg(SAY_DIALOGBOX_TEXT, TEXTMSG_GAME, 14074);break;
+		default: break;
+	}
+	return 0;
+}
+
+//TabaK. Ячейки 11-30 - список врагов фракции. 31-50 - список союзников. 51-55 - ожидающие добавления в союзники.
+bool ChangeOrgStat(uint orgId, uint8 stat, int val)
+{
+	string name=GetOrgName(orgId);
+	uint[] stats;
+	if(GetAnyData(name, stats))
+	{
+		if(int(stats[stat])+val>0) stats[stat]+=val;
+		else stats[stat]=0;
+		if(SetAnyData(name, stats)) return true;
+		else return false;
+	}
+	return false;
+}
+
+bool ChangeOrgStats(uint orgId, uint8[] stats, int[] vals)
+{
+	uint[] orgStats;
+	string name=GetOrgName(orgId);
+	if (!GetAnyData(name, orgStats)) return false;
+	if(stats.length()!=vals.length()) return false;
+	for(uint n=0, nMax=stats.length(); n<nMax; n++)
+	{
+		if(int(orgStats[stats[n]])+vals[n]>0) orgStats[stats[n]]+=vals[n];
+		else orgStats[stats[n]]=0;
+	}
+	if (!SetAnyData(name, orgStats)) return false;
+	return true;
+}
+
+uint[] GetOrgStats(uint orgId)
+{
+	string name=GetOrgName(orgId);
+	uint[] stats;
+	GetAnyData(name, stats);
+	return stats;
+}
+
+bool SetOrgStats(uint orgId, uint[] stats)
+{
+	string name=GetOrgName(orgId);
+	if(SetAnyData(name, stats)) return true;
+	return false;
+}
+
+string@[] GetOrgList()
+{
+	string@[] list;
+	for(uint n=0, nMax=OrgOrder.length(); n<nMax; n++)
+	{
+		if(GetOrgName(OrgOrder[n]) !="DELETED") list.insertLast(GetOrgName(OrgOrder[n]));
+	}
+	return list;
+}
+
+string@[] GetOrgListByOrder() {return OrgList;}
+
+int[] GetEnemyList(uint frId)
+{
+	string name=GetOrgName(frId);
+	uint[] stats;
+	int[] enemies;
+	if (!GetAnyData(name, stats)) Log("Ошибка! Anydata не открылся бля");
+	string eName="";
+	for(uint n=FR_ENEMYLIST_START; n<=FR_ENEMYLIST_END; n++)
+	{
+		eName=GetOrgName(stats[n]);
+		if(eName=="DELETED")
+		{
+			stats.removeAt(n);
+			stats.insertAt(FR_ENEMYLIST_END, 0);
+			SetOrgStats(frId, stats);
+			n--;
+			continue;
+		}
+		else if(eName=="ERROR") break;
+		enemies.insertLast(stats[n]);
+	}
+	return enemies;
+}
+
+int[] GetFriendList(uint frId)
+{
+	string name=GetOrgName(frId);
+	uint[] stats;
+	int[] friends;
+	if(name=="DELETED") return friends;
+	if (!GetAnyData(name, stats)) Log("Не открылся Anydata! Имя фракции - "+name);;
+	string frName="";
+	for(uint n=FR_FRIENDLIST_START; n<=FR_FRIENDLIST_END; n++)
+	{
+		frName=GetOrgName(stats[n]);
+		if(frName=="DELETED")
+		{
+			stats.removeAt(n);
+			stats.insertAt(FR_FRIENDLIST_END, 0);
+			SetOrgStats(frId, stats);
+			n--;
+			continue;
+		}
+		else if(frName=="ERROR") break;
+		friends.insertLast(stats[n]);
+	}
+	return friends;
+}
+
+int[] GetFrRequestsOrg(uint frId)
+{
+	uint[] stats;
+	int[] list;
+	if (!GetAnyData(GetOrgName(frId), stats)) Log("Ошибка! AnyData не найден - "+GetOrgName(frId)+"; Номер фракции="+frId);
+	for(uint8 n=FR_FRIENDREQUEST_START; n<=FR_FRIENDREQUEST_END; n++)
+	{
+		if(stats[n]!=0)
+		{
+			bool already=false;
+			if(OrgList[stats[n]-1]=="DELETED")
+			{
+				stats[n]=0;
+				SetOrgStats(frId, stats);
+			}
+			else
+			{
+				for(uint8 m=FR_FRIENDLIST_START; m<=FR_FRIENDLIST_END;m++)
+				{
+					if(stats[m]==stats[n])
+					{
+						stats[n]=0;
+						SetOrgStats(frId, stats);
+						already=true;
+					}
+				}
+			}
+			if (!already) list.insertLast(int(stats[n]));
+		}
+	}
+	return list;
+}
+
+uint GetOrgId(string name)
+{
+	for(uint n=0, nMax=OrgList.length(); n<nMax; n++)
+	{
+		if(name==OrgList[n]) return n+1;
+	}
+	return 0;
+}
+
+void RequestFriendshipOrg(uint targetId, uint frId)
+{
+	int[] list=GetFrRequestsOrg(targetId);
+	uint8[] indexes;
+	for(uint8 n=0, nMax=list.length(); n<nMax; n++)
+	{
+		if(list[n]==int(frId)) return;
+	}
+	if(list.length()<FR_FRIENDREQUEST_END-FR_FRIENDREQUEST_END+1)  list.insertFirst(int(frId));
+	else
+	{
+		list.removeLast();
+		list.insertFirst(int(frId));
+	}
+	for(uint8 n=FR_FRIENDREQUEST_START, nMax=FR_FRIENDREQUEST_START+list.length(); n<nMax; n++)
+	{
+		indexes.insertLast(n);
+	}
+	ChangeOrgStats(targetId, indexes, list);
+}
+
+void ApproveFriendshipOrg(uint frId, uint rqId)
+{
+	uint[] frStats=GetOrgStats(frId);
+	uint[] rqStats=GetOrgStats(rqId);
+	for(uint8 n=FR_FRIENDREQUEST_START; n<=FR_FRIENDREQUEST_END; n++)
+	{
+		if(frStats[n]==rqId)
+		{
+			frStats.removeAt(n);
+			frStats.insertAt(FR_FRIENDREQUEST_END, 0);
+		}
+	}
+	for(uint8 n=FR_ENEMYLIST_START; n<=FR_ENEMYLIST_END; n++)
+	{
+		if(frStats[n]==rqId)
+		{
+			frStats.removeAt(n);
+			frStats.insertAt(FR_ENEMYLIST_END,0);
+		}
+		if(rqStats[n]==frId)
+		{
+			rqStats.removeAt(n);
+			rqStats.insertAt(FR_ENEMYLIST_END, 0);
+		}
+	}
+	bool added=false;
+	bool addedRq=false;
+	for(uint8 n=FR_FRIENDLIST_START; n<=FR_FRIENDLIST_END; n++)
+	{
+		if(added && addedRq) break;
+		if(frStats[n]==0)
+		{
+			frStats[n]=rqId;
+			added=true;
+		}
+		if(rqStats[n]==0)
+		{
+			rqStats[n]=frId;
+			addedRq=true;
+		}
+	}
+	if (!added)
+	{
+		frStats.removeAt(FR_FRIENDLIST_END);
+		frStats.insertAt(FR_FRIENDLIST_START, rqId);
+	}
+	if (!addedRq)
+	{
+		rqStats.removeAt(FR_FRIENDLIST_END);
+		rqStats.insertAt(FR_FRIENDLIST_START, frId);
+	}
+	SetOrgStats(frId, frStats);
+	SetOrgStats(rqId, rqStats);
+}
+
+void CancelAllianceOrg(uint frId, uint targetId)
+{
+	uint[] frStats=GetOrgStats(frId);
+	uint[] targetStats=GetOrgStats(targetId);
+	for(uint8 n=FR_FRIENDLIST_START; n<=FR_FRIENDLIST_END; n++)
+	{
+		if(frStats[n]==targetId)
+		{
+			frStats.removeAt(n);
+			frStats.insertAt(FR_FRIENDLIST_END, 0);
+		}
+		if(targetStats[n]==frId)
+		{
+			targetStats.removeAt(n);
+			targetStats.insertAt(FR_FRIENDLIST_END, 0);
+		}
+	}
+	SetOrgStats(frId, frStats);
+	SetOrgStats(targetId, targetStats);
+}
+
+void AddEnemyOrg(uint frId, uint targetId)
+{
+	CancelAllianceOrg(frId, targetId);
+	uint[] frStats=GetOrgStats(frId);
+	uint[] targetStats=GetOrgStats(targetId);
+	bool isEnemyOrg=false;
+	bool isEnemyTarget=false;
+	bool foundEntryOrg=false;
+	bool foundEntryTarget=false;
+	uint insertIdOrg=FR_ENEMYLIST_START;
+	uint insertIdTarget=FR_ENEMYLIST_START;
+	for(uint n=FR_ENEMYLIST_START; n<=FR_ENEMYLIST_END;n++)
+	{
+		if(frStats[n]==targetId) isEnemyOrg=true;
+		if (!foundEntryOrg && frStats[n]==0)
+		{
+			foundEntryOrg=true;
+			insertIdOrg=n;
+		}
+		if(targetStats[n]==frId) isEnemyTarget=true;
+		if (!foundEntryTarget && targetStats[n]==0)
+		{
+			foundEntryTarget=true;
+			insertIdTarget=n;
+		}
+	}
+	
+	if (!isEnemyOrg)
+	{
+		if(foundEntryOrg)
+		{
+			frStats[insertIdOrg]=targetId;
+		}
+		else
+		{
+			frStats.removeAt(FR_ENEMYLIST_START);
+			frStats.insertAt(FR_ENEMYLIST_START, targetId);
+		}
+	}
+	
+	if (!isEnemyTarget)
+	{
+		if(foundEntryTarget)
+		{
+			targetStats[insertIdTarget]=frId;
+		}
+		else
+		{
+			targetStats.removeAt(FR_ENEMYLIST_START);
+			targetStats.insertAt(FR_ENEMYLIST_START, frId);
+		}
+	}
+	
+	SetOrgStats(frId, frStats);
+	SetOrgStats(targetId, targetStats);
+}
+
+void RemoveEnemy(uint frId, uint targetId)
+{
+	uint[] frStats=GetOrgStats(frId);
+	for(uint n=FR_ENEMYLIST_START; n<=FR_ENEMYLIST_END;n++)
+	{
+		if(frStats[n]==targetId)
+		{
+			frStats.removeAt(n);
+			frStats.insertAt(FR_ENEMYLIST_END,0);
+			break;
+		}
+	}
+	SetOrgStats(frId, frStats);
+}
+
+
+string@[] GetUnrelatedOrgList(uint frId) //Получаем список фракций, нейтральных к указанной в параметре
+{
+	string@[] Orgs=OrgList;
+	Orgs.removeAt(frId-1);
+	int[] friends=GetFriendList(frId);
+	int[] enemies=GetEnemyList(frId);
+	for(int m=0, mMax=int(Orgs.length()); m<mMax; m++)
+	{
+		if(Orgs[m]=="DELETED")
+		{
+				Orgs.removeAt(m);
+				mMax--;
+				m--;
+				continue;
+		}
+		for(uint n=0, nMax=friends.length(); n<nMax; n++)
+		{
+			if(Orgs[m]==GetOrgName(friends[n]))
+			{
+				Orgs.removeAt(m);
+				mMax--;
+				m--;
+			}
+		}
+	}
+	for(uint n=0, nMax=enemies.length(); n<nMax; n++)
+	{
+		for(int m=0, mMax=int(Orgs.length()); m<mMax; m++)
+		{
+			if(Orgs[m]==GetOrgName(enemies[n]))
+			{
+				Orgs.removeAt(m);
+				mMax--;
+				m--;
+			}
+		}
+	}
+	return Orgs;
+}
+
+uint e_OrgOrder_Update(uint[]@ values)
+{
+	if(OrgList.length()<1) return REAL_MINUTE(1);
+	uint[] stats1;
+	uint[] stats2;
+	OrgOrder.resize(0);
+	uint8 start=0;
+	for(uint8 n=0, nMax=OrgList.length(); n<nMax; n++)
+	{
+		if(OrgList[n] !="DELETED")
+		{
+			start=n;
+			break;
+		}
+		if(n==OrgList.length()-1 && OrgList[n]=="DELETED") return REAL_MINUTE(1);
+	}
+	if(GetAnyData(OrgList[start], stats1))
+	{
+		OrgOrder.insertFirst(start+1);
+	}
+	else
+	{
+		Log("Организация "+OrgList[start]+" не найдена. Удаляем из базы");
+		file f;
+		FileDelete("./fractions/"+OrgList[start]+".lst");
+		OrgList[start]="DELETED";
+		f.open("./fractions/fractions.lst", "w");
+		f.writeString(join(OrgList, "\n")+"\n");
+		f.close();
+		return 1;
+	}
+	if(OrgList.length()<2) return REAL_MINUTE(1);
+	for(uint n=start+1, nMax=OrgList.length(); n<nMax; n++)
+	{
+		if(OrgList[n]=="DELETED") continue;
+		if (!GetAnyData(OrgList[n], stats1))
+		{
+			Log("Организация "+OrgList[n]+" не найдена. Удаляем из базы");
+			file f;
+			FileDelete("./fractions/"+OrgList[n]+".lst");;
+			OrgList[n]="DELETED";
+			f.open("./fractions/fractions.lst", "w");
+			f.writeString(join(OrgList, "\n")+"\n");
+			f.close();
+			return 1;
+		}
+		uint count=OrgOrder.length();
+		bool added=false;
+		for(uint m=0; m<=count; m++)
+		{
+			if(m<count && !added)
+			{
+				GetAnyData(GetOrgName(OrgOrder[m]), stats2);
+				if(stats1[0]>stats2[0])
+				{
+					OrgOrder.insertAt(m, n+1);
+					added=true;
+				}
+			}
+			else
+			{
+				if (!added)
+				{
+					OrgOrder.insertLast(n+1);
+				}
+			}
+		}
+	}
+	
+	return REAL_MINUTE(1);
+}
+
+void _fr_GetExp(Critter& cr, uint index, int oldValue)
+{
+	if(cr.Param[ST_FRACTION]==0 || cr.Stat[ST_LEVEL]==int(__LevelCap))
+	{
+		changedParam_Experience(cr, 0, oldValue);
+		return;
+	}
+	int exp=cr.Param[ST_EXPERIENCE]-oldValue;
+	int rating=exp/FR_DIVIDER;
+	if(rating>0) ChangeOrgStat(cr.Param[ST_FRACTION], FR_RATING, rating);
+	changedParam_Experience(cr, 0, oldValue);
+}
+
+uint[] GetPlayersByFraction(uint orgId)
+{
+	uint[] retArr;
+	for(uint n=0, nMax=PlayersOnline.length(); n<nMax; n++)
+	{
+		Critter@ player=GetCritter(PlayersOnline[n]);
+		if(valid(player))
+		{
+			if(player.Param[ST_FRACTION]==int(orgId)) retArr.insertLast(PlayersOnline[n]);
+		}
+	}
+	return retArr;
+}
+
+void DeleteOrg(uint orgId)
+{
+	uint[] stats=GetOrgStats(orgId);
+	for(uint n=FR_LOCATIONS_START; n<=FR_LOCATIONS_END;n++)
+		{
+			if(stats[n]!=0)
+			{
+				Location@ loc=GetLocation(stats[n]);
+				if(valid(loc))
+				{
+					GameVar@ isQuest=GetLocalVar(LLVAR_is_quest_loc, loc.Id);
+					if(isQuest.GetValue()==1) DeleteLocation(loc.Id);
+				}
+			}
+		}
+	uint[] players=GetPlayersByFraction(orgId);
+	for(uint n=0, nMax=players.length(); n<nMax; n++)
+	{
+		Critter@ player=GetCritter(players[n]);
+		if(valid(player))
+		{
+			ProcessFactionStats(player, true);
+			player.ParamBase[ST_FRACTION]=0;
+			player.ParamBase[ST_FR_LEADERSHIP]=0;
+			player.RunClientScript("client_fraction_gui@__Scr_ReInit", 0,0,0,null,null);
+		}
+	}
+	FileDelete("./fractions/"+OrgList[orgId-1]+".lst");
+	EraseAnyData(OrgList[orgId-1]);
+	EraseAnyData(OrgList[orgId-1]+"_FactionColorize");
+	OrgList[orgId-1]="DELETED";
+	file f;
+	if(f.open("./fractions/fractions.lst", "w") >=0) 
+	{
+		f.writeString(join(OrgList, "\n")); 
+		f.close();
+	}
+	uint[] values={0,0};
+	e_OrgOrder_Update(values);
+}
+
+void unsafe_GetOrgList(Critter& player, int param0, int param1, int param2, string@ param3, int[]@ param4)
+{
+	if(OrgList.length()<1) return;
+	else if(OrgList.length()==1) player.RunClientScript("client_main@__SetOrgList",1,0,0,OrgList[0],null);
+	else player.RunClientScript("client_main@__SetOrgList",0,0,0,join(OrgList,"\n"),null);
+}

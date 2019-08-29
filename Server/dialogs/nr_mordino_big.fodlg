@@ -1,0 +1,157 @@
+[comment]
+Ваши комментарии / Your comments.
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _var p dialog_state = 1 #
+2 1020 D _script nr_quests@d_OrgIsBad 0  #
+3 1030 D _script nr_quests@d_OrgIsGood 0  D _param p ST_FR_LEADERSHIP = 0 #
+4 1040 D _script nr_quests@d_OrgIsGood 0  D _param p ST_FR_LEADERSHIP > 0 D _var p q_salvatore_supply = 0 #
+8 1050 D _param p KARMA_MAN_MORDINO = 1 D _var p q_salvatore_supply = 3 #
+9 1060 D _param p KARMA_MAN_MORDINO = 1 D _var p q_salvatore_supply = 2 #
+14 1070 D _param p KARMA_MAN_MORDINO = 1 D _var p q_wright_supply = 5 #
+17 1080 D _param p KARMA_MAN_MORDINO = 1 D _var p q_wright_supply = 4 @
+2 2000 None 0 #
+0 2010 @
+3 3000 maps_novato@dlg_GetOrgName 0 #
+0 3010 #
+0 3020 @
+4 4000 maps_novato@dlg_GetOrgName 0 #
+6 4010 #
+65507 4020 R _var p dialog_state = 1 #
+5 4030 R _var p dialog_state = 1 @
+5 5000 None 0 @
+6 6000 None 0 #
+0 6010 R _var p dialog_state = 1 #
+7 6020 R _script nr_quests@r_GetSalvatoreQuest 0  R _script nr_quests@r_JoinMordino 0  @
+7 7000 None 0 @
+8 8000 None 0 #
+10 8010 R _script nr_quests@r_TryGetSalvQuestMordino 0  #
+0 8020 @
+9 9000 None 0 #
+13 9010 #
+11 9020 @
+10 10000 None 0 #
+0 10010 @
+11 11000 None 0 @
+12 12000 None 0 #
+0 12010 R _script nr_quests@r_GetSalvatoreQuest 0  @
+13 13000 None 0 #
+0 13010 R _script nr_quests@r_GetWrightQuest 0  @
+14 14000 None 0 #
+14 14010 R _script nr_quests@r_TryGetWrightQuestMordino 0  #
+0 14020 @
+15 15000 None 0 #
+0 15010 @
+16 16000 None 0 #
+0 16010 R _script nr_quests@r_GetWrightQuest 0  @
+17 17000 None 0 &
+
+[russ]
+{100}{}{Иисус Мордино}
+{200}{}{Вы видите Большого Иисуса Мордино.}
+{210}{}{Вы видите большого и толстого мужчину с заплывшими глазами. Он покрыт потом и тяжело дышит.}
+{210}{}{Вы видите Большого Иисуса Мордино. Он покрыт потом и тяжело дышит.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{2}
+{1020}{}{ }
+{1030}{}{ }
+{1040}{}{ }
+{1050}{}{ }
+{1060}{}{ }
+{1070}{}{!}
+{1080}{}{!}
+{2000}{}{[Человек поворачивает свое лицо к вам. Он выглядит больным. Пот стекает по лицу проступает пятнами на одежде] Убирайся отсюда, тварь.}
+{2010}{}{Извините, я уже ухожу.}
+{3000}{}{Я слышал о вас. @lex frname@, верно? Передай своим боссам, что у меня к ним серъезный разговор, уяснил?}
+{3010}{}{Да.}
+{3020}{}{Не думаю.}
+{4000}{}{Я слышал о вас. @lex frname@, верно? И из того, что я слышал, вы на многое способны, но вы - просто банда бунтарей, уничтожающая всех, кто вам не нравится. Прям как наводнившие в последнее время пустошь нанюханные порошком фанатики, поклоняющиеся корешкам. У меня есть идеи, как направить вашу энергию с выгодой для обеих сторон. Работайте на меня и я превращу вас из банды головорезов в часть самой влиятельной группировки в Нью-Рено. С вашей стороны глупо будет отказываться.}
+{4010}{}{Я согласен, мистер Мордино.}
+{4020}{}{Работать на тебя? Да ты же жалкий истекающий потом жиробас, приготовся к смерти, личинка.}
+{4030}{}{Нет.}
+{5000}{}{[Вы слышите, как его легкие издают свистящий звук, выпуская воздух через раздутые ноздри] Кажется, я ошибался в вас. Катись отсюда, недоумок.}
+{6000}{}{Что ж... Хорошо, мальчик мой. Как ты уже, наверное, знаешь, в этом городе водится три банды стервятников, портящих нам бизнес. Это так называемые "семьи" Бишопов, Сальваторе и Райтов. В наших с тобой интересах устранить конкуренцию в их лице. Только не теми методами, к которым вы привыкли! Мы не можем просто ввалиться к ним и выпустить им кишки. Тут нужен более тонкий подход. Семья Мордино не может позволить себе портить свою репутацию, устраивая бойню в центре города. Мы должны ударить по их бизнесу. И сейчас как раз есть такая возможность. Я узнал о том, что в ближайшее время семья Сальваторе получит поставку своего чудо-оружия от какого-то загадочного поставщика. Вы должны сорвать сделку, чего бы это ни стоило. О том, что за мной не заржавеет даже и говорить не стоит - я забочусь о своих людях. Задача ясна?}
+{6010}{}{Черт, а вот это мне уже не нравится. Сорвать сделку торговцам оружия? Да ты спятил старик, я линяю отсюда.}
+{6020}{}{Ну, надеюсь вы не против, если мы там просто всех перебьем? Я не люблю усложнять простые вещи.}
+{7000}{}{Ахахаха... кх... [Смех постепенно перерастает в приступ тяжелого кашля] Вот теперь я понимаю, что вы именно те, кто мне нужен! Надеюсь, на деле вы так же хороши, как на словах.}
+{8000}{}{[Иисус молча смотрит на вас исподлобья. Вы отчетливо слышите хрипящий звук из его легких] Вы очень сильно меня расстроили, мальчик мой. Очень сильно. Мало того, что вы не справились с поставленной задачей - люди Сальваторе теперь могут узнать вас и это приведет их ко мне. Убирайся.}
+{8010}{}{Мистер Мордино,  мы не ожидали такого отпора. Их поставшики оказались самой настоящей армией с вертолетами и высокотехнологичным оружием. Дайте нам шанс исправится.}
+{8020}{}{[Молча уйти]}
+{9000}{}{Наконец-то! Никак не мог дождаться твоего прихода. Похоже, я не ошибся в вас. Чистая работа. Сделка сорвана, все свидетели мертвы. Они даже не догадываются, кто ударил по ним. Но почивать на лаврах не время, сынок. Своей участи ждут Райты и Бишопы. Вы готовы у следующему заданию?}
+{9010}{}{Разумеется, мистер Мордино.}
+{9020}{}{Нам нужно время на подготовку.}
+{10000}{}{А вы кого ожидали там увидеть, мать вашу? Это поставщики оружия, а не а не шлюхи с Вирджин Стрит. Идиоты!
+Вы хотите шанса? Шанса еще раз подставить меня? Ты хоть представляешь, сколько ресурсов я задейcтвовал, чтоб разузнать место и время их встречи?..[Пот стекает с лица Мордино рекой. Он достает из кармана платок и вытирает лоб] Что ж... Я дам вам еще один шанс. Но мне нужна информация о месте следующей сделки. Приходи через неделю, а до тех пор скройся с моих глаз!}
+{10010}{}{[Уйти]}
+{11000}{}{Что ж, вы этого заслужили. Отдохните, сходите в "Кошачью лапку". Приходите, когда будете готовы.}
+{12000}{}{Вам очень крупно повезло.  Мне удалось узнать узнать место следующей встречи  Сальваторе с поставщиками. Только попробуйте еще раз меня подвести!}
+{12010}{}{Мы не подведем, мистер Мордино.}
+{13000}{}{Следующей целью станут Райты. Всем известно, что вся их прибыль поступает от продажи алкоголя, который они сами же и готовят. Вы должны отравить партию. Когда все поймут, что от их бухла можно сыграть в ящик, желающих попытать счастья будет на порядок меньше, хех. Вот, возьми... Мои ребята в лаборатории постарались. Содержимого этого шприца достаточно, чтоб отравить целый водоем. Но все не так просто. Они готовят бухло прямо в Нью-Рено. Мы не можем устроить тут бойню. Тем не менее, я нашел выход. Они встречаются на Голгофе с крупным караваном, торгующим бухлом. Это один из основных их распространителей вне города. Люди Райтов всегда приходят на место встречи раньше, чтоб расставить своих людей на позиции. Прибудьте на место встречи раньше каравана, перебейте Райтов, отравите бухло, выдайте себя за них и продайте партию. Ах да, не забудьте взять с собой лопаты! На Голгофе куча мест, куда можно закопать тело. Не думаю, что караванщик проникнется к вам доверием, если вы будете стоять над кучей поверженных врагов. Ну что, ж...  Я рассчитываю на вас. Удачи.}
+{13010}{}{Удача нам не понадобится, мистер Мордино.}
+{14000}{}{Черт! Черт! ЧЕЕЕЕЕРТ!  Santa Maria! Идиоты! Вы себе хоть представляете, КАК вы меня подставили?! Если вас кто-то узнает, Райты поймут, что это моих рук дело! Убирайтесь!}
+{14010}{}{Сеньор Мордино, мы искупим свою вину, дайте нам шанс!}
+{14020}{}{[Молча уйти]}
+{15000}{}{Шанс?! Вы хотите шанса? Сразу после такой лажи?! Ану скройся с моих глаз, сын шакала и гиены!...
+Нет, стой... Клянусь, если бы у меня был выбор, я давно бы вас в расход пустил, но у меня его нет... Приходите через неделю, я попробую еще что-нибудь нарыть на Райтов...}
+{15010}{}{[Молча уйти]}
+{16000}{}{Вам невероятно повезло, что Райты - шайка кретинов и жизнь их ничему не учит. Они решили, что их предал караванщик, убили его и назначили встречу другому в том же месте. Отправляйтесь немедленно!}
+{16010}{}{На этот раз все будет сделано в лучшем виде, сеньор Мордино!}
+{17000}{}{Замечательно! Просто блестяще! Мальчики, я знал, что не ошибался в вас! На нашем пути осталась только шайка Бишопа. }
+
+[engl]
+{100}{}{Jesus Mordino}
+{200}{}{You see Big Jesus Mordino.}
+{210}{}{You see a fat man with swollen eyelids. He's covered in sweat and is panting for breath.}
+{210}{}{You see Big Jesus Mordino. He's covered in sweat and is breathing is panting for breath.}
+{1000}{}{Predialogue installations}
+{1010}{}{2}
+{1020}{}{ }
+{1030}{}{ }
+{1040}{}{ }
+{1050}{}{ }
+{1060}{}{ }
+{1070}{}{!}
+{1080}{}{!}
+{2000}{}{[the Person turns the person to you. It looks the patient. Sweat flows down on the person appears stains on clothes] Be cleaned from here, a creature.}
+{2010}{}{Excuse, I already leave.}
+{3000}{}{I heard about you. @lex frname, truly? Tell to the bosses, what at me to them sereznyj conversation, has understood?}
+{3010}{}{Yes.}
+{3020}{}{I do not think.}
+{4000}{}{I heard about you. @lex frname, truly? And from this that I heard, you are capable of much, but you - simply gang of rebels destroying all who is not pleasant to you. It is direct as flooded recently a heathland nanjuhannye a powder the fanatics worshipping to backs. I have ideas how to direct your energy with benefit for both parties. Work on me and I will transform you from a gang of bandits into a part of the most influential grouping in Nju-Reno. Of you will silly refuse.}
+{4010}{}{I agree, Mr. Mordino.}
+{4020}{}{to Work on you? Yes you pity expiring then zhirobas, prigotovsja to death, a larva.}
+{4030}{}{No.}
+{5000}{}{[you hear, how its lungs publish a whistling sound, letting the air out through razdutye nostrils] It seems, I was mistaken in you. Slide from here, the silly person.}
+{6000}{}{That... Well, my boy. As you already, probably, know, business is found in this city three gangs of the Egyptian vultures, spoiling to us. These are Bishop's so-called "families", Salvatore and Rights. In ours with you interests to eliminate a competition in their person. Only not those methods to which you have got used! We cannot simply become hollow to them and let out it guts. Here more thin approach is necessary. The family of Mordino does not presume to spoil to itself the reputation, arranging a slaughter-house in city centre. We should strike on their business. And now just there is such possibility. I have learnt that in the near future the family of Salvatore will receive delivery of the wonderful weapon from any mysterious supplier. You should break the transaction that it costed. That for me will not rust even it is not necessary to speak - I care of the people. The problem is clear?}
+{6010}{}{Lines, and here it any more is not pleasant to me. To break the transaction to dealers of the weapon? Yes you have gone balmy the old man, I fade from here.}
+{6020}{}{Well, I hope you not against if we there it is simple all we will interrupt? I do not like to complicate simple things.}
+{7000}{}{Ahahaha... kh... [The Laughter is developed gradually into an attack of heavy cough] Here now by me understand that you those who is necessary to me! I hope, in practice you as are good, as in words.}
+{8000}{}{[Jesus silently lours at you. You distinctly hear a rattling sound from its lungs] you very strongly me have upset, my boy. Very strongly. Not only that you have not coped with a task in view - people of Salvatore can learn you now and it will result them in me. Be cleaned.}
+{8010}{}{Mr. Mordino, we did not expect such repulse. Them postavshiki have appeared the real army with helicopters and the hi-tech weapon. Give us chance it will be corrected.}
+{8020}{}{[Silently leave]}
+{9000}{}{At last! Could not wait your arrival In any way. It seems that I was not mistaken in you. A neat job. The transaction is broken, all witnesses are dead. They do not guess at all who has struck on them. But to rest on laurels not time, the sonny. The fate is waited by Rights and Bishops. You are ready at following the task?}
+{9010}{}{Certainly, Mr. Mordino.}
+{9020}{}{We need time for preparation.}
+{10000}{}{And you whom expected there to see, your mother? They are suppliers of the weapon, instead of instead of the whore with Virdzhin Strit. Idiots!
+You want chance? Chance once again to substitute me? You though represent, how many resources I задейcтвовал to find out about a place and time of their meeting?. [Sweat flows down from person Mordino the river. It gets a scarf from a pocket and wipes a forehead] That... I will give you one more chance. But the information on a place of the following transaction is necessary to me. Come in a week, and until then disappear from my eyes!}
+{10010}{}{[to Leave]}
+{11000}{}{Well, you have deserved it. Have a rest, descend in "the Cat's pad". Come, when will be ready.}
+{12000}{}{to you has very largely carried. I managed to learn to learn a place of the following meeting of Salvatore with suppliers. Only try to bring me once again!}
+{12010}{}{We will not bring, Mr. Mordino.}
+{13000}{}{the Following purpose become Rights. All know that all their profit arrives from sale of alcohol which they and prepare. You should poison party. When all will understand that from their booze it is possible to play a box, interested persons will try the luck 10 times less, heh. Here, take... My children in laboratory have tried. It is enough contained this syringe to poison the whole reservoir. But all not so is simple. They prepare a booze directly in Nju-Reno. We cannot suit here a slaughter-house. Nevertheless, I have found a way out. They meet on Golgotha the large caravan trading in a booze. It is one of their basic distributors outside the city. Right's people always come on meeting place earlier to place the people on a position. Arrive on meeting place before a caravan, interrupt Rights, poison a booze, give out itself for them and sell lot. Ah yes, do not forget to take with itself a shovel! On Golgotha a heap of places where it is possible to dig a body. I do not think that the caravaneer will like to you trust if you are above a heap poverzhennyh enemies. Well... I count on you. Good luck.}
+{13010}{}{Good luck is not required to us, Mr. Mordino.}
+{14000}{}{Черт! Черт! ЧЕЕЕЕЕРТ!  Santa Maria! Идиоты! Вы себе хоть представляете, КАК вы меня подставили?! Если вас кто-то узнает, Райты поймут, что это моих рук дело! Убирайтесь!}
+{14010}{}{Сеньор Мордино, мы искупим свою вину, дайте нам шанс!}
+{14020}{}{[Молча уйти]}
+{15000}{}{Шанс?! Вы хотите шанса? Сразу после такой лажи?! Ану скройся с моих глаз, сын шакала и гиены!...
+Нет, стой... Клянусь, если бы у меня был выбор, я давно бы вас в расход пустил, но у меня его нет... Приходите через неделю, я попробую еще что-нибудь нарыть на Райтов...}
+{15010}{}{[Молча уйти]}
+{16000}{}{Вам невероятно повезло, что Райты - шайка кретинов и жизнь их ничему не учит. Они решили, что их предал караванщик, убили его и назначили встречу другому в том же месте. Отправляйтесь немедленно!}
+{16010}{}{На этот раз все будет сделано в лучшем виде, сеньор Мордино!}
+{17000}{}{Замечательно! Просто блестяще! Мальчики, я знал, что не ошибался в вас! На нашем пути осталась только шайка Бишопа. }
+

@@ -1,0 +1,124 @@
+#include "_macros.fos"
+#include "_animation.fos"
+
+/*
+јвтомат нюка-колы
+»грок может использовать монету на автомате, в этом случае, если пройдет проверку по удаче получит одну бутылку нюка-колы.
+≈сли проверка не пройдена, автомат выстрелит в него бутылкой. Ѕутылка летит на HIT_RANGE гексов в направлении игрока.
+≈сли игрок не пройдет проверку на ловкость, получит от MIN_DMG до MAX_DMG повреждений.
+≈сли на пути бутылки стоит другой криттер, получить повреждени€ может он. »грок, использовавший монетку будет считатьс€ атакующим.
+*/
+#define ONE_GAME_WEEK                                              (60*60*24*7)
+#define MAX_STOCK												   (10)
+#define HIT_RANGE                                                  (3) // рассто€ние, на которое "стрел€ет" автомат
+#define MIN_DMG                                                    (1)
+#define MAX_DMG                                                    (5)
+
+
+#define STR_USE_CAPS                                               (101)
+#define STR_GET_NUKE                                               (102)
+#define STR_HITTED                                                 (103)
+#define STR_DODGE                                                  (104)
+#define STR_SOMEBODY_DODGE                                         (105)
+#define STR_EMPTY                                                  (106)
+
+#define PLAYERS_SRCH_RADIUS                                        (10)
+
+
+#define NPC_NAME #(dialogId)   		((dialogId)*1000+100) // поиск имени Ќѕ÷ в файле FODLG.msg
+#define _CheckStat#(cr, stat, bonus) (Random(1,10)<cr.StatBase[stat]+bonus)
+
+import void InjureCritter(Critter& cr, uint dmg, uint dmgType, uint8 dir, uint attackerId) from "combat";
+
+
+bool _UseCapsOnNukeMachine(Critter& player, Scenery& scenery, int skill, Item@ item)
+{
+	if (!valid(item)) return false;
+
+	if(item.GetProtoId()!=PID_BOTTLE_CAPS) return false;
+	GameVar @ stock=GetLocalVar(LVAR_nuke_stock, player.Id);
+	GameVar @ restock_time=GetLocalVar(LVAR_nuke_restock_time, player.Id);
+
+	if (!valid(stock)||!valid(restock_time)) return false;
+
+	if(uint(restock_time.GetValue())<__FullSecond)
+	{
+		stock=uint(Random(MAX_STOCK/2, MAX_STOCK));
+		restock_time=__FullSecond + ONE_GAME_WEEK;
+	}
+
+	if(stock.GetValue()>0)
+	{
+		_CritDeleteItem(player, PID_BOTTLE_CAPS, 1);
+
+		stock=stock.GetValue() - 1;
+		player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_USE_CAPS);
+
+		if(_CheckStat(player, ST_LUCK, 0))
+		{
+			_CritAddItem (player, PID_NUKA_COLA, 1);
+			player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_GET_NUKE);
+			return true;
+
+		}else{
+			TryHitSomeOne(player, scenery);
+			return true;
+		}
+	}else{
+		player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_EMPTY);
+		return true;
+	}
+}
+
+void TryHitSomeOne(Critter & player, Scenery& nukeMashine)
+{
+	Map @map=player.GetMap();
+	if (!valid(map)) return;
+
+	uint16 x0=nukeMashine.HexX;
+	uint16 y0=nukeMashine.HexY;
+
+	uint16 x1=x0;
+	uint16 y1=y0;
+
+	uint dir=GetDirection(x0, y0, player.HexX, player.HexY);
+	bool targetHitted=false;
+
+	map.MoveHexByDir(x1, y1, dir, 3);
+	map.RunFlyEffect(PID_FLYING_KNIFE, null, null, x0, y0, x1, y1);
+
+	for(uint i=0; i<HIT_RANGE; i++)
+	{
+		map.MoveHexByDir(x0, y0, dir, 1);
+		Critter @target=map.GetCritter(x0, y0);
+		if(valid(target)&&!targetHitted)
+		{
+			if(target.IsLife())
+			{
+				if(_CheckStat(target, ST_AGILITY, 0))
+				{
+					target.SayMsg(SAY_NETMSG, TEXTMSG_TEXT,STR_DODGE);
+					_CritAnimate(target, ANIM2_DODGE_FRONT);
+
+					Critter @[] critters;
+					if(map.GetCrittersHex(target.HexX, target.HexY, PLAYERS_SRCH_RADIUS, FIND_ALL|FIND_ONLY_PLAYERS,   critters)>0)
+					{
+						for(uint i=0, iMax=critters.length(); i<iMax; i++)
+						{
+							if(critters[i].Id!=target.Id)
+							{
+								critters[i].SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_SOMEBODY_DODGE, "$name "+ (target.IsPlayer()?GetPlayerName(target.Id):(target.Stat[ST_DIALOG_ID]>0?"@msg DLG "+NPC_NAME(target.Stat[ST_DIALOG_ID])+" @":"")));
+							}
+						}
+					}
+				}else{
+					target.SayMsg(SAY_SHOUT, TEXTMSG_TEXT,STR_HITTED);
+					targetHitted=true;
+					InjureCritter(target, Random(MIN_DMG, MAX_DMG), DAMAGE_NORMAL, dir, player.Id);
+					map.AddItem(x0, y0,PID_NUKA_COLA,1);
+					break;
+				}
+			}
+		}
+	}
+}

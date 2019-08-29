@@ -1,0 +1,290 @@
+#include "_macros.fos"
+#include "fighter_pattern.fos"
+#include "_dialogs.fos"
+#include "utils_for_array.fos"
+#include "_animation.fos"
+
+#define MSG_IM_HAVE_ILLEGAL_ITEMS     (129) // Номер сообщения, отсылаемого игроком, если у него в инвентаре есть запрещенные предметы
+#define STR_NO_ILLEGAL_ITEMS          (5201) // Номер строки "У него бомба!" ToDo: женским персонажам кричать "у неё!"
+#define PLANE_LOOT                   ( 30 )
+#define MSG_CANCEL_PICKUP            ( 500 )
+
+import bool AddPickPlane(Critter& npc, uint priority, Item@ item, uint useItemId, bool toOpen) from "npc_planes";
+import bool AddAttackPlane(Critter& npc, uint priority, uint critId) from "npc_planes";
+import bool AddAttackPlane( Critter& npc, uint priority, uint critId, bool run ) from "npc_planes";
+import bool AddAttackPlane( Critter& npc, uint priority, Critter& target, bool run ) from "npc_planes";
+import bool AddAttackPlane( Critter& npc, uint priority, Critter& target, int minHp, bool run ) from "npc_planes";
+import bool AddWalkPlane( Critter& npc, uint priority, int identifier, uint identifierExt, uint16 hexX, uint16 hexY, uint8 dir, bool run, uint cut ) from "npc_planes";
+
+void _MapInit( Map& map, bool firstTime )
+{
+    map.SetEvent( MAP_EVENT_IN_CRITTER, "_MapInCritter" );
+
+    Critter @[] critters;
+    map.GetCritters( 0, FIND_LIFE | FIND_ONLY_NPC, critters );
+
+    for( uint i = 0; i < critters.length(); i++ )
+    {
+        critters[ i ].StatBase[ ST_REPLICATION_TIME ] = 30;
+        critters[ i ].StatBase[ ST_LUCK ] = 10;
+        critters[ i ].StatBase[ ST_BONUS_LOOK ] += 300;
+        critters[ i ].SkillBase[ SK_UNARMED ] = 300;
+        critters[ i ].SkillBase[ SK_ENERGY_WEAPONS ] = 300;
+        critters[ i ].SkillBase[ SK_BIG_GUNS ] = 300;
+        critters[ i ].SkillBase[ SK_SMALL_GUNS ] = 300;
+		critters[ i ].PerkBase[PE_BETTER_CRITICALS]=1;
+        critters[ i ].ModeBase[ MODE_NO_PUSH ] = 1;
+        critters[ i ].ModeBase[ MODE_NO_LOOT ] = 1;
+		critters[ i ].ModeBase[ MODE_NO_STEAL ] = 1;
+		critters[ i ].ModeBase[ MODE_NO_DROP ] = 1;
+		critters[ i ].ModeBase[ MODE_NO_KNOCK ] = 1;
+    }
+}
+
+// Охрана, которая стоит у самого входа и реагирует на пронос взрывчатки.
+// У остальных стандартное поведение городской охраны
+void _GuardInit(Critter & cr, bool firstTime)
+{
+	cr.StatBase[ST_BONUS_LOOK]+=30;
+	cr.StatBase[ST_CRITICAL_CHANCE]+=30;
+	cr.StatBase[ST_ACTION_POINTS]+=12;
+	cr.StatBase[ST_MAX_LIFE]+=200;
+	cr.StatBase[ST_CURRENT_HP]+=200;
+	cr.ModeBase[MODE_NO_STEAL]=1;
+	cr.ModeBase[MODE_NO_ENEMY_STACK]=1;
+	cr.ModeBase[MODE_NO_PUSH]=1;
+	cr.ModeBase[MODE_NO_SUPPLY]=1;
+	cr.PerkBase[PE_MORE_CRITICALS]=3;
+	cr.PerkBase[PE_BETTER_CRITICALS]=1;
+	cr.StatBase[ST_CRITICAL_RESISTANCE]=85;
+	cr.SetEvent(CRITTER_EVENT_MESSAGE,"_GuardMessage");
+	cr.SetEvent(CRITTER_EVENT_SMTH_STEALING,"_GuardSmthStealing");
+	cr.SetEvent(CRITTER_EVENT_SMTH_USE_ITEM,"_GuardSmthUseItem");
+	cr.SetEvent(CRITTER_EVENT_SMTH_DROP_ITEM,"_GuardSmthDropItem");
+	cr.SetEvent(CRITTER_EVENT_SMTH_ATTACK,"_GuardSmthAttack");
+    cr.SetEvent( CRITTER_EVENT_SMTH_DEAD, "_NpcSmthDead" );
+    cr.SetEvent( CRITTER_EVENT_PLANE_END, "_NpcPlaneEnd" );
+}
+
+void _TurretInit(Critter & cr, bool firstTime)
+{
+	cr.StatBase[ST_ACTION_POINTS]+=12;
+	cr.StatBase[ST_MAX_LIFE]+=600;
+	cr.StatBase[ST_CURRENT_HP]+=600;
+	cr.ModeBase[MODE_NO_ENEMY_STACK]=1;
+	cr.ModeBase[MODE_NO_SUPPLY]=1;
+	cr.PerkBase[PE_MORE_CRITICALS]=3;
+	cr.PerkBase[PE_BETTER_CRITICALS]=1;
+	cr.StatBase[ST_CRITICAL_RESISTANCE]=85;
+	cr.SetEvent(CRITTER_EVENT_SMTH_ATTACK,"_TurretSmthAttack");
+}
+
+void _MapInCritter( Map& map, Critter& cr )
+{
+    if( HasIllegalItems( cr ) )
+        cr.SendMessage( MSG_IM_HAVE_ILLEGAL_ITEMS, cr.Id, MESSAGE_TO_ALL_ON_MAP );
+}
+
+
+// Убивать при принесении взрывчатки и лутать
+void _GuardMessage( Critter& cr, Critter& fromCr, int message, int value )
+{
+    NpcPlane@[] planes;
+    if( message == MSG_IM_HAVE_ILLEGAL_ITEMS )
+    {
+        AddAttackPlane( cr, 0, value, true );
+        Critter @ target = GetCritter( value );
+        if( !valid( target ) )
+            return;
+        if( target.IsNpc() )
+            return;
+        if( Random( 0, 4 ) == 1 )
+            cr.SayMsg( SAY_SHOUT, TEXTMSG_TEXT, STR_NO_ILLEGAL_ITEMS, GetPlayerName( value ) );
+    }
+    else
+    {
+        if( message == MSG_CANCEL_PICKUP )
+        {
+            uint count = cr.GetPlanes( planes );
+            if( count == 0 )
+                return;
+            uint erased = 0;
+            for( uint i = 0; i < count; i++ )
+            {
+                if( planes[ i ].Identifier == PLANE_LOOT && planes[ i ].IdentifierExt == uint( value ) && cr.ErasePlane( i - erased ) )
+                    erased++;
+            }
+            if( cr.GetPlanes( PLANE_LOOT, value, planes ) != 0 )
+            {
+                for( uint i = 0; i < planes.length(); i++ )
+                {
+                    if( valid( planes[ i ] ) )
+                    {
+                        cr.ErasePlane( i );
+                    }
+                }
+            }
+        }
+    }
+}
+
+void _GuardSmthStealing( Critter& guard, Critter& fromCr, Critter& thief, bool success, Item& item, uint count )
+{
+    if( thief.IsPlayer() && guard.IsLife() )
+    {
+        AddAttackPlane( guard, 0, thief, 1, true );
+    }
+}
+
+void _GuardSmthDropItem( Critter& npc, Critter& fromCr, Item& item )
+{
+    if( fromCr.IsPlayer() && npc.IsLife() )
+    {
+        uint pid = item.GetProtoId();
+        if( pid == PID_ACTIVE_PLASTIC_EXPLOSIVE || pid == PID_ACTIVE_MINE || pid == PID_ACTIVE_DYNAMITE )
+        {
+            AddAttackPlane( npc, 0, fromCr, true );
+        }
+    }
+    if( !npc.IsLife() )
+        return;
+    if( !CheckItemIsIllegal( item ) )
+        return;
+    AddPickPlane( npc, AI_PLANE_ATTACK_PRIORITY, item, 0, true );
+}
+
+void _GuardSmthUseItem( Critter& npc, Critter& fromCr, Item& item, Critter@ onCritter, Item@ onItem, Scenery@ onScenery )
+{
+	if(fromCr.IsPlayer()&&npc.IsLife())
+	{
+		uint pid=item.GetProtoId();
+		if(pid==PID_PLASTIC_EXPLOSIVES||pid==PID_MINE||pid==PID_TOGGLE_SWITCH||pid==PID_DYNAMITE||pid==PID_ACTIVE_PLASTIC_EXPLOSIVE||pid==PID_ACTIVE_MINE||pid==PID_ACTIVE_DYNAMITE)
+		{
+            AddAttackPlane( npc, 0, fromCr, true );
+		}
+	}
+}
+
+// Illegal items list and checks
+
+const uint16[] Pids_IllegalItems={
+	 PID_ACTIVE_DYNAMITE, PID_ACTIVE_PLASTIC_EXPLOSIVE, PID_ACTIVE_MINE, PID_TOGGLE_SWITCH, PID_MINE, PID_DYNAMITE, PID_PLASTIC_EXPLOSIVES
+};
+
+bool HasIllegalItems(Critter & cr)
+{
+	Item@[] items;
+	if(cr.GetItems(-1, items)==0) return false;
+	for(uint i=0,l=items.length();i<l;i++)
+	{
+		if(CheckItemIsIllegal(items[i])) return true;
+	}
+	return false;
+}
+
+bool CheckItemIsIllegal(Item @ item)
+{
+	if(!valid(item)) return false;
+	return Present(item.GetProtoId(), Pids_IllegalItems);
+}
+
+void _GuardSmthAttack( Critter& guard, Critter& attacker, Critter& target )
+{
+    if( attacker.IsPlayer() )
+        AddAttackPlane( guard, 0, attacker, true );
+}
+
+void _TurretSmthAttack(Critter& turret, Critter& attacker, Critter& target)
+{
+	if(attacker.IsPlayer()) AddAttackPlane(turret,0,attacker,false);
+}
+
+void _NpcSmthDead( Critter& npc, Critter& fromCrit, Critter@ killer )
+{
+    if( _CritCanDropItemsOnDead( fromCrit ) )
+        AddWalkPlane( npc, 0, PLANE_LOOT, fromCrit.Id, fromCrit.HexX, fromCrit.HexY, 6, true, 1 );
+}
+
+int _NpcPlaneEnd( Critter& npc, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem )
+{
+    if( plane.Identifier == PLANE_LOOT && reason == REASON_SUCCESS )
+    {
+        Critter@ cr = ::GetCritter( plane.IdentifierExt );
+        if( valid( cr ) && cr.IsDead() )
+        {
+            Item@[] items;
+            cr.GetItems( SLOT_INV, items );
+            cr.GetItems( SLOT_HAND1, items );
+            cr.GetItems( SLOT_HAND2, items );
+            npc.GetMap().GetItems( cr.HexX, cr.HexY, items );
+
+            for( uint i = 0, j = items.length(); i < j; i++ )
+            {
+                int type = items[ i ].GetType();
+                if( type < ITEM_TYPE_ARMOR || type > ITEM_TYPE_KEY )
+                    @items[ i ] = null;
+            }
+            MoveItems( items, npc );
+            npc.SendMessage( MSG_CANCEL_PICKUP, plane.IdentifierExt, MESSAGE_TO_ALL_ON_MAP );
+            _CritAnimatePickup( npc );
+            npc.Wait( __Breaktime );
+        }
+        return PLANE_DISCARD;    // Skip global and end plane
+    }
+    return PLANE_RUN_GLOBAL;     // Run global
+}
+
+//Усиление для гражданских
+
+void _PowerInit(Critter & cr, bool firstTime)
+{
+	cr.StatBase[ST_MAX_LIFE]+=300;
+	cr.StatBase[ST_CURRENT_HP]+=300;
+	cr.StatBase[ST_BONUS_LOOK]+=30;
+	cr.StatBase[ST_CRITICAL_CHANCE]+=30;
+	cr.StatBase[ST_ACTION_POINTS]+=12;
+	cr.ModeBase[MODE_NO_ENEMY_STACK]=1;
+	cr.ModeBase[MODE_NO_PUSH]=1;
+	cr.StatBase[ST_CRITICAL_RESISTANCE]=85;
+	cr.PerkBase[PE_MORE_CRITICALS]=3;
+	cr.PerkBase[PE_BETTER_CRITICALS]=1;
+	cr.StatBase[ST_TALK_DISTANCE]=5;
+	cr.ModeBase[MODE_NO_SUPPLY]=1;
+	cr.StatBase[ST_NORMAL_RESIST]+=30;
+	cr.StatBase[ST_LASER_RESIST]+=30;
+	cr.StatBase[ST_FIRE_RESIST]+=30;
+	cr.StatBase[ST_PLASMA_RESIST]+=40;
+	cr.StatBase[ST_ELECTRO_RESIST]+=30;
+	cr.StatBase[ST_EXPLODE_RESIST]+=30;
+}
+
+
+void _GuardInit2(Critter & cr, bool firstTime) //Охрана репликационных центров.
+{
+	cr.StatBase[ST_BONUS_LOOK]=50;
+	cr.StatBase[ST_CRITICAL_CHANCE]=95;
+	cr.PerkBase[PE_MORE_CRITICALS]=3;
+	cr.StatBase[ST_ACTION_POINTS]=16;
+	cr.StatBase[ST_MAX_LIFE]+=350;
+	cr.StatBase[ST_CURRENT_HP]+=350;
+	cr.PerkBase[PE_BETTER_CRITICALS]=1;
+	cr.ModeBase[MODE_NO_STEAL]=1;
+	cr.ModeBase[MODE_NO_DROP]=1;
+	cr.ModeBase[MODE_NO_LOOT]=1;
+	cr.ModeBase[MODE_NO_ENEMY_STACK]=1;
+	cr.ModeBase[MODE_NO_PUSH]=1;
+	cr.StatBase[ST_CRITICAL_RESISTANCE]=85;
+
+	FighterPattern @ fp=FighterPattern();
+	fp.ForceArmourLvl=6;
+	fp.MustHealLvl=60;
+	fp.ForceCritterArmour(cr);
+	fp._SetOnAttackedEvents(cr);
+	cr._CanGenStim=1000;
+
+	cr.SetEvent(CRITTER_EVENT_MESSAGE,"_GuardMessage");
+	cr.SetEvent(CRITTER_EVENT_SMTH_STEALING,"_GuardSmthStealing");
+	cr.SetEvent(CRITTER_EVENT_SMTH_USE_ITEM,"_GuardSmthUseItem");
+	cr.SetEvent(CRITTER_EVENT_SMTH_DROP_ITEM,"_GuardSmthDropItem");
+	cr.SetEvent(CRITTER_EVENT_SMTH_ATTACK,"_GuardSmthAttack");
+}

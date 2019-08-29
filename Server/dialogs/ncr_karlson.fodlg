@@ -1,0 +1,299 @@
+[comment]
+Ваши комментарии / Your comments.
+30 - квест Сынишка
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 @
+2 2000 None 0 #
+0 2010 D _param p ST_INTELLECT > 3 #
+3 2020 D _param p ST_INTELLECT > 3 #
+30 2030 D _param p REPUTATION_NCR < 10 D _param p ST_INTELLECT > 3 #
+31 2040 D _param p REPUTATION_NCR > 9 D _var p q_ncr_karlson_son = 0 #
+34 2050 D _var p q_ncr_karlson_son > 6 D _var p q_ncr_karlson_son < 9 @
+3 3000 None 0 #
+4 3010 D _var p name_mem_npc_player = 0 R _var p name_mem_npc_player = 1 #
+6 3020 D _var p name_mem_npc_player = 1 @
+4 4000 None 0 #
+5 4010 #
+6 4020 @
+5 5000 None 0 #
+0 5010 @
+6 6000 None 0 #
+7 6010 @
+7 7000 None 0 #
+8 7010 @
+8 8000 None 0 #
+9 8010 @
+9 9000 None 0 #
+10 9010 D _param p SK_SPEECH < 100 #
+11 9020 D _param p SK_SPEECH > 99 @
+10 10000 None 0 #
+0 10010 @
+11 11000 None 0 #
+12 11010 @
+12 12000 None 0 #
+13 12010 @
+13 13000 None 1 #
+14 13010 #
+12 13020 #
+0 13030 @
+14 14000 None 1 #
+15 14010 #
+13 14020 #
+0 14030 @
+15 15000 None 1 #
+16 15010 #
+14 15020 #
+0 15030 @
+16 16000 None 1 #
+17 16010 #
+15 16020 #
+0 16030 @
+17 17000 None 1 #
+18 17010 #
+16 17020 #
+0 17030 @
+18 18000 None 1 #
+19 18010 #
+17 18020 #
+0 18030 @
+19 19000 None 1 #
+20 19010 #
+18 19020 #
+0 19030 @
+20 20000 None 1 #
+21 20010 #
+19 20020 #
+0 20030 @
+21 21000 None 1 #
+22 21010 #
+20 21020 #
+0 21030 @
+22 22000 None 1 #
+23 22010 #
+21 22020 #
+0 22030 @
+23 23000 None 1 #
+22 23010 #
+0 23020 D _var p ncr_carlson_story = 0 R _var p ncr_carlson_story = 1 R _param p ST_EXPERIENCE + 1500 R _script dialog@r_InfoMessage 1 1 R _param p REPUTATION_NCR + 2 #
+0 23030 D _var p ncr_carlson_story = 1 @
+30 24000 None 0 #
+0 24010 @
+31 25000 None 0 #
+32 25010 @
+32 26000 None 0 #
+33 26010 @
+33 27000 None 0 #
+0 27010 R _var p q_ncr_karlson_son = 1 #
+0 27020 @
+34 28000 None 0 #
+35 28010 #
+36 28020 D _param p SK_SPEECH > 130 @
+35 29000 None 0 #
+0 29010 R _var p q_ncr_karlson_son = 9 R _param p ST_EXPERIENCE + 1500 R _item p PID_BOTTLE_CAPS + 1000 @
+36 30000 None 0 #
+0 30010 R _param p ST_EXPERIENCE + 1500 R _var p q_ncr_karlson_son = 9 R _param p REPUTATION_NCR + 1 #
+0 30020 R _param p ST_EXPERIENCE + 1500 R _item p PID_BOTTLE_CAPS + 1000 R _var p q_ncr_karlson_son = 9 &
+
+[russ]
+{100}{}{Президент Карлсон}
+{200}{}{Вы видите почтенного мужчину.}
+{210}{}{Это Президент Карлсон.}
+{210}{}{Xотя он физически слаб, его глаза обладают очень мощным взглядом. Это определяет человека.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{Answer text}
+{2000}{}{Я очень занят, приходите в другое время.@@Я не хочу быть грубым, мне нужно больше времени на работу.@@Извините, но сейчас у меня нету времени на встречу с вами.}
+{2010}{}{Я ухожу. [Уйти]}
+{2020}{}{Я не займу у вас много времени. Мне всего лишь нужно задать несколько вопросов.}
+{2030}{}{Могу я чем-либо помочь вам, мистер президент?}
+{2040}{}{Могу я чем-либо помочь вам, мистер президент?}
+{2050}{}{Мистер президент, я поговорил с сержантом Кайлом о вашем сыне.}
+{3000}{}{Хорошо. Слушаю вас?}
+{3010}{}{Вы - Карлсон?}
+{3020}{}{Расскажите об обязанностях президента НКР?}
+{4000}{}{Да.}
+{4010}{}{Тот самый? Карлсон, который живет на крыше?}
+{4020}{}{Расскажите об обязанностях президента НКР?}
+{5000}{}{Очень смешно. А сейчас, прошу меня оставить.}
+{5010}{}{Простите. [Уйти]}
+{6000}{}{[Вздыхает] История будет короткой. Сейчас в НКР установлен режим военного времени. Городом, да и Республикой, в целом, управляет главнокомандующий армии Шейман. У меня не так много обязанностей, да и сама должность стала формальностью.}
+{6010}{}{Шейман забрал у вас всю власть? }
+{7000}{}{Не верно. Мы приняли подобное решение после долгих недель размышлений. Я целиком поддерживаю политику Шеймана и считаю, что он выведет Республику из упадка. Только он, и никто другой.}
+{7010}{}{Но, подождите, Шейман распустил совет, держит вас в заперти...}
+{8000}{}{@sex@|Молодой человек||Милая девушка|, вот сейчас вы несете несусветную чушь. Кто вам так ловко запудрил мозги?}
+{8010}{}{Но ведь это очевидно... В результате военного переворота...}
+{9000}{}{Не было никакого военного переворота. Не слушайте этот бред радикалов.}
+{9010}{}{А что было?}
+{9020}{}{А что было?}
+{10000}{}{Это уже не укладывается в несколько минут, которые я отвел на разговор с вами. Прошу меня понять и покинуть мой кабинет.}
+{10010}{}{Хорошо. [Уйти]}
+{11000}{}{Это уже не укладывается в несколько минут, которые я отвел на разговор с вами. Тем не менее, я расскажу вам, как все было на самом деле.}
+{11010}{}{Слушаю внимательно.}
+{12000}{}{После смерти Танди для НКР наступили черные дни. Я был избран Президентом НКР, и видел, как менялась Республика.}
+{12010}{}{Продолжайте, прошу вас. }
+{13000}{}{Разрозненные шайки рейдеров начали сбиваться в крупные банды. Работорговцы разбили свои лагеря рядом со столицей. Подняла голову преступность. Братство Стали совершило несколько ходов, совершенно не поддающихся разумному объяснению.}
+{13010}{}{[Слушать дальше]}
+{13020}{}{Повторите, пожалуйста?}
+{13030}{}{Достаточно, я наверное пойду. Благодарю вас. [Уйти]}
+{14000}{}{Все эти силы были заинтересованы в НКР. Республика - лакомый кусок пирога для различного рода жуликов. Развитое сельское хозяйство, богатая инфраструктура...}
+{14010}{}{[Слушать дальше]}
+{14020}{}{Повторите, пожалуйста?}
+{14030}{}{Достаточно, я наверное пойду. Благодарю вас. [Уйти]}
+{15000}{}{Как только я занял пост президента, сразу столкнулся со множеством проблем. Несмотря на то, что у Республики уже в то время была сильная армия, этого было недостаточно. Нам не хватало опытных военных. Мы несли одно поражение за другим.}
+{15010}{}{[Слушать дальше]}
+{15020}{}{Повторите, пожалуйста?}
+{15030}{}{Достаточно, я наверное пойду. Благодарю вас. [Уйти]}
+{16000}{}{Да, Вейстин порекомендовал связаться с Шейманом. Он командовал в то время подразделением местного ополчения. Шейман сразу же себя проявил, отбив несколько нападений рейдеров.}
+{16010}{}{[Слушать дальше]}
+{16020}{}{Повторите, пожалуйста?}
+{16030}{}{Достаточно, я наверное пойду. Благодарю вас. [Уйти]}
+{17000}{}{Вместе с Шейманом в НКР пришли несколько его доверенных людей (Сантьяго, Алекс и другие). Каждый из них - профессионал в военном деле.}
+{17010}{}{[Слушать дальше]}
+{17020}{}{Повторите, пожалуйста?}
+{17030}{}{Достаточно, я наверное пойду. Благодарю вас. [Уйти]}
+{18000}{}{Но Шейману мало кто доверял. На совещаниях Конгресса все советники, кроме Вейстина, выказывали недовольство ростом роли военных в НКР.}
+{18010}{}{[Слушать дальше]}
+{18020}{}{Повторите, пожалуйста?}
+{18030}{}{Достаточно, я наверное пойду. Благодарю вас. [Уйти]}
+{19000}{}{Местные рейнджеры прислушивались к голосу Конгресса больше, чем к приказам Шеймана. Некоторые подразделения вообще отказывались ему повиноваться.}
+{19010}{}{[Слушать дальше]}
+{19020}{}{Повторите, пожалуйста?}
+{19030}{}{Достаточно, я наверное пойду. Благодарю вас. [Уйти]}
+{20000}{}{Тем временем, на окраине столицы начали собираться объединенные силы работорговцев и рейдеров. Они готовились нанести серьезный удар по свободной Республике.}
+{20010}{}{[Слушать дальше]}
+{20020}{}{Повторите, пожалуйста?}
+{20030}{}{Достаточно, я наверное пойду. Благодарю вас. [Уйти]}
+{21000}{}{В такой ситуации у нас не оставалось другого выбора, как ввести режим военного времени. Шейман стал генералом и главнокомандующим Армии НКР. Я мирно передал ему свои полномочия, он их использовал, чтобы избавиться от недовольных советников Конгресса.}
+{21010}{}{[Слушать дальше]}
+{21020}{}{Повторите, пожалуйста?}
+{21030}{}{Достаточно, я наверное пойду. Благодарю вас. [Уйти]}
+{22000}{}{В результате рейнджеры НКР при поддержке войск Хаба разбили силы неприятеля. Репутация Шеймана очень возросла среди Рейнджеров. Шейман объявил мобилизацию, инициировал дополнительный набор в Армию и отряды рейнджеров. Сейчас мы чувствуем себя гораздо увереннее, чем два года назад. }
+{22010}{}{[Слушать дальше]}
+{22020}{}{Повторите, пожалуйста?}
+{22030}{}{Достаточно, я наверное пойду. Благодарю вас. [Уйти]}
+{23000}{}{Но ситуация все еще неспокойна. Мы не готовы прекратить действие законов военного времени. Но, как только угроза Республики будет уничтожена, все вернется на круги свои.}
+{23010}{}{Повторите, пожалуйста?}
+{23020}{}{Достаточно, я наверное пойду. Благодарю вас. [Уйти]}
+{23030}{}{Достаточно, я наверное пойду. Благодарю вас. [Уйти]}
+{24000}{}{Нет, не думаю.}
+{24010}{}{Хорошо, прощайте. [Уйти]}
+{25000}{}{Хм, вы выглядите заслуживающ@sex@|им||ей| доверия. Может быть, действительно имеет смысл... Мой сын...}
+{25010}{}{Ага! Его похитили остатки армии Повелителя, точно?}
+{26000}{}{Нет, нет, что вы. Все гораздо проще. В последнее время у меня слишком много дел. Я отправил сына к рейнджерам Кайла. Ну, чтобы он посмотрел, научился чему-нибудь...}
+{26010}{}{И что? Какие-то проблемы?}
+{27000}{}{Хм, Кайл попросил заглянуть к ним, чтобы решить "чертову проблему", ну вы знаете, как он выражается... Может, разберетесь, что натворил мой сын?}
+{27010}{}{Без проблем, я сообщу вам, что там стряслось. [Уйти]}
+{27020}{}{Нет, с сопливыми карапузами мне возиться не с руки. [Уйти]}
+{28000}{}{Да? И что говорит сержант?}
+{28010}{}{Ваш сын стащил пистолет у рейнджера, и никак не собирался его отдавать. Но проблема решена. Не без моей помощи.}
+{28020}{}{Не переживайте, ничего особенного. Так, небольшая проблема, я ее устранил@sex@|||а|. С вашим сыном все в порядке.}
+{29000}{}{Не может быть! Я разберусь с сыном. Это никуда не годится. Благодарю вас. [Протягивает деньги]}
+{29010}{}{Не за что. [Уйти]}
+{30000}{}{Вы меня успокоили. Спасибо. Возьмите за труды. [Протягивает деньги]}
+{30010}{}{Не стоит, это было несложно. [Уйти]}
+{30020}{}{Да, благодарю. [Забрать деньги]}
+{100000001}{}{Вы выслушали рассказ президента НКР Френка Карлсона о положении дел в Республике.}
+
+[engl]
+{100}{}{President Carlson}
+{200}{}{you see the respectable man.}
+{210}{}{It is President Carlson.}
+{210}{}{Xотя it is physically weak, his eyes possess very powerful sight. It defines the person.}
+{1000}{}{Predialogue installations}
+{1010}{}{Answer text}
+{2000}{}{I am very occupied, come to other time. @@ I do not want to be rough, it is necessary for me more time for work. @@ excuse, but now I do not have time for a meeting with you.}
+{2010}{}{I leave. [To leave]}
+{2020}{}{I will not occupy from you a lot of time. I only need to set some questions.}
+{2030}{}{I something Can help you, Mr. the president?}
+{2040}{}{I something Can help you, Mr. the president?}
+{2050}{}{Mr. the president, I have talked to sergeant Kajlom about your son.}
+{3000}{}{it is good. I listen to you?}
+{3010}{}{you are Carlson?}
+{3020}{}{Tell about duties of president NKR?}
+{4000}{}{Yes.}
+{4010}{}{That? Carlson who lives on a roof?}
+{4020}{}{Tell about duties of president NKR?}
+{5000}{}{it is very ridiculous. And now, I ask me to leave.}
+{5010}{}{Forgive. [To leave]}
+{6000}{}{[the History Sighs] will be short. Now in NKR the wartime mode is established. A city, and Republic the commander-in-chief of army Sheiman, as a whole, operates. At me not so it is a lot of duties, and the post became formality.}
+{6010}{}{Sheiman has taken away from you all power?}
+{7000}{}{it is not true. We have made the similar decision after long weeks of reflexions. I entirely support Sheiman's policy and I consider that it will deduce Republic from decline. Only it, and anybody another.}
+{7010}{}{But, wait, Sheiman has dismissed council, holds you in zaperti...}
+{8000}{}{@sex | the Young man || the Lovely girl |, here now you talk utter nonsense. Who so has dexterously bullshitted you?}
+{8010}{}{But after all it is obvious... As a result of a military coup d'etat...}
+{9000}{}{was not any military coup d'etat. Do not listen to this delirium of radicals.}
+{9010}{}{And what was?}
+{9020}{}{And what was?}
+{10000}{}{It does not keep within any more some minutes which I have taken away on conversation with you. I ask me to understand and leave my office.}
+{10010}{}{it is good. [To leave]}
+{11000}{}{It does not keep within any more some minutes which I have taken away on conversation with you. Nevertheless, I will tell to you as all was actually.}
+{11010}{}{I Listen attentively.}
+{12000}{}{After death of Tandi for NKR there have come rainy days. I have been selected by President NKR, and saw, how the Republic changed.}
+{12010}{}{Continue, I ask you.}
+{13000}{}{Isolated gangs of raiders have started to get off in large gangs. Rabotorgovtsy have set up the of camp near to capital. Has lifted a head criminality. The Steel brotherhood has made some courses which absolutely not are not giving in to a reasonable explanation.}
+{13010}{}{[to Listen further]}
+{13020}{}{Repeat, please?}
+{13030}{}{it is Enough, I probably will go. I thank you. [To leave]}
+{14000}{}{All these forces have been interested in NKR. Republic - a tidbit of a pie for any swindlers. The developed agriculture, a rich infrastructure...}
+{14010}{}{[to Listen further]}
+{14020}{}{Repeat, please?}
+{14030}{}{it is Enough, I probably will go. I thank you. [To leave]}
+{15000}{}{As soon as I have held a post of the president, at once have faced set of problems. In spite of the fact that the republic already at that time had a strong army, it was insufficiently. We did not have not enough skilled military men. We bore one defeat behind another.}
+{15010}{}{[to Listen further]}
+{15020}{}{Repeat, please?}
+{15030}{}{it is Enough, I probably will go. I thank you. [To leave]}
+{16000}{}{Yes, Vejstin has recommended to contact Sheiman. He ordered at that time division of a local home guard. Sheiman has shown at once itself, having beaten off some attacks of raiders.}
+{16010}{}{[to Listen further]}
+{16020}{}{Repeat, please?}
+{16030}{}{it is Enough, I probably will go. I thank you. [To leave]}
+{17000}{}{Together with Sheiman in NKR its entrusted people (Santiago, Alex and others) have come some. Each of them - the professional in military science.}
+{17010}{}{[to Listen further]}
+{17020}{}{Repeat, please?}
+{17030}{}{it is Enough, I probably will go. I thank you. [To leave]}
+{18000}{}{But very few people trusted Sheiman. At Congress meetings all advisers, except Vejstina, showed discontent with growth of a role of military men in NKR.}
+{18010}{}{[to Listen further]}
+{18020}{}{Repeat, please?}
+{18030}{}{it is Enough, I probably will go. I thank you. [To leave]}
+{19000}{}{Local rangers listened to the Congress voice more than to Sheiman's orders. Some divisions in general refused to obey it.}
+{19010}{}{[to Listen further]}
+{19020}{}{Repeat, please?}
+{19030}{}{it is Enough, I probably will go. I thank you. [To leave]}
+{20000}{}{In the meantime, on capital suburb incorporated forces rabotorgovtsev and raiders have started to gather. They were going to strike serious blow to free Republic.}
+{20010}{}{[to Listen further]}
+{20020}{}{Repeat, please?}
+{20030}{}{it is Enough, I probably will go. I thank you. [To leave]}
+{21000}{}{In such situation at us does not remain other choice how to enter a wartime mode. Sheiman became the general and the commander-in-chief of Army NKR. I have peacefully delegated to its the responsibility, it used them to get rid of dissatisfied advisers of the Congress.}
+{21010}{}{[to Listen further]}
+{21020}{}{Repeat, please?}
+{21030}{}{it is Enough, I probably will go. I thank you. [To leave]}
+{22000}{}{As a result rangers NKR with support of armies of the Hub have broken forces of the enemy. Sheiman's reputation has very much increased among Rangers. Sheiman declared mobilisation, initiated an additional set in Army and groups of rangers. Now we feel much more confident, than two years ago.}
+{22010}{}{[to Listen further]}
+{22020}{}{Repeat, please?}
+{22030}{}{it is Enough, I probably will go. I thank you. [To leave]}
+{23000}{}{But the situation is still restless. We are not ready to terminate wartime laws. But, as soon as Republic threat will be destroyed, all will return on the circles.}
+{23010}{}{Repeat, please?}
+{23020}{}{it is Enough, I probably will go. I thank you. [To leave]}
+{23030}{}{it is Enough, I probably will go. I thank you. [To leave]}
+{24000}{}{No, I do not think.}
+{24010}{}{it is good, farewell. [To leave]}
+{25000}{}{Hm, you look заслуживающ@sex | it || to it | trust. Perhaps, really it makes sense... My son...}
+{25010}{}{Aha! It was stolen by the rests of army of the Master, precisely?}
+{26000}{}{No, no that you. All is much easier. Recently at me it is too much affairs. I have sent the son to rangers of Kajla. Well, that he has looked, has learnt something...}
+{26010}{}{Also what? Any problems?}
+{27000}{}{Hm, Kajl has asked to glance to them to solve "chertovu a problem", well you know, how it is expressed... Perhaps will understand, what my son has done?}
+{27010}{}{Without problems, I will inform you that there have befallen. [To leave]}
+{27020}{}{No, with snotty karapuzami to me to potter not from a hand. [To leave]}
+{28000}{}{Yes? Also what the sergeant speaks?}
+{28010}{}{your son has pulled down a pistol at the ranger, and did not gather to give it in any way. But the problem is solved. Not without my help.}
+{28020}{}{do not worry, anything especial. So, a small problem, I it устранил@sex ||| and |. With your son everything is all right.}
+{29000}{}{cannot be! I will understand with the son. It does not suit anywhere. I thank you. [Stretches money]}
+{29010}{}{there is nothing. [To Leave]}
+{30000}{}{you have calmed me. Thanks. Take for works. [Stretches money]}
+{30010}{}{It is not necessary, it was simple. [To leave]}
+{30020}{}{Yes, I thank. [To take away money]}
+{100000001}{}{you have listened to the story of president NKR of Frenka Carlson about a state of affairs in Republic.}

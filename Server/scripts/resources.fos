@@ -1,0 +1,1051 @@
+// Author: Tab10id
+//#define __DEBUG__
+
+#include "_macros.fos"
+#include "_msgstr.fos"
+#include "_animation.fos"
+#include "stdlib_h.fos"
+
+#ifdef __DEBUG__
+#define LogEx #(error) Log(error)
+#endif
+#ifndef __DEBUG__
+#define LogEx #(error)
+#endif
+
+#define STR_ITEM_NAME #(itemPid) (itemPid*100)
+
+#define MAX_RESOURCES_COUNT_PER_SCENERY (20)
+#define TIME_FOR_RESOURCES_COUNT_RESP (60*60*6)
+#define RESOURCES_COUNT_RESP_COUNT (2)
+#define DEFAULT_TIMEOUT (REAL_MINUTE(10))
+#define OUTDOORSMAN_TIMEOUT #(cr) (cr.Timeout[TO_SK_OUTDOORSMAN]+__FullSecond+(DEFAULT_TIMEOUT/cr.Skill[SK_OUTDOORSMAN]))
+#define OUTDOORSMAN_SUPERSLEDGE_TIMEOUT #(cr) (cr.Timeout[TO_SK_OUTDOORSMAN]+__FullSecond+(DEFAULT_TIMEOUT/(cr.Skill[SK_OUTDOORSMAN]*3/2)))
+#define SCIENCE_SUPERTOOLKIT_TIMEOUT #(cr) (cr.Timeout[TO_SK_SCIENCE]+__FullSecond+(DEFAULT_TIMEOUT*3/(cr.Skill[SK_SCIENCE])))
+
+#define STR_NO_RESOURCE (3700)
+#define STR_WEIGHT_TOO_HEAVY (3701)
+#define STR_ITEMS_ADDED (3702)
+#define STR_ITEM_ADDED (3703)
+#define STR_WOOD_ADDED (3704)
+#define STR_TYPE_COUNT (3705)
+#define STR_TYPE_KG (3706)
+#define STR_NO_AMMIAK (3707)
+#define STR_AMMIAK_ADDED (3708)
+#define STR_V15_ADDED (3710)
+#define STR_ELECTRONIC_ADDED (3711)
+
+#define EXP_FOR_ORE (200)
+#define EXP_FOR_MINERAL (100)
+#define EXP_FOR_ELECTRONIC (100)
+#define EXP_FOR_FRUIT (25)
+#define EXP_FOR_METAL (30)
+#define EXP_FOR_POLE (50)
+#define EXP_FOR_TUBE (50)
+#define EXP_FOR_FLINT (100)
+#define EXP_FOR_URAN (90)
+#define EXP_FOR_STEEL (80)
+#define EXP_FOR_CHEMICALS (40)
+#define EXP_FOR_WATER (40)
+#define EXP_FOR_FRUIT_MK2 (400)
+
+import void InjureCritter(Critter& cr, uint dmg, uint dmgType, uint8 dir, uint attackerId, uint forceFlags) from "combat";
+import uint GetNearFullSecond(uint16 year, uint16 month, uint16 day, uint16 hour, uint16 minute, uint16 second) from "time";
+
+int16[][][] ToolsSettings=
+{
+	{
+		//Axe
+		{PID_AXE},                                                                                                  // Пиды инструментов
+		{0},                                                                                                        // Анимация проигрываемая при попытке собрать ресурсы
+		{0},                                                                                                        // Анимация проигрываемая при попытке собрать ресурсы
+		{2066,2316,2317,2318,2319,2320,2321,2945,2946,2947,4562,4563,4564,4565,4566,4567,4568,4569,4570,4571,4572}, // Пиды источников ресурсов
+		{5},                                                                                                        // Количество предметов в одном обхекте Scenery (0 - значение по умолчанию)
+		{PID_FIREWOOD, PID_SHARPENED_POLE},                                                                         // Пиды возможных ресурсов
+		{1,            1},                                                                                          // минимальное количество получаемых ресурсов
+		{1,            1},                                                                                          // максимальное количество получаемых ресурсов
+		{80,           80},                                                                                        // Шансы получения того или иного вида ресурсов (шансы проверяются по порядку)
+	},
+	{
+		//Sledgehammer
+		{PID_SLEDGEHAMMER, PID_SUPER_SLEDGE},
+		{ANIM1_HAMMER,     ANIM1_HAMMER},
+		{ANIM2_SWING_1H,   ANIM2_SWING_1H},
+		{2074, 2075, 2079, 2080, 2092, 2093, 2428, 2429, 2430, 2431, 2435, 3580, 4540, 4541},
+		{20},
+		{PID_FLINT, PID_ROCK},
+		{1,			  1},
+		{1,			  3},
+		{10,		 100},
+	},
+	{
+		//Sledgehammer
+		{PID_SLEDGEHAMMER, PID_SUPER_SLEDGE},
+		{ANIM1_HAMMER,     ANIM1_HAMMER},
+		{ANIM2_SWING_1H,   ANIM2_SWING_1H},
+		{2069, 2070, 2072, 2073, 2078, 2081, 2090, 2091, 3273},
+		{20},
+		{PID_ROCK, PID_MINERAL, PID_METAL_ORE},
+		{1,        1,           1},
+		{3,        2,           1},
+		{70,       50,          80},
+	},
+		{
+		//Multi tool
+		{PID_MULTI_TOOL},
+		{0},
+		{0},
+		{2106, 2118, 2252, 2253, 2254, 2255, 2256, 4599, 4600},
+		{5},
+		{PID_METAL_TRASH, PID_PUMP_PARTS},
+		{1,               1},
+		{2,               2},
+		{60,              80},
+	},
+	
+		{
+		//Multi tool
+		{PID_MULTI_TOOL},
+		{0},
+		{0},
+		{2099, 2100, 2210, 2211, 2212, 2213, 2307, 2308 ,2309 ,2310, 2311, 2314},
+		{1},
+		{PID_TUBE},
+		{1},
+		{1},
+		{60},
+	},
+	{
+		//Super Tool Kit
+		{PID_SUPER_TOOL_KIT},
+		{0},
+		{0},
+		{2788, 2789, 2790, 2791, 2800, 2801, 2802, 2803, 2804, 2805, 2806, 2814, 2815, 2816, 2817, 2818, 2819, 2820, 2821},
+		{5},
+		{PID_V15_COMPUTER_PART, PID_ELECTRONIC_WASTE},
+		{1,               1},
+		{1,               1},
+		{50,              70},
+	},
+	{
+		//Knives
+		{PID_KNIFE, PID_COMBAT_KNIFE},
+		{ANIM1_KNIFE, ANIM1_KNIFE},
+		{ANIM2_SWING_1H, ANIM2_SWING_1H},
+		{2369, 2370, 2371, 2963, 2964, 2965, 2966, 2967, 2968, 4528, },
+		{1},
+		{PID_MUTATED_FRUIT, PID_MUTATED_FRUIT_MK2},
+		{1, 1},
+		{1, 1},
+		{95, 100},
+	},
+	{
+		//Sledgehammer
+		{PID_SLEDGEHAMMER, PID_SUPER_SLEDGE},
+		{ANIM1_HAMMER,     ANIM1_HAMMER},
+		{ANIM2_SWING_1H,   ANIM2_SWING_1H},
+		{4883, 4884, 4885, 4886, 4887, 4888, 4889, 4890},
+		{20},
+		{PID_ROCK, PID_URANIUM_ORE},
+		{1,              1},
+		{3,              1},
+		{70,             80},
+	},
+		{
+		//Монтировка
+		{PID_CROWBAR},
+		{ANIM1_CLUB},
+		{ANIM2_SWING_1H},
+		{2107, 2109, 2117, 2257, 2265, 2266, 2267, 2268, 2269, 2270, 2312, 2313, 2315, 4601, 4602, 4608},
+		{3},
+		{PID_PUMP_PARTS},
+		{1},
+		{2},
+		{80},
+	},
+	{
+		//Knives
+		{PID_KNIFE, PID_COMBAT_KNIFE},
+		{ANIM1_KNIFE, ANIM1_KNIFE},
+		{ANIM2_SWING_1H, ANIM2_SWING_1H},
+		{2206, 2207, 2208, 2209, 2210, 2211, 2212, 2213, 2229, 2230, 2231, 2232, 2233, 2271, 2272, 2277},
+		{5},
+		{PID_POCKET_LINT, PID_RAGS},
+		{1, 1},
+		{2, 2},
+		{50, 100},
+	},
+	
+		{
+		//Multi tool
+		{PID_MULTI_TOOL},
+		{0},
+		{0},
+		{2116},
+		{2},
+		{PID_STEEL},
+		{1},
+		{1},
+		{60},
+	},
+	
+	{
+		//PID_CHEMICALS
+		{PID_BOTTLE_GLASS},
+		{0},
+		{0},
+		{2552, 2601, 2602, 2603, 2985, 2986, 2987, 2988},
+		{2},
+		{PID_CHEMICALS},
+		{1},
+		{1},
+		{60},
+	},
+	
+	{
+		//PID_BOTTLE_EMPTY
+		{PID_BOTTLE_EMPTY},
+		{0},
+		{0},
+		{2450, 2993, 4582, 4583},
+		{15},
+		{PID_BOTTLE_FULL},
+		{1},
+		{1},
+		{60},
+},
+		{
+		//Multi tool
+		{PID_BOTTLE_EMPTY},
+		{0},
+		{0},
+		{42},
+		{1},
+		{PID_BOTTLE_AMMIAK},
+		{0},
+		{0},
+		{100},
+	},
+	{
+		//Gribi
+		{PID_KNIFE, PID_COMBAT_KNIFE},
+		{ANIM1_KNIFE, ANIM1_KNIFE},
+		{ANIM2_SWING_1H, ANIM2_SWING_1H},
+		{4403, 4404, 4405},
+		{3},
+		{PID_MUSHROOM1, PID_MUSHROOM2},
+		{1},
+		{1},
+		{80, 100},
+	}
+};
+CTool[] Tools;
+// Класс стандартной обработки
+ToolDefault defTool;
+
+// Классы рассширенной обработки условий и результатов
+ToolAxe toolAxe;
+ToolSuperSledge toolSuperSledge;
+ToolGiveExpForOre toolGiveExpForOre;
+ToolGiveExpForMineral toolGiveExpForMineral;
+ToolGiveExpForPole toolGiveExpForPole;
+ToolGiveExpForMetal toolGiveExpForMetal;
+ToolGiveExpForTube toolGiveExpForTube;
+ToolGiveExpForFlint toolGiveExpForFlint;
+ToolGiveExpForFruit toolGiveExpForFruit;
+ToolGiveExpForFruitMk2 toolGiveExpForFruitMk2;
+ToolGiveExpForElectronic toolGiveExpForElectronic;
+ToolGiveExpForSteel toolGiveExpForSteel;
+ToolShowInfoInWeight toolShowInfoInWeight;
+ToolSuperToolKit toolSuperToolKit;
+ToolGiveExpForUran toolGiveExpForUran;
+ToolGiveExpForChemicals toolGiveExpForChemicals;
+ToolGiveExpForWater toolGiveExpForWater;
+ToolBottle toolBottle;
+
+void SetToolsExt()
+{
+	Tools[0].SetCallbackDemand(toolAxe,PID_AXE)
+			.SetCallbackAddExp(toolGiveExpForPole,PID_SHARPENED_POLE)
+			.SetCallbackResult(toolAxe,PID_FIREWOOD);
+	Tools[1].SetCallbackSetTimeouts(toolSuperSledge,PID_SUPER_SLEDGE)
+			.SetCallbackAddExp(toolGiveExpForFlint,PID_FLINT);
+	Tools[2].SetCallbackSetTimeouts(toolSuperSledge,PID_SUPER_SLEDGE)
+	        .SetCallbackAddExp(toolGiveExpForOre,PID_METAL_ORE)
+			.SetCallbackAddExp(toolGiveExpForMineral,PID_MINERAL)
+			.SetCallbackResult(toolShowInfoInWeight,PID_METAL_ORE)
+			.SetCallbackResult(toolShowInfoInWeight,PID_MINERAL);
+	Tools[3].SetCallbackAddExp(toolGiveExpForMetal,PID_METAL_TRASH);
+	Tools[4].SetCallbackAddExp(toolGiveExpForTube,PID_TUBE);
+	Tools[5].SetCallbackSetTimeouts(toolSuperToolKit,PID_SUPER_TOOL_KIT)
+	//		.SetCallbackDemand(toolSuperToolKit,PID_SUPER_TOOL_KIT)
+	//		.SetCallbackResult(toolSuperToolKit,PID_V15_COMPUTER_PART)
+//			.SetCallbackResult(toolSuperToolKit,PID_ELECTRONIC_WASTE)
+			.SetCallbackAddExp(toolGiveExpForElectronic,PID_V15_COMPUTER_PART)
+			.SetCallbackAddExp(toolGiveExpForElectronic,PID_ELECTRONIC_WASTE);
+	
+	Tools[6].SetCallbackAddExp(toolGiveExpForFruit,PID_MUTATED_FRUIT)
+			.SetCallbackAddExp(toolGiveExpForFruitMk2,PID_MUTATED_FRUIT_MK2);
+	Tools[7].SetCallbackAddExp(toolGiveExpForUran,PID_URANIUM_ORE);
+	Tools[8].SetCallbackAddExp(toolGiveExpForSteel,PID_STEEL);		
+Tools[9].SetCallbackDemand(toolBottle,PID_BOTTLE_EMPTY)
+				.SetCallbackResult(toolBottle,PID_BOTTLE_AMMIAK)
+			.SetCallbackSetTimeouts(toolBottle,PID_BOTTLE_EMPTY);
+	Tools[11].SetCallbackAddExp(toolGiveExpForChemicals,PID_CHEMICALS);	
+	Tools[12].SetCallbackAddExp(toolGiveExpForWater,PID_BOTTLE_FULL);	
+}
+
+
+class CStarter
+{
+	CStarter()
+	{
+		for(uint i=0, iMax=ToolsSettings.length(); i<iMax;i++)
+		{
+			uint k=0;
+			Tools.resize(Tools.length()+1);
+			CTool@ tool=Tools[Tools.length()-1];
+			tool.ToolPids=ToolsSettings[i][k++];
+			tool.Anim1=ToolsSettings[i][k++];
+			tool.Anim2=ToolsSettings[i][k++];
+			tool.SourcePids=ToolsSettings[i][k++];
+			tool.SourceCount=ToolsSettings[i][k++];
+			tool.NewItemsPids=ToolsSettings[i][k++];
+			tool.MinCount=ToolsSettings[i][k++];
+			tool.MaxCount=ToolsSettings[i][k++];
+			tool.NewItemsChances=ToolsSettings[i][k];
+			tool.CallbackDemand.resize(tool.ToolPids.length());
+			tool.CallbackResult.resize(tool.NewItemsPids.length());
+			tool.CallbackSetTimeouts.resize(tool.ToolPids.length());
+			tool.CallbackAddExp.resize(tool.NewItemsPids.length());
+			tool.SetCallbackDemand(defTool)
+			    .SetCallbackResult(defTool)
+				.SetCallbackGetTimeouts(defTool)
+				.SetCallbackSetTimeouts(defTool)
+				.SetCallbackAddExp(defTool);
+		}
+		SetToolsExt();
+	}
+}
+CStarter starter;
+
+interface IResourceDemand { bool OnDemand(Critter& master, uint16 toolPid); }
+interface IResourceResult { uint OnResult(Critter& master, Item@ onItem, Scenery@ onScenery, uint16 toolPid, uint count, uint16 newItemsPid); }
+interface IResourceGetTimeouts { bool OnGetTimeouts(Critter& master, uint16 toolPid); }
+interface IResourceSetTimeouts { void OnSetTimeouts(Critter& master, uint16 toolPid, uint count, uint16 newItemsPid); }
+interface IResourceAddExp { void OnAddExp(Critter& master, uint16 toolPid, uint count, uint16 newItemsPid); }
+
+class CTool
+{
+	int16[] ToolPids;
+	int16[] SourcePids;
+	int16[] SourceCount;
+	int16[] NewItemsPids;
+	int16[] NewItemsChances;
+	int16[] Anim1;
+	int16[] Anim2;
+	int16[] MinCount;
+	int16[] MaxCount;
+	IResourceDemand@[] CallbackDemand;
+	IResourceResult@[] CallbackResult;
+	IResourceGetTimeouts@ CallbackGetTimeouts;
+	IResourceSetTimeouts@[] CallbackSetTimeouts;
+	IResourceAddExp@[] CallbackAddExp;
+	CTool@ SetCallbackDemand(IResourceDemand@ callback)
+	{
+		for(uint i=0, iMax=ToolPids.length(); i<iMax; i++)
+		{
+			@CallbackDemand[i]=callback;
+		}
+		return this;
+	}
+	CTool@ SetCallbackResult(IResourceResult@ callback)
+	{
+		for(uint i=0, iMax=NewItemsPids.length(); i<iMax; i++)
+		{
+			@CallbackResult[i]=callback;
+		}
+		return this;
+	}
+	CTool@ SetCallbackDemand(IResourceDemand@ callback, uint16 toolPid)
+	{
+		int toolIdx=GetToolIdx(toolPid);
+		if(toolIdx!=-1)
+		{
+			@CallbackDemand[toolIdx]=callback;
+		}
+		else
+		{
+			LogEx("Tool with pid №"+toolPid+" not found in group");
+		}
+		return this;
+	}
+	CTool@ SetCallbackResult(IResourceResult@ callback, uint16 newItemPid)
+	{
+		int16 newItemIdx=GetNewItemIdx(newItemPid);
+		if(newItemIdx!=-1)
+		{
+			@CallbackResult[newItemIdx]=callback;
+		}
+		else
+		{
+			LogEx("New item with pid №"+newItemPid+" not found in group");
+		}
+		return this;
+	}
+	CTool@ SetCallbackGetTimeouts(IResourceGetTimeouts@ callback)
+	{
+		@CallbackGetTimeouts=callback;
+		return this;
+	}
+	CTool@ SetCallbackSetTimeouts(IResourceSetTimeouts@ callback)
+	{
+		for(uint i=0, iMax=ToolPids.length(); i<iMax; i++)
+		{
+			@CallbackSetTimeouts[i]=callback;
+		}
+		return this;
+	}
+	CTool@ SetCallbackSetTimeouts(IResourceSetTimeouts@ callback, uint16 toolPid)
+	{
+		int toolIdx=GetToolIdx(toolPid);
+		if(toolIdx!=-1)
+		{
+			@CallbackSetTimeouts[toolIdx]=callback;
+		}
+		else
+		{
+			LogEx("Tool with pid №"+toolPid+" not found in group");
+		}
+		return this;
+	}
+	CTool@ SetCallbackAddExp(IResourceAddExp@ callback)
+	{
+		for(uint i=0, iMax=NewItemsPids.length(); i<iMax; i++)
+		{
+			@CallbackAddExp[i]=callback;
+		}
+		return this;
+	}
+	CTool@ SetCallbackAddExp(IResourceAddExp@ callback, uint16 newItemPid)
+	{
+		int16 newItemIdx=GetNewItemIdx(newItemPid);
+		if(newItemIdx!=-1)
+		{
+			@CallbackAddExp[newItemIdx]=callback;
+		}
+		else
+		{
+			LogEx("New item with pid №"+newItemPid+" not found in group");
+		}
+		return this;
+	}
+	int16 GetNewItemIdx(Critter& player, int16 toolIdx)
+	{
+		bool demand=true;
+		if(not (CallbackDemand[toolIdx] is null))
+		{
+			demand=CallbackDemand[toolIdx].OnDemand(player,ToolPids[toolIdx]);
+		}
+		if(demand)
+		{
+			for(uint i=0, iMax=NewItemsChances.length(); i<iMax; i++)
+			{
+				if(Random(0,99)<NewItemsChances[i])
+				{
+					return i;
+				}
+				else
+				{
+					continue;
+				}
+			}
+		}
+		return -1;
+	}
+	int16 GetNewItemIdx(uint16 pid)
+	{
+		LogEx("NewItemsPids count: "+NewItemsPids.length());
+		for(uint i=0, iMax=NewItemsPids.length(); i<iMax; i++)
+		{
+			LogEx("NewItemsPids"+i+": "+NewItemsPids[i]);
+			if(NewItemsPids[i]==pid)
+			{
+				return i;
+			}
+		}
+		return -1;
+	}
+	int GetToolIdx(uint16 pid)
+	{
+		for(uint i=0, iMax=ToolPids.length(); i<iMax; i++)
+		{
+			if(ToolPids[i]==pid)
+			{
+				return i;
+			}
+		}
+		return -1;
+	}
+}
+
+void _ToolInit(Item& item, bool firstTime)
+{
+	item.SetEvent(ITEM_EVENT_USE,"_ToolUse");
+}
+
+bool _ToolUse(Item& item, Critter& cr, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+	uint16 pid=item.GetProtoId();
+	uint16 onObj;
+	uint resourceCount;
+	if(valid(onItem))
+	{
+		onObj=onItem.GetProtoId();
+	}
+	else
+	{
+		if(valid(onScenery))
+		{
+			onObj=onScenery.ProtoId;
+		}
+		else
+		{
+			return false;
+		}
+	}
+	CTool@ tool;
+	@tool=GetTool(pid,onObj);
+	if(valid(tool))
+	{
+		uint toolIdx=tool.GetToolIdx(pid);
+		if(not (tool.CallbackGetTimeouts is null))
+		{
+			bool noTimeouts=tool.CallbackGetTimeouts.OnGetTimeouts(cr,pid);
+			if(not noTimeouts)
+			{
+				return true;
+			}
+		}
+		if(not CritterCanGetMoreItems(cr))
+		{
+			return true;
+		}
+		AnimateCritter(cr,tool.Anim1[toolIdx],tool.Anim2[toolIdx]);
+		uint16 mapId=cr.GetMapId();
+		LogEx("Tool used");
+		if(valid(onScenery))
+		{
+			resourceCount=GetSceneryResourcesCount(mapId,onScenery);
+			if(resourceCount==0)
+			{
+				cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_NO_RESOURCE);
+				return true;
+			}
+		}
+		int16 newItemIdx=tool.GetNewItemIdx(cr,toolIdx);
+		if(newItemIdx!=-1)
+		{
+			if(tool.NewItemsPids[newItemIdx]>0)
+			{
+				uint itemCount=Random(tool.MinCount[newItemIdx],tool.MaxCount[newItemIdx]);
+				if(itemCount>0)
+				{
+					if(valid(onScenery))
+					{
+						if(resourceCount<itemCount)
+						{
+							itemCount=resourceCount;
+						}
+						resourceCount-=itemCount;
+						SetSceneryResourcesCount(resourceCount,mapId,onScenery);
+					}
+					if(itemCount>0) cr.AddItem(tool.NewItemsPids[newItemIdx],itemCount);
+				}
+				if(not (tool.CallbackResult[newItemIdx] is null))
+				{
+					itemCount+=tool.CallbackResult[newItemIdx].OnResult(cr, onItem, onScenery, pid, itemCount, tool.NewItemsPids[newItemIdx]);
+				}
+				if(not (tool.CallbackSetTimeouts[toolIdx] is null))
+				{
+					tool.CallbackSetTimeouts[toolIdx].OnSetTimeouts(cr, pid, itemCount, tool.NewItemsPids[newItemIdx]);
+				}
+				if(not (tool.CallbackAddExp[newItemIdx] is null))
+				{
+					tool.CallbackAddExp[newItemIdx].OnAddExp(cr, pid, itemCount, tool.NewItemsPids[newItemIdx]);
+				}
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+		else
+		{
+			return false;
+		}
+	}
+	else
+	{
+		LogEx("Wrong tool using");
+	}
+	return false;
+}
+bool CritterCanGetMoreItems(Critter& player)
+{
+	if ((player.Stat[ST_CARRY_WEIGHT]-player.ItemsWeight())<0)
+	{
+		player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_WEIGHT_TOO_HEAVY);
+		return false;
+	}
+	return true;
+}
+
+uint GetSceneryResourcesCount(uint16 mapId, Scenery& scenery)
+{
+	uint[] adResourceCount;
+	uint resourceCount=0;
+	if(IsAnyData("Resources_"+mapId+"_"+scenery.HexX+"_"+scenery.HexY+"_"+scenery.ProtoId))
+	{
+		if(GetAnyData("Resources_"+mapId+"_"+scenery.HexX+"_"+scenery.HexY+"_"+scenery.ProtoId,adResourceCount))
+		{
+			resourceCount=adResourceCount[0];
+		}
+	}
+	else
+	{
+		uint[] anyData;
+		uint maxResCount=GetMaxResourceCount(scenery.ProtoId);
+		anyData.insertLast(maxResCount);
+		if(not SetAnyData("Resources_"+mapId+"_"+scenery.HexX+"_"+scenery.HexY+"_"+scenery.ProtoId,anyData))
+		{
+			Log("AnyData not created");
+		}
+		uint[] forTE;
+		forTE.insertLast(mapId);
+		forTE.insertLast(scenery.HexX);
+		forTE.insertLast(scenery.HexY);
+		forTE.insertLast(scenery.ProtoId);
+		CreateTimeEvent(__FullSecond+TIME_FOR_RESOURCES_COUNT_RESP,"_AddResourcesCount",forTE,true);
+		resourceCount=maxResCount;
+	}
+	return resourceCount;
+}
+
+void SetSceneryResourcesCount(uint resourceCount, uint16 mapId, Scenery& scenery)
+{
+	uint[] anyData;
+	anyData.insertLast(resourceCount);
+	if(not SetAnyData("Resources_"+mapId+"_"+scenery.HexX+"_"+scenery.HexY+"_"+scenery.ProtoId,anyData))
+	{
+		Log("AnyData not created");
+	}
+}
+
+CTool@ GetTool(uint16 pid, uint16 source)
+{
+	LogEx("ToolsGroup count: "+Tools.length());
+	for(uint i=0, iMax=Tools.length(); i<iMax; i++)
+	{
+		for(int16 k=0, kMax=int(Tools[i].ToolPids.length()); k<kMax; k++)
+		{
+			if(Tools[i].ToolPids[k]==pid)
+			{
+				for(int16 l=0, lMax=int(Tools[i].SourcePids.length()); l<lMax; l++)
+				{
+					if(Tools[i].SourcePids[l]==source)
+					{
+						return Tools[i];
+					}
+				}
+				break;
+			}
+		}
+	}
+	return null;
+}
+
+CTool@ GetTool(uint16 sourcePid)
+{
+	for(uint i=0, iMax=Tools.length(); i<iMax; i++)
+	{
+		for(int16 k=0, kMax=int(Tools[i].SourcePids.length()); k<kMax; k++)
+		{
+			if(Tools[i].SourcePids[k]==sourcePid)
+			{
+				return Tools[i];
+			}
+		}
+	}
+	return null;
+}
+
+uint _AddResourcesCount(uint[]@ values)
+{
+	uint[] adResourceCount;
+	if(IsAnyData("Resources_"+values[0]+"_"+values[1]+"_"+values[2]+"_"+values[3]))
+	{
+		if(GetAnyData("Resources_"+values[0]+"_"+values[1]+"_"+values[2]+"_"+values[3],adResourceCount))
+		{
+			adResourceCount[0]+=RESOURCES_COUNT_RESP_COUNT;
+			if(adResourceCount[0]<GetMaxResourceCount(values[3]))
+			{
+				if(not SetAnyData("Resources_"+values[0]+"_"+values[1]+"_"+values[2]+"_"+values[3],adResourceCount))
+				{
+					Log("AnyData not created");
+				}
+			}
+			else
+			{
+				EraseAnyData("Resources_"+values[0]+"_"+values[1]+"_"+values[2]+"_"+values[3]);
+				return 0;
+			}
+		}
+		return TIME_FOR_RESOURCES_COUNT_RESP;
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+void AnimateCritter(Critter& cr, uint anim1, uint anim2)
+{
+	if(anim1!=0 or anim2!=0)
+	{
+		cr.Animate(anim1, anim2, null, true, true);
+	}
+}
+
+uint GetMaxResourceCount(uint16 scProto)
+{
+	CTool@ tool=GetTool(scProto);
+	{
+		uint count=tool.SourceCount[0];
+		if(count!=0)
+		{
+			return count;
+		}
+	}
+	return MAX_RESOURCES_COUNT_PER_SCENERY;
+}
+
+class ToolDefault : IResourceDemand, IResourceResult, IResourceGetTimeouts, IResourceSetTimeouts, IResourceAddExp
+{
+	uint OnResult(Critter& master, Item@ onItem, Scenery@ onScenery, uint16 toolPid, uint count, uint16 newItemsPid)
+	{
+		string lexem="$itemname"+"@msg ITEM " + STR_ITEM_NAME(newItemsPid)+ "@";
+		if(count>1)
+		{
+			lexem+="$count"+count+"$type"+"@msg text "+STR_TYPE_COUNT+"@";
+			master.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_ITEMS_ADDED,lexem);
+		}
+		else
+		{
+			if(count==1)
+			{
+				master.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_ITEM_ADDED,lexem);
+			}
+		}
+		return 0;
+	}
+	bool OnDemand(Critter& master, uint16 toolPid)
+	{
+		return true;
+	}
+	bool OnGetTimeouts(Critter& master, uint16 toolPid)
+	{
+		if(master.Timeout[TO_SK_OUTDOORSMAN]>0)
+		{
+			master.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_SKILL_WEARINESS);
+			return false;
+		}
+		return true;
+	}
+	void OnSetTimeouts(Critter& master, uint16 toolPid, uint count, uint16 newItemsPid)
+	{
+		master.TimeoutBase[TO_SK_OUTDOORSMAN]=OUTDOORSMAN_TIMEOUT(master);
+	}
+
+	void OnAddExp(Critter& master, uint16 toolPid, uint count, uint16 newItemsPid)
+	{
+		//do nothing
+	}
+}
+
+
+
+// Tools
+
+class ToolBottle : IResourceDemand, IResourceResult, IResourceSetTimeouts
+{
+	bool OnDemand(Critter& master, uint16 toolPid)
+	{
+		GameVar@ qVar=GetLocalVar(LVAR_q_mod_farrel_ammiak, master.Id);
+		if(valid(qVar) && qVar > 0)
+		{
+			return true;
+		}
+		else
+		{
+			return false;		
+		}
+	}
+	
+	uint OnResult(Critter& master, Item@ onItem, Scenery@ onScenery, uint16 toolPid, uint count, uint16 newItemsPid)
+	{
+		uint[] adResourceCount;
+		uint itemCount=1;
+		uint resourceCount=1;
+		if(valid(onItem))
+		{
+			if(IsAnyData("Resources_"+onItem.MapId+"_"+onItem.HexX+"_"+onItem.HexY+"_"+onItem.GetProtoId()))
+			{
+				if(GetAnyData("Resources_"+onItem.MapId+"_"+onItem.HexX+"_"+onItem.HexY+"_"+onItem.GetProtoId(),adResourceCount))
+				{
+					resourceCount=adResourceCount[0];
+				}
+			}
+			if(resourceCount==0)
+			{
+				master.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_NO_AMMIAK);
+				return 0;
+			}
+			uint[] anyData;
+			resourceCount=0;
+			anyData.insertLast(resourceCount);
+			if(not SetAnyData("Resources_"+onItem.MapId+"_"+onItem.HexX+"_"+onItem.HexY+"_"+onItem.GetProtoId(), anyData))
+			{
+				Log("res: AnyData not created");
+			}else{
+				uint[] forTE;
+				forTE.insertLast(onItem.MapId);
+				forTE.insertLast(onItem.HexX);
+				forTE.insertLast(onItem.HexY);
+				forTE.insertLast(onItem.GetProtoId());
+				CreateTimeEvent(__FullSecond+TIME_FOR_RESOURCES_COUNT_RESP*5,"_AddResourcesCount",forTE,true);
+			}
+			Item@ tool=master.GetItem(toolPid, -1);
+			if ((Random(1,6) + int(master.Stat[ST_LUCK]/4))>5 && valid(tool))
+			{
+				master.AddItem(PID_BOTTLE_AMMIAK, 1);
+				master.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_AMMIAK_ADDED);
+				_SubItem(tool, 1);	
+			}else{
+				master.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_NO_AMMIAK);
+			}
+		}
+		return 0;
+	}
+	
+	void OnSetTimeouts(Critter& master, uint16 toolPid, uint count, uint16 newItemsPid)
+	{
+	}
+}
+
+class ToolAxe : IResourceDemand, IResourceResult
+{
+	bool OnDemand(Critter& master, uint16 toolPid)
+	{
+		if(Random(0,99)<(50+(master.StatBase[ST_AGILITY]*5)))
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	uint OnResult(Critter& master, Item@ onItem, Scenery@ onScenery, uint16 toolPid, uint count, uint16 newItemsPid)
+	{
+		uint[] adResourceCount;
+		uint resourceCount=GetMaxResourceCount(onScenery.ProtoId);
+		uint maxCount=master.Skill[SK_OUTDOORSMAN]/50;
+		if(maxCount==0)
+		{
+			maxCount=1;
+		}
+		uint itemCount=Random(1,maxCount);
+		uint16 mapId=master.GetMapId();
+		if(valid(onScenery))
+		{
+			if(IsAnyData("Resources_"+mapId+"_"+onScenery.HexX+"_"+onScenery.HexY+"_"+onScenery.ProtoId))
+			{
+				if(GetAnyData("Resources_"+mapId+"_"+onScenery.HexX+"_"+onScenery.HexY+"_"+onScenery.ProtoId,adResourceCount))
+				{
+					resourceCount=adResourceCount[0];
+				}
+			}
+			if(resourceCount<itemCount)
+			{
+				itemCount=resourceCount;
+			}
+		}
+		if ((resourceCount==0) and (count==0))
+		{
+			master.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_NO_RESOURCE);
+			return 0;
+		}
+		else
+		{
+			resourceCount-=itemCount;
+			if ((count+itemCount)>0)
+			{
+				master.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_WOOD_ADDED);
+			}
+		}
+		if(valid(onScenery))
+		{
+			uint[] anyData;
+			anyData.insertLast(resourceCount);
+			if(not SetAnyData("Resources_"+mapId+"_"+onScenery.HexX+"_"+onScenery.HexY+"_"+onScenery.ProtoId,anyData))
+			{
+				Log("AnyData not created");
+			}
+		}
+		if(itemCount>0) master.AddItem(PID_FIREWOOD,itemCount);
+		return itemCount;
+	}
+}
+
+class ToolSuperSledge : IResourceSetTimeouts
+{
+	void OnSetTimeouts(Critter& master, uint16 toolPid, uint count, uint16 newItemsPid)
+	{
+		master.TimeoutBase[TO_SK_OUTDOORSMAN]=OUTDOORSMAN_SUPERSLEDGE_TIMEOUT(master);
+	}
+}
+
+class ToolSuperToolKit : IResourceSetTimeouts
+{
+	void OnSetTimeouts(Critter& master, uint16 toolPid, uint count, uint16 newItemsPid)
+	{
+		master.TimeoutBase[TO_SK_SCIENCE]=SCIENCE_SUPERTOOLKIT_TIMEOUT(master);
+	}
+}
+
+class ToolGiveExpForOre : IResourceAddExp
+{
+	void OnAddExp(Critter& master, uint16 toolPid, uint count, uint16 newItemsPid)
+	{
+		master.StatBase[ST_EXPERIENCE]+=EXP_FOR_ORE;
+	}
+}
+
+class ToolGiveExpForPole : IResourceAddExp
+{
+	void OnAddExp(Critter& master, uint16 toolPid, uint count, uint16 newItemsPid)
+	{
+		master.StatBase[ST_EXPERIENCE]+=EXP_FOR_POLE;
+	}
+}
+
+class ToolGiveExpForMetal : IResourceAddExp
+{
+	void OnAddExp(Critter& master, uint16 toolPid, uint count, uint16 newItemsPid)
+	{
+		master.StatBase[ST_EXPERIENCE]+=EXP_FOR_METAL;
+	}
+}
+
+class ToolGiveExpForFruit : IResourceAddExp
+{
+	void OnAddExp(Critter& master, uint16 toolPid, uint count, uint16 newItemsPid)
+	{
+		master.StatBase[ST_EXPERIENCE]+=EXP_FOR_FRUIT;
+	}
+}
+
+class ToolGiveExpForFruitMk2 : IResourceAddExp
+{
+	void OnAddExp(Critter& master, uint16 toolPid, uint count, uint16 newItemsPid)
+	{
+		master.StatBase[ST_EXPERIENCE]+=EXP_FOR_FRUIT_MK2;
+	}
+}
+
+class ToolGiveExpForMineral : IResourceAddExp
+{
+	void OnAddExp(Critter& master, uint16 toolPid, uint count, uint16 newItemsPid)
+	{
+		master.StatBase[ST_EXPERIENCE]+=EXP_FOR_MINERAL;
+		}
+}
+
+class ToolGiveExpForFlint : IResourceAddExp
+{
+	void OnAddExp(Critter& master, uint16 toolPid, uint count, uint16 newItemsPid)
+	{
+		master.StatBase[ST_EXPERIENCE]+=EXP_FOR_FLINT;
+	}
+}
+
+class ToolGiveExpForTube : IResourceAddExp
+{
+	void OnAddExp(Critter& master, uint16 toolPid, uint count, uint16 newItemsPid)
+	{
+		master.StatBase[ST_EXPERIENCE]+=EXP_FOR_TUBE;
+	}
+}
+
+class ToolGiveExpForElectronic : IResourceAddExp
+{
+	void OnAddExp(Critter& master, uint16 toolPid, uint count, uint16 newItemsPid)
+	{
+		master.StatBase[ST_EXPERIENCE]+=EXP_FOR_ELECTRONIC;
+	}
+}
+
+class ToolGiveExpForUran : IResourceAddExp
+{
+	void OnAddExp(Critter& master, uint16 toolPid, uint count, uint16 newItemsPid)
+	{
+		master.StatBase[ST_EXPERIENCE]+=EXP_FOR_URAN;
+	}
+}
+
+class ToolGiveExpForSteel : IResourceAddExp
+{
+	void OnAddExp(Critter& master, uint16 toolPid, uint count, uint16 newItemsPid)
+	{
+		master.StatBase[ST_EXPERIENCE]+=EXP_FOR_STEEL;
+	}
+}
+
+
+
+class ToolGiveExpForChemicals : IResourceAddExp
+{
+	void OnAddExp(Critter& master, uint16 toolPid, uint count, uint16 newItemsPid)
+	{
+		master.StatBase[ST_EXPERIENCE]+=EXP_FOR_CHEMICALS;
+		master.DeleteItem(PID_BOTTLE_GLASS,1);
+	}
+}
+
+class ToolGiveExpForWater : IResourceAddExp
+{
+	void OnAddExp(Critter& master, uint16 toolPid, uint count, uint16 newItemsPid)
+	{
+		master.StatBase[ST_EXPERIENCE]+=EXP_FOR_WATER;
+		master.DeleteItem(PID_BOTTLE_EMPTY,1);
+	}
+}
+
+class ToolShowInfoInWeight : IResourceResult
+{
+	uint OnResult(Critter& master, Item@ onItem, Scenery@ onScenery, uint16 toolPid, uint count, uint16 newItemsPid)
+	{
+		string lexem="$itemname"+"@msg ITEM " + STR_ITEM_NAME(newItemsPid)+ "@";
+		if(count>0)
+		{
+			ProtoItem@ newItemProto=GetProtoItem(newItemsPid);
+			uint itemweight=newItemProto.Weight*count/1000;
+			lexem+="$count"+itemweight+"$type"+"@msg text "+STR_TYPE_KG+"@";
+			master.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_ITEMS_ADDED,lexem);
+		}
+		return 0;
+	}
+}

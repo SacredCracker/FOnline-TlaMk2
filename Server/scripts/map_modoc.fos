@@ -1,0 +1,120 @@
+// Authors: cvet, rifleman17
+#include "_macros.fos"
+
+#define ENTRANCE_SOUTH     (0)
+#define ENTRANCE_NORTH     (1)
+#define ENTIRE_SPAWN       (17)
+#define PID_WASP           (505)
+#define MESSAGE_KILL       (17)
+#define FARM_X             (940)
+#define FARM_Y             (213)
+
+import bool GetEntireFreeHex(Map& map, int number, uint16& hx, uint16& hy) from "entire";
+
+bool entrance_Modoc(Location& modoc, Critter@[]& critters, uint8 entrance)
+{
+	Critter@ leader=critters[0];
+	if(entrance==ENTRANCE_NORTH) return leader.Skill[SK_OUTDOORSMAN]>=50;
+	return true;
+}
+
+// Квест "Вредители на ферме"
+// Мэр Модока просит игрока убить одну гигантскую осу, поселившуюся на одной из ферм Модока
+void _FarmInit(Map& map, bool firstTime)
+{
+	if(firstTime)
+	{
+		uint16 hx=0;
+		uint16 hy=0;
+		if(GetEntireFreeHex(map, ENTIRE_SPAWN, hx, hy))
+		{
+			map.AddNpc(PID_WASP, hx, hy, Random(0,5), null, null, "_WaspInit");
+		}
+	}
+	map.SetEvent(MAP_EVENT_IN_CRITTER, "_FarmInCritter");
+}
+
+void _FarmInCritter(Map& map, Critter& cr)
+{
+	cr.SendMessage(MESSAGE_KILL, cr.Id, MESSAGE_TO_ALL_ON_MAP);
+}
+
+void _WaspInit(Critter& wasp, bool firstTime)
+{
+	wasp.SetEvent(CRITTER_EVENT_DEAD, "_WaspDead");
+	wasp.SetEvent(CRITTER_EVENT_MESSAGE, "_WaspMessage");
+	wasp.StatBase[ST_REPLICATION_TIME]=-1;
+}
+
+void _WaspDead(Critter& cr, Critter@ killer)
+{
+	Map@ map=cr.GetMap();
+	if (!valid(map))
+		return;
+	Critter@[] players;
+	if(map.GetCritters(0, FIND_ALL|FIND_ONLY_PLAYERS, players)>0)
+	{
+		for(uint i=0, iMax=players.length(); i<iMax; i++)
+		{
+			GameVar@ qVar=GetLocalVar(LVAR_q_mod_joe_giant_wasp, players[i].Id);
+			if(valid(qVar) && qVar.GetValue()==1) qVar=2;
+		}
+	}
+	Location@ loc=map.GetLocation();
+	if(valid(loc))
+		loc.AutoGarbage=true;
+}
+
+void _WaspMessage(Critter& cr, Critter& fromCr, int message, int value)
+{
+	if(message==MESSAGE_KILL)
+		cr.AddEnemyInStack(fromCr.Id);
+}
+
+void r_ShowMap(Critter& player, Critter@ npc)
+{
+	uint locId=CreateLocation(LOCATION_Quest_ModocWaspFarm, FARM_X, FARM_Y, null);
+	if(locId==0) return;
+	Location @ loc=GetLocation(locId);
+	if(valid(loc))
+	{
+		loc.Visible=false;
+		loc.AutoGarbage=false;
+	}
+	player.SetKnownLoc(true, loc.Id);
+	int[] values={loc.Id, player.Id};
+	CreateTimeEvent(__FullSecond+REAL_DAY(2), "e_ResetWaspLoc", values, true);
+}
+
+uint e_ResetWaspLoc(uint[]@ values)
+{
+	Location @ loc=GetLocation(values[0]);
+	if(valid(loc))
+	{
+		loc.AutoGarbage=true;
+	}
+	GameVar@ qVar=GetLocalVar(LVAR_q_mod_joe_giant_wasp, values[1]);
+	if(valid(qVar))
+	{
+		if(qVar.GetValue()==1)
+			qVar=0;
+	}
+	return 0;
+}
+
+
+// Квест "Морозко"
+void dlg_CountBottles(Critter& player, Critter@ npc, string@ lexems)
+{
+	if(IS_DIALOG_END(lexems) or IS_DIALOG_SAY_MODE(lexems))
+		return;
+	lexems="$count" + _CritCountItem(player, PID_BOTTLE_AMMIAK);
+}
+
+void r_AllBottles(Critter& player, Critter@ npc)
+{
+	uint bottles=_CritCountItem(player, PID_BOTTLE_AMMIAK);
+	_CritDeleteItem(player, PID_BOTTLE_AMMIAK, bottles);
+	player.StatBase[ST_EXPERIENCE] +=bottles*400;
+	_CritAddItem(player, PID_BOTTLE_CAPS, bottles*400);
+}

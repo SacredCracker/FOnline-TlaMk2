@@ -1,0 +1,1159 @@
+// Библиотека общих функций городской охраны.
+// #inclide "city_guard.fos"
+
+// #ifdef _GUARD_DEN - относиться только к Дэну. #ifndef _GUARD_DEN - не относиться к дену.
+// _MAIN_ для майна.
+
+#ifndef _CITY_GUARD_
+#define _CITY_GUARD_
+
+#define CHECK_PENALTY			(5000)
+#define PENALTY_ADD_ATTACK		(400)
+#define PENALTY_ADD_KILL		(10000)
+#define PENALTY_ADD_STEAL		(10)
+#define PENALTY_ADD_SNEAK		(500)
+#define PENALTY_ADD_EXPLODE		(2000)
+#define PENALTY_ADD_EXPLODE_ACTIVATE	(1000)
+
+void AddPenaltyCity(Critter@ cr,int addStat)
+{ 
+	Map@ map=cr.GetMap();
+	if(valid(map)) 
+	{
+		Location@ loc=map.GetLocation();
+		if(valid(loc))
+		{
+			cr.CityPenaltyBase[loc.GetProtoId()]+=addStat;
+		}
+	}
+}
+	
+void SetPenaltyCity(Critter@ cr,uint newStat)  
+{
+	Map@ map=cr.GetMap();
+	if(valid(map)) 
+	{
+		Location@ loc=map.GetLocation();
+		if(valid(loc))
+		{
+			cr.CityPenaltyBase[loc.GetProtoId()]=newStat;
+		}
+	}
+}
+
+uint GetPenaltyCity(Critter& cr)
+{
+	Map@ map=cr.GetMap();
+	if(valid(map)) 
+	{
+		Location@ loc=map.GetLocation();
+		if(valid(loc))
+		{
+			return cr.CityPenalty[loc.GetProtoId()];
+		}
+	}
+	return 0;
+}
+
+bool sneak(Critter& cr)
+{
+	return cr.Mode[MODE_HIDE]!=0;
+}
+
+const int[] allowed_bt={BT_RADSCORPION,BT_RAT,BT_DOG,BT_PLANT,BT_GECKO,BT_GIANT_ANT,BT_DEADCLAW};
+
+int8 GetTimeBonus()
+{
+	uint16 hour=0, p0=0;
+	uint fs=__FullSecond;
+	GetGameTime (fs, p0, p0,p0,p0,hour,p0,p0);
+	if(hour>=9 && hour<17) return 0;
+	else if(hour>=21 || hour<5) return 6;
+	else if(hour<9) return(9-hour);
+	else return(hour-16);
+}
+
+#ifndef _MAIN_
+
+import void CritterAttack(Critter& cr, Critter& target, Critter@ guard) from "main";
+
+enum CrimenalType
+{
+	None,
+	Attack,
+	Kill,
+	Steal,
+	Sneak,
+	Loot
+}
+
+const uint[] PenaltyCrimenal={
+								0, 		// None
+								400, 	// Attack
+								10000, 	// Kill
+								15,		// Steal в процентах от стоимости предмета.
+								200,	// Sneak
+								15		// Loot в процентах от стоимости предмета.
+								};
+								
+const uint16[] Pids_IllegalItems={PID_ACTIVE_DYNAMITE, PID_ACTIVE_PLASTIC_EXPLOSIVE, PID_ACTIVE_MINE, PID_TOGGLE_SWITCH};
+const uint[] tntPidId={PID_ACTIVE_MINE,PID_ACTIVE_PLASTIC_EXPLOSIVE,PID_ACTIVE_DYNAMITE};
+
+void _GuardSmthStealing(Critter& cr, Critter& fromCr, Critter& thief, bool success, Item& item, uint count)
+{
+	uint Distantion=GetDistantion(cr.HexX, cr.HexY, thief.HexX, thief.HexY);
+	if(Distantion<=20)
+	{
+		if(thief.IsPlayer() && cr.IsLife())
+		{
+			if(success)
+			{
+				uint TimeBonus=GetTimeBonus();
+				Distantion/=2;
+				int chance=((50+(16-Distantion))-TimeBonus)-thief.Skill[SK_STEAL]*thief.Stat[ST_LUCK]/50;
+				chance=CLAMP(chance,5,95);
+				if(Random(1,100)<chance) AttackCityPlane(cr,thief);
+			}
+			else 
+			{
+				AttackCityPlane(cr,thief);
+			}
+		}
+	}
+}
+
+void _GuardSmthAttacked(Critter& cr, Critter& fromCr, Critter& attacker)
+{
+	/*uint Distantion=GetDistantion(cr.HexX, cr.HexY, attacker.HexX, attacker.HexY);
+	if(Distantion<=35 && !targetEnemy(fromCr))
+	{
+		AttackCityPlane(cr,attacker);
+	} */
+}
+
+bool targetEnemy(Critter& target) 
+{
+	for(uint i=0, iMax=allowed_bt.length(); i<iMax; i++)
+		if(target.Stat[ST_BODY_TYPE]==allowed_bt[i]) return true;
+	return false;
+}
+
+
+bool targetEnemy(Critter& guard, Critter& target)
+{
+	NpcPlane@[] planes;
+	uint count=guard.GetPlanes(planes);
+	if(count==0) return false;
+
+	for(uint i=0; i<count; i++)
+	{
+		if(planes[i].Attack_TargId==target.Id) return true;
+	}
+	return false;
+}
+
+void _GuardSmthAttack(Critter& guard, Critter& attacker, Critter& target)
+{
+	//CritterAttack(attacker,fromCr,cr);
+	/*
+	if(attacker.IsPlayer() && target.Stat[ST_NPC_ROLE_CITY] !=CITY_NONE_PROTECT && (GetDistantion(guard.HexX, guard.HexY, target.HexX, target.HexY)<=35 || GetDistantion(guard.HexX, guard.HexY, attacker.HexX, attacker.HexY)<=35) && !targetEnemy(target))
+	{
+		AttackCityPlane(guard,attacker);
+	}*/
+}
+
+bool IsNpcCity(Critter& cr)
+{
+	return (cr.IsNpc() && cr.Merc[MERC_MASTER_ID]==0 && cr.Stat[ST_NPC_ROLE_CITY]!=CITY_NONE_PROTECT && cr.Stat[ST_NPC_ROLE_CITY]!=TEMPLATE_MOB && !targetEnemy(cr));
+}
+
+void _GuardMessage(Critter& cr, Critter& fromCr, int message, int value)
+{
+	#ifdef _GUARD_DEN
+	NpcPlane@[] planes;
+	if(message==MESSAGE_PLEASE_KILL_ME_I_AM_IDIOT && GetLocalVar(LVAR_safe_zone_entered_den,fromCr.Id)!=0)
+	{
+		AttackCityPlane(cr,fromCr);
+	}
+	if(message==MSG_IM_HAVE_ILLEGAL_ITEMS)
+	{
+		AttackCityPlane(cr,fromCr);
+		Critter @ target=GetCritter(fromCr.Id);
+		if (!valid(target) || target.IsNpc()) return;
+		if(Random(0,4)==1) cr.SayMsg(SAY_SHOUT, TEXTMSG_TEXT, STR_NO_ILLEGAL_ITEMS, GetPlayerName(fromCr.Id));
+    }
+    else
+    {
+        if(message==MSG_CANCEL_PICKUP)
+        {
+			uint count=cr.GetPlanes(planes);
+			if(count==0) return ;
+			uint erased=0;
+			for(uint i=0; i<count; i++)
+			{
+				if(planes[i].Identifier==PLANE_LOOT && planes[i].IdentifierExt==uint(fromCr.Id) && cr.ErasePlane(i-erased)) erased++;
+			}
+            if(cr.GetPlanes(PLANE_LOOT, fromCr.Id, planes)!=0)
+            {
+                for(uint i=0, iMax=planes.length(); i<iMax; i++)
+                {
+                    if(valid(planes[i]))
+                    {
+                        cr.ErasePlane(i);
+                    }
+                }
+            }
+        }
+    }
+	#endif // _GUARD_DEN
+	#ifndef _GUARD_DEN
+	if(message==MESSAGE_I_AM_BLOCK_DOOR)
+	{
+		if(Random(0,4)==1) cr.SayMsg(SAY_SHOUT, TEXTMSG_DLG, DLGSTR(196, 9));
+		return;
+	}
+	
+	if(message==MESSAGE_KILL_ME)
+	{
+		NpcPlane@ plane=CreatePlane();
+		plane.Type=AI_PLANE_ATTACK;
+		plane.Priority=AI_PLANE_ATTACK_PRIORITY;
+		plane.Attack_TargId=fromCr.Id;
+		plane.Attack_MinHp=__DeadHitPoints;
+		plane.Attack_IsGag=false;
+		plane.Attack_GagHexX=0;
+		plane.Attack_GagHexY=0;
+		plane.Attack_LastHexY=fromCr.HexY;
+		plane.Attack_LastHexX=fromCr.HexX;
+		plane.Run=true;
+		cr.AddPlane(plane);
+		return;
+	}
+	#endif
+}
+
+// Обработчик нарушений, возвращаемое число записывается в штраф перед городом, если возвращается 0, то нарушения нету, криттера не атакуют.
+uint Crimenal(Critter& cr, Item@ targetItem, Critter@ targetCritter, uint8 type, Item@[] items)
+{
+	if(cr.IsNpc())
+	{
+		return 0;
+	}
+	switch (type)
+	{
+		case CrimenalType(Attack):
+		{
+			if(valid(targetCritter))
+			{
+				if(targetCritter.IsPlayer())
+				{
+					
+				}
+				else
+				{
+				
+				}
+			}
+		} break;
+		default: return 0;
+	}
+	return 0;
+}
+
+bool AttackCityPlane(Critter@ attacker, Critter@ attacked)
+{
+	if(IsNpcCity(attacked)) return false;
+	//if(targetEnemy(attacker,attacked)) return false;
+	if(sneak(attacked))
+	{
+		attacked.ModeBase[MODE_HIDE]=0;
+		_CritAnimateThrow(attacker);
+		attacker.GetMap().RunFlyEffect(4024, attacker,attacked,0,0,0,0);
+	}
+	return AddAttackPlane(attacker,0,attacked, true);
+}
+#endif
+
+#ifdef _MAIN_
+
+MenegerMap@[] MenMaps;
+MenegerMap@[] NewbieMaps;
+
+MenegerMap@[] GetMenMaps()
+{
+	return MenMaps;
+}
+
+void InitManajs()
+{
+	MenMaps.resize(0);
+	NewbieMaps.resize(0);
+	for(uint i=0; i<147; i++)
+	{
+		MenMaps.insertLast(MenegerMap(i));
+	}
+	
+	for(uint i=0;i<10;i++)
+	{
+		NewbieMaps.insertLast(MenegerMap(147+i));
+	}
+	
+	LoadBags();
+}
+
+uint GetIndex(Map& map,bool& isNewbie)
+{
+	Location@ loc=map.GetLocation();
+	uint index=map.GetProtoId();
+	isNewbie=false;
+	if(loc.GetProtoId()==LOCATION_NewbieLocation)
+	{
+		index-=(index>438?(433):(431));
+		isNewbie=true;
+	}
+	return index;
+}
+
+#define IsMerc(cr) (cr.Merc[MERC_MASTER_ID]!=0)
+
+void CritterInitMap(Map& map, Critter& cr)
+{
+	if(cr.IsPlayer() || cr.Merc[MERC_MASTER_ID]!=0)
+	{
+		bool IsNewbie=false;
+		uint index=GetIndex(map,IsNewbie);
+		if(IsNewbie)
+			NewbieMaps[index].InCritter(cr);
+		else if(index<147) 
+			MenMaps[index].InCritter(cr);
+	}
+}
+
+void CritterOutMap(Map& map, Critter& cr)
+{
+	if(cr.IsPlayer() || cr.Merc[MERC_MASTER_ID]!=0)
+	{
+		bool IsNewbie=false;
+		uint index=GetIndex(map,IsNewbie);
+		if(IsNewbie)
+			NewbieMaps[index].OutCritter(cr);
+		else if(index<147) 
+			MenMaps[index].OutCritter(cr);
+	}
+}
+
+void CritterAttack(Critter& cr, Critter& target)
+{
+	if(cr.IsPlayer() || cr.Merc[MERC_MASTER_ID]!=0)
+	{
+		Map@ map=cr.GetMap();
+		if(valid(map))
+		{
+			bool IsNewbie=false;
+			uint index=GetIndex(map,IsNewbie);
+			if(IsNewbie)
+				NewbieMaps[index].CritterAttack(cr,target);
+			else if(index<147)
+				MenMaps[index].CritterAttack(cr,target);
+		}
+	}
+}
+
+void CritterAttack(Critter& cr, Critter& target, Critter@ guard)
+{
+	if(cr.IsPlayer() || cr.Merc[MERC_MASTER_ID]!=0)
+	{
+		Map@ map=cr.GetMap();
+		if(valid(map))
+		{
+			bool IsNewbie=false;
+			uint index=GetIndex(map,IsNewbie);
+			if(IsNewbie)
+				NewbieMaps[index].CritterAttack(cr,target);
+			else if(index<147) 
+				MenMaps[index].CritterAttack(cr,target);
+		}
+	}
+}
+
+void KillCritter(Critter& cr,Critter& killer)
+{
+	if(killer.IsPlayer() || cr.Merc[MERC_MASTER_ID]!=0)
+	{
+		Map@ map=killer.GetMap();
+		if(valid(map))
+		{
+			bool IsNewbie=false;
+			uint index=GetIndex(map,IsNewbie);
+			if(IsNewbie)
+				NewbieMaps[index].Kill(cr,killer);
+			else if(index<147) MenMaps[index].Kill(cr,killer);
+		}
+	}
+}
+
+bool PlayerDead(Critter& player, Item@[] items, Map& map)
+{
+	if(player.IsPlayer())
+	{
+		bool IsNewbie=false;
+		uint index=GetIndex(map,IsNewbie);
+		if(IsNewbie)
+			return	NewbieMaps[index].Dead(player, items,map);
+		if(index<147) 
+			return MenMaps[index].Dead(player, items,map);
+	}
+	return false;
+}
+
+void StealLoot(Critter& cr, Critter& target, bool success, Item& item, uint count)
+{
+	Map@ map=cr.GetMap();
+	if(valid(map))
+	{
+		bool IsNewbie=false;
+		uint index=GetIndex(map,IsNewbie);
+		if(IsNewbie)
+			NewbieMaps[index].Steal(cr,target,success,item,count);
+		else if(index<147) 
+			MenMaps[index].Steal(cr,target,success,item,count);
+	}
+}
+
+void SneakCritter(Critter& cr, bool InSneak)
+{
+	Map@ map=cr.GetMap();
+	if(valid(map))
+	{
+		bool IsNewbie=false;
+		uint index=GetIndex(map,IsNewbie);
+		if(IsNewbie)
+			NewbieMaps[index].Sneak(cr,InSneak);
+		else if(index<147) 
+			MenMaps[index].Sneak(cr,InSneak);
+	}
+}
+
+void ExplodeCity(Critter& cr, bool IsActivate)
+{
+	Map@ map=cr.GetMap();
+	if(valid(map))
+	{
+		bool IsNewbie=false;
+		uint index=GetIndex(map,IsNewbie);
+		if(IsNewbie)
+			NewbieMaps[index].Explode(cr,IsActivate);
+		else if(index<147) 
+			MenMaps[index].Explode(cr,IsActivate);
+	}
+}
+
+void GetStatistic(Critter& cr, int, int, int)
+{
+	Map@ map=cr.GetMap();
+	if(valid(map))
+	{
+		bool IsNewbie=false;
+		uint index=GetIndex(map,IsNewbie);
+		if(IsNewbie)
+		{
+			cr.Say(SAY_NETMSG,"Гостей "+NewbieMaps[index].Guest.length());
+			cr.Say(SAY_NETMSG,"Врагов "+NewbieMaps[index].Enemy.length());
+		}
+		else if(index<147)
+		{
+			cr.Say(SAY_NETMSG,"Гостей "+MenMaps[index].Guest.length());
+			cr.Say(SAY_NETMSG,"Врагов "+MenMaps[index].Enemy.length());
+		}
+	}
+}
+
+class MenegerMap
+{
+	MenegerMap(uint index)
+	{
+		Guest.resize(0);
+		Enemy.resize(0);
+		Id=index;
+	}
+	
+	void InCritter(Critter& cr)
+	{
+		Critter@ master=cr;
+		uint IdMaster=cr.Merc[MERC_MASTER_ID];
+		if(cr.IsNpc() && IdMaster!=0)
+		{
+			@master=GetCritter(IdMaster);
+		}
+		if(GetPenaltyCity(master)>=CHECK_PENALTY)
+		{
+			GuardAttack(cr,null);
+			Enemy.insertLast(CritterMap(cr));
+		}
+		else Guest.insertLast(CritterMap(cr));
+	}
+	
+	void OutCritter(Critter& cr)
+	{
+		for(uint i=0, im=Guest.length(); i<im;i++)
+			if(Guest[i].CritterId==cr.Id)
+				{
+					Guest.removeAt(i);
+					return;
+				}
+		for(uint i=0, im=Enemy.length(); i<im;i++)
+			if(Enemy[i].CritterId==cr.Id)
+				{
+					Enemy.removeAt(i);
+					return;
+				}
+	}
+	
+	bool IsCritterEnemy(Critter& cr)
+	{
+		for(uint i=0, im=Enemy.length(); i<im;i++)
+				if(Enemy[i].CritterId==cr.Id)
+					{
+						return true;
+					}
+		return false;
+	}
+	
+	bool CheckAttackerIsEnemy(Critter& attacker, Critter& target)
+	{
+		if(attacker.IsPlayer())
+		{
+			if(target.IsPlayer())
+			{
+				return IsCritterEnemy(target);
+			}
+			else
+			{
+				int bt=target.Stat[ST_BODY_TYPE],
+				npcrc=target.Stat[ST_NPC_ROLE_CITY];
+				for(uint i=0, iMax=allowed_bt.length(); i<iMax; i++)
+					if(bt==allowed_bt[i]) return true;
+				if(npcrc==CITY_NONE_PROTECT || npcrc==CITY_enemy || npcrc==TEMPLATE_MOB) return true;
+			}
+		}
+		return false;
+	}
+	
+	void Sneak(Critter& cr, bool InSneak)
+	{
+		if(InSneak)
+		{
+			GuardToTargetOutSneak(cr);
+			AddPenaltyCity(cr,PENALTY_ADD_SNEAK);
+		}
+	}
+	
+	void Steal(Critter& cr, Critter& target, bool success, Item& item, uint count)
+	{
+		if(CheckAttackerIsEnemy(cr,target)) return;
+		uint penalty=((item.GetCost())/100*PENALTY_ADD_STEAL);
+		penalty=(penalty==0?1:penalty)*count;
+		AddPenaltyCity(cr,penalty);
+		if(success)
+		{
+			Critter@[] critters;
+			uint crlen=cr.GetCritters(true,FIND_LIFE_AND_KO|FIND_ONLY_NPC,critters), Distantion=0;
+			Critter@ gu;
+			for(uint i=0;i<crlen;i++)
+			{
+				@ gu=critters[i];
+				if(valid(gu))
+				{
+					Distantion=GetDistantion(cr.HexX, cr.HexY, gu.HexX, gu.HexY);
+					if(Distantion<=20)
+					{
+						if(Random(1,100)<CLAMP(((50+(16-Distantion/2))-GetTimeBonus())-cr.Skill[SK_STEAL]*cr.Stat[ST_LUCK]/50,5,50)) 
+						{
+							GuardAttack(cr,target);
+							for(uint i=0, im=Guest.length(); i<im;i++)
+								if(Guest[i].CritterId==cr.Id)
+								{
+									Enemy.insertLast(Guest[i]);
+									Guest.removeAt(i);
+									break;
+								}
+						}
+					}
+				}
+			}
+		}
+		else
+		{
+			for(uint i=0, im=Guest.length(); i<im;i++)
+				if(Guest[i].CritterId==cr.Id)
+				{
+					Enemy.insertLast(Guest[i]);
+					Guest.removeAt(i);
+					break;
+				}
+			GuardAttack(cr,target);
+		}
+	}
+	
+	void Explode(Critter& cr, bool IsActivate)
+	{
+		AddPenaltyCity(cr ,IsActivate?PENALTY_ADD_EXPLODE_ACTIVATE:PENALTY_ADD_EXPLODE);				
+		GuardAttack(cr,null);
+	}
+	
+	void CritterAttack(Critter@ attacker, Critter@ target)
+	{
+		if(CheckAttackerIsEnemy(attacker,target)) return;
+		AddPenaltyCity(attacker ,PENALTY_ADD_ATTACK);
+				
+		GuardAttack(attacker,null);
+	}
+	
+	void Kill(Critter& cr, Critter& killer)
+	{
+		if(CheckAttackerIsEnemy(killer,cr)) return;
+		AddPenaltyCity(killer ,PENALTY_ADD_KILL);
+				
+		GuardAttack(killer,cr);
+	}
+	
+	void GuardAttack(Critter& cr, Critter@attacked)
+	{
+		for(uint i=0, im=Guest.length(); i<im;i++)
+			if(Guest[i].CritterId==cr.Id)
+				{
+					Enemy.insertLast(Guest[i]);
+					Guest.removeAt(i);
+					break;
+				}
+				
+		Critter@[] critters;
+		uint crlen=0;
+		Map@ map=cr.GetMap();
+		
+		if(valid(attacked)) crlen=attacked.GetCritters(true,FIND_LIFE_AND_KO|FIND_ONLY_NPC,critters);
+		else crlen=cr.GetCritters(true,FIND_LIFE_AND_KO|FIND_ONLY_NPC,critters);
+		for(uint i=0;i<crlen;i++)
+		{
+			Critter@ gu=critters[i];
+			if(valid(gu))
+			{
+				if(gu.Stat[ST_NPC_ROLE_CITY]==TEMPLATE_GUARD || gu.Stat[ST_NPC_ROLE_CITY]==TEMPLATE_GRUP_PATROL  || gu.Stat[ST_NPC_ROLE_CITY]==CITY_klamath_patrol)
+				{
+					if(sneak(cr))
+					{
+						cr.ModeBase[MODE_HIDE]=0;
+						_CritAnimateThrow(gu);
+						gu.GetMap().RunFlyEffect(4024, gu,cr,0,0,0,0);
+					}
+					NpcPlane@[] planes;
+					uint count=gu.GetPlanes(planes);
+					if(count !=0)
+					{
+						for(uint i=0; i<count; i++)
+						{
+							if(planes[i].Attack_TargId==cr.Id) break;
+						}
+					}
+					AddAttackPlane(gu,0,cr);
+				}
+			}
+		}
+	}
+	
+	void GuardAttack(Critter& cr, Critter@attacked, uint hp)
+	{
+		Critter@[] critters;
+		uint crlen=0;
+		Map@ map=cr.GetMap();
+		
+		if(valid(attacked)) crlen=attacked.GetCritters(true,FIND_LIFE_AND_KO|FIND_ONLY_NPC,critters);
+		else crlen=cr.GetCritters(true,FIND_LIFE_AND_KO|FIND_ONLY_NPC,critters);
+		for(uint i=0;i<crlen;i++)
+		{
+			Critter@ gu=critters[i];
+			if(valid(gu))
+			{
+				if(gu.Stat[ST_NPC_ROLE_CITY]==TEMPLATE_GUARD || gu.Stat[ST_NPC_ROLE_CITY]==TEMPLATE_GRUP_PATROL  || gu.Stat[ST_NPC_ROLE_CITY]==CITY_klamath_patrol)
+				{
+					if(sneak(cr))
+					{
+						cr.ModeBase[MODE_HIDE]=0;
+						_CritAnimateThrow(gu);
+						gu.GetMap().RunFlyEffect(4024, gu,cr,0,0,0,0);
+					}
+					NpcPlane@[] planes;
+					uint count=gu.GetPlanes(planes);
+					if(count !=0)
+					{
+						for(uint i=0; i<count; i++)
+						{
+							if(planes[i].Attack_TargId==cr.Id) break;
+						}
+					}
+					NpcPlane@ plane=CreatePlane();
+					plane.Type=AI_PLANE_ATTACK;
+					plane.Priority=AI_PLANE_ATTACK_PRIORITY;
+					plane.Attack_TargId=cr.Id;
+					plane.Attack_MinHp=hp;
+					plane.Attack_IsGag=false;
+					plane.Attack_GagHexX=0;
+					plane.Attack_GagHexY=0;
+					plane.Attack_LastHexY=cr.HexY;
+					plane.Attack_LastHexX=cr.HexX;
+					plane.Run=true;
+					gu.AddPlane(plane);
+				}
+			}
+		}
+	}
+	
+	void GuardToTargetOutSneak(Critter& cr)
+	{
+		Critter@[] critters;
+		uint crlen=0;
+		Map@ map=cr.GetMap();
+		
+		crlen=cr.GetCritters(true,FIND_LIFE|FIND_ONLY_NPC,critters);
+		for(uint i=0;i<crlen;i++)
+		{
+			Critter@ gu=critters[i];
+			if(valid(gu))
+			{
+				int npcrc=gu.Stat[ST_NPC_ROLE_CITY];
+				if(npcrc==TEMPLATE_GUARD || npcrc==TEMPLATE_GRUP_PATROL  || npcrc==CITY_klamath_patrol)
+				{
+					cr.ModeBase[MODE_HIDE]=0;
+					gu.SetDir(GetDirection(gu.HexX,gu.HexY,cr.HexX,cr.HexY));
+					_CritAnimateThrow(gu);
+					gu.GetMap().RunFlyEffect(4024, gu,cr,gu.HexX,gu.HexY,cr.HexX,cr.HexY);
+					return;
+				}
+			}
+		}
+	}
+	
+	bool Dead(Critter& player, Item@[] items, Map& map)
+	{
+		Log("MenegerMap::Dead");
+		if(!IsCritterEnemy(player))
+		{
+			Log("MenegerMap::Dead - No Enemy");
+			Bags.insertLast(BagsDeadPlayers(player,items));
+			MoveItems(items,map,1,1);
+			return true;
+		}
+		return false;
+	}
+	
+	void ReturnLootToPlayer(Critter& cr)
+	{
+		uint[] indexs;
+		uint len=0;
+		for(uint i=0, im=Bags.length(); i<im;i++)
+		{
+			if(Bags[i].CritterId==cr.Id) 
+			{
+				MoveItems(Bags[i].GetItems(),cr);
+				indexs.insertLast(i);
+				len++;
+			}
+		}
+		for(uint i=0;i<len;i++)
+		{
+			Bags.removeAt(i);
+		}
+	}
+	
+	uint CheckIsBagsPlayer(Critter& player, BagsDeadPlayers@[]@+ bags)
+	{
+		uint len=0;
+		for(uint i=0, im=Bags.length(); i<im;i++)
+		{
+			if(Bags[i].CritterId==player.Id) 
+			{
+				bags.insertLast(Bags[i]);
+				len++;
+			}
+		}
+		return len;
+	}
+	
+	uint GetBags()
+	{
+		return Bags.length();
+	}
+	
+	void SaveBags(file@ f)
+	{
+		f.writeString("[ManejMap_Bags_"+Id+"]\n");
+			for(uint i=0, im=Bags.length(); i<im;i++)
+			{
+				f.writeString("[Bags_№"+i+"]\n");
+				Bags[i].Save(f);
+			}
+	}
+	
+	uint Id;
+	BagsDeadPlayers@[] Bags;
+	CritterMap@[] Guest;
+	CritterMap@[] Enemy;
+}
+
+class BagsDeadPlayers
+{
+	BagsDeadPlayers(Critter& cr, Item@[] it)
+	{
+		CritterId=cr.Id;
+		Items=it;
+		PercentCost=10;
+		Cost=0;
+	}
+	
+	BagsDeadPlayers(uint crId, Item@[] it)
+	{
+		CritterId=crId;
+		Items=it;
+		PercentCost=10;
+		Cost=0;
+	}
+	
+	void Save(file@ f)
+	{
+		f.writeString("Critter_Id="+CritterId+"\n");
+		for(uint i=0, im=Items.length();i<im;i++)
+			f.writeString("Item="+Items[i].Id+"\n");
+	}
+	
+	uint GetCost(uint m=PercentCost)
+	{
+		if(Cost!=0) return Cost;
+		uint cost=0;
+		for(uint i=0, iEnd=Items.length(); i<iEnd;i++)
+			cost+=(Items[i].Proto.Cost/100)*m;
+
+		Cost=cost<=1?1:cost;
+		return Cost;
+	}
+	
+	string@ GetDescription()
+	{
+		string@ txt="";
+		uint count=GetLength();
+		for(uint i=0, iEnd=Items.length();i<iEnd;i++)
+		{
+			txt+=" "+Items[i].GetProtoId();
+		}
+		return txt;
+	}
+	
+	uint GetLength()
+	{
+		return Items.length();
+	}
+	
+	void SetCost(uint cost)
+	{
+		Cost=cost;
+	}
+	
+	void CostNull()
+	{
+		Cost=0;
+	}
+	
+	Item@[] GetItems()
+	{
+		return Items;
+	}
+	
+	uint GetItems(Item@[]@+ items)
+	{
+		items=Items;
+		return Items.length();
+	}
+	
+	private uint PercentCost;
+	private uint Cost;
+	uint CritterId;
+	private Item@[] Items;
+}
+
+class CritterMap
+{
+	CritterMap(Critter@ cr)
+	{
+		CritterId=cr.Id;
+		IdAttacker=0;
+	}
+	
+	CritterMap(Critter@ cr, uint id)
+	{
+		CritterId=cr.Id;
+		IdAttacker=id;
+	}
+	
+	Critter@ GetCritter()
+	{
+		//Critter@ cr=GetCritter(CritterId);
+		return null;
+	}
+
+	uint CritterId;
+	uint IdAttacker;
+}
+
+uint GetCostBags(Critter& cr)
+{
+	uint cost=0;
+	BagsDeadPlayers@[] bags;
+	for(uint i=0, iEnd=GetBagsMapToPlayer(cr,bags);i<iEnd;i++)
+	{
+		cost+=bags[i].GetCost(10);
+	}
+	return cost;
+}
+
+uint GetBagsMap(Critter& cr)
+{
+	Map@ m=cr.GetMap();
+	if(!valid(m)) return 0;
+	Location@ loc=m.GetLocation();
+	if(valid(loc))
+	{
+		uint countBags=0;
+		for(uint i=0, iEnd=loc.GetMapCount(), index=0;i<iEnd;i++)
+		{
+			Map@ map=loc.GetMapByIndex(i);
+			if(valid(map))
+			{
+				bool IsNewbie=false;
+				uint index=GetIndex(map,IsNewbie);
+				if(IsNewbie)
+					countBags+=NewbieMaps[index].GetBags();
+				else if(index<147)
+					countBags+=MenMaps[index].GetBags();
+			}
+		}
+		return countBags;
+	}
+	return 0;
+}
+
+uint GetBagsMapToPlayer(Critter& cr, BagsDeadPlayers@[]@+ bags)
+{
+	Map@ m=cr.GetMap();
+	if(!valid(m)) return 0;
+	Location@ loc=m.GetLocation();
+	if(valid(loc))
+	{
+		uint countBags=0;
+		for(uint i=0, iEnd=loc.GetMapCount(), index=0;i<iEnd;i++)
+		{
+			Map@ map=loc.GetMapByIndex(i);
+			if(valid(map))
+			{
+				bool IsNewbie=false;
+				uint index=GetIndex(map,IsNewbie);
+				if(IsNewbie)
+					countBags+=NewbieMaps[index].CheckIsBagsPlayer(cr,bags);
+				else if(index<147)
+					countBags+=MenMaps[index].CheckIsBagsPlayer(cr,bags);
+			}
+		}
+		return countBags;
+	}
+	return 0;
+}
+// ~run main GetCountBag 0 0 0
+void GetCountBag(Critter& cr, int, int, int)
+{
+	cr.Say(SAY_NETMSG,""+GetBagsMap(cr));
+}
+// ~run main GetCountBagToPlayer 0 0 0
+void GetCountBagToPlayer(Critter& cr, int, int, int)
+{
+	BagsDeadPlayers@[] bags;
+	cr.Say(SAY_NETMSG,""+GetBagsMapToPlayer(cr,bags));
+}
+
+void GetDescriptionBags(Critter& cr, int, int, int)
+{
+	BagsDeadPlayers@[] bags;
+	string@ txt="";
+	for(uint i=0, iEnd=GetBagsMapToPlayer(cr,bags);i<iEnd;i++)
+	{
+		Log(""+i+" "+iEnd+" "+bags.length());
+		txt+=bags[i].GetDescription();
+		Log(""+i+" "+iEnd+" "+bags.length());
+	}
+	cr.Say(SAY_NETMSG,txt);
+}
+
+void GetStatisticLoot(Critter& cr, int, int, int)
+{
+
+}
+
+// ~run main ReturnAllLoot 0 0 0
+void ReturnAllLoot(Critter& cr)
+{
+	Map@ m=cr.GetMap();
+	if(!valid(m)) return;
+	Location@ loc=m.GetLocation();
+	if(valid(loc))
+	{
+		for(uint i=0, iEnd=loc.GetMapCount(), index=0;i<iEnd;i++)
+		{
+			Map@ map=loc.GetMapByIndex(i);
+			if(valid(map))
+			{
+				bool IsNewbie=false;
+				uint index=GetIndex(map,IsNewbie);
+				if(IsNewbie)
+					NewbieMaps[index].ReturnLootToPlayer(cr);
+				else if(index<147)
+					MenMaps[index].ReturnLootToPlayer(cr);
+			}
+		}
+	}
+}
+
+void ReturnAllLoot(Critter& cr, int, int, int)
+{
+	ReturnAllLoot(cr);
+}
+
+void GetPenalty(Critter& cr, int, int, int)
+{
+	cr.Say(SAY_NETMSG,""+GetPenaltyCity(cr));
+}
+// ~run main SaveBags 0 0 0
+void SaveBags(Critter& cr, int, int, int)
+{
+	SaveBags();
+}
+
+void SaveBags()
+{
+	uint tick=GetTick();
+	file cfg;
+	if(cfg.open("save\\bagsDeadPlayer\\lastSave","w")==0)
+	{
+		uint16[] time={0,0,0,0,0,0,0,0};
+		GetTime(time[0],time[1],time[2],time[3],time[4],time[5],time[6],time[7]);
+		string@ saveNameFile="SaveBags_"+time[2]+"_"+time[1]+"_"+time[0]+"_"+time[4]+"_"+time[5]+".save";
+		cfg.writeString(saveNameFile);
+		cfg.close(); 
+		if(cfg.open("save\\bagsDeadPlayer\\"+saveNameFile,"w")==0)
+		{
+			for(uint i=0,im=MenMaps.length();i<im;i++)
+				MenMaps[i].SaveBags(cfg);
+			cfg.close();
+			Log("Сумки мертвых игроков сохранены за "+(GetTick()-tick)+" миллисекунды.");
+		}
+	}
+}
+// ~run main LoadBags 0 0 0
+void LoadBags(Critter& cr, int, int, int)
+{
+	LoadBags();
+}
+
+void LoadBags()
+{
+	uint tick=GetTick();
+	file cfg;
+	if(cfg.open("save\\bagsDeadPlayer\\lastSave","r")==0)
+	{
+		string str=cfg.readWord();
+		cfg.close(); 
+		if(cfg.open("save\\bagsDeadPlayer\\"+str,"r")==0)
+		{
+			MenegerMap@ m;
+			int var=0, var2=0, var3=0;
+			Item@[] varItems;
+			while(not cfg.isEndOfFile())
+			{
+				if(str.length()>16 && substring(str,0,15)=="[ManejMap_Bags_")
+				{
+					if(var2!=0 && varItems.length()>0 && valid(m))
+					{
+						m.Bags.insertLast(BagsDeadPlayers(uint(var2),varItems));
+					}
+					var2=0;
+					varItems.resize(0);
+					StrToInt(substring(str,15,str.length()-16),var);
+					@m=MenMaps[var];
+				}
+				else if(str.length()>11 && substring(str,0,11)=="Critter_Id=")
+				{
+					if(var2!=0 && varItems.length()>0 && valid(m))
+					{
+						m.Bags.insertLast(BagsDeadPlayers(uint(var2),varItems));
+						var2=0;
+						varItems.resize(0);
+					}
+					StrToInt(substring(str,11,str.length()-11),var2);
+				}
+				else if(str.length()>5 && substring(str,0,5)=="Item=")
+				{
+					StrToInt(substring(str,5,str.length()-5),var3);
+					Item@ item=GetItem(uint(var3));
+					if(valid(item))
+					{
+						varItems.insertLast(item);
+					}
+				}
+				
+				str=cfg.readWord();
+			}
+			cfg.close();
+			Log("Сумки мертвых игроков загружены за "+(GetTick()-tick)+" миллисекунды.");
+			//for(uint i=0; i<147;i++)for(uint j=0, jm=MenMaps[i].Bags.length();j<jm;j++)for(uint p=0, pm=MenMaps[i].Bags[j].Items.length();p<pm;p++)Log(""+MenMaps[i].Bags[j].Items[p].Id);
+		}
+	}
+}
+//~run main TestIc 1 1000000 0  
+void TestIc(Critter& cr, int id, int f, int)
+{
+	uint startTick=GetTick();
+	for(uint i=0;i<uint(f);i++)
+		GetItem(uint(id));
+	cr.Say(SAY_NETMSG,""+(GetTick()-startTick));
+}
+
+uint r_BankIsBags(Critter& player, Critter@ npc)
+{
+	return GetBagsMap(player)!=0?14:15;
+}
+
+uint r_BankReturnLoot(Critter& player, Critter@ npc)
+{
+	Item@ money=player.GetItem(PID_BOTTLE_CAPS,-1);
+	if(valid(money))
+	{
+		uint cost=GetCostBags(player),
+		countMoney=money.GetCount();
+		if(countMoney>=cost)
+		{
+			player.DeleteItem(PID_BOTTLE_CAPS,cost);
+			ReturnAllLoot(player);
+			return 2;
+		}
+	}
+	return 16;
+}
+
+void dlg_CostBags(Critter& player, Critter@ npc, string@ lexems)
+{
+	if(not IS_DIALOG_GENERATED(lexems)) return; 
+	lexems+="$money"+GetCostBags(player);
+}
+
+bool d_IsCountMoney(Critter& player, Critter@ npc)
+{
+	return (player.CountItem(PID_BOTTLE_CAPS)>=GetCostBags(player));
+}
+#endif
+#endif

@@ -1,0 +1,358 @@
+[comment]
+
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+3 1010 D _param p ST_INTELLECT > 3 D _var p name_mem_npc_player = 1 D _var p newbie_multi_tool = 0 D _var p q_newbie_collar = 0 D _var p q_newbie_gather_trash = 0 D _var p q_newbie_ammo = 0 #
+20 1020 D no_recheck _param p ST_INTELLECT > 3 D no_recheck _var p name_mem_npc_player = 1 D no_recheck _var p q_newbie_collar ! 2 D no_recheck _item p PID_MULTI_TOOL > 0 D no_recheck _var p newbie_multi_tool = 1 D _var p q_newbie_collar > 0 D or D _var p q_newbie_ammo > 0 D or D _var p q_newbie_gather_trash > 0 #
+10 1030 D _param p ST_INTELLECT < 4 D _var p q_newbie_gather_trash = 0 #
+2 1040 D _var p name_mem_npc_player = 0 R _var p name_mem_npc_player = 1 #
+6 1050 D _var p newbie_multi_tool = 1 D _item p PID_MULTI_TOOL < 1 R _item p PID_EXP_COLLAR_CRAFT - 5 R _item p PID_PUMP_PARTS - 3 R _item p PID_METAL_TRASH - 3 R _item p PID_PLASTIC_EXPLOSIVES_DULL - 5 R _var p q_newbie_collar = 0 R _var p q_newbie_gather_trash = 0 R _var p q_newbie_ammo = 0 #
+25 1060 D _var p q_newbie_collar = 2 D _var p q_newbie_gather_trash = 0 D _var p q_newbie_ammo = 0 #
+6 1070 D _param p ST_INTELLECT > 3 D _var p name_mem_npc_player = 1 D _var p q_newbie_collar ! 2 D _item p PID_MULTI_TOOL < 1 D _var p newbie_multi_tool = 1 D _var p q_newbie_collar > 0 D or D _param p ST_INTELLECT > 3 D _var p name_mem_npc_player = 1 D _var p q_newbie_collar ! 2 D _item p PID_MULTI_TOOL < 1 D _var p newbie_multi_tool = 1 D _var p q_newbie_gather_trash > 0 D or D _var p q_newbie_ammo > 0 R _item p PID_EXP_COLLAR_CRAFT - 5 R _item p PID_METAL_TRASH - 3 R _item p PID_PUMP_PARTS - 3 R _item p PID_PLASTIC_EXPLOSIVES_DULL - 3 R _var p q_newbie_collar = 0 #
+20 1080 D _var p q_newbie_collar ! 2 D _param p ST_INTELLECT > 3 D _var p name_mem_npc_player = 1 D _var p newbie_multi_tool = 0 D _var p q_newbie_collar > 0 D or D _var p q_newbie_collar ! 2 D _param p ST_INTELLECT > 3 D _var p name_mem_npc_player = 1 D _var p newbie_multi_tool = 0 D _var p q_newbie_gather_trash > 0 D or D _var p q_newbie_ammo > 0 #
+3 1090 D _param p ST_INTELLECT > 3 D _var p newbie_multi_tool = 1 D _var p name_mem_npc_player = 1 D _item p PID_MULTI_TOOL > 0 D _var p q_newbie_collar = 0 D _var p q_newbie_gather_trash = 0 D _var p q_newbie_ammo = 0 @
+2 2000 None 0 #
+3 2010 #
+0 2020 @
+10 3000 None 0 #
+0 3010 #
+11 3020 @
+11 4000 None 0 #
+0 4010 #
+0 4020 D _var p newbie_multi_tool = 0 R _item p PID_MULTI_TOOL + 1 R _var p newbie_multi_tool = 1 R _var p q_newbie_gather_trash = 1 #
+0 4030 D _item p PID_MULTI_TOOL > 0 R _var p q_newbie_gather_trash = 1 @
+3 5000 None 0 #
+4 5010 D _param p ST_INTELLECT > 8 D or D _param p SK_REPAIR > 59 D or D _param p SK_SCIENCE > 59 #
+5 5020 D _param p SK_SCIENCE < 60 D _param p SK_REPAIR < 60 D _param p ST_INTELLECT < 9 #
+0 5030 #
+7 5040 D _param p SK_SMALL_GUNS > 49 D _param p SK_REPAIR > 49 #
+9 5050 D _param p SK_REPAIR < 50 D or D _param p SK_SMALL_GUNS < 50 #
+30 5060 @
+4 6000 None 0 #
+3 6010 #
+0 6020 D _var p q_newbie_collar = 0 D _item p PID_MULTI_TOOL < 1 D _var p newbie_multi_tool = 0 R _item p PID_MULTI_TOOL + 1 R _item p PID_PLASTIC_EXPLOSIVES_DULL + 5 R _item p PID_METAL_TRASH + 3 R _item p PID_PUMP_PARTS + 3 R _var p q_newbie_collar = 1 R _var p newbie_multi_tool = 1 #
+0 6030 D _item p PID_MULTI_TOOL > 0 D _var p q_newbie_collar = 0 R _item p PID_PLASTIC_EXPLOSIVES_DULL + 5 R _item p PID_METAL_TRASH + 3 R _item p PID_PUMP_PARTS + 3 R _var p q_newbie_collar = 1 @
+5 7000 None 0 #
+3 7010 #
+65507 7020 @
+6 8000 Attack 0 #
+65507 8010 @
+7 9000 None 0 #
+0 9010 D _var p q_newbie_ammo = 0 D _item p PID_MULTI_TOOL < 1 D _var p newbie_multi_tool = 0 R _item p PID_MULTI_TOOL + 1 R _var p q_newbie_ammo = 1 R _var p newbie_multi_tool = 1 R _item p PID_GUNPOWDER + 4 R _item p PID_METAL_TRASH + 8 #
+8 9020 #
+0 9030 D _var p q_newbie_ammo = 0 D _item p PID_MULTI_TOOL > 0 R _var p q_newbie_ammo = 1 R _item p PID_GUNPOWDER + 4 R _item p PID_METAL_TRASH + 8 @
+8 10000 None 0 #
+0 10010 D _var p q_newbie_ammo = 0 D _item p PID_MULTI_TOOL < 1 D _var p newbie_multi_tool = 0 R _item p PID_MULTI_TOOL + 1 R _var p q_newbie_ammo = 1 R _var p newbie_multi_tool = 1 R _item p PID_GUNPOWDER + 4 R _item p PID_METAL_TRASH + 8 #
+3 10020 #
+0 10030 D _var p q_newbie_ammo = 0 D _item p PID_MULTI_TOOL > 0 R _var p q_newbie_ammo = 1 R _item p PID_GUNPOWDER + 4 R _item p PID_METAL_TRASH + 8 @
+9 11000 None 0 #
+0 11010 #
+3 11020 #
+65507 11030 @
+13 12000 None 0 #
+0 12010 #
+3 12020 @
+14 13000 None 0 #
+0 13010 #
+3 13020 @
+15 14000 None 0 #
+0 14010 #
+17 14020 @
+16 15000 Attack 0 @
+17 16000 Attack 0 @
+18 17000 Attack 0 @
+20 18000 None 0 #
+21 18010 D _var p q_newbie_collar = 1 D _item p PID_EXP_COLLAR_CRAFT > 2 D _item p PID_EXP_COLLAR_CRAFT < 5 R _param p ST_EXPERIENCE + 200 R _item p PID_BOTTLE_CAPS + 100 R _item p PID_EXP_COLLAR_CRAFT - 3 R _var p q_newbie_collar = 2 R _item p PID_PLASTIC_EXPLOSIVES_DULL - 2 #
+0 18020 #
+65507 18030 D _var p q_newbie_collar = 1 R _item p PID_PUMP_PARTS - 3 R _item p PID_METAL_TRASH - 3 R _item p PID_PLASTIC_EXPLOSIVES_DULL - 5 R _item p PID_EXP_COLLAR_CRAFT - 5 R _item p PID_MULTI_TOOL - 1 R _var p newbie_multi_tool = 0 R _var p q_newbie_collar = 0 #
+22 18040 D _item p PID_EXP_COLLAR_CRAFT > 4 D _var p newbie_multi_tool = 0 R _param p ST_EXPERIENCE + 400 R _item p PID_EXP_COLLAR_CRAFT - 5 R _item p PID_BOTTLE_CAPS + 250 R _var p q_newbie_collar = 0 #
+24 18050 D _item p PID_EXP_COLLAR_CRAFT > 1 D _var p q_newbie_collar = 3 D _var p newbie_multi_tool = 0 R _item p PID_EXP_COLLAR_CRAFT - 2 R _item p PID_BOTTLE_CAPS + 150 R _param p ST_EXPERIENCE + 200 R _var p q_newbie_collar = 0 #
+22 18060 D _var p newbie_multi_tool = 1 D _item p PID_EXP_COLLAR_CRAFT > 4 R _param p ST_EXPERIENCE + 400 R _item p PID_MULTI_TOOL - 1 R _item p PID_BOTTLE_CAPS + 250 R _item p PID_EXP_COLLAR_CRAFT - 5 R _var p q_newbie_collar = 0 R _var p newbie_multi_tool = 0 #
+24 18070 D _var p newbie_multi_tool = 1 D _item p PID_EXP_COLLAR_CRAFT > 1 D _var p q_newbie_collar = 3 R _item p PID_EXP_COLLAR_CRAFT - 2 R _item p PID_BOTTLE_CAPS + 150 R _param p ST_EXPERIENCE + 200 R _var p q_newbie_collar = 0 R _item p PID_MULTI_TOOL - 1 R _var p newbie_multi_tool = 0 #
+13 18080 D _var p newbie_multi_tool = 0 D _var p q_newbie_ammo = 1 D _item p PID_10MM_JHP > 39 D _item p PID_9MM_AMMO > 39 R _item p PID_BOTTLE_CAPS + 120 R _item p PID_10MM_JHP - 40 R _item p PID_9MM_AMMO - 40 R _var p q_newbie_ammo = 0 R _param p ST_EXPERIENCE + 300 #
+13 18090 D _var p newbie_multi_tool = 1 D _var p q_newbie_ammo = 1 D _item p PID_10MM_JHP > 39 D _item p PID_9MM_AMMO > 39 R _var p q_newbie_ammo = 0 R _var p newbie_multi_tool = 0 R _item p PID_10MM_JHP - 40 R _item p PID_9MM_AMMO - 40 R _item p PID_MULTI_TOOL - 1 R _item p PID_BOTTLE_CAPS + 120 R _param p ST_EXPERIENCE + 300 #
+14 18100 D _var p newbie_multi_tool = 0 D _var p q_newbie_ammo = 1 D _item p PID_9MM_AMMO < 20 D _item p PID_10MM_JHP > 79 D or D _var p newbie_multi_tool = 0 D _var p q_newbie_ammo = 1 D _item p PID_10MM_JHP > 59 D _item p PID_9MM_AMMO > 19 D or D _var p newbie_multi_tool = 0 D _var p q_newbie_ammo = 1 D _item p PID_10MM_JHP > 19 D _item p PID_9MM_AMMO > 59 D or D _var p newbie_multi_tool = 0 D _var p q_newbie_ammo = 1 D _item p PID_9MM_AMMO > 79 D _item p PID_10MM_JHP < 20 R _param p ST_EXPERIENCE + 150 R _item p PID_10MM_JHP - 80 R _item p PID_9MM_AMMO - 80 R _item p PID_BOTTLE_CAPS + 25 R _var p q_newbie_ammo = 0 #
+14 18110 D _var p q_newbie_ammo = 1 D _var p newbie_multi_tool = 1 D _item p PID_10MM_JHP > 79 D _item p PID_9MM_AMMO < 20 D or D _var p q_newbie_ammo = 1 D _var p newbie_multi_tool = 1 D _item p PID_9MM_AMMO > 19 D _item p PID_10MM_JHP > 59 D or D _var p q_newbie_ammo = 1 D _var p newbie_multi_tool = 1 D _item p PID_10MM_JHP > 19 D _item p PID_9MM_AMMO > 59 D or D _var p q_newbie_ammo = 1 D _var p newbie_multi_tool = 1 D _item p PID_9MM_AMMO > 79 D _item p PID_10MM_JHP < 20 R _param p ST_EXPERIENCE + 150 R _item p PID_10MM_JHP - 80 R _item p PID_9MM_AMMO - 80 R _item p PID_MULTI_TOOL - 1 R _item p PID_BOTTLE_CAPS + 25 R _var p newbie_multi_tool = 0 R _var p q_newbie_ammo = 0 #
+15 18120 D _var p newbie_multi_tool = 0 D _var p q_newbie_ammo = 1 D _item p PID_10MM_JHP > 19 D _item p PID_10MM_JHP < 40 D _item p PID_9MM_AMMO > 39 D _item p PID_9MM_AMMO < 60 D or D _var p newbie_multi_tool = 0 D _var p q_newbie_ammo = 1 D _item p PID_10MM_JHP > 39 D _item p PID_10MM_JHP < 60 D _item p PID_9MM_AMMO > 19 D _item p PID_9MM_AMMO < 40 D or D _var p newbie_multi_tool = 0 D _var p q_newbie_ammo = 1 D _item p PID_9MM_AMMO < 20 D _item p PID_10MM_JHP < 80 D _item p PID_10MM_JHP > 59 D or D _var p newbie_multi_tool = 0 D _var p q_newbie_ammo = 1 D _item p PID_10MM_JHP < 20 D _item p PID_9MM_AMMO < 80 D _item p PID_9MM_AMMO > 59 D or D _var p newbie_multi_tool = 0 D _var p q_newbie_ammo = 1 D _item p PID_9MM_AMMO > 29 D _item p PID_9MM_AMMO < 40 D _item p PID_10MM_JHP > 29 D _item p PID_10MM_JHP < 40 R _var p q_newbie_ammo = 0 R _item p PID_10MM_JHP - 80 R _item p PID_9MM_AMMO - 80 R _item p PID_GUNPOWDER - 1 #
+15 18130 D _var p newbie_multi_tool = 1 D _var p q_newbie_ammo = 1 D _item p PID_10MM_JHP > 19 D _item p PID_10MM_JHP < 40 D _item p PID_9MM_AMMO > 39 D _item p PID_9MM_AMMO < 60 D or D _var p newbie_multi_tool = 1 D _var p q_newbie_ammo = 1 D _item p PID_10MM_JHP > 39 D _item p PID_10MM_JHP < 60 D _item p PID_9MM_AMMO > 19 D _item p PID_9MM_AMMO < 40 D or D _var p newbie_multi_tool = 1 D _var p q_newbie_ammo = 1 D _item p PID_9MM_AMMO < 20 D _item p PID_10MM_JHP < 80 D _item p PID_10MM_JHP > 59 D or D _var p newbie_multi_tool = 1 D _var p q_newbie_ammo = 1 D _item p PID_10MM_JHP < 20 D _item p PID_9MM_AMMO < 80 D _item p PID_9MM_AMMO > 59 D or D _var p newbie_multi_tool = 1 D _var p q_newbie_ammo = 1 D _item p PID_9MM_AMMO < 40 D _item p PID_9MM_AMMO > 29 D _item p PID_10MM_JHP > 29 D _item p PID_10MM_JHP < 40 R _var p q_newbie_ammo = 0 R _var p newbie_multi_tool = 0 R _item p PID_MULTI_TOOL - 1 R _item p PID_10MM_JHP - 80 R _item p PID_9MM_AMMO - 80 R _item p PID_GUNPOWDER - 1 #
+16 18140 D _var p q_newbie_ammo = 1 D _var p newbie_multi_tool = 0 D _item p PID_10MM_JHP < 20 D _item p PID_9MM_AMMO < 40 D _item p PID_9MM_AMMO > 19 D or D _var p q_newbie_ammo = 1 D _var p newbie_multi_tool = 0 D _item p PID_9MM_AMMO < 20 D _item p PID_10MM_JHP < 40 D _item p PID_10MM_JHP > 19 D or D _var p q_newbie_ammo = 1 D _var p newbie_multi_tool = 0 D _item p PID_10MM_JHP < 30 D _item p PID_9MM_AMMO < 30 D _item p PID_10MM_JHP > 19 D _item p PID_9MM_AMMO > 19 R _item p PID_9MM_AMMO - 80 R _item p PID_10MM_JHP - 80 R _var p q_newbie_ammo = 0 R _item p PID_METAL_TRASH - 4 R _item p PID_GUNPOWDER - 2 #
+16 18150 D _var p q_newbie_ammo = 1 D _var p newbie_multi_tool = 1 D _item p PID_10MM_JHP < 20 D _item p PID_9MM_AMMO < 40 D _item p PID_9MM_AMMO > 19 D or D _var p q_newbie_ammo = 1 D _var p newbie_multi_tool = 1 D _item p PID_9MM_AMMO < 20 D _item p PID_10MM_JHP < 40 D _item p PID_10MM_JHP > 19 D or D _var p q_newbie_ammo = 1 D _var p newbie_multi_tool = 1 D _item p PID_10MM_JHP < 30 D _item p PID_9MM_AMMO < 30 D _item p PID_10MM_JHP > 19 D _item p PID_9MM_AMMO > 19 R _item p PID_9MM_AMMO - 80 R _item p PID_10MM_JHP - 80 R _var p newbie_multi_tool = 0 R _var p q_newbie_ammo = 0 R _item p PID_MULTI_TOOL - 1 R _item p PID_METAL_TRASH - 4 R _item p PID_GUNPOWDER - 2 #
+18 18160 D _var p q_newbie_ammo = 1 D _item p PID_10MM_JHP < 20 D _item p PID_9MM_AMMO < 20 R _item p PID_GUNPOWDER - 4 R _item p PID_MULTI_TOOL - 1 R _item p PID_10MM_JHP - 80 R _item p PID_9MM_AMMO - 80 R _var p q_newbie_ammo = 0 R _var p newbie_multi_tool = 0 R _item p PID_METAL_TRASH - 8 #
+32 18170 D _var p q_newbie_gather_trash = 1 D _param p ST_INTELLECT > 3 D _var p newbie_multi_tool = 0 D _item p PID_METAL_TRASH > 1 D _item p PID_PUMP_PARTS > 1 R _var p q_newbie_gather_trash = 0 R _item p PID_METAL_TRASH - 2 R _item p PID_PUMP_PARTS - 2 R _param p ST_EXPERIENCE + 225 R _item p PID_BOTTLE_CAPS + 50 #
+32 18180 D _var p q_newbie_gather_trash = 1 D _param p ST_INTELLECT > 3 D _var p newbie_multi_tool = 1 D _item p PID_METAL_TRASH > 1 D _item p PID_PUMP_PARTS > 1 R _var p newbie_multi_tool = 0 R _var p q_newbie_gather_trash = 0 R _item p PID_MULTI_TOOL - 1 R _item p PID_METAL_TRASH - 2 R _item p PID_PUMP_PARTS - 2 R _param p ST_EXPERIENCE + 225 R _item p PID_BOTTLE_CAPS + 50 #
+33 18190 D _var p q_newbie_gather_trash = 1 D _param p ST_INTELLECT < 4 D _var p newbie_multi_tool = 0 D _item p PID_METAL_TRASH > 1 D _item p PID_PUMP_PARTS > 1 R _var p q_newbie_gather_trash = 0 R _item p PID_METAL_TRASH - 2 R _item p PID_PUMP_PARTS - 2 R _param p ST_EXPERIENCE + 225 R _item p PID_BOTTLE_CAPS + 50 #
+33 18200 D _var p newbie_multi_tool = 1 D _var p q_newbie_gather_trash = 1 D _param p ST_INTELLECT < 4 D _item p PID_METAL_TRASH > 1 D _item p PID_PUMP_PARTS > 1 R _var p newbie_multi_tool = 0 R _var p q_newbie_gather_trash = 0 R _item p PID_MULTI_TOOL - 1 R _item p PID_METAL_TRASH - 2 R _item p PID_PUMP_PARTS - 2 R _param p ST_EXPERIENCE + 225 R _item p PID_BOTTLE_CAPS + 50 @
+21 19000 None 0 #
+0 19010 #
+26 19020 @
+22 20000 None 0 #
+0 20010 #
+3 20020 @
+23 21000 None 0 #
+0 21010 @
+24 22000 None 0 #
+0 22010 #
+3 22020 @
+25 23000 None 0 #
+0 23010 #
+0 23020 D _item p PID_PUMP_PARTS > 1 D _item p PID_METAL_TRASH > 1 R _item p PID_PLASTIC_EXPLOSIVES_DULL + 2 R _var p q_newbie_collar = 3 @
+26 24000 None 0 #
+0 24010 #
+27 24020 R _var p q_newbie_collar = 0 R _var p newbie_multi_tool = 0 R _item p PID_MULTI_TOOL - 1 @
+27 25000 Attack 0 #
+65507 25010 @
+30 26000 None 0 #
+31 26010 #
+0 26020 D _item p PID_MULTI_TOOL = 0 R _item p PID_MULTI_TOOL + 1 R _var p newbie_multi_tool = 1 R _var p q_newbie_gather_trash = 1 #
+0 26030 D _item p PID_MULTI_TOOL > 0 R _var p q_newbie_gather_trash = 1 @
+31 27000 None 0 #
+0 27010 #
+0 27020 D _item p PID_MULTI_TOOL = 0 R _var p q_newbie_gather_trash = 1 R _var p newbie_multi_tool = 1 R _item p PID_MULTI_TOOL + 1 #
+0 27030 D _item p PID_MULTI_TOOL > 0 R _var p q_newbie_gather_trash = 1 @
+32 28000 None 0 #
+3 28010 #
+0 28020 @
+33 29000 None 0 #
+0 29010 &
+
+[russ]
+{100}{}{Курт}
+{200}{}{Человек в спецовке.}
+{210}{}{Курт, начальник производственного цеха.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{Квест на выполнение трудовой нормы не взят, игрок не брал инструменты}
+{1020}{}{Один из квестов на выполнение трудовой нормы взят, инструменты получены и есть у игрока}
+{1030}{}{Игрок тупой, квест не взят}
+{1040}{}{Не знаком}
+{1050}{}{Игрок проебал инструменты}
+{1060}{}{Игрок нашел ресурсы для крафта последних двух ошейников}
+{1070}{}{Квест на выполнение трудовой нормы взят, инструменты получены и отсутствуют у игрока}
+{1080}{}{Квест на выполнение трудовой нормы взят, инструменты не брал}
+{1090}{}{Квест на выполнение трудовой нормы не взят, игрок брал инструменты, терял и умирал, но снова нашел}
+{2000}{}{Ха, еще @sex@|один ботаник||одна криворукая| пожаловал@sex@|||а|. Хе-хе! Меня зовут Курт и я раздаю трудовые нормы.}
+{2010}{}{Так точно, @sex@|ботаник||криворукая| @pname@ прибыл@sex@|||а| для выполнения трудовой нормы!}
+{2020}{}{[Видите раба с оторванной станком кистью руки] Ой, кажется я ошиб@sex@|ся||лась| дверью!}
+{3000}{}{И кто пустил сюда твою кретинскую рожу?! Вали отсюда, @sex@|идиот||идиотка|, пока не сломал@sex@|||а| ничего. Ей богу, у брамина в глазах и то, интеллекта больше видно.}
+{3010}{}{@pname@ любить брамина в зад, @pname@ думать хорошо!}
+{3020}{}{Му-у-у! @pname@ как брамин! Работу давай!}
+{4000}{}{Ну хорошо, дебил @sex@|||ка|. Для производства мне нужно как больше различного мусора и железяк. Возьми инструменты и поищи на улице места, где можно отковырять что-то полезное. Понимаешь, тупорог@sex@|ий||ая|?Просто ТЫКАЙ инструментами в кучи хлама! Принеси по 2 кучки мусора и железяк. Потеряешь инструменты - обточу тебе темечко на токарном станке!}
+{4010}{}{@pname@ не хочет темечко тесать! [Убегаете]}
+{4020}{}{@pname@ искать, найти и принести! [Берете инструменты]}
+{4030}{}{@pname@ искать, найти и принести!}
+{5000}{}{Сегодня у нас есть направления на сборку ошейников, патронов и сбор хлама, из которого это все конструируется. Что тебе по душе?}
+{5010}{}{Я бы попробовал@sex@|||а| себя в сборке ошейников.}
+{5020}{}{Я бы попробовал@sex@|||а| себя в сборке ошейников.}
+{5030}{}{Сегодня такая чудесная погода, я лучше на улице поработаю.}
+{5040}{}{Записываюсь на сборку патронов.}
+{5050}{}{Записываюсь на сборку патронов.}
+{5060}{}{Я бы по округе пошарился, мусор пособирал. Люблю свежий воздух!}
+{6000}{}{Хорошо, вроде ты смышлен@sex@|ый||ая| @sex@|малый||цыпа|. Бери инструменты, необходимые запчасти и марш к верстаку. Схема сборки висим там же. С тебя требуется 5 ошейников для выполнения нормы. Как закончишь, сразу приноси. И аккуратнее с взрывчатым веществом!}
+{6010}{}{Взрывчатое вещество, говорите... Я, пожалуй, выберу иное направление. Напомните, что там еще есть?}
+{6020}{}{Слушаюсь, начальник! Исполню в лучшем виде! [Берете инструменты и запчасти]}
+{6030}{}{Слушаюсь, начальник! Исполню в лучшем виде! [Берете  запчасти]}
+{7000}{}{Боюсь, что кривизна твоих рук приведет нас всех к большому бадабуму. Займись лучше чем нибудь еще.}
+{7010}{}{Выберу тогда что-то более подходящее для себя. Напомните, какие еще есть направления?}
+{7020}{}{На свои лапы посмотри, козел!}
+{8000}{}{Эй, а где твои инструменты? Ты что, думаешь, что можно безнаказанно разбрасываться казенным имуществом? Ну всё, сука, ты огребаешь!}
+{8010}{}{Нет, нет, пощадите!}
+{9000}{}{Смотри мне в глаза, тупица, и слушай внимательно. Я дам тебе всё необходимое, тебе нужно только загружать эти детали в станок и следить, чтобы он не заедал. В трудовую норму входит сборка следующих патронов: 9 мм - 40 штук, 10 мм полуоболочечные - 40 штук. Вопросы есть?}
+{9010}{}{У матросов нет вопросов! [Берете инструменты и железяки с порохом]}
+{9020}{}{А если станок заест?}
+{9030}{}{Ух, лучше потороплюсь. [Берете железяки с порохом]}
+{10000}{}{Если заест - тебе лучше подорвать свою жопу и извлечь инструментами заклинившую деталь как можно быстрее. Если станок повредится из-за твоей медлительности - засуну твою голову в него.}
+{10010}{}{Ух, лучше потороплюсь. [Берете инструменты и железяки с порохом]}
+{10020}{}{[Коситесь на раба, брыжжущего во все стороны кровью из изуродованной культи] Пожалуй, я не готов@sex@|||а| к такому. Напомните, чем еще можно заняться?}
+{10030}{}{Ух, лучше потороплюсь. [Берете железяки с порохом]}
+{11000}{}{Ты хоть когда нибудь держал@sex@|||а| в руках ствол или инструменты? Думаю, тебе стоит сначала узнать, что вообще значат эти слова, ха-ха.}
+{11010}{}{Когда нибудь я стану так@sex@|им||ой| же умн@sex@|ым||ой|, как вы! А пока, пойду покопаюсь в браминьем дерьме...  }
+{11020}{}{Выберу тогда что-то более подходящее для себя. Напомните, какие еще есть направления?}
+{11030}{}{А я думаю, у тебя член короткий!}
+{12000}{}{[Тщательно пересчитывает патроны] Ха, все верно собрал@sex@|||а|! Вот твое жалованье. [Отдает вам 120 монет] Еще будешь трудиться?}
+{12010}{}{Пойду лучше прогуляюсь.}
+{12020}{}{Конечно, чем еще можно заняться?}
+{13000}{}{[Тщательно пересчитывает патроны. Хмурится] Эк@sex@|ий||ая| ты идиотина, с памятью плохо или считать не умеешь?! Ну, хотя бы общее количество верное. Вот тебе немного денег. [Отдает вам 25 монет] Еще будешь трудиться?}
+{13010}{}{Пойду лучше прогуляюсь.}
+{13020}{}{Конечно, чем еще можно заняться?}
+{14000}{}{[Тщательно пересчитывает патроны. Хмурится и краснеет от гнева] Тупое ты животное, тут нихрена не верное количество патронов! Ты ничего не получишь, убирайся ОТСЮДА, пока я тебя не пристрелил! }
+{14010}{}{Ух, займусь лучше уборкой навоза.}
+{14020}{}{Курт, расслабься, подумаешь перепутал немного, сегодня такой чудесный день, кажется, что воздух пронизан добротой и милосердием, а  в мире бывают проблемы и пострашнее. Вот как то раз, в волшебный солнечный день, я пас брамина...}
+{15000}{}{[Глаза наливаются кровью, задыхается от злости] Тут. МАЛО. Патронов. Сейчас я помогу тебе найти потерявшиеся!}
+{16000}{}{[Глаза наливаются кровью, начинает задыхаться от злости] НУ ВСЁ, СУКА, ТЫ ОГРЕБАЕШЬ!}
+{17000}{}{[В глазах появляется нездоровый блеск] Эти слова будут написаны на твоей могиле.}
+{18000}{}{Справил@sex@|ся||ась| с работой?}
+{18010}{}{Начальник, мне удалось собрать только три ошейника и запчасти закончились.}
+{18020}{}{Нет еще, скоро закончу!}
+{18030}{}{Я передумал@sex@|||а|, сам занимайся своей вшивой работенкой!}
+{18040}{}{Вот 5 ошейников.}
+{18050}{}{Я собрал@sex@|||а| последние 2 ошейника.}
+{18060}{}{Вот 5 ошейников.}
+{18070}{}{Я собрал@sex@|||а| последние 2 ошейника.}
+{18080}{}{Вот патроны. [Выкладываете патроны на стол]}
+{18090}{}{Вот патроны. [Выкладываете патроны на стол]}
+{18100}{}{Начальник, не помню уже сколько патронов вам было нужно, получилось столько! [Выкладываете патроны на стол]}
+{18110}{}{Начальник, не помню уже сколько патронов вам было нужно, получилось столько! [Выкладываете патроны на стол]}
+{18120}{}{Начальник, не помню уже сколько патронов вам было нужно, получилось столько! [Выкладываете патроны на стол]}
+{18130}{}{Начальник, не помню уже сколько патронов вам было нужно, получилось столько! [Выкладываете патроны на стол]}
+{18140}{}{Начальник, не помню уже сколько патронов вам было нужно, получилось столько! [Выкладываете явно недостаточное количество патронов на стол]}
+{18150}{}{Начальник, не помню уже сколько патронов вам было нужно, получилось столько! [Выкладываете явно недостаточное количество патронов на стол]}
+{18160}{}{Начальник, ничего не получается! Крокодил не ловится, не растет кокос!}
+{18170}{}{Начальник, я наковырял вам отборного мусора!}
+{18180}{}{Начальник, я наковырял вам отборного мусора!}
+{18190}{}{[Радостно подпрыгиваете и вываливаете собранный мусор]}
+{18200}{}{[Радостно подпрыгиваете и вываливаете собранный мусор]}
+{19000}{}{Чертовы тупицы, совершенно не можете экономно распоряжаться имуществом. Давай то, что сделал@sex@|||а|, я дам тебе только часть жалованья. Меня не волнует, где ты добудешь еще запчастей, но полного жалованья не получишь, пока не сдашь еще два ошейника. [Отдает вам 100 монет] Попробуй наковырять инструментами на улице подходящего мусора. Отдавай оставшуюся взрывчатку и проваливай!}
+{19010}{}{Хорошо, я поищу еще запчастей.}
+{19020}{}{Где и как мне их искать?}
+{20000}{}{Ха! Не каждому удается так хорошо справиться, вот твое жалованье. [Отдает вам 250 монет] Еще будешь трудиться?}
+{20010}{}{Пойду лучше прогуляюсь.}
+{20020}{}{Конечно, чем еще можно заняться?}
+{21000}{}{Хорошо, вот оставшиеся 2 куска взрывчатки.}
+{21010}{}{[Бережно берете куски пластида и уходите]}
+{22000}{}{Молодец, вот остаток твоего жалованья. [Отдает вам 150 монет] Еще будешь трудиться?}
+{22010}{}{Пойду лучше прогуляюсь.}
+{22020}{}{Конечно, чем еще можно заняться?}
+{23000}{}{Ну что, нашел@sex@|||а| запчасти?}
+{23010}{}{Еще нет.}
+{23020}{}{Да, сэр, я готов@sex@|||а| закончить начатое.}
+{24000}{}{Чёрт побери! Вечно вам, @sex@|баранам||курицам|, все нужно расжевывать! Просто возьми инструменты и ковыряй ими все кучи хлама, что встретишь. Наверняка, во многих можно найти полезные штуковины. Но если ты при этом где-то потеряешь выданные тебе инструменты, лучше тебе не показываться мне на глаза. Ты все понял@sex@|||а|?! [Выпучив глаза, и покраснев, орет на вас]}
+{24010}{}{Д-да, мне все ясно. [Незаметно вытираете капли слюны Курта со лица]}
+{24020}{}{Повторите еще раз, до меня не дошло.}
+{25000}{}{Ну всё, тупоголов@sex@|ый||ая|, ты меня достал@sex@|||а|! Жри говно!}
+{25010}{}{Ох, я просто пошутил... Пошутил!}
+{26000}{}{Скорее, ты слишком туп, чтобы заниматься более продуктивной деятельностью. Тебе понадобятся инструменты, чтобы добыть что-то полезное из куч хлама. Потеряешь инструменты - сделаю из тебя отбивную. От тебя требуется найти пару кучек полезного мусора и пару кучек дельных железяк. Сам разберешься, что к чему, или тебе ОБЪЯСНИТЬ?}
+{26010}{}{Думаю, разъяснения не помешают.}
+{26020}{}{Не думаю, что возникнут трудности. [Берете инструменты и уходите]}
+{26030}{}{Не думаю, что возникнут трудности.}
+{27000}{}{Ну хорошо, дебил @sex@|||ка|. Для производства мне нужно как больше различного мусора и железяк. Возьми инструменты и поищи на улице места, где можно отковырять что-то полезное. Понимаешь, тупорог@sex@|ий||ая|?Просто ТЫКАЙ инструментами в кучи хлама! Принеси по 2 кучки мусора и железяк. Потеряешь инструменты - обточу тебе темечко на токарном станке!}
+{27010}{}{О-о-о, мое темечко не готово к встрече с токарным станком! Займусь я лучше чем нибудь более безопасным.}
+{27020}{}{Окей, все понял! [Берете инструменты и уходите]}
+{27030}{}{Окей, все понял!}
+{28000}{}{Хорошо, только держись подальше. Воняешь хуже пса поганого. Держи свою мелочь. [Бросает вам под ноги горсть монет]}
+{28010}{}{Можно еще чем нибудь заняться?}
+{28020}{}{[Уходите]}
+{29000}{}{Хы, дебил@sex@|||ка|, тебе удалось это сделать. Невероятно! Пойди теперь прочь отсюда, видеть твою рожу не могу больше. [Бросает вам в лицо горсть монет]}
+{29010}{}{Угуук!}
+
+[engl]
+{100}{}{Kurt}
+{200}{}{A man in boiler suit.}
+{210}{}{Kurt, head of the workshop.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{Квест на выполнение трудовой нормы не взят, игрок не брал инструменты}
+{1020}{}{Один из квестов на выполнение трудовой нормы взят, инструменты получены и есть у игрока}
+{1030}{}{Игрок тупой, квест не взят}
+{1040}{}{Не знаком}
+{1050}{}{Игрок проебал инструменты}
+{1060}{}{Игрок нашел ресурсы для крафта последних двух ошейников}
+{1070}{}{Квест на выполнение трудовой нормы взят, инструменты получены и отсутствуют у игрока}
+{1080}{}{Квест на выполнение трудовой нормы взят, инструменты не брал}
+{1090}{}{Квест на выполнение трудовой нормы не взят, игрок брал инструменты, терял и умирал, но снова нашел}
+{2000}{}{Heh, a wild good-for-nothing appears. He-he! My name's Kurt and I hand out the daily production norms.}
+{2010}{}{Yes, sir! Good-for-nothing reporting for working duty, sir!}
+{2020}{}{[You notice a slave with a missing hand] I must have stepped into the wrong door!}
+{3000}{}{Who let you in, you retard?! Get the fuck out, dumb fuck, before I break your limbs. Good God! Honestly, a brahmin has more intelligence in its eyes.}
+{3010}{}{@pname@ love brahmin in rear, @pname@ think well!}
+{3020}{}{Mooo! @pname@ like brahmin! You give work!}
+{4000}{}{All right, dimwit. I need a lot of scrap metal parts and junk for production. Take this tool and search for places outside where you cold scrape something useful. Get it, dummy? Just poke your instrument in piles of junk! Get me two junk pieces and metal parts. You lose the tool and I'll pull you through a turning machine.}
+{4010}{}{@pname@ no want think! [Run away]}
+{4020}{}{@pname@ look, find and bring! [Take the tool]}
+{4030}{}{@pname@ look, find and bring!}
+{5000}{}{On today's roster we have assembling collars, making cartridges and junk gathering. Which one do you prefer?}
+{5010}{}{I'd like to try assembling collars.}
+{5020}{}{I'd like to try assembling collars.}
+{5030}{}{The weather's so nice today, I think I'd rather work outside.}
+{5040}{}{I'm in for making cartridges.}
+{5050}{}{I'm in for making cartridges.}
+{5060}{}{I'd gather junk around, I love working outdoors!}
+{6000}{}{Fine, you look like a capable @sex@|guy||chick|. Take the tools, materials and be off to the workbench. You'll find the blueprint there. The daily norm is 5 collars. Bring them here as soon as you finish. And be careful with explosives!}
+{6010}{}{Explosives, you say, huh... I'd rather do something else. Remind me, what other options are there?}
+{6020}{}{Yes, master! Will do! [You take tools and materials]}
+{6030}{}{Yes, master! Will do! [You take the materials]}
+{7000}{}{I'm afraid of a big bada boom when you lay your shaking hands on that stuff. You'd better take up something else.}
+{7010}{}{Well, I'll find fomething more suitable then. Remind me, what other options are there?}
+{7020}{}{Look at your own hands, jerk!}
+{8000}{}{Hey, where's your tool? You think you can get away with wasting masers' property? It's time to teach you a lesson!}
+{8010}{}{No! Please, have mercy!}
+{9000}{}{Listen and learn, blockhead. I give you all that's necessary, You only need to load these parts into the machine, and make sure it doesn't jam. The working norm is 40 9mm cartridges, 40 10mm JHP cartridges. Any questions?}
+{9010}{}{No questions, sir! [You take tools, metal parts and gunpowder]}
+{9020}{}{What if the machine jams?}
+{9030}{}{Yikes, I'd better hurry. [You take metal parts and gunpowder]}
+{10000}{}{If it does - you lift your ass and get the jammed piece out with your tool. If the machine is damaged because of your sluggishness, I'll stuck your head into it and push the button.}
+{10010}{}{Yikes, I'd better hurry. [You take tools, metal parts and gunpowder]}
+{10020}{}{[You gaze at a slave spurting blood all over from a decapitated limb] I'm not ready for that. Remind me, what are the other options?}
+{10030}{}{Yikes, I'd better hurry. [You take metal parts and gunpowder]}
+{11000}{}{Have you ever held a gun or a tool? I doubt you even know what these words mean, ha-ha.}
+{11010}{}{Some day I'll be as smart as you! And for now I'll go dig some brahmin shit...  }
+{11020}{}{I'll do something more suitable. Remind me, what are the other options?}
+{11030}{}{And I think you got a tiny dick!}
+{12000}{}{[Counts the cartridges carefully] Yeah, it's all correct! Here's your salary. [Gives you $120] Want to work some more?}
+{12010}{}{I'd rather have a walk.}
+{12020}{}{Sure, what else can I do?}
+{13000}{}{[Counts the cartridges carefully and frowns] You imbecile, you've got bad memory or what? Can you count?! Well, at least you didn't fuck them up. Here's a little something. [Gies you $25] Want to work some more?}
+{13010}{}{I'd rather have a walk.}
+{13020}{}{Sure, what else can I do?}
+{14000}{}{[Counts the cartridges carefully and his face grows red with anger] You retarded animal, this isn't even remotely close to the norm! You get nothing, get the fuck out before I shoot you!}
+{14010}{}{Yikes, I'd rather get down to cleaning brahmin shit.}
+{14020}{}{Chill out, Kurt. All right, I fucked up. But it's such a lovely peaceful day. Honestly, there are worse troubles in the world. Once upon a time on a lovely day like this I was pasturing a brahmin...}
+{15000}{}{[His eyes become bloodshot] There's. NOT. Enough. Cartridges. I'll help you find the lost ones down on the ground!}
+{16000}{}{[His eyes become bloodshot, he gasps from anger] That's it! I'll kick your retarded ass!}
+{17000}{}{[There's a mean twinkle in his eyes] These words will be written on your tombstone.}
+{18000}{}{Did you cope with your work?}
+{18010}{}{Master, I could only assemble three collars before I ran out of parts.}
+{18020}{}{Not yet, just finishing!}
+{18030}{}{I changed my mind, do your lousy work yourself!}
+{18040}{}{Here are five collars.}
+{18050}{}{I've assembled the last two collars.}
+{18060}{}{Here are five collars.}
+{18070}{}{I've assembled the last two collars.}
+{18080}{}{Here are the cartridges. [Lay cartridges on the table]}
+{18090}{}{Here are the cartridges. [Lay cartridges on the table]}
+{18100}{}{Master, I don't remember how many cartridges you said, but here's everything I could make! [Lay cartridges on the table]}
+{18110}{}{Master, I don't remember how many cartridges you said, but here's everything I could make! [Lay cartridges on the table]}
+{18120}{}{Master, I don't remember how many cartridges you said, but here's everything I could make! [Lay cartridges on the table]}
+{18130}{}{Master, I don't remember how many cartridges you said, but here's everything I could make! [Lay cartridges on the table]}
+{18140}{}{Master, I don't remember how many cartridges you said, but here's everything I could make! [Lay an obviously insufficient amount of cartridges on the table]}
+{18150}{}{Master, I don't remember how many cartridges you said, but here's everything I could make! [Lay an obviously insufficient amount of cartridges on the table]}
+{18160}{}{Master, I can't do anything! It doesn't work!}
+{18170}{}{Master, I've brought you a bunch of prime junk!}
+{18180}{}{Master, I've brought you a bunch of prime junk!}
+{18190}{}{[You bounce joyfully and pile the gathered junk]}
+{18200}{}{[You bounce joyfully and pile the gathered junk]}
+{19000}{}{Dang tribals, They can't do anything right. Give me what you've made and I'll give you a part of your salary. I don't care where you get more parts, but you won't get the rest until you assemble two more collars. [Gives you $100] Try to pluck some junk with your tool outside. Give me the remaining explosives and get out!}
+{19010}{}{All right, I'll look for more parts.}
+{19020}{}{Where should I look for them?}
+{20000}{}{Huh, not many of you savages manage that well. [Gives you $250] Want to work some more?}
+{20010}{}{I'd rather have a walk.}
+{20020}{}{Sure, what else can I do?}
+{21000}{}{All right, here are the remaining two pieces of explosives.}
+{21010}{}{[You take explosives carefully and leave]}
+{22000}{}{Well done, here's the rest of your salary. [Gives you $150] Want to work some more?}
+{22010}{}{I'd rather have a walk.}
+{22020}{}{Sure, what else can I do?}
+{23000}{}{So have you found the materials?}
+{23010}{}{Not yet.}
+{23020}{}{Yes sir, and I'm ready to finish the work.}
+{24000}{}{Goddammit! Why do I always have to chew everything over! Just take your tool and poke any piles of junk you see with it. Most definitely you'll find something we could use. But if you happen to lose the instrument issued to you, you'd better not show up again. Is that clear?! [He screams at you bulging his eyes]}
+{24010}{}{Yes, yes, I get it. [You cautiously wipe Kurt's spit off your face]}
+{24020}{}{I'm sorry, what? I wasn't listening.}
+{25000}{}{That's it, shithead, now you've really reached the limit! Eat shit!}
+{25010}{}{Oh, I was just kidding... It was a joke!}
+{26000}{}{It's more like you're too dumb for any productive activity. You'll need the tool to fish something useful out of a pile of garbage. You lose the tool - I cut your hands off and use them as buttscratchers. You need to find a couple of junk piles and a couple of metal parts. Will you figure out what to do or should I EXPLAIN it to you?}
+{26010}{}{I guess some explanation won''t hurt.}
+{26020}{}{I don't think there'll be any problems. [Take the tool and leave]}
+{26030}{}{I don't think there'll be any problems.}
+{27000}{}{All right, dimwit. I need a lot of scrap metal parts and junk for production. Take this tool and search for places outside where you cold scrape something useful. Get it, dummy? Just poke your instrument in piles of junk! Get me two junk pieces and metal parts. You lose the tool and I'll pull you through a turning machine!}
+{27010}{}{Ooh, I'm too young to meet the turning machine! I'd rather do something safer.}
+{27020}{}{Okay, I get it! [Take the tool and leave]}
+{27030}{}{Okay, I get it!}
+{28000}{}{Fine, just keep away from me. You stink like an open sewer. Here are your coins. [Throws a handful of change at your feet]}
+{28010}{}{Can I do something else?}
+{28020}{}{[Leave]}
+{29000}{}{Heh, I can't believe it! You retard actually did it! Now get out of here, I'm sick of seeing your mug. [Throws a bunch of coins in your face]}
+{29010}{}{Uhuh!}
+

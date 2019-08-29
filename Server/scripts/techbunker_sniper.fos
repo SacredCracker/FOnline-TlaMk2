@@ -1,0 +1,33 @@
+// Author: rifleman17
+// Снайперы для первого уровня бункера
+// Отличия - не убегает после выстрела, а уходит в сник
+// не атакует игроков в правом рукаве пещеры (с минами)
+// TODO: добавить снятие плана атаки на PLANE_RUN
+#define _NoBaseInstance // свой экземпляр шаблона
+
+#include "pattern_sniper.fos"
+
+import bool IsCritterInDeadZone(Critter & cr) from "loc_tech_bunker";
+
+class TechBunkerSniperPattern : SniperPattern
+{
+
+	void AttackPlayer(Critter & cr, uint priority, Critter & player)
+	{
+		if(!player.IsPlayer()) return;
+		if(IsCritterInDeadZone(player)) return;
+		//Log("prepare to attack!");
+		AddAttackPlane(cr, priority, player);
+	}
+
+	// Не убегает с места последнего выстрела
+	bool _HaveToRun(Critter & sniper, Critter & player)
+	{
+		sniper.ModeBase[MODE_HIDE]=1;
+		return false;
+	}
+
+}
+
+TechBunkerSniperPattern pattern;
+

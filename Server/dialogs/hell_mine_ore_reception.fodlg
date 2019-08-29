@@ -1,0 +1,51 @@
+[comment]
+
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 NOT_ANSWER_CLOSE_DIALOG 1#
+2 1010d*_param p ST_REPLICATION_MONEY < 0 #
+3 1020d*_param p ST_REPLICATION_MONEY > -1 @
+2 2000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 2010d*_item p PID_URANIUM_ORE > 0 r*_script hell_mine_ore_reception@r_TakeOre 0  #
+4 2020d*_item p PID_ROCK > 0 r*_script hell_mine_ore_reception@r_ThrowRock 0  *_item p PID_ROCK - 1 #
+0 2030@
+3 3000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 3010@
+4 4000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 4010#
+0 4020d*_item p PID_URANIUM_ORE > 0 r*_script hell_mine_ore_reception@r_TakeOre 0  &
+
+[russ]
+{100}{}{none}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{-}
+{1020}{}{Рассчитался с хабологами.}
+{2000}{}{Добро пожаловать. Если хотите сдать руду, положите её в проём за терминалом. На ваш счёт будет автоматически зачислена нужная сумма. Внимание! Берегите пальцы.}
+{2010}{}{[Высыпать руду]}
+{2020}{}{[Кинуть камешек]}
+{2030}{}{[Выход]}
+{3000}{}{Ваш репликационный счёт положительный. В доступе отказано.}
+{3010}{}{[Выход]}
+{4000}{}{Терминал не реагирует.}
+{4010}{}{[Выход]}
+{4020}{}{[Высыпать руду]}
+
+[engl]
+{100}{}{none}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{-}
+{1020}{}{}
+{2000}{}{Welcome. If you want to hand in the ore, tip it into the hole above this terminal.}
+{2010}{}{[Tip the ore]}
+{2020}{}{[Toss a stone]}
+{2030}{}{[Exit]}
+{3000}{}{Your replication account balance is positive. Access denied.}
+{3010}{}{[Exit]}
+{4000}{}{Terminal does not react.}
+{4010}{}{[Exit]}
+{4020}{}{[Tip the ore]}
+

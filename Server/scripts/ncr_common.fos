@@ -1,0 +1,718 @@
+// Author: rifleman17
+// Все небольшие скрипты НКР
+
+#include "_macros.fos"
+#include "merc_h.fos"
+#include "_teams.fos"
+
+#define DL #(str)
+//#define DL #(str) Log(str)
+/********************************************Нищенка: Beggar************************************************************************/
+
+#define	PHRASE_NUM_FIRST				(1)//первая фраза нищенки
+#define PHRASE_NUM_LAST					(13)// последняя фраза нищенки
+#define PHRASE_NUM_HIDE					(20)//фраза, которую говорит нищенка когда прячет деньги в тайник
+
+#define	MAIN_INTERVAL					(60*60*12)// промежуток времени между монологами нищенки (когда она начинает говорить о своей судьбе)
+#define SINGLE_INTERVAL					(60*2)// промежуток времени между фразами нищенки
+#define HIDE_INTERVAL					(60*30)// интервал времени до того момента, как, после получения 100 монет нищенка пойдет прятать барахло
+
+#define MONEY_TO_HIDE					(100)// количество денег, после которого нищенка пойдет х
+
+#define X_HIDING_PLACE					(44)// позиция бочки по х, куда прячет деньги
+#define Y_HIDING_PLACE					(92)// позиция бочки по y, куда прячет деньги
+
+#define HIDE_PRIORITY					(45)// меньше атаки, но больше остального
+
+import bool AddWalkPlane(Critter& npc, uint priority, uint16 hexX, uint16 hexY, uint8 dir, bool run, uint cut) from "npc_planes";
+import bool AddMiscPlane(Critter& npc, uint priority, uint waitSecond, string@ funcName) from "npc_planes";
+import bool OnUseExplode(Critter& cr, Item& explode, Critter@ targetCr, Item@ targetItem, Scenery@ targetScen, uint timer)  from "explode";
+import bool Merc2Player(Critter & player, Critter & merc,  uint16 type) from "merc";
+import void CancelMerc(Critter & merc) from "merc";
+import uint GetPlayerMercs(Critter & player, Critter@ []& mercs) from "merc";
+
+void _BeggarInit(Critter & npc, bool firstTime)
+{
+	npc.ModeBase[MODE_NO_BARTER]=1;
+	npc.StatBase[ST_DIALOG_ID]=DIALOG_ncr_beggar;//temporary
+	npc.SetEvent(CRITTER_EVENT_FINISH,"e_BeggarFinish");
+	npc.StatBase[ST_VAR1]=PHRASE_NUM_FIRST;
+	if(firstTime)
+	{
+		npc.StatBase[ST_VAR0]=CreateTimeEvent(__FullSecond+MAIN_INTERVAL, "e_BeggarTimeEvent", npc.Id, true);
+	}
+}
+
+
+void e_BeggarFinish(Critter& npc, bool deleted)
+{
+	if(deleted)
+	{
+		EraseTimeEvent(npc.StatBase[ST_VAR0]);
+		if(npc.StatBase[ST_VAR2]!=0){EraseTimeEvent(npc.StatBase[ST_VAR2]);}
+	}
+}
+
+uint e_BeggarTimeEvent(uint[]@ values)
+{
+	Critter @ npc=GetCritter(values[0]);
+	if (!valid(npc)){return 60*60;}
+	if (!npc.IsLife()){return 60*60;}
+	npc.SayMsg(SAY_NORM_ON_HEAD,TEXTMSG_DLG,DLGSTR(npc.Stat[ST_DIALOG_ID],npc.StatBase[ST_VAR1]));
+
+	switch(npc.StatBase[ST_VAR1])
+	{
+		case PHRASE_NUM_LAST:
+			npc.StatBase[ST_VAR0]=CreateTimeEvent(__FullSecond+MAIN_INTERVAL,"e_BeggarTimeEvent", npc.Id, true);
+			npc.StatBase[ST_VAR1]=PHRASE_NUM_FIRST;
+			break;
+		default:
+			npc.StatBase[ST_VAR0]=CreateTimeEvent(__FullSecond+SINGLE_INTERVAL,"e_BeggarTimeEvent", npc.Id, true);
+			npc.StatBase[ST_VAR1]++;
+			break;
+	}
+
+	return 0;
+}
+
+// обработка отданых 5 монет
+void r_CountMoney(Critter& player, Critter @ npc)
+{
+	if (!valid(npc)){return;}
+	// В var2 сохраняем эвент пойти сложить бабло в тайник
+	if(npc.StatBase[ST_VAR2]!=0)
+	{
+		return;// уже был повешен обработчик
+	}
+	if(npc.CountItem(PID_BOTTLE_CAPS)>MONEY_TO_HIDE)
+	{
+		npc.StatBase[ST_VAR2]=CreateTimeEvent(__FullSecond+HIDE_INTERVAL,"e_TimeToHideMoney", npc.Id, true);
+	}
+
+}
+
+// нищенка прячет деньги в тайник
+uint e_TimeToHideMoney(uint[]@ values)
+{
+	Critter @ npc=GetCritter(values[0]);
+	if (!valid(npc)){return 60*60;}
+	if (!npc.IsLife()){return 60*60;}
+
+	if (!AddWalkPlane(npc,HIDE_PRIORITY,X_HIDING_PLACE, Y_HIDING_PLACE, Random(1,5), false, 1)){return 60*60;}
+	AddMiscPlane(npc, HIDE_PRIORITY-1, 60, "ncr_common@_MiscHideMoney");
+
+	return 0;
+}
+
+// тайник - использование воровства на бочке
+// в карте проставлен скрипт бочке
+bool s_UseBarrel(Critter& player,Scenery& scenery,int skill,Item@ item)
+{
+	if(skill!=SK_STEAL) {return false;}
+
+	Map @map=player.GetMap();
+
+	if (!valid(map)){return false;}
+
+	Item @hidingPlace=_GetHidingPlace(map, false);
+
+	if (!valid(hidingPlace)){return false;}
+
+	if(hidingPlace.GetType()==ITEM_TYPE_CONTAINER)
+	{
+		hidingPlace.LockerOpen();
+		player.ShowContainer(null,hidingPlace,TRANSFER_HEX_CONT_UP);
+		return true;
+	}
+	return false;
+}
+
+// тайник. thnkz hex
+// canCreate - признак, если нет уже контейнера, созать его
+Item @ _GetHidingPlace(Map @ map, bool canCreate)
+{
+		Item @ container=map.GetItem(X_HIDING_PLACE, Y_HIDING_PLACE, PID_FLOOR_SAFE);
+		if(not valid(container))// Первое обращение - нету тайника
+		{
+			if (!canCreate){return null;}
+			@ container=map.AddItem(X_HIDING_PLACE, Y_HIDING_PLACE, PID_FLOOR_SAFE, 1);
+			if(not valid(container)) {return null;}
+			SETFLAG(container.Flags, ITEM_HIDDEN);
+			container.Update();
+		}
+
+		return container;
+}
+
+void _MiscHideMoney(Critter & cr)
+{
+	cr.SetDir(GetDirection(cr.HexX, cr.HexY, X_HIDING_PLACE, Y_HIDING_PLACE));
+	//_CritAnimateUse(cr); у этого бодитайпа нет анимации использования
+	uint money=cr.CountItem(PID_BOTTLE_CAPS);
+	Map @map=cr.GetMap();
+	if (!valid(map)){return;}
+	cr.SayMsg(SAY_NORM_ON_HEAD,TEXTMSG_DLG,DLGSTR(cr.Stat[ST_DIALOG_ID],PHRASE_NUM_HIDE));
+	Item @ container=_GetHidingPlace(map, true);
+	if(money>0)
+	{
+		if (!cr.DeleteItem(PID_BOTTLE_CAPS, money)){return;}
+		container.AddItem(PID_BOTTLE_CAPS,money,0);
+	}
+	EraseTimeEvent(cr.StatBase[ST_VAR2]);
+	cr.StatBase[ST_VAR2]=0;
+
+}
+
+/********************************************Охрана аванпоста Братства Стали********************************************************/
+#define NPCROLE_BOS_GUARD				(44) // специальная роль для охранников аванпоста
+#define MSG_NUM_TAKE_OUT				(1)//номер сообщения в диалоге охранника, в котором он приказывает игроку отойти от двери аванпоста
+
+void _InitLukGuards(Critter& guard,	bool firstTime)
+{
+	guard.StatBase[ST_NPC_ROLE]=NPCROLE_BOS_GUARD;
+	guard.StatBase[ST_DIALOG_ID]=DIALOG_ncr_bos_guards;//temporary
+}
+
+/********************************************Дверь в  аванпост БОС******************************************************************/
+void s_BosDoor(Item& door,bool firstTime)
+{
+	door.SetEvent(ITEM_EVENT_SKILL,"e_UseBosDoor");
+}
+
+bool e_UseBosDoor(Item& item, Critter& player, int skill)
+{
+	if (!player.IsPlayer()){return false;}
+	Map @map=player.GetMap();
+	if (!valid(map)){return false;}
+
+	uint aliveGuards=map.GetNpcCount(NPCROLE_BOS_GUARD, FIND_LIFE);
+	if(aliveGuards>0)
+	{
+		Critter @guard=map.GetNpc(NPCROLE_BOS_GUARD,FIND_LIFE, Random(0,aliveGuards-1));
+		if (!valid(guard)){return false;}
+		guard.SayMsg(SAY_SHOUT_ON_HEAD,TEXTMSG_DLG,DLGSTR(guard.Stat[ST_DIALOG_ID],MSG_NUM_TAKE_OUT));
+		return true;
+	}
+	return false;
+}
+
+/********************************************Компутор Люка**************************************************************************/
+#define STR_NUM_USE_COMP			(1)
+
+bool s_UseLukComp(Critter& player,Scenery& scenery,int skill,Item@ item)
+{
+	// false - передача евента на дальнейшую обработку
+	// true - прекращение обработки
+	// диалог вызывается при использовании навыка "наука"
+	if(skill!=SK_SCIENCE) return false;
+	// не допускается использование предметов
+	if(valid(item)) return false;
+	if (!player.IsPlayer()) return false;
+	// запуск диалога с компьютером
+	RunDialog(player,DIALOG_ncr_luk_comp,scenery.HexX,scenery.HexY,false);
+	return true;
+}
+
+// сообщение в чат "вы использовали компьютер люка
+void r_MessageUseComp(Critter& player, Critter @ npc)
+{
+	player.SayMsg(SAY_NETMSG, TEXTMSG_DLG, DLGSTR(DIALOG_ncr_luk_comp, STR_NUM_USE_COMP));
+}
+
+/******************************************Заключенный паладин**************************************************************************/
+// один из полицейских говорит случайную фразу в стиле "молчать"
+#define POLICE_SEARCH_RADIUS 			(10)// радиус вокруг паладина, в котором ищем полицейских
+#define STR_NUM_SHUTUP					(1)// номер строки разговора "молчать!"
+void dlg_PolismenComment(Critter& player, Critter@ paladin, string@ lexems)
+{
+
+	if (!valid(paladin)){return;}
+	Map @map=paladin.GetMap();
+	if (!valid(map)){return;}
+	Critter@[] critters;
+	map.GetCrittersHex(paladin.HexX, paladin.HexY, POLICE_SEARCH_RADIUS, FIND_LIFE|FIND_ONLY_NPC, critters);
+	if(critters.length()==0){return;}
+	uint i=Random(0,critters.length()-1);
+	if(critters[i].StatBase[ST_DIALOG_ID]==DIALOG_ncr_policeman)
+	{
+		critters[i].SayMsg(SAY_SHOUT_ON_HEAD,TEXTMSG_DLG,DLGSTR(paladin.Stat[ST_DIALOG_ID],STR_NUM_SHUTUP));
+
+	}
+}
+
+/****************************************Разведка Реддинга для сержанта Кайла***********************************************************/
+void r_BeginReddReconQuest(Critter& player, Critter @ cr)
+{
+	Location @loc=GetLocationByPid(LOCATION_Redding, 0);
+
+	_SetSurroundFog(player, loc);
+}
+
+// установка тумана войны вокруг локации
+void _SetSurroundFog (Critter & cr, Location & loc)
+{
+	uint zX=loc.WorldX / __GlobalMapZoneLength;
+	uint zY=loc.WorldY / __GlobalMapZoneLength;
+
+	for(int i=-1;i<=1;i++)
+	{
+		for(int j=-1; j<=1; j++)
+		{
+			if(i==0&&j==0) continue;
+
+			cr.SetFog(zX+i, zY+j, FOG_FULL);
+		}
+	}
+}
+
+// проверка, открыты ли все сектора вокруг локации, сама локация не проверяется
+bool _IsSurroundFog(Critter & cr, Location & loc)
+{
+	uint zX=loc.WorldX / __GlobalMapZoneLength;
+	uint zY=loc.WorldY / __GlobalMapZoneLength;
+
+	for(int i=-1;i<=1;i++)
+	{
+		for(int j=-1; j<=1; j++)
+		{
+			if(i==0&&j==0) continue;
+
+			if(cr.GetFog(zX+i,zY+j)!=FOG_NONE)
+				return true;
+		}
+	}
+	return false;
+}
+
+// проверка, выполнен ли квест
+bool d_CheckReddReconComplete(Critter& player, Critter @ cr)
+{
+	Location @loc=GetLocationByPid(LOCATION_Redding, 0);
+	if (!valid(loc)) return false;
+
+	return !_IsSurroundFog(player, loc);
+}
+
+bool d_NotCheckReddReconComplete(Critter& player, Critter @ cr)
+{
+	return !d_CheckReddReconComplete(player, cr);
+}
+
+/****************************************Доска объявлений в НКР***********************************************************/
+#define  	BUY_FIRST		(3100)
+#define		BUY_END			(3109)
+#define 	SRCH_FIRST		(3110)
+#define		SRCH_END		(3116)
+#define 	SELL_FIRST		(3117)
+#define		SELL_END		(3130)
+#define		ADV_FIRST		(3131)
+#define		ADV_END			(3138)
+#define		MISC_FIRST		(3139)
+#define		MISC_END		(3175)
+
+void dlg_Buy(Critter& player, Critter@ none, string@ lexems)
+{
+	if (!IS_DIALOG_GENERATED(lexems)) return;
+	lexems="$text@msg TEXT " + Random(BUY_FIRST, BUY_END)  + "@";
+} // куплю
+
+void dlg_Find(Critter& player, Critter@ none, string@ lexems)
+{
+	if (!IS_DIALOG_GENERATED(lexems)) return;
+	lexems="$text@msg TEXT " + Random(SRCH_FIRST, SRCH_END)  + "@";
+} // ищу
+
+void dlg_Sell(Critter& player, Critter@ none, string@ lexems)
+{
+	if (!IS_DIALOG_GENERATED(lexems)) return;
+	lexems="$text@msg TEXT " + Random(SELL_FIRST, SELL_END)  + "@";
+} // продам
+
+void dlg_Adv(Critter& player, Critter@ none, string@ lexems)
+{
+	if (!IS_DIALOG_GENERATED(lexems)) return;
+	lexems="$text@msg TEXT " + Random(ADV_FIRST, ADV_END)  + "@";
+} // реклама
+
+void dlg_Misc(Critter& player, Critter@ none, string@ lexems)
+{
+	if (!IS_DIALOG_GENERATED(lexems)) return;
+	lexems="$text@msg TEXT " + Random(MISC_FIRST, MISC_END)  + "@";
+} // разное
+
+bool _BlackBoardInit(Critter& cr, Scenery& sc, int skill, Item@ item)
+{
+	RunDialog(cr, DIALOG_ncr_blackboard, sc.HexX, sc.HexY, false);
+	return true;
+}
+
+/****************************************Больной брамин на Ранчо Вейстина ************************************************/
+#define	NEX_ILL_EVENT				(60*60*24*5) // следующая "болезнь" брамина через 5 игровых суток
+#define NPC_ROLE_ILL_BRAHMIN		(71)// роль "больной брамин"
+#define NPC_ROLE_HEALTHY_BRAHMIN	(72)// роль "здоровый брамин"
+#define STR_DISP_QUESTION			(3470)// текст диалога при вопросе "искать/не искать"
+#define STR_DISP_YES				(3471)// текст согласия
+#define STR_DISP_NO					(3472)// отказ
+#define STR_DOIT					(3473)// сообщение в чат "Ух, дрянь какая! После нескольких унизительных мгновений вы извлекаете наружу причину "отравления" брамина.
+#define STR_FOUND_ITEM				(3474)// текст с лексемами - получение итема
+
+void CreateBrahminIllEvent(Map & map)
+{
+	CreateTimeEvent(__FullSecond+NEX_ILL_EVENT, "e_NextIllBrahmin", map.Id, true);
+}
+
+void _NcrRanchMapInit(Map& map, bool firstTime)
+{
+	if(firstTime)
+	{
+		CreateBrahminIllEvent(map);
+	}
+}
+
+uint e_NextIllBrahmin(uint[]@ values)
+{
+	GameVar @ status=GetGlobalVar(GVAR_ncr_ranch_brahmin_ill);
+	if (!valid(status)) return 0;
+	Map @ map=GetMap(values[0]);
+	if (!valid(map)) return 0;
+	uint illCount=map.GetNpcCount(NPC_ROLE_ILL_BRAHMIN, FIND_ALL);
+	if(illCount>0)
+	{
+		for(uint i=0; i<illCount; i++)
+		{
+			Critter @ illOne=map.GetNpc(NPC_ROLE_ILL_BRAHMIN, FIND_ALL, i);
+			if(valid(illOne)) Ill2Healthy(illOne);
+		}
+	}
+	uint healthCount=map.GetNpcCount(NPC_ROLE_HEALTHY_BRAHMIN, FIND_LIFE);
+	if(healthCount>0)
+	{
+		Critter @ brahmin=map.GetNpc(NPC_ROLE_HEALTHY_BRAHMIN, FIND_LIFE, Random(0, healthCount-1));
+		if(valid(brahmin))
+		{
+			Healthy2Ill(brahmin);
+			status=1;
+		}
+	}
+	CreateBrahminIllEvent(map);
+	return 0;
+}
+
+void Healthy2Ill(Critter & brahmin)
+{
+	brahmin.SetScript("_IllBrahminInit");
+	brahmin.StatBase[ST_DIALOG_ID]=DIALOG_mob_ill_brahmin;
+	brahmin.StatBase[ST_NPC_ROLE]=NPC_ROLE_ILL_BRAHMIN;
+	brahmin.ToKnockout(KNOCKOUT_ANIM2_DEFAULT(true), 5, brahmin.HexX, brahmin.HexY);
+	brahmin.SetEvent(CRITTER_EVENT_SMTH_USE_ITEM,"e_OnSmthUseItem");
+}
+
+void Ill2Healthy(Critter & brahmin)
+{
+	brahmin.SetScript("");
+	brahmin.StatBase[ST_DIALOG_ID]=DIALOG_mob_brahmin;
+	brahmin.StatBase[ST_NPC_ROLE]=NPC_ROLE_HEALTHY_BRAHMIN;
+	brahmin.SetEvent(CRITTER_EVENT_SMTH_USE_ITEM,"");
+	brahmin.ToDead(ANIM2_DEAD_FRONT,null);
+	brahmin.ToLife();
+}
+
+void e_OnSmthUseItem(Critter& cr, Critter& fromCr, Item& item, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+	if (!valid(onCritter)) return;
+	if(cr.Id!=onCritter.Id) return;
+	if(item.GetProtoId()!=PID_FIRST_AID_KIT) return;
+	if(cr.StatBase[ST_DIALOG_ID] !=DIALOG_mob_ill_brahmin) return;
+
+	GameVar @qVar=GetLocalVar(LVAR_q_ncr_felix_save_brahmin, fromCr.Id);
+	if (!valid(qVar)) return;
+	if(qVar.GetValue()!=1) return;
+	if (!fromCr.IsPlayer()) return;
+	fromCr.StatBase[ST_VAR1]=cr.Id;// запоминаем брамина
+	fromCr.ShowScreen(SCREEN_DIALOGBOX,2,"answer_CureBrahmin");
+	fromCr.Say(SAY_DIALOGBOX_TEXT,"Вы на самом деле готовы проверить, чем отравился брамин, используя резиновые перчатки и вантус?");
+	fromCr.Say(SAY_DIALOGBOX_BUTTON(0),"Да, с богом!");
+	fromCr.Say(SAY_DIALOGBOX_BUTTON(1),"НИ ЗА ЧТО!!!");
+}
+
+void answer_CureBrahmin(Critter& player, uint answerI, string& answerS)
+{
+	//player.Say(SAY_NETMSG,"Answer integer<"+answerI+">, string<"+answerS+">.");
+
+	if(answerI==1)
+	{
+		player.StatBase[ST_VAR1]=0;
+		return;
+	}
+	Critter @ brahmin=GetCritter(player.Stat[ST_VAR1]);
+	player.StatBase[ST_VAR1]=0;
+
+	if (!valid(brahmin)) return;
+	if(brahmin.IsDead()) return;
+	player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_DOIT);
+	GameVar @qVar=GetLocalVar(LVAR_q_ncr_felix_save_brahmin, player.Id);
+	if (!valid(qVar)) return;
+	qVar=2;
+	// достаем приз
+	uint[] pids={PID_FRAG_GRENADE, PID_FRAG_GRENADE, PID_AXE, PID_MOTION_SENSOR, PID_V15_COMPUTER_PART, PID_TUBE, PID_EXPLOSIVE_ROCKET, PID_WAKIZASHI_BLADE,
+		PID_FLAMER, PID_URANIUM_ORE, PID_DESERT_EAGLE_EXT_MAG, PID_WRENCH, PID_BOXING_GLOVES, PID_SMALL_ENERGY_CELL, PID_GAMMA_GULP_BEER,
+		PID_GAMMA_GULP_BEER, PID_GAMMA_GULP_BEER, PID_GAMMA_GULP_BEER,PID_CIGARETTES, PID_EXCAVATOR_CHIP, PID_HUMAN_BRAIN, PID_DEANS_ELECTRONICS,
+		PID_ACTIVE_DYNAMITE, PID_ACTIVE_DYNAMITE, PID_ACTIVE_DYNAMITE, PID_ACTIVE_DYNAMITE, PID_ACTIVE_DYNAMITE, PID_ACTIVE_DYNAMITE, PID_ACTIVE_DYNAMITE};
+
+	Item @ item=player.AddItem(pids[Random(0,pids.length()-1)],1);
+	if(item.GetProtoId()==PID_ACTIVE_DYNAMITE)
+	{
+		CreateTimeEvent(__FullSecond+10*60,"explode@e_Explode",item.Id,false);
+	}
+	Ill2Healthy(brahmin);
+	GameVar @ status=GetGlobalVar(GVAR_ncr_ranch_brahmin_ill);
+	if(valid(status)) status=1;
+}
+
+void _IllBrahminInit(Critter & brahmin, bool firstTime)
+{
+	brahmin.StatBase[ST_DIALOG_ID]=DIALOG_mob_ill_brahmin;
+	brahmin.StatBase[ST_NPC_ROLE]=NPC_ROLE_ILL_BRAHMIN;
+	brahmin.ToKnockout(KNOCKOUT_ANIM2_DEFAULT(true), 1000, brahmin.HexX, brahmin.HexY);
+	brahmin.SetEvent(CRITTER_EVENT_SMTH_USE_ITEM,"e_OnSmthUseItem");
+}
+
+/**************************************** Привести брамина для феликса    ************************************************/
+#define STR_GET_MERC_BRAHMIN				(3475) // строка для чата игрока, когда найден брамин
+
+void r_BeginBrahminFindQuest(Critter& player, Critter @ npc)
+{
+	GameVar @qVar=GetLocalVar(LVAR_q_ncr_felix_find_brahmin, player.Id);
+	if (!valid(qVar)) return;
+	Item @ item=player.AddItem(PID_BRAHMIN_FLOWER, 1);
+	if (!valid(item)) return;
+
+	item.SetScript("_FlowerInit");
+	item.Update();
+	qVar=1;
+}
+
+void _FlowerInit(Item & item, bool firstTime)
+{
+	item.SetEvent(ITEM_EVENT_USE , "e_ItemUse");
+}
+
+bool e_ItemUse(Item& item, Critter& player, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+	if(player.IsNpc()||!valid(onCritter)) return false;
+
+	if(onCritter.StatBase[ST_BODY_TYPE]!=BT_BRAHMIN) return false;
+
+	GameVar @qVar=GetLocalVar(LVAR_q_ncr_felix_find_brahmin, player.Id);
+	if (!valid(qVar)) return false;
+	if(qVar.GetValue()==0||qVar.GetValue()==3) return false;
+
+	Map @map=onCritter.GetMap();
+	if (!valid(map)) return false;
+
+	Location @ loc=map.GetLocation();
+	if (!valid(loc)) return false;
+
+	if(LOCATION_IS_CITY(loc.GetProtoId())) return false;
+
+	Merc2Player(player, onCritter, MERC_FOLLOWER_CAN_LOSE);
+	player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_GET_MERC_BRAHMIN);
+	DeleteItem(item);
+	qVar=2;
+	return true;
+}
+
+bool d_HasBrahmins(Critter& player, Critter@ cr)
+{
+	Critter @[] mercs;
+	if(GetPlayerMercs(player, mercs)==0) return false;
+
+	for(uint i=0, iMax=mercs.length(); i<iMax; i++)
+	{
+		if(mercs[i].StatBase[ST_BODY_TYPE]==BT_BRAHMIN) return true;
+	}
+	return false;
+}
+
+void r_CompleteBrahminFindQuest(Critter& player, Critter @ npc)
+{
+	GameVar @qVar=GetLocalVar(LVAR_q_ncr_felix_find_brahmin, player.Id);
+	if (!valid(qVar)) return;
+	if(qVar.GetValue()!=2) return;
+
+	Critter @[] mercs;
+	if(GetPlayerMercs(player, mercs)==0) return;
+	uint brahmins=0;
+	for(uint i=0, iMax=mercs.length(); i<iMax; i++)
+	{
+		if(mercs[i].StatBase[ST_BODY_TYPE]==BT_BRAHMIN)
+		{
+			DeleteNpc(mercs[i]);
+			brahmins++;
+		}
+	}
+
+	if(brahmins==0) return;
+	qVar=3;
+	player.StatBase[ST_EXPERIENCE]+=2000;
+	if(brahmins>1) player.ReputationBase[REPUTATION_NCR]=player.Reputation[REPUTATION_NCR] + 1;
+	player.AddItem(PID_BOTTLE_CAPS, 300);
+
+}
+
+/************************** Охранники караванов на Базаре играют в покер только по вечерам *******************************/
+// время играть в покер
+#define NPC_ROLE_START_VALUE (1600)
+
+bool d_IsPlayTime(Critter & player, Critter @ npc)
+{
+	return __Hour<10||__Hour>18;
+}
+
+// охранники не играют в покер
+bool d_IsNotPlayTime(Critter & player, Critter @ npc)
+{
+	return !d_IsPlayTime(player, npc);
+}
+
+// установлена ли нужная роль у игрока
+bool d_IsNpcRoleSet(Critter & player, Critter @ npc)
+{
+	if (!valid(npc)) return false;
+	return npc.Stat[ST_NPC_ROLE]==NPC_ROLE_START_VALUE;
+}
+
+bool d_IsNotNpcRoleSet(Critter & player, Critter @ npc)
+{
+	return !d_IsNpcRoleSet(player, npc);
+}
+
+void r_SetNpcRole(Critter & player, Critter @ npc)
+{
+	if(valid(npc))
+	{
+		npc.StatBase[ST_NPC_ROLE]=NPC_ROLE_START_VALUE;
+	}
+}
+
+/***************************************** Проводник караванов HAL *******************************************************/
+import void _SetupCaravanLeader(uint idCaravan, Critter & leader) from "caravan";
+
+void _HalInit(Critter & hal, bool firstTime)
+{
+	hal.StatBase[ST_VAR0]=4;
+	//Log("Проводник караванов HAL Id="+hal.Id);
+	_SetupCaravanLeader(4, hal);
+}
+/******************************************** Библиография Хаба. *********************************************************/
+#define ENTIRE_NUM_SPAWN                                   (112) // номер гекса, на котором будут появляться книги
+#define VAR_FIRST_BOOK_ACCESS                              (LVAR_ncr_hub_book_access_1)//4277
+#define VAR_LAST_BOOK_ACCESS                               (LVAR_ncr_hub_book_access_7)//4283
+#define BOOKS_COUNT                                        (VAR_LAST_BOOK_ACCESS-VAR_FIRST_BOOK_ACCESS+1)
+#define RESP_MODE_ENTIRES                                  (ENTIRE_NUM_SPAWN)
+#define BOOK_RESP_TIME_MIN                                 (60*60*24*6) // раз в 6 дней
+#define BOOK_RESP_TIME_MAX                                 (60*60*24*9) // раз в 9 дней
+#define BOOK_RESP_TIME                                     (Random(BOOK_RESP_TIME_MIN, BOOK_RESP_TIME_MAX))
+#define BOOK_INFO #(bookNum)                               (2*(1+bookNum))
+#define BOOK_COST #(bookInfo)                              ((bookInfo/2)-4)             // условная стоимость книги. Первая=-3; вторая -2 итд
+#define VAR_NUM   #(bookNum)                               (VAR_FIRST_BOOK_ACCESS+bookNum)
+#define GET_XP #(booksCost, baseXP)                        (baseXP+(baseXP*ABS(booksCost)))
+#define XP_BASE #(lvl)                                     (((lvl>20)?2000:((lvl>10)?1000:500)))
+#define QST_BEGIN                                          (1)
+#define QST_END                                            (3)
+#define ACCEPT_BOOK                                        (1)
+import void RespawnItem(uint mapId, uint16 itemPid, uint itemCount, uint scriptId, uint16 hX, uint16 hY, uint varNum, uint modeResp, uint timeResp, uint itemInfo) from "respawn_item";
+import void r_RatchTimeOutSet(Critter& player, Critter@ npc ,int v0, int v1) from "ncr_ratch";
+
+void SpawnHubBooks(Map & map)
+{
+	// Желательно использовать этот скрипт только один раз, при первой загрузке карты
+	uint mapId=map.Id;
+	for(int8 i=0; i<BOOKS_COUNT; i++)
+	{
+		RespawnItem(mapId, PID_HUBOLOGIST_BOOK, 1, 0, 0, 0, VAR_NUM(i), RESP_MODE_ENTIRES, BOOK_RESP_TIME ,BOOK_INFO(i));
+	}
+}
+
+// debug
+void _SpawnBooks(Critter& cr, int,int,int)
+{
+	Map@ map=cr.GetMap();
+	if(valid(map))
+		SpawnHubBooks(map);
+}
+
+void r_BeginQuest(Critter& player, Critter@ npc)
+{
+
+	GameVar @ qVar=GetLocalVar(LVAR_q_ncr_hub_book, player.Id);
+	if (!valid(qVar)) return;
+	if(qVar==QST_BEGIN) return;
+	qVar=QST_BEGIN;
+	for(int i=VAR_FIRST_BOOK_ACCESS; i<=VAR_LAST_BOOK_ACCESS; i++)
+	{
+		GameVar @ access=GetLocalVar(i, player.Id);
+		if (!valid(access)) continue;
+		access=ACCEPT_BOOK;
+	}
+}
+
+
+// noAward=0 - не отказался от награды, 1 - отказался от награды
+void r_EndQuest(Critter& player, Critter@ npc, int noAward)
+{
+	GameVar @ qVar=GetLocalVar(LVAR_q_ncr_hub_book, player.Id);
+	if (!valid(qVar)) return;
+	if(qVar==QST_END || qVar==0) return;
+	uint bookCount=player.CountItem(PID_HUBOLOGIST_BOOK);
+	if(bookCount<3) return;
+	Item @[] items;
+	if(player.GetItemsByType(ITEM_TYPE_MISC, items)==0) return;
+	int sumCost=0;
+	int counter=0;
+	for(uint i=0, iMax=items.length(); i<iMax && counter<7; i++)
+	{
+		if(items[i].GetProtoId()==PID_HUBOLOGIST_BOOK)
+		{
+			sumCost+=BOOK_COST(items[i].Info);
+			counter++;
+		}
+	}
+	uint additionalAward=0;
+	switch(sumCost)
+	{
+		case 0:
+			additionalAward=PID_SCOUT_HANDBOOK;
+			break; // Доп награда книжка скаута
+		case 1:
+			additionalAward=PID_FIRST_AID_BOOK;
+			break; // Доп награда книжка санитара
+		default:
+			break;
+	}
+	player.DeleteItem(PID_HUBOLOGIST_BOOK, bookCount);
+	qVar=QST_END;
+	player.StatBase[ST_EXPERIENCE]+=GET_XP(sumCost,XP_BASE(player.Stat[ST_LEVEL]));
+	if(counter>5&&noAward>0)
+	{
+		player.ReputationBase[REPUTATION_NCR]=player.Reputation[REPUTATION_NCR] + 2;
+		return;
+	}
+	if(counter==6&&noAward==0)
+	{
+		player.AddItem(PID_BOTTLE_CAPS, XP_BASE(player.Stat[ST_LEVEL])*2);
+	}
+	if(additionalAward>0)
+	{
+		player.AddItem(additionalAward,1);
+		if(valid(npc))
+		{
+			npc.SayMsg(SAY_NORM_ON_HEAD,TEXTMSG_DLG,DLGSTR(npc.Stat[ST_DIALOG_ID],additionalAward));
+		}
+	}
+}
+
+void r_SetHubBookReset(Critter& player, Critter@ npc)
+{
+	r_RatchTimeOutSet(player, npc, LVAR_ncr_hub_book_quest_timeout, 30*24*60 -((300-player.Stat[SK_SPEECH])*60));
+}

@@ -1,0 +1,65 @@
+[comment]
+диалог для квеста ФорматC и Возрождение императора
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 D _var p sf_imperator_memory > 0 D _var p sf_imperator_memory < 100 D _param p SK_SCIENCE { 75 D _var p q_sf_kenli_imperator_restore = 1 D _var p sf_imperator_cancel_num < 4 R _var p sf_imperator_cancel_num + 1 R _var p q_sf_kenli_imperator_restore = 2 #
+3 1020 D _var p sf_imperator_memory > 0 D _param p SK_SCIENCE { 150 D _param p SK_SCIENCE > 75 D _var p sf_imperator_memory < 99 D _var p q_sf_kenli_imperator_restore = 1 D _var p sf_imperator_cancel_num < 4 R _var p q_sf_kenli_imperator_restore = 3 R _var p sf_imperator_memory + 1 #
+3 1030 D _var p sf_imperator_memory > 0 D _param p SK_SCIENCE { 230 D _param p SK_SCIENCE > 150 D _var p sf_imperator_memory < 98 D _var p q_sf_kenli_imperator_restore = 1 D _var p sf_imperator_cancel_num < 4 R _var p q_sf_kenli_imperator_restore = 4 R _var p sf_imperator_memory + 2 #
+3 1040 D _var p sf_imperator_memory > 0 D _var p sf_imperator_memory < 100 D _param p SK_SCIENCE > 230 D _var p sf_imperator_memory < 97 D _var p q_sf_kenli_imperator_restore = 1 D _var p sf_imperator_cancel_num < 4 R _var p q_sf_kenli_imperator_restore = 5 R _var p sf_imperator_memory + 3 #
+4 1050 D _var p sf_imperator_memory < 100 D _param p SK_SCIENCE { 150 D _param p SK_SCIENCE > 75 D _var p sf_imperator_memory } 99 D _var p q_sf_kenli_imperator_restore = 1 D _var p sf_imperator_cancel_num < 4 R _var p q_sf_kenli_imperator_restore = 6 R _var p sf_imperator_memory + 1 #
+4 1060 D _var p sf_imperator_memory < 100 D _param p SK_SCIENCE { 230 D _param p SK_SCIENCE > 150 D _var p sf_imperator_memory } 98 D _var p q_sf_kenli_imperator_restore = 1 D _var p sf_imperator_cancel_num < 4 R _var p q_sf_kenli_imperator_restore = 7 R _var p sf_imperator_memory + 2 #
+4 1070 D _var p sf_imperator_memory < 100 D _param p SK_SCIENCE { 300 D _param p SK_SCIENCE > 230 D _var p sf_imperator_memory } 97 D _var p q_sf_kenli_imperator_restore = 1 D _var p sf_imperator_cancel_num < 4 R _var p q_sf_kenli_imperator_restore = 8 R _var p sf_imperator_memory + 3 #
+5 1080 D _var p sf_imperator_memory > 0 D _var p sf_imperator_memory < 100 D _param p SK_SCIENCE { 75 D _var p q_sf_ahs7_imperator_format = 1 D _var p sf_imperator_cancel_num < 4 R _var p sf_imperator_cancel_num + 1 R _var p q_sf_ahs7_imperator_format = 2 #
+6 1090 D _var p sf_imperator_memory > 0 D _var p sf_imperator_memory < 100 D _param p SK_SCIENCE { 150 D _param p SK_SCIENCE > 75 D _var p q_sf_ahs7_imperator_format = 1 D _var p sf_imperator_cancel_num < 4 R _var p q_sf_ahs7_imperator_format = 3 R _var p sf_imperator_memory - 1 #
+6 1100 D _var p sf_imperator_memory > 0 D _var p sf_imperator_memory < 100 D _param p SK_SCIENCE { 230 D _param p SK_SCIENCE > 150 D _var p q_sf_ahs7_imperator_format = 1 D _var p sf_imperator_cancel_num < 4 R _var p q_sf_ahs7_imperator_format = 4 R _var p sf_imperator_memory - 3 #
+6 1110 D _var p sf_imperator_memory > 0 D _var p sf_imperator_memory < 100 D _param p SK_SCIENCE { 300 D _param p SK_SCIENCE > 230 D _var p q_sf_ahs7_imperator_format = 1 D _var p sf_imperator_cancel_num < 4 R _var p q_sf_ahs7_imperator_format = 5 R _var p sf_imperator_memory - 5 @
+2 2000 None 0 @
+3 3000 None 0 @
+4 4000 None 0 @
+5 5000 None 0 @
+6 6000 None 0 &
+
+[russ]
+{100}{}{император}
+{1000}{}{Predialogue installations}
+{1010}{}{Возрождение императора. Наука <=75}
+{1020}{}{Возрождение императора. Наука <=150}
+{1030}{}{Возрождение императора. Наука <=230}
+{1040}{}{Возрождение императора. Наука <=300}
+{1050}{}{Возрождение императора. Наука <=150 и это последний квестер}
+{1060}{}{Возрождение императора. Наука <=230 и это последний квестер}
+{1070}{}{Возрождение императора. Наука <=300 и это последний квестер}
+{1080}{}{Формат: С. Наука<=75}
+{1090}{}{Формат: С. Наука<=150}
+{1100}{}{Формат: С. Наука<=230}
+{1110}{}{Формат: С. Наука<=300}
+{2000}{}{Вам не хватает знаний для того, чтобы восстановить данные...}
+{3000}{}{Используя научный подход вы частично восстановили информацию на жестких дисках.}
+{4000}{}{Используя научный подход вы сумели восстановить последние сектора жестких дисков Императора.}
+{5000}{}{Вы не достаточно хорошо подкованы, чтобы обойти систему защиты Императора.}
+{6000}{}{Вы легко обходите защиту императора и уничтожаете часть важной информации.}
+
+[engl]
+{100}{}{the emperor}
+{1000}{}{Predialogue installations}
+{1010}{}{the Renaissance of the emperor. A science <=75}
+{1020}{}{the Renaissance of the emperor. A science <=150}
+{1030}{}{the Renaissance of the emperor. A science <=230}
+{1040}{}{the Renaissance of the emperor. A science <=300}
+{1050}{}{the Renaissance of the emperor. The science <=150 also is last kvester}
+{1060}{}{the Renaissance of the emperor. The science <=230 also is last kvester}
+{1070}{}{the Renaissance of the emperor. The science <=300 also is last kvester}
+{1080}{}{the Format: S.Nauka <=75}
+{1090}{}{the Format: S.Nauka <=150}
+{1100}{}{the Format: S.Nauka <=230}
+{1110}{}{the Format: S.Nauka <=300}
+{2000}{}{you do not have not enough knowledge to restore the data...}
+{3000}{}{Using the scientific approach you partially have restored the information on hard disks.}
+{4000}{}{Using the scientific approach you have managed to restore last sectors of hard disks of the Emperor.}
+{5000}{}{you are not well enough grounded to bypass system of protection of the Emperor.}
+{6000}{}{you easily bypass protection of the emperor and destroy a part of the important information.}

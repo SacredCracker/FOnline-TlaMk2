@@ -1,0 +1,256 @@
+[comment]
+
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 D _var n name_mem_npc_player = 0 D _var p q_vc_helene_troy_beauty ! 1 D _var p q_vc_helene_troy_beauty ! 2 #
+4 1020 D _var n name_mem_npc_player = 1 D _var p q_vc_helene_troy_beauty ! 1 D _var p q_vc_helene_troy_beauty ! 2 #
+26 1030 D _var p q_vc_helene_troy_beauty > 0 D _var p q_vc_helene_troy_beauty < 3 @
+2 2000 None 0 #
+3 2010 D _param p ST_INTELLECT > 3 R _var n name_mem_npc_player = 1 #
+0 2020 D _param p ST_INTELLECT > 3 #
+0 2030 D _param p ST_INTELLECT < 4 @
+3 3000 None 0 #
+0 3010 #
+4 3020 @
+4 4000 None 0 #
+0 4010 #
+5 4020 D _var p ncr_westin_pills_status = 2 #
+10 4030 D _var p ncr_westin_pills_status = 3 D _item p PID_MENTATS > 0 D _item p PID_BUFFOUT > 0 R _item p PID_BUFFOUT - 1 R _item p PID_MENTATS - 1 R _var p ncr_westin_pills_status = 4 R _var p q_ncr_westin_pills = 3 #
+9 4040 D _var p ncr_westin_pills_status = 3 #
+18 4050 D _var p ncr_westin_pills_status = 4 #
+19 4060 D _param p ST_CHARISMA < 3 D _param p SK_SPEECH > 79 D _param p ST_INTELLECT > 5 D _param p REPUTATION_VAULT_CITY > 7 D _param p ST_GENDER = 1 D _var p q_vc_helene_troy_beauty = 0 D _script dialog@d_TimeoutOk 0  @
+5 5000 None 0 #
+6 5010 @
+6 6000 None 0 #
+7 6010 @
+7 7000 None 0 #
+0 7010 #
+8 7020 @
+8 8000 None 0 #
+0 8010 #
+0 8020 R _var p ncr_westin_pills_status = 3 R _var p q_ncr_westin_pills = 2 @
+9 9000 None 0 @
+10 10000 None 0 #
+11 10010 @
+11 11000 None 0 #
+12 11010 @
+12 12000 None 0 #
+13 12010 @
+13 13000 None 0 #
+14 13010 D _item p PID_BOTTLE_CAPS > 999 R _var p ncr_westin_pills_status = 5 R _item p PID_BOTTLE_CAPS - 1000 R _item p PID_HEART_PILLS + 1 R _var p q_ncr_westin_pills = 4 R _param p ST_EXPERIENCE + 4006 #
+15 13020 #
+17 13030 D _param p ST_CHARISMA < 8 #
+16 13040 D _param p ST_CHARISMA > 7 R _item p PID_HEART_PILLS + 1 R _var p ncr_westin_pills_status = 5 R _var p q_ncr_westin_pills = 4 R _param p ST_EXPERIENCE + 9000 #
+0 13050 @
+14 14000 None 0 #
+0 14010 @
+15 15000 None 0 @
+16 16000 None 0 #
+0 16010 @
+17 17000 None 0 @
+18 18000 None 0 #
+15 18010 #
+14 18020 D _item p PID_BOTTLE_CAPS > 999 R _var p ncr_westin_pills_status = 5 R _item p PID_BOTTLE_CAPS - 1000 R _item p PID_HEART_PILLS + 1 R _var p q_ncr_westin_pills = 4 R _param p ST_EXPERIENCE + 4000 #
+16 18030 D _param p ST_CHARISMA > 7 R _item p PID_HEART_PILLS + 1 R _var p ncr_westin_pills_status = 5 R _param p ST_EXPERIENCE + 9000 #
+17 18040 D _param p ST_CHARISMA < 8 #
+0 18050 @
+19 19000 None 0 #
+0 19010 R _script dialog@r_SetUniqTO 1 125000 #
+20 19020 @
+20 20000 None 0 #
+21 20010 @
+21 21000 None 0 #
+22 21010 @
+22 22000 None 0 #
+23 22010 @
+23 23000 None 0 #
+24 23010 @
+24 24000 None 0 #
+25 24010 @
+25 25000 None 0 #
+0 25010 R _item p PID_HOLODISK + 1 R _var p q_vc_helene_troy_beauty = 1 @
+26 26000 None 0 #
+0 26010 #
+27 26020 D _var p q_vc_helene_troy_beauty = 2 D _script q_dappo_lost_c_robot@d_HasHolodisk 1 55 R _script q_dappo_lost_c_robot@r_RemoveHolodisk 1 55 #
+27 26030 D _var p q_vc_helene_troy_beauty = 2 D _var p vc_beauty_holo_remembered = 1 @
+27 27000 None 0 #
+28 27010 R _script dialog@r_FadeOut 1 0 @
+28 28000 None 0 #
+29 28010 @
+29 29000 None 0 #
+0 29010 D _var p q_vc_helene_troy_beauty = 2 R _param p ST_CHARISMA + 1 R _param p ST_EXPERIENCE + 4000 R _item p PID_COSMETIC_CASE + 1 R _item p PID_MIRROR_SHADES + 1 R _item p PID_NECKLACE + 1 R _param p REPUTATION_VAULT_CITY + 6 R _item p PID_BOTTLE_CAPS + 2000 R _var p q_vc_helene_troy_beauty = 3 R _script dialog@r_InfoMessage 1 1 &
+
+[russ]
+{100}{}{Элен Трой}
+{200}{}{Это доктор Элен Трой. }
+{210}{}{Вы видите молодую стройную женщину в халате доктора. Золотые нашивки говорят о ее высоком положении.}
+{210}{}{Элен Трой. Главный врач Города-Убежища.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{не знакомы}
+{1020}{}{знакомы}
+{1030}{}{Получили квест на хирургию лица}
+{2000}{}{Вы новеньк@sex@|ий||ая| в Городе?}
+{2010}{}{Мы незнакомы, если вы об этом. Мое имя @pname@.}
+{2020}{}{Моя ошибка, я ухожу. [Уйти]}
+{2030}{}{Ах! Бабба! Моей уходить! [Уйти]}
+{3000}{}{Очень приятно, @pname@. Меня зовут Элен. Я главный врач Города-убежища.}
+{3010}{}{Еще Увидимся. [Уйти]}
+{3020}{}{Я к вам по делу, Элен.}
+{4000}{}{Я очень занятой человек. Говорите быстро, что у вас стряслось.}
+{4010}{}{Не буду вас отвлекать, Элен. [Уйти]}
+{4020}{}{Советнику Вейстину нужны таблетки для сердца. По его словам, достать их можно только у вас.}
+{4030}{}{Элен, как мы и договаривались, я достал@sex@|||а| Ментат и Баффаут.}
+{4040}{}{Элен, я не могу найти Ментаты и Баффаут! Нельзя ли как-нибудь обойтись без них?}
+{4050}{}{Элен, я снова насчет лекарства для советника...}
+{4060}{}{Мне показалось, или вы что-то хотели сказать?}
+{5000}{}{Это так. Но я уже отправила посылку Вейстину на этой неделе. Приходил его человек, я с ним знакома. Вас же я вижу впервые.}
+{5010}{}{Посыльный Вейстина пропал в Пустоши. И лекарство не было доставлено. Поэтому прислали меня.}
+{6000}{}{Хм. Поймите меня правильно, @pname@. Это очень дорогой и сложный в производстве препарат. Я не могу раздавать его направо и налево.}
+{6010}{}{По словам Вейстина, таблетки стоят 1000 монет.}
+{7000}{}{Верно... Хорошо. Я вам поверю, @pname@. Но помочь ничем не могу, увы. Мои запасы препарата сейчас на нуле.}
+{7010}{}{Получается, Вейстину конец, думаю, вы это понимаете.  До свидания! [Уйти]}
+{7020}{}{Как же быть! Вы не могли бы произвести еще немного этих таблеток?}
+{8000}{}{У меня нет ингридиентов. Если только вы найдете ментаты и баффаут... Сами понимаете, наркотики у нас запрещены...}
+{8010}{}{Да и черт с ним. Надеюсь, Вейстин протянет еще пару недель и без своих колес! [Уйти]}
+{8020}{}{Без проблем. Я постараюсь найти Ментаты и Баффаут. [Уйти]}
+{9000}{}{Увы, без наркотиков мне не удастся приготовить лекарство для советника. Постарайтесь их достать.}
+{10000}{}{Замечательно, @pname@. Компоненты, необходимые для приготовления таблеток можно извлечь только из этих наркотиков. К сожалению, никто этого не понимает, и получить доступ к наркотикам я не могу.}
+{10010}{}{Долго ли мне ждать?}
+{11000}{}{Процесс приготвления лекарства прост. Сложность в компонентах. [Открывает герметичный контейнер, погружает в кипящую жидкость наркотики и закрывает крышку].}
+{11010}{}{[Ждать результата]}
+{12000}{}{[Через несколько минут, на крышке контейнера загорается зеленый индикатор. Элен отворачивает кран в дне контейнера и наполняет колбу бурым раствором] Осталось залить раствор в пресс и приготовить таблетки.}
+{12010}{}{Интересно наблюдать за вашей работой, Элен.}
+{13000}{}{[Процесс приготвления лекарства завершен. Элен отключает таблеточный пресс и высыпает готовые таблетки в упаковку] Вот ваши таблетки. 1000 монет}
+{13010}{}{Благодарю. [Отдать деньги]}
+{13020}{}{Элен, у меня нет столько денег.}
+{13030}{}{Элен, но ведь это я достал вам наркотики. Ваши затраты минимальны. Может быть, вы просто подарите мне лекарство?}
+{13040}{}{Элен, но ведь это я достал вам наркотики. Ваши затраты минимальны. Может быть, вы просто подарите мне лекарство?}
+{13050}{}{Я вынужден ненадолго покинуть вас, но я вернусь. [Уйти]}
+{14000}{}{Не мешкайте, чтобы поддержать работу сердца, Вейстину приходится регулярно принимать этот препарат.}
+{14010}{}{Да, я постараюсь добраться до НКР как можно быстрее. [Уйти]}
+{15000}{}{Найдите. К сожалению, я не занимаюсь благотворительностью.}
+{16000}{}{Вы правы. Передайте лекарство советнику как можно быстрей.}
+{16010}{}{Вы - чудо, Элен. Надеюсь, мы еще увидимся. [Уйти]}
+{17000}{}{Наркотики - это только часть активных компонентов. Вам просто повезло, что у меня были подготовлены остальные составляющие препарата. }
+{18000}{}{Да, таблетки готовы, цена 1000 монет.}
+{18010}{}{Элен, у меня нет столько денег.}
+{18020}{}{Благодарю. [Отдать деньги]}
+{18030}{}{Элен, но ведь это я достал вам наркотики. Ваши затраты минимальны. Может быть, вы просто подарите мне лекарство?}
+{18040}{}{Элен, но ведь это я достал вам наркотики. Ваши затраты минимальны. Может быть, вы просто подарите мне лекарство?}
+{18050}{}{Я вынужден ненадолго покинуть вас, но я вернусь. [Уйти]}
+{19000}{}{Знаете, вы ради бога не подумайте, что я намекаю, будто вы плохо выглядите. Но вы не хотели бы добавить себе шарма, стать привлекательнее?}
+{19010}{}{Что? Ты, обезьяна, ты хочешь сказать, что я плохо выгляжу? Да ты сама всю жизнь не умывалась. Пошла брамину в задницу, дура.}
+{19020}{}{Вы хотите сказать, что можете исправить ЭТО? [Тычете себе в лицо] Да  я ради этого смертокогта убью пилкой для ногтей !}
+{20000}{}{Ничего столь радикального не требуется.  Просто есть небольшая проблема…}
+{20010}{}{Я должна взорвать Гекко? Убить президента НКР? Я готова.}
+{21000}{}{Да выслушайте же меня. Проблема такого характера. Мы знаем, что наше оборудование  может справиться с такой задачей. И знаем, что до войны такие технологии существовали. Но…}
+{21010}{}{Продолжайте…}
+{22000}{}{К сожалению, в стандартную  комплектацию убежищ  такое программное обеспечение не входило.}
+{22010}{}{То есть я всегда буду такой? Я так и знала…}
+{23000}{}{Терпение. До войны эти технологии существовали. Значит должно быть и программное обеспечение для них.}
+{23010}{}{ТАААК!}
+{24000}{}{Если бы вы смогли разыскать программу по пластической хирургии лица, записать на голодиск и принести нам... Мы без проблем смогли выполнить такую операцию на нашем оборудовании. Возьметесь?}
+{24010}{}{Вы ещё спрашиваете. Разумеется, возьмусь.}
+{25000}{}{Рекомендую начать поиски в Сан-Фране. Этот город меньше всего пострадал во время войны.}
+{25010}{}{Спасибо за наводку. [Выход]}
+{26000}{}{Как там наше дело?}
+{26010}{}{В процессе.}
+{26020}{}{Я выполняю всё, за что берусь. Поэтому и жива до сих пор. Вот ваши программы.}
+{26030}{}{Там всё не так уж сложно, я  расскажу... [ Излагаете содержание файлов ] }
+{27000}{}{Отлично. Начнем прямо сейчас, если не возражаете.}
+{27010}{}{Да какие возражения… быстрее уже давай.}
+{28000}{}{Ну что ж, приступим... [Вся операция занимает совсем немного времени]}
+{28010}{}{И это все?}
+{29000}{}{Да, вот, мы обкатали технологию….эээ… Вы наш первый и почетнейший пациент, хотела я сказать. Вас положительно невозможно узнать. Прекрасный результат. А вот это вам от всех женщин нашего города. Берите, не отказывайтесь.}
+{29010}{}{Спасибо. Где у вас тут можно купить зеркало во всю стену?}
+{100000001}{}{Вы очень похорошели. Обаяние увеличено на 1.}
+
+[engl]
+{100}{}{Elen of Troys}
+{200}{}{It is doctor Elen of Troys.}
+{210}{}{you see the young harmonous woman in a dressing gown of the doctor. Gold stripes speak about its high position.}
+{210}{}{Elen of Troys. The head physician of the City-refuge.}
+{1000}{}{Predialogue installations}
+{1010}{}{are not familiar}
+{1020}{}{are familiar}
+{1030}{}{Have received a quest on surgery of the person}
+{2000}{}{you новеньк@sex | y || aja | in the City?}
+{2010}{}{We are unfamiliar, if you about it. My name @pname.}
+{2020}{}{My error, I leave. [To leave]}
+{2030}{}{Ah! Babba! Mine to leave! [To leave]}
+{3000}{}{it is very pleasant, @pname. My name is Elen. I the head physician of the City-refuge.}
+{3010}{}{Still we Will meet. [To leave]}
+{3020}{}{I to you on business, Elen.}
+{4000}{}{I very occupied the person. Say quickly that at you has befallen.}
+{4010}{}{you I will not distract, Elen. [To Leave]}
+{4020}{}{tablets for heart are necessary to Adviser Vejstinu. As he said, to get them it is possible only at you.}
+{4030}{}{Elen as we also agreed, I достал@sex ||| and | Mentat and Baffaut.}
+{4040}{}{Elen, I cannot find Mentaty and Baffaut! Whether It is impossible to do without them somehow?}
+{4050}{}{Elen, I again about a medicine for the adviser...}
+{4060}{}{it seemed To me, or you something wanted to tell?}
+{5000}{}{It so. But I have already sent a parcel of Vejstinu this week. Its person came, I am familiar with it. You I see for the first time.}
+{5010}{}{Messenger Vejstina was gone in the Heathland. And the medicine has not been delivered. Therefore have sent me.}
+{6000}{}{Hm. Understand me correctly, @pname. It is very expensive and difficult preparation in manufacture. I cannot distribute it to the right and on the left.}
+{6010}{}{According to Vejstina, tablets stand 1000 coins.}
+{7000}{}{it is true... Well. I to you will believe, @pname. But help I can nothing, alas. My stocks of a preparation now on zero.}
+{7010}{}{It turns out, Vejstinu the end, I think, you understand it. Good-bye! [To leave]}
+{7020}{}{How to be! You could not make a little more these tablets?}
+{8000}{}{At me is not present ingridientov. If only you find mentaty and baffaut... Understand, drugs at us are forbidden...}
+{8010}{}{And the hell with him. I hope, Vejstin will stretch still couple of weeks and without the wheels! [To leave]}
+{8020}{}{Without problems. I will try to find Mentaty and Baffaut. [To Leave]}
+{9000}{}{Alas, without drugs I will not manage to prepare a medicine for the adviser. Try to get them.}
+{10000}{}{it is remarkable, @pname. The components necessary for preparation of tablets can be taken only from these drugs. Unfortunately, anybody does not understand it, and get access to drugs I cannot.}
+{10010}{}{whether Long to me to wait?}
+{11000}{}{Process prigotvlenija medicines is simple. Complexity in components. [Opens the tight container, immerses in a boiling liquid drugs and closes a cover].}
+{11010}{}{[to Wait for result]}
+{12000}{}{[In some minutes, on a container cover the green indicator lights up. Elen the crane in a bottom of the container turns on and fills a flask with a brown solution] It is necessary to fill in a solution in a press and to prepare tablets.}
+{12010}{}{it is interesting to observe of your work, Elen.}
+{13000}{}{[Process prigotvlenija medicines is finished. Elen disconnects tabletochnyj a press and pours out ready tablets in packing] Here your tablets. 1000 coins}
+{13010}{}{I Thank. [To give money]}
+{13020}{}{Elen, at me is not present so much money.}
+{13030}{}{Elen, but after all it I have got to you drugs. Your expenses are minimum. Perhaps, you simply present to me a medicine?}
+{13040}{}{Elen, but after all it I have got to you drugs. Your expenses are minimum. Perhaps, you simply present to me a medicine?}
+{13050}{}{I am compelled to leave for a short while you, but I will return. [To leave]}
+{14000}{}{do not delay to support work of heart, Vejstinu should accept this preparation regularly.}
+{14010}{}{Yes, I will try to reach to NKR as soon as possible. [To leave]}
+{15000}{}{Find. Unfortunately, I am not engaged in charity.}
+{16000}{}{you are right. Transfer a medicine to the adviser as it is possible faster.}
+{16010}{}{you - a miracle, Elen. I hope, we still will meet. [To leave]}
+{17000}{}{Drugs are only a part of active components. To you has simply carried that at me other components of a preparation have been prepared.}
+{18000}{}{Yes, tablets are ready, the price of 1000 coins.}
+{18010}{}{Elen, at me is not present so much money.}
+{18020}{}{I Thank. [To give money]}
+{18030}{}{Elen, but after all it I have got to you drugs. Your expenses are minimum. Perhaps, you simply present to me a medicine?}
+{18040}{}{Elen, but after all it I have got to you drugs. Your expenses are minimum. Perhaps, you simply present to me a medicine?}
+{18050}{}{I am compelled to leave for a short while you, but I will return. [To leave]}
+{19000}{}{Know, you for God's sake do not think that I hint, as if you look bad. But you would not like to add to yourselves charm, to become more attractive?}
+{19010}{}{That? You, a monkey, you want to tell, what I look bad? Yes you all life did not wash. The silly woman has gone braminu to a bum.}
+{19020}{}{you want to tell, what can correct IT? [To myself in the person] Yes I for the sake of it smertokogta will kill Tychete a file for nails!}
+{20000}{}{Anything so radical it is not required. Simply there is a small problem …}
+{20010}{}{I should blow up Gekko? To kill president NKR? I am ready.}
+{21000}{}{Yes listen to me. A problem of such character. We know that our equipment can cope with such problem. Also we know that before war such technologies existed. But …}
+{21010}{}{Continue …}
+{22000}{}{Unfortunately, such software was not included into a standard complete set of refuges.}
+{22010}{}{That is I always will be such? I and knew …}
+{23000}{}{Patience. Before war these technologies existed. Means should be and the software for them.}
+{23010}{}{TAAAK!}
+{24000}{}{If you could find for the program on plastic surgery of the person, write down on golodisk and bring to us... We without problems could execute such operation on our equipment. Undertake?}
+{24010}{}{you still ask. Certainly, I will undertake.}
+{25000}{}{I Recommend to begin searches in the Dignity-frane. This city has least suffered during war.}
+{25010}{}{Thanks for navodku. [The Exit]}
+{26000}{}{As there our business?}
+{26010}{}{In process.}
+{26020}{}{I carry out everything, for what I undertake. Therefore also it is live till now. Here your programs.}
+{26030}{}{There all is not too difficult, I will tell... [State the maintenance of files]}
+{27000}{}{it is excellent. We will begin right now if do not object.}
+{27010}{}{Yes what objections … faster already give.}
+{28000}{}{Well, we will start... [All operation occupies very few time]}
+{28010}{}{Also it is all?}
+{29000}{}{Yes, here, we obkatali technology ….eee … you our first and most honorary patient, I wanted to tell. You cannot be learnt. Fine result. And here it to you from all women of our city. Take, do not refuse.}
+{29010}{}{Thanks. Where here it is possible to buy a mirror from you in all wall?}
+{100000001}{}{you have very much got prettier. Charm is increased on 1.}

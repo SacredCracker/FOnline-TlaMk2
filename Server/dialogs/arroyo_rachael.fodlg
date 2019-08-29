@@ -1,0 +1,97 @@
+[comment]
+
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 D _var p arroyo_doc_healing = 0 D _var p click_counter < 25 R _var p click_counter + 1 #
+3 1020 D _var p click_counter } 25 D _var p arroyo_doc_healing = 0 R _var p click_counter = 0 R _script dialog@r_Attack 1 16 #
+4 1030 D _var p arroyo_doc_healing = 2 #
+10 1040 D _var p arroyo_doc_healing = 1 @
+2 2000 None 0 #
+7 2010 D _var p name_mem_player_npc = 1 D _item p PID_DAISIES > 0 D _var p name_mem_npc_player = 1 R _param p ST_EXPERIENCE + 3000 R _item p PID_DAISIES - 1 R _var p name_mem_npc_player = 1 R _param p REPUTATION_ARROYO + 1 @
+3 3000 None 0 @
+4 4000 None 0 #
+5 4010 R _script dialog@r_ToHeal 0  R _var p arroyo_doc_healing = 0 R _param p DAMAGE_EYE = 0 R _param p DAMAGE_RIGHT_ARM = 0 R _param p DAMAGE_LEFT_ARM = 0 R _param p DAMAGE_RIGHT_LEG = 0 R _param p DAMAGE_LEFT_LEG = 0 R _script dialog@r_FadeOut 1 2000 @
+5 5000 None 0 #
+6 5010 D _param p ST_INTELLECT > 3 #
+0 5020 D _param p ST_INTELLECT < 4 @
+6 6000 None 0 #
+0 6010 #
+0 6020 D _param p ST_GENDER = 0 R _var p name_mem_player_npc = 1 #
+0 6030 D _param p ST_GENDER = 1 @
+7 7000 None 0 #
+8 7010 D _param p ST_CHARISMA } 5 #
+9 7020 D _param p ST_CHARISMA < 5 #
+0 7030 @
+8 8000 None 0 #
+9 8010 #
+0 8020 @
+9 9000 None 0 @
+10 10000 None 0 &
+
+[russ]
+{100}{}{Рейчел}
+{200}{}{Вы видите: Рейчел}
+{210}{}{Рыжая девушка в костюме Убежища и очках. У неё очень строгий вид.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{Зашёл с улицы.}
+{1020}{}{Закликал до смерти.}
+{1030}{}{Пришёл на операцию}
+{1040}{}{Не туда попал.}
+{2000}{}{Немедленно покиньте операционную!}
+{2010}{}{А я с маргаритками. Оп! [Достать горшок из-за спины]}
+{3000}{}{Помогите! @sex@|Тут какой-то маньяк||Ко мне пристаёт какая-то больная женщина!|!}
+{4000}{}{Привет. Я Рейчел, буду Вас лечить. Прилягте сюда. Не бойтесь механической руки, не бойтесь. Тааак, отлично. [Приладывает к Вашему лицу какую-то маску со шлангом] Теперь дышите глубоко... Дышите... Дышииитеее... [Её голос замедляется и всё вокруг темнеет]}
+{4010}{}{[Далее]}
+{5000}{}{[Вы очнулись. Вы всё ещё лежите на операционном столе. Но, на удивление, уже ничего не болит.]}
+{5010}{}{Спасибо, доктор!}
+{5020}{}{Спасибо!}
+{6000}{}{Да не за что, я рада помочь. Я же на самом деле пока не доктор, и мне очень нужна практика, чтобы им стать. Так что заходите ещ... Ой. Как это некрасиво прозвучало. @sex@|Но цветы можете приносить, конечно! Я особенно люблю маргаритки.||Просто буду рада помочь, в случае чего!|}
+{6010}{}{Практика, говоришь... Постараюсь я больше не попадать в эту больницу.}
+{6020}{}{Буду иметь ввиду!}
+{6030}{}{Буду иметь ввиду!}
+{7000}{}{Ой! Какая неожиданность! Я же тогда пошутила! Спасибо, большое, спасибо! [Рейчел краснеет]}
+{7010}{}{[Выжидающе на неё посмотреть]}
+{7020}{}{[Выжидающе на неё посмотреть]}
+{7030}{}{Мне только приятно порадовать такую девушку, как Вы. До свидания!}
+{8000}{}{[Рейчел целует Вас в щёчку и краснеет ещё больше]}
+{8010}{}{Рейчел, а что вы делаете сегодня вечером?}
+{8020}{}{Пока!}
+{9000}{}{Извините... Я занята! Да, не забудьте закрыть за собой дверь!}
+{10000}{}{Вы ошиблись дверью. С мелкими ранениями - к Франческе.}
+
+[engl]
+{100}{}{Rachel}
+{200}{}{You see: Rachel}
+{210}{}{A redhead in a vault jumpsuit and glasses. She has a very stern outlook.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{Зашёл с улицы.}
+{1020}{}{Закликал до смерти.}
+{1030}{}{Пришёл на операцию}
+{1040}{}{Не туда попал.}
+{2000}{}{Leave the operating room immediately!}
+{2010}{}{I brought you daisies. Voila! [Present the pot of daisies from behind your back]}
+{3000}{}{Help! @sex@|There's a psycho here||This mad woman does not leave me alone|!}
+{4000}{}{Hello. My name is Rachel and I will treat you. Lie down here. Don't be afraid of mechanical hand, don't. Yes, excellent. [Presses some kind of mask to your face] Now breathe deeply... Breathe in... Breathe out... [Her voice slows down and everything grows dim]}
+{4010}{}{[Further]}
+{5000}{}{[You awaken. You are still on the operating table. But to your surprise nothing aches.]}
+{5010}{}{Thank you, Doctor!}
+{5020}{}{Thank you!}
+{6000}{}{I'm glad I helped. I'm not really a doctor yet, and I need practice to become one. Come back soon... Oh... Sorry, I didn't mean that. @sex@|But you can bring me flowers, of course! I like daisies.||I mean if anything does happen, I'll be glad to help you!|}
+{6010}{}{Practice, you say... I'll try to keep away from this hospital.}
+{6020}{}{I'll keep that in mind!}
+{6030}{}{I'll keep that in mind!}
+{7000}{}{Oh! this is so unexpected! I was just kidding! Thank you very much! [Rachel blushes]}
+{7010}{}{[Look at her expectedly]}
+{7020}{}{[Look at her expectedly]}
+{7030}{}{I just wanted to make a beautiful girl happy. Goodbye!}
+{8000}{}{[Rachel kisses you on the cheek and blushes some more]}
+{8010}{}{Rachel, what are you doing tonight?}
+{8020}{}{Bye!}
+{9000}{}{Sorry... I'm busy! And don't forget to close the door as you leave!}
+{10000}{}{You got the wrong door. Francesca deals with small injuries.}
+

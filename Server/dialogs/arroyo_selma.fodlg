@@ -1,0 +1,288 @@
+[comment]
+
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 D _var p name_mem_npc_player = 0 D _param p ST_INTELLECT } 4 D _script caravan@d_NotHasFailures 0  #
+15 1020 D _var p name_mem_npc_player = 1 D _script caravan@d_NotHasFailures 0  D _param p ST_INTELLECT } 4 D _script caravan@d_NotPlayerHired 0  D _script caravan@d_NotStatus 1 4 D _var p q_arroyo_selma_caravan_escort ! 8 D _var p q_arroyo_selma_caravan_escort ! 10 #
+13 1030 D _param p ST_INTELLECT < 4 #
+17 1040 D _script caravan@d_PlayerHired 0  D _script caravan@d_Status 1 1 D _script caravan@d_NotHasFailures 0  #
+19 1050 D _script caravan@d_Status 1 4 D _script caravan@d_NotHasFailures 0  #
+100 1060 D _var p q_arroyo_selma_caravan_escort = 7 #
+102 1070 D _var p q_arroyo_selma_caravan_escort = 4 #
+104 1080 D _var p q_arroyo_selma_caravan_escort = 3 #
+105 1090 D _var p q_arroyo_selma_caravan_escort = 5 #
+105 1100 D _var p q_arroyo_selma_caravan_escort = 6 #
+107 1110 D _var p q_arroyo_selma_caravan_escort = 8 D or D _var p q_arroyo_selma_caravan_escort = 10 @
+2 2000 None 0 #
+0 2010 #
+3 2020 R _var p name_mem_npc_player = 1 @
+3 3000 None 0 #
+4 3010 #
+5 3020 D _script caravan@d_NotIsCaravanReversed 0  #
+6 3030 D _script caravan@d_IsCaravanReversed 0  #
+7 3040 D _script caravan@d_Status 1 1 #
+8 3050 D _script caravan@d_NotStatus 1 4 D _script caravan@d_NotStatus 1 1 #
+0 3060 @
+4 4000 None 0 #
+5 4010 D _script caravan@d_NotIsCaravanReversed 0  #
+6 4020 D _script caravan@d_IsCaravanReversed 0  #
+7 4030 D _script caravan@d_Status 1 1 #
+8 4040 D _script caravan@d_NotStatus 1 1 D _script caravan@d_NotStatus 1 4 #
+0 4050 @
+5 5000 None 0 #
+7 5010 D _script caravan@d_Status 1 1 #
+8 5020 D _script caravan@d_NotStatus 1 4 D _script caravan@d_NotStatus 1 1 #
+0 5030 @
+6 6000 None 0 #
+7 6010 D _script caravan@d_Status 1 1 #
+8 6020 D _script caravan@d_NotStatus 1 1 D _script caravan@d_NotStatus 1 4 #
+0 6030 @
+7 7000 None 0 #
+0 7010 #
+9 7020 D _script caravan@d_NotIsCaravanReversed 0  #
+10 7030 D _script caravan@d_IsCaravanReversed 0  D _script caravan@d_NotIsFullParty 0  R _script caravan@r_PutPlayerRequest2Info 0  R _var p q_arroyo_selma_caravan_escort = 1 #
+11 7040 D _script caravan@d_IsCaravanReversed 0  D _script caravan@d_IsFullParty 0  @
+8 8000 None 0 #
+0 8010 @
+9 9000 None 0 #
+0 9010 #
+10 9020 D _script caravan@d_NotIsFullParty 0  R _script caravan@r_PutPlayerRequest2Info 0  R _var p q_arroyo_selma_caravan_escort = 1 #
+11 9030 D _script caravan@d_IsFullParty 0  @
+10 10000 None 0 #
+0 10010 @
+11 11000 None 0 #
+0 11010 #
+12 11020 @
+12 12000 None 0 #
+0 12010 #
+0 12020 R _script caravan@r_PutPlayerRequest2Info 0  R _var p q_arroyo_selma_caravan_escort = 1 @
+13 13000 None 0 #
+65507 13010 #
+0 13020 @
+15 14000 None 0 #
+16 14010 #
+0 14020 @
+16 15000 None 0 #
+4 15010 @
+17 16000 None 0 #
+18 16010 @
+18 17000 None 0 #
+0 17010 @
+19 18000 None 0 #
+0 18010 #
+20 18020 D _script caravan@d_PlayerHired 0  @
+20 19000 None 0 #
+0 19010 R _script caravan@r_ContinueCaravan 0  @
+100 20000 None 0 #
+0 20010 @
+101 21000 None 0 @
+102 22000 None 0 #
+103 22010 @
+103 23000 None 0 @
+104 24000 None 0 #
+0 24010 #
+65507 24020 @
+105 25000 None 0 #
+106 25010 @
+106 26000 None 0 #
+65507 26010 #
+0 26020 @
+107 27000 None 0 #
+0 27010 R _item p PID_BOTTLE_CAPS + 3000 R _script dialog@r_QuestReward1 0  R _var p q_arroyo_selma_caravan_escort = 11 #
+108 27020 D _script caravan@d_IsCaravanReversed 0  R _item p PID_BOTTLE_CAPS + 3000 R _script dialog@r_QuestReward1 0  R _var p q_arroyo_selma_caravan_escort = 11 @
+108 28000 None 0 &
+
+[russ]
+{100}{}{Сельма}
+{200}{}{Вы видите Сельму Хаек}
+{210}{}{Перед вами жгучая брюнетка с густыми бровями и фантастическим носом. Это Сельма.}
+{1000}{}{Predialogue installations}
+{1010}{}{не знакомы  ПРовалов нет}
+{1020}{}{знаком, не в составе. Провалов нет.}
+{1030}{}{низкий инт}
+{1040}{}{Игрок в составе каравана. Караван пока не вышел. Провалов нет.}
+{1050}{}{караван на энкаунтере, все спокойно. Норм инт. Реплика для всех,  а не только игрока с квестом. У игрока не было провалов}
+{1060}{}{Провал: игрок убил караванщика на энкаунтере}
+{1070}{}{Провал: игрок покинул караван во время маршрута. Норм инт}
+{1080}{}{Провал: игрок нападал на караван или пытался ограбить}
+{1090}{}{Провал: игрок погиб во время каравана}
+{1100}{}{Провал: проводника убили во время каравана, кто-то кроме игрока}
+{1110}{}{выполнен квест, доступна награда}
+{2000}{}{Привет зайчик. Я тебя раньше не видела. Меня разыскиваешь?}
+{2010}{}{Нет, обознал@sex@|ся||ась|, прошу прощения.}
+{2020}{}{Меня зовут @pname@. Это ты - Селма?}
+{3000}{}{Да, это я. Я вожу караваны отсюда  в Город-Убежище. Мне не помешает  надежный человек для охраны груза. Хочешь пойти с нами?}
+{3010}{}{И как такая очаровательная крошка справляется с опасностями Пустоши? Рейдеры, кентавры, прочие чудовища? Ты их не боишься?}
+{3020}{}{А когда вы выходите и какой груз везете?}
+{3030}{}{А когда вы выходите и какой груз везете?}
+{3040}{}{Сколько я получу и какие условия?}
+{3050}{}{Я в твоем распоряжении. Сколько заплатишь?}
+{3060}{}{Нет, мне это не интересно.}
+{4000}{}{[Смеется] Чтобы справиться с ними, я и нанимаю @sex@|парней||девчонок| вроде тебя. Мне нужны охранники, конечно. Ну что, хочешь получить работу?@@У меня в караване только проверенные люди. Таким не страшна никакая нечисть. А ты как, с нами или что?}
+{4010}{}{А когда вы выходите и какой груз везете?}
+{4020}{}{А когда вы выходите и какой груз везете?}
+{4030}{}{Сколько я получу и какие условия?}
+{4040}{}{Я в твоем распоряжении. Сколько заплатишь?}
+{4050}{}{Нет, это не для меня.}
+{5000}{}{Ну, мы продаем сельхоз продукцию и рыбу, а из ГУ везем всякую электронику и медикаменты. Выходим в 14 часов ровно.}
+{5010}{}{Сколько я получу и какие условия?}
+{5020}{}{Я в твоем распоряжении. Сколько заплатишь?}
+{5030}{}{Понятно. Пожелаю удачи.}
+{6000}{}{Мы почти закончили свои дела здесь. Скоро собираемся обратно. Нужно доставить в Арройо груз медикаментов.}
+{6010}{}{Сколько я получу и какие условия?}
+{6020}{}{Я в твоем распоряжении. Сколько заплатишь?}
+{6030}{}{Удачи. Надеюсь, у вас все будет в порядке.}
+{7000}{}{Выходим сегодня в 14 часов. Плачу три куска, когда доберемся до места. Идем без остановок, опоздавших, раненых не ждем. Что скажешь?}
+{7010}{}{Ух, нет. Прямо сейчас я не могу. В другой раз.}
+{7020}{}{Напомни, какой груз вы везете?}
+{7030}{}{Ладно, я с тобой.}
+{7040}{}{Ладно, я с тобой.}
+{8000}{}{Найди меня за пару часов до выхода каравана. Начиная с полудня мы утрясаем состав каравана и нанимаем охранников. За работу получишь три косых. А сейчас, извини, мне нужно идти.}
+{8010}{}{Еще увидимся.}
+{9000}{}{Рыбу, трепангов и водоросли. А в обратный зад - медикаменты. Ну? Я жду ответа.}
+{9010}{}{Я подумаю...}
+{9020}{}{Трепангов? Тогда я в деле... Хоть посмотрю, что это такое.}
+{9030}{}{Трепангов? Тогда я в деле... Хоть посмотрю, что это такое.}
+{10000}{}{Отлично. Отправляемся в 14 часов. Будь рядом.}
+{10010}{}{Договорились.@@Буду неподалеку. @@Ясно.}
+{11000}{}{[Сверяется с каким-то списком] Ой, как неудачно, все места заняты. Может придешь в другой раз? Извини...}
+{11010}{}{Ладно, забудь.}
+{11020}{}{Но, может, не придет кто?}
+{12000}{}{Хм. Да, всякое бывает. Будь здесь на всякий случай, если что, дам знать. В 14 часов все решится .}
+{12010}{}{Я подумал@sex@|||а| и решил@sex@|||а| . Мне это не подходит.}
+{12020}{}{Хорошо, подожду здесь.}
+{13000}{}{О-па. Тяжелый случай. Может, ты уже пойдешь от греха?}
+{13010}{}{Моя убивать! Твоя страдать! [Атака]}
+{13020}{}{Фу, тебе! [Уйти]}
+{14000}{}{А, это ты? Ну что, подумал@sex@|||а| над моим предложением?}
+{14010}{}{Да, вот только вопросы есть. }
+{14020}{}{Пока не решу никак, позже загляну.}
+{15000}{}{Валяй, на пару вопросов отвечу. Ты мне пока нравишься. Только не тупи, а то могу и передумать.}
+{15010}{}{Тебя не пугают опасности Пустоши? Там полно отморозков.}
+{16000}{}{Не путайся под ногами. Скоро выходим.}
+{16010}{}{Долго ждать еще?}
+{17000}{}{В 14 часов будь рядом, чтобы я тебя видела. Опоздавших ждать не буду.}
+{17010}{}{Поскорей бы уже.[Уйти]@@Ясно. [Уйти]@@Хорошо, подождем. [Уйти]}
+{18000}{}{Ну что за люди в пустошах. Кошмар какой-то.@@Хм, ну почему меня вечно пытаются ограбить@@Вот уроды, я вам яйца отрежу!@@Это начинает  надоедать. Опять они здесь.}
+{18010}{}{Не бери в голову. [Уйти]}
+{18020}{}{Не стоит тут отсвечивать, пошли дальше?}
+{19000}{}{Да, самое время. Идем.}
+{19010}{}{Все готовы. Можно выходить.}
+{20000}{}{Думаю, тебе не стоит здесь свою рожу показывать.}
+{20010}{}{Че за дела?!}
+{21000}{}{Уходи. А еще лучше убирайся.}
+{22000}{}{Ты бросил@sex@|||а| мой караван и теперь явил@sex@|ся||ась| с наглой рожей? Вон отсюда!}
+{22010}{}{Эй, полегче!}
+{23000}{}{Я не желаю видеть и слышать тебя. Иди отсюда, не порть мне настроение.}
+{24000}{}{С  детства не выношу гопников и жуликов. Удались отсюда, пока хуже не стало.}
+{24010}{}{Гопников? Да сама ты! [Уйти]}
+{24020}{}{Хуже? Ну, попробуй, сделай что-нибудь! [Атака]}
+{25000}{}{Слушай, ты когда начинаешь тупить, уже не можешь остановиться? Убирайся, у меня нет на тебя времени!}
+{25010}{}{Э, минутку. Меня там приложили, в твоем караване, и ты не хочешь платить?}
+{26000}{}{Тебе лучше уйти, а то знаешь, и до беды недалеко. споткнешься, ногу сломаешь... иди добром.}
+{26010}{}{Ах ты обезьяна! [Атака]}
+{26020}{}{Чтоб ты лопнула, ведьма. [Уйти]}
+{27000}{}{А, это ты? Ну что ж,  неплохо. Я знала, что могу тебе верить. Вот твоя плата. Но теперь нам нужно обратно. Ты с нами?}
+{27010}{}{Спасибо, я подумаю.}
+{27020}{}{Да, конечно. Только вот схожу гляну на Убежище.}
+{28000}{}{Далеко не убегай, нам скоро выходить.}
+
+[engl]
+{100}{}{Salma}
+{200}{}{You see Salma Hayek}
+{210}{}{You see a banging hot brunette with thick yeybrows and a fantastic nose. It's Salma.}
+{1000}{}{Predialogue installations}
+{1010}{}{не знакомы  ПРовалов нет}
+{1020}{}{знаком, не в составе. Провалов нет.}
+{1030}{}{низкий инт}
+{1040}{}{Игрок в составе каравана. Караван пока не вышел. Провалов нет.}
+{1050}{}{караван на энкаунтере, все спокойно. Норм инт. Реплика для всех,  а не только игрока с квестом. У игрока не было провалов}
+{1060}{}{Провал: игрок убил караванщика на энкаунтере}
+{1070}{}{Провал: игрок покинул караван во время маршрута. Норм инт}
+{1080}{}{Провал: игрок нападал на караван или пытался ограбить}
+{1090}{}{Провал: игрок погиб во время каравана}
+{1100}{}{Провал: проводника убили во время каравана, кто-то кроме игрока}
+{1110}{}{выполнен квест, доступна награда}
+{2000}{}{Hey, buddy. Haven't seen you around. Looking for me?}
+{2010}{}{No, I took you for some other hot latino girl, sorry.}
+{2020}{}{My name's @pname@. Are you Salma?}
+{3000}{}{At your service. I lead caravans from here to Vault City. I could use a guy like you in my caravan guard. Want to come along?}
+{3010}{}{How does a such nice little girl like yourself cope with the hardships of the wasteland? Raiders, deathclaws and other beasts. Aren't you afraid?}
+{3020}{}{When do you leave and what do you carry?}
+{3030}{}{When do you leave and what do you carry?}
+{3040}{}{What are the terms? How much do I get?}
+{3050}{}{I'm all yours. How much will I get?}
+{3060}{}{No, I'm not interested.}
+{4000}{}{[Laughs] I pay @sex@|guys||girls| like you to cope with them. That means I'm looking for guards. Do you want the job?@@I have reliable people in my caravan. We could take on the Devil if he tried something. Are you with us?}
+{4010}{}{When do you leave and what do you carry?}
+{4020}{}{When do you leave and what do you carry?}
+{4030}{}{What are the terms? How much do I get?}
+{4040}{}{I'm all yours. How much will I get?}
+{4050}{}{No, I'm not interested.}
+{5000}{}{Well, we take agricultural stuff and fish, and bring back electronics and medical supplies from Vault City. We set out at 14:00 sharp.}
+{5010}{}{What are the terms? How much do I get?}
+{5020}{}{I'm all yours. How much will I get?}
+{5030}{}{I see. Well, good luck.}
+{6000}{}{We're almost done here, going back to Arroyo soon. We must deliver medical supplies.}
+{6010}{}{What are the terms? How much do I get?}
+{6020}{}{I'm all yours. How much will I get?}
+{6030}{}{Good luck, I hope you get there safe.}
+{7000}{}{We set out at 14:00. I'll pay you three grand when we get there. We make no stops, we wait for nobody. Are you in?}
+{7010}{}{Eh, no. I can't right now, maybe some other time.}
+{7020}{}{Remind me, what do you transport?}
+{7030}{}{All right, I'm in.}
+{7040}{}{All right, I'm in.}
+{8000}{}{Find me a couple of hours before departure. We take on guards starting from noon. You'll get three grand for the work. I'm busy now, so if you don't mind...}
+{8010}{}{See you.}
+{9000}{}{Fish, trepangs and seaweed. Medicine on our way back. So what will be your answer?}
+{9010}{}{I'll think about it...}
+{9020}{}{Trepangs? Then I'm in... I want to see what the hell that is.}
+{9030}{}{Trepangs? Then I'm in... I want to see what the hell that is.}
+{10000}{}{Fine. We set off at 14:00. Be around.}
+{10010}{}{It's a deal.@@I'll be here. @@I see.}
+{11000}{}{[Checks against some list] Oh, what a pity, we're full. Come some other time. Sorry...}
+{11010}{}{Never mind.}
+{11020}{}{Maybe somebody won't show up?}
+{12000}{}{Hmm, maybe. Be here just in case then. We'll find out at 14:00.}
+{12010}{}{I thought it over and decided to agree.}
+{12020}{}{All right, I'll wait here.}
+{13000}{}{Heh. A serious case. How about you get out?}
+{13010}{}{Me kill! You suffer! [Attack]}
+{13020}{}{You caca! [Leave]}
+{14000}{}{Oh, it's you? Well, have you thought about my offer?}
+{14010}{}{Yeah, but I got some questions. }
+{14020}{}{ot yet, I'll come when I do.}
+{15000}{}{Go for it, ask away. But do it quick, while I still like you.}
+{15010}{}{Aren't you afraid of the wasteland dangers? It's full of cutthroats.}
+{16000}{}{Don't get in the way. We're leaving soon.}
+{16010}{}{How much longer?}
+{17000}{}{Be here so that I could see you at 14:00. We're not going to wait.}
+{17010}{}{I can't wait to set out.[Leave]@@I see. [Leave]@@All right, let's wait. [Leave]}
+{18000}{}{What kind of people are you? It's awful!@@Why am I always being robbed?@@I'll chop your balls off, bastards!@@I'm getting tired of it. They're here again.}
+{18010}{}{Never mind. [Leave]}
+{18020}{}{We shouldn't stay here. let's move out, shall we?}
+{19000}{}{Yeah, it's about time.}
+{19010}{}{Everyone's ready, let's move out.}
+{20000}{}{I think you'd better not stick your mug in here.}
+{20010}{}{What the deuce?!}
+{21000}{}{Go away. No, what I mean is RUN AWAY.}
+{22000}{}{You left the caravan and now you show up as if nothing happened? Get the hell out!}
+{22010}{}{Hey, easy!}
+{23000}{}{I don't want to see you or hear you or whatever, Get out, don't spoil this lovely day.}
+{24000}{}{I can't stand two things. Muggers and crooks. Just get out until I get angry.}
+{24010}{}{Crooks? Up yours, bitch! [leave]}
+{24020}{}{And then what? Go on, show me what you've got! [Attack]}
+{25000}{}{When you start nagging you can't stop, can you? Get out, I don't have time for you!}
+{25010}{}{Wait a second, I was wasted in your caravan and you don't want to pay?}
+{26000}{}{You'd better go until something bad happens... Like an accident or something.}
+{26010}{}{You monkey turd! [Attack]}
+{26020}{}{Go die in hell. [Leave]}
+{27000}{}{Oh, it's you. Well, not bad at all. I knew that I can rely on you. Here's your payment. But we need to make our way back. Are you with us?}
+{27010}{}{I'll think about it, thanks.}
+{27020}{}{Sure. I'll just go have a quick look at the vault.}
+{28000}{}{Don't go too far, we're leaving soon.}

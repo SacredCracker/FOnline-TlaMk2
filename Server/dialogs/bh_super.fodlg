@@ -1,0 +1,200 @@
+[comment]
+name_mem_player_npc=1 - игрок в данный момент очищает руду.
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _param p ST_INTELLECT < 4 #
+3 1020 D _var n name_mem_npc_player = 0 D _param p ST_INTELLECT > 3 R _var n name_mem_npc_player = 1 #
+5 1030 D _var n name_mem_npc_player = 1 D _param p ST_INTELLECT > 3 D _var p q_bh_super_new_technology ! 2 D _var p q_bh_super_new_technology ! 3 D _var p q_bh_super_new_technology ! 4 #
+21 1040 D _var p q_bh_super_new_technology > 1 D _var p q_bh_super_new_technology < 5 @
+2 2000 None 0 #
+6 2010 #
+0 2020 @
+3 3000 None 0 #
+9 3010 #
+10 3020 #
+15 3030 #
+0 3040 @
+4 4000 None 0 #
+6 4010 #
+0 4020 @
+5 5000 None 0 #
+9 5010 #
+10 5020 #
+15 5030 #
+0 5040 #
+16 5050 D _param p ST_INTELLECT > 5 D _param p SK_SPEECH > 79 D _param p SK_OUTDOORSMAN > 99 D _var p q_bh_super_new_technology = 0 D _param p KILL_MEN > 66 @
+6 6000 None 0 #
+0 6010 @
+9 7000 None 0 #
+10 7010 #
+15 7020 #
+0 7030 @
+10 8000 None 0 #
+15 8010 #
+0 8020 @
+14 9000 None 0 #
+0 9010 @
+15 10000 None 0 #
+65506 10010 #
+0 10020 @
+16 11000 None 0 #
+0 11010 #
+17 11020 @
+17 12000 None 0 #
+18 12010 @
+18 13000 None 0 #
+19 13010 @
+19 14000 None 0 #
+20 14010 @
+20 15000 None 0 #
+0 15010 R _var p q_bh_super_new_technology = 1 #
+0 15020 @
+21 16000 None 0 #
+0 16010 #
+22 16020 D _script q_dappo_lost_c_robot@d_HasHolodisk 1 56 D _var p q_bh_super_new_technology = 4 #
+22 16030 D _param p SK_SCIENCE > 119 D _var p q_bh_super_new_technology = 4 D _var p bh_hub_holo_remembered = 1 @
+22 17000 None 0 #
+0 17010 D _var p q_bh_super_new_technology = 4 R _item p PID_HK_G11E + 1 R _item p PID_4_7MM_CASELESS + 100 R _param p REPUTATION_BROKEN_HILLS + 5 R _param p ST_EXPERIENCE + 9000 R _script broken_common@r_GrantPlayer 0  R _var p q_bh_super_new_technology = 5 R _var p bh_uran_discount = 1 R _var p fixboy_uran = 1 #
+0 17020 D _var p q_bh_super_new_technology = 4 R _item p PID_BOTTLE_CAPS + 10000 R _item p PID_HK_G11E + 1 R _item p PID_4_7MM_CASELESS + 100 R _param p REPUTATION_BROKEN_HILLS + 5 R _param p ST_EXPERIENCE + 9000 R _script broken_common@r_GrantPlayer 0  R _var p q_bh_super_new_technology = 5 R _var p fixboy_uran = 1 &
+
+[russ]
+{100} {} {Mertvjak}
+{200} {} {you see disgusting мутировавшее a being, with a spotty skin and a terrible grin.}
+{210} {} {you see мертв€ка. Its skin, apparently, will soon slip from it. But it is visible that other townspeople easily accept it.}
+{1000} {} {Predialogue installations}
+{1010} {} {Stupid}
+{1020} {} {it is not familiar}
+{1030} {} {the Sign}
+{1040} {} {has received a quest on horns of plenty}
+{2000} {} {You have nothing to do here!}
+{2010} {} {Daa €гга! »ип ооп оп!}
+{2020} {} {Nezna.}
+{3000} {} {You have nothing to do here!}
+{3010} {} {Who you?}
+{3020} {} {That it for a place?}
+{3030} {} {uranium is necessary To me.}
+{3040} {} {Anything. @@ it is fine, unimportant. While.}
+{4000} {} {That is necessary to you?}
+{4010} {} {Daa €гга! »ип ооп оп!}
+{4020} {} {Nezna.}
+{5000} {} {That is necessary to you?}
+{5010} {} {Who you?}
+{5020} {} {That it for a place?}
+{5030} {} {uranium is necessary To me.}
+{5040} {} {Anything. @@ it is fine, unimportant. While.}
+{5050} {} {I search for work. There are ideas, than at you here it is possible to be engaged?}
+{6000} {} {Listen, the child, is a pity to me that you do not have brains, but here to you not a place. Run from here. @@ to You here not a place. It is dangerous. Run from here.}
+{6010} {} {[It is ready]}
+{7000} {} {I the chief of cleaning factory. That it is necessary for you?}
+{7010} {} {That it for a place?}
+{7020} {} {uranium is necessary To me.}
+{7030} {} {Anything.}
+{8000} {} {It is cleaning factory Broken Hills. Here we clear the ore extracted in mine. That it is necessary for you?}
+{8010} {} {uranium is necessary To me.}
+{8020} {} {Anything.}
+{9000} {} {it is good. You have nothing to do here. Please, leave us alone.}
+{9010} {} {While.}
+{10000} {} {Nuuu... All right, money is necessary to a city.}
+{10010} {} {Give we will look that at you is.}
+{10020} {} {trade Will suffice for today.}
+{11000} {} {You look the serious person. You will not undertake to execute the commission? Not free of charge, naturally.}
+{11010} {} {you Have bothered. At everyone to me the commission is. I do not want.}
+{11020} {} {State, I will think.}
+{12000} {} {At us here concentrating factory as you see. Uranium is enriched on the sly. While all is clear?}
+{12010} {} {I See, I see, you talk sense.}
+{13000} {} {Well and so, I was reached by hearings that хабологи, this cattle, this shit dog, these штопаные condoms, these Е}
+{13010} {} {[Blinking, wait a volley of curses]}
+{14000} {} {Е these swine, it would be necessary for them to cut drinks Е So. Stop. What did I speak?}
+{14010} {} {[C] That it is necessary to them to cut with readiness drinks.}
+{15000} {} {And? No. And so. They have found a way to simplify process of enrichment of ore. And to simplify - means to reduce the price, you understand? More shortly, this technology is necessary to us. If you can get it, my gratitude will not know borders Е эээ Е in reasonable limits.
+
+}
+{15010} {} {He, I and not such доставал@sex ||| and |. I undertake, certainly.}
+{15020} {} {I do not love хабологов. Understand.}
+{16000} {} {As there our arrangement?}
+{16010} {} {In process, it is already fast Е [the Exit]}
+{16020} {} {Enjoy [Give a disk]}
+{16030} {} {I have found out about all. There very graceful technological decision, now I will tell.}
+{17000} {} {Well you the good fellow. Did not expect. Well and I will not offend. Choose: 10000 money right now, or a discount of 25 % for all uranium that you will buy from us. Well and personally from me something, anyway.
+
+}
+{17010} {} {the Discount. [An exit]}
+{17020} {} {Money. [An exit]}
+
+[engl]
+{100} {} {A ghoul.}
+{200} {} {You see a repulsive mutated creature with spotted skin and an eerie grin.}
+{210} {} {You see a ghoul. His skin seems to tear. But it seems, that other residents accept him easily.}
+{1000} {} {Predialogue installations}
+{1010} {} {the Answer}
+{1020} {} {it is not familiar}
+{1030} {} {the Sign}
+{1040} {} {has received a quest on horns of plenty}
+{2000} {} {You have nothing to do here!}
+{2010} {} {Daa €гга! »ип ооп оп!}
+{2020} {} {Nezna.}
+{3000} {} {You have nothing to do here!}
+{3010} {} {Who you?}
+{3020} {} {That it for a place?}
+{3030} {} {uranium is necessary To me.}
+{3040} {} {Anything.}
+{4000} {} {That is necessary to you?}
+{4010} {} {Daa €гга! »ип ооп оп!}
+{4020} {} {Nezna.}
+{5000} {} {That is necessary to you?}
+{5010} {} {Who you?}
+{5020} {} {That it for a place?}
+{5030} {} {uranium is necessary To me.}
+{5040} {} {Anything.}
+{5050} {} {I search for work. There are ideas, than at you here it is possible to be engaged?}
+{6000} {} {Vremja:60000 Is not present ответа:«авершить dialogue / Close dialog}
+{6010} {} {- it is ready-}
+{7000} {} {I the chief of cleaning factory. That it is necessary for you?}
+{7010} {} {That it for a place?}
+{7020} {} {uranium is necessary To me.}
+{7030} {} {Anything.}
+{8000} {} {It is cleaning factory Broken Hills. Here we clear the ore extracted in mine. That it is necessary for you?}
+{8010} {} {uranium is necessary To me.}
+{8020} {} {Anything.}
+{9000} {} {it is good. You have nothing to do here. Please, leave us alone.}
+{9010} {} {While.}
+{10000} {} {Nonsense what. We will not give anything to you.}
+{10010} {} {Then say goodbye to life.}
+{10020} {} {it is fine. While.}
+{11000} {} {You look the serious person. You will not undertake to execute the commission? Not free of charge, naturally.
+}
+{11010} {} {you Have bothered. At everyone to me the commission is. I do not want [an exit]}
+{11020} {} {- State, I will think.}
+{12000} {} {At us here concentrating factory as you see. Uranium is enriched on the sly. While all is clear?
+
+}
+{12010} {} {I See, I see, you talk sense.}
+{13000} {} {Well and so, I was reached by hearings that хабологи, this cattle, this shit dog, these штопаные condoms, these Е
+
+}
+{13010} {} {[Blinking, wait a volley of curses]}
+{14000} {} {Е these swine, it would be necessary for them to cut drinks Е So. Stop. What did I speak?
+
+}
+{14010} {} {[C] That it is necessary to them to cut with readiness drinks.}
+{15000} {} {And? No. And so. They have found a way to simplify process of enrichment of ore. And to simplify - means to reduce the price, you understand? More shortly, this technology is necessary to us. If you can get it, my gratitude will not know borders Е эээ Е in reasonable limits.
+
+}
+{15010} {} {He, I and not got the such. I undertake, certainly.}
+{15020} {} {I do not love хабологов. Understand. [An exit]}
+{16000} {} {As there our arrangement?
+
+}
+{16010} {} {In process, it is already fast Е [the Exit]}
+{16020} {} {Enjoy [Give a disk]}
+{16030} {} {I have found out about all. There very graceful technological decision, now I will tell.}
+{17000} {} {Well you the good fellow. Did not expect. Well and I will not offend. Choose: 10000 money right now, or a discount of 25 % for all uranium that you will buy from us. Well and personally from me something, anyway.
+
+}
+{17010} {} {the Discount [the Exit]}
+{17020} {} {Money [the Exit]}

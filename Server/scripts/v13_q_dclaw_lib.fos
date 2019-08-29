@@ -1,0 +1,86 @@
+// Name:	v13_q_dclaw_lib
+// Author:	Sufir
+
+// Вспомогательная функция. Возвращает стадию квеста.
+int GetQuestStage(Critter& player)
+{
+
+	if(player.IsNotValid) return -1;
+	if(!player.IsPlayer()) return -1;
+	GameVar@ quest=GetLocalVar(LVAR_q_v13_dclaw, player.Id);
+	if(valid(quest)) {
+		return quest.GetValue();
+	}
+	return -1;
+
+}
+
+
+// Вспомогательная функция. Устанавливает стадию квеста.
+void SetGroupQuestStage(Critter& player, int[] fromStages, int toStage)
+{
+
+	Critter@[] group;
+	Critter@ leader=GetCritter(GetLeaderId(player));
+	group.insertLast(@leader);
+	leader.GetFollowGroup(FIND_ALL, group);
+	Log("Set quest");
+	for(uint i=0, iMax=group.length(); i<iMax; i++){
+		for(uint s=0, sMax=fromStages.length(); s<sMax; s++){
+			if(fromStages[s] >=0 && GetQuestStage(group[i])==fromStages[s]) {
+				SetQuestStage(group[i], toStage);
+				Log("Set quest for " + group[i].Id + " to stage " + toStage + " from " + GetQuestStage(group[i]));
+			} else if(fromStages[s]==-1) {
+				SetQuestStage(group[i], toStage);
+			}
+		}
+	}
+
+}
+
+
+// Вспомогательная функция. Устанавливает стадию квеста.
+bool SetQuestStage(Critter& player, int stage)
+{
+
+	if(!valid(player)) return false;
+	if(!player.IsPlayer()) return false;
+	GameVar@ quest=GetLocalVar(LVAR_q_v13_dclaw, player.Id);
+	if(valid(quest) && quest.GetValue() !=stage){
+		quest=stage;
+		return true;
+	}
+	return false;
+
+}
+
+
+// Вспомогательная функция. Возвращает лидера группы в которой состоит игрок.
+uint GetLeaderId(Critter& player)
+{
+
+	Critter@ leader;
+	if(valid(player.GetFollowLeader())){
+		@leader=player.GetFollowLeader();
+	} else {
+		@leader=player;
+	}
+	if(valid(leader)){
+		return(leader.Id);
+	} else {
+		return(0);
+	}
+
+}
+
+
+/*
+q_v13_dclaw
+Квест "Добыть самку", в Убежище 13.
+0 - квест не взят
+1 - квест взят
+2 - квест взят, самка поймана
+3 - квест взят, ошейник потерян
+4 - квест выполнен
+5 - квест провален
+*/

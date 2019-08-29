@@ -1,0 +1,183 @@
+[comment]
+Ваши комментарии / Your comments.
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 NOT_ANSWER_CLOSE_DIALOG 0#
+10 1010d*_var p ncr_is_curfew_active = 0 #
+10 1020d*_var p ncr_is_curfew_active = 1 *_var p ncr_is_night_guard_access_granted = 1 #
+2 1030d*_var p ncr_is_curfew_active = 1 *_var p ncr_is_night_guard_access_granted = 0 @
+10 2000 NOT_ANSWER_CLOSE_DIALOG 0#
+20 2010d*_var p ncr_smit_position = 2 *_var p ncr_smit_gate_guard_access_granted = 0 *_var p ncr_player_lead_smit_2_dustybar < 4 @
+2 3000 NOT_ANSWER_CLOSE_DIALOG 0#
+3 3010d*_param p ST_INTELLECT > 3 #
+0 3020d*_param p ST_INTELLECT < 4 @
+3 4000 NOT_ANSWER_CLOSE_DIALOG 0#
+4 4010@
+4 5000 NOT_ANSWER_CLOSE_DIALOG 0#
+5 5010d*_var p scen_ranger > 0 r*_var p ncr_is_night_guard_access_granted = 1 #
+5 5020d*_var p scen_ranger = 0 *_param p SK_SPEECH > 100 r*_var p ncr_is_night_guard_access_granted = 1 #
+6 5030d*_param p SK_SPEECH < 101 *_var p scen_ranger = 0 #
+7 5040#
+14 5050@
+5 6000 NOT_ANSWER_CLOSE_DIALOG 0@
+6 7000 NOT_ANSWER_CLOSE_DIALOG 0@
+7 8000 NOT_ANSWER_CLOSE_DIALOG 0#
+8 8010#
+11 8020@
+8 9000 NOT_ANSWER_BEGIN_BATTLE 0@
+11 10000 NOT_ANSWER_CLOSE_DIALOG 0#
+12 10010d*_param p ST_CHARISMA > 6 *_item p PID_BOTTLE_CAPS > 99 r*_var p ncr_is_night_guard_access_granted = 1 *_item p PID_BOTTLE_CAPS - 100 #
+13 10020d*_param p ST_CHARISMA < 7 #
+13 10030#
+5 10040d*_item p PID_BOTTLE_CAPS > 299 r*_item p PID_BOTTLE_CAPS - 300 *_var p ncr_is_night_guard_access_granted = 1 @
+12 11000 NOT_ANSWER_CLOSE_DIALOG 0@
+13 12000 NOT_ANSWER_CLOSE_DIALOG 0@
+14 13000 NOT_ANSWER_CLOSE_DIALOG 0#
+8 13010#
+0 13020#
+8 13030d*_param p PE_JINXED_II = 0 #
+15 13040d*_param p PE_JINXED_II = 1 *_param p ST_LUCK = 1 r*_var p ncr_is_night_guard_access_granted = 1 #
+15 13050d*_var p ncr_player_has_multipass = 1 r*_var p ncr_is_night_guard_access_granted = 1 @
+15 14000 NOT_ANSWER_CLOSE_DIALOG 0@
+20 15000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 15010#
+21 15020@
+21 16000 NOT_ANSWER_CLOSE_DIALOG 0#
+22 16010@
+22 17000 NOT_ANSWER_CLOSE_DIALOG 0#
+23 17010#
+26 17020d*_var p ncr_captain_smit_access_granted = 1 r*_var p ncr_player_lead_smit_2_dustybar = 4 *_var p ncr_smit_gate_guard_access_granted = 1 *_var p q_ncr_lead_smit_2_dustybar = 2 #
+0 17030@
+23 18000 NOT_ANSWER_CLOSE_DIALOG 0#
+8 18010#
+24 18020@
+24 19000 NOT_ANSWER_CLOSE_DIALOG 0#
+25 19010#
+0 19020d*_item p PID_BOTTLE_CAPS > 99 r*_item p PID_BOTTLE_CAPS - 100 *_var p ncr_smit_gate_guard_access_granted = 1 *_var p ncr_player_lead_smit_2_dustybar = 4 *_var p q_ncr_lead_smit_2_dustybar = 2 @
+25 20000 NOT_ANSWER_CLOSE_DIALOG 0@
+26 21000 NOT_ANSWER_CLOSE_DIALOG 0&
+
+[russ]
+{100}{}{Охранник}
+{200}{}{Выглядит как официальное лицо, так как носит форму со значком НКР.}
+{210}{}{Это просто городской охранник.}
+{210}{}{Давайте посмотрим - крепкий парень, значок, военная форма - хмм, точно охранник.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{ дневное время. Обычный режим + проводы Смита}
+{1020}{}{доступ получен в ночное время. Обычный режим + проводы Смита. 
+Примечание: Чтобы поговорить насчет Смита ночью,  игрок должен заранее получить разрешение на проход в город для себя.}
+{1030}{}{доступ не получен в ночное время}
+{2000}{}{Добро пожаловать в НКР. Просто для того, чтобы вы знали, если у вас есть оружие, держите его в кобуре или еще где. Это не бандитский город, незнакомец.@@Добро пожаловать в НКР, столицу Новой Калифорнийской Республики, под управлением Президента Карлсона.Приветствую вас, незнакомец. Пришли, чтобы делать бизнес с НКР?@@НКР приветствует вас - если не будете хулиганить.@@Прочитали знак при входе? "Нет оружию", так вот это мы и говорим.@@Ворота на ночь закрываются. Если приспичило выйти, то обратитесь к охране.}
+{2010}{}{Тут такое дело...}
+{3000}{}{Стоять. Город закрыт. Проход запрещен.}
+{3010}{}{Это еще почему?}
+{3020}{}{Ох! Страшно! [Уйти]}
+{4000}{}{Комендатский час. Ждите до утра.}
+{4010}{}{И что, нет никакого способа пройти в город?}
+{5000}{}{Только рейнджеры, военные и полиция НКР могут находиться на улицах города после 21:00. Также, при наличии специального разрешения, мы вас пропустим.}
+{5010}{}{Но я рейнджер!}
+{5020}{}{Но я рейнджер!}
+{5030}{}{Но я рейнджер!}
+{5040}{}{Офицер, мне очень нужно попасть в город. Я готов заплатить!}
+{5050}{}{У меня есть персональное разрешение администрации на посещение города во время комендантского часа.}
+{6000}{}{В таком случае, вы можете пройти.}
+{7000}{}{Вы не похожи на рейнджера. Уходите. Иначе я открою огонь.}
+{8000}{}{Вы предлагаете взятку офицеру при исполнении?}
+{8010}{}{А что, я как-то непонятно выразился? [В сторону] Каких только идиотов не встретишь в НКР.}
+{8020}{}{Нет, ни в коем случае! Я просто предлагаю сократить процедуру по оформлению пропуска и заплатить по тройному тарифу.}
+{9000}{}{[Поднимает оружие] Внимание! Всем постам. У нас нарушитель. Приказываю нейтрализовать!}
+{10000}{}{[Осматривается] Окей. Гони 300 монет, и я сделаю вид, что тебя здесь не было.}
+{10010}{}{А может, сойдемся на 100 монетах? Я на мели сейчас, но в следующий раз у меня будет полная сумма.}
+{10020}{}{А может, сойдемся на 100 монетах? Я на мели сейчас, но в следующий раз у меня будет полная сумма.}
+{10030}{}{У меня нет такой уймы денег. Может, в долг пропустите?}
+{10040}{}{[Отдать 300 монет]}
+{11000}{}{С паршивой овцы... Давай деньги и проходи. }
+{12000}{}{Не пойдет. Я рискую. Ищи деньги, там посмотрим.}
+{13000}{}{Разрешите взглянуть?}
+{13010}{}{Какого черта! Прочь с дороги, идиот!}
+{13020}{}{Ох. Кажется, у меня с собой нет документов. Я вернусь. [Уйти]}
+{13030}{}{Вот мой пропуск [Показать средний палец]}
+{13040}{}{Вот мой пропуск [Показать средний палец]}
+{13050}{}{Вот мой пропуск [Показать пропуск]}
+{14000}{}{Пропуск подлинный. Проход разрешаю. Добро пожаловать в НКР, @pname@.}
+{15000}{}{Какие-то проблемы?}
+{15010}{}{Нет, офицер, никаких проблем. [Уйти]}
+{15020}{}{Офицер, этот человек со мной. [Показать на Смита]}
+{16000}{}{И что? Я тебя поздравить с этим должен?}
+{16010}{}{Прошу вас, разрешите Смиту пройти в центр города. Я за него ручаюсь.}
+{17000}{}{Исключено. правила общие для всех. Оформит пропуск - пройдет в город.}
+{17010}{}{Офицер, я ценю ваше время, и для его экономии предлагаю заплатить пошлину Смита прямо здесь, на месте.}
+{17020}{}{Офицер, я был@sex@|||а| у капитана таможни. Получено разрешение на проход в город.}
+{17030}{}{Мы так и сделаем. [Уйти]}
+{18000}{}{Ты чего несешь? Это взятка?}
+{18010}{}{Конечно, это взятка, придурок!}
+{18020}{}{Это всего лишь средство для решения проблемы. Я обещаю не спускать глаз с моего приятеля. }
+{19000}{}{Договорились, ответственность за его действия будешь нести ты. 100 монет и проходите.}
+{19010}{}{У меня нет таких денег.}
+{19020}{}{Вот, вы нас очень выручили, офицер. [Отдать деньги] Смит, следуйте за мной.}
+{20000}{}{Тогда обращайтесь в таможню и оформляйте пропуск. }
+{21000}{}{Да, мне уже сообщили. Проходите.}
+
+[engl]
+{100}{}{Guard.}
+{200}{}{He looks like official, ' cuz wearing uniform with NCR bage.}
+{210}{}{It's just a city guard.}
+{210}{}{Let's see - he's a hearty, has a bage, wearing military uniform - hmmph, a guard, exactly.}
+{1000}{}{Predialogue installations}
+{1010}{}{}
+{1020}{}{access is received at night}
+{1030}{}{access is not received at night}
+{2000}{}{Welcome to NKR. Simply that you knew, if you have a weapon, hold it in a holster or still where. It not a gangster city, the stranger. @@ welcome to NKR, capital of New Californian Republic, under control of President Tandi. I welcome you, the stranger. Have come to do business with NKR? @@ NKR welcomes you - if will not be huliganit. @@ Have read a sign at an input? "Is not present to the weapon", and so we and tell it. @@ gate for the night are closed. If was impatient to leave, address to protection.}
+{2010}{}{Here such business...}
+{3000}{}{to Stand. The city is closed. Pass is forbidden.}
+{3010}{}{It still why?}
+{3020}{}{Oh! Terribly! [To leave]}
+{4000}{}{Kommendatsky hour. Wait till the morning.}
+{4010}{}{Also what, there is no way to pass in a city?}
+{5000}{}{Only rangers, military men and police NKR can be on city streets after 21:00. Or, in the presence of the special permission, we will pass you.}
+{5010}{}{But I the ranger!}
+{5020}{}{But I the ranger!}
+{5030}{}{But I the ranger!}
+{5040}{}{the Officer, I need to get to a city. I am ready to pay!}
+{5050}{}{I have a personal permission of administration to visiting of a city during a curfew.}
+{6000}{}{In that case, you can pass.}
+{7000}{}{you are not similar to the ranger. Leave. Otherwise I will open fire.}
+{8000}{}{you offer a bribe to the officer at execution?}
+{8010}{}{And what, I somehow was not clearly expressed? [Aside] What only idiots you will not meet in NKR.}
+{8020}{}{No, in no event! I simply suggest to reduce procedure on registration of the admission and to pay under the threefold tariff.}
+{9000}{}{[takes up the arms] Attention! To all posts. At us the infringer. I order to neutralise!}
+{10000}{}{[Okej Looks round]. Drive 300 coins, and I will pretend that you here were not.}
+{10010}{}{And can, we will converge on 100 coins? I aground now, but next time at me will be the full sum.}
+{10020}{}{And can, we will converge on 100 coins? I aground now, but next time at me will be the full sum.}
+{10030}{}{I do not have such a great lot of money. Can on credit pass?}
+{10040}{}{[to Give 300 coins]}
+{11000}{}{From a nasty sheep... Give money and pass.}
+{12000}{}{will not go. I risk. Search for money, there we will look.}
+{13000}{}{Allow to look?}
+{13010}{}{What the hell! Make way, the idiot!}
+{13020}{}{Oh. It seems, I with themselves do not have documents. I will return. [To leave]}
+{13030}{}{Here my admission [to Show a middle finger]}
+{13040}{}{Here my admission [to Show a middle finger]}
+{13050}{}{Here my admission [to Show the admission]}
+{14000}{}{the Admission original. Pass I resolve. Welcome to NKR, @pname.}
+{15000}{}{Any problems?}
+{15010}{}{No, the officer, any problems. [To leave]}
+{15020}{}{the Officer, this person with me. [To show on Smith]}
+{16000}{}{Also what? I to congratulate you on it should?}
+{16010}{}{I Ask you, allow to pass to Smith in city centre. I warrant for it.}
+{17000}{}{It is excluded. Rules the general for all. Will issue the admission - will pass in a city.}
+{17010}{}{the Officer, I appreciate your time, and for its economy I suggest to pay Smith's duty directly here, on a place.}
+{17020}{}{the Officer, I был@sex ||| and | at the captain of customs. The permit to pass to a city is obtained.}
+{17030}{}{We and will make. [To leave]}
+{18000}{}{You of that bear? It is a bribe?}
+{18010}{}{Certainly, it is a bribe, the moron!}
+{18020}{}{It only means for a solution of a problem. I promise to keep the eyes glued from my friend.}
+{19000}{}{Have agreed, responsibility for its actions will be born by you. 100 coins also pass.}
+{19010}{}{I do not have such money.}
+{19020}{}{Here, you have very much gained us, the officer. [To give money] Smith, follow me.}
+{20000}{}{Then address in customs and make out the admission.}
+{21000}{}{Yes, to me have already informed. Pass.}

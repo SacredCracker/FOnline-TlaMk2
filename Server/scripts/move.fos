@@ -1,0 +1,297 @@
+// Cracker 
+#include "_macros.fos"
+
+import bool GetEntireFreeHex(Map& map, int number, uint16& hx, uint16& hy) from "entire";
+
+#define ENTIRE_NUMBER_START (0) // Первый энтери будет это значение + ST_NPC_ROLE. 
+#define ENTIRE_NUMBER_END   (10)	//Последний энтери будет это значение + ST_NPC_ROLE
+
+#define MIN_RANDOM 		(5)  // Лучше не трогать. Не делать больше пяти(5)!
+#define MAX_RANDOM		(5) // Менять чтобы изменять шанс того что нпц пойдет к следующей точки (чем выше, тем ниже шанс) Не делать меньше пяти(5)!
+
+int MIN_RANDOM_DIST=(0); // Радиус гексов 
+int MAX_RANDOM_DIST=(0); // от энтери
+
+void _PatrolInit(Critter& mov, bool firstTime)
+{
+	mov.SetEvent(CRITTER_EVENT_IDLE, "_Patrol");
+}
+
+void _Patrol(Critter& cr)
+{
+	Patrol(cr,cr.StatBase[ST_NPC_PATROL_ID], MIN_RANDOM_DIST,MAX_RANDOM_DIST , ENTIRE_NUMBER_START, cr.StatBase[ST_NPC_PATROL_NUMBER], MIN_RANDOM,MAX_RANDOM, 5, false, true);
+}
+
+void Patrol(Critter& cr,uint numberPatrol, int MinRandomDist, int MaxRandomDist , uint EntireNumberStart, uint EntireNumberEnd, int MinRandom, int MaxRandom, int NecessaryRandom, bool HouseMove, bool RandomDir)
+{
+	if(cr.Skill[SK_SNEAK]>=150) cr.ModeBase[MODE_HIDE]=1;
+ uint npcRole=numberPatrol;
+ if(Random(MinRandom,MaxRandom)!=NecessaryRandom) return;
+ GameVar@ movGVq=GetLocalVar(LVAR_move_enteri,cr.Id);
+ uint movGV=movGVq.GetValue();
+ if(HouseMove)
+ {
+  movGV=Random(EntireNumberStart+npcRole,EntireNumberEnd+npcRole);
+ }
+ else { if(movGV==0) 
+ {
+ movGV=EntireNumberStart+npcRole;
+ }
+ else if(movGV!=EntireNumberEnd+npcRole)
+ {
+ movGV+=1;
+ } 
+ else 
+ {
+ movGV=EntireNumberStart+npcRole;
+ } 
+ }
+	uint LastEntiry=movGVq.GetValue(); 
+	movGVq=movGV;
+ 
+	uint16 hx=0; uint16 hy=0;	uint16 LEhx=0; uint16 LEhy=0;
+  
+	if (!GetEntireFreeHex(cr.GetMap(),movGV,hx,hy))
+	{
+		GetEntireFreeHex(cr.GetMap(),npcRole,hx,hy);
+		movGVq=npcRole;
+	}	
+	GetEntireFreeHex(cr.GetMap(),LastEntiry,LEhx,LEhy);
+	uint16 hX=hx+Random(MinRandomDist,MaxRandomDist);
+	uint16 hY=hy+Random(MinRandomDist,MaxRandomDist);
+    cr.SetHomePos(hX,hY,RandomDir==true?Random(0,5):GetDirection(hX,hY, LEhx,LEhy));
+}
+
+/*
+void t_Test(Critter& cr, Scenery& trigger, bool entered, uint8 dir, int p0)
+{
+	
+	Log(""+p0);
+}
+
+void Test(Map& map)
+{
+	Scenery@[] sceneries;
+	map.GetSceneries(3852, sceneries);
+	for(uint i=0;i<sceneries.length();i++)
+	{
+		//Log(""+sceneries[i].Param0);
+	}
+}
+
+void Test(Critter& cr, int p0, int, int)
+{
+	uint16 hx=0; uint16 hy=0;
+	GetEntireFreeHex(cr.GetMap(), p0, hx, hy);
+	Log("X "+hx+" Y "+hy);
+}
+
+// ~run move Test 5012 0 0 
+
+
+bool GetPatrolCoords(Map& map,Scenery@[] patrol, uint16& hexX, uint16& hexY)
+{
+	//Scenery@[] sceneries;
+	//map.GetSceneries(7000, sceneries);
+	//Entire@ ent=sceneries[0];
+	//ent.HexX
+	
+	return false;
+}
+
+/*
+bool GetPatrolFreeHex(Map& map, int number, uint16& hx, uint16& hy)
+{
+	uint count=0; //map.CountEntire(number);
+	Scenery@[] sceneries;
+	map.GetSceneries(7000, sceneries);
+	count=sceneries.length();
+	// Fisrt check direct coords
+	for(uint i=0;i<count;i++)
+	{
+		if(map.GetEntireCoords(number,i,hx,hy) && map.IsHexPassed(hx,hy)) return true;
+	}
+
+	if(hx==0 || hy==0 || hx>=map.GetWidth()-1 || hy>=map.GetHeight()-1) return false; // Check borders
+
+	// Second check coords with offsets
+	for(uint i=0;i<count;i++)
+	{
+		if(map.GetEntireCoords(number,i,hx,hy))
+		{
+			for(int x=-1;x<=1;x++)
+			{
+				for(int y=-1;y<=1;y++)
+				{
+					if(x==0 && y==0) continue; // Skip direct position
+					if ((hx%2)==1 && ((x==-1 && y==1) || (x==1 && y==1))) continue;
+					if ((hx%2)==0 && ((x==-1 && y==-1) || (x==1 && y==-1))) continue;
+
+					if(map.IsHexPassed(hx+x,hy+y))
+					{
+						hx+=x;
+						hy+=y;
+						return true;
+					}
+				}
+			}
+		}
+	}
+}
+*/
+// Autor Tab10id
+// Tab10id begin_ 
+
+#define WALK_PERIOD (REAL_SECOND(Random(8,18)))
+#define MAXDIST (8) // Максимальное расстояние от HomePos
+#define MAXDISTEXT (3) // Максимальное расстояние, на которое может отойти криттер за один раз
+#define MAXTRY (10) // Количество попыток найти новую точку назначения
+import bool AddWalkPlane(Critter& npc, uint priority, uint16 hexX, uint16 hexY, uint8 dir, bool run, uint cut) from "npc_planes";
+
+void _CritInit(Critter& crit, bool firstTime)
+{
+	uint8 run=0;
+	InitWalkRandom(crit, run);
+	crit.ModeBase[MODE_NO_HOME]=1; // Отменяем возвращение игрока на HomePos
+	crit.SetEvent(CRITTER_EVENT_TALK,"_NpcTalk"); // Обрабатываем попытку игрока заговорить с нпц
+	crit.SetEvent(CRITTER_EVENT_PLANE_END,"_PlaneEnd"); // Создаем новое событие для передвижения нпц (нпц дошел до точки назначения)
+	crit.SetEvent(CRITTER_EVENT_RESPAWN,"_InitWalk"); // Возобновляем движение после респа
+	crit.SetEvent(CRITTER_EVENT_DEAD,"_OnDead"); // Отменяем попытку передвижения, в случае смерти нпц
+}
+
+void InitWalkRandom(Critter& crit, uint8 run)
+{
+	if(crit.IsDead())
+	{
+		return;
+	}
+	EraseTE(crit);
+	crit.AddTimeEvent("cte_WalkRandom",WALK_PERIOD,CTE_WALK_RANDOM,run);
+}
+
+uint cte_WalkRandom(Critter& crit, int identifier, uint& run)
+{
+	int incr=0; // Для избегания зацикливания в случае заблокированного пути
+	if (!valid(crit))
+	{
+		return 0;
+	}
+	if(crit.IsDead())
+	{
+		return 0;
+	}
+	Map@ map=crit.GetMap();
+	if (!valid(map))
+	{
+		return 0;
+	}
+	bool brun=false;
+	uint16 x, y, homeX=0, homeY=0;
+	uint homeM=0;
+	uint8 homeD=0;
+	uint8 dir;
+	//uint&inout, uint16&inout, uint16&inout, uint8&inout
+	crit.GetHomePos(homeM,homeX,homeY,homeD);
+	if(run==1)
+	{
+		brun=true;
+	}
+	if ((int(crit.HexX)<int(homeX)-MAXDIST) or (int(crit.HexX)>int(homeX)+MAXDIST) or (int(crit.HexY)<int(homeY)-MAXDIST) or (int(crit.HexY)>int(homeY)+MAXDIST))
+	{
+		crit.ModeBase[MODE_NO_HOME]=0; // Заставляем нпц вернуться на HomePos, если он каким-то образом отошел от нее далеко (например, в результате атаки)
+	}
+	else
+	{
+		do
+		{
+			do
+			{
+				x=crit.HexX+Random(-MAXDISTEXT,MAXDISTEXT);
+			}
+			while((x>homeX+MAXDIST) or (x<homeX-MAXDIST));
+			do
+			{
+				y=crit.HexY+Random(-MAXDISTEXT,MAXDISTEXT);
+			}
+			while((y>homeY+MAXDIST) or (y<homeY-MAXDIST));
+			incr++;
+		}
+		while(((map.GetPathLength(crit.HexX,crit.HexY,x,y,0)==0) or (map.GetPathLength(crit.HexX,crit.HexY,x,y,0)>MAXDISTEXT)) and (incr<MAXTRY)); // Пытаемся найти новую точку назначения
+		if(incr<MAXTRY)
+		{
+			dir=GetDirection(crit.HexX,crit.HexY,x,y);
+			AddWalkPlane(crit, AI_PLANE_WALK_PRIORITY, x, y, dir, brun, 0);
+		}
+		else
+		{
+			StartWalkRandom(crit);
+		}
+	}
+	return 0;
+}
+
+bool _NpcTalk(Critter& crit, Critter& player, bool attach, uint talkCount)
+{
+	if(attach)
+	{
+		CancelWalkRandom(crit); // Отменяем все планы на передвижения
+		crit.SetDir(GetDirection(crit.HexX,crit.HexY,player.HexX,player.HexY)); // Поворачиваемся лицом к игроку
+	}
+	else
+	{
+		StartWalkRandom(crit); // Возобновляем движение
+	}
+	return true;
+}
+
+void StartWalkRandom(Critter& crit)
+{
+	uint8 run=0;
+/*	if(crit.ModeBase[MODE_RUN_RANDOM]==1)
+	{
+		run=1;
+	}*/
+	if(crit.Mode[MODE_NO_HOME]==0)
+	{
+		crit.ModeBase[MODE_NO_HOME]=1;
+	}
+	InitWalkRandom(crit, run);
+}
+
+void CancelWalkRandom(Critter& crit)
+{
+	_NpcEraseAllPlanesWalk(crit);
+	EraseTE(crit);
+}
+
+int _PlaneEnd(Critter& crit, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem)
+{
+	StartWalkRandom(crit); // Возобновляем движение
+	return PLANE_RUN_GLOBAL;
+}
+
+void _InitWalk(Critter& crit)
+{
+	uint8 run=0;
+	/*if(crit.ModeBase[MODE_RUN_RANDOM]==1)
+	{
+		run=1;
+	}*/
+	InitWalkRandom(crit, run); // Возобновляем движение
+}
+
+void _OnDead(Critter& crit, Critter@ killer)
+{
+	EraseTE(crit);
+}
+
+void EraseTE(Critter& crit)
+{
+	uint[] rates,durations,indexes;
+	uint count=crit.GetTimeEvents(CTE_WALK_RANDOM,indexes,durations, rates);
+	if(count!=0)
+	{
+		crit.EraseTimeEvents(CTE_WALK_RANDOM);
+	}
+}
+// _end Tab10id 

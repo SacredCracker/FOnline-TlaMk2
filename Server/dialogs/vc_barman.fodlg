@@ -1,0 +1,96 @@
+[comment]
+
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+3 1010 D _param p ST_INTELLECT < 4 #
+7 1020 D _param p ST_INTELLECT > 3 D _var p q_vc_barmen_delivery = 1 D _var p click_counter < 5 #
+10 1030 D _param p ST_INTELLECT > 3 D _var p click_counter > 4 #
+2 1040 D _param p ST_INTELLECT > 3 D _var p q_vc_barmen_delivery ! 1 D _var p click_counter < 5 @
+2 2000 None 0 #
+4 2010 D _script ncr_ratch@d_RatchTimeOutCheck 1 8806 D _var p click_counter < 5 #
+0 2020 @
+3 3000 None 0 @
+4 4000 None 0 #
+5 4010 #
+0 4020 @
+5 5000 None 0 #
+6 5010 @
+6 6000 None 0 #
+0 6010 D _script ncr_ratch@d_RatchTimeOutCheck 1 8806 R _var p q_vc_barmen_delivery = 1 R _script ncr_ratch@r_RatchTimeOutSet 2 8806 2880 #
+0 6020 @
+7 7000 None 0 #
+8 7010 D _item p PID_MEAT_ON_A_STICK > 4 D _item p PID_IGUANA_ON_A_STICK > 4 D _item p PID_MEAT_JERKY > 4 D _var p click_counter < 5 #
+0 7020 #
+9 7030 D _item p PID_MEAT_ON_A_STICK > 4 D _item p PID_IGUANA_ON_A_STICK > 4 D _item p PID_MEAT_JERKY > 4 D _var p click_counter > 4 @
+8 8000 None 0 #
+0 8010 D _item p PID_MEAT_ON_A_STICK > 4 D _item p PID_IGUANA_ON_A_STICK > 4 D _item p PID_MEAT_JERKY > 4 D _var p q_vc_barmen_delivery = 1 R _param p ST_EXPERIENCE + 1500 R _param p REPUTATION_VAULT_CITY + 1 R _item p PID_BOTTLE_CAPS + 450 R _item p PID_IGUANA_ON_A_STICK - 5 R _item p PID_MEAT_JERKY - 5 R _item p PID_MEAT_ON_A_STICK - 5 R _var p click_counter + 1 R _var p q_vc_barmen_delivery = 2 @
+9 9000 None 0 #
+0 9010 D _item p PID_MEAT_ON_A_STICK > 4 D _item p PID_IGUANA_ON_A_STICK > 4 D _item p PID_MEAT_JERKY > 4 D _var p q_vc_barmen_delivery = 1 R _item p PID_MEAT_ON_A_STICK - 5 R _item p PID_MEAT_JERKY - 5 R _item p PID_IGUANA_ON_A_STICK - 5 R _param p REPUTATION_VAULT_CITY + 1 R _item p PID_BOTTLE_CAPS + 450 R _param p ST_EXPERIENCE + 1500 R _var p click_counter + 1 R _var p q_vc_barmen_delivery = 2 @
+10 10000 None 0 &
+
+[russ]
+{100}{Бармен}
+{200}{}{Вы видите бармена.}
+{210}{}{Вы видите высокого человека в элегантном костюме. Он смотрит прямо перед собой и, кажется, не обращает внимания на посетителей.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{тупица }
+{1020}{}{взялись за доставку}
+{1030}{}{квест сдан}
+{1040}{}{обычный интеллект. Квест не взят}
+{2000}{}{Что-то хотели?}
+{2010}{}{Может, тебе какая-нибудь помощь нужна?}
+{2020}{}{Нет. Не сегодня.}
+{3000}{}{Удались, тупоголовый@ Господи, кого только пускают в город@Лично для вас ничего нет}
+{4000}{}{Нужна конечно. Если ты не против поработать.}
+{4010}{}{Не против. Излагай.}
+{4020}{}{Что-то часто работать приходится. Я пойду лучше.}
+{5000}{}{Видишь ли, многим гражданам уже опротивела синтезированная пища. Они готовы отдать неплохие деньги за натуральные продукты. Если бы ты @sex@|взялся||взялась| за поставки, я был бы очень благодарен.}
+{5010}{}{Что именно нужно?}
+{6000}{}{Ну скажем так: пять шашлыков, пять игуан на палочке и пять порций вяленого мяса. Плачу четыре с половиной  сотни. И моя благодарность.}
+{6010}{}{Договорились[выход]}
+{6020}{}{Что-то не хочется.[выход]}
+{7000}{}{Как мой заказ? @sex@|Принес||Принесла|?}
+{7010}{}{Ага. Забирай.}
+{7020}{}{Ещё нет[выход]}
+{7030}{}{Ага. Забирай.}
+{8000}{}{Зашибись. Так, это тебе. Кстати, приноси ещё  то же самое через пару дней. Я возьму. }
+{8010}{}{Хорошо[выход]}
+{9000}{}{Так, это тебе. Спасибо, но пока больше ничего приносить не нужно. }
+{9010}{}{Как скажешь.[выход]}
+{10000}{}{Как успехи?@@Привет @pname@!@@Кого я вижу!@@Рад видеть тебя!}
+
+[engl]
+{100}{the Barman}
+{200}{}{you see the barman.}
+{210}{}{you see the tall person in an elegant suit. He looks directly before itself(himself) and, apparently, does not pay attention to visitors.}
+{1000}{}{Predialogue installations}
+{1010}{}{a numskull}
+{1020}{}{undertook delivery}
+{1030}{}{the quest is handed over}
+{1040}{}{usual intelligence. The quest is not taken}
+{2000}{}{Something wanted?}
+{2010}{}{Perhaps any help is necessary to you?}
+{2020}{}{No. Not today.}
+{3000}{}{Have gone right, tupogolovyj My God whom only start up in город@Лично for you anything is not present}
+{4000}{}{It is necessary certainly. If you not against to work.}
+{4010}{}{Not against. State.}
+{4020}{}{Something often it is necessary to work. I will go better.}
+{5000}{}{You see to many citizens the synthesised food has already become loathsome. They are ready to give quite good money for natural products. If you @sex | undertook || undertook | deliveries, I would be very grateful.}
+{5010}{}{What exactly is necessary?}
+{6000}{}{Well we will tell so: five shish kebabs, five iguan on a stick and five portions vjalenogo meat. To crying four and a half hundred. And my gratitude.}
+{6010}{}{Have agreed [an exit]}
+{6020}{}{Something would not be desirable. [An exit]}
+{7000}{}{As my order? @sex | has brought || Has brought |?}
+{7010}{}{Aha. Take away.}
+{7020}{}{Still there is no [an exit]}
+{7030}{}{Aha. Take away.}
+{8000}{}{Hurt. So, it to you. By the way, bring still the same in couple of days. I will take.}
+{8010}{}{it is good [an exit]}
+{9000}{}{So, it to you. Thanks but while more than anything it is not necessary to bring.}
+{9010}{}{As you will tell. [An exit]}
+{10000}{}{As successes? @@ greetings @pname! @@ Whom I see! @@ is glad to see you!}

@@ -1,0 +1,90 @@
+#include "_macros.fos"
+#include "hell_h.fos"
+#include "npc_planes.fos"
+
+#define ERROR_DIALOG_NODE   (100)
+#define STR_MINE_URANIUM	(3031)
+#define STR_MINE_STONE		(3032)
+
+import bool TransitToMap(Critter& cr, int locPid, int mapIndex, int entranceNum) from "stdlib";
+
+/** Инициализирует выходную дверь. */
+void init_out_door(Item& item, bool firstTime)
+{
+	item.SetEvent(ITEM_EVENT_SKILL, "_OutDoorUseSkill");
+}
+
+/** Обрабатывает попытки использования (открытия) выходной двери. */
+bool _OutDoorUseSkill(Item& door, Critter& player, int skill)
+{
+	// обрабатываем попытку открытия или попытку взлома
+	if (skill < 0 || skill == SK_LOCKPICK)
+	{
+		// запускаем диалог с охранником
+		return RunDialog(player, DIALOG_hell_mines_out_door_guard, door.HexX, door.HexY, false);
+	}
+
+	return true;
+}
+
+void init_out_door2(Item& item, bool firstTime)
+{
+	item.SetEvent(ITEM_EVENT_SKILL, "_OutDoorUseSkill2");
+}
+
+bool _OutDoorUseSkill2(Item& door, Critter& player, int skill)
+{
+	if (skill < 0 || skill == SK_LOCKPICK)
+	{
+		return RunDialog(player, DIALOG_hell_mines_out_door_guard2, door.HexX, door.HexY, false);
+	}
+
+	return true;
+}
+
+import void _DeletePlayerItem(Critter & cr, uint itemPid, bool deleteAll) from "hell_pipboys";
+
+/** Отправляет игрока из шахт на поверность */
+void r_LeaveMines(Critter& player, Critter@ guard)
+{
+	// перемещаем игрока на поверхность
+	bool result = TransitToMap(
+		player, LOCATION_ReplicationHell, MAP_INDEX_hell_out, ENTRANCE_mines_to_out);
+
+	// игрок не телепортировался
+	if (!result)
+	{
+		// __ForceDialog = ERROR_DIALOG_NODE;
+		return;
+	}
+	_DeletePlayerItem(player, PID_SLEDGEHAMMER, false);
+	_DeletePlayerItem(player, PID_URANIUM_ORE, false);
+}
+
+void r_LeaveMines2(Critter& player, Critter@ guard)
+{
+	bool result = TransitToMap(
+		player, LOCATION_ReplicationHell, MAP_INDEX_hell_corridor, ENTRANCE_mines_to_corridor);
+	if (!result)
+	{
+	    //__ForceDialog = ERROR_DIALOG_NODE;
+		return;
+	}
+	_DeletePlayerItem(player, PID_SLEDGEHAMMER, false);
+	_DeletePlayerItem(player, PID_URANIUM_ORE, false);
+}
+
+//Сопротивление радиации для охранников
+
+void _GuardInit(Critter& npc, bool firstTime)
+{
+	npc.SetEvent(CRITTER_EVENT_SMTH_ATTACK,"_GuardSmthAttack");
+	npc.StatBase[ST_RADIATION_RESISTANCE] = 500;
+	npc.StatBase[ST_PERCEPTION] = 10;
+	npc.SkillBase[SK_SMALL_GUNS] = 190;
+}
+
+void _GuardSmthAttack(Critter& npc, Critter& attacker, Critter& target)
+{
+	if(attacker.IsPlayer()) AddAttackPlane(npc,0,attacker);
+}

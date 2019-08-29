@@ -1,0 +1,418 @@
+#include "_macros.fos"
+
+import bool GetEntireFreeHex(Map& map, int number, uint16& hx, uint16& hy) from "entire";
+
+GrupPatrol@[] AllPatrols;
+
+GrupPatrol@ GetPatrol(uint id)
+{
+	return AllPatrols[id-1];
+}
+
+GrupPatrol@ GetPatrolIndex(uint index)
+{
+	for(uint i=0, iMax=AllPatrols.length(); i<iMax; i++)
+	{
+		if(AllPatrols[i].Id==index) return AllPatrols[i]; 
+	}
+	return null;
+}
+
+class Patroller
+{
+	Patroller(Critter@ cr, uint grupIndex, uint ind)
+	{
+		index=ind;
+		GrupIndex=grupIndex;
+		@Patrol=cr;
+		cr.PatrolBase[PL_PATRULLER_ID]=index;
+		FirstTime=true;
+		Talke=false;
+		GrupPatrol@ grup=GetPatrolIndex(grupIndex);
+		if(valid(grup))
+		{
+			if(grup.Patrols.length()>0)
+			{
+				DifferentX=grup.GetLider().Patrol.HexX-Patrol.HexX;
+				DifferentY=grup.GetLider().Patrol.HexY-Patrol.HexY;;
+			}
+			else
+			{
+				DifferentX=0;
+				DifferentY=0;
+			}
+		}
+		else
+		{
+			DifferentX=0;
+			DifferentY=0;
+		}
+	}
+	
+	void Init()
+	{
+		if(FirstTime)
+		{
+			FirstTime=false;
+		}
+		else
+		{
+		
+		}
+		
+		GrupPatrol@ gp=GetPatrolIndex(GrupIndex);
+		if (!valid(gp)) return;
+		uint16 hexX=0; uint16 hexY=0;
+		GetEntireFreeHex(gp.GetMap(),gp.CurrentPoint,hexX,hexY);
+		Patrol.AddPlane(gp.MovePlan(hexX+DifferentX,hexY+DifferentY,Random(0,5),false,0));
+	}
+	
+	int8 DifferentX;
+	int8 DifferentY;
+	bool FirstTime;
+	uint index;
+	uint GrupIndex;
+	bool Talke;
+	Critter@ Patrol;
+	
+}
+/*
+class Hex
+{
+	uint16 X;
+	uint16 Y;
+	Map@ map;
+}
+*/
+class GrupPatrol
+{
+	GrupPatrol(Critter@ cr)
+	{
+		Id=cr.Patrol[PL_GRUP_NUMBER];
+		Patroller Lider(cr, Id, Patrols.length());
+		Patrols.insertLast(@Lider);
+		FirstTime=true;
+		CountPoint=cr.Patrol[PL_COUNT_POINT];
+		StartPoint=cr.Patrol[PL_START_POINT];
+		CurrentPoint=0;
+		EndPoint=StartPoint+CountPoint;
+		cr.PatrolBase[PL_GRUP_NUMBER]=Id;
+		IdentifierExtPlaneGrup=10;
+		IdentifierPlaneGrup=5000+Id;
+		AttackCritterId=0;
+	}
+	
+	#define ACTUAL_IdentifierExtPlaneGrup_move	(IdentifierExtPlaneGrup+CurrentPoint)
+	#define ACTUAL_IdentifierExtPlaneGrup_wait	(IdentifierExtPlaneGrup+CurrentPoint+100)
+	//#define ACTUAL_IdentifierExtPlaneGrup_attack	(IdentifierExtPlaneGrup+AI_PLANE_ATTACK+AttackCritterId)
+	
+	Patroller@ AddPatroler(Critter& cr)
+	{
+		Patroller patrol(cr, Id, Patrols.length()+1);
+		cr.PatrolBase[PL_GRUP_NUMBER]=Id;
+		Patrols.insertLast(@patrol);
+		return patrol;
+	}
+	
+	void PatrolInit()
+	{
+		if(FirstTime)
+		{
+			MoveToNextEntireGrup();
+			FirstTime=false;
+		}
+		else
+		{
+		
+		}
+	}
+	
+	int EndPlaneGrup(Patroller@ patr, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem)
+	{
+		//if(plane.Identifier==IdentifierPlaneGrup)
+		//{
+			if(NoPlan()) {plane.SetChild(WaitPlane(90));return 2;}
+			/*{
+				const uint ext_move=ACTUAL_IdentifierExtPlaneGrup_move;
+				const uint ext_wait=ACTUAL_IdentifierExtPlaneGrup_wait; 
+				const uint ext=plane.IdentifierExt;
+				if(ext==ext_move)
+				{
+					plane.SetChild(WaitPlane(90));
+				}
+				else if(ext==ext_wait)
+				{
+
+				}
+			} */
+			//return 2;
+		//}
+		return 0;
+	}
+	
+	bool NoPlan()
+	{
+		for(uint i=0, iMax=Patrols.length(); i<iMax;i++)
+		{
+			if(valid(Patrols[i]) && valid(Patrols[i].Patrol))
+			{
+				if(Patrols[i].Patrol.IsLife() && !Patrols[i].Patrol.IsNoPlanes()) return false;
+			}
+		}
+		return true;
+	}
+	
+	int BeginPlaneGrup(Patroller@ patr, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem)
+	{
+		if(plane.Identifier==IdentifierPlaneGrup)
+		{
+			const uint ext_move=ACTUAL_IdentifierExtPlaneGrup_move;
+			const uint ext_wait=ACTUAL_IdentifierExtPlaneGrup_wait; 
+			const uint ext=plane.IdentifierExt;
+			if(ext==ext_move)
+			{
+			}
+			else if(ext==ext_wait)
+			{
+			}
+		}
+		return 0;
+	}
+	
+	bool Attack(Patroller@ patr, Critter@ target)
+	{
+		return false;
+	}
+	
+	bool Attacked(Patroller@ patr, Critter& attacker)
+	{
+		return false;
+	}
+	
+	void Idle(Patroller@ patr)
+	{
+	
+	}
+	
+	void Dead(Patroller@ patr, Critter@ killer)
+	{
+		
+	}
+	
+	void Respawn(Patroller@ patr)
+	{
+	
+	}
+	
+	bool Talke()
+	{
+		for(uint i=0, iMax=Patrols.length(); i<iMax; i++)
+		{
+			if(Patrols[i].Talke) return true;
+		}
+		return false;
+	}
+	
+	void MoveToNextEntireGrup()
+	{
+		uint EntNum=CurrentPoint;
+		if(EntNum==0 || EntNum==StartPoint+CountPoint) 
+		{
+			EntNum=StartPoint;
+		}
+		else
+		{
+			EntNum+=1;
+		} 
+
+		uint16 hexX=0; uint16 hexY=0;
+		GetEntireFreeHex(GetMap(),EntNum,hexX,hexY);
+		CurrentPoint=EntNum;
+		GrupMove(hexX,hexY,Random(0,5),false,0);
+	}
+	
+	
+	
+	bool GrupMove(uint16 hexX,uint16 hexY, uint8 dir, bool run, uint cut)
+	{
+		if(Talke()) return false;
+		for(uint i=0, iMax=Patrols.length(); i<iMax; i++)
+		{
+			Critter@ npc=Patrols[i].Patrol;
+			if(npc.Skill[SK_SNEAK]>=150) npc.ModeBase[MODE_HIDE]=1;
+			npc.AddPlane(MovePlan(hexX+Patrols[i].DifferentX,hexY+Patrols[i].DifferentY,dir,run,cut));
+		}
+		return true;
+	}
+	
+	bool GrupWait(uint second)
+	{
+		for(uint i=0, iMax=Patrols.length(); i<iMax;i++)
+		{
+			Critter@ npc=Patrols[i].Patrol;
+			if (!valid(npc)) return false;
+			npc.AddPlane(WaitPlane(second));
+		}
+		return true;
+	}
+	
+	NpcPlane@ WaitPlane(uint second)
+	{
+		NpcPlane@ plane=CreatePlane();
+		plane.Type=AI_PLANE_MISC;
+		plane.Identifier=IdentifierPlaneGrup;
+		plane.IdentifierExt=ACTUAL_IdentifierExtPlaneGrup_wait;
+		plane.Priority=AI_PLANE_MISC_PRIORITY;
+		plane.Misc_WaitSecond=__FullSecond+(second);
+		plane.Misc_SetScript("plane_GrupPatrolMisc");
+		return plane;
+	}
+	
+	NpcPlane@ MovePlan(uint16 hexX,uint16 hexY, uint8 dir, bool run, uint cut)
+	{
+		NpcPlane@ plane=CreatePlane();
+		plane.Type=AI_PLANE_WALK;
+		plane.Identifier=IdentifierPlaneGrup;
+		plane.IdentifierExt=ACTUAL_IdentifierExtPlaneGrup_move;
+		plane.Priority=AI_PLANE_WALK_PRIORITY;
+		plane.Walk_HexX=hexX;
+		plane.Walk_HexY=hexY;
+		plane.Walk_Dir=dir;
+		plane.Run=run;
+		plane.Walk_Cut=cut;
+		return plane;
+	}
+	
+	Patroller@ GetLider()
+	{
+		return Patrols[0];
+	}
+	
+	Patroller@ GetPatroller(Critter@ ptr)
+	{
+		for(uint i=0, iMax=Patrols.length(); i<iMax; i++)
+		{
+			if(Patrols[i].Patrol.Id==ptr.Id) return Patrols[i];
+		}
+		return null;
+	}
+	
+	Map@ GetMap()
+	{
+		if(Patrols.length()>0)
+		{
+			return Patrols[0].Patrol.GetMap();
+		}
+		return null;
+	}
+	
+	bool FirstTime;
+	uint Id;
+	uint CountPoint;
+	uint EndPoint;
+	uint CurrentPoint;
+	uint StartPoint;
+	int IdentifierPlaneGrup;
+	uint IdentifierExtPlaneGrup;
+	uint AttackCritterId;
+	//Hex@ CoordinatLider;
+	Patroller@[] Patrols;
+}
+
+void plane_GrupPatrolMisc(Critter& cr)
+{
+	Patroller@ patr=GetPatroller(@cr, uint(cr.Patrol[PL_GRUP_NUMBER]));
+	if(valid(patr))
+	{
+		GrupPatrol@ grup=GetPatrolIndex(cr.Patrol[PL_GRUP_NUMBER]);
+		grup.MoveToNextEntireGrup();
+	}
+}
+
+Patroller@ GetPatroller(Critter@ cr, uint GrupId)
+{
+	if(valid(cr)) 
+	{
+		uint indx=uint(cr.Patrol[PL_GRUP_NUMBER]);
+		GrupPatrol@ grup=GetPatrolIndex(indx);
+		if(valid(grup)) 
+		{
+			Patroller@ ptr=grup.GetPatroller(cr);
+			if(valid(ptr)) return ptr;
+		}
+	}
+	return null;
+}
+
+void AddPatrolerToGrup(Critter& cr)
+{
+	GrupPatrol@ grup=GetPatrolIndex(cr.Patrol[PL_GRUP_NUMBER]);
+	if(valid(grup))	
+	{
+		Patroller@ patr=grup.AddPatroler(cr);
+		_PatrollerInit(cr, false);
+		patr.Init();
+	}
+	else
+	{
+		_CreateGrupPatrol(cr,false);
+	}
+}
+
+void _CreateGrupPatrol(Critter& lider,bool ft)
+{
+	GrupPatrol@ grup=GetPatrolIndex(lider.Patrol[PL_GRUP_NUMBER]);
+	if (!valid(grup))
+	{
+		GrupPatrol NewGrup(@lider);
+		AllPatrols.insertLast(@NewGrup);
+		NewGrup.PatrolInit();
+		_PatrollerInit(lider,ft);
+	}
+}
+
+void _PatrollerInit(Critter& cr, bool ft)
+{
+	cr.ModeBase[MODE_NO_HOME]=1;
+}
+
+bool _Attack(Critter& cr, Critter& target)
+{
+	return GetPatrolIndex(cr.PatrolBase[PL_GRUP_NUMBER]).Attack(GetPatroller(cr, cr.Patrol[PL_GRUP_NUMBER]),target);
+}
+
+int _GrupPlaneEnd(Critter& npc, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem)
+{
+	return GetPatrolIndex(npc.Patrol[PL_GRUP_NUMBER]).EndPlaneGrup(GetPatroller(@npc, npc.Patrol[PL_GRUP_NUMBER]),plane,reason,someCr,someItem);
+}
+
+int _GrupPlaneBegin(Critter& cr, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem)
+{
+	Patroller@ patr=GetPatroller(@cr, uint(cr.Patrol[PL_GRUP_NUMBER]));
+	if(valid(patr))	return GetPatrolIndex(cr.Patrol[PL_GRUP_NUMBER]).BeginPlaneGrup(patr,plane,reason,someCr,someItem);
+	else return 0;
+}
+
+bool _Attacked(Critter& cr, Critter& attacker)
+{
+	return GetPatrolIndex(cr.PatrolBase[PL_GRUP_NUMBER]).Attacked(GetPatroller(cr, cr.Patrol[PL_GRUP_NUMBER]),attacker);
+}
+void _Idle(Critter& cr)
+{
+	if(valid(GetPatrolIndex(cr.PatrolBase[PL_GRUP_NUMBER])))
+	{
+		if(valid(GetPatroller(cr, cr.Patrol[PL_GRUP_NUMBER]))) GetPatrolIndex(cr.PatrolBase[PL_GRUP_NUMBER]).Idle(GetPatroller(cr, cr.Patrol[PL_GRUP_NUMBER]));
+		else Log("Не валиден патрульный");
+	}
+	else Log("Не валидна группа "+cr.PatrolBase[PL_GRUP_NUMBER]+"     "+AllPatrols.length()+"\n Доложите Крекеру!");
+}
+
+void _Dead(Critter& cr, Critter@ killer)
+{
+	GetPatrolIndex(cr.PatrolBase[PL_GRUP_NUMBER]).Dead(GetPatroller(cr, cr.Patrol[PL_GRUP_NUMBER]),killer);
+}
+
+void _Respawn(Critter& cr)
+{
+	GetPatrolIndex(cr.PatrolBase[PL_GRUP_NUMBER]).Respawn(GetPatroller(cr, cr.Patrol[PL_GRUP_NUMBER]));
+}

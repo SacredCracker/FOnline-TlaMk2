@@ -1,0 +1,377 @@
+#include "_macros.fos"
+#include "_dialogs.fos" 
+
+import void CancelMerc(Critter & merc) from "merc";
+import bool Merc2Player(Critter & player, Critter & merc) from "merc";
+import bool IsMerc(Critter & merc) from "merc";
+import bool AddAttackPlane(Critter& npc, uint priority, Critter& target) from "npc_planes";
+import bool AddMiscPlane(Critter& npc, uint priority, uint waitMinute, string@ funcName) from "npc_planes";
+/*
+rifleman17
+
+Робот, которого можно починить и управлять им с помощью голосовых команд
+Игрок должен отдавать команды, используя кнопку "Say"
+в качестве команд система воспринимает специальные слова, эти слова игрок найдет в бункере, из диалогов с компьютером, надписей на стенах 
+UNIVERSE  - пароль, только после его произнесения робот воспринимает команды - сложно
+NO ATTACK - пассивный режим для мерка - средне
+DEFEND ME - защищать игрока от аттак остальных очень сложно
+STAY HERE - оставайся на месте (отменяет режим мерка) -- просто
+FOLLOW ME - включает режим мерка  --- найти сложнее всего
+DIAG      - диагностика - просто
+IDKFA     - бесконечные патроны, невозможно найти.
+УБИТЬ ВСЕХ ЛЮДЕЙ - робот начинает шариться по миру и убивать всех // на будущее
+
+команды может отдавать любой игрок, если знает пароль
+мерка могут игроки отбирать друг от друга
+*/
+
+#define CMD_UNKNOWN                (0) // неизвестная команда
+#define CMD_TO_PASSIVE             (1) // не атаковать противника
+#define CMD_TO_DEFEND              (2) // атаковать противника при нападении на игрока
+#define CMD_STAY_HERE              (3) // оставайся на месте
+#define CMD_FOLLOW_ME              (4) // сопровождай меня
+#define CMD_DIAG                   (5) // режим диагностики
+#define CMD_IDKFA                  (6) // вкл-выкл бесконечных патронов
+#define CMD_KILLEMALL              (7) // убить всех людей
+
+#define CMDTEXT_TOPASSIVE          ("NO ATTACK")
+#define CMDTEXT_TODEFEND           ("DEFEND ME")
+#define CMDTEXT_STAYHERE           ("STAY HERE")
+#define CMDTEXT_FOLLOWME           ("FOLLOW ME")
+#define CMDTEXT_SELFDIAG           ("DIAG")
+#define CMDTEXT_IDKFA              ("IDKFA")
+#define CMDTEXT_KILLEMALL          ("УБИТЬ ВСЕХ ЛЮДЕЙ")
+
+#define FORCE_DIALOG_WRONG_PWD     (3) // неправильный пароль
+#define FORCE_DIALOG_RIGHT_PWD     (4) // правильный пароль
+#define FORCE_DIALOG_WRONG_COMMAND (5) // неправильная команда
+#define FORCE_DIALOG_ADD_MERC      (6) // добавление мерка-робота игроку
+#define FORCE_DIALOG_CANCEL_MERC   (7) // отмена режима мерка
+#define FORCE_DIALOG_DEFEND        (9) // режим для мерка - защита хозяина
+#define FORCE_DIALOG_PASSIVE       (10)// пассивный режим - мерк не вмешивается в бой хозяина
+#define FORCE_DIALOG_DIAG          (11)// самодиагностика
+#define FORCE_DIALOG_IDKFA_ON      (12)// бесконечные патроны
+#define FORCE_DIALOG_IDKFA_OFF     (13)// бесконечные патроны
+
+#define STR_DEFEND                 (1) // лексема "боевой режим включен"
+#define STR_PASSIVE                (2) // лексема "боевой режим выключен"
+#define STR_FOLLOW                 (3) // лексема "режим следования"
+#define STR_PATROL                 (4) // лексема "режим патрулирования"
+
+#define SKILL_FOR_INFO             (150) // значение навыка "ремонт" - необходимое для того, чтобы узнать о двигателе робота
+#define SKILL_FOR_REPAIR           (220) // значение навыка "ремонт" - необходимое для установки двигателя в робота
+#define REPAIR_XP                  (10000) // опыт, который игрок получит за ремонт робота
+
+#define STR_HOW_TO_SKILL_LOW       (300) // К сожалению, вам не хватает практических знаний, чтобы понять, каким образом можно было бы починить этого робота.
+#define STR_HOW_TO_REPAIR          (301) // Очевидно, робот может быть отремонтирован. Требуется замена двигателя.
+#define STR_REPAIR_SUCCESS         (302) // Для профессионала с подготовкой вашего уровня установка двигателя - совсем не проблема! После того, как вы заменили двигатель и пару раз двинули по корпусу робота - механический страж ожил!
+#define STR_REPAIR_SKILL_LOW       (303) // Очевидно, что проблема в двигателе. Но как его установить? Вы недостаточно хорошо разбираетесь в роботах, чтобы заменить двигатель.
+
+#define STR_BEGIN_MAD              (10) // Первая строка, которую говорит робот, когда ему прикажут убить всех людей
+#define STR_END_MAD                (15) // последняя
+
+#define KILLEM_ALL_PRIORITY        (200) // Приоритет плана "Убить всех людей". Очень высокий.
+
+uint8 CheckCommand(string cmd)
+{
+	cmd=strupr(cmd);
+	if(cmd==CMDTEXT_TOPASSIVE)
+	{
+		return CMD_TO_PASSIVE;
+	}
+	if(cmd==CMDTEXT_TODEFEND)
+	{
+		return CMD_TO_DEFEND;
+	}
+	if(cmd==CMDTEXT_STAYHERE)
+	{
+		return CMD_STAY_HERE;
+	}
+	if(cmd==CMDTEXT_FOLLOWME)
+	{
+		return CMD_FOLLOW_ME;
+	}
+	if(cmd==CMDTEXT_SELFDIAG)
+	{
+		return CMD_DIAG;
+	}
+	if(cmd==CMDTEXT_KILLEMALL)
+	{
+		return CMD_KILLEMALL;
+	}
+	if(cmd==CMDTEXT_IDKFA)
+	{
+		return CMD_IDKFA;
+	}
+	return CMD_UNKNOWN;
+}
+uint dlg_GetPassword(Critter& player, Critter@ robo, string@ pwd)
+{
+	if(!IS_DIALOG_SAY_MODE(pwd)) return 0;
+	if(!valid(robo)) return 0;
+	
+	if(pwd!="UNIVERSE")
+	{
+		return FORCE_DIALOG_WRONG_PWD;
+	}else{	 
+		return FORCE_DIALOG_RIGHT_PWD;
+	}
+}
+
+void dlg_SelfDiag(Critter& player, Critter@ robo, string@ command)
+{
+	if(!valid(robo)) return;
+	if(IS_DIALOG_SAY_MODE(command)) return;
+	
+	command ="$combatMode @msg DLG"+(robo.Merc[MERC_DEFEND_MASTER]==1?DLGSTR(robo.Stat[ST_DIALOG_ID], STR_DEFEND):DLGSTR(robo.Stat[ST_DIALOG_ID], STR_PASSIVE));
+	command +="@$followMode @msg DLG"+(IsMerc(robo)?DLGSTR(robo.Stat[ST_DIALOG_ID], STR_FOLLOW):DLGSTR(robo.Stat[ST_DIALOG_ID],STR_PATROL))+" @";
+}
+
+uint dlg_GetCommand(Critter& player, Critter@ robo, string@ command)
+{
+	if(!valid(robo)) return 0;
+	if(!IS_DIALOG_SAY_MODE(command)) return 0;
+	
+	
+	bool set=false;
+	switch(CheckCommand(command))
+	{
+		case CMD_TO_PASSIVE:
+			if(IsMerc(robo))
+			{
+				robo.MercBase[MERC_DEFEND_MASTER]=0;
+				robo.MercBase[MERC_ASSIST_MASTER]=0;
+				return FORCE_DIALOG_PASSIVE;
+			}
+			break;
+		
+		case CMD_TO_DEFEND:
+			if(IsMerc(robo))
+			{
+				robo.MercBase[MERC_DEFEND_MASTER]=1;
+				robo.MercBase[MERC_ASSIST_MASTER]=1;
+				return FORCE_DIALOG_DEFEND;
+			}
+			break;
+			
+		case CMD_STAY_HERE:
+			CancelMerc(robo);
+			return FORCE_DIALOG_CANCEL_MERC;
+			
+		case CMD_FOLLOW_ME:
+			CancelMerc(robo);
+			Merc2Player(player, robo);
+			return FORCE_DIALOG_ADD_MERC;
+			
+		case CMD_DIAG:
+			return FORCE_DIALOG_DIAG;
+	
+		case CMD_IDKFA:
+
+			set=(robo.Stat[ST_VAR1]==1);
+			robo.StatBase[ST_VAR1]=(set?0:1);
+			robo.ModeBase[MODE_UNLIMITED_AMMO]=(set?0:1);
+			return (set?FORCE_DIALOG_IDKFA_OFF:FORCE_DIALOG_IDKFA_ON);
+		case CMD_KILLEMALL:
+			robo.StatBase[ST_VAR2]=STR_BEGIN_MAD;
+			AddMiscPlane(robo, KILLEM_ALL_PRIORITY, 1, "tbu_robo@plane_PrepareKillEmAll");
+			break;
+		default:
+			break;
+	}
+	return FORCE_DIALOG_WRONG_COMMAND; 
+
+}
+// Робот произносит несколько фраз из диалога перед тем, как окончательно свихнуться. В этот момент его все еще можно убить.
+void plane_PrepareKillEmAll(Critter & robo)
+{	
+	robo.SayMsg(SAY_SHOUT, TEXTMSG_DLG, robo.StatBase[ST_VAR2]);
+	if(robo.StatBase[ST_VAR2]==STR_END_MAD)
+	{
+		robo.SetScript("_ManiacRoboInit");
+		return;
+	}
+	robo.StatBase[ST_VAR2]++;
+	AddMiscPlane(robo, KILLEM_ALL_PRIORITY, 2, "tbu_robo@plane_PrepareKillEmAll");
+}
+// Маршрут движения робота, если он получил указание убить всех
+const uint[] roboLocPids={ LOCATION_NewReno, LOCATION_Redding, LOCATION_VaultCity, LOCATION_Gecko , LOCATION_BrokenHills, LOCATION_Den, LOCATION_Klamath, LOCATION_SanFrancisco, LOCATION_NCR};
+// Прототип следующей локации сохраняется в ST_VAR1
+uint _GetNextCityIdx(Critter & robo)
+{
+	uint idx=0;
+	Map @ map=robo.GetMap();
+	
+	if(!valid(map)) return robo.Stat[ST_VAR1];
+	
+	Location @ loc=map.GetLocation();
+	if(!valid(loc)) return robo.Stat[ST_VAR1];
+	
+	for(uint i=0; i<roboLocPids.length(); i++)
+	{
+		if(roboLocPids[i]==loc.GetProtoId())
+		{
+			idx=((idx+1<roboLocPids.length())?idx+1:0);
+			break;
+		}
+	}
+	return idx;
+}
+
+
+void _BrokenRoboInit(Critter & robo, bool firstTime)
+{
+	if(!robo.IsDead()) robo.ToDead(ANIM2_DEAD_BACK, null);
+	robo.SetEvent(CRITTER_EVENT_SMTH_USE_ITEM, "_RoboSmthUseItem");
+	robo.SetEvent(CRITTER_EVENT_SMTH_USE_SKILL, "_RoboSmthUseSkill");
+	robo.StatBase[ST_REPLICATION_TIME]=-1;
+}
+
+void _RoboSmthUseItem(Critter& robo, Critter& fromCr, Item& item, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+	if(!valid(onCritter)) return;
+	if(onCritter.Id!=robo.Id) return;
+	if(item.GetProtoId()!=PID_ROBOT_MOTIVATOR) return;
+	
+	if(fromCr.Skill[SK_REPAIR]<SKILL_FOR_REPAIR)
+	{
+		
+		fromCr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_REPAIR_SKILL_LOW);
+		return;
+	}else{
+		
+		fromCr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_REPAIR_SUCCESS);
+		fromCr.StatBase[ST_EXPERIENCE]+=REPAIR_XP;
+		robo.SetEvent(CRITTER_EVENT_SMTH_USE_ITEM, "");
+		robo.SetEvent(CRITTER_EVENT_SMTH_USE_SKILL, "");
+		robo.AddItem(PID_GECK,1); // Робота все должны видеть
+		robo.AddItem(PID_223_FMJ,10); // Если у робота вдруг закончились патроны
+		robo.AddItem(PID_SNIPER_RIFLE,5); // На случай поломки
+		
+		_SubItem(item,1);
+		robo.ToLife();
+		return;
+	}
+}
+
+void _RoboSmthUseSkill(Critter& robo, Critter& fromCr, int skill, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+	if(!valid(onCritter)) return;
+	if(onCritter.Id!=robo.Id) return;
+	if(skill!=SK_REPAIR) return;
+	if(fromCr.Skill[SK_REPAIR]<SKILL_FOR_INFO)
+	{
+		fromCr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_HOW_TO_SKILL_LOW);
+		return;
+	}
+	if(fromCr.Skill[SK_REPAIR]>=SKILL_FOR_INFO)
+	{
+		fromCr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_HOW_TO_REPAIR);
+		return;
+	}
+	
+}
+
+void _AliveRoboInit(Critter & robo, bool firstTime)
+{
+	robo.StatBase[ST_REPLICATION_TIME]=-1;
+}
+
+void _ManiacRoboInit(Critter & robo, bool firstTime)
+{
+	
+	robo.StatBase[ST_DIALOG_ID]=0;
+	robo.StatBase[ST_REPLICATION_TIME]=-1;
+	robo.ModeBase[MODE_UNLIMITED_AMMO]=1;
+	robo.ModeBase[MODE_NO_LOOSE_LIMBS]=1;
+	robo.ModeBase[MODE_NO_KNOCK]=1;
+	robo.ModeBase[MODE_INVULNERABLE]=1;
+	robo.StatBase[ST_MAX_LIFE]=1000;
+	robo.StatBase[ST_CURRENT_HP]=robo.Stat[ST_MAX_LIFE];
+	robo.StatBase[ST_ACTION_POINTS]=20;
+	robo.StatBase[ST_MAX_CRITICAL]=100;
+	robo.StatBase[ST_CRITICAL_CHANCE]=100;
+	robo.PerkBase[PE_LIVING_ANATOMY]=1;
+	robo.ModeBase[MODE_NO_HOME]=1;
+	robo.ModeBase[MODE_GECK]=1;
+	robo.ModeBase[MODE_NO_DROP]=1;
+	robo.ModeBase[MODE_NO_LOOT]=1;
+	robo.ModeBase[MODE_NO_STEAL]=1;
+	for(uint i=ST_NORMAL_RESIST; i<ST_POISON_RESISTANCE;i++)
+	{
+		robo.StatBase[i]=(i==ST_EMP_RESIST?295:500);
+	}
+	robo.SkillBase[SK_ENERGY_WEAPONS]=300;
+	robo.SkillBase[SK_UNARMED]=300;
+	robo.SetEvent(CRITTER_EVENT_IDLE, "_RoboIdle");
+	robo.SetEvent(CRITTER_EVENT_DEAD, "_RoboDead");
+	robo.SetEvent(CRITTER_EVENT_GLOBAL_PROCESS, "_RoboGlobal");
+	
+}
+bool _RoboGlobal(Critter& robo, int type, Critter@[]& group, Item@ car, uint& x, uint& y, uint& toX, uint& toY, uint& speed, uint& encounterDescriptor, bool& waitForAnswer)
+{
+	if(type==GLOBAL_PROCESS_START || type==GLOBAL_PROCESS_STOPPED)
+	{
+		Location@ loc=GetLocationByPid(roboLocPids[robo.Stat[ST_VAR1]], 0);
+		if(!valid(loc))
+		{
+			Log("Invalid robot location");
+			return false;			
+		}
+		uint endX=loc.WorldX;
+		uint endY=loc.WorldY;
+		if ((endX==x) and (endY==y)) 
+		{
+			Map @map=loc.GetMapByIndex (0);
+			if(!valid(map))
+			{
+				Log("Invalid robot map");
+				return false;
+			}
+			Log("Transit to map success.");
+			robo.TransitToMap(map.Id, 0);
+		
+		}else{
+		
+			toX=endX;
+			toY=endY;
+			speed=uint(GLOBAL_MAP_BASE_SPEED/2);
+		}
+		return true;
+	}
+	return false;
+}
+
+void _RoboIdle(Critter& robo)
+{
+	Map @ map=robo.GetMap();
+	if(!valid(map)) return;
+	Critter @[] critters;
+	if(map.GetCritters(0, FIND_LIFE_AND_KO|FIND_ONLY_PLAYERS, critters)>0)
+	{
+		Critter @ player=critters[Random(0, critters.length()-1)];
+		if(valid(player))
+		{
+			AddAttackPlane(robo, 0, player);
+			return;
+		}
+	}
+	if(map.GetCritters(0, FIND_LIFE_AND_KO|FIND_ONLY_NPC, critters)>0)
+	{
+		Critter @ npc=critters[Random(0, critters.length()-1)];
+		if(valid(npc))
+		{
+			AddAttackPlane(robo, 0, npc);
+			return;
+		}
+	}
+	// никого вживых не осталось, робот перемещается на следующую локацию. Все карты зачищать необязательно
+	robo.StatBase[ST_VAR1]=_GetNextCityIdx(robo);
+	robo.TransitToGlobal(false);
+	
+	
+}
+void _RoboDead(Critter& robo, Critter@ killer)
+{
+	robo.SetScript("");
+}

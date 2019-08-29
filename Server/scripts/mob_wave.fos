@@ -1,0 +1,781 @@
+// Author: rifleman17
+// Специальный скрипт для реализации волновых нападений агрессивных мобов на некоей карте
+
+#include "_macros.fos"
+#include "serializator.fos"
+#include "teams_table.fos"
+#include "utils_for_array.fos"
+#include "_colors.fos"
+#include "_teams.fos"
+
+#define POINT_TYPE_ENTIRE                            (0) // Тип координатной точки волны - указание с помощью Entire Hex'a
+#define POINT_TYPE_COORDS                            (1) // Тип координатной точки волны - указание с помощью координат
+#define ORDER_TYPE_WAIT                              (0) // Тип задания мобам волны "ждите на месте"
+#define ORDER_TYPE_ATTACK                            (1) // Тип задания мобам волны "найти врага"
+#define ORDER_TYPE_MOVE                              (2) // Тип задания мобам волны "двигайся к точке"
+#define ORDER_TYPE_SPAWN                             (3) // Тип задания мобам волны "сгенерить мобов"
+#define ORDER_TYPE_DELETE_MOBS                       (4) // Тип шага "удалить всех мобов волны через
+#define ORDER_TYPE_TRANSIT                           (5) // Тип шага "перенестись на некую карту"
+#define TIME_TO_DELETE_MOBS                          (30*60) // Время на удаление мобов по умолчанию в игровых минутах.
+
+//#define DL #(s) (Log(s))
+#define DL #(s)
+
+import bool AddAttackPlane(Critter& npc, uint priority, uint critId) from "npc_planes";
+import bool AddWalkPlane(Critter& npc, uint priority, uint16 hexX, uint16 hexY, uint8 dir, bool run, uint cut) from "npc_planes";
+import bool GetFreeHex(Map& map, uint radius, uint16& hx, uint16& hy) from "caravan";
+
+// Добавление или обновление существующего описания волны мобов.
+// waveNum       - Номер волны, не должны пересекаться
+// mapId         - Id карты, на которой будет происходить волна
+// attackNpc     - Признак: атаковать нпц
+// attackPlayers - Признак: атаковать игроков
+void _AddWave(int waveNum, uint mapId, bool attackNpc, bool attackPlayers, uint playerAttackPriority, uint npcAttackPriority)
+{
+	MobWave @ mw=MobWave(waveNum);
+	mw.MapId=mapId;
+	mw.AttackPlayers=attackPlayers;
+	mw.AttackNpc=attackNpc;
+	mw.CurrentStep=0;
+	mw.PlayerAttackPriority=playerAttackPriority;
+	mw.NPCAttackPriority=npcAttackPriority;
+	mw.Save();
+}
+
+// Добавление описания одного шага в волну
+// waveNum       - Номер волны, к которой производится добавление
+// type          - Тип шага
+// radius        - Радиус действия шага
+// timeNext      - Время начала следующего шага, в игровых минутах
+// timeRepeat    - Время следующего повторения шага, в игровых минутах
+// search        - Признак: при каждом повторе или начале шага повторять поиск врагов
+// clear         - Признак: перед выполнением шага очистить список врагов
+// entire        - Номер гекса для координатной точки шага, если координатная точка указывается с помощью Entire гекса
+// x             - Координата по оси икс для координатной точки шага, если она указывается через координаты
+// y             - Координата по оси игрек для координатной точки шага, если она указывается через координаты
+// param         - Дополнительный параметр. Например код карты, на которую нужно телепортироваться в шаге ORDER_TYPE_TRANSIT
+void _AddStep(int waveNum, uint8 type, uint8 radius, uint timeNext, uint timeRepeat, bool search, bool clear, uint8 entire, uint16 x, uint16 y, int param)
+{
+	MobWave @ mw=MobWave(waveNum);
+	mw.Load();
+	WaveStep @ ws=WaveStep();
+	WavePoint @ wp=WavePoint();
+	ws.Type=type;
+	ws.Radius=radius;
+	wp.Entire=entire;
+	wp.HexX=x;
+	wp.HexY=y;
+	wp.Type=(entire==0?POINT_TYPE_COORDS:POINT_TYPE_ENTIRE);
+	DL("wp.Type:="+wp.Type);
+	ws.Point=wp;
+	ws.TimeNext=timeNext;
+	ws.SearchForTargetsBefore=search;
+	ws.ClearTargetsBefore=clear;
+	ws.TimeRepeat=timeRepeat;
+	ws.Param=param;
+	mw._AddWaveStep(ws);
+	mw.Save();
+}
+
+void _AddStep(int waveNum, uint8 type, uint8 radius, uint timeNext, uint timeRepeat, bool search, bool clear, uint8 entire, uint16 x, uint16 y)
+{
+	_AddStep(waveNum, type, radius, timeNext, timeRepeat, search, clear, entire, x, y, 0);
+}
+// Добавление описания одного моба в составе волны
+// waveNum       - Номер волны, к которой производится добавление
+// mobId         - Id моба, если известно
+// params        - Набор параметров моба, если он будет добавлен на карту при начале волны
+// items         - Набор итемов моба, если он будет добавлен на карту при начале волны
+// script        - Скрипт моба, если будет добавлен пр иначале волны
+// pid           - Код прототипа НПЦ
+void _AddMob(int waveNum, uint mobId, int[]@ params, int[]@ items, string@ script, uint pid)
+{
+	MobWave @ mw=MobWave(waveNum);
+	mw.Load();
+	MobInfo @ mi=MobInfo();
+	DL("mobinfo created");
+	mi.MobId=mobId;
+	DL("here");
+	if(valid(params)) {
+		DL("params valid");
+		MergeArrays(mi.MobParams, params);
+	}
+	DL("items");
+	if(valid(items)) MergeArrays(mi.MobItems, items);
+	DL("script");
+	if(valid(script)) mi.Script=script;
+	mi.Pid=pid;
+	mw._AddMob2Wave(mi);
+	mw.Save();
+}
+
+// Вспомогательный класс: Описание моба в составе волны
+class MobInfo
+{
+	uint MobId;       // Id моба (криттера) в составе волны. Все параметры моба должны настраиваться вне волны.
+	int[] MobParams; // Описания итемов у спавнящегося моба. Необязательный параметр
+	int[] MobItems;  // Описания итемов у спавнящегося моба. Необязательный параметр
+	string Script;   // Скрипт у спавнящегося моба. Необязательный параметр
+	uint Pid;         // Прототип НПЦ
+
+	Critter @ Mob()
+	{
+		return GetCritter(MobId);
+	}
+
+	void Save(string key)
+	{
+		Serializator save;
+		save.Set(this.MobId);
+		save.Set(this.Script);
+		save.Set(this.Pid);
+		save.Set(this.MobParams);
+		save.Set(this.MobItems);
+		save.Save("MobInfo_"+key);
+	}
+
+	void Load(string key)
+	{
+		Serializator load;
+		if (!load.Load("MobInfo_"+key))
+		{
+			Log("Can't load MobInfo. Key: MobInfo_"+key);
+			return;
+		}
+		DL("time to load something");
+		load.Get(this.MobId);
+		load.Get(this.Script);
+		load.Get(this.Pid);
+		DL("time to load params");
+		load.Get(this.MobParams);
+		load.Get(this.MobItems);
+	}
+}
+int _PE(Critter& cr, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem)
+{
+	DL("Reason+"+reason+" type"+plane.Type);
+	return PLANE_RUN_GLOBAL;
+}
+// Вспомогательный класс - информация о цели волны
+class TargetInfo
+{
+	uint TargetId;     // Id цели
+	uint Priority;     // Приоритет атаки данной цели
+	uint[] MobsAttack; // Id мобов, атакующих данную цель
+
+	void AttackTarget(Critter @ mob)// Назначение плана атаки цели некоему мобу
+	{
+		if (!valid(mob)) return;
+		if(mob.IsDead()||mob.IsPlayer()) return;
+		AddAttackPlane(mob, this.Priority, this.TargetId);
+		mob.SetEvent(CRITTER_EVENT_PLANE_END,"_PE");
+		for(uint i=0, iMax=this.MobsAttack.length(); i<iMax; i++)
+		{
+			if(this.MobsAttack[i]==mob.Id) return;
+		}
+		this.MobsAttack.insertLast(mob.Id);
+		DL("Attacking! Id Target"+this.TargetId);
+	}
+
+	uint CountTargetAttackers()// Считает сколько атакующих для данной цели. Считаются только живые мобы
+	{
+		uint attackers=0;
+		for(uint i=0, iMax=this.MobsAttack.length(); i<iMax; i++)
+		{
+			Critter @ mob=GetCritter(this.MobsAttack[i]);
+			if(!valid(mob)) continue;
+			if(mob.IsDead()) continue;
+			attackers++;
+		}
+		return attackers;
+	}
+
+	void Save(string key)
+	{
+		Serializator save;
+		save.Set(this.TargetId);
+		save.Set(this.Priority);
+		save.Set(this.MobsAttack);
+		save.Save("TargetInfo_"+key);
+	}
+
+	void Load(string key)
+	{
+		Serializator load;
+		if (!load.Load("TargetInfo_"+key))
+		{
+			Log("Can't load TargetInfo. Key: TargetInfo_"+key);
+			return;
+		}
+		load.Get(this.TargetId);
+		load.Get(this.Priority);
+		load.Get(this.MobsAttack);
+	}
+}
+
+// Координатная точка волны
+class WavePoint
+{
+	uint8 Type;    // Тип указания координатной точки волны через прямые координаты или через гекс
+	uint8 Entire;  // Номер гекса
+	uint16 HexX;   // Координата по оси икс
+	uint16 HexY;   // Координата по оси игрек
+
+	void GetCoords(Map @ map, uint16& hX, uint16& hY)
+	{
+		if(this.Type==POINT_TYPE_ENTIRE)
+		{
+			if (!valid(map)) return;
+			uint entNum=map.CountEntire(this.Entire);
+			map.GetEntireCoords(this.Entire, Random(0,entNum-1),hX,hY);
+		}else{
+			hX=this.HexX;
+			hY=this.HexY;
+		}
+	}
+
+	void Save(string key)
+	{
+		Serializator save;
+		save.Set(this.Type);
+		save.Set(this.Entire);
+		save.Set(this.HexX);
+		save.Set(this.HexY);
+		save.Save("WavePoint_"+key);
+	}
+
+	void Load(string key)
+	{
+		Serializator load;
+		if (!load.Load("WavePoint_"+key))
+		{
+			Log("Can't load WavePoint. Key: WavePoint_"+key);
+			return;
+		}
+		load.Get(this.Type);
+		DL("Type!"+this.Type);
+		load.Get(this.Entire);
+		load.Get(this.HexX);
+		load.Get(this.HexY);
+	}
+}
+
+// Задание для мобов во время волны. Мобы могут просто находиться в некоей точке, патрулировать ее либо перемещаться к ней
+class WaveStep
+{
+	uint8 Type;    // Тип задания
+	uint8 Radius;  // Радиус от координатной точки в гексах, в котором оперируют мобы
+	WavePoint Point;   // Координатная точка задания
+	uint TimeNext;  // Время в игровых минутах, через которое наступает следующий шаг
+	bool SearchForTargetsBefore; // Признак - перед началом этапа найти новых врагов
+	bool ClearTargetsBefore; // Признак - перед началом этапа очистить список врагов
+	uint TimeRepeat; // Время повтора шага в игровых минутах
+	uint Param; // Дополнительный параметр
+
+	void DoAction(MobInfo @ mi, Map @ map, TargetInfo @ ti)
+	{
+		DL("Action type="+this.Type);
+		if (!valid(mi)||!valid(map)) return;
+		if (!valid(this.Point)) return;
+		switch(this.Type)
+		{
+			case ORDER_TYPE_WAIT:
+				_DoActionWait(mi,map);
+				break;
+			case ORDER_TYPE_ATTACK:
+				if(valid(ti))
+				{
+					_DoActionAttack(mi,ti);
+				}
+				break;
+			case ORDER_TYPE_MOVE:
+				_DoActionMove(mi, map);
+				break;
+			case ORDER_TYPE_SPAWN:
+				_DoActionSpawn(mi,map);
+				break;
+			case ORDER_TYPE_DELETE_MOBS:
+				_DoActionDeleteMob(mi);
+				break;
+			case ORDER_TYPE_TRANSIT:
+				_DoActionTransitToMap(mi);
+				break;
+		}
+	}
+
+	void _DoActionSpawn(MobInfo & mi, Map & map) // Спавн мобов в нужном месте
+	{
+		DL("_DoActionSpawn called");
+		uint16 x=0;
+		uint16 y=0;
+		this.Point.GetCoords(map, x, y);
+		Critter @ mob;
+		DL("Triing get mob. radius="+this.Radius+"x"+x+"Pid="+mi.Pid);
+		if(GetFreeHex(map,this.Radius,x,y)&&mi.Pid>0)
+		{
+			@mob=map.AddNpc(mi.Pid, x, y, 6, mi.MobParams, mi.MobItems, mi.Script);
+			mi.MobId=mob.Id;
+			DL("Spawn success");
+		}
+	}
+
+	void _DoActionMove(MobInfo & mi, Map & map)// Перемещение к следующей точке волны
+	{
+		DL("_DoActionMove called");
+		Critter @ mob=mi.Mob();
+		if (!valid(mob)) return;
+		uint16 x=mob.HexX;
+		uint16 y=mob.HexY;
+		this.Point.GetCoords(map, x, y);
+		uint tries=0;
+		while(tries<20)
+		{
+			tries++;
+			if(GetFreeHex(map,this.Radius,x,y))
+			{
+				if(map.GetPathLength(mob,x,y,1)>0) break;
+			}
+		}
+		AddWalkPlane(mob, 0, x, y, 6, true, 1);
+
+		mob.ModeBase[MODE_NO_HOME]=1;
+		DL("plan move added");
+	}
+
+	void _DoActionWait(MobInfo & mi, Map & map) // Установка домашней позиции в некоей точке волны
+	{
+		DL("_DoActionWait called");
+		Critter @ mob=mi.Mob();
+		if (!valid(mob)) return;
+		mob.ModeBase[MODE_NO_HOME]=0;
+		uint16 x=mob.HexX;
+		uint16 y=mob.HexY;
+		this.Point.GetCoords(map, x, y);
+		if(GetFreeHex(map,this.Radius,x,y))
+		{
+			mob.SetHomePos(x,y,Random(0,5));
+		}
+	}
+
+	void _DoActionAttack(MobInfo & mi, TargetInfo & ti)
+	{
+		DL("_DoActionAttack called");
+		Critter @ mob=mi.Mob();
+		if (!valid(mob)) return;
+		mob.ModeBase[MODE_NO_HOME]=0;
+		ti.AttackTarget(mob);
+	}
+
+	void _DoActionDeleteMob(MobInfo & mi)
+	{
+		DL("_DoActionDeleteMob called");
+		Critter @ mob=mi.Mob();
+		if (!valid(mob)) return;
+		CreateTimeEvent(__FullSecond+TIME_TO_DELETE_MOBS,"e_DeleteSpawnedMob",mob.Id,false);
+		DL("Delete Event created");
+	}
+
+	void _DoActionTransitToMap(MobInfo & mi)
+	{
+		DL("_DoActionTransitToMap called");
+		Map @ map=GetMap(this.Param);
+		if (!valid(map)) return;
+		Critter @ mob=mi.Mob();
+		if (!valid(mob)) return;
+		uint16 x=0;
+		uint16 y=0;
+		this.Point.GetCoords(map, x, y);
+		mob.TransitToMap(map.Id, x,y, Random(0,5));
+		DL("Mob transit success");
+	}
+
+	void Save(string key)
+	{
+		Serializator save;
+		save.Set(this.Type);
+		save.Set(this.Radius);
+		save.Set(this.TimeNext);
+		save.Set(this.SearchForTargetsBefore);
+		save.Set(this.ClearTargetsBefore);
+		save.Set(this.TimeRepeat);
+		save.Set(this.Param);
+		this.Point.Save(key);
+		save.Save("WaveStep_"+key);
+	}
+
+	void Load(string key)
+	{
+		Serializator load;
+		if (!load.Load("WaveStep_"+key))
+		{
+			Log("Can't load WaveStep. Key: WaveStep_"+key);
+			return;
+		}
+		load.Get(this.Type);
+		load.Get(this.Radius);
+		load.Get(this.TimeNext);
+		load.Get(this.SearchForTargetsBefore);
+		load.Get(this.ClearTargetsBefore);
+		load.Get(this.TimeRepeat);
+		load.Get(this.Param);
+		this.Point=WavePoint();
+		this.Point.Load(key);
+	}
+}
+
+// Класс описания волны мобов
+class MobWave
+{
+	int Number;                // Номер описания волны.
+	WaveStep[] Steps;          // Массив описаний этапов волны
+	TargetInfo[] Targets;      // Массив описаний целей мобов в составе волны
+	MobInfo[] Mobs;            // Массив описаний мобов в составе волны
+	uint MapId;                // Код карты, по которой идет волна
+	bool AttackPlayers;        // Признак: мобы будут атаковать игрока сами
+	bool AttackNpc;            // Признак: мобы будут атаковать всех нпц, кроме тех, что в составе волны
+	uint8 CurrentStep;         // Текущий активный этап волны
+	uint PlayerAttackPriority; // Приоритет атаки игроков
+	uint NPCAttackPriority;    // Приоритет атаки НПЦ
+
+	MobWave(int number)// Конструктор
+	{
+		this.Number=number;
+		this.CurrentStep=0;
+	}
+
+	void Save()
+	{
+		Serializator save;
+		string key="MobWave_"+this.Number;
+		save.Set(this.Number);
+		uint len=this.Steps.length();
+		save.Set(len);
+		if(len>0)
+		{
+			for(uint i=0; i<len; i++)
+			{
+				this.Steps[i].Save(key+i);
+			}
+		}
+		len=this.Targets.length();
+		save.Set(len);
+		if(len>0)
+		{
+			for(uint i=0; i<len; i++)
+			{
+				this.Targets[i].Save(key+i);
+			}
+		}
+		len=this.Mobs.length();
+		save.Set(len);
+		if(len>0)
+		{
+			for(uint i=0; i<len; i++)
+			{
+				this.Mobs[i].Save(key+i);
+			}
+		}
+		save.Set(this.MapId);
+		save.Set(this.AttackPlayers);
+		save.Set(this.AttackNpc);
+		save.Set(this.CurrentStep);
+		save.Set(this.PlayerAttackPriority);
+		save.Set(this.NPCAttackPriority);
+		save.Save(key);
+	}
+
+	void Load()
+	{
+		Serializator load;
+		string key="MobWave_"+this.Number;
+		if (!load.Load(key))
+		{
+			Log("Can't load WaveStep. Key: "+key);
+			return;
+		}
+		load.Get(this.Number);
+		uint len=0;
+		load.Get(len);
+		DL("loading steps");
+		if(len>0)
+		{
+			for(uint i=0; i<len; i++)
+			{
+				WaveStep @ ws=WaveStep();
+				ws.Load(key+i);
+				this.Steps.insertLast(ws);
+			}
+		}
+		DL("loading targets");
+		load.Get(len);
+		if(len>0)
+		{
+			for(uint i=0; i<len; i++)
+			{
+				TargetInfo @ti=TargetInfo();
+				ti.Load(key+i);
+				this.Targets.insertLast(ti);
+			}
+		}
+		DL("loading mobs");
+		load.Get(len);
+		if(len>0)
+		{
+			for(uint i=0; i<len; i++)
+			{
+				MobInfo @mi=MobInfo();
+				mi.Load(key+i);
+				this.Mobs.insertLast(mi);
+			}
+		}
+		load.Get(this.MapId);
+		load.Get(this.AttackPlayers);
+		load.Get(this.AttackNpc);
+		load.Get(this.CurrentStep);
+		load.Get(this.PlayerAttackPriority);
+		load.Get(this.NPCAttackPriority);
+		DL("Load Mob Wave success");
+	}
+
+	void _AddMob2Wave(Critter @ mob) // Добавление описания моба для конкретного криттера в волну
+	{
+		if (!valid(mob)) return;
+		uint mobId=mob.Id;
+		for(uint i=0, iMax=this.Mobs.length(); i<iMax; i++)
+		{
+			if(mobId==this.Mobs[i].MobId) return; // Добавлен ранее
+		}
+		MobInfo @ mi=MobInfo();
+		mi.MobId=mobId;
+		this.Mobs.insertLast(mi);
+	}
+
+	void _AddMob2Wave(MobInfo @ mi)
+	{
+		if (!valid(mi)) return;
+		this.Mobs.insertLast(mi);
+	}
+
+	void _AddTarget2Wave(Critter @ target, uint priority) // Добавление описания цели в волну
+	{
+		if (!valid(target)) return;
+		uint targetId=target.Id;
+		int[] mobs={TEAM_Mob0,TEAM_Mob1,TEAM_Mob2,TEAM_Mob3,TEAM_Mob4,TEAM_Mob5,TEAM_Mob6,TEAM_Mob7,TEAM_Mob8,TEAM_Mob9};
+		DL("Check target valid");
+		for(uint i=0, iMax=this.Mobs.length(); i<iMax; i++)
+		{
+			Critter @ mob=this.Mobs[i].Mob();
+			if(valid(mob))
+			{
+				if(mob.Id==targetId) return; // Цель=свой. Не атакуем.
+				// Для мобов-животных отмена атаки всех других мобов животных
+				if(Present(mob.Stat[ST_TEAM_ID], mobs)&&Present(target.Stat[ST_TEAM_ID], mobs)) return;
+				if(TEAM_PARITY(mob.Stat[ST_TEAM_ID],target.Stat[ST_TEAM_ID])!=Ignore) return; // Команда своя, не атакуем
+			}
+		}
+		DL("Valid target");
+		for(uint i=0, iMax=this.Targets.length(); i<iMax; i++)
+		{
+			if(targetId==this.Targets[i].TargetId) return; // Добавлен ранее
+		}
+		DL("Not added before");
+		TargetInfo @ ti=TargetInfo();
+		ti.TargetId=targetId;
+		ti.Priority=priority;
+		this.Targets.insertLast(ti);
+	}
+
+	void _AddWaveStep(WaveStep & ws)
+	{
+		this.Steps.insertLast(ws);
+	}
+
+	void RepeatStep()
+	{
+		WaveStep@ ws=this.Steps[this.CurrentStep];
+		if(this.MapId==0) return;
+		Map @map=GetMap(this.MapId);
+		if (!valid(map)) return;
+		if(ws.SearchForTargetsBefore)
+		{
+			Critter @[] critters;
+			uint16 x=0;
+			uint16 y=0;
+			ws.Point.GetCoords(map, x, x);
+			if(this.AttackPlayers)
+			{
+				map.GetCrittersHex(x,y,ws.Radius,FIND_LIFE_AND_KO|FIND_ONLY_PLAYERS, critters);
+			}
+			if(this.AttackNpc)
+			{
+				map.GetCrittersHex(x,y,ws.Radius,FIND_LIFE_AND_KO|FIND_ONLY_NPC, critters);
+			}
+			for(uint i=0, iMax=critters.length(); i<iMax; i++)
+			{
+				Critter @ target=critters[i];
+				if(valid(target))
+				{
+					this._AddTarget2Wave(target, target.IsNpc()?this.NPCAttackPriority:this.PlayerAttackPriority);
+				}
+			}
+		}
+		for(uint i=0, iMax=this.Mobs.length(); i<iMax; i++)
+		{
+			TargetInfo @ ti;
+			if(this.Targets.length()>0)
+			{
+				this.Targets[Random(0, Targets.length()-1)];
+			}
+			ws.DoAction(this.Mobs[i], map, ti);
+		}
+	}
+
+	void DoStep() // Выполнение текущего этапа
+	{
+		DL("steps: "+this.Steps.length()+" curr="+this.CurrentStep);
+		WaveStep@ ws=this.Steps[this.CurrentStep];
+		if(ws.ClearTargetsBefore)
+		{
+			this.Targets.resize(0);
+		}
+		if(this.MapId==0) return;
+		Map @map=GetMap(this.MapId);
+		if (!valid(map)) return;
+		if(ws.SearchForTargetsBefore)
+		{
+			Critter @[] critters;
+			uint16 x=0;
+			uint16 y=0;
+			ws.Point.GetCoords(map, x, y);
+			if(this.AttackPlayers)
+			{
+				map.GetCrittersHex(x,y,ws.Radius,FIND_LIFE_AND_KO|FIND_ONLY_PLAYERS, critters);
+			}
+			if(this.AttackNpc)
+			{
+				map.GetCrittersHex(x,y,ws.Radius,FIND_LIFE_AND_KO|FIND_ONLY_NPC, critters);
+			}
+			for(uint i=0, iMax=critters.length(); i<iMax; i++)
+			{
+				Critter @ target=critters[i];
+				if(valid(target))
+				{
+					this._AddTarget2Wave(target, target.IsNpc()?this.NPCAttackPriority:this.PlayerAttackPriority);
+				}
+			}
+		}
+		for(uint i=0, iMax=this.Mobs.length(); i<iMax; i++)
+		{
+			TargetInfo @ ti;
+			if(this.Targets.length()>0)
+			{
+				DL("target founded");
+				@ti=this.Targets[Random(0, Targets.length()-1)];
+			}
+			ws.DoAction(this.Mobs[i], map, ti);
+		}
+		if(ws.TimeNext>0)
+		{
+			CreateTimeEvent(__FullSecond+ws.TimeNext*60,"e_NextWaveStep",this.Number,true);
+		}
+		if(ws.TimeRepeat>0)
+		{
+			DL("Repeat needed +"+ws.TimeRepeat);
+			uint[] values={this.Number, this.CurrentStep};
+			CreateTimeEvent(__FullSecond+ws.TimeNext*60,"e_RepeatStep",values,true);
+		}
+	}
+
+	void NextStep() // Переключение этапа на следующий или первый, если выполнен последний
+	{
+		uint8 next=this.CurrentStep+1;
+		if(next>=this.Steps.length())
+		{
+			next=0;
+		}
+		this.CurrentStep=next;
+	}
+}
+
+uint e_NextWaveStep(uint[]@ values)
+{
+	MobWave mv=MobWave(values[0]);
+	mv.Load();
+	mv.NextStep();
+	mv.DoStep();
+	mv.Save();
+	return 0;
+}
+
+uint e_RepeatStep(uint[]@ values)
+{
+	MobWave mv=MobWave(values[0]);
+	mv.Load();
+	if(values[1]!=mv.CurrentStep) return 0; // Шаг закончен, начат другой
+	mv.RepeatStep();
+	mv.Save();
+	return mv.Steps[values[1]].TimeRepeat*60;
+}
+
+uint e_DeleteSpawnedMob(uint[]@ values)
+{
+	Critter @ mob=GetCritter(values[0]);
+	if (!valid(mob)) return 0;
+	if (!mob.IsDead()) return 0;
+	DeleteNpc(mob);
+	return 0;
+}
+
+//
+// Функционал для консольных команд
+//
+// type=0 - никого не атаковать, 1 - только игроков, 2 - и игроков и нпц
+void AddWave(int waveNum, int mapId, int type)
+{
+	MobWave @ mw=MobWave(waveNum);
+	mw.Load();
+	mw.MapId=mapId;
+	if(type>0) mw.AttackPlayers=true;
+	if(type>1) mw.AttackNpc=true;
+	mw.Save();
+}
+
+void AddSpawnStep(int waveNum, uint8 radius, uint timeNext, uint x, uint y)
+{
+	_AddStep(waveNum, ORDER_TYPE_SPAWN, radius, timeNext, 0, false, false, 0, x, y);
+}
+
+void AddMob(int waveNum, int pid, int team)
+{
+	int[] params={ST_TEAM_ID, team};
+	_AddMob(waveNum, 0, params, null, null, pid);
+}
+
+void AddDeleteStep(int waveNum, uint8 radius, uint timeNext)
+{
+	_AddStep(waveNum, ORDER_TYPE_DELETE_MOBS, radius, timeNext, 0, false, true, 0, 0, 0);
+}
+
+void AddMoveStep(int waveNum, uint8 radius, uint timeNext, uint x, uint y)
+{
+	_AddStep(waveNum, ORDER_TYPE_MOVE, radius, timeNext, 0, false, true, 0, x, y);
+}
+
+void AddAttackStep(int waveNum, uint8 radius, uint timeNext, uint timeRepeat, uint x, uint y)
+{
+	_AddStep(waveNum, ORDER_TYPE_ATTACK, radius, timeNext, 0, true, true, 0, x, y);
+}
+
+void AddTransitStep(int waveNum, uint8 radius, uint timeNext, uint x, uint y, uint mapId)
+{
+	_AddStep(waveNum, ORDER_TYPE_TRANSIT, radius, timeNext, 0, true, true, 0, x, y, mapId);
+}
+
+void _StartWave(int waveNum)
+{
+	DL("StartWaveCalled");
+	MobWave @ mw=MobWave(waveNum);
+	mw.Load();
+	mw.DoStep();
+	mw.Save();
+}

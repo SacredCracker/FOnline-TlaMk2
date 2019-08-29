@@ -1,0 +1,502 @@
+// Author: rifleman17
+
+#include "_macros.fos"
+#include "merc_h.fos"
+#include "merc_dialog.fos"
+#include "_teams.fos"
+#include "merc_utils.fos"
+
+uint8 GetDir(Critter & cr0, Critter & cr1){return GetDirection(cr0.HexX,cr0.HexY,cr1.HexX,cr1.HexY);}
+import bool GetFreeHex(Map& map, uint radius, uint16& hx, uint16& hy) from "caravan";
+import bool AddWalkPlane(Critter& npc, uint priority, uint16 hexX, uint16 hexY, uint8 dir, bool run, uint cut) from "npc_planes";
+import bool AddAttackPlane(Critter& npc, uint priority, Critter& target) from "npc_planes";
+import void UseDrug(Critter& cr, Item& drug) from "drugs"; 
+// Debug Log
+//#define DL#(s) (Log(s))
+#define DL#(s)
+
+//* ********* Типовые шаблоны для мерков. Для использования в качестве заготовок *********//
+
+
+#define MERC_PARAM_COUNT               (7) // число параметров мерка для некоего типа. Если потребуется добавить новый параметр,нужно изменить это число и дописать параметры для каждого типа мерков
+#define MERC_TYPE_COUNT                (4) // число типов мерков. При добавлении нового типа, увеличивайте число вручную
+#define MERC_CELL #(type, col) (_mercInfo[((type>MERC_TYPE_COUNT?MERC_FOLLOWER_DEFAULT:type)-1)*MERC_PARAM_COUNT + col])// ячейка таблицы (строка+1, колонка)
+#define RELEASE_TIME                   (__FullSecond+60*20) // 60 минут=время в игровых минутах до уничтожения/или переноса на домашнюю позицию мерка после вызова CancelMerc.
+#define FIRE_TIME                      (60*60*24*30*3) // Время службы по умолчанию - 3 месяца
+/*
+type                         - тип мерка
+loseDist                     - дистанция, на которой мерк отстанет от игрока, 0=не будет отставать
+alwaysRun                    - перемещается бегом (если анимация позволяет)
+cancelOnMasterDead           - сброс мерка при смерти хозяина
+cancelOnMasterAttack         - сброс мерка при атаки мерка хозяином
+defendMaster                 - атакует тех, кто напал на хозяина
+assistMaster                 - атакует тех, на кого напал хозяин
+cancelTime                   - время завершения службы
+*/
+const uint[] _mercInfo={//  type,                   loseDist,  alwaysRun,  cancelOnMasterDead,  cancelOnMasterAttack,  defendMaster,  assistMaster
+MERC_FOLLOWER_DEFAULT,      0,         0,          1,                   1,                     0,             0,
+MERC_FOLLOWER_HARMLESS,     0,         0,          0,                   0,                     0,             0,
+MERC_FOLLOWER_CAN_LOSE,     MMDistFar, 0,          1,                   1,                     0,             0,
+MERC_GUARD_DEFAULT,         0,         0,          1,                   1,                     1,             0
+};
+
+#define _MercCanLose #(type) (MERC_CELL(type, 1)>MMDistNone)
+#define _MercLoseDist #(type) (MERC_CELL(type, 1))
+#define _MercAlwaysRun #(type) (MERC_CELL(type, 2))
+#define _MercCancelOnMasterAttack #(type) (MERC_CELL(type, 4))
+#define _MercDefendMaster #(type) (MERC_CELL(type, 5))
+#define _MercAssistMaster #(type) (MERC_CELL(type, 6))
+//#define _MercCancelOnMasterDead #(type) (MERC_CELL(type, 3)) не реализовано
+
+//* *************************** Скрипт инициализации мерка ***************************** *//
+void _MercInit(Critter & merc, bool firstTime)
+{
+	merc.SetEvent(CRITTER_EVENT_IDLE, "merc@e_MercIdle"); // Обязательный скрипт. В нем контролируется положение мерка относительно игрока
+
+	merc.SetEvent(CRITTER_EVENT_SMTH_DEAD, "merc@e_MercSmthDead");
+	merc.SetEvent(CRITTER_EVENT_ATTACKED, "merc@e_MercAttacked");
+	merc.SetEvent(CRITTER_EVENT_DEAD, "merc@e_MercDead");
+	merc.SetEvent(CRITTER_EVENT_SMTH_ATTACKED, "merc@e_MercSmthAttacked");
+	merc.SetEvent(CRITTER_EVENT_GLOBAL_PROCESS, "merc@_MercGlobalProcess");
+	merc.SetEvent(CRITTER_EVENT_HIDE_CRITTER,"merc@_MercHideCritter");
+	 
+
+	merc.ModeBase[MODE_NO_HOME]=1;
+	//merc.StatBase[ST_REPLICATION_TIME]=-1;
+	merc.ModeBase[MODE_GECK]=1; // Чтобы НПЦ не удалялся при выходе игрока с энкаунтера.
+}
+
+
+//* ****************************** Обработка событий мерка ***************************** *//
+
+
+ void _MercHideCritter(Critter& merc, Critter& hideCr)
+ {
+ 
+	if(uint(merc.MasterId)==hideCr.Id) 
+		e_MercIdle(merc);
+ 
+ }
+
+
+bool _MercGlobalProcess(Critter& cr, int type, Item@ car, float& x, float& y, float& toX, float& toY, float& speed, uint& encounterDescriptor, bool& waitForAnswer)
+{
+	if(type==GLOBAL_PROCESS_NPC_IDLE)
+	{
+		e_MercIdle(cr);
+	}
+	return false;
+}
+
+void e_MercSmthAttacked(Critter& merc, Critter& fromCr, Critter& attacker)
+{
+	
+	if(fromCr.Id==attacker.Id) return;	// только если мастер не атаковал сам себя
+	if(merc.IsCurPlane(AI_PLANE_ATTACK)) return; // Реакция будет лишь в том случае, если у самого мерка нет планов атаки кого-либо.
+	if(attacker.Id==merc.Id) return;
+	
+	if(uint(merc.MasterId)==fromCr.Id) // Атакован хозяин мерка
+	{
+		if(merc.Merc[MERC_DEFEND_MASTER]>0)
+		{
+			AddAttackPlane(merc, 0, attacker);
+		}
+		return;
+	}
+	if(uint(merc.MasterId)==attacker.Id) // Атакующий - хозяин мерка
+	{
+		if(merc.Merc[MERC_ASSIST_MASTER]>0)
+		{
+			AddAttackPlane(merc, 0, fromCr);
+		}
+		return;
+	}
+}
+
+void e_MercDead(Critter& merc, Critter@ killer)
+{
+	DL("Canceld merc");
+	CancelMerc(merc);
+}
+
+bool e_MercAttacked(Critter& merc, Critter& attacker)
+{
+	if(attacker.Id==uint(merc.MasterId)&&_CancelOnMasterAttack(merc))
+	{
+		CancelMerc(merc);// хозяин атаковал мерка
+	}
+	return false;
+}
+
+void e_MercSmthDead(Critter& merc, Critter& fromCr, Critter@ killer)
+{
+	
+	if (!valid(fromCr) || !valid(merc))  return;
+	
+	if(fromCr.Id==uint(merc.MasterId))
+	{
+		Critter@ master=GetCritter(merc.MasterId);
+		if (!valid(master)) return;
+		
+		if(merc.Merc[MERC_IS_SLAVE] >0)
+			r_WaitMaster(master, merc);	/// ожидание игрока для рабов.
+				else 
+					CancelMerc(merc);	/// отмена для мерков.
+		
+				
+	}
+	if (!valid(killer)) return;
+	
+	if(merc.Merc[MERC_IS_SLAVE] >0 && (killer.Id==uint(merc.Id) || killer.Id==uint(merc.MasterId)) && !fromCr.IsPlayer() && merc.StatBase[ST_EXPERIENCE]<28000)
+	{
+		if(killer.Id==uint(merc.Id))
+		merc.StatBase[ST_EXPERIENCE]+=fromCr.StatBase[ST_MAX_LIFE]*4;
+		
+		if(killer.Id==uint(merc.MasterId))
+		merc.StatBase[ST_EXPERIENCE]+=fromCr.StatBase[ST_MAX_LIFE]*2;
+	
+	}
+}
+
+void e_MercIdle(Critter& merc)
+{
+
+	if(merc.MasterId==0) return;
+
+	if(merc.IsNoPlanes())
+		{
+			if(merc.Stat[ST_CURRENT_HP]<merc.Stat[ST_MAX_LIFE]/2 && merc.Stat[ST_CURRENT_AP]>=0 &&   merc.CountItem(PID_STIMPAK)>0)
+			{
+				Item@ stimpack =merc.GetItem (PID_STIMPAK,SLOT_INV) ;
+				if(valid(stimpack))
+					UseDrug(merc,stimpack);  
+			}
+			
+			
+		}
+	
+	
+	if(merc.IsNoPlanes() &&  merc.Merc[MERC_IS_SLAVE] >0 && merc.Merc[MERC_WAIT_FOR_MASTER]!=0)
+		check_doorDist(merc);
+		
+
+	
+	if ((uint(merc.Merc[MERC_CANCEL_TIME])<__FullSecond) && merc.Merc[MERC_IS_SLAVE]<1)
+	{
+		CancelMerc(merc);
+		return;
+	}
+	
+	Critter @ master=GetCritter(merc.MasterId);
+	if (!valid(master)) return;
+
+	if(master.IsDead())
+	{
+		e_MercSmthDead(merc, master, null);
+		return;// погиб хозяин
+	}
+
+	Map @ map_master=master.GetMap();
+	Map @ map_merc=merc.GetMap();
+
+	if(valid(map_master))
+	{
+		uint16 hX=master.HexX;
+		uint16 hY=master.HexY;
+		GetFreeHex(map_master, 1, hX, hY);
+		if(valid(map_merc))
+		{
+			if(map_master.Id==map_merc.Id)
+			{
+				int dist=GetCrittersDistantion(merc, master);
+				if(_CanLose(merc))
+				{
+					if(dist>merc.LoseDist)
+					{
+						CancelMerc(merc);
+						DL("lost master.Dist="+dist + " losedist" + merc.LoseDist);
+						return;// потеряли
+					}
+				}
+				if(dist>merc.MercMasterDist)
+				{
+					if(merc.Merc[MERC_WAIT_FOR_MASTER]==0)
+						AddWalkPlane(merc, 0, hX, hY, GetDir(merc, master), _AlwaysRun(merc), 1);
+				}
+			}else{
+					if(merc.Merc[MERC_WAIT_FOR_MASTER]==0 || merc.Merc[MERC_WAIT_FOR_MASTER]==2)
+						merc.TransitToMap(map_master.Id, hX, hY, Random(0,5));
+			}
+		}else{
+			if(merc.Merc[MERC_WAIT_FOR_MASTER]==0 || merc.Merc[MERC_WAIT_FOR_MASTER]==2)
+			merc.TransitToMap(map_master.Id, hX, hY, Random(0,5));
+		}
+	}else{
+		if(merc.Merc[MERC_CANCEL_ON_GLOBAL] > 0)
+		{
+			// Мерк отменяет режим службы, если хозяин вышел на глобал и установлен параметр MERC_CANCEL_ON_GLOBAL
+			CancelMerc(merc);
+			return;
+		}
+		// хозяин на глобале
+		if(merc.Merc[MERC_WAIT_FOR_MASTER] >0 && merc.Merc[MERC_WAIT_FOR_MASTER] !=2)
+			return;
+		Critter@[] globalGroup=master.GetGlobalGroup();
+		if(valid(merc.GetGlobalGroup()) || !valid(globalGroup)) 
+			return;
+		Critter@ leader=globalGroup[0];
+		if(valid(leader) && leader.Stat[ST_CHARISMA] > int(globalGroup.length()) && merc.Merc[MERC_IS_SLAVE]<1)
+			merc.TransitToGlobalGroup(master.Id);
+			
+			if ((merc.Merc[MERC_WAIT_FOR_MASTER]==0 || merc.Merc[MERC_WAIT_FOR_MASTER]==2) && merc.Merc[MERC_IS_SLAVE] > 0)
+			merc.TransitToGlobalGroup(master.Id);
+	}
+}
+
+//* ***************************** Добавление мерков игроку ***************************** *//
+// Добавление мерка одного из преустановленных типов игроку
+// player - хозяин мерка
+// merc - мерк
+// type - тип мерка
+bool Merc2Player(Critter & player, Critter & merc, uint16 type) // Predefined Mercs
+{
+	return Merc2Player(player, merc, (_MercAlwaysRun(type)>0), (_MercCancelOnMasterAttack(type)>0), _MercLoseDist(type), MMDistShort, type, (_MercDefendMaster(type)>0), (_MercAssistMaster(type)>0), 0);
+
+}
+
+// Добавление мерка игроку. Тип мерка MERC_FOLLOWER_DEFAULT.
+// player - хозяин мерка
+// merc - мерк
+bool Merc2Player(Critter & player, Critter & merc) // Default follower
+{
+	return Merc2Player(player, merc, MERC_FOLLOWER_DEFAULT);
+}
+bool Merc2Player(Critter & player, Critter & merc, bool alwaysRun, bool cancelOnAttack, uint loseDist, uint16 mercMasterDist, uint16 type, bool defendMaster, bool assistMaster) // Custom Mercs
+{
+	return Merc2Player(player, merc, alwaysRun, cancelOnAttack, loseDist, mercMasterDist, type, defendMaster, assistMaster, 0);
+}
+// Добавление мерка с подробной настройкой параметров
+// player - хозяин мерка
+// merc - мерк
+// merc - мерк
+// alwaysRun - признак: мерк всегда перемещается бегом
+// cancelOnAttack - признак: если игрок атакует мерка, мерк слетит с этого игрока
+// loseDist - дистанция, при превышении которой между игроком и нпц, отменяется режим мерка.
+// При loseDist=0 - мерк не будет отставать от хозяина
+// mercMasterDist - дистанция, на которую будет стремиться приблизиться мерк при перемещении хозяина по карте
+// type - тип мерка
+// defendMaster - признак, мерк будет защищать хозяина, если хозяин был атакован кем-то
+// assistMaster - признак, если хозяин кого-то атакует, мерк присоединится к атаке
+// fireTime - время увольнения
+bool Merc2Player(Critter & player, Critter & merc, bool alwaysRun, bool cancelOnAttack, uint loseDist, uint16 mercMasterDist, uint16 type, bool defendMaster, bool assistMaster, uint fireTime) // Custom Mercs
+{
+	if(merc.Id==player.Id)
+	{
+		Log("Wrong mercenary master... Merc creation failed");
+		return false;
+	}
+	merc.MercBase[MERC_TYPE]=type;
+	merc.MercBase[MERC_MASTER_ID]=player.Id;
+	merc.MercBase[MERC_ALWAYS_RUN]=alwaysRun?1:0;
+	merc.MercBase[MERC_CANCEL_ON_ATTACK]=cancelOnAttack?1:0;
+	merc.MercBase[MERC_LOSE_DIST]=loseDist;
+	DL("initial losedist="+loseDist+"merc.MercBase[MERC_LOSE_DIST]="+merc.MercBase[MERC_LOSE_DIST]+"merc.Merc[MERC_LOSE_DIST]"+merc.Merc[MERC_LOSE_DIST]);
+	merc.MercBase[MERC_MASTER_DIST]=mercMasterDist;
+	merc.MercBase[MERC_DEFEND_MASTER]=defendMaster?1:0;
+	merc.MercBase[MERC_ASSIST_MASTER]=assistMaster?1:0;
+	merc.MercBase[MERC_CANCEL_TIME]=__FullSecond + (fireTime==0?FIRE_TIME:fireTime);
+	merc.StatBase[ST_TEAM_ID]=TEAM_Default;
+	merc.SetScript("merc@_MercInit");
+
+	return true;
+
+}
+
+// Добавление мерка с частичной настройкой параметров
+// player - хозяин мерка
+// merc - мерк
+// merc - мерк
+// alwaysRun - признак: мерк всегда перемещается бегом
+// cancelOnAttack - признак: если игрок атакует мерка, мерк слетит с этого игрока
+// loseDist - дистанция, при превышении которой между игроком и нпц, отменяется режим мерка.
+// При loseDist=0 - мерк не будет отставать от хозяина
+// mercMasterDist - дистанция, на которую будет стремиться приблизиться мерк при перемещении хозяина по карте
+bool Merc2Player(Critter & player, Critter & merc, bool alwaysRun, bool cancelOnAttack, uint loseDist, uint mercMasterDist) // Custom Mercs
+{
+	return Merc2Player(player, merc, alwaysRun, cancelOnAttack, loseDist, mercMasterDist, MERC_CUSTOM, false, false,0);
+}
+
+//* **************************** Отмена режима мерка у нпц ***************************** *//
+void CancelMerc(Critter & merc)
+{
+	for(uint i=MERC_BEGIN;i<=MERC_END;i++)
+	{
+		if(i!=MERC_IS_SLAVE)
+		merc.MercBase[i]=0;
+	}
+	merc.SetScript("");
+	merc.SetEvent(CRITTER_EVENT_IDLE, "");
+	merc.SetEvent(CRITTER_EVENT_SMTH_DEAD, "");
+	merc.SetEvent(CRITTER_EVENT_ATTACKED, "");
+	merc.SetEvent(CRITTER_EVENT_DEAD, "");
+	merc.SetEvent(CRITTER_EVENT_SMTH_ATTACKED, "");
+	merc.SetEvent(CRITTER_EVENT_GLOBAL_PROCESS, "");
+
+	CreateTimeEvent(RELEASE_TIME, "e_ReleaseMerc", merc.Id, true);
+}
+
+uint e_ReleaseMerc(uint[]@ val)
+{
+	Critter @ merc=GetCritter(val[0]);
+	if(valid(merc))
+	{
+		merc.ModeBase[MODE_GECK]=0;
+		merc.ModeBase[MODE_NO_HOME]=0;
+		// Если домашняя позиция нпц найдена, перемещаем его домой.
+		uint mapId=0;
+		uint16 hexX=0;
+		uint16 hexY=0;
+		uint8 dir=0;
+		merc.GetHomePos(mapId, hexX, hexY, dir);
+		if(mapId>0)
+		{
+			Map @ map=GetMap(mapId);
+			
+			// если не раб то возвращаем на место. (проверка по карте домашней позиции.)
+			if(valid(map) && map.GetProtoId()<MAP_geck02)
+			{
+				merc.StatBase[ST_REPLICATION_TIME]=0;
+				if(merc.IsDead()) merc.ToLife();
+				if(merc.TransitToMap(mapId, hexX, hexY, dir)) return 0;
+			}
+		}
+		
+		if(valid(merc.GetMap()) && merc.MercBase[MERC_IS_SLAVE]>0)
+		{
+			Item@[] items;
+			merc.GetItems(SLOT_INV,items);
+			MoveItems(items,merc.GetMap(), merc.HexX,merc.HexY);    
+		}
+		
+		// Домашняя позиция не найдена, криттера нужно удалять
+		// TODO: Сделать этот пункт настраиваемым
+		DeleteNpc(merc);
+	}
+	return 0;
+
+}
+
+//* *********************** Получение мерков игрока ******************** *//
+// Все мерки игрока записываются в переданный массив mercs
+// Возвращаемое значение - число найденных мерков
+// player - хозяин мерков
+uint GetPlayerMercs(Critter & player, Critter@ []& mercs)
+{
+	Map @map=player.GetMap();
+	mercs.resize(0);
+	if (!valid(map))
+	{
+		// Игрок на глобале
+		// можно и не найти всех мерков - поскольку после выхода на глобал у них уходит какоето время на присоедиение в группу
+		Critter@[] globalGrp=player.GetGlobalGroup();
+		if(valid(globalGrp))
+		{
+			for(uint i=0, iMax=globalGrp.length(); i<iMax; i++)
+			{
+				if(uint(globalGrp[i].MasterId)==player.Id)
+				{
+					mercs.insertLast(@globalGrp[i]);
+				}
+			}
+		}
+	}else{
+		Critter @[]critters;
+		if(map.GetCritters(0, FIND_LIFE_AND_KO|FIND_ONLY_NPC,critters)==0)
+		{
+			return 0;
+
+		}else{
+
+			for(uint i=0, iMax=critters.length(); i<iMax; i++)
+			{
+				if(uint(critters[i].MasterId)==player.Id)
+				{
+					mercs.insertLast(@critters[i]);
+				}
+			}
+		}
+	}
+	return mercs.length();
+}
+// Возвращает всех мерков хозяина с указанной NpcRole
+// player - хозяин мерка
+// mercs - список мерков данного хозяина с указанной ролью
+// mercRole - роль искомого мерка
+uint GetPlayerMercs(Critter & player, Critter@ []& mercs, int mercRole)
+{
+	Critter @[]critters;
+	if(GetPlayerMercs(player, critters)>0)
+	{
+		for(uint i=0, iMax=critters.length(); i<iMax; i++)
+		{
+			Critter @ merc=critters[i];
+			if (!valid(merc)) continue;
+
+			if(merc.Stat[ST_NPC_ROLE]==mercRole)
+			{
+				mercs.insertLast(@merc);
+			}
+		}
+		return mercs.length();
+	}else{
+		return 0;
+	}
+}
+
+// Возвращает первого найденного мерка с указанной NpcRole
+// player - хозяин мерка
+// mercRole - роль искомого мерка
+Critter @ GetPlayerMerc(Critter & player, int mercRole)
+{
+	Critter @[] mercs;
+	if(GetPlayerMercs(player, mercs)>0)
+	{
+		for(uint i=0, iMax=mercs.length(); i<iMax; i++)
+		{
+			Critter @ merc=mercs[i];
+			if (!valid(merc)) continue;
+
+			if(merc.Stat[ST_NPC_ROLE]==mercRole)
+			{
+				return merc;
+			}
+		}
+	}
+	return null;
+}
+/* ****************************** Дополнительные методы ****************************** */
+// Хозяин мерка
+Critter@ GetMaster(Critter& merc)
+{
+	 return GetCritter (merc.MasterId);
+}
+
+// Признак, является ли криттер чьим-то мерком
+bool IsMerc(Critter & merc)
+{
+	return merc.MasterId>0;
+}
+
+/* **************************************** DEBUG *************************************** */
+void Merc(Critter & cr, int mercId, int ld,int)
+{
+	Critter @ merc=GetCritter(mercId);
+	Merc2Player(cr, merc);
+}
+
+void MercParam(Critter & cr, int mercId, int param, int value)
+{
+	Critter @ merc=GetCritter(mercId);
+	if (!valid(merc)) return;
+	merc.MercBase[param]=value;
+}

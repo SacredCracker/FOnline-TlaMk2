@@ -1,0 +1,595 @@
+// Author: Dagnir, rifleman17
+// Cracker: ряд правок.
+// По сути скопирован скрипт map_barter_ground.fos
+#include "_animation.fos"
+#include "guards.fos"
+
+#define MSG_IM_HAVE_ILLEGAL_ITEMS     	  (129) // Номер сообщения, отсылаемого игроком, если у него в инвентаре есть запрещенные предметы
+#define MSG_CANCEL_PICKUP 				  (500)
+#define STR_NO_ILLEGAL_ITEMS          	  (5200) // Номер строки "ты зачем принес сюда это!"
+#define PLANE_LOOT                   	  (30)
+#define MESSAGE_PLEASE_KILL_ME_I_AM_IDIOT (13)
+#define STR_DOG_SNIFFED_EXPLOSIVES        (101002)
+
+#define ST_AGRESS						(ST_VAR9)
+
+#define _GUARD_DEN
+
+#include "city_guard.fos"
+
+import bool AddProsecutionPlane(Critter& npc, Critter@ target, uint priority, bool run) from "npc_planes";
+void _GuardDogInit(Critter& cr, bool firstTime)
+{
+if(firstTime)
+	{
+		for(uint i=0;i<=6;i++)
+		{
+			cr.StatBase[i]=10;
+		}
+		cr.StatBase[ST_REPLICATION_TIME]=60;
+		cr.StatBase[ST_ACTION_POINTS]=Random(10,16);
+		cr.StatBase[ST_ARMOR_CLASS]=Random(15,30);
+		cr.PerkBase[PE_MORE_CRITICALS]=Random(1,5);
+		
+		uint16 MaxLife=Random(120,200);
+		cr.StatBase[ST_MAX_LIFE] +=MaxLife;
+		cr.StatBase[ST_CURRENT_HP] +=MaxLife;
+		
+		cr.StatBase[ST_CRITICAL_RESISTANCE]=Random(30,65);
+		cr.StatBase[ST_CRITICAL_RESISTANCE]=85;
+		cr.PerkBase[PE_SNIPER]=1;
+		cr.PerkBase[PE_SLAYER]=1;
+		
+		cr.SkillBase[SK_UNARMED]=250;
+		cr.ModeBase[MODE_NO_LOOT]=1;
+		cr.ModeBase[MODE_NO_DROP]=1;
+		cr.ModeBase[MODE_NO_STEAL]=1;
+		cr.ModeBase[MODE_NO_PUSH]=1;
+		cr.ModeBase[MODE_NO_ENEMY_STACK]=1; 
+	}
+	cr.StatBase[ST_AGRESS]=0;
+	//cr.SetEvent(CRITTER_EVENT_SMTH_ATTACK,"_DogSmthAttack");
+	//cr.SetEvent(CRITTER_EVENT_MESSAGE,"_DogMessage");
+	cr.SetEvent(CRITTER_EVENT_PLANE_END,"_DogPlaneEnd"); 
+	cr.SetEvent(CRITTER_EVENT_SHOW_CRITTER,"_DogSmthCr");
+}
+
+int _DogPlaneEnd(Critter& npc, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem)
+{
+	if(plane.Type==AI_PLANE_WALK && npc.NpcPlaneParam[NPP_PROSECUTION_TARGET]!=0)
+	{
+		if(npc.Stat[ST_AGRESS]>=0 && npc.Stat[ST_AGRESS]<80)
+		{
+			npc.StatBase[ST_AGRESS]+=1;
+			npc.Say(SAY_SHOUT_ON_HEAD,"Тявкает");
+		}
+		else if(npc.Stat[ST_AGRESS]>=80 && npc.Stat[ST_AGRESS]<150)
+		{
+			npc.StatBase[ST_AGRESS]+=1;
+			npc.Say(SAY_SHOUT_ON_HEAD,"Рычит");
+		}
+		else
+		{
+			AddAttackPlane(npc,0,GetCritter(npc.NpcPlaneParam[NPP_PROSECUTION_TARGET]),true);
+			npc.StatBase[ST_AGRESS]=0;
+			return PLANE_DISCARD;
+		}
+		if(GetLocalVar(LVAR_safe_zone_entered_den,npc.NpcPlaneParam[NPP_PROSECUTION_TARGET])!=0) GetCritter(npc.NpcPlaneParam[NPP_PROSECUTION_TARGET]).SendMessage(MESSAGE_PLEASE_KILL_ME_I_AM_IDIOT,npc.NpcPlaneParam[NPP_PROSECUTION_TARGET], MESSAGE_TO_WHO_SEES_ME);
+	}
+	return PLANE_RUN_GLOBAL;
+}
+
+bool SearchInvenTnt(Critter& cr)
+{
+	if(cr.IsPlayer())
+	{
+		for(uint i=0, iMax=tntPidId.length(); i<iMax;i++)
+		{
+			if(valid(cr.GetItem(tntPidId[i], -1))) return true;
+		}
+	}
+	return false;
+}
+
+void _DogSmthCr(Critter& cr, Critter& showCr)
+{
+	if(SearchInvenTnt(showCr) && !sneak(showCr) && cr.NpcPlaneParam[NPP_PROSECUTION_TARGET]==0) 
+	{
+		cr.Say(SAY_SHOUT_ON_HEAD,"Тявкает");
+		if(showCr.IsPlayer() && showCr.IsLife()) showCr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT,  STR_DOG_SNIFFED_EXPLOSIVES); 
+		AddProsecutionPlane(cr, showCr,0,true);
+		if(GetLocalVar(LVAR_safe_zone_entered_den,showCr.Id)!=0) showCr.SendMessage(MESSAGE_PLEASE_KILL_ME_I_AM_IDIOT, showCr.Id, MESSAGE_TO_WHO_SEES_ME);
+	}
+	else if(sneak(showCr))
+	{
+		AddAttackPlane(cr, 0, showCr, showCr.Stat[ST_CURRENT_HP]-1,true);
+	}
+}
+
+void _PatrolDenInit(Critter & cr, bool firstTime)
+{
+	if(firstTime)
+	{
+	for(uint i=0;i<=6;i++)
+	{
+		cr.StatBase[i]=10;
+	}
+	cr.StatBase[ST_REPLICATION_TIME]=60;
+	cr.StatBase[ST_ACTION_POINTS]=Random(10,16);
+	cr.StatBase[ST_ARMOR_CLASS]=Random(25,40);
+	cr.PerkBase[PE_MORE_CRITICALS]=Random(1,5);
+    
+	uint16 MaxLife=Random(170,300);
+	cr.StatBase[ST_MAX_LIFE] +=MaxLife;
+	cr.StatBase[ST_CURRENT_HP] +=MaxLife;
+	
+	cr.StatBase[ST_CRITICAL_RESISTANCE]=Random(30,65);
+	cr.StatBase[ST_CRITICAL_RESISTANCE]=85;
+	cr.PerkBase[PE_SNIPER]=1;
+	cr.PerkBase[PE_SLAYER]=1;
+	
+	//ToDo: Сделать специализации на навык по которым будет выдавать инвентарь.
+	
+	cr.SkillBase[SK_SMALL_GUNS]=250;
+	cr.SkillBase[SK_BIG_GUNS]=250;
+	cr.SkillBase[SK_UNARMED]=250;
+	cr.SkillBase[SK_ENERGY_WEAPONS]=250;
+	cr.ModeBase[MODE_NO_LOOT]=1;
+	cr.ModeBase[MODE_NO_DROP]=1;
+	cr.ModeBase[MODE_NO_STEAL]=1;
+	cr.ModeBase[MODE_NO_PUSH]=1;
+	cr.ModeBase[MODE_NO_ENEMY_STACK]=1;
+	cr.ModeBase[MODE_UNLIMITED_AMMO]=1;	
+	}
+	
+	//cr.SetEvent(CRITTER_EVENT_SMTH_ATTACKED,"_GuardSmthAttacked");
+	//cr.SetEvent(CRITTER_EVENT_SMTH_ATTACK,"_GuardSmthAttack");
+	//cr.SetEvent(CRITTER_EVENT_SMTH_USE_ITEM,"_GuardSmthUseItem");
+	//cr.SetEvent(CRITTER_EVENT_SMTH_DROP_ITEM,"_GuardSmthDropItem");
+	cr.SetEvent(CRITTER_EVENT_MESSAGE,"_GuardMessage");
+	//cr.SetEvent(CRITTER_EVENT_PLANE_END,"_NpcPlaneEnd");
+	//cr.SetEvent(CRITTER_EVENT_SMTH_MOVE_ITEM,"_SmthItemMove");  
+	//cr.SetEvent(CRITTER_EVENT_SHOW_CRITTER,"_SmthCr");
+	//cr.SetEvent(CRITTER_EVENT_SMTH_STEALING,"_GuardSmthStealing");
+}
+
+
+void _GuardInit(Critter & cr, bool firstTime)
+{
+	_EventGumanoidGuardInit(cr, firstTime);
+	if(firstTime)
+	{
+	cr.StatBase[ST_REPLICATION_TIME]=60;
+	cr.StatBase[ST_ACTION_POINTS]=16;
+	cr.StatBase[ST_ARMOR_CLASS]=35;
+	cr.PerkBase[PE_MORE_CRITICALS]=18;
+    cr.StatBase[ST_BONUS_LOOK]=60;
+	uint16 MaxLife=Random(250,400);
+	cr.StatBase[ST_MAX_LIFE] +=MaxLife;
+	cr.StatBase[ST_CURRENT_HP] +=MaxLife;
+	cr.StatBase[ST_CRITICAL_RESISTANCE]=80;
+	cr.SkillBase[SK_SMALL_GUNS]=250;
+	cr.SkillBase[SK_BIG_GUNS]=250;
+	cr.SkillBase[SK_UNARMED]=250;
+	cr.SkillBase[SK_ENERGY_WEAPONS]=250;
+	cr.ModeBase[MODE_NO_LOOT]=1;
+	cr.ModeBase[MODE_NO_DROP]=1;
+	cr.ModeBase[MODE_NO_STEAL]=1;
+	cr.ModeBase[MODE_NO_PUSH]=1;
+	cr.ModeBase[MODE_NO_ENEMY_STACK]=1; 
+	cr.ModeBase[MODE_UNLIMITED_AMMO]=1;
+	}
+	
+	cr.SetEvent(CRITTER_EVENT_SMTH_ATTACKED,"_GuardSmthAttacked");
+	cr.SetEvent(CRITTER_EVENT_SMTH_STEALING,"_GuardSmthStealing");
+	cr.SetEvent(CRITTER_EVENT_SMTH_ATTACK,"_GuardSmthAttack");
+	cr.SetEvent(CRITTER_EVENT_SMTH_USE_ITEM,"_GuardSmthUseItem");
+	cr.SetEvent(CRITTER_EVENT_SMTH_DROP_ITEM,"_GuardSmthDropItem");
+	cr.SetEvent(CRITTER_EVENT_SMTH_DEAD,"_NpcSmthDead");
+	cr.SetEvent(CRITTER_EVENT_PLANE_END,"_NpcPlaneEnd");
+	cr.SetEvent(CRITTER_EVENT_SMTH_MOVE_ITEM,"_SmthItemMove");  
+	cr.SetEvent(CRITTER_EVENT_SHOW_CRITTER,"_SmthCr");
+}
+
+void _NCRPolicemanInit(Critter & cr, bool firstTime)
+{	
+	for(int resist=ST_NORMAL_RESIST; resist<=ST_ELECTRO_RESIST; resist++)
+		cr.StatBase[resist]=40;
+	for(int absorb=ST_NORMAL_ABSORB; absorb<=ST_ELECTRO_ABSORB; absorb++)
+		cr.StatBase[absorb]=5;
+		
+	cr.StatBase[ST_EMP_ABSORB]=500;
+	cr.StatBase[ST_EXPLODE_RESIST]=60;
+	
+	cr.StatBase[ST_NPC_ROLE_CITY]=9;
+	
+	cr.StatBase[ST_REPLICATION_TIME]=35;
+	cr.StatBase[ST_ACTION_POINTS]=16;
+	cr.StatBase[ST_ARMOR_CLASS]=50;
+    cr.StatBase[ST_BONUS_LOOK]=60;
+	cr.StatBase[ST_MAX_LIFE]=527;
+	cr.StatBase[ST_CURRENT_HP]=590;
+	cr.PerkBase[PE_BONUS_RANGED_DAMAGE]=39;
+	cr.PerkBase[PE_MORE_CRITICALS]=21;
+	cr.StatBase[ST_CRITICAL_RESISTANCE]=70;
+	cr.SkillBase[SK_SMALL_GUNS]=290;
+	cr.SkillBase[SK_UNARMED]=250;
+	cr.ModeBase[MODE_NO_STEAL]=1;
+	cr.ModeBase[MODE_NO_PUSH]=1;
+	cr.ModeBase[MODE_NO_ENEMY_STACK]=1;
+	cr.SetEvent(CRITTER_EVENT_SMTH_STEALING,"_GuardSmthStealing");
+	cr.SetEvent(CRITTER_EVENT_SMTH_ATTACK,"_GuardSmthAttack");
+	cr.SetEvent(CRITTER_EVENT_SMTH_USE_ITEM,"_GuardSmthUseItem");
+	cr.SetEvent(CRITTER_EVENT_SMTH_DROP_ITEM,"_GuardSmthDropItem");
+	cr.SetEvent(CRITTER_EVENT_MESSAGE,"_GuardMessage");
+	cr.SetEvent(CRITTER_EVENT_SMTH_DEAD,"_NpcSmthDeadNCR");
+	cr.SetEvent(CRITTER_EVENT_PLANE_END,"_NpcPlaneEnd");
+	cr.SetEvent(CRITTER_EVENT_SMTH_MOVE_ITEM,"_SmthItemMoveNCR");  
+	cr.SetEvent(CRITTER_EVENT_SHOW_CRITTER,"_SmthCrNCR");
+	cr.SetEvent(CRITTER_EVENT_MESSAGE,"_GuardOnMessage");
+}
+
+void _SmthCrNCR(Critter& cr, Critter& showCr)
+{
+	Item@ item=_CritGetItemHand(showCr);
+	if (!valid(item)) return;
+	if(item.GetType()==ITEM_TYPE_WEAPON && _WeaponSkill(item.Proto,item.Mode)!=SK_UNARMED && !cr.IsDead()
+		&& _WeaponSkill(item.Proto,item.Mode)!=SK_MELEE_WEAPONS && showCr.Stat[ST_NPC_ROLE_CITY]!=9)
+	{
+		if ((GetLocalVar(LVAR_safe_zone_entered_den,showCr.Id)).GetValue()==1)
+		{			
+			NpcPlane@ plane=CreatePlane();
+			plane.Type=AI_PLANE_ATTACK;
+			plane.Priority=AI_PLANE_ATTACK_PRIORITY;
+			plane.Attack_TargId=showCr.Id;
+			plane.Attack_MinHp=__DeadHitPoints;
+			plane.Attack_IsGag=false;
+			plane.Attack_GagHexX=0;
+			plane.Attack_GagHexY=0;
+			plane.Attack_LastHexY=showCr.HexY;
+			plane.Attack_LastHexX=showCr.HexX;
+			plane.Run=true;
+			cr.AddPlane(plane);
+			if(Random(0,20)>5) cr.SayMsg(SAY_SHOUT_ON_HEAD, TEXTMSG_DLG, DLGSTR(cr.Stat[ST_DIALOG_ID], 3));// Тут нпц может что-то сказать.
+		}
+	}
+}
+
+void _SmthCr(Critter& cr, Critter& showCr)
+{
+	if(showCr.IsDead()) return;
+	uint penalty=GetPenaltyCity(showCr);
+	if(penalty>5 && (GetLocalVar(LVAR_safe_zone_entered_den,showCr.Id)).GetValue()==1) 
+	{
+		NpcPlane@ plane=CreatePlane();
+		plane.Type=AI_PLANE_ATTACK;
+		plane.Priority=AI_PLANE_ATTACK_PRIORITY;
+		plane.Attack_TargId=showCr.Id;
+		plane.Attack_MinHp=__DeadHitPoints;
+		plane.Attack_IsGag=false;
+		plane.Attack_GagHexX=0;
+		plane.Attack_GagHexY=0;
+		plane.Attack_LastHexY=showCr.HexY;
+		plane.Attack_LastHexX=showCr.HexX;
+		plane.Run=true;
+		cr.AddPlane(plane);
+	}
+	Item@ item=_CritGetItemHand(showCr);
+	if (!valid(item)) return;
+	if(item.GetType()==ITEM_TYPE_WEAPON && _WeaponSkill(item.Proto,item.Mode)!=SK_UNARMED && !cr.IsDead()
+		&& _WeaponSkill(item.Proto,item.Mode)!=SK_MELEE_WEAPONS)
+		{
+			if ((GetLocalVar(LVAR_safe_zone_entered_den,showCr.Id)).GetValue()==1)
+			{
+				NpcPlane@ plane=CreatePlane();
+				plane.Type=AI_PLANE_ATTACK;
+				plane.Priority=AI_PLANE_ATTACK_PRIORITY;
+				plane.Attack_TargId=showCr.Id;
+				plane.Attack_MinHp=__DeadHitPoints;
+				plane.Attack_IsGag=false;
+				plane.Attack_GagHexX=0;
+				plane.Attack_GagHexY=0;
+				plane.Attack_LastHexY=showCr.HexY;
+				plane.Attack_LastHexX=showCr.HexX;
+				plane.Run=true;
+				cr.AddPlane(plane);
+				if(Random(0,20)>5) cr.SayMsg(SAY_SHOUT_ON_HEAD, TEXTMSG_DLG, DLGSTR(cr.Stat[ST_DIALOG_ID], 3));// Тут нпц может что-то сказать.
+			}
+		}
+}
+
+void _SmthItemMoveNCR(Critter& gd, Critter& cr, Item& item, uint8 fromSlot)
+{
+	uint8 toSlot=item.CritSlot;
+	if(item.GetType()==ITEM_TYPE_WEAPON && toSlot==SLOT_HAND1 && _WeaponSkill(item.Proto,item.Mode)!=SK_UNARMED && !gd.IsDead()
+		&& _WeaponSkill(item.Proto,item.Mode)!=SK_MELEE_WEAPONS && GetDistantion(gd.HexX, gd.HexY, cr.HexX, cr.HexY)<=30
+		&& cr.Stat[ST_NPC_ROLE_CITY]!=9)
+		{
+			if ((GetLocalVar(LVAR_safe_zone_entered_den,cr.Id)).GetValue()==1)
+			{	
+				NpcPlane@ plane=CreatePlane();
+				plane.Type=AI_PLANE_ATTACK;
+				plane.Priority=AI_PLANE_ATTACK_PRIORITY;
+				plane.Attack_TargId=cr.Id;
+				plane.Attack_MinHp=__DeadHitPoints;
+				plane.Attack_IsGag=false;
+				plane.Attack_GagHexX=0;
+				plane.Attack_GagHexY=0;
+				plane.Attack_LastHexY=cr.HexY;
+				plane.Attack_LastHexX=cr.HexX;
+				plane.Run=true;
+				gd.AddPlane(plane);
+				gd.SayMsg(SAY_SHOUT_ON_HEAD, TEXTMSG_DLG, DLGSTR(gd.Stat[ST_DIALOG_ID], 3));// Тут нпц может что-то сказать.
+			}
+		}
+}
+
+void _SmthItemMove(Critter& gd, Critter& cr, Item& item, uint8 fromSlot)
+{
+	uint8 toSlot=item.CritSlot;
+	if(item.GetType()==ITEM_TYPE_WEAPON && toSlot==SLOT_HAND1 && _WeaponSkill(item.Proto,item.Mode)!=SK_UNARMED && !gd.IsDead()
+		&& _WeaponSkill(item.Proto,item.Mode)!=SK_MELEE_WEAPONS && GetDistantion(gd.HexX, gd.HexY, cr.HexX, cr.HexY)<=30)
+	{
+		if ((GetLocalVar(LVAR_safe_zone_entered_den,cr.Id)).GetValue()==1)
+		{
+			NpcPlane@ plane=CreatePlane();
+			plane.Type=AI_PLANE_ATTACK;
+			plane.Priority=AI_PLANE_ATTACK_PRIORITY;
+			plane.Attack_TargId=cr.Id;
+			plane.Attack_MinHp=__DeadHitPoints;
+			plane.Attack_IsGag=false;
+			plane.Attack_GagHexX=0;
+			plane.Attack_GagHexY=0;
+			plane.Attack_LastHexY=cr.HexY;
+			plane.Attack_LastHexX=cr.HexX;
+			plane.Run=true;
+			gd.AddPlane(plane);
+			gd.SayMsg(SAY_SHOUT_ON_HEAD, TEXTMSG_DLG, DLGSTR(gd.Stat[ST_DIALOG_ID], 3));// Тут нпц может что-то сказать.
+		}
+	}
+}
+
+void _GuardSmthDropItem(Critter& npc, Critter& fromCr, Item& item)
+{
+	if (!npc.IsLife()) return;
+	if(fromCr.IsPlayer()&&npc.IsLife())
+	{
+		uint pid=item.GetProtoId();
+		if(pid==PID_ACTIVE_PLASTIC_EXPLOSIVE||pid==PID_ACTIVE_MINE||pid==PID_ACTIVE_DYNAMITE)
+		{
+			AttackCityPlane(npc,fromCr);
+		}
+	}
+	if (!CheckItemIsIllegal(item)) return;
+	if(GetDistantion(npc.HexX, npc.HexY, fromCr.HexX, fromCr.HexY)<=35) AddPickPlane(npc, AI_PLANE_ATTACK_PRIORITY, item, 0, true);	
+}
+
+void _GuardSmthUseItem(Critter& npc, Critter& fromCr, Item& item, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+	if(fromCr.IsPlayer()&&npc.IsLife())
+	{
+		uint pid=item.GetProtoId();
+		if ((pid==PID_PLASTIC_EXPLOSIVES||pid==PID_MINE||pid==PID_TOGGLE_SWITCH
+		||pid==PID_DYNAMITE||pid==PID_ACTIVE_DYNAMITE||pid==PID_ACTIVE_PLASTIC_EXPLOSIVE
+		||pid==PID_ACTIVE_MINE || pid==PID_TRAP_PLANT_SPIKE || pid==PID_ACTIVE_TRAP_PLANT_SPIKE
+		||pid==PID_TRAP_PLANT_SPIKE_MK2 ||pid==PID_ACTIVE_TRAP_PLANT_SPIKE_MK2) && GetDistantion(npc.HexX, npc.HexY, fromCr.HexX, fromCr.HexY)<=35)
+		{
+			AttackCityPlane(npc, fromCr);
+		}
+	}
+}
+
+void _NpcSmthDead(Critter& npc, Critter& fromCrit, Critter@ killer)
+{
+	if (!valid(fromCrit)) return;
+	if(GetDistantion(npc.HexX, npc.HexY, fromCrit.HexX, fromCrit.HexY)<=35)
+	{
+		if (!valid(killer)) return;
+		if(_CritCanDropItemsOnDead(fromCrit) && killer.Id==npc.Id)
+			AddWalkPlane(npc,0,PLANE_LOOT,fromCrit.Id,fromCrit.HexX,fromCrit.HexY,6,true,1);
+		if(killer.IsPlayer() && !targetEnemy(npc,fromCrit))
+		{
+			AddPenaltyCity(killer,1);
+			AttackCityPlane(npc,killer);
+		}
+	}
+}
+
+void _NpcSmthDeadNCR(Critter& npc, Critter& fromCrit, Critter@ killer)
+{
+	if(_CritCanDropItemsOnDead(fromCrit) && GetDistantion(npc.HexX, npc.HexY, fromCrit.HexX, fromCrit.HexY)<=35)
+		AddWalkPlane(npc,0,PLANE_LOOT,fromCrit.Id,fromCrit.HexX,fromCrit.HexY,6,true,1);
+}
+
+// Illegal items list and checks
+
+bool HasIllegalItems(Critter & cr)
+{
+	Item@[] items;
+	if(cr.GetItems(-1, items)==0) return false;
+	for(uint i=0, iMax=items.length(); i<iMax; i++)
+	{
+		if(CheckItemIsIllegal(items[i])) return true;		
+	}
+	return false;
+}
+
+bool CheckItemIsIllegal(Item @ item)
+{
+	if (!valid(item)) return false;
+	return Present(item.GetProtoId(), Pids_IllegalItems);
+}
+
+int _NpcPlaneEnd(Critter& npc, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem)
+{
+	if(plane.Identifier==PLANE_LOOT && reason==REASON_SUCCESS)
+	{
+		Critter@ cr=::GetCritter(plane.IdentifierExt);
+		if(valid(cr) && cr.IsDead())
+		{
+			Item@[] items;
+			cr.GetItems(SLOT_INV,items);
+			cr.GetItems(SLOT_HAND1,items);
+			cr.GetItems(SLOT_HAND2,items);
+			npc.GetMap().GetItems(cr.HexX,cr.HexY,items);
+
+			for(uint i=0, iMax=items.length(); i<iMax;i++)
+			{
+				int type=items[i].GetType();
+				if(type<ITEM_TYPE_ARMOR || type>ITEM_TYPE_KEY) @items[i]=null;
+			}
+			MoveItems(items,npc);
+			npc.SendMessage(MSG_CANCEL_PICKUP, plane.IdentifierExt, MESSAGE_TO_ALL_ON_MAP);
+			_CritAnimatePickup(npc);
+			npc.Wait(__Breaktime);
+		}
+		return PLANE_DISCARD; // Skip global and end plane
+	}
+	return PLANE_RUN_GLOBAL; // Run global
+}
+
+
+void t_Enter(Critter& cr, Scenery& trigger, bool entered, uint8 dir)
+{
+	Map@ map=cr.GetMap();
+	if (!valid(map)) return;
+	if(not cr.IsPlayer()) return;
+	Item@ item=_CritGetItemHand(cr);
+	if(valid(item))
+	{
+		if ((item.GetType()==ITEM_TYPE_WEAPON && _WeaponSkill(item.Proto,item.Mode)!=SK_UNARMED 
+			&& _WeaponSkill(item.Proto,item.Mode)!=SK_MELEE_WEAPONS) || GetPenaltyCity(cr)>4)
+		{
+			Critter@[] critters;
+			if(map.GetCrittersHex(cr.HexX,cr.HexY,30,FIND_LIFE_AND_KO|FIND_ONLY_NPC,critters)!=0)
+			{
+				NpcPlane@ plane=CreatePlane();
+				plane.Type=AI_PLANE_ATTACK;
+				plane.Priority=AI_PLANE_ATTACK_PRIORITY;
+				plane.Attack_TargId=cr.Id;
+				plane.Attack_MinHp=__DeadHitPoints;
+				plane.Attack_IsGag=false;
+				plane.Attack_GagHexX=0;
+				plane.Attack_GagHexY=0;
+				plane.Attack_LastHexY=cr.HexY;
+				plane.Attack_LastHexX=cr.HexX;
+				plane.Run=true;
+				for(uint i=0, iMax=critters.length(); i<iMax; i++) 
+				{
+					if(critters[i].StatBase[ST_NPC_ROLE]==55 || critters[i].StatBase[ST_NPC_ROLE]==155) critters[i].AddPlane(plane);
+				}
+			}
+		}
+	}
+	GameVar@ var=GetLocalVar(LVAR_safe_zone_entered_den, cr.Id);
+	var=1;
+	
+}
+
+void t_Leave(Critter& player, Scenery& trigger, bool entered, uint8 dir)
+{
+	if(not player.IsPlayer()) return;
+	GameVar@ var=GetLocalVar(LVAR_safe_zone_entered_den, player.Id);
+	var=0;
+}
+
+void t_Warn(Critter& cr, Scenery& trigger, bool entered, uint8 dir, int npcRole)
+{
+	Map@ map=cr.GetMap();
+	if (!valid(map)) return;
+	if(not cr.IsPlayer()) return;
+	Item@ item=_CritGetItemHand(cr);
+	if(valid(item))
+	{
+		if(item.GetType()==ITEM_TYPE_WEAPON && _WeaponSkill(item.Proto,item.Mode)!=SK_UNARMED 
+			&& _WeaponSkill(item.Proto,item.Mode)!=SK_MELEE_WEAPONS)
+		{
+			cr.Wait(0);
+			Critter@[] critters;
+			if(map.GetCrittersHex(cr.HexX,cr.HexY,	//Ищем нпц в пределах видимости игрока, иначе нету смысла что-то говорить
+				((cr.StatBase[ST_PERCEPTION]*3)+__LookNormal),FIND_LIFE|FIND_ONLY_NPC,critters)!=0)
+			{
+				for(uint i=0, iMax=critters.length(); i<iMax;i++) 
+				{
+					if(critters[i].StatBase[ST_NPC_ROLE]==55 || critters[i].StatBase[ST_NPC_ROLE]==155) 
+					{
+						critters[i].SayMsg(SAY_SHOUT_ON_HEAD, TEXTMSG_DLG, DLGSTR(critters[i].Stat[ST_DIALOG_ID], 1));
+						return;	// Говорить будет только один нпц.
+					}
+				}
+			}
+		}
+	}
+}
+
+void _DenInCritterMap(Map& den, Critter& cr)
+{
+	Critter@[] critters;
+	if(den.GetCrittersHex(cr.HexX,cr.HexY,	//Ищем нпц в пределах видимости игрока, иначе нету смысла что-то говорить
+		((cr.StatBase[ST_PERCEPTION]*3)+__LookNormal),FIND_LIFE|FIND_ONLY_NPC,critters)!=0)
+	{
+		for(uint i=0, iMax=critters.length(); i<iMax;i++) 
+		{
+			if(critters[i].StatBase[ST_NPC_ROLE]==55 || critters[i].StatBase[ST_NPC_ROLE]==155) 
+			{
+				uint[] EventValues={cr.Id,critters[i].Id};
+				CreateTimeEvent(__FullSecond+50,"e_Message",EventValues,false);
+				//critters[i].SayMsg(SAY_SHOUT_ON_HEAD, TEXTMSG_DLG, DLGSTR(critters[i].Stat[ST_DIALOG_ID], KillerCr?0:2));
+				break;	// Говорить будет только один нпц.
+			}
+		}
+	}
+}
+
+uint e_Message(uint[]@ values)
+{
+	Critter@ guard=GetCritter(values[1]);
+	Critter@ guest=GetCritter(values[0]);
+	bool KillerCr=GetPenaltyCity(guest)>5;
+	guard.SayMsg(SAY_SHOUT_ON_HEAD, TEXTMSG_DLG, DLGSTR(guard.Stat[ST_DIALOG_ID], KillerCr?0:2));
+	return 0;
+}
+
+// Сообщения
+void _GuardOnMessage(Critter& cr, Critter& fromCrit, int message, int value)
+{
+	if(message==MESSAGE_PLEASE_KILL_ME_I_AM_IDIOT)
+		{
+			NpcPlane@ plane=CreatePlane();
+			plane.Type=AI_PLANE_ATTACK;
+			plane.Priority=AI_PLANE_ATTACK_PRIORITY;
+			plane.Attack_TargId=fromCrit.Id;
+			plane.Attack_MinHp=__DeadHitPoints;
+			plane.Attack_IsGag=false;
+			plane.Attack_GagHexX=0;
+			plane.Attack_GagHexY=0;
+			plane.Attack_LastHexY=fromCrit.HexY;
+			plane.Attack_LastHexX=fromCrit.HexX;
+			plane.Run=true;
+			cr.AddPlane(plane);
+			if(Random(0,20)>5) cr.SayMsg(SAY_SHOUT_ON_HEAD, TEXTMSG_DLG, DLGSTR(cr.Stat[ST_DIALOG_ID], 3));// Тут нпц может что-то сказать.
+		}
+}
+
+void _DenKillCritterMap(Map& map, Critter& cr, Critter@ killer)
+{
+	Critter@[] critters;
+	if(map.GetCrittersHex(cr.HexX,cr.HexY,
+		((cr.StatBase[ST_PERCEPTION]*3)+__LookNormal),FIND_LIFE|FIND_ONLY_NPC,critters)!=0)
+	{
+		AddPenaltyCity(killer,1);
+	}
+}
+
+// Наследуем класс поведения охранника
+class CGuardsManagerForDen : CGuards
+{
+	CGuardsManagerForDen()
+	{
+		super();
+		//Dialog=198;
+		SaveZoneGameVar=LVAR_safe_zone_entered_den;
+	}
+}
+
+CGuardsManagerForDen Guard;	// Экземпляр класса поведения охранника

@@ -1,0 +1,110 @@
+// city
+// ST_NPC_ROLE_CITY - перечисление ролей.
+
+/* Список локаций с Ролями:
+ 1.Дэн
+	Возможные роли дэна: 
+		1. Наркоман
+		2. Житель
+		3. Бандит
+		4. Продавец
+		5. Бармен
+		6. Клиент бара
+		7. Игрок (казино)
+		8. Ребенок
+		9. Охранник
+		10. Нарокторговец
+		11. Проститутки
+
+*/
+	#define CITY_den_patrol	(1)
+	#define CITY_den_dog_guard (2)
+		
+		
+/*		
+ 2.Кламат
+	Возможные роли Кламата:
+		1. Житель
+		2. Траппер (трапперы выступающие в роли охраников)
+		3. Траппер-житель
+		4. Траппер (траппер входящий в группу охраников)
+		5. Брамин
+		6. Пастух (Р: Торр)
+		7. Ребенок
+		8. Торговец
+		9. Вышибала (охрана баров)
+		10. Клиент бара
+		11. Бармен
+		12. Мясник
+		13. Брахмин
+		
+ 3.Модок
+ 4.Город убежище
+ 5.Геко
+ 6.Брокен Хилс
+ 7.Нью-Рино
+ 8.Убежище 15
+ 9.НКР
+ 10.Реддинг
+ 11.Сан Франциско
+ 12.Наварро
+ 13.Арройо
+ 14.Примитивное племя
+*/
+
+// 10..19 Klamath
+#define CITY_KLAMATH_ROLE_BEGIN	(10)
+
+#define CITY_klamath_butcher 		(10)
+#define CITY_klamath_citizen 		(11)
+#define CITY_klamath_trappers_guard	(12)
+#define CITY_klamath_brahmin_butchers 	(13)
+#define CITY_klamath_patrol 		(14)
+#define CITY_klamath 		(15)
+#define CITY_KLAMATH_ROLE_END		(19)
+// 100 - Guest City
+
+// Военные базы
+#define CITY_BASE_ATACKER			(32)	// Моб, атакующий базу
+ #define CITY_BASE_CITIZEN			(33)	// Перманентные жильцы базы
+
+// 150 - Aggressive guest
+#define CITY_AGGRES_BEGIN			(150)
+
+#define CITY_enemy					(175)
+
+// 300 - Animals
+#define CITY_ANIMALS_AGGRES_BEGIN	(300)
+
+#define	CITY_animals_geckon			(301)
+#define	CITY_animals_radscorpion	(302)
+#define	CITY_animals_rat			(303)	
+
+#define CITY_ANIMALS_AGGRES_END		(350) 
+
+#define CITY_AGGRES_END		(400)
+
+//Шаблонки пусть идут с номеров 600
+
+
+#define CITY_GUARDING #(x)	(x==CITY_klamath_trappers_guard || x==TEMPLATE_GUARD)
+#define NOT_HELP #(x)	(x>=TEMPLATE_GUARD_BAR && x<=TEMPLATE_ANIMAL)
+
+#define TEMPLATE_GUARD				(601)
+#define TEMPLATE_INHABITANT 		(602)
+#define TEMPLATE_GUARD_BAR			(603)
+#define TEMPLATE_CHILD 				(604)
+#define TEMPLATE_MOB 				(605)
+#define TEMPLATE_ANIMAL 			(606)
+
+#define TEMPLATE_GRUP_PATROL 			(610)
+
+// Вторичные характеристики.
+#define CITY_NONE_PROTECT			(611)
+
+// Индефикаторы планов 
+
+#define IDENTIFIER_KLAMATH_BUTCHER	(1000)
+	#define IDENTIFIEREXT_PENALTY_WALK_BRAHMIN	(1)
+	#define IDENTIFIEREXT_PENALTY_KILL_BRAHMIN	(2)
+	

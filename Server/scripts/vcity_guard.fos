@@ -1,0 +1,38 @@
+// Author: heX
+// —крипты охраны в √ороде ”бежище
+// охранники прос€т убрать оружие.
+// охранники реагируют на употребление алкогол€ и наркотиков.
+
+#include "_macros.fos"
+
+// добавл€ем библиотеку
+#include "guard_lib.fos"
+
+// включаем обработчики событий
+#include "guard_lib_events.fos"
+
+// WARN:
+// € тут рискую и делаю наследование...
+// (а наследование еще не совсем стабильно работает в AngScr)
+// но вроде все работает нормально.
+
+// наследуем класс библиотеки
+class CGuardsManagerForVault : CGuardsManager
+{
+	CGuardsManagerForVault()
+	{
+		super();
+		Dialog=DIALOG_vc_guard;
+	}
+}
+
+// класс с алгоритмом
+CGuardsManagerForVault Grd;
+
+bool GuardItemTest(Item@ item) // export
+{
+	return Grd.GuardItemTest(item);
+}
+
+
+// constructor [ heX ]

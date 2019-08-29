@@ -1,0 +1,134 @@
+// Author: cvet
+#include "_macros.fos"
+#include "quest_warehouse_h.fos"
+#include "_colors.fos"
+
+import bool AddAttackPlane(Critter& npc, uint priority, Critter& target) from "npc_planes";
+
+#define TURRET_PID             (480)
+#define STATE_TURRETS_OFF      (10)
+#define SCIENCE_OFF_TURRETS    (110)
+#define STR_TURRETS_ON         (1200)
+#define STR_TURRETS_OFF        (1201)
+#define STR_COMPUTER_BEEP      (1205)
+#define NPC_ROLE_TURRET        (1)
+
+bool IsTurretActive(Critter& turret)
+{
+	if(not turret.IsLife()) return false;
+	Map@ map=turret.GetMap();
+	if(not valid(map)) return false;
+	return map.GetData(STATE_TURRETS_OFF)==0;
+}
+
+void TurretScanArea(Critter& turret)
+{
+	if(not IsTurretActive(turret)) return;
+	Critter@[] players;
+	if(turret.GetCritters(false,FIND_LIFE_AND_KO|FIND_ONLY_PLAYERS,players)>0)
+	{
+		for(uint i=0;i<players.length();i++)
+		{
+			Critter@ player=players[i];
+			turret.AddEnemyInStack(player.Id);
+			AddAttackPlane(turret,0,player);
+		}
+	}
+}
+
+void TurretsTurnOn(Map& map)
+{
+	if(map.GetData(STATE_TURRETS_OFF)==0) return; // Already on
+	map.SetData(STATE_TURRETS_OFF,0);
+
+	// Scan area for attack
+	Critter@[] turrets;
+	if(map.GetCritters(TURRET_PID,FIND_LIFE_AND_KO|FIND_ONLY_NPC,turrets)>0)
+	{
+		for(uint i=0;i<turrets.length();i++)
+		{
+			TurretScanArea(turrets[i]);
+		}
+	}
+}
+
+void TurretsTurnOff(Map& map)
+{
+	if(map.GetData(STATE_TURRETS_OFF)!=0) return; // Already off
+	map.SetData(STATE_TURRETS_OFF,1);
+
+	// If turrets has attack plane, clear it
+	Critter@[] turrets;
+	if(map.GetCritters(TURRET_PID,FIND_ALL|FIND_ONLY_NPC,turrets)>0)
+	{
+		for(uint i=0;i<turrets.length();i++)
+		{
+			turrets[i].ErasePlane(AI_PLANE_ATTACK,true);
+			turrets[i].ClearEnemyStack();
+		}
+	}
+}
+
+// Computer On/Off turrets
+bool s_Computer(Critter& cr, Scenery& computer, int skill, Item@ item)
+{
+	Map@ map=cr.GetMap();
+	if(not valid(map)) return true;
+
+	if(skill!=SK_SCIENCE || cr.Skill[SK_SCIENCE]<SCIENCE_OFF_TURRETS)
+	{
+		map.SetTextMsg(computer.HexX,computer.HexY,COLOR_GRAY,TEXTMSG_TEXT,STR_COMPUTER_BEEP);
+		return true;
+	}
+
+	if(map.GetData(STATE_TURRETS_OFF)!=0) // Turn on passive turrets
+	{
+		TurretsTurnOn(map);
+		map.SetTextMsg(computer.HexX,computer.HexY,COLOR_GRAY,TEXTMSG_TEXT,STR_TURRETS_ON);
+	}
+	else // Turn off active turrets
+	{
+		TurretsTurnOff(map);
+		map.SetTextMsg(computer.HexX,computer.HexY,COLOR_GRAY,TEXTMSG_TEXT,STR_TURRETS_OFF);
+		
+		// Устанавливаем автоудаление и видимость при наличии предмета типа ГЕКК
+		Location@ loc=map.GetLocation();
+		loc.AutoGarbage=true;
+		loc.GeckVisible=true;
+	}
+	return true;
+}
+
+// Turret functions
+void _TurretInit(Critter& turret, bool firstTime)
+{
+	turret.SetEvent(CRITTER_EVENT_IDLE,"_TurretIdle");
+	turret.SetEvent(CRITTER_EVENT_SHOW_CRITTER,"_TurretShowCritter");
+	turret.SetEvent(CRITTER_EVENT_PLANE_BEGIN,"_TurretBeginPlane");
+	turret.ModeBase[MODE_UNLIMITED_AMMO]=1;
+}
+
+void _TurretIdle(Critter& turret)
+{
+	TurretScanArea(turret);
+}
+
+void _TurretShowCritter(Critter& turret, Critter& cr)
+{
+	if(cr.IsPlayer() && IsTurretActive(turret))
+	{
+		turret.AddEnemyInStack(cr.Id);
+		AddAttackPlane(turret,0,cr);
+	}
+}
+
+int _TurretBeginPlane(Critter& turret, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem)
+{
+	if(plane.Type==AI_PLANE_ATTACK && not IsTurretActive(turret)) return PLANE_DISCARD;
+	return PLANE_RUN_GLOBAL;
+}
+
+
+
+
+

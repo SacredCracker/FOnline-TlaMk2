@@ -1,0 +1,185 @@
+// Author: rifleman17
+// Хранилище отобранных у игроков и других нпц предметов на глобальной карте
+#include "_macros.fos"
+#include "entire.fos"
+#include "_npc_pids.fos"
+#include "_bags.fos"
+#include "_teams.fos"
+
+#define LOC_DELTA              (3 * __GlobalMapZoneLength) // Радиус установки локации
+#define LOC_SEARCH             (6 * __GlobalMapZoneLength) // Радиус поиска локации
+#define ENTIRE_GUARD           (177)
+#define ENTIRE_DIR             (178)
+#define MAX_CONTAINER_ITEMS    (200)
+
+
+
+const uint16[][] GlobalCoords=
+{
+    { 668, 1121 },
+    { 375, 709 },
+    { 274, 367 },
+    { 685, 218 },
+    { 1224, 632 },
+    { 1073, 1181 },
+    { 1019, 119 }
+};
+
+// GameEvent
+uint e_CreateStoreHouse(uint[] @ values)
+{
+    // Выбираем случайные координаты
+    uint idx=Random(0, GlobalCoords.length() - 1);
+    // Ищем склад
+    Location@[] locations;
+    if(GetLocations(GlobalCoords[ idx ][ 0 ], GlobalCoords[ idx ][ 1 ], LOC_SEARCH, locations) > 0)
+    {
+        for(uint i=0, l=locations.length(); i<l; i++)
+        {
+            Location@ loc=locations[ i ];
+            if(valid(loc))
+            {
+                GameVar@ isStoreHouse=GetLocalVar(LLVAR_storehouse_cont_id, loc.Id);
+                if(valid(isStoreHouse) && isStoreHouse > 0)
+                    return 0;                     // в данном регионе уже есть склад
+            }
+        }
+    }
+    // Не найдена локация в данной области
+    uint locId=CreateLocation(LOCATION_DesertEncounter12,
+                                 GlobalCoords[ idx ][ 0 ] + Random(-1 * LOC_DELTA, LOC_DELTA),
+                                 GlobalCoords[ idx ][ 1 ] + Random(-1 * LOC_DELTA, LOC_DELTA),
+                                 null);
+    uint  pid=0;
+    uint8 dir=0;
+    if(locId > 0)
+    {
+        Location@ loc=GetLocation(locId);
+        if(valid(loc))
+        {
+            loc.AutoGarbage=false;
+            loc.Visible=false;
+            Map@ map=loc.GetMapByIndex(0);
+            if(valid(map))
+            {
+                map.SetScript("_MapInit");
+                Item@[] items;
+                map.GetItems(128, items);
+                if(items.length() > 0)
+                {
+                    GameVar@ contId=GetLocalVar(LLVAR_storehouse_cont_id, locId);
+                    if(valid(contId))
+                    {
+                        contId=items[ 0 ].Id;
+                        loc.Visible=false;
+                        loc.AutoGarbage=false;
+                        Entire[] entires;
+                        uint16 hexX=0, hexY=0;
+                        GetNearEntire(map, ENTIRE_DIR, hexX, hexY);
+                        if(ParseEntires(map, entires, ENTIRE_GUARD) > 0)
+                        {
+                            for(uint i=0, l=entires.length(); i<l; i++)
+                            {
+                                dir=GetDirection(entires[ i ].HexX, entires[ i ].HexY, hexX, hexY);
+                                pid=Random(0, 1)==0 ? NPC_PID_JACKAL_SNIPER : NPC_PID_JACKAL_TERMINATOR;
+								int[] params={ST_TEAM_ID, TEAM_Bandit, ST_NPC_ROLE, 17, ST_BAG_ID, (pid==NPC_PID_JACKAL_SNIPER ? BAG_Sniper1 : BAG_Term1),ST_REPLICATION_TIME,-1};
+                                map.AddNpc(pid, entires[ i ].HexX, entires[ i ].HexY, dir, params, null, "encounter_npc@_NpcInit");
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+void _MapInit(Map& map, bool firstTime)
+{
+    map.SetEvent(MAP_EVENT_IN_CRITTER, "_MapInCritter");
+}
+
+void _MapInCritter(Map& map, Critter& cr)
+{
+    if(cr.IsPlayer())
+    {
+        Critter@[] npc;
+        if(map.GetCritters(0, FIND_LIFE | FIND_ONLY_NPC, npc) > 0)
+        {
+            for(uint i=0, l=npc.length(); i<l; i++)
+            {
+                Critter@ hostile=npc[ i ];
+                if(valid(hostile) && hostile.Stat[ ST_NPC_ROLE ]==17)
+                    hostile.AddEnemyInStack(cr.Id);
+            }
+        }
+    }
+}
+
+void SaveLoot2Storehouse(uint16 WorldX, uint16 WorldY, Item@[] items)
+{
+    // Ищем локацию
+    Location@[] locations;
+    Location@ storeHouse;
+    GameVar@  isStoreHouse;
+    if(GetLocations(WorldX, WorldY, LOC_SEARCH, locations) > 0)
+    {
+        for(uint i=0, l=locations.length(); i<l; i++)
+        {
+            Location@ loc=locations[ i ];
+            if(valid(loc))
+            {
+                @storeHouse=loc;
+                @isStoreHouse=GetLocalVar(LLVAR_storehouse_cont_id, loc.Id);
+                if(valid(isStoreHouse) && isStoreHouse > 0)
+                    break;
+            }
+        }
+    }
+    if(valid(storeHouse) && storeHouse.Visible==false && valid(isStoreHouse) && isStoreHouse > 0)
+    {
+        Item@ container=GetItem(isStoreHouse.GetValue());
+        if(valid(container))
+        {
+            MoveItems(items, container, 0);
+            if(CountContainerItems(container) > MAX_CONTAINER_ITEMS)
+            {
+                storeHouse.Visible=true;
+                CreateTimeEvent(__FullSecond + REAL_HOUR(24), "e_DeleteLocation", storeHouse.Id, true);
+            }
+            return;
+        }
+
+    }
+}
+
+uint CountContainerItems(Item& container)
+{
+    Item@ item;
+    Item@[] items;
+    uint  count=0;
+    container.GetItems(0, items);
+    for(uint i=0, l=items.length(); i<l; i++)
+    {
+        @item=items[ i ];
+        if(valid(item))
+        {
+            if(item.GetType()==ITEM_TYPE_WEAPON ||
+                item.GetType()==ITEM_TYPE_ARMOR ||
+                item.GetType()==ITEM_TYPE_DRUG)
+                count +=item.GetCount();
+            else
+                count +=1;
+        }
+    }
+    return count;
+}
+
+
+uint e_DeleteLocation(uint[] @ values)
+{
+    Location@ loc=GetLocation(values[ 0 ]);
+    if(valid(loc))
+        DeleteLocation(loc.Id);
+    return 0;
+}

@@ -1,0 +1,42 @@
+#define EVENT_RACING_PREPARE       (1)
+#define EVENT_RACING_BEGIN         (2)
+#define EVENT_RACING_RUN           (3)
+#define EVENT_RACING_STOP          (4)
+#define EVENT_STOREHOUSE           (5)
+#define EVENT_CACHE                (6)
+#define EVENT_PURGATORY_PREPARE    (7)
+#define EVENT_PURGATORY_BEGIN      (8)
+#define EVENT_PURGATORY_FIGHT      (9)
+#define EVENT_PURGATORY_END        (10)
+
+#define STATUS_NEVER_OCCURED       (0)
+#define STATUS_RUNNING             (1)
+#define STATUS_OCCURED             (2)
+#define STATUS_ENDED               (3)
+
+#define GAME_MONTH                 # (mon)                 (mon * 30 * 24 * 60 * 60)
+#define GAME_DAY                   # (day)                   (day * 24 * 60 * 60)
+#define GAME_WEEK                  # (week)                 (GAME_DAY(7) * week)
+#define GAME_HOUR                  # (hour)                 (hour * 60 * 60)
+
+// void DeclareEvent(uint idx, string handler, uint timeOccure, bool timeAbsolute, bool defaultStart, uint nextEventIdx)
+// void DeclareCondition(uint idx, uint eventCondition, uint status)
+
+DeclareEvent(EVENT_RACING_PREPARE, "game_event_racing@e_RunPreparePhase", GAME_MONTH(4), false, true, EVENT_RACING_BEGIN);
+DeclareCondition(EVENT_RACING_PREPARE, EVENT_RACING_STOP, STATUS_OCCURED);
+DeclareEvent(EVENT_RACING_BEGIN, "game_event_racing@e_RunBeginPhase", GAME_WEEK(2), false, false, 0);
+DeclareCondition(EVENT_RACING_BEGIN, EVENT_RACING_PREPARE, STATUS_OCCURED);
+DeclareEvent(EVENT_RACING_RUN, "game_event_racing@e_RunRacingPhase", GAME_DAY(1), false, false, EVENT_RACING_STOP);
+DeclareEvent(EVENT_RACING_STOP, "game_event_racing@e_RunStopPhase", GAME_MONTH(1), false, false, EVENT_RACING_PREPARE);
+DeclareCondition(EVENT_RACING_STOP, EVENT_RACING_RUN, STATUS_OCCURED);
+DeclareEvent(EVENT_STOREHOUSE, "game_event_storehouse@e_CreateStoreHouse", GAME_MONTH(1), false, true, EVENT_STOREHOUSE);
+DeclareCondition(EVENT_STOREHOUSE, EVENT_STOREHOUSE, STATUS_OCCURED);
+DeclareEvent(EVENT_CACHE, "game_event_caches@e_StatusOn", GAME_DAY(7), false, true, EVENT_CACHE);
+DeclareEvent(EVENT_PURGATORY_PREPARE, "purgatory@e_RunPreparationStage", GAME_MONTH(2), false, true, EVENT_PURGATORY_BEGIN);
+DeclareCondition(EVENT_PURGATORY_PREPARE, EVENT_PURGATORY_END, STATUS_OCCURED);
+DeclareEvent(EVENT_PURGATORY_BEGIN, "purgatory@e_RunBeginStage", GAME_DAY(1), false, false, EVENT_PURGATORY_FIGHT);
+DeclareCondition(EVENT_PURGATORY_BEGIN, EVENT_PURGATORY_PREPARE, STATUS_OCCURED);
+DeclareEvent(EVENT_PURGATORY_FIGHT, "purgatory@e_RunFightStage", REAL_MINUTE(10), false, false, EVENT_PURGATORY_END);
+DeclareCondition(EVENT_PURGATORY_FIGHT, EVENT_PURGATORY_BEGIN, STATUS_OCCURED);
+DeclareEvent(EVENT_PURGATORY_END, "purgatory@e_RunEndStage", GAME_DAY(2), false, false, EVENT_PURGATORY_PREPARE);
+DeclareCondition(EVENT_PURGATORY_END, EVENT_PURGATORY_FIGHT, STATUS_OCCURED);

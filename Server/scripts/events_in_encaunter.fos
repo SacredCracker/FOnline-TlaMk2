@@ -1,0 +1,751 @@
+/*================================================================================================================================
+==Автор: Ra																													==
+==Скрипт запускає та обробляє події на енкаунтерах.																			==
+==Зарезервовані стати для мобів:																								==
+==		ST_VAR0 тимчасово зберігає досвід за вбивство моба																		==
+==		ST_VAR1 тимчасово зберігає поточні ХП моба																				==
+==		ST_VAR2 тимчасово зберігає повні ХП моба																				==
+==		ST_VAR3 Зберігає інформацію про використання інструменту на кріттера (ресурси)											==
+==Зарезервовані стати для персонажів:																							==									==
+==		ST_VAR3 для зберігання порядкового номеру персонажа (що б виключити з алгоритму будь які пошуки по масивах)				==
+==		ST_VAR4 для зберігання інформації, чи прийшов персонаж уже з перком PE_CAUTIOUS_NATURE, чи отримав його на локації		==
+==Є обмеження (COUNT_PLAYERS) максимальної кількості гравців на одному енкаунтері одночасно.									==
+==Якщо їх буде більше, то остані досвід не отримають. Чим менше це значення, тим краще для швидкодії.							==
+==Мксимум - 54, так як інші елементи масиву карти для вільних данних, вже зайняті.												==
+==Також, якщо ХП моба буде знято більше ніж 65 535 одним гравцем - розрахунок буде не вірний.									==
+==================================================================================================================================*/
+
+#include "_macros.fos"
+#include "_vars.fos"
+#include "entire.fos"
+#include "_bags.fos"
+#include "_npc_pids.fos"
+#include "_colors.fos"
+#include "_msgstr.fos"
+#include "_teams.fos"
+
+#define SMALL_GUN                         (0)
+#define ENERGY_GUN                        (1)
+#define BIG_GUN                           (2)
+
+#define NO_ENC   						  (0)	// не енкаунтер
+#define OVERALL  					      (1)	// загальний енкаунтер
+#define RELIABE  						  (2)	// індивідуальний енкаунтер
+
+#define COUNT_PLAYERS_IN_HIDDING_PLEACE	  (55)  //
+#define IS_CLERABLE_ENC					  (56)  //
+#define RADAR_VISIBLE				  (57)	//
+#define IS_CAVE							  (59)	//
+
+#define TIMEOUT_RESTORE_CONTAINER		REAL_SECOND(3)
+#define MYSTERIOUS_STRANGER_TIMEOUT		REAL_MINUTE(30)
+
+
+#define COUNT_PLAYERS                     (26)  // максимальна кількість гравців для розрахунку
+
+import bool Merc2Player(Critter & player, Critter & merc, uint16 type) from "merc";
+import bool IsMerc(Critter & merc) from "merc";
+import Critter@ GetMaster(Critter& merc) from "merc";
+
+void initEvents(Map & map, bool firstTime)
+{
+	map.SetData(RADAR_VISIBLE, 1);
+	map.SetEvent(MAP_EVENT_OUT_CRITTER,"_MapOutCritter");
+	map.SetEvent(MAP_EVENT_IN_CRITTER,"_MapInCritter");
+	map.SetEvent(MAP_EVENT_CRITTER_DEAD,"_MobDead");
+	map.SetEvent(MAP_EVENT_FINISH,"e_MapErase");	// Это заплатка на случай неудаления инормации о мобах, после рестарта сервера и удаления локации
+	
+	map.SetData(0, 0);
+}
+
+// ВНИМАНИЕ
+// Эта функция - заплатка на случай неудаления инормации о мобах, после рестарта сервера и удаления локации
+// Добавлена, посколькую при рестарте локация может быть удалена без CRITTER_EVENT_FINISH для криттеров, которые на неё находятся
+// Если вы это читаете и данный баг в СДК исправлен - можете удалить эту функцию
+void e_MapErase(Map& map, bool deleted)
+{
+	if(!deleted) return;
+	
+	Critter@[] critters;
+	map.GetCritters(0,FIND_LIFE_AND_KO|FIND_ONLY_NPC,critters);
+	
+	for(uint i=0, iMax=critters.length(); i<iMax; i++)
+		EraseAnyData("mob_in_enc"+critters[i].Id);
+}
+
+// моб отримав пошкодження
+bool _MobDamage(Critter& target, Critter& attacker)
+{
+		 if(target.ModeBase[MODE_ENCAUNTER_MOB]!=1 || target.IsDead()) return false;
+		 if (!valid(target) || !valid(attacker)) return false;
+		
+		// Map @map=attacker.GetMap();
+		// Розрахунок отриманого досвіду, пропорційно нанесенному пошкодженню та досвіду, визначеному в прототипі моба,
+		// з обмеженням в разі відновлення ХП моба та значень менше нуля
+		int hp=target.StatBase[ST_CURRENT_HP]>0?target.Stat[ST_CURRENT_HP]:0; 
+		if(attacker.IsPlayer())
+		{	
+			uint16[] PlayersToMobDamage;
+			if(GetAnyData("mob_in_enc"+target.Id, PlayersToMobDamage))
+			{
+				PlayersToMobDamage[attacker.StatBase[ST_VAR3]]+=target.StatBase[ST_VAR1]>hp?target.StatBase[ST_VAR1]-hp:0; // Пошкодження від кожного гравця в своєму елементі масиву.
+				SetAnyData("mob_in_enc"+target.Id, PlayersToMobDamage);
+			}
+		}
+		else if(attacker.MercBase[MERC_MASTER_ID]>0)
+		{
+			Critter @ master=GetCritter(attacker.MercBase[MERC_MASTER_ID]);
+			if(not valid(master)) return false;
+			
+			uint16[] PlayersToMobDamage;
+			if(GetAnyData("mob_in_enc"+target.Id, PlayersToMobDamage))
+			{
+				int dmg=target.StatBase[ST_VAR1]>hp?target.StatBase[ST_VAR1]-hp:0;
+				PlayersToMobDamage[master.StatBase[ST_VAR3]]+=PlayersToMobDamage[master.StatBase[ST_VAR3]]>dmg?dmg:0;
+				SetAnyData("mob_in_enc"+target.Id, PlayersToMobDamage);
+			}
+		}
+	target.StatBase[ST_VAR1]=hp; // Перезапис нового поточного значення ХП
+	return false;
+}
+
+// моб здох
+void _MobDead(Map& map, Critter& cr, Critter@ killer)
+{
+	// Таинственный незнакомец
+	if(cr.StatBase[ST_VAR8] !=0 && cr.ModeBase[MODE_ENCAUNTER_MOB]==0)
+	{
+		Critter@ master=GetCritter(cr.StatBase[ST_VAR8]);
+		if(not valid(master)) return;
+		GameVar@ timeout=GetLocalVar(LVAR_mysterious_stranger_timeout, master.Id);
+		if(not valid(timeout)) return;
+		timeout=__FullSecond + REAL_MINUTE(25);
+		return;
+	}
+	
+	// EXPERIENCE
+	if(cr.ModeBase[MODE_ENCAUNTER_MOB]==1 && map.GetData(0)>0)
+	{
+		uint16[] PlayersToMobDamage;
+		GetAnyData("mob_in_enc"+cr.Id, PlayersToMobDamage);
+		for(int i=0, iMax=map.GetData(0); i<iMax; i++)
+		{
+			Critter@ player=GetCritter(map.GetData(i+1));
+			if(valid(player))
+				player.StatBase[ST_EXPERIENCE] +=(cr.StatBase[ST_VAR0]*PlayersToMobDamage[i])/cr.StatBase[ST_VAR2];
+		}
+		cr.StatBase[ST_KILL_EXPERIENCE]=cr.StatBase[ST_VAR0];		
+	}
+	// Перестраховка на випадок респауну моба, або не видалення енкаунтера. В цьому разі, досвід за нього знову буде по старому механізму.
+	EraseAnyData("mob_in_enc"+cr.Id);
+}
+
+
+void _MapInCritter(Map& map, Critter& cr)
+{
+	if(cr.ModeBase[MODE_ENCAUNTER_MOB]==1 && cr.IsLife())
+	{
+		cr.StatBase[ST_VAR0]=cr.StatBase[ST_KILL_EXPERIENCE]; // Досвід за вбивство
+		cr.StatBase[ST_KILL_EXPERIENCE]=0;			
+		cr.StatBase[ST_VAR1]=cr.Stat[ST_MAX_LIFE]<cr.Stat[ST_CURRENT_HP]?cr.Stat[ST_MAX_LIFE]:cr.Stat[ST_CURRENT_HP]; // Поточні ХП
+		cr.StatBase[ST_VAR2]=cr.StatBase[ST_VAR1]; // Початкові ХП
+		cr.StatBase[ST_VAR3]=1;
+		cr.SetEvent(CRITTER_EVENT_FINISH, "_MobErase");
+		cr.SetEvent(CRITTER_EVENT_RESPAWN, "_MobRespawn");
+		
+		uint16[] PlayersToMobDamage (COUNT_PLAYERS);
+		for(uint i=0; i<COUNT_PLAYERS; i++)
+			PlayersToMobDamage[i]=0;
+			
+		SetAnyData("mob_in_enc"+cr.Id, PlayersToMobDamage);
+		return;
+	}
+	
+	if(cr.IsPlayer())
+	{		
+		// Таинственный незнакомец
+		addMysterionStranger(map, cr);
+		
+		cr.SetEvent(CRITTER_EVENT_USE_ITEM ,"_CrUseItem");
+		//cr.SetEvent(CRITTER_EVENT_USE_SKILL ,"_CrUseSkill");
+		
+		//PE_CAUTIOUS_NATURE
+		if(cr.Perk[PE_CAUTIOUS_NATURE]>0) 
+		{
+			cr.StatBase[ST_PERCEPTION_EXT]+=3;
+			cr.StatBase[ST_VAR4]=3;
+		}
+		
+		uint8 number=map.GetData(0)+1;
+		if(number>COUNT_PLAYERS) return;
+		map.SetData(0, number);
+		map.SetData(number, cr.Id);
+		cr.StatBase[ST_VAR3]=number-1;
+		
+		//cave_mobs.fos
+		if(map.GetData(IS_CAVE)==1)
+			CreateTimeEvent(__FullSecond+REAL_SECOND(8), "cave_mobs@e_PlayerHere", cr.Id, false);
+	}	
+}
+
+// Ресурси
+bool _CrUseItem(Critter& cr, Item& item, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+	if(item.GetProtoId()!=PID_SUPER_TOOL_KIT || not valid(onCritter))
+		return false;
+
+	cr.TimeoutBase[TO_SK_REPAIR]=REPAIR_TIMEOUT(cr);
+
+	if(onCritter.StatBase[ST_VAR3]!=1)
+		return false;
+
+	onCritter.StatBase[ST_VAR3]=0;
+	uint16 pid=0;
+
+	uint16 crPid=onCritter.GetProtoId();
+
+	if ((crPid==NPC_PID_SENTRY_BOT_1 || crPid==NPC_PID_SENTRY_BOT_2) && Random(1,100)<20 && cr.SkillBase[SK_SCIENCE]>219)
+	{
+		cr.AddItem(PID_ROBOT_PARTS,1);
+		cr.SayMsg(SAY_NETMSG,TEXTMSG_GAME,STR_PARSE_ROBOT);
+		return true;
+	}
+
+	if(crPid==NPC_PID_ROBOMIND && Random(1,100)<15 && cr.SkillBase[SK_SCIENCE]>199)
+	{
+		cr.AddItem(PID_ROBOT_MOTIVATOR,1);
+		cr.SayMsg(SAY_NETMSG,TEXTMSG_GAME,STR_PARSE_ROBOT);
+		return true;
+	}
+	return false;
+}
+
+/*bool _CrUseSkill(Critter& cr, int skill, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+	if(not valid(onCritter) || skill<0) return false;
+
+	if ((onCritter.GetProtoId()!=NPC_PID_ROBOMIND && onCritter.GetProtoId()!=NPC_PID_RoboEye) || onCritter.IsLife())
+		return false;
+
+	if(onCritter.StatBase[ST_VAR3]==0)
+	{
+		cr.SayMsg(SAY_NETMSG,TEXTMSG_GAME,STR_SYSTEM_IS_DAMAGED);
+		cr.TimeoutBase[TO_SK_REPAIR]=REPAIR_TIMEOUT(cr);
+		return true;
+	}
+
+	if(onCritter.Anim2Dead!=ANIM2_DEAD_FRONT && onCritter.Anim2Dead!=ANIM2_DEAD_BACK && onCritter.GetProtoId()!=NPC_PID_ROBOMIND)
+	{
+		cr.SayMsg(SAY_NETMSG,TEXTMSG_GAME,STR_ROBOT_IS_DESTROY);
+		return true;
+	}
+
+	if(skill==SK_SCIENCE && cr.SkillBase[SK_SCIENCE]>139)
+	{
+		cr.TimeoutBase[TO_SK_SCIENCE]=SCIENCE_TIMEOUT(cr);
+		if(onCritter.StatBase[ST_VAR3]==2)
+		{
+			cr.SayMsg(SAY_NETMSG,TEXTMSG_GAME,STR_SYSTEM_IS_DAMAGED);
+			return true;
+		}
+
+		onCritter.StatBase[ST_VAR3]=2;	
+		if(Random(1,100)<cr.SkillBase[SK_SCIENCE]/3)
+		{
+			Merc2Player(cr, onCritter, 4);
+			onCritter.ModeBase[MODE_ENCAUNTER_MOB]=0;
+			onCritter.MercBase[MERC_MASTER_DIST]=10;
+			onCritter.MercBase[MERC_CANCEL_ON_GLOBAL]=0;
+			onCritter.MercBase[MERC_CANCEL_ON_ATTACK]=0;
+			onCritter.MercBase[MERC_ASSIST_MASTER]=1;
+			onCritter.MercBase[MERC_CANCEL_TIME]=__FullSecond + REAL_HOUR(18);
+			onCritter.StatBase[ST_TEAM_ID]=TEAM_Player;
+			onCritter.ModeBase[MODE_GECK]=1;
+			EraseAnyData("mob_in_enc"+onCritter.Id);
+			onCritter.DropPlanes();
+			onCritter.ClearEnemyStack();
+			cr.SayMsg(SAY_NETMSG,TEXTMSG_GAME,STR_ROBOT_IS_MERC);
+
+			Critter@[] mercs;
+			Map@ map=cr.GetMap();
+			if(not valid(map)) return false;
+			if(map.GetCritters(0,FIND_LIFE_AND_KO|FIND_ONLY_NPC,mercs)>0)
+				for(uint i=0, iMax=mercs.length(); i<iMax; i++)
+					if(IsMerc(mercs[i]))
+						mercs[i].EraseEnemyFromStack(onCritter.Id);
+		}
+		else cr.SayMsg(SAY_NETMSG,TEXTMSG_GAME,STR_ROBOT_NO_MERC);
+		
+		return true;
+	}
+	
+	if(skill==SK_REPAIR && cr.SkillBase[SK_REPAIR]>139)
+	{
+		onCritter.StatBase[ST_VAR3]=0;
+		cr.TimeoutBase[TO_SK_REPAIR]=REPAIR_TIMEOUT(cr);
+		if(Random(1,1)<cr.SkillBase[SK_REPAIR]/3 && IsMerc(onCritter))
+		{
+			onCritter.ToLife();
+			onCritter.StatBase[ST_CURRENT_HP]=onCritter.StatBase[ST_MAX_LIFE];
+			cr.SayMsg(SAY_NETMSG,TEXTMSG_GAME,STR_ROBOT_IS_REPAIR);
+		}
+		else cr.SayMsg(SAY_NETMSG,TEXTMSG_GAME,STR_ROBOT_NO_REPAIR);
+		return true;
+	}
+
+	return false;
+}*/
+
+//LVAR_robo_merc
+
+
+// кріттер вийшов з мапи
+void _MapOutCritter(Map& map, Critter& cr)
+{
+	cr.SetEvent(CRITTER_EVENT_USE_ITEM ,"");
+	cr.SetEvent(CRITTER_EVENT_USE_SKILL ,"");
+
+	//PE_CAUTIOUS_NATURE
+	if(cr.Perk[PE_CAUTIOUS_NATURE]>0 && cr.StatBase[ST_VAR4]==3) 
+	{
+		cr.StatBase[ST_PERCEPTION_EXT]-=3;
+		cr.StatBase[ST_VAR4]=0;	
+	}
+	
+	// Обнуление таинственного странника
+	if(not valid(cr.GetMap()))	
+	{
+		Critter@ merc = GetCritter(cr.StatBase[ST_VAR8]);
+		cr.StatBase[ST_VAR8]=0;
+		if(not valid(merc)) return;
+		DeleteNpc(merc);
+	}
+}
+
+void _MobErase(Critter& cr, bool deleted)
+{
+	if(deleted)
+		EraseAnyData("mob_in_enc"+cr.Id);
+}
+
+void _MobRespawn(Critter& cr)
+{
+	if(cr.ModeBase[MODE_ENCAUNTER_MOB]!=0)
+		DeleteNpc(cr);
+}
+
+//*******************************************
+//****** PERK MYSTERIOUS STRANGER ***********
+//*******************************************
+
+//Багажники
+#define BAG_Small1          (67)
+#define BAG_Small2          (117)
+#define BAG_Small3          (167)
+#define BAG_Small4          (191)
+#define BAG_Energy1		    (274)
+#define BAG_Energy2		    (263)
+#define BAG_Energy3		    (275)
+#define BAG_Energy4		    (261)
+
+const uint16[] Bug_Level1={BAG_Small1,BAG_Energy1};
+const uint16[] Bug_Level2={BAG_Small2,BAG_Energy2};
+const uint16[] Bug_Level3={BAG_Small3,BAG_Energy3};
+const uint16[] Bug_Level4={BAG_Small4,BAG_Energy4};
+
+// Таинственный странник
+void addMysterionStranger(Map& map, Critter& cr)
+{	
+	// Перевірка на перк MYSTERIOUS STRANGER
+	if(cr.Perk[PE_MYSTERIOUS_STRANGER]<1) 				return;
+	if(Random(1,100)>(25+cr.StatBase[ST_LUCK]*4))		return;
+	if(cr.StatBase[ST_VAR8]!=0) 						return;
+	cr.StatBase[ST_VAR8]=1;
+	
+	GameVar@ timeout=GetLocalVar(LVAR_mysterious_stranger_timeout, cr.Id);
+	if(uint(timeout.GetValue()) > __FullSecond)
+		return;
+		
+	string script;
+	int bug;
+
+	Critter@ merc;
+		
+	uint crPid;
+	if(cr.StatBase[ST_LEVEL]<15)
+	{
+		crPid=601;
+		bug=Bug_Level1[Random(0,Bug_Level1.length()-1)];
+	}
+	else if(cr.StatBase[ST_LEVEL]<22)
+	{
+		crPid=602;
+		bug=Bug_Level2[Random(0,Bug_Level2.length()-1)];
+	}
+	else if(cr.StatBase[ST_LEVEL]<26)
+	{
+		crPid=603;
+		bug=Bug_Level3[Random(0,Bug_Level3.length()-1)];
+	}
+	else if(cr.StatBase[ST_LEVEL]<30)
+	{
+		crPid=604;
+		bug=Bug_Level3[Random(0,Bug_Level3.length()-1)];
+	}
+	else 
+	{
+		crPid=605;
+		bug=Bug_Level4[Random(0,Bug_Level4.length()-1)];
+	}
+
+	int[] paramsMerc={
+			ST_BAG_ID, bug};
+			
+	uint entNum=map.CountEntire(0);
+	uint16 hexX=0;
+	uint16 hexY=0;
+	for(uint8 i=0; i<entNum; i++)
+	{
+		if(map.GetEntireCoords(0, entNum-1, hexX, hexY))
+			if(map.IsHexPassed(hexX, hexY))
+				break;
+	}
+	
+	if(hexX==0)	return;
+	
+	@merc=map.AddNpc(crPid, hexX, hexY, cr.Dir, paramsMerc, null, null);
+		
+	if(not valid(merc)) return;
+	Merc2Player(cr, merc, 4);
+	merc.MercBase[MERC_MASTER_DIST]=6;
+	merc.MercBase[MERC_CANCEL_ON_GLOBAL]=1;
+	merc.MercBase[MERC_ASSIST_MASTER]=1;
+	merc.MercBase[MERC_CANCEL_ON_ATTACK]=0;
+	merc.ModeBase[MODE_GECK]=0;
+	merc.SkillBase[SK_SNEAK]=cr.SkillBase[SK_SNEAK] + 65;
+	merc.ModeBase[MODE_HIDE]=cr.ModeBase[MODE_HIDE];
+	merc.PerkBase[PE_SILENT_RUNNING]=cr.PerkBase[PE_SILENT_RUNNING];
+	merc.StatBase[ST_TEAM_ID]=TEAM_Player;
+	merc.StatBase[ST_VAR8]=cr.Id;
+	cr.StatBase[ST_VAR8]=merc.Id;
+}
+
+//*******************************************
+//************* HIDING PLACE ****************
+//*******************************************
+
+// Перевіряє надійність локації та можливість встановлення ретранслятора
+uint reliabilityMap (uint pid)
+{
+	if(pid>=MAP_e_desert9_hiding_pleace && pid<=MAP_e_city8_hiding_pleace) return RELIABE;
+	else if ((pid>=MAP_e_city1 && pid<=MAP_e_city8) || (pid>=MAP_e_desert1 && pid<=MAP_e_desert12) 
+		|| (pid>=MAP_e_mountain1 && pid<=MAP_e_mountain7) || (pid>=MAP_e_cave0_out && pid<=MAP_e_cave5_in)
+		|| (pid>=MAP_e_ocean1 && pid<=MAP_e_ocean_trader) || (pid>=MAP_e_coast1 && pid<=MAP_e_coast5_cave))
+		return OVERALL;
+	else return NO_ENC;
+}
+
+// Ініціалізація ретранслятора
+void _LocBugInit(Item& item, bool firstTime)
+{
+	item.SetEvent(ITEM_EVENT_USE,"_LocVisible");
+}
+
+// Обробка видимості та збереження локації
+bool _LocVisible(Item& item, Critter& cr, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+	Map @ map=cr.GetMap();
+	if(not valid(map)) return false;
+	
+	// Перевірка чи локація є згенерованим енкаунтером
+	if(reliabilityMap(map.GetProtoId())==NO_ENC)
+	{
+		cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_HIDING_NOT_ENC); //"Активация ретранслятора тут не имеет смысла."
+		return true;
+	}
+	
+	// Перевірка, чи не має вже іншої індивідуальної локації
+	GameVar@ game_map=GetLocalVar(LVAR_hiding_place_location, cr.Id);
+	Location@ loc;
+	if(game_map.GetValue()!=0)
+		@loc=GetLocation(game_map.GetValue());
+
+	Location@ thisLoc=map.GetLocation();
+	
+	if(valid(loc))
+		if(thisLoc.Id==loc.Id) return false;
+
+	// Якщо це уже існуюче укриття
+	if(thisLoc.GetMapCount()>1)
+	{
+		Map @ hiddingPleaceMap=thisLoc.GetMapByIndex(1);
+		if(not valid(hiddingPleaceMap)) return false;
+		int countPlayersInMap=hiddingPleaceMap.GetData(COUNT_PLAYERS_IN_HIDDING_PLEACE);
+		if(countPlayersInMap>0) 
+		{
+			ShowDialog(cr);
+			return true;
+		}
+	}
+
+	if(reliabilityMap(map.GetProtoId())==OVERALL) 
+	{			
+		cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT,  STR_HIDING_UNSAFE); //"Вы активировали ретранслятор, хоть вас не покидает чувство, что место слишком заметно и ненадежно."
+		InitHidingPlace(map, cr, OVERALL);
+		return true;
+	}
+
+
+	if(valid(loc))
+	{
+		ShowDialog(cr); // Запустити діалог підтвердження на видалення старої локації
+		return true;
+	}
+
+	if(item.GetProtoId()!=PID_LOC_BUG) return true;
+		
+	if(reliabilityMap(map.GetProtoId())==RELIABE)
+	{
+		cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT,  STR_HIDING_ACTIVATED); //"Вы активировали ретранслятор в надежно спрятаном от глаз месте."
+		InitHidingPlace(map, cr, RELIABE);
+	}
+
+	return true;
+}
+
+void ShowDialog(Critter& cr)
+{
+	cr.ShowScreen(SCREEN_DIALOGBOX, 1, "answer_EatEgg");
+	cr.SayMsg(SAY_DIALOGBOX_TEXT, TEXTMSG_TEXT, STR_HIDING_COMFIRM_DELETE); //"Координаты старой локации будут безвозвратно удалены с вашего пип-боя. Вы не сможете вернутся на старое место и забрать спрятанные вещи. Стереть старую локацию?"
+	cr.SayMsg(SAY_DIALOGBOX_BUTTON(0), TEXTMSG_TEXT, STR_HIDING_COMFIRM_COMFIRM); //"ДА, СТЕРЕТЬ ЛОКАЦИЮ."
+}
+
+void answer_EatEgg(Critter& cr, uint answerI, string& answerS)
+{
+	if(answerI !=0) return;
+		
+	GameVar@ game_map=GetLocalVar(LVAR_hiding_place_location, cr.Id);
+	Location@ oldLoc;
+	if(game_map.GetValue()!=0)
+		@oldLoc=GetLocation(game_map.GetValue());
+		
+	if(valid(oldLoc))
+	{
+		Map @ hiddingPleaceMap=oldLoc.GetMapByIndex(1);
+		if(not valid(hiddingPleaceMap)) return;
+		int countPlayersInMap=hiddingPleaceMap.GetData(COUNT_PLAYERS_IN_HIDDING_PLEACE)-1;
+		//Log("countPlayersInMap="+countPlayersInMap);
+		if(countPlayersInMap>0)
+		{
+			cr.UnsetKnownLoc(true, oldLoc.Id);
+			hiddingPleaceMap.SetData(COUNT_PLAYERS_IN_HIDDING_PLEACE, countPlayersInMap);
+		}
+		else
+		{
+			Location@ newLoc=GetLocation(CreateLocation(oldLoc.GetProtoId(), oldLoc.WorldX, oldLoc.WorldY, null));
+			// Параметри нової локації
+			newLoc.Visible=false;     // Невидима
+			newLoc.GeckVisible=false; // Невидима при наявності ГЕКК
+			newLoc.AutoGarbage=true; // Відсутнє автовидалення
+			
+			//Цикл по кількості карт на локації
+			for(uint m=0, mMax=oldLoc.GetMapCount(); m<mMax; m++)
+			{
+				Map@ oldMap=oldLoc.GetMapByIndex(m);
+				Map@ newMap=newLoc.GetMapByIndex(m);
+							
+				FromMapToMap(oldMap, newMap);				
+			}
+			
+			oldLoc.AutoGarbage=true;
+			oldLoc.Update();
+			
+			//Видалення на всякий выпадок
+			DeleteLocation(oldLoc.Id);
+		}
+		game_map=0;
+	}
+
+	// Якщо це уже існуюче укриття
+	Location@ thisLoc=cr.GetMap().GetLocation();
+	if(thisLoc.GetMapCount()>1)
+	{
+		Map @ hiddingPleaceMap=thisLoc.GetMapByIndex(1);
+		if(not valid(hiddingPleaceMap)) return;
+		int countPlayersInMap=hiddingPleaceMap.GetData(COUNT_PLAYERS_IN_HIDDING_PLEACE);
+		if(countPlayersInMap>0) 
+		{
+			hiddingPleaceMap.SetData(COUNT_PLAYERS_IN_HIDDING_PLEACE, countPlayersInMap+1);
+			cr.SetKnownLoc(true, thisLoc.Id);
+			game_map=thisLoc.Id;
+			return;
+		}
+	}
+
+	Item@ item=cr.GetItem(PID_LOC_BUG, -1);
+	_LocVisible(item, cr, null, null, null);
+}
+
+void InitHidingPlace(Map& map, Critter& cr, uint8 reliability)
+{
+	if(not valid(map) || not valid(cr)) return;
+
+	Location @loc=map.GetLocation();
+
+	if(not valid(loc)) return;
+
+	GameVar@ game_map=GetLocalVar(LVAR_hiding_place_location, cr.Id);
+
+	// Створення нової локації
+	if(reliability==RELIABE)
+	{
+		Critter@[] group;
+		group.insertLast(@cr);		
+
+		// Створення нової локацію на тому ж місці
+		Location@ newLoc=GetLocation(CreateLocation(loc.GetProtoId(), loc.WorldX, loc.WorldY, group));
+		if(not valid(newLoc)) return;
+
+		// Параметри нової локації
+		newLoc.Visible=false;     // Невидима
+		newLoc.GeckVisible=false; // Невидима при наявності ГЕКК
+		newLoc.Color=COLOR_SAND;  // Колір SAND
+		newLoc.AutoGarbage=false; // Відсутнє автовидалення
+
+		//Цикл по кількості карт на локації
+		for(uint m=0, mMax=loc.GetMapCount(); m<mMax; m++)
+		{
+			Map@ oldMap=loc.GetMapByIndex(m);
+			Map@ newMap=newLoc.GetMapByIndex(m);
+
+			newMap.SetData(COUNT_PLAYERS_IN_HIDDING_PLEACE, 1);
+			//newMap.SetData(RADAR_VISIBLE, 1);
+
+			FromMapToMap(oldMap, newMap);				
+		}
+
+		// Встановлення очищення від предметів, для мапи з індексом 0
+		Map @ firstMap=newLoc.GetMapByIndex(0);
+		if(valid(firstMap))	
+		{
+			firstMap.SetData(IS_CLERABLE_ENC, 1);
+			firstMap.SetScript("events_in_encaunter@_initHidingPleaceMap");
+		}
+
+		game_map=newLoc.Id;
+		//Log("game_map="+game_map.GetValue());
+		cr.SetKnownLoc(true, loc.Id);
+	}
+	// Створення загальної автовидаляємої локації
+	else
+	{
+		loc.Visible=true;
+		loc.Color=COLOR_DDRED;
+		loc.AutoGarbage=true;			
+	}
+	
+	loc.Radius=6;
+	loc.Update();
+}
+
+
+void FromMapToMap(Map & oldMap, Map & newMap)
+{	
+	// Перенесення кріттерів (окрім мобів) з старої мапи на нову
+	Critter@[] critters;
+	if(oldMap.GetCritters(0,FIND_ALL, critters)>0) 
+		for(uint i=0, iMax=critters.length(); i<iMax; i++)
+			if(critters[i].ModeBase[MODE_ENCAUNTER_MOB]!=1 || critters[i].IsPlayer()) critters[i].TransitToMap(newMap.Id, critters[i].HexX, critters[i].HexY, critters[i].Dir);
+
+	// Перенесення частини предметів з старої локації на нову
+	Item@[] items;
+	for(uint i=ITEM_TYPE_ARMOR; i<ITEM_TYPE_KEY+1; i++)
+		oldMap.GetItemsByType(i,items);
+	for(uint i=0, iMax=items.length(); i<iMax; i++)
+		MoveItem(items[i],1,newMap,items[i].HexX, items[i].HexY);
+	
+	// Перенесення машин з старої локації на нову
+	Item@[] cars;
+	oldMap.GetItemsByType(ITEM_TYPE_CAR,cars);
+	for(uint i=0, iMax=cars.length(); i<iMax; i++)
+	{
+		for(uint child=0; child<3; child++)
+		{
+			Item@ bag=cars[i].GetChild(child);
+			if(valid(bag)) MoveItem(bag,1,newMap,bag.HexX, bag.HexY);
+		}
+		MoveItem(cars[i],1,newMap,cars[i].HexX, cars[i].HexY);
+	}
+}
+
+void _initHidingPleaceMap(Map & map, bool firstTime)
+{
+	map.SetEvent(MAP_EVENT_OUT_CRITTER,"_HiddingPleaceMapOut");
+}
+
+void _HiddingPleaceMapOut(Map& map, Critter& cr)
+{
+	if(map.GetCritters(0,FIND_ALL|FIND_ONLY_PLAYERS,null)!=0) return;
+		
+	//Видалення предметів.
+	Item@[] items;
+	for(uint i=ITEM_TYPE_ARMOR; i<ITEM_TYPE_KEY+1; i++)
+		map.GetItemsByType(i,items);
+	for(uint i=0, iMax=items.length(); i<iMax; i++)
+		if(Random(0, 100)>75) DeleteItem(items[i]);
+		
+	// Регенерація контейнерів
+	uint[] carContainersId=getIdCarContainer(map);
+	
+	Item@[] containers;
+	map.GetItemsByType(ITEM_TYPE_CONTAINER,containers);
+
+	for(uint i=0, iMax=containers.length(); i<iMax; i++)
+	{
+		bool IsCarBag=false;
+		for(uint j=0, jMax=carContainersId.length(); j<jMax; j++)
+		{
+			Item@ container=containers[i];
+			if(carContainersId[j]==container.Id)
+				IsCarBag=true;
+		}
+		
+		if (!IsCarBag)
+		{
+			DeleteItem(containers[i]);
+			uint[] values={map.Id, containers[i].HexX, containers[i].HexY, containers[i].GetProtoId()};
+			CreateTimeEvent(__FullSecond+TIMEOUT_RESTORE_CONTAINER,"e_RestoreContainer",values,true);
+		}
+	}
+}
+
+uint[] getIdCarContainer(Map& map)
+{
+	Item@[] cars;
+	uint[] carContainersId;
+	map.GetItemsByType(ITEM_TYPE_CAR,cars);
+	carContainersId.resize(cars.length()*3);
+	uint index=0;
+	for(uint i=0, iMax=cars.length(); i<iMax; i++)
+	{
+		for(uint child=0; child<3; child++)
+		{
+			Item@ bag=cars[i].GetChild(child);
+			if(valid(bag))
+				carContainersId[index]=bag.Id;
+			index++;
+		}
+	}
+	return carContainersId;
+}
+
+uint e_RestoreContainer(uint[]@ values)
+{	
+	Map@ map=GetMap(values[0]);
+	if(not valid(map)) return 0;
+	//if(map.IsHexPassed(values[1], values[2])==false) return __FullSecond+TIMEOUT_RESTORE_DOOR;
+	Item@ container=map.AddItem(values[1], values[2], values[3], 1);
+	//if(not valid(container)) return 60;
+	container.Update();
+	return 0;
+}

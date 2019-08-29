@@ -1,0 +1,58 @@
+[comment]
+
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 NOT_ANSWER_CLOSE_DIALOG 1#
+2 1010d*_var p q_newbie_hilario_firewood = 3 @
+2 2000 NOT_ANSWER_CLOSE_DIALOG 0#
+3 2010d*_item p PID_MUTATED_FRUIT > 1 *_item p PID_BOTTLE_FULL > 2 r*_item p PID_MUTATED_FRUIT - 2 *_item p PID_BOTTLE_FULL - 3 #
+0 2020#
+0 2030d*_item p PID_BOTTLE_FULL > 2 *_item p PID_MUTATED_FRUIT < 2 #
+0 2040d*_item p PID_BOTTLE_FULL < 3 *_item p PID_MUTATED_FRUIT > 1 #
+0 2050d*_item p PID_BOTTLE_FULL < 3 *_item p PID_MUTATED_FRUIT < 2 @
+3 3000 NOT_ANSWER_CLOSE_DIALOG 0#
+4 3010d*_item p PID_FIREWOOD > 0 *_item p PID_LIGHTER > 0 r*_item p PID_FIREWOOD - 1 #
+0 3020d*_item p PID_FIREWOOD > 0 *_item p PID_LIGHTER < 1 r*_item p PID_MUTATED_FRUIT + 2 *_item p PID_BOTTLE_FULL + 2 #
+0 3030d*_item p PID_FIREWOOD < 1 r*_item p PID_BOTTLE_FULL + 2 *_item p PID_MUTATED_FRUIT + 2 @
+4 4000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 4010r*_item p PID_BOOZE + 10 *_script dialog@r_InfoMessage 1 1 *_param p ST_EXPERIENCE + 40 &
+
+[russ]
+{100}{}{none}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{Разрешение на использование дано}
+{2000}{}{[Вы осматриваете аппарат. Нужно пару мутафруктов, по возможности переспелых или подгнивших, так лучше бродить будут. Ну и конечно воды литра три]}
+{2010}{}{[Заливаете воду в аппарат и бросаете пару фруктов]}
+{2020}{}{[Уходите]}
+{2030}{}{[У вас не хватает фруктов. Уходите]}
+{2040}{}{[Воды маловато. Уходите]}
+{2050}{}{[У вас не хватает ингридиентов. Уходите]}
+{3000}{}{[Так, топка. А здесь растапливаются дрова]}
+{3010}{}{[Укладываете поленья в топке и поджигаете]}
+{3020}{}{[Укладываете поленья в топке... и понимаете что забыли зажигалку. Дрова нужно чем-то поджечь. Забираете фрукты и дрова и сливаете воду обратно в бутылку]}
+{3030}{}{[Так... А про дрова-то вы кажется и забыли. Забираете фрукты и сливаете воду обратно в бутылку]}
+{4000}{}{[Вода закипает. Аппарат фыркает и пыхтит, а вы начинаете чувствовать характерный запах браги]}
+{4010}{}{[Подставляете бутыли под капающий горячий самогон]}
+{100000001}{}{Вам удалось выгнать немного самогона.}
+
+[engl]
+{100}{}{none}
+{1000}{}{Predialogue installations}
+{1010}{}{the Permission to use is given}
+{2000}{}{[you examine the device. It is necessary for steam mutafruktov, whenever possible overripe or begun to rot so will wander is better. Well and certainly waters of litre three]}
+{2010}{}{[Fill in water in the device and throw pair of fruit]}
+{2020}{}{[Leave]}
+{2030}{}{[you do not have not enough fruit. Leave]}
+{2040}{}{[Waters poorly. Leave]}
+{2050}{}{[At you does not suffice ingridientov. Leave]}
+{3000}{}{[So, a fire chamber. And here fire wood]} is kindled
+{3010}{}{[Stack logs in a fire chamber and set fire]}
+{3020}{}{[Stack logs in a fire chamber... Also understand that have forgotten a lighter. It is necessary to set fire to fire wood something. Take away fruit and fire wood and merge water back in a bottle]}
+{3030}{}{[So... And about fire wood you it seems and have forgotten. Take away fruit and merge water back in a bottle]}
+{4000}{}{[Water begins to boil. The device sniffs and puffs, and you start to catch a characteristic smell of home-made beer]}
+{4010}{}{[Substitute large bottles under dripping hot moonshine]}
+{100000001}{}{you managed to expel a few moonshine.}

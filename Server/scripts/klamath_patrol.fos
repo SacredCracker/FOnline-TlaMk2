@@ -1,0 +1,138 @@
+// Cracker
+
+#include "_animation.fos"
+#include "_macros.fos"
+#include "guards_h.fos"
+
+import bool AddAttackPlane(Critter& npc, uint priority, uint critId, bool run) from "npc_planes";
+import bool AddPickPlane(Critter& npc, uint priority, Item@ item, uint useItemId, bool toOpen) from "npc_planes";
+import bool AddAttackPlane(Critter& npc, uint priority, Critter& target, bool run) from "npc_planes";
+import bool AddAttackPlane(Critter& npc, uint priority, Critter& target, int minHp, bool run) from "npc_planes";
+import bool AddWalkPlane(Critter& npc, uint priority, int identifier, uint identifierExt, uint16 hexX, uint16 hexY, uint8 dir, bool run, uint cut) from "npc_planes";
+
+
+#define PLANE_LOOT                   	  (30)
+
+#include "city_guard.fos"
+
+void _PatrolKlamathInit(Critter & cr, bool firstTime)
+{
+	if(firstTime)
+	{
+		for(uint i=0;i<=6;i++)
+		{
+			cr.StatBase[i]=10;
+		}
+		cr.StatBase[ST_REPLICATION_TIME]=60;
+		cr.StatBase[ST_ACTION_POINTS]=Random(10,16);
+		cr.StatBase[ST_ARMOR_CLASS]=Random(25,40);
+		cr.PerkBase[PE_MORE_CRITICALS]=Random(1,5);
+		
+		uint16 MaxLife=Random(120,230);
+		cr.StatBase[ST_MAX_LIFE] +=MaxLife;
+		cr.StatBase[ST_CURRENT_HP] +=MaxLife;
+		
+		cr.StatBase[ST_CRITICAL_RESISTANCE]=Random(30,65);
+		cr.StatBase[ST_CRITICAL_RESISTANCE]=85;
+		cr.PerkBase[PE_SNIPER]=1;
+		cr.PerkBase[PE_SLAYER]=1;
+		
+		//ToDo: Сделать специализации на навык по которым будет выдавать инвентарь.
+		
+		cr.SkillBase[SK_SMALL_GUNS]=250;
+		cr.SkillBase[SK_BIG_GUNS]=250;
+		cr.SkillBase[SK_UNARMED]=250;
+		cr.SkillBase[SK_ENERGY_WEAPONS]=250;
+
+		cr.ModeBase[MODE_NO_STEAL]=1;
+		cr.ModeBase[MODE_NO_PUSH]=1;
+		cr.ModeBase[MODE_NO_ENEMY_STACK]=1;
+		cr.ModeBase[MODE_UNLIMITED_AMMO]=1;
+	}
+	
+		//cr.SetEvent(CRITTER_EVENT_SMTH_ATTACK,"_GuardSmthAttack");
+		//cr.SetEvent(CRITTER_EVENT_SMTH_ATTACKED,"_GuardSmthAttacked");
+		//cr.SetEvent(CRITTER_EVENT_SMTH_USE_ITEM,"_GuardSmthUseItem");
+		//cr.SetEvent(CRITTER_EVENT_SMTH_DROP_ITEM,"_GuardSmthDropItem");
+		//cr.SetEvent(CRITTER_EVENT_PLANE_END,"_NpcPlaneEnd");
+		cr.SetEvent(CRITTER_EVENT_MESSAGE,"_GuardMessage");
+		//cr.SetEvent(CRITTER_EVENT_SMTH_STEALING,"_GuardSmthStealing");
+		//cr.SetEvent(CRITTER_EVENT_SMTH_USE_SKILL,"_GuardSmthUseSkill");
+}
+
+
+void _GuardSmthUseSkill(Critter& cr, Critter& fromCr, int skill, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+	if(valid(onItem) && skill==SK_LOCKPICK)
+	{
+		uint16 pid=onItem.GetProtoId();
+
+		if(pid==PID_FAETON || pid==PID_HIGHWAYMAN_FIX3 || pid==PID_HIGHWAYMAN_FIX2 || pid==PID_HIGHWAYMAN_FIX1 || pid==PID_HIGHWAYMAN_GAS|| pid==PID_BOAT || 
+			pid==PID_HIGHWAYMAN || pid==PID_VERTIBIRD || pid==PID_SCOUT || pid==PID_BUGGY || pid==PID_HUMMER || pid==PID_HUMMER_BAG|| pid==PID_VERTIBIRD_BAG ||
+			pid==PID_HIGHWAYMAN_BAG || pid==PID_BUGGY_BAG || pid==PID_SCOUT_BAG || pid==PID_BOAT_BAG) 
+		{
+			AttackCityPlane(cr,fromCr);
+		} 
+	}
+}
+
+void _GuardSmthDropItem(Critter& npc, Critter& fromCr, Item& item)
+{
+
+	if(fromCr.IsPlayer()&&npc.IsLife())
+	{
+		uint pid=item.GetProtoId();
+		if(pid==PID_ACTIVE_PLASTIC_EXPLOSIVE||pid==PID_ACTIVE_MINE||pid==PID_ACTIVE_DYNAMITE)
+		{
+			AttackCityPlane(npc, fromCr);
+		}
+	}
+	if (!npc.IsLife()) return;
+	//if(GetDistantion(npc.HexX, npc.HexY, fromCr.HexX, fromCr.HexY)<=35) AddPickPlane(npc, 0, item, 0, true);	
+}
+
+void _GuardSmthUseItem(Critter& npc, Critter& fromCr, Item& item, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+	if(fromCr.IsPlayer()&&npc.IsLife())
+	{
+		uint pid=item.GetProtoId();
+		if(pid==PID_PLASTIC_EXPLOSIVES||pid==PID_MINE||pid==PID_TOGGLE_SWITCH||pid==PID_DYNAMITE||pid==PID_ACTIVE_DYNAMITE||pid==PID_ACTIVE_PLASTIC_EXPLOSIVE||pid==PID_ACTIVE_MINE)
+		{
+			AttackCityPlane(npc, fromCr);
+		}
+	}
+}
+
+void _NpcSmthDead(Critter& npc, Critter& fromCrit, Critter@ killer)
+{
+	if(_CritCanDropItemsOnDead(fromCrit) && GetDistantion(npc.HexX, npc.HexY, fromCrit.HexX, fromCrit.HexY)<=35)
+		AddWalkPlane(npc,0,PLANE_LOOT,fromCrit.Id,fromCrit.HexX,fromCrit.HexY,6,true,1);
+}
+
+int _NpcPlaneEnd(Critter& npc, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem)
+{
+	if(plane.Identifier==PLANE_LOOT && reason==REASON_SUCCESS)
+	{
+		Critter@ cr=::GetCritter(plane.IdentifierExt);
+		if(valid(cr) && cr.IsDead())
+		{
+			Item@[] items;
+			cr.GetItems(SLOT_INV,items);
+			cr.GetItems(SLOT_HAND1,items);
+			cr.GetItems(SLOT_HAND2,items);
+			npc.GetMap().GetItems(cr.HexX,cr.HexY,items);
+
+			for(uint i=0, iMax=items.length(); i<iMax; i++)
+			{
+				int type=items[i].GetType();
+				if(type<ITEM_TYPE_ARMOR || type>ITEM_TYPE_KEY) @items[i]=null;
+			}
+			MoveItems(items,npc);
+
+			_CritAnimatePickup(npc);
+			npc.Wait(__Breaktime);
+		}
+		return PLANE_DISCARD; // Skip global and end plane
+	}
+	return PLANE_RUN_GLOBAL; // Run global
+}

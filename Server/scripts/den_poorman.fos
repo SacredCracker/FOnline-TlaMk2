@@ -1,0 +1,62 @@
+// Author: cvet
+#include "_macros.fos"
+
+import bool AddPickPlane(Critter& npc, uint priority, Item@ item, uint useItemId, bool toOpen) from "npc_planes";
+
+const uint[] EatPid={PID_MUTATED_FRUIT,PID_IGUANA_ON_A_STICK,PID_MEAT_ON_A_STICK,PID_BEER,
+	PID_BOX_OF_NOODLES,PID_FROZEN_DINNER,PID_MEAT_JERKY,PID_CHEEZY_POOFS,PID_COOKIE,
+	PID_SMITTY_MEAL,PID_MEAT};
+const uint EatPidCount=11;
+
+void _PoormanInit(Critter& poorman, bool firstTime)
+{
+	poorman.SetEvent(CRITTER_EVENT_SHOW_ITEM_ON_MAP,"_PoormanShowItemOnMap");
+	poorman.SetEvent(CRITTER_EVENT_HIDE_ITEM_ON_MAP,"_PoormanHideItemOnMap");
+	poorman.StatBase[ST_VAR0]=0; // Тут будет хранится Id итема, который мы хотим съесть.
+}
+
+
+void _PoormanShowItemOnMap(Critter& poorman, Item& item, bool added, Critter@ dropper)
+{
+	// Можем ли мы сейчас подойти.
+	if(poorman.StatBase[ST_VAR0]!=0) return;
+	if(not poorman.IsNoPlanes()) return;
+
+	// Смотрим, съедобен ли итем.
+	for(uint i=0;i<EatPidCount;i++)
+	{
+		if(item.GetProtoId()!=EatPid[i]) continue;
+
+		poorman.Say(SAY_NORM_ON_HEAD,"Ням-ням, вкусняшка.");
+		AddPickPlane(poorman,0,item,0,true);
+		poorman.StatBase[ST_VAR0]=int(item.Id);
+	}
+}
+
+
+void _PoormanHideItemOnMap(Critter& poorman, Item& item, bool deleted, Critter@ picker)
+{
+	// Проверим, может кто-то поднял нашу еду.
+	if(uint(poorman.StatBase[ST_VAR0])!=item.Id) return;
+	poorman.StatBase[ST_VAR0]=0;
+	if(not valid(picker)) return;
+
+	// Ругаем поднявшего.
+	if(picker.Id!=poorman.Id)
+	{
+		_NpcEraseAllPlanesPick(poorman);
+		poorman.Wait(3000);
+		poorman.Say(SAY_NORM_ON_HEAD,"Подлец.");
+	}
+	// Это мы сами подняли, едим.
+	else
+	{
+		poorman.DeleteItem(item.GetProtoId(),item.GetCount());
+		poorman.Say(SAY_NORM_ON_HEAD,"Ммм, вкусно!");
+		poorman.Wait(3000);
+	}
+}
+
+
+
+

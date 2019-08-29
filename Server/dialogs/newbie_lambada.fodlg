@@ -1,0 +1,223 @@
+[comment]
+
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 D _param p ST_INTELLECT > 3 D _var p q_newbie_injured = 0 D _var p name_mem_npc_player = 0 D _var p loyality > 2 #
+3 1020 D _param p ST_INTELLECT < 4 #
+4 1030 D _var p loyality < 3 #
+5 1040 D _param p ST_INTELLECT > 3 D _var p name_mem_npc_player = 1 D _var p q_newbie_injured = 0 #
+16 1050 D _param p ST_INTELLECT > 3 D _var p q_newbie_injured > 0 D _var p name_mem_npc_player = 1 @
+2 2000 None 1 #
+6 2010 #
+0 2020 R _var p loyality - 1 #
+0 2030 @
+3 3000 None 1 #
+0 3010 @
+4 4000 None 1 @
+5 5000 None 1 #
+8 5010 #
+9 5020 #
+11 5030 #
+7 5040 @
+6 6000 None 1 #
+5 6010 R _var p name_mem_npc_player = 1 #
+0 6020 @
+7 7000 None 1 @
+8 8000 None 1 #
+5 8010 D _var p q_newbie_injured = 0 #
+16 8020 D _var p q_newbie_injured > 0 @
+9 9000 None 0 #
+10 9010 D _var p q_newbie_injured < 5 #
+20 9020 D _var p q_newbie_injured = 5 #
+5 9030 D _var p q_newbie_injured = 0 #
+16 9040 D _var p q_newbie_injured > 0 @
+10 10000 None 1 #
+11 10010 D _var p q_newbie_injured = 0 D or D _var p q_newbie_injured = 1 #
+11 10020 D _var p q_newbie_injured = 1 #
+5 10030 D _var p q_newbie_injured = 0 #
+16 10040 D _var p q_newbie_injured = 1 D or D _var p q_newbie_injured = 2 @
+11 11000 None 1 #
+12 11010 D _var p q_newbie_injured = 0 #
+13 11020 D _var p q_newbie_injured = 1 #
+19 11030 D _var p q_newbie_injured = 3 @
+12 12000 None 1 #
+14 12010 D _param p SK_DOCTOR < 40 #
+15 12020 D _param p SK_DOCTOR > 39 R _var p loyality + 2 R _param p ST_EXPERIENCE + 350 R _var p q_newbie_injured = 1 #
+5 12030 @
+13 13000 None 1 #
+7 13010 R _var p q_newbie_injured = 2 #
+16 13020 @
+14 14000 None 1 #
+5 14010 D _param p ST_STRENGTH < 5 #
+16 14020 D _param p ST_STRENGTH > 4 R _var p loyality + 1 R _param p ST_EXPERIENCE + 200 R _var p q_newbie_injured = 1 @
+15 15000 None 1 #
+16 15010 @
+16 16000 None 1 #
+8 16010 #
+9 16020 #
+11 16030 D _var p q_newbie_injured < 5 #
+17 16040 D _var p q_newbie_injured = 2 D or D _var p q_newbie_injured = 4 #
+0 16050 @
+17 17000 None 1 #
+18 17010 D _var p q_newbie_injured = 2 D _item p PID_FIREWOOD > 0 D _item p PID_ROPE > 0 R _var p q_newbie_injured = 3 R _var p loyality + 1 R _item p PID_FIREWOOD - 1 R _item p PID_ROPE - 1 R _param p ST_EXPERIENCE + 250 #
+18 17020 D _var p q_newbie_injured = 4 D _item p PID_SHARPENED_POLE > 0 D _item p PID_GECKO_PELT > 0 R _var p q_newbie_injured = 5 R _var p loyality + 1 R _item p PID_SHARPENED_POLE - 1 R _item p PID_GECKO_PELT - 1 R _param p ST_EXPERIENCE + 300 R _param p SK_FIRST_AID + 7 R _param p SK_DOCTOR + 7 #
+16 17030 @
+18 18000 None 1 #
+16 18010 @
+19 19000 None 1 #
+7 19010 R _var p q_newbie_injured = 4 #
+16 19020 @
+20 20000 None 1 #
+16 20010 &
+
+[russ]
+{100}{}{Ламбада}
+{200}{}{Вы видите: Ламбада.}
+{210}{}{Вы видите крепкого метиса, лежащего на дерюге. Это Ламбада. Похоже, у него повреждена нога, и он больше не танцует.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{Умный и незнакомы}
+{1020}{}{Глупый}
+{1030}{}{Низкая лояльность}
+{1040}{}{Уже знакомы, но квест не начат.}
+{1050}{}{Уже знакомы, квест начат.}
+{2000}{}{[Крепкий метис оценивающе смотрит на вас] Ты не из этих крыс, готовых грызть друг другу глотку, лишь бы угодить хозяину? Крысятки готовы на все, ради лишней подачки. [Он сплевывает, что весьма непросто в его лежачем положении] Или ты новый червь в этой куче крысиного дерьма?}
+{2010}{}{Назови мне хоть одну причину, по которой я не должен сломать тебе вторую ногу?@@Я могу для симметрии тебе еще и руку сломать.@@Я сделаю вид, что тебе просто больно, и дам еще один шанс поздороваться.}
+{2020}{}{Ты охерел, паскуда?! [Вы злобно оглядываетесь по сторонам] Слишком много свидетелей. Живи пока.@@Ах ты сучара колеченная! Вот подрасту, я тебе вторую ногу переломаю! [Уходите]}
+{2030}{}{Нога сломана, голова сломана... Эх, совсем калека. [Уходите, сокрушенно качая головой]@@Поговорим, когда будешь в другом расположении духа.}
+{3000}{}{Твою мать! [Глядя на вашу простодушную улыбающуюся морду имбицила, его лицо искажается в бессильной злобе] Что же они с тобой сделали, друг? Крысятки снова на коне. [Он сплевывает, что весьма непросто в его лежачем положении] Иди своей дорогой.}
+{3010}{}{Гы-ы. [Вы радостно вытираетесь рукавом, размазав сопли по щетине и идете своей дорогой]@@Угук. [Вы вытираете слюни с подбородка и идете своей дорогой]}
+{4000}{}{Крысятки снова на коне. [Скалится щербатым ртом]@@Еще один любитель крысиного дерьма.}
+{5000}{}{@pname@, надеюсь, у тебя дела не хуже моих, потому что у меня совсем херово. Ха-ха!@@Здоров@sex@|||а| будь, @pname@.}
+{5010}{}{Почему тебя так зовут?}
+{5020}{}{Что с тобой произошло?}
+{5030}{}{Ты и правда хреново выглядишь. Нужна помощь?}
+{5040}{}{Да, здоровье надо беречь.@@Пока к тебе не подошел, было лучше.}
+{6000}{}{Ага, зубоскалишь. Значит зубы есть. [Он улыбается щербатым ртом] И это неплохо. Не кипятись, @sex@|приятель||подруга|. Прибереги свой бойцовый пыл для крыс. Меня зовут Ламбада.}
+{6010}{}{Я @pname@. Кстати, ты хреново выглядишь.@@В этой куче дерьма меня называют @pname@.}
+{6020}{}{Ну и имя. [Уходите]@@Мне лучше уйти.}
+{7000}{}{Ха-ха!@@Смешно, ага.}
+{8000}{}{Потому, что это мое имя. Ха-ха! Да ладно, кому интересно, как мое настоящее имя в этой куче крысиного дерьма? Меня так прозвали красотки из соседнего барака. Раньше я лихо танцевал с ними ламбаду у вечернего костра. Им нравилось, а мне и подавно! Ха-ха! [Он улыбается]  А потом Сэм, крысятник, запретил вечерний костер. А сейчас я и вовсе хромой. Уже не потанцуешь.}
+{8010}{}{Все мы уже не те, что раньше...}
+{8020}{}{Все мы уже не те, что раньше...}
+{9000}{}{Попал я в передрягу, что тут рассказывать? Со сломаной ногой я не могу работать, а безработные местным крысам не нужны. Ха-ха!}
+{9010}{}{Тут, кажется, есть доктор. Почему не обратишься к нему?}
+{9020}{}{Тут, кажется, есть доктор. Почему не обратишься к нему?}
+{9030}{}{Ясно.@@Бывает.}
+{9040}{}{Ясно.@@Бывает.}
+{10000}{}{Местный ветеринар-вивисектор только и ждет, когда к нему на стол попадет очередная тушка для опытов. Нет уж. Из его клиники я точно не выйду здоровым, а тут еще есть надежда на помощь неокрысившихся людей.}
+{10010}{}{О, это как раз про меня! Нужна помощь?}
+{10020}{}{О, это как раз про меня! Чем еще помочь?}
+{10030}{}{Да уж, лучше тут сгнить.}
+{10040}{}{Ну, все не так уж и плохо.}
+{11000}{}{Да уж, от помощи я бы не отказался. Положение у меня - сам@sex@|||а| видишь, я прямо прикован к постели. Ха-ха!}
+{11010}{}{Выкладывай.}
+{11020}{}{Выкладывай.}
+{11030}{}{Выкладывай.}
+{12000}{}{Мне нужно вправить ногу, пока крысы не скормили меня браминам за тунеядство. Это не сложно, надо просто сильно дернуть, что бы кость встала на место. Возьмешься?}
+{12010}{}{Хмм. Попробую [Вы аккуратно берете его ногу двумя руками, а затем с силой дергаете]}
+{12020}{}{[Вы аккуратно ощупываете ногу Ламбады] Опухоли почти нет, небольшой отек. Да тут смещение кости меньше, чем на волос! Не надо дергать, просто аккуратно потянем... [Вы пытаетесь вправить ногу]}
+{12030}{}{Пожалуй, нет.}
+{13000}{}{Ногу ты мне вправил@sex@|||а|. Спасибо, @sex@|приятель||подруга|! Теперь, чтобы кости срослись ровно, надо наложить шину. Только не спрашивай, что это такое! Просто принеси мне несколько палок и веревку.}
+{13010}{}{Палки и веревка? Хорошо, принесу. Надеюсь, ты не вешаться собрался...}
+{13020}{}{Ну, не знаю... Веревка и мыло тут бы больше подошли.}
+{14000}{}{АарРггхХр! [Лицо Ламбады искажается болью] Твою же за ногу!}
+{14010}{}{Мда. Силы у меня маловато. Прости, Ламбада, может позже получится.}
+{14020}{}{[У вас получилось вправить кость] Надо же, вроде получилось.}
+{15000}{}{Едрит твою налево, @pname@! [Глаза Ламбады округлились от удивления] Мне даже больно не было. Да ты знахарь!}
+{15010}{}{[Вы мастерски вправили кость] Иногда сила, это не самое главное. Теперь нога срастется правильно.}
+{16000}{}{Хэй, @sex@|приятель||подруга|! Иду на поправку твоими стараниями. @@ @pname@, я в долгу не останусь, дай только на ноги встать. Ха-ха!@@А, @pname@! Приятно видеть человека среди крыс в этой куче дерьма. }
+{16010}{}{Почему тебя так зовут?}
+{16020}{}{Что с тобой произошло?}
+{16030}{}{Выглядишь лучше. Нужна еще помощь?}
+{16040}{}{На счет твоей просьбы, Ламбада...}
+{16050}{}{Вижу, тебе лучше. До встречи!@@Давай, поправляйся. Учить танцевать меня будешь.@@Эх, мне бы твою радость...}
+{17000}{}{Намылил веревку для хромой полукровки? Ха-ха!}
+{17010}{}{Вот веревка и палки, как ты просил.}
+{17020}{}{Вот шкура и кол, как ты просил.}
+{17030}{}{Будь мужиком, потерпи.@@Скоро, Ламбада, скоро.}
+{18000}{}{О, @pname@, спасибо! Я в долгу перед тобой, @sex@|приятель||подруга|!}
+{18010}{}{Сегодня я тебе, завтра ты мне...@@Я не крыса, я всегда помогаю своим.}
+{19000}{}{Последняя просьба, @pname@. Твоими стараниями кость срастется, как надо, и я не останусь хромым калекой среди этого крысиного дерьма! Но пока нога еще болит, и похромать придется. Было бы неплохо обзавестись костылем на это время, как думаешь? Принесешь деревянный кол, и я твой должник навеки. Ха-ха! И шкурку гекко, что бы подмышки до мозолей не стереть [Ламбада улыбается щербатым ртом]}
+{19010}{}{Деревянный кол и шкурку геко? Легко! Жди меня здесь и никуда не уходи.}
+{19020}{}{Да я сам@sex@|||а| что-то приболел@sex@|||а|. Невмоготу мне за ящерицами бегать.}
+{20000}{}{Ха-ха, @pname@, ну ты и @sex@|шутник||шутница|! Ты ж меня починил@sex@|||а| почище любого доктора. Я к местному ветеринару-вивисектору теперь ни ногой.}
+{20010}{}{[Далее]}
+
+[engl]
+{100}{}{Lambada}
+{200}{}{You see: Lambada.}
+{210}{}{You see a well-built metis sitting on a rag. Looks like his leg is broken. Looks like he's not gonna dance again.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{Умный и незнакомы}
+{1020}{}{Глупый}
+{1030}{}{Низкая лояльность}
+{1040}{}{Уже знакомы, но квест не начат.}
+{1050}{}{Уже знакомы, квест начат.}
+{2000}{}{[A stately metis looks at you appraisingly] You're not one of those rats that are ready to bite each other's heads off just to please their master, are you? They're ready for anything just to get another miserable pittance. [He spits on the ground which is quite difficult from his position] Or are you just a new worm in this pile of rat shit?}
+{2010}{}{Give me one reason not to break your other leg.@@I could break your arm as well, just for the sake of symmetry.@@I'll pretend you were just moaning in pain and give you another chance to say hello.}
+{2020}{}{U mad, fuckface?! [You look around cautiously] Your luck there are too many witnesses.@@You cock sucking motherfucker! I'll break your other leg when I have some time! [Leave]}
+{2030}{}{Broken leg, empty head... A cripple indeed. [Leave, shaking your head]@@Let's talk when you're in a better mood.}
+{3000}{}{God Dammit! [Looking at your simple face of an imbecile his face is distorted with rage] What the hell did they do to you? Damn rats, that's what they are. Damn rats. [He spits on the ground which is quite difficult from his position] Just go where you were going, friend.}
+{3010}{}{Herp Derp. [Wipe your face with your hand spreading snot all over your face and leave]@@Hurr Durr. [You wipe saliva off your chin and leave]}
+{4000}{}{Damn rat bastards. [Grins with gap-toothed mouth]@@One more rat shit eater.}
+{5000}{}{@pname@, I hope you're doing better than me, because I'm doing real crappy, heh!@@God bless you, @pname@.}
+{5010}{}{Why do they call you Lambada?}
+{5020}{}{What happened to you?}
+{5030}{}{Yeah, you don't look too good. Need any help?}
+{5040}{}{I was doing good before I came up to you.@@Yeah, if you ain't got health you ain't got nothing.}
+{6000}{}{So you've got some fighting spirit. [Grins with his gap-toothed mouth] It's a good thing. But better save it for those rats. My name's Lambada.}
+{6010}{}{I'm @pname@. You look kind of shitty by the way.@@In this pile of shit I'm known as @pname@.}
+{6020}{}{Hell of a name. [Leave]@@I got to go.}
+{7000}{}{Ha-ha!@@Yeah, very funny.}
+{8000}{}{Cause it's my name, ha-ha! Come on, who needs my real name in this pile of rat vomit? Babes from the next barrack gave me this nickname. I used to dance with them by the night fire. They liked it, and I did too! Ha-ha! [He smiles]  And then Sam, that rat bastard, banned the night fire. And then I got crippled. No more dancing.}
+{8010}{}{We're all not what we used to be...}
+{8020}{}{We're all not what we used to be...}
+{9000}{}{What can I say, I got myself into some serious shit. I can not work with a broken leg, And the rats don't need those who can't work, heh!}
+{9010}{}{There was a doctor somewhere, why don't you go to him?}
+{9020}{}{There was a doctor somewhere, why don't you go to him?}
+{9030}{}{I see.@@Shit happens.}
+{9040}{}{I see.@@Shit happens.}
+{10000}{}{The local veterinarian vivisector is just waiting for a new guinea pig for his experiments. No way. I won't walk out better than I was from his clinic, that's for sure. And here I still have some hope for good people to help me.}
+{10010}{}{Well, sounds just like me! Need help?}
+{10020}{}{Well, sounds just like me! Need help?}
+{10030}{}{Yeah, I guess It's better to rot in here.}
+{10040}{}{Well, it's not that bad after all.}
+{11000}{}{I sure could use some! You can see the situation I'm in, I'm almost bound to bed, heh!}
+{11010}{}{Go on.}
+{11020}{}{Go on.}
+{11030}{}{Go on.}
+{12000}{}{I need to fix my leg before those rats feed me to brahmins for my uselessness. It's not difficult, You just need to pull it hard, so that the bone would come back to its place. Will you do it?}
+{12010}{}{Hmm. I'll try [Take his leg carefully with both hands, and then pull it sharply]}
+{12020}{}{[Feel Lambada's leg carefully] There's just a slight swelling. Bone displacement is insignificant! No need to pull hard, I'll just turn it a little... [You try to set the joint right]}
+{12030}{}{I'd rather not.}
+{13000}{}{You fixed my leg, thank you for that, @sex@|pal||sis|! Now for the bones to grow together right we need to apply a splint. Don't ask me what it is! Just get me a couple of wooden planks and a rope.}
+{13010}{}{Planks and rope? Okay, I will. I hope you're not gonna hang yourself with it...}
+{13020}{}{I don't know... A chair ans some rope would be more suitable.}
+{14000}{}{Arrrrrgh! [Lambada's face is distorted with pain] God fucking damn it!}
+{14010}{}{Yeah... I don't have enough strength. Sorry, Lambada, maybe it will work next time.}
+{14020}{}{[You succeed in fixing the leg] Wow, looks like it worked.}
+{15000}{}{Jesus Christ, @pname@! [Lambada's eyes widen with amazement] It almost didn't feel anything. You're a magician!}
+{15010}{}{[You masterfully fix set the bone right] Sometimes strength is not important. The leg will heal now.}
+{16000}{}{Hey, @sex@|pal||sis|! I'm getting better thanks to you.@@ @pname@, I won't leave you unanswered. Just let me get back on my feet. Ha-ha!@@Ah, @pname@! It's good to see a man among these rats.}
+{16010}{}{Why do they call you Lambada?}
+{16020}{}{What happened to you?}
+{16030}{}{You look better. Need any more help?}
+{16040}{}{It's about your request...}
+{16050}{}{I see you're getting better. See you!@@Get well soon. You'll teach me how to dance.@@I wish I were as happy as you...}
+{17000}{}{Got some wood and rope for a lame half-breed, heh?}
+{17010}{}{Here's wood and rope, just like you asked.}
+{17020}{}{Here's the skin and the pole.}
+{17030}{}{Be a man, hold it.@@I'm on it, Lambada, I'm on it.}
+{18000}{}{Oh, @pname@, Thank you! I owe you, @sex@|bro||sis|!}
+{18010}{}{I help you today, you help me tomorrow. It's the only way to survive here...@@I'm not a rat, I always help my bros.}
+{19000}{}{The last request, @pname@. With your help the bones re growing together just fine, and I won't be left a cripple in this pile of rat shit! But it still hurts and I have to limp some. It would be nice to get a crutch for the time being, don't you think? Get me a wooden pole and I'm in debt to you forever. Ha-ha! And a gecko skin so that I don't rub my armpits sore [Lambada smiles with his gap-toothed mouth]}
+{19010}{}{A pole and a gecko skin? No problem! I'll be right back, don't go anywhere, he-he.}
+{19020}{}{I'm kind of sick myself. Can't run for lizards.}
+{20000}{}{Ha-ha, @pname@, you're so much fun! You fixed me better than any doctor could. I'll never come anywhere near that local butcher.}
+{20010}{}{[Further]}
+

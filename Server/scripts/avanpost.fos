@@ -1,0 +1,86 @@
+#include "_macros.fos"
+//import void SetTracker(Critter& cr, int trackId) from "main";
+import void SetTracker(Critter& cr, int trackId) from "globalmap_group";
+import bool AddAttackPlane(Critter& npc, uint priority, Critter& target) from "npc_planes";
+import int[] GetFriendList(uint frId) from "main";
+import uint EraseAttackPlane(Critter& npc, Critter& target) from "npc_planes";
+
+void r_SetTracker(Critter& master, Critter@ slave)
+{
+	int trackId=int(master.GetMap().GetLocation().GetProtoId()-300);
+	master.Say(SAY_NETMSG, "trackId="+int(master.GetMap().GetLocation().GetProtoId()-300));
+	SetTracker(master, trackId);
+}
+
+void _TurretInit(Critter& turret, bool firstTime)
+{
+	turret.SetFavoriteItem(SLOT_HAND1, PID_DUAL_MINIGUN);
+	turret.ModeBase[MODE_UNLIMITED_AMMO]=1;
+	turret.SetEvent(CRITTER_EVENT_SHOW_CRITTER,"_CheckEnemy");
+}
+
+void _CheckEnemy(Critter& turret, Critter& showCr)
+{
+	if(turret.GetProtoId()==showCr.GetProtoId()) return;
+	if(turret.Param[ST_FRACTION]==0)
+	{
+		turret.AddEnemyInStack(showCr.Id);
+		AddAttackPlane(turret,0,showCr);
+	}
+	else if(turret.Param[ST_FRACTION]==-1) return;
+	else
+	{
+		if(turret.Param[ST_FRACTION]==showCr.Param[ST_FRACTION]) return;
+		int[] friends=GetFriendList(turret.Param[ST_FRACTION]);
+		for(uint n=0, nMax=friends.length(); n<nMax; n++)
+		{
+			if(showCr.Param[ST_FRACTION]==friends[n]) return;
+		}
+		turret.Say(SAY_NORM_ON_HEAD, "Защитный протокол активирован");
+		turret.AddEnemyInStack(showCr.Id);
+		AddAttackPlane(turret,0,showCr);
+	}
+}
+
+bool s_Terminal(Critter& player, Scenery& terminal, int skill, Item@ item)
+{
+	if(player.IsPlayer() && skill==-1 && not valid(item)) RunDialog(player,6000,terminal.HexX,terminal.HexY,false);
+	return true;
+}
+
+void r_ActSecurity(Critter& master, Critter@ slave)
+{
+	Critter@[] turrets;
+	master.GetMap().GetCritters(480, FIND_ALL, turrets);
+	for(uint n=0, nMax=turrets.length(); n<nMax; n++)
+	{
+		uint[] enemies;
+		turrets[n].GetEnemyStack(enemies);
+		for(uint m=0, mMax=enemies.length(); m<mMax;m++)
+		{
+			Critter@ cr=GetCritter(enemies[m]);
+			if(valid(cr)) EraseAttackPlane(turrets[n], cr);
+		}
+		turrets[n].ClearEnemyStack();
+		turrets[n].ParamBase[ST_FRACTION]=master.Param[ST_FRACTION];
+	}
+}
+
+void r_DeactSecurity(Critter& master, Critter@ slave)
+{
+	Critter@[] turrets;
+	master.GetMap().GetCritters(480, FIND_ALL, turrets);
+	for(uint n=0, nMax=turrets.length(); n<nMax; n++)
+	{
+		uint[] enemies;
+		turrets[n].GetEnemyStack(enemies);
+		for(uint m=0, mMax=enemies.length(); m<mMax;m++)
+		{
+			Critter@ cr=GetCritter(enemies[m]);
+			if(valid(cr)) EraseAttackPlane(turrets[n], cr);
+		}
+		turrets[n].ClearEnemyStack();
+		turrets[n].ParamBase[ST_FRACTION]=-1;
+	}
+}
+

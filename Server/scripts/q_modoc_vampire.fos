@@ -1,0 +1,253 @@
+// Author: rifleman17
+// Квест "Ночь нежна" - выяснить, почему ослабли коровы на одной из ферм модока.
+
+#include "_macros.fos"
+#include "_npc_pids.fos"
+
+#define GAME_DAY #(days)       (days*24*60*60)
+#define GAME_WEEK #(weeks)     (weeks*GAME_DAY(7))
+
+#define FARM_X                 (939)
+#define FARM_Y                 (185)
+#define QVAMP_FARM_KNOWN       (2) // статус квеста: Известны координаты локации с фермой
+#define QVAMP_VAMP_MISSED      (3) // статус квеста: Низкое восприятие. Вампира не заметил.
+#define QVAMP_VAMP_ESCAPED     (4) // статус квеста: Вампира заметил, он удрал в неизвестном направлении.
+#define QVAMP_VAMP_TARGETED    (5) // статус квеста: Вампира заметил, может найти
+#define QVAMP_VAMP_FOUNDED     (6) // статус квеста: Пещера найдена.
+#define QVAMP_VAMP_KILLED      (8) // статус квеста: Игрок убил вампира.
+#define ENTIRE_SPAWN_BAT       (33) // Номер гекса, на котором появится летучая мышь. (ферма)
+#define ENTIRE_MOVETO_BAT      (34) // Номер гекса, к которому отправится летучая мышь.
+#define NPC_PID_BAT            (NPC_PID_VBBat)
+#define STR_SEENPLAYER         (5970) // Номер строки из файла FOTEXT, которую произносит мышь.
+#define STR_NOT_NIGHT          (5971) // Отличное место для наблюдений. Осталось дождаться ночи и выяснить, что происходит с браминами.
+#define STR_DONT_SHOOT         (5972) // Не стреляй, давай поговорим!
+#define FD_CURE_SUCCESS        (16) // Успех при попытке исцелить вампира
+#define FD_CURE_FAIL           (17) // Провала при попытке исцелить вампира
+
+import Location@ CreateLocationForCritter(Critter& player, int locPid, int worldX, int worldY, int delta, int varNum) from "location";
+import void SetLocationDeleteTime(Location& loc, uint time) from "location";
+import void _DeletableMapInit(Map& map, bool firstTime) from "location";
+import bool GetNearEntire(Map& map, int number, uint16& hx, uint16& hy) from "entire";
+import bool AddWalkPlane(Critter& npc, uint priority, uint16 hexX, uint16 hexY, uint8 dir, bool run, uint cut) from "npc_planes";
+
+// Отображение локации "Ферма с вампиром" для игрока.
+void r_ShowVampireFarm(Critter& player, Critter@ npc)
+{
+	Location@ loc=CreateLocationForCritter(player, LOCATION_Quest_ModocVampireFarm, FARM_X, FARM_Y, __GlobalMapZoneLength, LVAR_mod_vampire_farm_location);
+	if(valid(loc))
+	{
+		SetLocationDeleteTime(loc, GAME_DAY(2));
+		GameVar @ locOwner=GetLocalVar(LLVAR_loc_mod_vampire_farm_quester_id, loc.Id);
+		if(valid(locOwner))
+			locOwner=player.Id;
+	}
+}
+
+// Скрипт для карты ферма с вампиром
+void _VampireFarmInit(Map& map, bool firstTime)
+{
+	map.SetLoopTime(1, 65000);
+	_DeletableMapInit(map, firstTime);
+	map.SetEvent(MAP_EVENT_FINISH, "_VampireFarmFinish");
+}
+
+void _VampireFarmFinish(Map& map, bool deleted)
+{
+	if(deleted)
+	{
+		Location@ loc=map.GetLocation();
+		if (!valid(loc))
+			return;
+		// Игрок не посетил ферму, либо не дошел до нужной точки статус квеста должен быть сброшен в ноль
+		GameVar@ questerId=GetLocalVar(LLVAR_loc_mod_vampire_farm_quester_id, loc.Id);
+		if (!valid(questerId) || questerId==0)
+			return;
+		GameVar@ qVar=GetLocalVar(LVAR_q_mod_joe_vampire, questerId.GetValue());
+		if(valid(qVar) && qVar==QVAMP_FARM_KNOWN)
+		{
+			qVar=0;
+		}
+	}
+}
+
+// Брамины
+void _BrahminInit(Critter& cr, bool firstTime)
+{
+	cr.StatBase[ST_DIALOG_ID]=DIALOG_mob_ill_brahmin;
+	cr.ToKnockout(KNOCKOUT_ANIM2_DEFAULT(true), 1000, cr.HexX, cr.HexY);
+}
+
+// Триггер, переключающий статус квеста. Должны быть расположены на карте в линию
+void t_ChangeStatus(Critter& player, Scenery& trigger, bool entered, uint8 dir)
+{
+	if(__Hour<23 && __Hour > 4) // В дневное время ничего не происходит
+	{
+		if(entered)
+			player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_NOT_NIGHT);
+		return;
+	}
+	Map@ map=player.GetMap();
+	if (!valid(map))
+		return;
+	Location@ loc=map.GetLocation();
+	if (!valid(loc))
+		return;
+	GameVar@ quester=GetLocalVar(LLVAR_loc_mod_vampire_farm_quester_id, loc.Id);
+	if (!valid(quester) || quester !=player.Id)
+		return;
+	// Игрок - нужный
+	GameVar@ qVar=GetLocalVar(LVAR_q_mod_joe_vampire, player.Id);
+	if(valid(qVar))
+	{
+		if(qVar==QVAMP_FARM_KNOWN)
+		{
+			uint8 p=player.Stat[ST_PERCEPTION];
+			if(p<5)
+				qVar=QVAMP_VAMP_MISSED;
+			if(p==5)
+				qVar=QVAMP_VAMP_ESCAPED;
+			if(p > 5)
+				qVar=QVAMP_VAMP_TARGETED;
+			if(p > 4)
+				ShowVamp(map);
+		}
+	}
+	if (!loc.AutoGarbage)
+		loc.AutoGarbage=true;
+
+}
+
+// Пролетающая говорящая мышь
+void ShowVamp(Map& map)
+{
+	uint16 hx=0;
+	uint16 hy=0;
+	if(GetNearEntire(map, ENTIRE_SPAWN_BAT, hx, hy))
+	{
+		Critter@ bat=map.AddNpc(NPC_PID_BAT, hx, hy, Random(0,5), null, null, "q_modoc_vampire@_BatInit");
+		if(valid(bat))
+		{
+			bat.SayMsg(SAY_NORM, TEXTMSG_TEXT, STR_SEENPLAYER);
+			if(GetNearEntire(map, ENTIRE_MOVETO_BAT, hx, hy))
+			{
+				AddWalkPlane(bat, 0, hx, hy, Random(0,5), true, 1);
+			}
+			bat.SetScript("_BatInit");
+		}
+	}
+}
+
+void _BatInit(Critter& cr, bool firstTime)
+{
+	cr.SetEvent(CRITTER_EVENT_IDLE, "_BatIdle"); // Удаление вампира сразу, как дойдет до нужной точки
+}
+
+void _BatIdle(Critter& cr)
+{
+	DeleteNpc(cr);
+}
+
+// Пещера с вампиром
+void _VampireCaveInit(Map& map, bool firstTime)
+{
+	if(firstTime)
+	{
+		Location@ loc=map.GetLocation();
+		if (!valid(loc))
+			return;
+		SetLocationDeleteTime(loc, GAME_WEEK(2));
+		loc.AutoGarbage=false;
+	}
+
+	map.SetLoopTime(1, 65000);
+	map.SetEvent(MAP_EVENT_IN_CRITTER, "_VampireCaveInCritter");
+	_DeletableMapInit(map, firstTime);
+}
+
+
+void _VampireCaveInCritter(Map& map, Critter& cr)
+{
+	GameVar @ qVar=GetLocalVar(LVAR_q_mod_joe_vampire, cr.Id);
+	if(valid(qVar))
+	{
+		if(qVar==QVAMP_VAMP_TARGETED || qVar==QVAMP_VAMP_FOUNDED)
+		{
+			Location@ loc=map.GetLocation();
+			if(valid(loc) && !cr.IsKnownLoc(false, loc.GetProtoId()))
+				cr.SetKnownLoc(true, loc.Id);
+		}
+	}
+}
+// Скрипт вампира
+void _VampireInit(Critter& cr, bool firstTime)
+{
+	cr.SetEvent(CRITTER_EVENT_DEAD, "_VampireDead");
+	cr.SetEvent(CRITTER_EVENT_SHOW_CRITTER_1, "_VampireShowCritter1");
+	cr.ShowCritterDist1=10;
+}
+
+// Кто-то убил вампира
+void _VampireDead(Critter& cr, Critter@ killer)
+{
+	Map@ map=cr.GetMap();
+	if(valid(map))
+	{
+		Location@ loc=map.GetLocation();
+		if(valid(loc) && !loc.AutoGarbage)
+			loc.AutoGarbage=true;
+		if(valid(killer) && killer.IsPlayer())
+		{
+			GameVar@ qVar=GetLocalVar(LVAR_q_mod_joe_vampire, killer.Id);
+			if(valid(qVar) && qVar==QVAMP_VAMP_FOUNDED)
+			{
+				qVar=QVAMP_VAMP_KILLED;
+			}
+		}
+	}
+}
+
+// Вампир видит игрока на расстоянии 10 гексов
+void _VampireShowCritter1(Critter& cr, Critter& showCrit)
+{
+	cr.SayMsg(SAY_SHOUT, TEXTMSG_TEXT, STR_DONT_SHOOT);
+}
+
+
+// Попытка излечения вампира
+uint r_TryCureVampire(Critter& cr, Critter@ npc, int val)
+{
+	uint forceDialog=FD_CURE_FAIL;
+	int sk=cr.Skill[SK_DOCTOR];
+	uint8 mode=0;
+	uint16 activePid=cr.GetSlotProto(SLOT_HAND1, mode).ProtoId;
+	if(activePid==PID_DOCTORS_BAG)
+	{
+		sk +=25;
+		if(Random(0,30)==0)
+			cr.DeleteItem(PID_DOCTORS_BAG,1);
+	}
+	else if(activePid==PID_PARAMEDICS_BAG)
+	{
+		sk +=50;
+		if(Random(0,30)==0)
+			cr.DeleteItem(PID_PARAMEDICS_BAG,1);
+	}
+	if(sk >=80)
+	{
+		forceDialog=FD_CURE_SUCCESS;
+	}
+	else
+	{
+		if(sk > Random(5,95))
+			forceDialog=FD_CURE_SUCCESS;
+	}
+	Map@ map=cr.GetMap();
+	if(valid(map))
+	{
+		Location@ loc=map.GetLocation();
+		if(valid(loc) && !loc.AutoGarbage)
+			loc.AutoGarbage=true;
+	}
+	//Log("fd=" + forceDialog);
+	return forceDialog;
+}

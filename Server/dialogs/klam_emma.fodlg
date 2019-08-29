@@ -1,0 +1,255 @@
+[comment]
+
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 NOT_ANSWER_CLOSE_DIALOG 1#
+20 1010d*_param p ST_INTELLECT < 4 *_var p q_klam_find_trappers = 0 #
+20 1020d*_var p q_klam_find_trappers = 3 *_param p ST_INTELLECT < 4 #
+22 1030d*_param p ST_INTELLECT < 4 *_var p q_klam_find_trappers > 0 *_var p q_klam_find_trappers < 3 #
+12 1040d*_param p ST_INTELLECT < 4 *_var p q_klam_find_trappers = 4 #
+25 1050d*_param p ST_INTELLECT < 4 *_var p loyality < 4 *_var p q_klam_find_trappers = 9 r*_var p loyality - 1 #
+2 1060d*_param p ST_INTELLECT > 3 *_var p q_klam_find_trappers = 0 *_var p loyality > 3 #
+13 1070d*_param p ST_INTELLECT > 3 *_var p q_klam_find_trappers = 1 *_var p loyality > 3 #
+13 1080d*_param p ST_INTELLECT > 3 *_var p q_klam_find_trappers = 2 *_var p loyality > 3 #
+2 1090d*_param p ST_INTELLECT > 3 *_var p q_klam_find_trappers = 3 *_var p loyality > 3 #
+18 1100d*_param p ST_INTELLECT > 3 *_var p q_klam_find_trappers = 4 *_var p loyality > 3 #
+18 1110d*_param p ST_INTELLECT > 3 *_var p q_klam_find_trappers = 5 *_var p loyality > 3 #
+10 1120d*_param p ST_INTELLECT > 3 *_var p q_klam_find_trappers = 6 *_var p loyality > 3 #
+10 1130d*_param p ST_INTELLECT > 3 *_var p q_klam_find_trappers = 7 *_var p loyality > 3 #
+2 1140d*_param p ST_INTELLECT > 3 *_var p q_klam_find_trappers = 8 *_var p loyality > 3 #
+6 1150d*_param p ST_INTELLECT > 3 *_var p q_klam_find_trappers = 9 *_var p loyality > 3 r*_var p loyality - 1 #
+6 1160d*_param p ST_INTELLECT > 3 *_var p loyality < 4 r*_var p loyality - 1 #
+7 1170d*_var p loyality < 2 #
+26 1180d*_var p q_klam_find_trappers = 10 @
+2 2000 NOT_ANSWER_CLOSE_DIALOG 1#
+3 2010d*_var p q_klam_find_trappers = 0 #
+19 2020#
+8 2030d*_var p q_klam_find_trappers = 3 *_param p ST_INTELLECT > 5 r*_var p q_klam_find_trappers = 4 *_param p ST_EXPERIENCE + 300 #
+8 2040d*_var p q_klam_find_trappers = 3 *_param p ST_INTELLECT < 6 r*_var p q_klam_find_trappers = 4 *_param p ST_EXPERIENCE + 300 #
+11 2050d*_var p q_klam_find_trappers = 8 r*_var p q_klam_find_trappers = 4 *_param p ST_EXPERIENCE + 300 #
+4 2060r*_var p loyality - 2 *_param p ST_KARMA - 5 @
+3 3000 NOT_ANSWER_CLOSE_DIALOG 1#
+5 3010r*_var p q_klam_find_trappers = 1 #
+6 3020r*_param p ST_KARMA - 5 *_var p loyality - 2 @
+4 4000 NOT_ANSWER_CLOSE_DIALOG 1@
+5 5000 NOT_ANSWER_CLOSE_DIALOG 1#
+0 5010@
+6 6000 NOT_ANSWER_CLOSE_DIALOG 0@
+7 7000 NOT_ANSWER_BEGIN_BATTLE 1@
+8 8000 NOT_ANSWER_CLOSE_DIALOG 1#
+11 8010r*_param p ST_KARMA + 5 *_param p REPUTATION_KLAMATH + 1 #
+9 8020r*_var p q_klam_find_trappers = 6 *_param p ST_KARMA - 5 *_param p REPUTATION_KLAMATH - 1 @
+9 9000 NOT_ANSWER_CLOSE_DIALOG 1@
+10 10000 NOT_ANSWER_CLOSE_DIALOG 1@
+11 11000 NOT_ANSWER_CLOSE_DIALOG 1#
+0 11010r*_item p PID_HEALING_POWDER + 2 *_item p PID_MUTATED_FRUIT + 3 *_item p PID_ANTIDOTE + 1 *_item p PID_MEAT_JERKY + 1 *_item p PID_STIMPAK + 1 #
+12 11020r*_param p ST_KARMA + 5 @
+12 12000 NOT_ANSWER_CLOSE_DIALOG 1@
+13 13000 NOT_ANSWER_CLOSE_DIALOG 1#
+0 13010#
+14 13020#
+8 13030d*_var p q_klam_find_trappers = 2 *_param p ST_INTELLECT < 6 r*_var p q_klam_find_trappers = 4 *_param p ST_EXPERIENCE + 300 #
+8 13040d*_var p q_klam_find_trappers = 2 *_param p ST_INTELLECT > 5 r*_var p q_klam_find_trappers = 4 *_param p ST_EXPERIENCE + 300 #
+11 13050d*_var p q_klam_find_trappers = 8 r*_var p q_klam_find_trappers = 4 *_param p ST_EXPERIENCE + 300 #
+15 13060r*_var p loyality - 1 @
+14 14000 NOT_ANSWER_CLOSE_DIALOG 1#
+0 14010@
+15 15000 NOT_ANSWER_CLOSE_DIALOG 1#
+16 15010#
+16 15020#
+9 15030r*_var p q_klam_find_trappers = 6 *_param p ST_KARMA - 5 #
+16 15040#
+17 15050d*_param p SK_SPEECH < 50 r*_var p loyality - 2 *_var p q_klam_find_trappers = 9 #
+9 15060d*_param p SK_SPEECH > 49 r*_param p ST_KARMA - 5 *_var p q_klam_find_trappers = 6 *_param p ST_EXPERIENCE + 300 @
+16 16000 NOT_ANSWER_CLOSE_DIALOG 1#
+9 16010d*_param p SK_SPEECH > 49 r*_param p ST_KARMA - 5 *_var p q_klam_find_trappers = 6 *_var p loyality - 2 *_param p ST_EXPERIENCE + 300 #
+0 16020@
+17 17000 NOT_ANSWER_CLOSE_DIALOG 1@
+18 18000 NOT_ANSWER_CLOSE_DIALOG 1@
+19 19000 NOT_ANSWER_CLOSE_DIALOG 1@
+20 20000 NOT_ANSWER_CLOSE_DIALOG 1#
+21 20010d*_var p q_klam_find_trappers = 0 r*_var p q_klam_find_trappers = 1 #
+23 20020d*_var p q_klam_find_trappers = 3 r*_var p q_klam_find_trappers = 4 *_param p ST_KARMA + 5 *_param p ST_EXPERIENCE + 300 *_param p REPUTATION_KLAMATH + 1 @
+21 21000 NOT_ANSWER_CLOSE_DIALOG 1#
+0 21010@
+22 22000 NOT_ANSWER_CLOSE_DIALOG 1#
+23 22010d*_var p q_klam_find_trappers = 2 r*_var p q_klam_find_trappers = 4 *_param p ST_KARMA + 5 *_param p ST_EXPERIENCE + 300 *_param p REPUTATION_KLAMATH + 1 #
+24 22020r*_var p q_klam_find_trappers = 9 *_param p ST_KARMA - 5 #
+0 22030@
+23 23000 NOT_ANSWER_CLOSE_DIALOG 1#
+0 23010r*_item p PID_IGUANA_ON_A_STICK + 1 *_item p PID_MUTATED_FRUIT + 3 *_item p PID_HEALING_POWDER + 2 *_item p PID_MEAT_JERKY + 1 @
+24 24000 NOT_ANSWER_CLOSE_DIALOG 1@
+25 25000 NOT_ANSWER_CLOSE_DIALOG 1@
+26 26000 NOT_ANSWER_CLOSE_DIALOG 0&
+
+[russ]
+{100}{}{Эмма}
+{200}{}{Вы видите: Эмма.}
+{210}{}{Похоже, эта женщина чем-то сильно обеспокоена и расстроена. Она что-то готовит у стола, но видно, что её мысли заняты чем-то другим.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{Глупый, не знаком.}
+{1020}{}{Глупый, взял квест у Брайана.}
+{1030}{}{Глупый, взял квест у Эммы (1,2).}
+{1040}{}{Глупый, выполнил квест.}
+{1050}{}{Глупый, попытался обмануть.}
+{1060}{}{0}
+{1070}{}{1}
+{1080}{}{2}
+{1090}{}{3}
+{1100}{}{4}
+{1110}{}{5}
+{1120}{}{6}
+{1130}{}{7}
+{1140}{}{8}
+{1150}{}{9}
+{1160}{}{Нагрубил.}
+{1170}{}{Негодяй!}
+{1180}{}{10}
+{2000}{}{[Только сейчас замечает, что вы находились в доме. Когда она поворачивает к вам лицо, видно, что у неё заплаканы глаза.] К-к-к-то вы? Что вам надо?}
+{2010}{}{С вами всё в порядке? У вас такой вид, как будто вы чем-то расстроены.}
+{2020}{}{Да ничего, просто заш@sex@|ёл||ла| сказать, что вы забыли запереть дверь.}
+{2030}{}{Я от Брайана. Он просил передать, что у него всё в порядке. Но он чем-то заразился и пока не может сам прийти.}
+{2040}{}{Я от Брайана. Он просил передать, что у него всё в порядке. Но он облучился на какой-то свалке отходов и не может прийти.}
+{2050}{}{Я от Брайана. Он просил передать, что у него всё в порядке. Он облучился на охотничьих землях, но его уже вылечили, и он скоро придёт домой. Пока ему просто надо отлежаться.}
+{2060}{}{Гони деньги, дура! И еду тоже заверни в кулёчек!}
+{3000}{}{Д-да... Т-т-то есть н-н-нет... Мой муж, вчера утром ушёл на охоту, и его до сих пор нет. Он никогда так сильно не задерживался. Я хотела попробовать найти его, но рядом с дорогой в охотничьи земли бродил по кустам большой геккон, и я поб-б-оялась...}
+{3010}{}{Может, я могу помочь?}
+{3020}{}{Ушёл, и ночь где-то пропадал? Готов@sex@|||а| поспорить, он сейчас прохлаждается с девочками в заведении Салли!}
+{4000}{}{У меня нет денег. Уходите.}
+{5000}{}{Вы правда не боитесь?! Умоляю, умоляю вас, поищите его там! Его зовут Брайан, он уже не очень молод, ушёл в своей кожаной броне. У него длинные волосы.}
+{5010}{}{Я посмотрю, что я смогу сделать.}
+{6000}{}{Уходите.}
+{7000}{}{Уходите!}
+{8000}{}{Спасибо тебе, спасибо добрый человек! Я уже было думала о самом плохом. Но почему он не может прийти? Ему совсем плохо?}
+{8010}{}{Да. Но я согласился ему помочь. Скоро ждите его дома.}
+{8020}{}{Да. Не хочу врать, скажу прямо. При его состоянии его уже ничто не спасёт. Сожалею.}
+{9000}{}{О нееет! **Рыдает**}
+{10000}{}{**Рыдает**}
+{11000}{}{Спасибо тебе за добрые новости! Но... у меня даже нет ничего, чтобы тебя отблагодарить. Хотя... [Роется в столе и достаёт небольшой кулёк.] Вот, возьми. Может, где и пригодится.}
+{11010}{}{Спасибо. [Забрать]}
+{11020}{}{Спасибо, но мне ничего не надо. Я рад@sex@|||а| помочь.}
+{12000}{}{Спасибо ещё раз!}
+{13000}{}{[У Эммы при виде вас загораются глаза. Она просто молчит вопросительно смотрит, с искоркой надежды в глазах.]}
+{13010}{}{Я всё ещё работаю над этим.}
+{13020}{}{Напомните мне, как выглядел ваш муж?}
+{13030}{}{Я встретил@sex@|||а| Брайана. Он просил передать, что у него всё в порядке. Но он чем-то заразился и пока не может сам прийти.}
+{13040}{}{Я встретил@sex@|||а| Брайана. Он просил передать, что у него всё в порядке. Но он облучился на какой-то свалке отходов и не может прийти.}
+{13050}{}{Я от Брайана. Он просил передать, что у него всё в порядке. Он облучился где-то на охотничьих землях, но его уже вылечили, и он скоро придёт домой. Пока ему просто надо отлежаться.}
+{13060}{}{Я нашёл его... труп. Его загрызли гекко, его больше нет.}
+{14000}{}{Он уже не очень молод, ушёл в своей кожаной броне. Его зовут Брайан. У него длинные волосы.}
+{14010}{}{Спасибо. Я продолжу поиски.}
+{15000}{}{[Глаза женщины расширяются от ужаса, но потом в них появляется искорка надежды.] А... там... был... всего один труп?}
+{15010}{}{Да.}
+{15020}{}{Нет, два.}
+{15030}{}{Было три трупа.}
+{15040}{}{Четыре, если я не ошибаюсь.}
+{15050}{}{Да там просто гора трупов, кости, кровь, кишки, гекко упитанные ходят, ну просто как брамины! Я сам@sex@|||а| еле ноги унёс@sex@|||ла|!}
+{15060}{}{Там было очень много костей и крови, я не смог@sex@|||ла| определить. Но все свежие. Сожалею.}
+{16000}{}{Но с ним было два траппера! Значит, это был не он! Попробуйте, попробуйте поискать ещё!}
+{16010}{}{Признаться, он был ещё жив, когда я приш@sex@|ёл||ла|. Но он был в страшных ранах и лежал в крови. Я пожалел@sex@|||а| беднягу и решил@sex@|||а| добить.}
+{16020}{}{Хорошо. Простите, что напугал.}
+{17000}{}{Я не могу поверить в этот вздор.}
+{18000}{}{Спасибо ещё раз!@@Заходите иногда в гости.@@В этом доме вам всегда рады.@@Брайана всё ещё нет, но мне говорили, что он в порядке.@@Один знакомый согласился меня провести до Брайана, мы идём завтра.@@Я так рада, я так рада.@@Когда Брайан вернётся, я накормлю его мясом.@@Хорошо, что всё хорошо.}
+{19000}{}{Сп-п-пасибо.}
+{20000}{}{[Грустно] Чего тебе надо?}
+{20010}{}{Ух! Ух!}
+{20020}{}{Брайана просить говорить всё в порядке! Брайана скоро приходить!}
+{21000}{}{Хочешь вкусное яблоко? Сбегай в земли гекко, найди там траппера Брайана. Д-ж-и-м-а. Запомнил@sex@|||а|?}
+{21010}{}{Яблоко! Ух! Моя бежать!}
+{22000}{}{Ну что?}
+{22010}{}{Брайана просить говорить всё в порядке! Брайана скоро приходить!}
+{22020}{}{Брайана нету, Брайана загрызли гекко!}
+{22030}{}{Ничего!}
+{23000}{}{Спасибо! Вот, возьми вкусняшек.}
+{23010}{}{Ухуху!}
+{24000}{}{Я тебе не верю. Уходи. Кака.}
+{25000}{}{Кака, кака, фу, уходи.}
+{26000}{}{Не мешайте.@@Я не потерплю в своём доме незнакомцев.@@Уходите.@@Отстаньте от меня.}
+
+[engl]
+{100}{}{Emma}
+{200}{}{You see: Emma.}
+{210}{}{It seems that this woman is upset and worried. She says something by the table, but it's obvious that her mind is somewhere else.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{Dimwit not acquainted.}
+{1020}{}{Dimwit agreed to Brian's quest.}
+{1030}{}{Dimwit agreed to Emma's quest (1,2).}
+{1040}{}{Dimwit finished the quest.}
+{1050}{}{Dimwit tried to deceive.}
+{1060}{}{0}
+{1070}{}{1}
+{1080}{}{2}
+{1090}{}{3}
+{1100}{}{4}
+{1110}{}{5}
+{1120}{}{6}
+{1130}{}{7}
+{1140}{}{8}
+{1150}{}{9}
+{1160}{}{Was rude.}
+{1170}{}{Scum!}
+{1180}{}{10}
+{2000}{}{[Only at this point she notices that you are in the house. When she turns her face to you, you see that her eyes are tear-stained.] Wh-who are you? What do you want?}
+{2010}{}{Are you all right? You look like you are very disappointed.}
+{2020}{}{Nothing actually, just dropped by to tell you that you forgot to lock the door.}
+{2030}{}{Brian sent me. He asked me to tell you that he's all right. But he's infected with something, so he can't come yet.}
+{2040}{}{Brian sent me. He asked me to tell you that he's all right. But he got radiated at some waste dump and can't come.}
+{2050}{}{Brian sent me. He asked me to tell you that he's all right. He got radiated at hunting grounds, but he's already cured, and soon he'll come home. He just needs to lie down a bit.}
+{2060}{}{Give me the money, slut! And pack me some food as well!}
+{3000}{}{Y-yes... I m-m-mean no... My husband went hunting last night and still has not returned. He never stayed for so long. I wanted to try to find him, but there was a huge gecko in the bushes by the road to hunting grounds, and I was s-scared...}
+{3010}{}{Maybe I could help?}
+{3020}{}{He left and stayed out at night? I bet he's chilling out with girls in Sally's establishment!}
+{4000}{}{I don't have any money. Get out.}
+{5000}{}{Are you really not afraid?! Look for him, I beg you! His name is Brian, he's already not that young. He left wearing leather armor. And he has long hair.}
+{5010}{}{I'll see what I can do.}
+{6000}{}{Go away.}
+{7000}{}{Get out!}
+{8000}{}{Thank you, kind sir! I was already imagining the worst. But why can't he come? Is he that sick?}
+{8010}{}{Yes, but I will help him. Expect him soon.}
+{8020}{}{Yes. I don't want to lie to you. Nothing can save him in condition he is in. I'm sorry.}
+{9000}{}{Oh Nooo! **Weeps**}
+{10000}{}{**Weeps**}
+{11000}{}{Thank you for the good news! But... I don't have anything to thank you with. Wait... [She rummages in the table drawer and takes out a small packet.] Here, take this. Maybe it'll come in handy.}
+{11010}{}{Thank you. [Take]}
+{11020}{}{Thanks, but I don't really need anything. It was my pleasure to help.}
+{12000}{}{Thanks again!}
+{13000}{}{[Emma's eyes begin to glisten upon seeing you. She just stares at you inquiringly with a sparkle of hope in her eyes.]}
+{13010}{}{I'm still working on it.}
+{13020}{}{Please remind me how does your husband look like.}
+{13030}{}{I met Brian. He wanted me to tell you that he's all right. But he's infected with something, so he can't come yet.}
+{13040}{}{I met Brian. He wanted me to tell you that he's all right. But he got radiated at some waste dump and can't come.}
+{13050}{}{Brian sent me. He asked me to tell you that he's all right. He got radiated at hunting grounds, but he's already cured, and soon he'll come home. He just needs to lie down a bit.}
+{13060}{}{I found him... his body. Geckos tore him apart, and now he's dead.}
+{14000}{}{He's not that young, he left wearing leather armor. His mane is Brian. He has long hair.}
+{14010}{}{Thank you. I'll keep on searching.}
+{15000}{}{[Woman's eyes widen from fear, but then a glimpse of hope appears in them.] But... was... there... only one corpse?}
+{15010}{}{Yes.}
+{15020}{}{No, there were two.}
+{15030}{}{There were three corpses.}
+{15040}{}{Four, if I am not mistaken.}
+{15050}{}{There was a pile of corpses, blood, bones and guts! Gecko are as fat as brahmin there! I barely made it out of there!}
+{15060}{}{There were a lot of blood and bones, I couldn't figure it out. But it was all still fresh. I'm sorry.}
+{16000}{}{But there were two trappers with him! That means it's not him! Try, please, try to search some more!}
+{16010}{}{Frankly speaking he was still alive when I arrived. But he was lying in a puddle of his own blood, severely wounded. I put him out of his misery.}
+{16020}{}{All right. Sorry for scaring you.}
+{17000}{}{I can't believe this bullshit.}
+{18000}{}{Thanks once again!@@Come visit me some time.@@You're always welcome in this house.@@Brian's still away, but I've been told he's okay.@@A friend of mine agreed to take me to Brian. We set off tomorrow.@@I'm so glad, I'm so glad.@@When Brian comes home, I'll cook him a luxurious dinner.@@All's well that ends well.}
+{19000}{}{Th-thank you.}
+{20000}{}{[Sadly] What do you want?}
+{20010}{}{Uh! Oh!}
+{20020}{}{Brian say he allrite! Brian come soon!}
+{21000}{}{Do you want a yummy apple? Go to gecko land, find a trapper named Brian. B-r-i-a-n. Memorized?}
+{21010}{}{Apple! Uh! Me go now!}
+{22000}{}{So?}
+{22010}{}{Brian say he be allrite! Brian come soon!}
+{22020}{}{Brian no more, Brian eaten by gecko!}
+{22030}{}{Nothing!}
+{23000}{}{Thank you! Here, have some snacks.}
+{23010}{}{Woohoo!}
+{24000}{}{I don't believe you. Go away. Bad.}
+{25000}{}{Bad, bad, out, go away.}
+{26000}{}{Don't bother me.@@I don't allow strangers into the house.@@Get out.@@Leave me alone.}

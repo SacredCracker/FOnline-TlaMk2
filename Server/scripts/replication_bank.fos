@@ -1,0 +1,638 @@
+// Author: cvet, rifleman17
+//
+// Replication Bank
+//
+
+#include "_macros.fos"
+#include "entire.fos"
+
+import bool AddAttackPlane(Critter& npc, uint priority, Critter& target) from "npc_planes";
+import bool AddAttackPlane(Critter& npc, uint priority, Critter& target, int minHp) from "npc_planes";
+import bool AddWalkPlane(Critter& npc, uint priority, uint16 hexX, uint16 hexY, uint8 dir, bool run, uint cut) from "npc_planes";
+import bool AddPickPlane(Critter& npc, uint priority, Item@ item, uint useItemId, bool toOpen) from "npc_planes";
+
+#define ENTER_MONEY_NEED              (100)
+#define MAX_TIME_FOR_ENTER            (REAL_MINUTE(2)) // Время отпущенное игроку на манипуляции с контейнером.
+
+#define MESSAGE_TRY_PASS_PLAYER       (0) // Спросить у охраны можно ли запустить нового игрока, см. Var2.
+#define MESSAGE_BEGIN_PASS_PLAYER     (1) // Уведомить охрану что бы пропустили игрока.
+#define MESSAGE_END_PASS_PLAYER       (2) // Сообщить охране выкинуть зазевавшегося игрока.
+#define MESSAGE_THROW_OUT_PLAYER      (3) // Сообщить охране выкинуть зазевавшегося игрока.
+#define MESSAGE_PLAYER_ON_WARNING_HEX (4) // Игрок наступил на предупредительный хекс.
+#define MESSAGE_PLAYER_ON_ATTACK_HEX  (5) // Игрок наступил на атакующий хекс.
+
+#define ROLE_BANKER                   (1) // Банкир.
+#define ROLE_GUARD                    (2) // Охранник.
+#define ROLE_KEEPER                   (3) // Кладовщик.
+
+#define ENT_HIDE_CONT                 (100) // Хекс со скрытым контейнером.
+#define ENT_SHOW_CONT                 (101) // Хекс с видимым контейнером.
+#define ENT_DOOR_GUARD                (110) // Хекс охранника около двери.
+#define ENT_DOOR_HEX                  (120) // Хекс где расположена дверь.
+
+// Пиды контейнеров.
+#define HIDE_CONTAINER_PID            (PID_FOOTLOCKER_CLEAN_LEFT)
+#define SHOW_CONTAINER_PID            (PID_FOOTLOCKER_CLEAN_LEFT)
+
+#define FORCE_DIALOG_MOVE_ITEMS_ERROR (4)
+#define FORCE_DIALOG_ROOM_BUSY        (5)
+#define FORCE_DIALOG_NO_MONEY         (6)
+
+#define STR_NEXT                      (1000)
+#define STR_STOP                      (1001)
+#define STR_TIME_LEFT                 (1002)
+#define STR_TIME_END                  (1003)
+#define STR_THIEF                     (1004)
+
+// Борьба с затыканием проходов в банках.
+// id игрока сохраняется в Var9
+#define FORCE_DIALOG_PLAYER_NOTFOUND  (5)
+#define FORCE_DIALOG_PLAYER_FOUND     (4)
+#define WARN_TIME                     (REAL_SECOND(60))
+#define ATTACK_TIME                   (WARN_TIME+REAL_SECOND(10))
+#define STR_WARN_PLAYER               (1)
+#define STR_ATTACK_PLAYER             (2)
+
+//
+// Bank
+//
+class CBank
+{
+	Entire[] HideContPos; // Координаты скрытого контейнера.
+	Entire[] ShowContPos; // Координаты видимых контейнеров.
+	Entire[] DoorHexPos; // Координаты хекса двери.
+	Entire[] DoorGuardPos; // Координаты хекса, где стоят охранники у двери.
+	uint PassedTime; // Время пропуска.
+	bool PlayerNotify; // Предупрежден ли игрок о том, что задерживается.
+	bool PlayerEntered; // Вошел ли игрок в помещение.
+	uint PassedPlayerId; // Id пропущенного к контейнерам игрока.
+	uint ThrowOutPlayerId; // Id игрока, которого банкир просил выкинуть.
+	bool DoorGuardSayWarning; // Указывает предупредил ли кто-нибудь из охранников игрока.
+	bool PlayerPassed; // Id пропущенного к контейнерам игрока.
+	uint16 DoorPid;
+
+	void Init(Map@ map)
+	{
+		PassedTime=0;
+		PlayerNotify=false;
+		PlayerEntered=false;
+		PassedPlayerId=0;
+		ThrowOutPlayerId=0;
+		DoorGuardSayWarning=false;
+		ParseEntires(map,HideContPos,ENT_HIDE_CONT);
+		ParseEntires(map,ShowContPos,ENT_SHOW_CONT);
+		ParseEntires(map,DoorGuardPos,ENT_DOOR_GUARD);
+		ParseEntires(map,DoorHexPos,ENT_DOOR_HEX);
+	}
+}
+
+uint[] BanksMapId;
+CBank[] Banks;
+
+CBank@ GetBank(Critter& cr)
+{
+	uint16 id=cr.GetMapId();
+	if(id==0) return null;
+	for(uint i=0, iMax=BanksMapId.length(); i<iMax; i++) if(id==BanksMapId[i]) return @Banks[i];
+	return null;
+}
+
+void ParseBank(Critter& cr)
+{
+	Map@ map=cr.GetMap();
+	if(valid(map) && not valid(GetBank(cr)))
+	{
+		BanksMapId.insertLast(map.Id);
+		Banks.grow(1);
+		Banks.last().Init(map);
+	}
+}
+
+//
+// Banker
+//
+void _BankerInit(Critter& banker, bool firstTime)
+{
+	banker.SetEvent(CRITTER_EVENT_FINISH,"_BankerFinish");
+	banker.SetEvent(CRITTER_EVENT_IDLE,"_BankerIdle");
+	banker.SetEvent(CRITTER_EVENT_MESSAGE,"_BankerOnMessage");
+	ParseBank(banker);
+	banker.StatBase[ST_NPC_ROLE]=ROLE_BANKER;
+	banker.ModeBase[MODE_NO_ENEMY_STACK]=1;
+}
+
+void _BankerFinish(Critter& banker, bool deleted)
+{
+	CBank@ bank=GetBank(banker);
+	if(valid(bank) && bank.PassedPlayerId!=0) TransferItems(banker,bank.PassedPlayerId,true);
+}
+
+void _BankerIdle(Critter& banker)
+{
+	CBank@ bank=GetBank(banker);
+	if(not valid(bank)) return;
+
+	// Никого нет.
+	if(bank.PassedPlayerId==0) return;
+
+	// Проверим вошел ли игрок.
+	if(not bank.PlayerEntered && __FullSecond>bank.PassedTime+REAL_SECOND(15))
+	{
+		banker.SayMsg(SAY_NORM_ON_HEAD,TEXTMSG_TEXT,STR_NEXT);
+		EndEnter(banker,bank.PassedPlayerId);
+	}
+	// Время игрока подходит к концу.
+	else if(bank.PlayerEntered && not bank.PlayerNotify && __FullSecond>bank.PassedTime+MAX_TIME_FOR_ENTER-REAL_SECOND(20))
+	{
+		banker.SayMsg(SAY_NORM,TEXTMSG_TEXT,STR_TIME_LEFT);
+		bank.PlayerNotify=true;
+		banker.Wait(5000);
+	}
+	// Игрок задержался больше положенного.
+	else if(__FullSecond>bank.PassedTime+MAX_TIME_FOR_ENTER)
+	{
+		banker.SendMessage(MESSAGE_THROW_OUT_PLAYER,bank.PassedPlayerId,MESSAGE_TO_ALL_ON_MAP);
+		banker.SayMsg(SAY_SHOUT_ON_HEAD,TEXTMSG_TEXT,STR_TIME_END);
+		EndEnter(banker,bank.PassedPlayerId);
+	}
+	// Ждем дальше
+	else
+	{
+		banker.Wait(5000);
+	}
+}
+
+void _BankerOnMessage(Critter& banker, Critter& player, int num, int val)
+{
+	// Обработка сообщений игрока.
+	// Убедимся пропущенный игрок ли это послал сообщение и банкир ли принял.
+	if(banker.StatBase[ST_NPC_ROLE]!=ROLE_BANKER) return;
+
+	CBank@ bank=GetBank(banker);
+	if(not valid(bank)) return;
+
+	if(player.Id!=bank.PassedPlayerId) return;
+
+	// С помощью этих сообщений вычисляем зашел ли игрок или вышел.
+	if(num==MESSAGE_PLAYER_ON_WARNING_HEX)
+	{
+		if(not bank.PlayerEntered) return;
+		banker.SayMsg(SAY_NORM_ON_HEAD,TEXTMSG_TEXT,STR_NEXT);
+		EndEnter(banker,bank.PassedPlayerId);
+	}
+	else if(num==MESSAGE_PLAYER_ON_ATTACK_HEX)
+	{
+		bank.PlayerEntered=true;
+	}
+}
+
+// Начало работы с контейнерами.
+bool IsCanEnter(Critter& player, Critter& banker)
+{
+	CBank@ bank=GetBank(banker);
+	if(not valid(bank)) return false;
+	// Зашел ли другой игрок.
+	if(bank.PassedPlayerId!=0) return false;
+	// Если нет, то спросим охрану, все ли в порядке.
+	banker.StatBase[ST_VAR0]=1;
+	banker.SendMessage(MESSAGE_TRY_PASS_PLAYER,int(player.Id),MESSAGE_TO_ALL_ON_MAP);
+	// Охрана одобрила.
+	return banker.StatBase[ST_VAR0]!=0?true:false;
+}
+
+uint r_TryEnter(Critter& player, Critter@ banker)
+{
+	// Прверим можно ли войти в комнату.
+	if(IsCanEnter(banker,player)==false)
+	{
+		return FORCE_DIALOG_ROOM_BUSY;
+	}
+
+	// Достаточно ли у игрока денег.
+	if(_CritCountItem(player,PID_BOTTLE_CAPS)<ENTER_MONEY_NEED)
+	{
+		return FORCE_DIALOG_NO_MONEY;
+	}
+
+	// Перемещаем итемы игрока в видимый контейнер.
+	if(TransferItems(banker,player.Id,false)==false)
+	{
+		return FORCE_DIALOG_MOVE_ITEMS_ERROR;
+	}
+
+	CBank@ bank=GetBank(banker);
+	if(not valid(bank))
+	{
+		return FORCE_DIALOG_MOVE_ITEMS_ERROR;
+	}
+
+	// Пропускаем игрока.
+	player.DeleteItem(PID_BOTTLE_CAPS,ENTER_MONEY_NEED);
+	bank.PassedPlayerId=player.Id;
+	bank.PassedTime=__FullSecond;
+	bank.PlayerNotify=false;
+	bank.PlayerEntered=false;
+	banker.SendMessage(MESSAGE_BEGIN_PASS_PLAYER,int(player.Id),MESSAGE_TO_ALL_ON_MAP);
+
+	return 0;
+}
+
+// Условие и результат на завершение работы с контейнерами.
+bool d_IsNotEntered(Critter& player, Critter@ banker)
+{
+	CBank@ bank=GetBank(banker);
+	if(not valid(bank)) return true;
+	return bank.PassedPlayerId!=player.Id;
+}
+
+bool d_IsEntered(Critter& player, Critter@ banker)
+{
+	CBank@ bank=GetBank(banker);
+	if(not valid(bank)) return false;
+	// Проверяем тот ли игрок работал с контейнером.
+	return bank.PassedPlayerId==player.Id;
+}
+
+void r_EndEnter(Critter& player, Critter@ banker)
+{
+	EndEnter(banker,player.Id);
+}
+
+// Завершаем сеанс.
+void EndEnter(Critter& banker, uint playerId)
+{
+	CBank@ bank=GetBank(banker);
+	if(not valid(bank)) return;
+	// Завершаем работу с игроком.
+	bank.PassedPlayerId=0;
+	// Перемещаем итемы игрока в невидимый контейнер.
+	TransferItems(banker,playerId,true);
+	banker.SendMessage(MESSAGE_END_PASS_PLAYER,playerId,MESSAGE_TO_ALL_ON_MAP);
+}
+
+// Перемещение итемов между видимым и невидимым контейнером.
+bool TransferItems(Critter& banker, uint playerId, bool hide)
+{
+	CBank@ bank=GetBank(banker);
+	if(not valid(bank)) return false;
+	// Находим контейнеры.
+	uint num=playerId%10;
+	if(num>=bank.ShowContPos.length()) num=0;
+	if(bank.HideContPos.length()==0 || bank.ShowContPos.length()==0) return false;
+	Map@ map=banker.GetMap();
+	if(not valid(map)) return false;
+	Item@ contHide=map.GetItem(bank.HideContPos[0].HexX,bank.HideContPos[0].HexY,HIDE_CONTAINER_PID);
+	if(not valid(contHide)) return false;
+	Item@ contShow=map.GetItem(bank.ShowContPos[num].HexX,bank.ShowContPos[num].HexY,SHOW_CONTAINER_PID);
+	if(not valid(contShow)) return false;
+
+	// +heX
+	// Fix: запираем ящики - чтобы игроки не тупили.
+	for(int i=0; i<10; i++)
+	{
+		Item@ contTmp=map.GetItem(bank.ShowContPos[i].HexX, bank.ShowContPos[i].HexY,SHOW_CONTAINER_PID);
+		if(valid(contTmp)) contTmp.LockerId=1;
+	}
+	// Cнимаем запор на ящике игрока
+	contShow.LockerId=0;
+
+	// Перемещаем итемы.
+	Item@[] items;
+	if(hide)
+	{
+		contShow.GetItems(0,items);
+		MoveItems(items,contHide,playerId);
+	}
+	else
+	{
+		contHide.GetItems(playerId,items);
+		MoveItems(items,contShow,0);
+	}
+	return true;
+}
+
+//
+// Guard
+//
+void _GuardInit(Critter& guard, bool firstTime)
+{
+	guard.SetEvent(CRITTER_EVENT_IDLE,"_GuardIdle");
+	guard.SetEvent(CRITTER_EVENT_MESSAGE,"_GuardOnMessage");
+	guard.SetEvent(CRITTER_EVENT_SMTH_ATTACK,"_GuardSmthAttack"); //Добавил Дагнир, 11.02.2010.
+	guard.SetEvent(CRITTER_EVENT_SMTH_STEALING,"_GuardSmthStealing"); //Добавил rifleman17, 22.02.2010.
+	guard.SetEvent(CRITTER_EVENT_SMTH_USE_ITEM,"_GuardSmthUseItem"); //r17 23.03.10
+	guard.SetEvent(CRITTER_EVENT_SMTH_DROP_ITEM,"_GuardSmthDropItem"); //r17 23.03.10
+	ParseBank(guard);
+	guard.StatBase[ST_NPC_ROLE]=ROLE_GUARD;
+	guard.StatBase[ST_EXPLODE_ABSORB]=30;
+	guard.StatBase[ST_EXPLODE_RESIST]=60; //Дагнир, 22.02.2010 - полумера от подрывов с глобала.
+	guard.ModeBase[MODE_NO_ENEMY_STACK]=1;
+	guard.ModeBase[MODE_NO_LOOT]=1;
+	guard.ModeBase[MODE_NO_DROP]=1;
+	guard.ModeBase[MODE_NO_STEAL]=1;
+	guard.ModeBase[MODE_NO_KNOCK]=1;
+	guard.ModeBase[MODE_UNLIMITED_AMMO]=1; //в противном случае у них воруют оружие
+	guard.StatBase[ST_ACTION_POINTS]=12;
+	guard.StatBase[ST_BONUS_LOOK]=300; //Чтобы реагировали на атаки других игроков сникерами.
+}
+
+void _GuardIdle(Critter& guard)
+{
+	CBank@ bank=GetBank(guard);
+	if(not valid(bank)) return;
+	bank.ThrowOutPlayerId=0;
+}
+
+// Сообщения от банкира или игрока.
+void _GuardOnMessage(Critter& guard, Critter& crit, int num, int val)
+{
+	// Проверяем, охрана ли приняла.
+	if(guard.StatBase[ST_NPC_ROLE]!=ROLE_GUARD) return;
+	//if(guard.Cond==COND_DEAD) return;
+
+	CBank@ bank=GetBank(guard);
+	if(not valid(bank)) return;
+
+	// Обработка сообщений игрока.
+	// Убедимся игрок ли это послал сообщение.
+	if(crit.IsPlayer())
+	{
+		if(num==MESSAGE_PLAYER_ON_WARNING_HEX)
+		{
+			// Предупреждаем игрока, если прошел без предупреждения.
+			if(bank.PassedPlayerId==crit.Id || bank.ThrowOutPlayerId==crit.Id) return;
+			if(bank.DoorGuardSayWarning) return;
+			// Ищем охранника около двери.
+			for(uint i=0, iMax=bank.DoorGuardPos.length(); i<iMax; i++)
+			{
+				if(guard.HexX!=bank.DoorGuardPos[i].HexX || guard.HexY!=bank.DoorGuardPos[i].HexY) continue;
+				guard.SayMsg(SAY_SHOUT_ON_HEAD,TEXTMSG_TEXT,STR_STOP);
+				bank.DoorGuardSayWarning=true;
+				break;
+			}
+		}
+		else if(num==MESSAGE_PLAYER_ON_ATTACK_HEX)
+		{
+			// Атакуем наглеца, если он прошел без рзрешения.
+			if(bank.PassedPlayerId==crit.Id || bank.ThrowOutPlayerId==crit.Id) return;
+			AddAttackPlane(guard,0,crit);
+		}
+		return;
+	}
+
+	// Обработка сообщений банкира.
+	// Убедимся банкир ли это послал сообщение.
+	if(crit.StatBase[ST_NPC_ROLE]!=ROLE_BANKER) return;
+
+	// Спрашивает возможно ли пустить игрока.
+	if(num==MESSAGE_TRY_PASS_PLAYER)
+	{
+		if (!guard.IsNoPlanes()) crit.StatBase[ST_VAR0]=0; // См. den_sh_banker IsCanEnter
+		else if(guard.Cond!=COND_LIFE) crit.StatBase[ST_VAR0]=0; // См. den_sh_banker IsCanEnter
+	}
+	// Сообщает что игрок начал манипуляции с контейнерами.
+	else if(num==MESSAGE_BEGIN_PASS_PLAYER)
+	{
+	}
+	// Сообщает что игрок звершил манипуляции с контейнерами.
+	else if(num==MESSAGE_END_PASS_PLAYER)
+	{
+	}
+	// Просит выкинуть зеваку.
+	else if(num==MESSAGE_THROW_OUT_PLAYER)
+	{
+		Map@ map=guard.GetMap();
+		if(not valid(map)) return;
+		Critter@ player=map.GetCritter(uint(val));
+		if(valid(player))
+		{
+			AddAttackPlane(guard,0,player);
+			bank.ThrowOutPlayerId=uint(val);
+		}
+	}
+}
+
+void _GuardSmthAttack(Critter& guard, Critter& attacker, Critter& target)
+{
+	if(attacker.IsPlayer()) AddAttackPlane(guard,0,attacker);
+}
+
+void _GuardSmthStealing(Critter& guard, Critter& fromCr, Critter& thief, bool success, Item& item, uint count)
+{
+	if(thief.IsPlayer()&&guard.IsLife())
+	{
+		guard.SayMsg(SAY_SHOUT_ON_HEAD, TEXTMSG_TEXT,STR_THIEF);
+		AddAttackPlane(guard,0,thief,1);
+	}
+}
+
+void _GuardSmthDropItem(Critter& npc, Critter& fromCr, Item& item)
+{
+	if(fromCr.IsPlayer()&&npc.IsLife())
+	{
+		uint pid=item.GetProtoId();
+		if(pid==PID_ACTIVE_PLASTIC_EXPLOSIVE||pid==PID_ACTIVE_MINE||pid==PID_ACTIVE_DYNAMITE)
+		{
+			AddAttackPlane(npc, 0, fromCr);
+		}
+	}
+}
+
+void _GuardSmthUseItem(Critter& npc, Critter& fromCr, Item& item, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+	if(fromCr.IsPlayer()&&npc.IsLife())
+	{
+		uint pid=item.GetProtoId();
+		if(pid==PID_PLASTIC_EXPLOSIVES||pid==PID_MINE||pid==PID_TOGGLE_SWITCH||pid==PID_DYNAMITE)
+		{
+			AddAttackPlane(npc, 0, fromCr);
+		}
+	}
+}
+// Триггеры около двери.
+void t_DangerHex(Critter& player, Scenery& trigger, bool entered, uint8 dir)
+{
+	if(not entered) return;
+	// Проверяем игрок ли это и тот кторого пустил банкир.
+	if (!player.IsPlayer()) return;
+
+	CBank@ bank=GetBank(player);
+	if(not valid(bank)) return;
+
+	// Посылаем сообщение о том, что наступили на этот хекс.
+	bank.DoorGuardSayWarning=false;
+	player.SendMessage(MESSAGE_PLAYER_ON_WARNING_HEX,0,MESSAGE_TO_ALL_ON_MAP);
+}
+
+void t_AttackHex(Critter& player, Scenery& trigger, bool entered, uint8 dir)
+{
+	if(not entered) return;
+	// Проверяем игрок ли это и тот которого пустил банкир.
+	if (!player.IsPlayer()) return;
+
+	// Посылаем сообщение о том, что наступили на этот хекс.
+	player.SendMessage(MESSAGE_PLAYER_ON_ATTACK_HEX,0,MESSAGE_TO_ALL_ON_MAP);
+}
+
+//
+// Keeper
+//
+uint16[] ShowContPos; // Координаты видимых контейнеров.
+uint16[] DoorHexPos; // Координаты хекса двери.
+bool PlayerPassed=false; // Id пропущенного к контейнерам игрока.
+uint16 DoorPid=0;
+
+void _KeeperInit(Critter& keeper, bool firstTime)
+{
+	keeper.SetEvent(CRITTER_EVENT_IDLE,"_KeeperIdle");
+	keeper.SetEvent(CRITTER_EVENT_MESSAGE,"_KeeperOnMessage");
+	ParseBank(keeper);
+	keeper.StatBase[ST_NPC_ROLE]=ROLE_KEEPER;
+	keeper.ModeBase[MODE_NO_ENEMY_STACK]=1;
+}
+
+void _KeeperIdle(Critter& keeper)
+{
+	CBank@ bank=GetBank(keeper);
+	if(not valid(bank)) return;
+	if(bank.PlayerPassed) keeper.Wait(10000);
+}
+
+void _KeeperOnMessage(Critter& keeper, Critter& banker, int num, int val)
+{
+	// Проверяем, что передал банкир кладовщику.
+	if(keeper.StatBase[ST_NPC_ROLE]!=ROLE_KEEPER || banker.StatBase[ST_NPC_ROLE]!=ROLE_BANKER) return;
+
+	CBank@ bank=GetBank(keeper);
+	if(not valid(bank)) return;
+
+	// Сообщает что игрок начал манипуляции с контейнерами.
+	if(num==MESSAGE_BEGIN_PASS_PLAYER)
+	{
+		uint contNum=uint(val)%10;
+		if(contNum>=bank.ShowContPos.length()) contNum=0;
+		if(bank.ShowContPos.length()==0) return;
+		bank.PlayerPassed=true;
+		AddWalkPlane(keeper,0,bank.ShowContPos[contNum].HexX,bank.ShowContPos[contNum].HexY,0xFF,false,1);
+		//AddPickPlane(keeper,0,ShowContPos[contNum*2],ShowContPos[contNum*2+1],SHOW_CONTAINER_PID);
+	}
+	// Сообщает что игрок завершил манипуляции с контейнерами или просит выкинуть зеваку.
+	else if(num==MESSAGE_END_PASS_PLAYER || num==MESSAGE_THROW_OUT_PLAYER)
+	{
+		bank.PlayerPassed=false;
+		keeper.Wait(0);
+		Map@ map=keeper.GetMap();
+		if(not valid(map)) return;
+
+		// Закрываем дверь.
+		if(bank.DoorHexPos.length()>0)
+		{
+			Item@ door=map.GetDoor(bank.DoorHexPos[0].HexX,bank.DoorHexPos[0].HexY);
+			if(valid(door) && _LockerIsOpen(door)) AddPickPlane(keeper,0,door,0,false);
+		}
+
+		// Закрываем открытые контейнеры.
+		for(uint i=0, iMax=bank.ShowContPos.length(); i<iMax; i++)
+		{
+			Item@ cont=map.GetItem(bank.ShowContPos[i].HexX,bank.ShowContPos[i].HexY,SHOW_CONTAINER_PID);
+			if(not valid(cont) || _LockerIsClose(cont)) continue;
+			AddPickPlane(keeper,0,cont,0,false);
+		}
+	}
+}
+
+uint dlg_TalkAboutGagPlayer(Critter& player, Critter@ npc, string@ playerName)
+{
+	if (!IS_DIALOG_SAY_MODE(playerName)) return 0;
+
+	if (!valid(npc)) return 0;
+	if(npc.IsDead()) return 0;
+
+	Critter@ cr=GetPlayer(playerName);
+	if(valid(cr))
+	{
+		if (!cr.IsDead())
+		{
+
+			// не следит ни за кем
+			if(npc.IsSee(cr)&&npc.StatBase[ST_VAR9]==0&&cr.Id!=player.Id)
+			{
+				if(AddCheckPlayerPosition(npc, cr))
+				{
+					return FORCE_DIALOG_PLAYER_FOUND;
+				}
+			}
+		}
+	}
+
+	return FORCE_DIALOG_PLAYER_NOTFOUND;
+}
+
+bool AddCheckPlayerPosition(Critter & guard, Critter & player)
+{
+	Map @ guardMap=guard.GetMap();
+	Map @ playerMap=player.GetMap();
+	if (!valid(guardMap)||!valid(playerMap)) return false;
+	if(guardMap.Id!=playerMap.Id) return false;
+
+	uint[] values={guard.Id, player.Id,  player.HexX, player.HexY};
+
+	if(CreateTimeEvent(__FullSecond+WARN_TIME, "e_WarnGagPlayer", values, false)>0)
+	{
+		guard.StatBase[ST_VAR9]=CreateTimeEvent(__FullSecond+ATTACK_TIME, "e_AttackGagPlayer", values, false);
+		return true;
+	}
+	return false;
+}
+
+uint e_WarnGagPlayer(uint[]@ values)
+{
+	Critter @ guard=GetCritter(values[0]);
+	if(valid(guard))
+	{
+		Critter @ player=GetCritter(values[1]);
+		if(valid(player))
+		{
+			if(guard.IsSee(player))
+			{
+
+				guard.SayMsg(SAY_SHOUT, TEXTMSG_DLG, DLGSTR(guard.Stat[ST_DIALOG_ID], STR_WARN_PLAYER),  "$pname "+GetPlayerName(player.Id));
+			}
+		}
+	}
+	return 0;
+}
+
+uint e_AttackGagPlayer(uint[]@ values)
+{
+	Critter @ guard=GetCritter(values[0]);
+	if(valid(guard))
+	{
+		guard.StatBase[ST_VAR9]=0;
+		Critter @ player=GetCritter(values[1]);
+		if(valid(player))
+		{
+			if(player.IsPlayer())
+			{
+				Map @ guardMap=guard.GetMap();
+				Map @ playerMap=player.GetMap();
+				if (!valid(guardMap)||!valid(playerMap)) return 0;
+				if(guardMap.Id!=playerMap.Id) return 0;
+
+				uint oldX=values[2];
+				uint oldY=values[3];
+				uint newX=player.HexX;
+				uint newY=player.HexY;
+
+				if(oldX==newX&&oldY==newY)
+				{
+					guard.SayMsg(SAY_SHOUT, TEXTMSG_DLG, DLGSTR(guard.Stat[ST_DIALOG_ID], STR_ATTACK_PLAYER));
+					AddAttackPlane(guard,0,player);
+					player.SendMessage(MESSAGE_PLAYER_ON_ATTACK_HEX,0,MESSAGE_TO_ALL_ON_MAP);
+				}
+			}
+		}
+	}
+
+	return 0;
+}

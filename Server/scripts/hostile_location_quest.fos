@@ -1,0 +1,508 @@
+// Author: rifleman17
+// Скрипт для реализации квестов, целью которых является зачистка некоей локации от мобов
+// Особенности:
+//   - локация видна одному игроку
+//   - если игрок убит, локация не исчезает
+//   - если погибли все мобы, локация удаляется, переключается квестовая переменная "выполнено"
+//   - на карте может быть несколько нпц-союзников, ведется отсчет погибших, может использоваться в квесте
+//   - если игрок погиб, союзники сбрасывают планы атаки "Отступаем! Смена позиции" и уходят на исходную позицию
+//   - противники и союзники ставятся на карте маппером, не скриптом, у них указывается соответствующий NPC_ROLE
+//   - противникам и союзникам присваевается свой скрипт
+//   - все параметры локации и карт прописываются в Maps.cfg, Locations.cfg
+//   - все поля и свойства квеста сериализуются в AnyData, ключ создается на основе комбинации Id игрока и номера квестовой переменной
+//   - при атаке игроком мобов, защитники присоединяются, если даже игрок с ними не поговорил
+//   - удаление локации контролируется таймаутом, при создании карты добавляется таймевент. Через два реальных дня локация будет удалена, статус квестовой переменной будет переключен.
+//   - внимание! для всех карт в локации устанавливается специфический скрипт
+//   - для каждой карты в локации заняты Map::GetData(0) - код игрока, выполняющего квест; и Map::GetData(1) - номер квестовой переменной. Чтобы в контексте карты иметь доступ к описанию квеста.
+// TODO:
+//   - изменить на групповой квест
+//   - обработать убийство игроком союзников после того, как задача квеста выполнена
+//   - изменть реализацию поведения криттеров, чтобы они допускали использование своих скриптов
+
+#include "_macros.fos"
+#include "serializator.fos"
+
+#define NPC_ROLE_HOSTILE         (400)
+#define NPC_ROLE_ALLY            (401)
+#define QUEST_ACTIVE             (1) // Квест получен
+#define QUEST_FAIL_LOC_DELETED   (2) // Квест провален, удалена локация - истекло время на квест.
+#define QUEST_COMPLETE           (3) // Квест выполнен, все враждебные нпц уничтожены, локация удалена.
+#define TIME_RESET               (REAL_DAY(2)) // Время автоматического удаления локации и приведения квестовой переменной в состояние QUEST_FAIL_LOC_DELETED
+#define MSG_KILL_EM              (144)
+
+#define _AnyDataKey  #(crId, varNum)("HLoc_"+crId+"_q_"+varNum)
+#define _GetPlayerId #(map)         (map.GetData(0))
+#define _GetVarNum   #(map)         (map.GetData(1))
+#define _SetPlayerId #(map, crId)   (map.SetData(0, crId))
+#define _SetVarNum   #(map, varNum) (map.SetData(1, varNum))
+#define _InfoFromMap #(map)         (HostileLocationInfo(_GetPlayerId(map), _GetVarNum(map)))
+#define _InfoFromCr  #(cr)          (valid(cr.GetMap()) ? HostileLocationInfo(_GetPlayerId(cr.GetMap()), _GetVarNum(cr.GetMap())) : null)
+
+//#define DL #(s) (Log(s))
+#define DL #(s)
+
+import bool AddAttackPlane(Critter& npc, uint priority, uint critId) from "npc_planes";
+import bool AddWalkPlane(Critter& npc, uint priority, uint16 hexX, uint16 hexY, uint8 dir, bool run, uint cut) from "npc_planes";
+import bool GetFreeHex(Map& map, uint radius, uint16& hx, uint16& hy) from "caravan";
+
+
+class HostileLocationInfo
+{
+	HostileLocationInfo()
+	{
+		this.LocCreated=false;
+	}
+
+	HostileLocationInfo(int playerId, int varNum)
+	{
+		this.LocCreated=false;
+		this.PlayerId=playerId;
+		this.QVarNum=varNum;
+	}
+
+	uint PlayerId;               // Id игрока выполняющего квест
+	uint QVarNum;                // Номер квестовой переменной, связанной с квестом
+	uint CVarNum;                // Номер локальной переменной для игрока - счетчика смертей союзников, если равна=0, подсчет не происходит
+	uint LocId;                  // Id локации
+	uint LocPid;                 // Код прототипа локации
+	uint LocX;                   // Положение локации на глобальной карте по оси икс
+	uint LocY;                   // Положение локации на глобальной карте по оси игрек
+	uint CoordDelta;             // Относительное смещение по координатным осям глобальной карты, на которое может быть смещена точка положения локации
+	bool LocCreated;             // Признак: Локация уже создана
+
+	bool Serialized()
+	{
+		string key=_AnyDataKey(this.PlayerId, this.QVarNum);
+		return IsAnyData(key);
+	}
+
+	void Save()
+	{
+		string key=_AnyDataKey(this.PlayerId, this.QVarNum);
+		Serializator save;
+		save.Set(this.PlayerId);
+		save.Set(this.QVarNum);
+		save.Set(this.CVarNum);
+		save.Set(this.LocId);
+		save.Set(this.LocPid);
+		save.Set(this.LocX);
+		save.Set(this.LocY);
+		save.Set(this.CoordDelta);
+		save.Set(this.LocCreated);
+		save.Save(key);
+	}
+
+	void Load()
+	{
+		string key=_AnyDataKey(this.PlayerId, this.QVarNum);
+		Serializator load;
+		if (!load.Load(key))
+		{
+			//Log("Can't load HostileLocation. Key: "+key);
+			return;
+		}
+		load.Get(this.PlayerId);
+		load.Get(this.QVarNum);
+		load.Get(this.CVarNum);
+		load.Get(this.LocId);
+		load.Get(this.LocPid);
+		load.Get(this.LocX);
+		load.Get(this.LocY);
+		load.Get(this.CoordDelta);
+		load.Get(this.LocCreated);
+	}
+
+	void Erase()
+	{
+		string key=_AnyDataKey(this.PlayerId, this.QVarNum);
+		if(IsAnyData(key))
+			EraseAnyData(key);
+	}
+
+	bool CreateHostileLocation()
+	{
+		if(this.PlayerId==0 || this.LocCreated || this.LocPid==0)
+			return false; // Игрок неизвестен или локация создана ранее, или код прототипа неизвестен
+		Critter@ player=GetCritter(this.PlayerId);
+		if (!valid(player))
+			return false; // Не найден игрок
+		
+		this.LocId=CreateLocation(this.LocPid, this.LocX + Random(-1 * this.CoordDelta, this.CoordDelta), this.LocY + Random(-1 * this.CoordDelta, this.CoordDelta), null);
+		if(this.LocId==0)
+			return false; // Ошибка при создании локации
+		DL("Location created ok. LocId=" + this.LocId);
+		this.LocCreated=true;
+		this.Save();
+		player.SetKnownLoc(true, this.LocId);
+		// Прописывание скриптов для карт локации, а также сохранение ключевой информации о квесте в Map::Data
+		Location@ loc=GetLocation(this.LocId);
+		if(valid(loc))
+		{
+			for(uint i=0, l=loc.GetMapCount(); i<l; i++)
+			{
+				Map@ map=loc.GetMapByIndex(i);
+				if(valid(map))
+				{
+					_SetPlayerId(map, this.PlayerId);
+					_SetVarNum(map, this.QVarNum);
+					map.SetScript("_HostileMapInit");
+				}
+			}
+		}
+		// Событие удаления локации через какое-то время, если игрок не успел выполнить квест
+		uint[] values={this.PlayerId, this.QVarNum};
+		CreateTimeEvent(__FullSecond + TIME_RESET, "e_ResetHostileLoc", values, true);
+		// Сериализация описания квеста и локации в AnyData
+		this.Save();
+		return true;
+	}
+
+	uint GetNpc(Critter@[]& critters, bool ally, int findType)
+	{
+		uint len=critters.length(); // Первоначальная длина массива
+		if(this.LocId==0)
+			return 0;
+		DL("Locvald? LocId" + this.LocId);
+		Location@ loc=GetLocation(this.LocId);
+		if (!valid(loc))
+			return 0;
+		for(uint i=0, iMax=loc.GetMapCount(); i<iMax; i++)
+		{
+			DL("Map#" + i);
+			Map@ map=loc.GetMapByIndex(i);
+			if(valid(map))
+			for(uint j=0, jMax=map.GetNpcCount((ally ? NPC_ROLE_ALLY : NPC_ROLE_HOSTILE), findType); j<jMax; j++)
+			{
+				DL("j=" + j);
+				Critter@ cr=map.GetNpc((ally ? NPC_ROLE_ALLY : NPC_ROLE_HOSTILE), findType, j);
+				if(valid(cr)) critters.insertLast(@cr);
+			}
+		}
+		DL("array length"+(critters.length() - len));
+		return (critters.length() - len);
+	}
+
+	uint DeadPercent(bool ally)
+	{
+		Critter@[] critters;
+		uint all=this.GetNpc(critters, ally, FIND_ALL|FIND_ONLY_NPC);
+		uint dead=this.GetNpc(critters, ally, FIND_KO_AND_DEAD|FIND_ONLY_NPC);
+		DL("perce" + (dead==0? 0 : uint(100*dead/all))+"dead:"+dead + "; all:"+all);
+		return (dead==0? 0 : uint(100*dead/all));
+	}
+
+	void ResetQuest()
+	{
+		GameVar@ qVar=GetLocalVar(this.QVarNum, this.PlayerId);
+		if(valid(qVar)) qVar=QUEST_FAIL_LOC_DELETED;
+
+		if(this.CVarNum !=0) // Сброс счетчика, если назначен
+		{
+			GameVar@ status=GetLocalVar(this.CVarNum, this.PlayerId);
+			if(valid(status) && status.GetValue() !=0)
+				status=0;
+		}
+		Location@ loc=GetLocation(this.LocId);
+		if(valid(loc))
+			loc.AutoGarbage=true;
+		this.Erase();
+	}
+
+	void CompleteQuest()
+	{
+		DL("complete quest called");
+		GameVar@ qVar=GetLocalVar(this.QVarNum, this.PlayerId);
+		if(valid(qVar)) qVar=QUEST_COMPLETE;
+
+		DL("counter quest called");
+		if(this.CVarNum !=0) // Установка счетчика, если назначен
+		{
+			GameVar@ status=GetLocalVar(this.CVarNum, this.PlayerId);
+			if(valid(status) && status.GetValue()==0)
+			{
+				Critter@[] critters;
+				status=this.GetNpc(critters, true, FIND_DEAD|FIND_ONLY_NPC);
+			}
+		}
+		Location@ loc=GetLocation(this.LocId);
+		if(valid(loc))
+			loc.AutoGarbage=true;
+		Critter@[] critters;
+		this.GetNpc(critters, true, FIND_ALL|FIND_ONLY_NPC);
+		this.GetNpc(critters, false, FIND_ALL|FIND_ONLY_NPC);
+		for(uint i=0, iMax=critters.length(); i<iMax; i++)
+			critters[i].SetScript("");
+		this.Erase();
+	}
+}
+
+uint e_ResetHostileLoc(uint[]@ values) // Очистка AnyData
+{
+	HostileLocationInfo@ info=HostileLocationInfo(values[0], values[1]);
+	if(valid(info) && info.Serialized())
+	{
+		info.Load();
+		info.ResetQuest();
+	}
+	return 0;
+}
+
+void _HostileMapInit(Map& map, bool firstTime)
+{
+	DL("map init. Pid:" + map.GetProtoId());
+	map.SetEvent(MAP_EVENT_CRITTER_DEAD, "_HostileMapCritterDead");
+	map.SetEvent(MAP_EVENT_IN_CRITTER, "_HostileMapInCritter");
+	HostileLocationInfo@ info=_InfoFromMap(map);
+	if (!valid(info) || !info.Serialized())
+		return;
+	info.Load();
+	Critter@[] allies;
+	if(info.GetNpc(allies, true, FIND_LIFE_AND_KO|FIND_ONLY_NPC) > 0)
+	{
+		for(uint i=0, iMax=allies.length(); i<iMax; i++)
+		{
+			DL("Ally script set");
+			allies[i].SetScript("_AllyInit");
+		}
+	}
+	Critter@[] hostiles;
+	if(info.GetNpc(hostiles, false, FIND_LIFE_AND_KO|FIND_ONLY_NPC) > 0)
+	{
+		for(uint i=0, iMax=hostiles.length(); i<iMax; i++)
+		{
+			hostiles[i].SetScript("_HostileInit");
+		}
+	}
+}
+
+void _HostileMapInCritter(Map& map, Critter& cr)
+{
+
+}
+
+void _HostileMapCritterDead(Map& map, Critter& cr, Critter@ killer)
+{
+	HostileLocationInfo@ info=_InfoFromMap(map);
+	if (!valid(info) || !info.Serialized())
+		return;
+	info.Load();
+	Critter@[] hostiles;
+	if(info.GetNpc(hostiles, false, FIND_LIFE_AND_KO|FIND_ONLY_NPC)==0) // Все мобы мертвы
+	{
+		DL("completed");
+		info.CompleteQuest();
+		map.SetScript("");
+		map.SetEvent(MAP_EVENT_CRITTER_DEAD, "");
+		map.SetEvent(MAP_EVENT_IN_CRITTER, "");
+		return;
+	}
+	if(cr.IsPlayer() && cr.Id==info.PlayerId) // Убит игрок. Союзники возвращаются на домашнюю позицию.
+	{
+		for(uint i=0, iMax=hostiles.length(); i<iMax; i++)
+		{
+			hostiles[i].DropPlanes();
+		}
+		Critter@[] allies;
+		if(info.GetNpc(allies, true, FIND_LIFE_AND_KO|FIND_ONLY_NPC) > 0)
+		{
+			for(uint i=0, iMax=allies.length(); i<iMax; i++)
+			{
+				Critter@ cr=allies[i];
+				if(valid(cr))
+				{
+					SendAllyHome(cr);
+				}
+			}
+		}
+	}
+
+}
+
+// Скрипты союзника
+void _AllyInit(Critter& cr, bool firstTime)
+{
+	DL("Ally init");
+	cr.StatBase[ST_VAR0]=0;
+	cr.ModeBase[MODE_NO_HOME]=0;
+	cr.SetEvent(CRITTER_EVENT_IDLE, "_AllyIdle");
+	cr.SetEvent(CRITTER_EVENT_SMTH_ATTACKED, "_AllySmthAttacked");
+	cr.SetEvent(CRITTER_EVENT_SHOW_CRITTER, "_AllyShowCritter");
+}
+
+void _AllyIdle(Critter& cr)
+{
+	if(cr.Stat[ST_VAR0]==0 || !valid(cr.GetMap()))
+		return;
+	HostileLocationInfo@ info=_InfoFromCr(cr);
+	if (!valid(info) || !info.Serialized())
+		return;
+	info.Load();
+	Critter@ player=GetCritter(info.PlayerId);
+	if (!valid(player))
+	{
+		SendAllyHome(cr);
+		return;
+	}
+	Map@ map=player.GetMap();
+	if (!valid(map))
+	{
+		SendAllyHome(cr);
+		return;
+	}
+	Location@ loc=map.GetLocation();
+	if (!valid(loc) || loc.Id !=info.LocId)
+	{
+		SendAllyHome(cr);
+		return;
+	}
+	if(map.Id==cr.GetMap().Id)
+	{
+		if(GetCrittersDistantion(cr, player) > 20)
+			AddWalkPlane(cr, 0, player.HexX, player.HexY, Random(0,5), true, 3);
+	}
+	else
+	{
+		uint16 hX=player.HexX;
+		uint16 hY=player.HexY;
+		if(GetFreeHex(map, 4, hX, hY) && map.GetPathLength(hX,hY, player.HexX, player.HexY, 1)>0)
+		{
+			cr.TransitToMap(map.Id, hX, hY, Random(0,5));
+		}
+	}
+}
+
+void SendAllyHome(Critter& cr)
+{
+	uint mapId=0;
+	uint16 hX=0;
+	uint16 hY=0;
+	uint8 dir=0;
+	cr.DropPlanes();
+	cr.StatBase[ST_VAR0]=0;
+	cr.ModeBase[MODE_NO_HOME]=0;
+	cr.GetHomePos(mapId, hX, hY, dir);
+	cr.TransitToMap(mapId, hX, hY, dir);
+}
+
+void _AllySmthAttacked(Critter& cr, Critter& fromCr, Critter& attacker)
+{
+
+	if(cr.Stat[ST_VAR0]==0)
+		return;
+}
+
+void _AllyShowCritter(Critter& cr, Critter& showCrit)
+{
+	DL("Show critter");
+	HostileLocationInfo@ info=_InfoFromCr(cr);
+	if (!valid(info) && !info.Serialized())
+		return;
+	info.Load();
+	DL("Info loaded");
+	if(cr.Stat[ST_VAR0]==0)
+	{
+		if(showCrit.IsPlayer() && showCrit.Id==info.PlayerId)
+		{
+			DL("Player remembered");
+			cr.StatBase[ST_VAR0]=1;
+			cr.ModeBase[MODE_NO_HOME]=1;
+		}
+		else
+		{
+			return;
+		}
+	}
+}
+
+// Диалоги с союзниками
+// val=1, следовать, val=0, стоять на месте
+void r_SetFollow(Critter& player, Critter@ npc, int val)
+{
+	if(valid(npc))
+	{
+		npc.StatBase[ST_VAR0]=CLAMP(val, 0, 1);
+		npc.ModeBase[MODE_NO_HOME]=CLAMP(val, 0, 1);
+	}
+}
+
+// Скрипты противника
+void _HostileInit(Critter& cr, bool firstTime)
+{
+	cr.SetEvent(CRITTER_EVENT_IDLE, "_AllyIdle");
+	cr.SetEvent(CRITTER_EVENT_ATTACKED, "_HostileAttacked");
+	cr.SetEvent(CRITTER_EVENT_SHOW_CRITTER_1, "_HostileShowCritter");
+	cr.SetEvent(CRITTER_EVENT_DEAD, "_HostileDead");
+	cr.SetEvent(CRITTER_EVENT_MESSAGE, "_HostileMessage");
+	cr.ShowCritterDist1=10;
+}
+
+void _HostileMessage(Critter& cr, Critter& fromCr, int message, int value)
+{
+	if(message==MSG_KILL_EM && fromCr.Stat[ST_NPC_ROLE]==cr.Stat[ST_NPC_ROLE])
+	{
+		AddAttackPlane(cr, 0, value);
+	}
+}
+
+void _HostileShowCritter(Critter& cr, Critter& showCrit)
+{
+	if(showCrit.IsPlayer() || showCrit.Stat[ST_NPC_ROLE]==NPC_ROLE_ALLY)
+	{
+		AddAttackPlane(cr, 0, showCrit.Id);
+	}
+}
+
+bool _HostileAttacked(Critter& cr, Critter& attacker)
+{
+	if(attacker.IsPlayer() || attacker.Stat[ST_NPC_ROLE]==NPC_ROLE_ALLY)
+	{
+		cr.SendMessage(MSG_KILL_EM, attacker.Id, MESSAGE_TO_WHO_SEES_ME);
+	}
+	return false;
+}
+
+void _HostileDead(Critter& cr, Critter@ killer)
+{
+	bool toAll=false;
+	HostileLocationInfo@ info=_InfoFromCr(cr);
+	if(valid(info) && info.Serialized())
+	{
+		info.Load();
+		if(info.DeadPercent(false)>20)
+			toAll=true;
+	}
+	if(valid(killer))
+	{
+		cr.SendMessage(MSG_KILL_EM, killer.Id, (toAll ? MESSAGE_TO_ALL_ON_MAP : MESSAGE_TO_WHO_SEES_ME));
+	}
+}
+
+// Диалог
+void r_ShowLocation(Critter& player, Critter@ npc, int qVar, int counterVar, int locPid, int locX, int locY)
+{
+	HostileLocationInfo@ info=HostileLocationInfo(player.Id, qVar);
+	if (!valid(info))
+		return;
+	info.CVarNum=counterVar;
+	info.LocPid=locPid;
+	info.LocX=locX;
+	info.LocY=locY;
+	info.CoordDelta=0;
+	info.Save();
+	info.CreateHostileLocation();
+}
+
+// То же, но с рандомным смещением в пределах одной координатной зоны
+void r_ShowLocation2(Critter& player, Critter@ npc, int qVar, int counterVar, int locPid, int locX, int locY)
+{
+	HostileLocationInfo@ info=HostileLocationInfo(player.Id, qVar);
+	if (!valid(info))
+		return;
+	info.CVarNum=counterVar;
+	info.LocPid=locPid;
+	info.LocX=locX;
+	info.LocY=locY;
+	info.CoordDelta=__GlobalMapZoneLength;
+	info.Save();
+	info.CreateHostileLocation();
+}

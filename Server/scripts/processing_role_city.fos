@@ -1,0 +1,138 @@
+#include "_macros.fos"
+
+import bool AddAttackPlane(Critter& npc, uint priority, Critter& target) from "npc_planes";
+import uint EraseAttackPlane(Critter& npc, Critter& target) from "npc_planes";
+import void _CritInit(Critter& crit, bool firstTime) from "move";
+import bool CritterInHouse(Critter& cr, uint8& typeZone) from "city";
+import bool CritterInProtectZone(Critter& guard, Critter& cr) from "city";
+import void _GuardInit(Critter& guard, bool firstTime) from "klamath_ai"; 
+import void _MobInit(Critter& npc, bool firstTime) from "mob";
+import void _PatrolInit(Critter& mov, bool firstTime) from "move";
+import void _ButcherInit(Critter& cr, bool firstTime) from "klamath_ai";
+import void _PatrolDenInit(Critter & cr, bool firstTime) from "den_brotherhood";
+import void _PatrolKlamathInit(Critter & cr, bool firstTime) from "klamath_patrol";
+import void _GuardDogInit(Critter& cr, bool firstTime) from "den_brotherhood";
+import void AddPatrolerToGrup(Critter& cr) from "GrupPatrol";
+
+#define PATROL_CITY_ROLE #(x)	(x!=CITY_klamath_trappers_guard)
+
+#define MO				(102000)	// Moo...
+
+//Обработчик ролей, вешает скрипты по городским ролям.
+void processing_role_city(Critter& cr, bool ft)
+{
+	switch (cr.StatBase[ST_NPC_ROLE_CITY])
+	{	
+		case CITY_klamath_butcher: _ButcherInit(cr, ft); break;
+		case CITY_klamath_trappers_guard: _GuardInit(cr, ft); break;
+		case TEMPLATE_GUARD_BAR: _TemplateGuardBarInit(cr, ft); break;
+		case TEMPLATE_MOB: _MobInit(cr, ft); break;
+		case TEMPLATE_ANIMAL: _TemplateAnimalInit(cr, ft); break;
+		case CITY_den_patrol: _PatrolDenInit(cr,ft); break;
+		case CITY_klamath_patrol: _PatrolKlamathInit(cr,ft); break;
+		case CITY_den_dog_guard: _GuardDogInit(cr, ft); break;
+		case TEMPLATE_GRUP_PATROL:	{_PatrolKlamathInit(cr,ft); break;}
+		default: break;
+	}
+	
+	if(cr.PatrolBase[PL_GRUP_NUMBER]!=0)
+	{
+		AddPatrolerToGrup(cr);
+	}
+	else if(PATROL_CITY_ROLE(cr.StatBase[ST_NPC_ROLE_CITY]) && cr.StatBase[ST_NPC_PATROL_ID]!=0)
+	{
+		_PatrolInit(cr, ft);
+	}
+}
+
+// Шаблоны поведения
+
+// Шаблон Охраника бара.
+/* Охраник бара должен защишать людей только на територии охраняемого им бара. Чтобы определить охраняется бар им или нет используется типовые гексы пометки здания.
+Если охраник и атакуемая цель стоят на одной типовой зоне бара, то нужно защитить атакуемого. */
+
+void _TemplateGuardBarInit(Critter& gb, bool firstTime)
+{
+	gb.SetEvent(CRITTER_EVENT_SMTH_ATTACK, "_ProtectionBar");
+}
+
+void _ProtectionBar(Critter& cr, Critter& fromCr, Critter& target)
+{
+	uint8 typeZone=0;
+	if(CritterInHouse(target, typeZone) && typeZone==HEX_ZONE_HOUSE_BAR)
+	{
+		NpcPlane@[] planes;
+		uint count=cr.GetPlanes(planes);
+		for(uint i=0; i<count; i++)
+		{
+			NpcPlane@ plane=planes[i];
+			if (!valid(plane) || plane.Attack_TargId==target.Id || plane.Attack_TargId==fromCr.Id) return;
+		}
+		if(CritterInProtectZone(cr, target))
+		{
+			if(fromCr.StatBase[ST_NPC_ROLE_CITY]==TEMPLATE_GUARD_BAR || CITY_GUARDING(fromCr.StatBase[ST_NPC_ROLE_CITY])) return;
+			AddAttackPlane(cr, 1, fromCr);
+		}
+		else return;
+	}
+}
+
+// Шаблон Мирное животное.
+/* Мирное животное в бои не вмешивается, постоянно гуляет*/
+
+void _TemplateAnimalInit(Critter& an, bool firstTime)
+{
+	_CritInit(an, firstTime);
+	an.SetEvent(CRITTER_EVENT_ATTACKED, "_AnimalAttacked");
+	an.SetEvent(CRITTER_EVENT_DEAD, "_AnimalDead");
+}
+
+void _AnimalDead(Critter& cr, Critter@ killer)
+{
+	if(valid(killer))
+		if(killer.PerkBase[PE_BUTCHER]!=0)
+			_CritAddItem(cr,PID_MEAT,1);
+}
+
+bool _AnimalAttacked(Critter& cr, Critter& target)
+{
+	if(cr.StatBase[ST_BODY_TYPE]==BT_BRAHMIN) BrahminAnimalAttack(cr, target);
+	return true;
+}
+
+bool BrahminAnimalAttack(Critter& npc, Critter& target)
+{
+	NpcPlane@ plane=CreatePlane();
+	if(target.StatBase[ST_LEVEL]<=3 && target.IsPlayer())
+	{
+		if(Random(0,5)==0) npc.SayMsg(SAY_NORM_ON_HEAD,TEXTMSG_TEXT,MO);
+		plane.Type=AI_PLANE_ATTACK;
+		plane.Priority=AI_PLANE_ATTACK_PRIORITY;
+		plane.Attack_TargId=target.Id;
+		plane.Attack_MinHp=__DeadHitPoints;
+		plane.Attack_IsGag=false;
+		plane.Attack_GagHexX=0;
+		plane.Attack_GagHexY=0;
+		plane.Attack_LastHexX=target.HexX;
+		plane.Attack_LastHexY=target.HexY;
+		plane.Run=false;
+	}
+	else if(target.PerkBase[PE_BUTCHER]!=0)
+	{
+		npc.ToKnockout(KNOCKOUT_ANIM2_DEFAULT(true),6,npc.HexX,npc.HexY);
+		
+		return false;
+	}
+	else
+	{
+		npc.SayMsg(SAY_SHOUT_ON_HEAD,TEXTMSG_TEXT,MO);
+		plane.Type=AI_PLANE_WALK;
+		plane.Priority=AI_PLANE_WALK_PRIORITY;
+		plane.Walk_HexX=Random((target.HexX+(5*(-1))), (target.HexX+5));
+		plane.Walk_HexY=Random((target.HexY+(5*(-1))), (target.HexY+5));
+		plane.Walk_Dir=GetDirection(plane.Walk_HexX, plane.Walk_HexY, target.HexX, target.HexY);
+		plane.Run=true;
+		plane.Walk_Cut=0;
+	}
+	return npc.AddPlane(plane);
+}

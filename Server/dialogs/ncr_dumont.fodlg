@@ -1,0 +1,231 @@
+[comment]
+30 и дальше - Доставка еды шерифу от бармена Дасти для перса с низкой интой
+40 - разговор о планах на будущее шерифа
+50 - квест "Найти шпиона для Сантьяго"
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 NOT_ANSWER_CLOSE_DIALOG 0#
+2 1010d*_var n name_mem_npc_player = 0 r*_var n name_mem_npc_player = 1 #
+3 1020d*_var n name_mem_npc_player = 1 *_param p ST_INTELLECT > 3 #
+30 1030d*_param p ST_INTELLECT < 4 @
+2 2000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 2010d*_param p ST_INTELLECT < 4 #
+0 2020d*_param p ST_INTELLECT > 3 @
+3 3000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 3010#
+10 3020d*_var p ncr_dumont_brkradio_status_char = 0 *_var p ncr_dusty_party_status_char = 1 *_var p ncr_dusty_party_status_global = 1 #
+16 3030d*_var p ncr_dumont_brkradio_status_char > 0 *_var p ncr_dumont_brkradio_status_char < 9 #
+17 3040d*_var p ncr_dumont_brkradio_status_char = 9 #
+20 3050d*_var p ncr_smit_vs_vestin_status = 1 #
+40 3060d*_param p SK_SPEECH < 70 #
+41 3070d*_param p SK_SPEECH > 69 #
+50 3080d*_var p q_ncr_santiaga_find_spy_status > 0 *_var p q_ncr_santiaga_find_spy_status < 17 @
+10 4000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 4010#
+11 4020@
+11 5000 NOT_ANSWER_CLOSE_DIALOG 0#
+12 5010@
+12 6000 NOT_ANSWER_CLOSE_DIALOG 0#
+13 6010@
+13 7000 NOT_ANSWER_CLOSE_DIALOG 0#
+16 7010r*_var p ncr_dumont_brkradio_status_char = 1 #
+14 7020d*_param p SK_REPAIR > 75 @
+14 8000 NOT_ANSWER_CLOSE_DIALOG 0#
+15 8010r*_var p ncr_dumont_brkradio_status_char = 10 *_param p ST_EXPERIENCE + 150 *_item p PID_GAMMA_GULP_BEER + 1 @
+15 9000 NOT_ANSWER_CLOSE_DIALOG 0@
+16 10000 NOT_ANSWER_CLOSE_DIALOG 0@
+17 11000 NOT_ANSWER_CLOSE_DIALOG 0#
+18 11010d*_item p PID_GAMMA_GULP_BEER < 3 r*_var p ncr_dumont_brkradio_status_char = 10 *_item p PID_GAMMA_GULP_BEER + 1 *_param p ST_EXPERIENCE + 150 #
+18 11020d*_item p PID_GAMMA_GULP_BEER = 3 r*_var p ncr_dumont_brkradio_status_char = 10 *_item p PID_GAMMA_GULP_BEER + 1 *_param p ST_EXPERIENCE + 850 #
+18 11030d*_item p PID_GAMMA_GULP_BEER > 3 *_item p PID_GAMMA_GULP_BEER < 8 r*_var p ncr_dumont_brkradio_status_char = 10 *_item p PID_GAMMA_GULP_BEER + 1 *_param p ST_EXPERIENCE + 550 #
+18 11040d*_item p PID_GAMMA_GULP_BEER > 7 r*_var p ncr_dumont_brkradio_status_char = 10 *_item p PID_GAMMA_GULP_BEER + 1 *_param p ST_EXPERIENCE + 425 @
+18 12000 NOT_ANSWER_CLOSE_DIALOG 0@
+20 13000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 13010#
+21 13020@
+21 14000 NOT_ANSWER_CLOSE_DIALOG 0#
+22 14010r*_var p ncr_smit_vs_vestin_status = 5 *_param p ST_EXPERIENCE + 150 *_param p REPUTATION_NCR + 1 @
+22 15000 NOT_ANSWER_CLOSE_DIALOG 0@
+30 16000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 16010#
+31 16020d*_var p ncr_dusty_food_delivery_status = 1 *_item p PID_IGUANA_ON_A_STICK > 0 @
+31 17000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 17010#
+32 17020@
+32 18000 NOT_ANSWER_CLOSE_DIALOG 0#
+33 18010r*_item p PID_IGUANA_ON_A_STICK - 1 *_var p ncr_dusty_food_delivery_status = 2 #
+0 18020@
+33 19000 NOT_ANSWER_CLOSE_DIALOG 0@
+40 20000 NOT_ANSWER_CLOSE_DIALOG 0@
+41 21000 NOT_ANSWER_CLOSE_DIALOG 0#
+42 21010@
+42 22000 NOT_ANSWER_CLOSE_DIALOG 0#
+43 22010@
+43 23000 NOT_ANSWER_CLOSE_DIALOG 0#
+44 23010@
+44 24000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 24010d*_var p ncr_dumont_history = 0 r*_var p ncr_dumont_history = 1 *_param p REPUTATION_NCR + 1 *_param p ST_EXPERIENCE + 600 *_script dialog@r_InfoMessage 1 1 #
+0 24020d*_var p ncr_dumont_history = 1 @
+50 25000 NOT_ANSWER_CLOSE_DIALOG 0#
+51 25010@
+51 26000 NOT_ANSWER_CLOSE_DIALOG 0#
+52 26010@
+52 27000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 27010d*_var p npc_story = 0 r*_var p npc_story = 1 *_param p ST_EXPERIENCE + 400 #
+0 27020d*_var p npc_story = 1 &
+
+[russ]
+{100}{}{Шериф Дюмонт}
+{200}{}{Вы видите седого человека в униформе полиции НКР.}
+{210}{}{Это шериф НКР.}
+{210}{}{У этого парня все по уставу - короткая стрижка и квадратная челюсть, настоящий правильный парень.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{не знаком}
+{1020}{}{знаком норм инт}
+{1030}{}{знаком низкий инт}
+{2000}{}{Позволь дать тебе совет от Шерифа Дамонта, незнакомец - этот город не любит таких как ты. Любая проблема и я становлюсь жестким. А теперь, могу ли я что-нибудь сделать для тебя?}
+{2010}{}{Ладно, плюнь на это.}
+{2020}{}{Ох. Пока. }
+{3000}{}{Еще раз привет. Что я могу сделать для тебя?}
+{3010}{}{Забудь об этом, я передумал. До свидания.}
+{3020}{}{Шериф, а я могу стать полицейским?}
+{3030}{}{Шериф, я опросил@sex@|||а| людей. Правда, пока не всех...}
+{3040}{}{Шериф, рапорты от полицейских НКР собраны.}
+{3050}{}{Шериф, я обладаю информацией, которая может быть вам интересна.}
+{3060}{}{Дюмонт, а сколько вам лет?}
+{3070}{}{Дюмонт, а сколько вам лет?}
+{3080}{}{Шериф, вы, безусловно, в курсе всех дел, что происходят на улицах города?}
+{4000}{}{Ты смеешься надо мной? Ты чужа@sex@|к||я| в нашем городе@sex@|, парень|||. А в полицию идут только люди, известные в НКР.}
+{4010}{}{Я так и думал@sex@|||а|. [Уйти]}
+{4020}{}{Ясно. Но, возможно, я мог@sex@|||ла| бы вам чем-то помочь, шериф? Вы поймете, что я заслуживаю доверия.}
+{5000}{}{[Хмурится и что-то взвешивает про себя] Хм. Не знаю, почему я тебя вообще до сих пор не выставил за дверь. Мы посмотрим, что ты за птица.}
+{5010}{}{Готов@sex@|||а| к любому заданию, шериф!}
+{6000}{}{[Шериф показывает на обесточенную радиостанцию] Эти радисты сегодня наломали дров. В результате проведенного технического обслуживания мы на полдня остались без полицейской радиосвязи.}
+{6010}{}{Да, незадача.}
+{7000}{}{У меня к тебе будет просьба. Обойди наших постовых, 8 человек, и выясни обстановку. Потом вернись ко мне. Справишься?}
+{7010}{}{Без проблем, Шериф. }
+{7020}{}{Шериф, а может быть, мы поступим проще? Я отремонтирую радиостанцию, и вы сами всех опросите?}
+{8000}{}{Хм, а ты сможешь? В принципе, это тоже вариант.}
+{8010}{}{Тут не должно быть ничего сложного, стандартные схемы, элементарно! [Приступить к работе]}
+{9000}{}{[Шериф с интересом наблюдает за вами. Через несколько минут радиостанция заработала] А ты неплохой механик. Благодарю. Вот, возьми, из конфискованного. [Шериф протягивает вам бутылку пива Гамма]}
+{10000}{}{Возвращайся, когда опросишь всех 8 человек. Мне нужна точная информация.}
+{11000}{}{Как дела в городе?}
+{11010}{}{Происшествий не зафиксировано. В городе все спокойно.}
+{11020}{}{Происшествий не зафиксировано. В городе все спокойно.}
+{11030}{}{Происшествий не зафиксировано. В городе все спокойно.}
+{11040}{}{Происшествий не зафиксировано. В городе все спокойно.}
+{12000}{}{Ничуть в этом не сомневался. Так или иначе, благодарю за службу. В качестве награды возьми эту бутылку. }
+{13000}{}{Что вы имеете в виду?}
+{13010}{}{Не берите в голову. Я ухожу. [Уйти]}
+{13020}{}{Советник Вейстин в опасности. Некто Смит собирается пробраться к нему в дом и учинить расправу.}
+{14000}{}{Вейстин? Чушь. У него в охране опытные профессионалы. Они никого не пропустят.}
+{14010}{}{Этот Смит - очень подозрительный человек. И мне кажется, он опасен.}
+{15000}{}{Хорошо, я проверю эти данные. Благодарю за бдительность!}
+{16000}{}{[Шериф занят какими-то своими делами и не обращает на вас внимания]}
+{16010}{}{[Уйти, не отвлекая шерифа]}
+{16020}{}{[Проорать шерифу в ухо] Эй! Шляпа! Жрать! НААааа!!!!}
+{17000}{}{[Шериф дергается от неожиданности и выхватывает из кобуры пистолет] Кто здесь?!! Какого дьявола ты орешь, как раненый брамин. В камеру захотел@sex@|||а|?}
+{17010}{}{Дурак! [Уйти]}
+{17020}{}{Бармен - просить меня! Я - носить. Жратва, вкусно. Забирай?}
+{18000}{}{Дасти посылает в качестве посыльного первого попавшегося олигофрена из пустоши. Куда катится этот мир? Из твоих лап я даже консервы не возьму. Лопай эту дрянь сам! Бармену, так и быть, я не буду ничего говорить. }
+{18010}{}{Шляпа, добрый ты. Друг. Вкусно жрать. [Съесть еду шерифа]}
+{18020}{}{Дурак! [Уйти]}
+{19000}{}{А теперь дуй отсюда, да поскорее.}
+{20000}{}{Не твое дело. Не мешай.}
+{21000}{}{Много, @pname@, уже слишком много.}
+{21010}{}{Вы всегда были полицейским?}
+{22000}{}{Я служу шерифом в НКР довольно давно. Последнее время все чаще думаю о том, что через год-другой нужно с этим завязывать.}
+{22010}{}{Чем займетесь на пенсии, шериф?}
+{23000}{}{Вообще, у меня были мысли попросить у Шеймана принять меня в армию НКР, даже рядовым. Но, думаю, это уже слишком.}
+{23010}{}{То есть, планов особенных нет никаких?}
+{24000}{}{Осяду где-нибудь в пригороде. Начну браминов выращивать, капусту сажать.}
+{24010}{}{Ну да, неплохо. Кто-то ведь должен сажать капусту, а не преступников. [Уйти]}
+{24020}{}{По-моему, это звучит неплохо! [Уйти]}
+{25000}{}{Разумеется, а что тебя интересует?}
+{25010}{}{Есть сведения, что в НКР закрепились несколько представителей одной из банд Нью-Рено. Мне будет интересна любая информация на эту тему.}
+{26000}{}{Хм. Бандиты? Не слышал ничего подобного.}
+{26010}{}{Никаких подозрительных личностей не замечено?}
+{27000}{}{Нет, в городе все спокойно. Хотя, подожди... Дороти на днях говорила, что однажды ночью перехватила странный сеанс радиосвязи. Предположительно, на связь вышел кто-то из НКР. Подробностей я не знаю, обратись к ней.}
+{27010}{}{Спасибо, шериф. Возможно, ситуация прояснится. [Уйти]}
+{27020}{}{Спасибо, шериф. Возможно, ситуация прояснится. [Уйти]}
+{100000001}{}{Вы расспросили шерифа Дюмонта о его планах на будущее.}
+
+[engl]
+{100}{}{Sheriff Dumont.}
+{200}{}{You see hoary man, wearing police uniform of NCR.}
+{210}{}{It's sheriff of the NCR.}
+{210}{}{This guy is living statute - short haircut and square jaws, utter 'right guy'. }
+{1000}{}{Predialogue installations}
+{1010}{}{it is not familiar}
+{1020}{}{a sign on norms int}
+{1030}{}{a sign low int}
+{2000}{}{Allow to give to your advice from Sheriff Damonta, the stranger - this city does not love such as you. Any problem and I become rigid. And now, whether I can make something for you?}
+{2010}{}{it is fine, spit it.}
+{2020}{}{Oh. While.}
+{3000}{}{Once again greetings. What can I make for you?}
+{3010}{}{Forget about it, I have changed the mind. Good-bye.}
+{3020}{}{the Sheriff, and I can become policemen?}
+{3030}{}{the Sheriff, I опросил@sex ||| and | people. However, yet all...}
+{3040}{}{the Sheriff, official reports from policemen NKR are collected.}
+{3050}{}{the Sheriff, I possess the information which can be interesting to you.}
+{3060}{}{Djumont, and how old are you?}
+{3070}{}{Djumont, and how old are you?}
+{3080}{}{the Sheriff, you, certainly, in a course of all affairs what occur on city streets?}
+{4000}{}{You laugh over me? You чужа@sex | to || I | in ours городе@sex |, the guy |||. And to police there are only the people known in NKR.}
+{4010}{}{I and думал@sex ||| and |. [To Leave]}
+{4020}{}{it is clear. But, probably, I мог@sex ||| la | something to help you, the sheriff? You will understand that I am reliable.}
+{5000}{}{[something Frowns also weighs about itself] Hm. I do not know, why I in general have not turned you till now out. We will look that you for a bird.}
+{5010}{}{Gotov@sex ||| and | to any task, the sheriff!}
+{6000}{}{[the Sheriff shows on the disconnected radio station] These radio operators today have committed follies. As a result of the spent maintenance service we on half-day remained without a police radio communication.}
+{6010}{}{Yes, an ill luck.}
+{7000}{}{At me to you will be the request. Bypass ours postovyh, 8 persons, and find out conditions. Then return to me. You will consult?}
+{7010}{}{Without problems, the Sheriff.}
+{7020}{}{the Sheriff, and can be, we will arrive easier? I will repair radio station, and you interrogate all?}
+{8000}{}{Hm, and you can? Basically, it too a variant.}
+{8010}{}{Here should not be anything difficult, standard schemes, elementary! [To start to work]}
+{9000}{}{[the Sheriff with interest observes of you. In some minutes the radio station has earned] And you the quite good mechanic. I thank. Here, take, from confiscated. [The sheriff stretches you a bottle of beer Scale]}
+{10000}{}{Come back, when you will interrogate all 8 persons. The exact information is necessary to me.}
+{11000}{}{As affairs in a city?}
+{11010}{}{Incidents it is not fixed. In a city all is quiet.}
+{11020}{}{Incidents it is not fixed. In a city all is quiet.}
+{11030}{}{Incidents it is not fixed. In a city all is quiet.}
+{11040}{}{Incidents it is not fixed. In a city all is quiet.}
+{12000}{}{At all it did not doubt. Anyhow, I thank for service. As an award take this bottle.}
+{13000}{}{That you mean?}
+{13010}{}{do not get into the head. I leave. [To leave]}
+{13020}{}{Adviser Vejstin in danger. Somebody Smith is going to make the way to it in the house and to use violence.}
+{14000}{}{Vejstin? Bosh. At it in protection skilled professionals. They will pass nobody.}
+{14010}{}{This Smith - very suspicious person. And it seems to me, it is dangerous.}
+{15000}{}{it is good, I will check up this data. I thank for vigilance!}
+{16000}{}{[the Sheriff engaged in by any affairs and does not pay to you attention]}
+{16010}{}{[to Leave, without distracting the sheriff]}
+{16020}{}{[Proorat to the sheriff in an ear] Hey! A hat! To guzzle! NAAaaa!!!!}
+{17000}{}{[the Sheriff twitches from unexpectedness and snatches out from a holster a pistol] Who here?!! What devil you shout, as the wounded man bramin. In the chamber захотел@sex ||| and |?}
+{17010}{}{the Fool! [To leave]}
+{17020}{}{the Barman - to ask me! I - to carry. A grub, it is tasty. Take away?}
+{18000}{}{Dasti sends as the messenger first comer oligofrena from a heathland. Where this world slides? From your paws I even canned food will not take. Burst this rubbish itself!, Well, I will not tell anything to the barman.}
+{18010}{}{the Hat, kind you. The friend. Is tasty to guzzle. [To eat meal of the sheriff]}
+{18020}{}{the Fool! [To leave]}
+{19000}{}{And now blow from here, yes somewhat quicker.}
+{20000}{}{Not your business. Do not disturb.}
+{21000}{}{it is a lot of, @pname, already it is too much.}
+{21010}{}{you always were the policeman?}
+{22000}{}{I serve as the sheriff in NKR for a long time. Lately even more often I think that in a year-other it is necessary to fasten with it.}
+{22010}{}{Than will be engaged on pension, the sheriff?}
+{23000}{}{In general, at me were thoughts to ask for Sheiman to accept me in army NKR, even the private soldier. But, I think, it already too.}
+{23010}{}{That is, plans especial are not present any?}
+{24000}{}{I Will settle somewhere in suburb. I will start braminov to grow up, cabbage to put.}
+{24010}{}{Well, not bad. Someone after all should put cabbage, instead of criminals. [To leave]}
+{24020}{}{In my opinion, it sounds not bad! [To leave]}
+{25000}{}{Certainly, and what you interests?}
+{25010}{}{There are data that in NKR some representatives of one of gangs of Nju-Reno were fixed. Any information on this theme will be interesting to me.}
+{26000}{}{Hm. Gangsters? Did not hear anything similar.}
+{26010}{}{Any suspicious persons it is not noticed?}
+{27000}{}{No, in a city all is quiet. Though, wait... Doroti one of these days said that once has intercepted a strange session of a radio communication at night. Presumably, on communication there was someone from NKR. I do not know details, address to it.}
+{27010}{}{Thanks, the sheriff. Probably, the situation will clear up. [To leave]}
+{27020}{}{Thanks, the sheriff. Probably, the situation will clear up. [To leave]}
+{100000001}{}{you have asked sheriff Djumonta on its plans for the future.}

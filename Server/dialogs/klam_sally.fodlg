@@ -1,0 +1,340 @@
+[comment]
+Ваши комментарии / Your comments. 
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _param p ST_INTELLECT < 4 #
+6 1020 D _param p ST_INTELLECT > 3 D _param p ST_GENDER = 0 D _var p name_mem_player_npc = 0 R _var p name_mem_player_npc = 1 #
+7 1030 D _param p ST_INTELLECT > 3 D _param p ST_GENDER = 1 D _var p name_mem_player_npc = 0 R _var p name_mem_player_npc = 1 #
+17 1040 D _param p ST_INTELLECT > 3 D _var p name_mem_player_npc = 1 @
+2 2000 None 0 #
+3 2010 #
+4 2020 #
+5 2030 @
+3 3000 None 0 @
+4 4000 None 0 @
+5 5000 None 0 @
+6 6000 None 0 #
+28 6010 #
+11 6020 #
+9 6030 #
+8 6040 @
+7 7000 None 0 #
+28 7010 #
+9 7020 #
+11 7030 #
+8 7040 #
+9 7050 @
+8 8000 None 0 @
+9 9000 None 0 #
+0 9010 #
+10 9020 @
+10 10000 None 0 #
+11 10010 #
+0 10020 #
+11 10030 @
+11 11000 None 0 #
+16 11010 #
+13 11020 #
+14 11030 #
+15 11040 #
+9 11050 #
+12 11060 #
+18 11070 @
+12 12000 None 0 #
+11 12010 #
+8 12020 @
+13 13000 None 0 #
+20 13010 D _item p PID_BOTTLE_CAPS > 24 R _item n PID_BOTTLE_CAPS + 25 R _item p PID_BOTTLE_CAPS - 25 R _var p klam_sally_pay = 2 R _var p name_mem_npc_player = 1 #
+19 13020 D _item p PID_BOTTLE_CAPS < 25 #
+11 13030 #
+8 13040 @
+14 14000 None 0 #
+20 14010 D _item p PID_BOTTLE_CAPS > 54 R _item p PID_BOTTLE_CAPS - 55 R _item n PID_BOTTLE_CAPS + 55 R _var p klam_sally_pay = 3 #
+19 14020 D _item p PID_BOTTLE_CAPS < 55 #
+11 14030 #
+8 14040 @
+15 15000 None 0 #
+20 15010 D _item p PID_BOTTLE_CAPS > 124 R _item n PID_BOTTLE_CAPS + 125 R _item p PID_BOTTLE_CAPS - 125 R _var p klam_sally_pay = 4 #
+19 15020 D _item p PID_BOTTLE_CAPS < 125 #
+11 15030 #
+8 15040 @
+16 16000 None 0 #
+20 16010 D _item p PID_BOTTLE_CAPS > 14 R _item p PID_BOTTLE_CAPS - 15 R _item n PID_BOTTLE_CAPS + 15 R _var p klam_sally_pay = 1 #
+19 16020 D _item p PID_BOTTLE_CAPS < 15 #
+11 16030 #
+0 16040 @
+17 17000 None 1 #
+27 17010 D _var p click_counter = 15 D _item p PID_FIREWOOD } 10 D _item p PID_AXE > 0 R _var p click_counter = 16 R _item p PID_AXE - 1 R _item p PID_FIREWOOD - 10 R _item p PID_BOTTLE_CAPS + 100 R _param p ST_EXPERIENCE + 150 R _script dialog@r_SetUniqTO 1 100 #
+30 17020 D _item p PID_FIREWOOD } 10 D _var p click_counter = 15 D _item p PID_AXE < 1 #
+11 17030 #
+18 17040 #
+21 17050 D _var p q_klam_sally_find_prostitute = 0 D _param p SK_SPEECH > 24 #
+28 17060 D _var p click_counter < 15 #
+24 17070 D _var p q_klam_sally_find_prostitute = 1 D or D _var p q_klam_sally_find_prostitute = 2 #
+29 17080 D _var p click_counter = 16 D _script dialog@d_TimeoutOk 0  #
+31 17090 D _var p click_counter = 16 D _script dialog@d_NotTimeoutOk 0  #
+8 17100 @
+18 18000 None 0 #
+11 18010 #
+8 18020 @
+19 19000 None 0 #
+0 19010 @
+20 20000 None 0 @
+21 21000 None 0 #
+22 21010 D _param p SK_SPEECH > 24 #
+0 21020 @
+22 22000 None 0 #
+0 22010 #
+23 22020 @
+23 23000 None 0 #
+0 23010 #
+0 23020 R _var p q_klam_sally_find_prostitute = 1 @
+24 24000 None 0 #
+0 24010 #
+25 24020 D _var p q_klam_sally_find_prostitute = 2 @
+25 25000 None 0 #
+0 25010 R _item p PID_BOTTLE_CAPS + 450 R _var p q_klam_sally_find_prostitute = 3 R _param p ST_EXPERIENCE + 1500 R _param p REPUTATION_KLAMATH + 2 @
+26 26000 None 0 #
+0 26010 R _var p click_counter = 15 R _item p PID_AXE + 1 #
+0 26020 @
+27 27000 None 0 #
+0 27010 @
+28 28000 None 0 #
+26 28010 #
+0 28020 @
+29 29000 None 0 #
+0 29010 R _var p click_counter = 15 R _item p PID_AXE + 1 #
+0 29020 @
+30 30000 None 0 @
+31 31000 None 0 #
+0 31010 &
+
+[russ]
+{100}{}{Салли}
+{200}{}{Вы видите полную пожилую женщину с большим носом.}
+{210}{}{Вы видите Большеносую Салли, владелицу Банного Домика.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{тупица}
+{1020}{}{не знакомы}
+{1030}{}{не знакомы, Ж}
+{1040}{}{знакомы }
+{2000}{}{Здравствуйте, мое имя Салли Дантон. Xмм, понятно?}
+{2010}{}{Луковая голова? Ей?}
+{2020}{}{Xочу пии-саать}
+{2030}{}{Ей? (покачивая головой)}
+{3000}{}{Ну, достаточно для идиота. Но у меня тут таких нет. Убирайся сейчас же. Пошел, пошел.}
+{4000}{}{Я понимаю, что ты дикарь и все такое, но это банный домик, а не туалет. Убирайся, пока я тебя не вышвырнула.}
+{5000}{}{Я знаю, мои мальчики встречались с разными идиотами,но ты превзошел всех. Не могу поверить, что ты их победил. Здесь тебя не обслужат, убирайся.}
+{6000}{}{Мое имя Салли Дантон, но чаще меня зовут Большеносая Салли. Я владелица этого банного домика. У нас есть из чего выбрать.}
+{6010}{}{Привет. Есть работенка?}
+{6020}{}{Какие особенные ванные у вас есть?}
+{6030}{}{Нее, Мисс Салли, мне нужна обычная ванная. У вас же нет пузырьковой, не так ли?}
+{6040}{}{Мне кажется, я передумал. Вернусь попозже.}
+{7000}{}{Мое имя Большеносая Салли Дантон, я хозяйка этого банного домика. Боюсь, что мы можем предложить девушку в качестве помощи. Это вам пойдет?}
+{7010}{}{Привет ещё раз. Может, у тебя есть какая работёнка для меня?}
+{7020}{}{Мне нужна только ванная.}
+{7030}{}{Женщины умеют хорошо обслужить.}
+{7040}{}{Мне нужен был вообще-то мужчина помощник.}
+{7050}{}{Не думаю, что это мне подойдет.}
+{8000}{}{Сожалею, что не смогли помочь. Возвращайтесь попозже.}
+{9000}{}{Если вам нужна ванная без обслуги, идите в Золотой Гекко или в Дом Бакнера. Но не думаю, что там приятнее.}
+{9010}{}{Спасибо, мисс Большой Нос. Я лучше там попробую. До свидания.}
+{9020}{}{Я пошутил, мне нравятся особенные ванные.}
+{10000}{}{Специальные ванные различаются по цене из-зи количества времени, которое девушка с вами проводит, и видов услуг, которыми вы воспользуетесь.}
+{10010}{}{Вы имеете в виду, что я буду с настоящей, живой девушкой? Я согласен!}
+{10020}{}{Не думаю, что готов к этому. Я лучше пойду.}
+{10030}{}{Внешность прислужницы лучше тоже включить в цену.}
+{11000}{}{Вот различные виды ванн: Микрованночка, Обтирочная, быстрая Помывка Целиком, и, наконец, Полная и Всесторонний банный сервис, предоставляемый красивой и талантливой Дженни, недавно обученной в лучшем доме Дэна.}
+{11010}{}{Что еще за микрованночка?}
+{11020}{}{Думаю, Обтирочной хватит. Сколько с меня?}
+{11030}{}{Мне больше подойдет Полная Помывка. Сколько это будет стоить?}
+{11040}{}{Красивая и талантливая? Мне нужно побольше об этом узнать.}
+{11050}{}{Мне не нужны посторонние, когда я моюсь. Я пойду.}
+{11060}{}{А я не могу сразу все попробовать?}
+{11070}{}{А как насчет скидок?}
+{12000}{}{Нет. Вам нужно выбрать только одну за раз. Но вы всегда можете вернуться. Обычно, после небольшого отдыха.}
+{12010}{}{Перечислите ка мне типы ванн снова.}
+{12020}{}{Если я не могу сделать собственную программу, то даже не хочу пробовать. Я пошел.}
+{13000}{}{Для привлекательного молодого человека это стоит только 25 баксов.}
+{13010}{}{25? Отлично, по рукам. Я беру.}
+{13020}{}{25? Отлично, по рукам. Я беру.}
+{13030}{}{Расскажите-ка еще разочек, какие виды ванн у вас?}
+{13040}{}{Наверное, сейчас я обойдусь. Я ухожу.}
+{14000}{}{Думаю, любая из наших девушек захочет вас искупать полностью. Я лучше послежу за временем, чтобы убедиться, что ванная была по укороченной пролграмме. Ванная по укороченной программе обойдется вам в 55 баксов.}
+{14010}{}{Это смешная цифра. Вот вам 55 долларов.}
+{14020}{}{Это смешная цифра. Вот вам 55 долларов.}
+{14030}{}{Xмм... А какие вы говорите еще бывают ванные?}
+{14040}{}{Спасибо, я лучше поэкономлю деньги.}
+{15000}{}{Я уверена, что ваше Кругосветное Путешествие с прекрасной Дженни запомнится вам надолго. Цена - 125 долларов.}
+{15010}{}{Не могу дождаться момента, чтобы попасть к Дженни. Вот мои 125 баксов.}
+{15020}{}{Не могу дождаться момента, чтобы попасть к Дженни. Вот мои 125 баксов.}
+{15030}{}{Может, мне еще чего-нибудь понравится. Могу я узнать поподробнее.}
+{15040}{}{Мне кажется, что 125 за ванную слишком много. Я пожалуй пойду, пока у меня не начались неприятности.}
+{16000}{}{За каких-то 15 баксов вы получите небольшую помывку руками.}
+{16010}{}{Всего 15? Давайте попробуем.}
+{16020}{}{Всего 15? Давайте попробуем.}
+{16030}{}{Повторите, какие у вас еще ванны есть?}
+{16040}{}{Извините, мне пора.}
+{17000}{}{Опять вернул@sex@|ся||ась|? Много парней по-моему все никак не отмоются.}
+{17010}{}{Вот, как и заказывали. [Отдать дрова]}
+{17020}{}{Вот, как и заказывали. [Отдать дрова]}
+{17030}{}{Расскажите о видах ваших услуг снова.}
+{17040}{}{На меня не распространяется скидка, как постоянному клиенту?}
+{17050}{}{Привет. Я тут собираюсь в путешествие по городам, а потом обратно в Кламат. Может, вам чего-нибудь нужно сделать в другом городе? За разумную плату, конечно.}
+{17060}{}{Привет ещё раз. Может, у тебя есть какая работёнка для меня?}
+{17070}{}{По поводу твоего поручения...}
+{17080}{}{Дровишки еще нужны?}
+{17090}{}{Дровишки еще нужны?}
+{17100}{}{Я просто осматриваюсь. Мне не нужна ванная.}
+{18000}{}{Было бы не справедливым брать меньше, мои девочки достойну всех денег, которые вы за них платите.}
+{18010}{}{Думаю, что честно. Что сейчас у вас есть?}
+{18020}{}{Ну если нет скидок, тогда я пошел.}
+{19000}{}{У вас нет денег, так что возвращайтесь, когда сможете заплатить.@@Кажется, что твои глаза гораздо больше, чем твой бюджет. Лучше тебе попробовать более дешевое мытье.}
+{19010}{}{Я еще вернусь.}
+{20000}{}{Большое спасибо за пользование нашими услугами. Девушка вас ждет.}
+{21000}{}{О, да ты вовремя. Мне как раз нужна была помощь человека скорого на ноги и с хорошо подвешенным языком.}
+{21010}{}{О, то что нужно. Это просто мой портрет.}
+{21020}{}{Нет, тут я пас, извини.}
+{22000}{}{Видишь ли, одна из моих девочек собралась замуж, и скоро уедет. Мне нужно найти ей замену.}
+{22010}{}{О, одной шлюхой меньше.  Это неплохо. Я не стану тебе помогать.}
+{22020}{}{Вон что, ясно. Есть какие либо условия, для кандидатки?}
+{23000}{}{Ну это должна быть девушка с опытом работы. Уж не знаю, где такую найти. }
+{23010}{}{Пффф. Даже ты не занешь, а мне откуда это знать. Нет, так я работать не стану.}
+{23020}{}{Хм. Ну я так понял, что в этом городе ловить нечего. Тут ты и сама всех знаешь. Поищу в других местах. Пустошь велика.}
+{24000}{}{Нашел мне работницу?}
+{24010}{}{Ищу изо всех сил.}
+{24020}{}{Да, нашел. С опытом работы. Готова в любой момент заступит ь на смену.  Это Вирджиния из Дена.}
+{25000}{}{Прекрасно, рада это слышать. Получи свои денежки.}
+{25010}{}{От спасибо, Салли!}
+{26000}{}{Как ты видишь, у нас тут кругом тут водные процедуры, но чтобы печь топить нужны дрова, а мой маникюр и нежная кожа... ну ты понимаешь, да? Нужно 10 вязанок. [Протягивает топор рукоятью вперёд]}
+{26010}{}{Да запросто. [Берете топор]}
+{26020}{}{Нет, у меня есть другие дела.}
+{27000}{}{О, отлично! Вот твои 100 монет.}
+{27010}{}{Да как два пальца...}
+{28000}{}{Cделаешь для меня доброе дело?}
+{28010}{}{Конечно.}
+{28020}{}{Нет, у меня есть другие дела.}
+{29000}{}{Да, они нужны нам постоянно. [Протягивает топор] Хочешь подзаработать?}
+{29010}{}{Да, конечно. [Берете топор]}
+{29020}{}{Нет, для друзей интересовался.}
+{30000}{}{А где топор?}
+{31000}{}{Сейчас - нет, но могут пригодиться уже совсем скоро. Зайди попозже.}
+{31010}{}{Окей!}
+
+[engl]
+{100}{}{Sally}
+{200}{}{You see a plump, older woman with a large nose}
+{210}{}{You see Big Nose Sally, the owner of the Bathhouse.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{тупица}
+{1020}{}{не знакомы}
+{1030}{}{не знакомы, Ж}
+{1040}{}{знакомы }
+{2000}{}{Hello there, my name’s Sally Dunton. Hmm, did you catch that?}
+{2010}{}{Ally Onion? Gurk?}
+{2020}{}{I gotta pee-ee}
+{2030}{}{Oog? [shaking head]}
+{3000}{}{Well, that’s a right nice try for an idjit. But I ain’t having none of your kind in here. Now, git out. Shoo, shoo.}
+{4000}{}{I know you’re a tribal and all, but this is a bathhouse, not an outhouse. Git out afore I have you thrown out!}
+{5000}{}{I know my boys have taken up with some poor sorts, but you’re the worst yet. I just can’t believe that you let them down. I won’t have you in my place. Now, get out.}
+{6000}{}{My name’s Sally Dunton, but mostly they call me Big Nose Sally. I’m the owner of this here bathhouse. We have a whole hassleful of special, attended baths for you to pick from.}
+{6010}{}{Hi. Do you have any job for me, by any chance?}
+{6020}{}{What kind of special, attended baths do you have here?}
+{6030}{}{Gee, Miss Sally, I just wanted a regular bath. You don’t have a bubble bath, do you?}
+{6040}{}{I think I’ve changed my mind; I may try back later.}
+{7000}{}{My name’s ‘Big Nose’ Sally Dunton and I’m the owner of this here bathhouse. I’m afraid that we just have girl bath attendants here. That alright with you?}
+{7010}{}{Hi. Do you have any job for me, by any chance?}
+{7020}{}{I’m just here for a bath.}
+{7030}{}{Women suit me just fine.}
+{7040}{}{Gee, I was really looking for a male attendant.}
+{7050}{}{I don’t think this is what I was looking for.}
+{8000}{}{I’m sorry that we couldn’t help you out. Come on back later, though.}
+{9000}{}{If you just want an unattended bath, you might try the Golden Gecko or the Buckner House. But I doubt that you’ll find that as enjoyable.}
+{9010}{}{Thanks, Miss Big Nose. I’ll try that instead. Good-bye.}
+{9020}{}{I was just kidding; I’d like a special bath.}
+{10000}{}{The special baths that we have available vary in cost by the amount of time that the gal spends with you, and any special services that you take advantage of.}
+{10010}{}{You mean I get to be with a real-live girl? Sign me up!}
+{10020}{}{I don’t think I’m ready for this; I better go.}
+{10030}{}{I think that the appearance of the attendant better figure into the cost, too.}
+{11000}{}{The baths that we have available are: a Wash Cloth, Hand Wipe, a brief Full Body Wash, and, lastly, the Round-the-World Full Squeaky Clean Servicing, offered by the beautiful and talented Jenny, recently trained at the finest house in the Den.}
+{11010}{}{Wash Cloth?}
+{11020}{}{I think I can get by with the Hand Wipe; how much is that?}
+{11030}{}{I like the idea of a Full Body Wash; what’s that going to cost?}
+{11040}{}{Beautiful and talented? I’ve got to hear more about the Round-the-World Full Squeaky Clean Wash.}
+{11050}{}{I don’t think I’m ready to take a bath with someone else watching; I’m going to leave.}
+{11060}{}{Can I mix and match the different types of baths?}
+{11070}{}{What about getting a discount on those baths?}
+{12000}{}{No, you have to choose one at a time, but you can always come back for more -- usually after a brief rest.}
+{12010}{}{Tell me the different types of bath again.}
+{12020}{}{If I can’t make my own combinations, I don’t even want a bath; I’m outta here.}
+{13000}{}{Well, for an attractive individual like yourself that would only cost $25.}
+{13010}{}{$25? That’s a bargain; I’ll take it.}
+{13020}{}{$25? That’s a bargain; I’ll take it.}
+{13030}{}{Hmm, tell me about the other types of baths again.}
+{13040}{}{Maybe I don’t need this right now. I’m leaving.}
+{14000}{}{I think any of our girls would be happy to give you a full body wash; I just better watch the time to make sure it’s a brief one (chuckle). The Brief Full Body Wash will cost you $55.}
+{14010}{}{That sounds like fun. Here’s my $55.}
+{14020}{}{That sounds like fun. Here’s my $55.}
+{14030}{}{Hmm, what are the other choices again?}
+{14040}{}{Thanks, but I think that I’ll save my money for now.}
+{15000}{}{Well I’m sure that your Round-the–World trip Servicing with beautiful Jenny will be an experience that you’ll savor for quite a while. A real bargain at only $125.}
+{15010}{}{I can’t wait to enjoy Jenny’s special talents. Here’s my $125.}
+{15020}{}{I can’t wait to enjoy Jenny’s special talents. Here’s my $125.}
+{15030}{}{Maybe I should hear about the other bath choices again.}
+{15040}{}{I don’t think that I’ll ever need $125 worth of cleaning. I’m going to leave before I get myself into trouble.}
+{16000}{}{For some 15 bucks you get a wash small hands.}
+{16010}{}{$15? That’s a bargain; I’ll take it.}
+{16020}{}{$15? That’s a bargain; I’ll take it.}
+{16030}{}{What are the other choices again?}
+{16040}{}{Sorry, I must go.}
+{17000}{}{Back again, huh? A lot of folks just can’t seem to get clean enough.}
+{17010}{}{Here you are [Pass the firewood]}
+{17020}{}{Here you are [Pass the firewood]}
+{17030}{}{Tell me the types of bath that you have again.}
+{17040}{}{Well now, it wouldn’t be fair to discount any of our services. My gals are well worth what they charge.}
+{17050}{}{Hi. I'm a kind of traveller. Just wondering if you need anything done in other cities. For a price, of course.}
+{17060}{}{Hello again. Do you have any job for me, by any chance?}
+{17070}{}{About that assignment of yours...}
+{17080}{}{Do you still need firewood?}
+{17090}{}{Дровишки еще нужны?}
+{17100}{}{I don’t think this is what I was looking for.}
+{18000}{}{Well now, it wouldn’t be fair to discount any of our services. My gals are well worth what they charge.}
+{18010}{}{Tell me the types of bath that you have again.}
+{18020}{}{Well, if I can’t get a discount, I’m leaving.}
+{19000}{}{You don’t have enough money. Come back when you’re able to pay.@@It seems as though your eyes are bigger than your budget. Perhaps you’d like to try a cheaper washing.}
+{19010}{}{I'll be back.}
+{20000}{}{Thank you for using our services. The girl is waiting for you.}
+{21000}{}{Oh, wow. I actually needed some help from a man with fast feet and glib tongue.}
+{21010}{}{Well, you've got one in front of you.}
+{21020}{}{Doesn't sound like me.}
+{22000}{}{You see, one of my girls is getting married. So I need to find a replacement on a short notice.}
+{22010}{}{Heh, minus one whore.  That ain't bad. I'm not gonna help you.}
+{22020}{}{I see. Any specific demands for an applicant?}
+{23000}{}{Yes, it must be a girl with work experience. And I don't know where to find one.}
+{23010}{}{Pffft. If YOU don't know, how should I know? No, I can't do it.}
+{23020}{}{Hmm, nothing to look for in this town as far as I get it. Well, the wasteland's large, I'll find you a girl.}
+{24000}{}{So have you found me a new girl?}
+{24010}{}{I'm doing my best.}
+{24020}{}{Yes, I did. And she has ample experience. She's ready to come any time. It's Virginia from The Den.}
+{25000}{}{Glad to hear it. Here's your money.}
+{25010}{}{Thanks a lot, Sally!}
+{26000}{}{As you could have noticed, we have bathing services here, so we need lots of firewood to warm up the water. But I'm too busy to do it, so... [Hands you an axe with its handle facing forwards]}
+{26010}{}{Peace of cake. [Take the axe]}
+{26020}{}{Sorry, not my kind of work.}
+{27000}{}{Well done! Here, take hundred bucks.}
+{27010}{}{That was easy...}
+{28000}{}{Will you do me a favor?}
+{28010}{}{Sure.}
+{28020}{}{Sorry, I'm kind of busy now.}
+{29000}{}{Yeah, we always need them. [Passes you the axe]}
+{29010}{}{Cool. [Grab the axe]}
+{29020}{}{No, I did not want to work, just wondering for my friends.}
+{30000}{}{Where da fuck is the axe?}
+{31000}{}{Сейчас - нет, но могут пригодиться уже совсем скоро. Зайди попозже.}
+{31010}{}{Окей!}
+

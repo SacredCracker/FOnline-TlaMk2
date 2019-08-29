@@ -1,0 +1,831 @@
+#include "_macros.fos"
+#include "pids_groups.fos"
+#include "_bags.fos"
+#include "_teams.fos"
+#include "_npc_pids.fos"
+#include "_vars.fos"
+#include "npc_menege_lib.fos"
+#include "_maps.fos"
+
+import string GetOrgName(uint num) from "main";
+import bool ChangeOrgStat(uint orgId, uint8 stat, int val) from "main";
+
+#define SIERRA_BASE                        (0)
+#define MARIPOSA_BASE                      (1)
+#define CATHEDRAL_BASE                     (2)
+
+// Количество этапов удержания базы, с финальным включительно, НАЧИНАЯ С НУЛЕВОГО.
+// Под этапом подразумевается атака на базу мобов, в финальном этапе появляется сама машина.
+#define BASE_NUMBER_OF_CYCLES 	           (3)
+#define BASE_REFRESH_TIME                  (REAL_MINUTE(Random(8, 10))) // Время цикла удержания базы
+#define CAR_WAIT_TIME                      (REAL_MINUTE(Random(2,3)))	// Время ожидания машины на базе
+
+#define ORG_ENCLAVE                        (1)
+#define ORG_BOS                            (2)
+#define ORG_MOB							   (3)
+
+#define ENTIRE_SUPPLY_CAR                  (50)							// Номер энтайр респа машины
+#define EXP_DEFENCE                        (100)						// Опыт, за удачное удержание
+#define EXP_FRACTION                       (32)   					    // Количество очек насчитанное для фракции за круг
+
+#define LEVEL_BASE							(0)		// Ячейка масива карты, куда будет записан уровень удержания базы
+#define STAGE_BASE							(1)		// Ячейка масива карты, куда будет записана текущий этап уровня удержания базы
+#define ORG_BASE							(2)		// Ячейка масива карты, куда будет записана принадлежность базы
+#define INDEX_BASE							(3)		// Ячейка масива карты, куда будет записан индекс данной базы
+#define FRACTION_BASE						(4)		// Ячейка масива карты, куда будет записан индекс данной базы
+
+const uint[] GvarTimeEvent={GVAR_base_sierra_time_event_id,GVAR_base_mariposa_time_event_id,GVAR_base_cathedral_time_event_id};
+
+const int[] BaseIndex={LOCATION_Sierra, LOCATION_MilitaryBase, LOCATION_Cathedral}; // Масив констант пидов локаций
+const int[] ScoreCur={SCORE_SIERRA_CUR,SCORE_MARIPOSA_CUR,SCORE_CATHEDRAL_CUR};	// Текущая принадлежность базы группировке
+const int[] ScoreOrg={SCORE_SIERRA_ORG,SCORE_MARIPOSA_ORG,SCORE_CATHEDRAL_ORG};	// Текущая принадлежность базы фракции БоС или Анклав
+const int[] ScoreBest={SCORE_SIERRA_BEST,SCORE_MARIPOSA_BEST,SCORE_CATHEDRAL_BEST};
+
+int GetIndexBaseByPid(int base)
+{
+	for(uint i=0, iMax=BaseIndex.length(); i<iMax; i++)
+		if(BaseIndex[i]==base) return i;
+	Log("Ошибка. Военной базы не существует");
+	return -1;
+}
+
+// Захват базы
+void r_BaseTo(Critter& player, Critter@ terminal, int org)
+{
+	Location@ LocBase=player.GetMap().GetLocation();
+	int base=GetIndexBaseByPid(LocBase.GetProtoId());
+
+	int indexBase=GetIndexBaseByPid(LocBase.GetProtoId());	// Порядковый номер базы
+
+	// Обнуление таймевентов и уровней удержания базы
+	GameVar@ varTE=GetGlobalVar(GvarTimeEvent[base]);
+	if(varTE!=0)
+	{
+		EraseTimeEvent(varTE.GetValue());
+		varTE=0;
+	}
+	Map@ map=LocBase.GetMapByIndex(0);	// Первая карта локации, на которой и будет проходить атака
+	ClearBase(map);	
+	map.SetData(ORG_BASE, org);				// Запись текущей организации, за которую захвачена база
+	map.SetData(INDEX_BASE, base);			// Запись текущей организации, за которую захвачена база
+	map.SetData(FRACTION_BASE, player.StatBase[ST_FRACTION]);			// Запись текущей фракции, которая захватила базу
+
+	SetBestScore(ScoreCur[base],null, GetOrgName(player.StatBase[ST_FRACTION]));	// Текущая фракция, захватившая базу
+	SetBestScore(ScoreOrg[base],null,org==ORG_ENCLAVE?"Enclave":"Br. of Steel");	// Текущая принадлежность базы
+	
+	varTE=CreateTimeEvent(__FullSecond+BASE_REFRESH_TIME/BASE_NUMBER_OF_CYCLES,"e_BaseRefresh", map.Id, true);	// Запустить евент на удержание базы
+}
+
+// Проверка, есть ли хоть один криттер с захватившей фракции на базе.
+bool FractionInMap(Map@ map)
+{
+	Critter@[] groups;
+	int fraction=map.GetData(FRACTION_BASE);
+	if(map.GetCritters(0,FIND_LIFE_AND_KO|FIND_ONLY_PLAYERS,groups)>0)
+	for(uint i=0, iMax=groups.length();  i<iMax; i++)
+		if(fraction==groups[i].StatBase[ST_FRACTION] && groups[i].ModeBase[MODE_HIDE]==0)
+			return true;
+	return false;
+}
+
+//Очистка базы
+void ClearBase(Map@ map)
+{
+	// Очистка статистики
+	SetBestScore(ScoreCur[map.GetData(INDEX_BASE)], null, "---");
+	SetBestScore(ScoreOrg[map.GetData(INDEX_BASE)], null, "---");
+
+	map.SetData(STAGE_BASE, 0);			// Обнуления этапа уровня удержания базы
+	map.SetData(LEVEL_BASE, 0);			// Обнуление уровня удержания базы
+
+	// Обнуление таймевентов
+	GameVar@ varTE=GetGlobalVar(GvarTimeEvent[map.GetData(INDEX_BASE)]);
+	if(varTE!=0)
+	{
+		EraseTimeEvent(varTE.GetValue());
+		varTE=0;
+	}
+
+	// Удаление атакующих НПЦ
+	Critter@[] npcs;
+	if(map.GetCritters(0,FIND_ALL|FIND_ONLY_NPC,npcs)>0)
+		for(uint i=0, iMax=npcs.length();i<iMax;i++)
+			if(npcs[i].StatBase[ST_NPC_ROLE_CITY]==32)
+				_CritterDead(npcs[i], null);
+}
+
+uint e_BaseRefresh(uint[]@ values)
+{
+	Map@ map=GetMap(values[0]);
+
+	int level=map.GetData(LEVEL_BASE);
+	int stage=map.GetData(STAGE_BASE);
+	int base=map.GetData(INDEX_BASE);
+	int org=map.GetData(ORG_BASE);
+
+	//Если база контролируется игроком, запускается новый цикл удержания.
+	// Количество этапов увеличивается на единицу, после каждых четырех удержаний. 
+	uint timeout=0;
+	if(FractionInMap(map))
+		timeout=BASE_REFRESH_TIME/(BASE_NUMBER_OF_CYCLES+level/4);
+	else
+	{
+		ClearBase(map);
+		return 0;
+	}
+
+	// Если спавнить машину ещё не пора
+	if(stage<(BASE_NUMBER_OF_CYCLES+level/4))
+	{
+		SetupWaves(base, org, level);
+		map.SetData(STAGE_BASE, stage+1);
+		return timeout;
+	}
+
+	// Если уже пора
+	map.SetData(STAGE_BASE, 0);			// Обнуляем текущий уровень цикла удержания базы
+	if(level<50)
+		map.SetData(LEVEL_BASE, level+1);	// Цикл удержания увеличивается на единицу
+
+	// СПАВНИМ МАШИНУ
+	//Если уровень выше 5 - заспавнить мобов во время респа машины
+	if(level>5) SetupWaves(base, org, level);
+
+	CreateSupplyCar(map, level>20?20:level, base, org);
+	if(level>20) CreateSupplyCar(map, 20, base, org); // Если больше 20-ти кругов, то спавним дополнительную машину
+	
+	// Activate militia on Cathedral
+	if(base==CATHEDRAL_BASE)
+	{
+		Critter@[] npcs, players;
+		if(map.GetCritters(0,FIND_LIFE_AND_KO|FIND_ONLY_PLAYERS,players)>0 && map.GetCritters(0,FIND_LIFE_AND_KO|FIND_ONLY_NPC,npcs)>0)
+		for(uint i=0, iMax=npcs.length();i<iMax;i++)
+		if(npcs[i].StatBase[ST_NPC_ROLE]==33)
+			for(uint j=0, jMax=players.length();j<jMax;j++)
+				AddAttackPlane(npcs[i],0,players[j]);
+	}
+	
+	// Начисление опыта, за удержание базы.
+	Critter@[] groups;
+	if(map.GetCritters(0,FIND_LIFE_AND_KO|FIND_ONLY_PLAYERS,groups)>0)
+	for(uint i=0, iMax=groups.length(); i<iMax; i++)
+		if(groups[i].StatBase[ST_FRACTION]==map.GetData(FRACTION_BASE))
+		{
+			groups[i].Say(SAY_NETMSG, "База успешно защищена.");
+			if(groups[i].StatBase[ST_LEVEL]>17)
+				groups[i].StatBase[ST_EXPERIENCE]+=(groups[i].StatBase[ST_LEVEL]-10)*EXP_DEFENCE*(level+1)/2;
+		}
+	// И начисление фракционных очек
+	ChangeOrgStat(map.GetData(FRACTION_BASE), FR_RATING, EXP_FRACTION*level);
+
+	// Обновление статистики принадлежности
+	GameVar@ varEnclaveScore=GetGlobalVar(GVAR_base_enclave_score);
+	GameVar@ varBosScore=GetGlobalVar(GVAR_base_bos_score);
+	if(org==ORG_ENCLAVE) varEnclaveScore+=1;
+	else if(org==ORG_BOS) varBosScore+=1;
+	if(varEnclaveScore>varBosScore) SetBestScore(SCORE_BASE_BEST_ORG,null,"Enclave");
+	else if(varEnclaveScore<varBosScore) SetBestScore(SCORE_BASE_BEST_ORG,null,"Br. of Steel");
+	else SetBestScore(SCORE_BASE_BEST_ORG,null,"<draw>");
+
+	return timeout;
+}
+
+void CreateSupplyCar(Map@ map, int level, int base, int org)
+{	
+	Entire[] entires;
+	ParseEntires(map,entires,ENTIRE_SUPPLY_CAR);
+	uint16 carPid=Random(1, 500)<(499-level/5)?PID_SCOUT:PID_HIGHWAYMAN;
+
+	Item@ car;
+	for(int i=0, iMax=entires.length(); i<iMax; i++)
+	{
+		Entire@ ent=entires[i];
+		if(map.CheckPlaceForItem(ent.HexX,ent.HexY,carPid))
+		{
+			@car=map.AddItem(ent.HexX,ent.HexY,carPid,1);
+			map.PlaySound("carbreaks.ogg");
+			break;
+		}
+	}
+
+	if(not valid(car)) return;
+	Item@ bag=car.GetChild(0);
+	uint keyId=Random(10000,50000);
+	car.CarFuel=Random(0,car.Proto.Car_TankVolume);	
+	if(carPid!=PID_HIGHWAYMAN) 
+	{
+		CreateTimeEvent(__FullSecond+CAR_WAIT_TIME,"e_DeleteCar",car.Id,true);
+		car.LockerId=1;
+	}
+	else 
+	{
+		car.LockerId=keyId;
+		if(valid(bag))
+		{
+			bag.LockerId=keyId;
+			bag.LockerComplexity=Random(80, 100);
+			bag.Update();
+		}
+
+		Item@ key=bag.AddItem(PID_KEY,1,0);
+		if(valid(key))
+		{
+			key.LockerId=keyId;
+			key.Update();
+		}
+	}
+	car.Update();
+
+	// Fill bag begin	
+	// Предметы, необходимые для крафта
+	// Уникальные предметы
+	// Общие предметы
+	// Марипоза
+	// Собор
+	// Сиерра
+	// Анклав
+	//     Марипоза
+	//     Собор
+	//     Сиерра
+	// БС
+	//     Марипоза
+	//     Собор
+	//     Сиерра
+	if(valid(bag))
+	{
+		//Предметы, необходимые для крафта
+		//------------------------------------------------------------
+		FillBag(bag,PID_TECHNICAL_MANUAL,1,1,20+level*4);	
+		FillBag(bag,PID_CHEMISTRY_MANUAL,1,1,100+level*10);
+		FillBag(bag,PID_NAVCOM_PARTS,1,1,10+level*4);
+		FillBag(bag,PID_PLANK,1,1,60+level*10);
+		FillBag(bag,PID_IMPULSE_GENERATOR,1,1,60+level*10);
+		FillBag(bag,PID_SUPER_CAPACITOR,1,1,30+level*10);
+		FillBag(bag,PID_ELECTRO_MAGNET,1,1,60+level*10);
+		FillBag(bag,PID_PARTS_PLASMA_RIFLE,1,1,60+level*10);
+		FillBag(bag,PID_REFINED_ORE,6,12,60+level*10);
+		//------------------------------------------------------------
+		
+		//Уникальная амуниция и предметы
+		//------------------------------------------------------------
+		FillBag(bag,PID_JUMPSUIT,1,1,50);	     // Костюм жителя убежища
+		FillBag(bag,PID_BLACK_ROBE,1,1,50);	     // Черная роба
+		FillBag(bag,PID_DECOMPOSING_BODY,1,1,50);
+		FillBag(bag,PID_BLOW_UP_DOLL,1,1,50);
+		FillBag(bag,PID_POPPED_BLOW_UP_DOLL,1,1,50);
+		if(level>2)
+		{
+			FillBag(bag,PID_MONUMENT_CHUNCK,1,2,40+level*40);		// Кусок монумента
+			FillBag(bag,PID_KEEPBRIGE_ROBE,1,1,50+level*25);	    // Роба хранителя моста
+		    FillBag(bag,PID_ALIEN_LASER_PISTOL,1,1,30+level*20);	// Пистолет пришельцев
+			FillBag(bag,PID_ELEPHANT_GUN,1,1,60+level*30);		// Слонобой
+			
+			if(level>4)
+			{
+				FillBag(bag,PID_BLACK_COMBAT_ARMOR,1,1,10+level*10);	 // ЧББ
+				FillBag(bag,PID_HOLY_HAND_GRENADE,1,1,4+level*2);	 // Святая граната
+				FillBag(bag,PID_CHITIN_ARMOR,1,1,25+level*18);		
+				FillBag(bag,PID_CHITIN_ARMOR_MK_II,1,1,12+level*10);	
+		    }
+		}
+		//------------------------------------------------------------
+		
+		// Деньги
+		FillBag(bag,PID_BOTTLE_CAPS,1000+level*200,5000+level*200,800);
+		if(level>15) bag.AddItem(PID_BOTTLE_CAPS,Random(5000,8000),0);
+		if(carPid==PID_HIGHWAYMAN) bag.AddItem(PID_BOTTLE_CAPS,100000,0);
+		
+		// Книги
+		FillBag(bag,Pids_BooksMedium,1,1,30);
+		FillBag(bag,Pids_BooksMedium,1,1,30);
+		FillBag(bag,Pids_BooksMedium,1,1,30);
+		
+		// Алкоголь и еда
+		FillBag(bag,Pids_DrugsAlcohol,2,4,85);
+		FillBag(bag,Pids_MiscFood,2,4,85);
+		
+		// Наркотики
+		FillBag(bag,Pids_DrugsMinor,1,4,45);
+		FillBag(bag,Pids_DrugsMajor,1,3,25+level*2);
+		FillBag(bag,PID_STIMPAK,8+level*3,20+level*3,650+level*69);
+		if(level>2) FillBag(bag,PID_SUPER_STIMPAK,7+level*2,28+level*2,580+level*53);
+		
+		if(level>2) FillBag(bag,PID_GATLING_LASER,1,1,160+level*16);
+		FillBag(bag, Pids_WeaponPistolMachineGunMajor,1,1,25+level*2);
+		FillBag(bag, PID_SNIPER_RIFLE,1,1,180+level*12);
+		FillBag(bag, PID_GRANADE_REVOLV_II,1,1,100+level*12);
+		FillBag(bag, PID_ANACONDA,1,1,140+level*12);
+		FillBag(bag, PID_MORTAR,1,1,80+level*12);		
+		FillBag(bag, PID_BOZAR,1,1,80+level*8);
+		FillBag(bag, Pids_WeaponBigGunsMinor,1,1,23);
+		
+		if(level<3) FillBag(bag, PID_LASER_RIFLE,1,1,200);
+		else if(level<6) FillBag(bag, PID_PLASMA_RIFLE,1,1,120+level*10);
+		else FillBag(bag, PID_TURBO_PLASMA_RIFLE,1,1,120+level*10);
+		
+		FillBag(bag, PID_14MM_MACHINEGUN,1,1,110+level*10);
+		
+		FillBag(bag, PID_LOUISVILLE_SLUGGER,1,1,100+level*8);
+		FillBag(bag, PID_SUPER_SLEDGE,1,1,100+level*8);
+		
+		if(level<2)FillBag(bag, Pids_WeaponMeleeMinor,1,2,48);
+		else FillBag(bag, Pids_WeaponMeleeMajor,1,2,35);
+		
+		if(level<2)FillBag(bag, Pids_WeaponUnarmedMinor,1,2,60);
+		else if(level<4)FillBag(bag, PID_POWER_FIST,1,1,200+level*15);
+		else FillBag(bag, PID_MEGA_POWER_FIST,1,1,100+level*10);
+
+		//Боеприпасы
+		FillBag(bag,PID_700_NITRO_EXPRESS,12+level*6,17+level*6,220+level*16);
+		FillBag(bag,Pids_WeaponGrenade,7+level*2,11+level*2,46+level*9);		
+		FillBag(bag,PID_2MM_EC_AMMO,29+level*5,35+level*5,290+level*40);	
+		FillBag(bag,PID_4_7MM_CASELESS,120+level*22,320+level*22,300+level*40);
+		FillBag(bag,PID_223_FMJ,185+level*15,230+level*15,220+level*25);
+		FillBag(bag,PID_SMALL_ENERGY_CELL,65+level*10,85+level*10,310+level*39);
+		FillBag(bag,PID_MICRO_FUSION_CELL,34+level*10,44+level*10,220+level*29);
+		FillBag(bag,Pids_MiscExplosions,4+level,6+level,42+level*6);
+		if(level<2)FillBag(bag,Pids_AmmoMinor,48+level*12,115+level*12,85+level*8);
+		else FillBag(bag,Pids_AmmoMinor,45+level*11,115+level*11,46+level*4);
+		FillBag(bag,PID_14MM_AP,38+level*6,46+level*6,240+level*38);
+		FillBag(bag,PID_CANNON_BALLS,9+level*4,13+level*4,210+level*16);
+		FillBag(bag,PID_40MM_GRANADE,11+level*4,16+level*4,210+level*16);
+		FillBag(bag,PID_EXPLOSIVE_ROCKET,6+level,11+level,210+level*26);
+		
+		FillBag(bag,Pids_MiscPartsBasic,2,5,35+level*2);
+		FillBag(bag,Pids_MiscPartsBody,1,1,5);
+		FillBag(bag,Pids_MiscOther,1,1,10);
+
+		FillBag(bag,Pids_MiscToolsMediacal,1,1,23);	
+		FillBag(bag,Pids_MiscToolsTech,1,1,15);	
+				
+		GameVar@ timeout_motivator=GetGlobalVar(GVAR_timeout_motivator);
+		if(valid(timeout_motivator))
+			if(__FullSecond>uint(timeout_motivator.GetValue()))
+			{
+				Item@ motivator=bag.AddItem(PID_MOTIVATOR, 1, 0);
+				timeout_motivator=__FullSecond+REAL_HOUR(Random(22,32));
+				Log("Добавлено на базу 1 PID_MOTIVATOR");
+			}
+			
+		GameVar@ timeout_motivator_k9=GetGlobalVar(GVAR_timeout_motivator);
+		if(valid(timeout_motivator_k9))
+			if(uint(timeout_motivator_k9.GetValue())<__FullSecond)
+			{
+				Item@ motivator=bag.AddItem(PID_K9_MOTIVATOR, 1, 0);
+				timeout_motivator_k9=__FullSecond+REAL_HOUR(Random(24,30));
+				Log("Добавлено на базу 1 PID_K9_MOTIVATOR");
+			}
+			
+		GameVar@ timeout_oil_can=GetGlobalVar(GVAR_timeout_oil_can);
+		if(valid(timeout_oil_can))
+			if(uint(timeout_oil_can.GetValue())<__FullSecond)
+			{
+				Item@ motivator=bag.AddItem(PID_OIL_CAN_TRUE, 1, 0);
+				timeout_oil_can=__FullSecond+REAL_HOUR(Random(8,10));
+				Log("Добавлено на базу 1 PID_OIL_CAN_TRUE");
+			}
+		
+		if(base==MARIPOSA_BASE)
+		{
+		    if(level<2) FillBag(bag,Pids_ArmorLight,1,3,40);
+			else FillBag(bag,Pids_ArmorMetal,1,2,30);
+			
+			FillBag(bag,Pids_DrugsAntiRad,2,4,46);
+			
+			FillBag(bag,Pids_WeaponShotgunsMinor,1,1,20);
+			FillBag(bag,Pids_WeaponPistolMachineGunMinor,1,1,20);	
+			if(level<4) FillBag(bag,Pids_WeaponPistolsMinor,1,1,20);
+			else FillBag(bag,Pids_WeaponPistolsMajor,1,1,20);		
+			
+			FillBag(bag,PID_HN_NEEDLER_CARTRIDGE,25+level*11,50+level*10,310+level*40);
+			FillBag(bag,PID_7_62MM_AMMO,110+level*25,215+level*25,410+level*45);
+			FillBag(bag,PID_5MM_JHP,250+level*30,400+level*30,510+level*60);
+			FillBag(bag,PID_EXPLOSIVE_ROCKET,6+level,11+level,210+level*50);
+			FillBag(bag,PID_FLAMETHROWER_FUEL,52+level*6,73+level*6,520+level*56);
+		}
+		else if(base==CATHEDRAL_BASE)
+		{			
+			FillBag(bag,PID_PURPLE_ROBE,1,2,450);
+			FillBag(bag,Pids_BooksMedium,1,2,30);
+		    
+			if(level<2) FillBag(bag,Pids_ArmorLight,1,3,40);
+			else FillBag(bag,Pids_ArmorMetal,1,2,30);
+			
+			FillBag(bag,Pids_WeaponShotgunsMinor,1,1,20);
+			FillBag(bag,Pids_WeaponPistolMachineGunMinor,1,1,20);	
+			if(level<4) FillBag(bag,Pids_WeaponPistolsMinor,1,1,20);
+			else FillBag(bag,Pids_WeaponPistolsMajor,1,1,20);		
+			
+			FillBag(bag,PID_HN_NEEDLER_CARTRIDGE,25+level*11,50+level*10,310+level*40);
+			FillBag(bag,PID_7_62MM_AMMO,110+level*25,215+level*25,410+level*45);
+			FillBag(bag,PID_5MM_JHP,250+level*30,400+level*30,510+level*60);
+			FillBag(bag,PID_EXPLOSIVE_ROCKET,6+level,11+level,210+level*50);
+			FillBag(bag,PID_FLAMETHROWER_FUEL,52+level*6,73+level*6,520+level*56);
+			FillBag(bag,PID_FLAMETHROWER_FUEL_MK_II,12+level*5,15+level*5,270+level*30);
+		}
+		else if(base==SIERRA_BASE)
+		{
+			FillBag(bag,Pids_ArmorMetal,1,3,30);
+			if(level>3) FillBag(bag,PID_SENTRY_BOT_ARMOR,1,1,3+level);
+			
+			FillBag(bag,Pids_WeaponShotgunsMajor,1,1,20);
+			FillBag(bag,Pids_WeaponPistolsMajor,1,1,20);
+			FillBag(bag,PID_VINDICATOR_MINIGUN,1,1,80+level*8);			
+			
+			FillBag(bag,PID_223_FMJ,165+level*11,210+level*11,230+level*20);	
+			FillBag(bag,PID_2MM_EC_AMMO,25+level*5,35+level*5,300+level*40);
+			FillBag(bag,PID_HN_AP_NEEDLER_CARTRIDGE,32+level*12,60+level*12,300+level*42);
+			FillBag(bag,PID_FLAMETHROWER_FUEL_MK_II,32+level*4,41+level*4,360+level*48);
+			FillBag(bag,PID_5MM_AP,258+level*31,412+level*32,580+level*70);
+			FillBag(bag,PID_ROCKET_AP,6+level,11+level,210+level*28);
+		}
+
+		if(org==ORG_BOS)		
+		{
+			if(level>2) FillBag(bag,PID_POWERED_ARMOR,1,1,30+level*8);
+			FillBag(bag,PID_COMBAT_ARMOR_MK_II,1,1,150+level*15);
+			FillBag(bag,PID_BROTHERHOOD_COMBAT_ARMOR,1,1,100+level*10);
+			if(level>2) FillBag(bag,PID_TESLA_RIFLE,1,1,40+level*5);
+			if(level>2) FillBag(bag,PID_PLASMA_CANNON,1,1,40+level*5);
+			if(level>2) FillBag(bag,PID_M72_GAUSS_RIFLE,1,1,40+level*8);	
+			if(level>2) FillBag(bag,PID_YK42B_PULSE_RIFLE,1,1,80+level*8);			
+			FillBag(bag,PID_INDEPENDENT,1,1,150+level*15);
+			
+			if(base==SIERRA_BASE)
+			{
+				if(level>2) FillBag(bag,PID_HARDENED_POWER_ARMOR,1,1,25+level*6);
+			}
+		}
+		else
+		{
+			FillBag(bag,PID_COMBAT_ARMOR,1,1,250+level*25);
+			if(level>3) FillBag(bag,PID_ADVANCED_POWER_ARMOR,1,1,15+level*5);
+			FillBag(bag,PID_HK_G36,1,1,150+level*15);
+		    FillBag(bag, PID_YK32_PULSE_PISTOL,1,1,120+level*10);
+			if(level>2) FillBag(bag,PID_BIG_MORTAR,1,1,40+level*5);
+			if(level>2) FillBag(bag,PID_PK12_GAUSS_PISTOL,1,1,90+level*12);	
+					
+			if(base==SIERRA_BASE)
+			{
+				if(level>3) FillBag(bag,PID_ADVANCED_POWER_ARMOR_MK2,1,1,10+level*3);
+			}
+		}
+	}
+	// Fill bag end
+}
+
+// Функция заполнения багажника, для наборов итэмов, с chance=100 для 100% вероятности.
+void FillBag(Item@ bag, uint16[]& pids, uint min, uint max, int chance)
+{
+	if(chance>=Random(1,100)) 
+	{
+		Item@ item=bag.AddItem(pids[Random(0,pids.length()-1)],Random(min, max),0);
+	}
+}
+
+//Перегруженная функция заполнения багажника, для отдельных итэмов, с chance=1000 для 100% вероятности.
+void FillBag(Item@ bag, uint16 pid, uint min, uint max, int chance)
+{
+	if(chance>=Random(1,1000)) 
+	{
+		Item@ item=bag.AddItem(pid,Random(min, max),0);
+	}
+}
+
+//Удаление машины
+uint e_DeleteCar(uint[]@ values)
+{
+	Item@ car=GetItem(values[0]);
+	if(valid(car)) DeleteItem(car);
+	return 0;
+}
+
+void SetupWaves(int base, int org, int level)
+{
+	if(base==MARIPOSA_BASE)
+	{
+		if(Random(0,4)==3) SetupMariposaWaves(ORG_MOB, level);
+		else SetupMariposaWaves(org, level);
+	}
+	if(base==CATHEDRAL_BASE)
+	{
+		if(Random(0,4)==3) SetupCathedralWaves(ORG_MOB, level);
+		else SetupCathedralWaves(org, level);
+	}
+	if(base==SIERRA_BASE)
+	{
+		if(Random(0,4)==3) SetupSierraWaves(ORG_MOB, level);
+		else SetupSierraWaves(org, level);
+	}
+}
+
+// Пиды прототипов атакующих НПЦ
+#define NPCPID_Dog			     (82)						 // Собака
+#define NPCPID_Alien			 (243) 						 // Пришелец
+#define NPCPID_BosTrooper        (497) 						 // Тяжелый пехотинец БС
+#define NPCPID_EnclaveTrooper    (496) 						 // Тяжелый пехотинец анклава
+#define NPCPID_BosSniper         (494) 						 // Снайпер БС
+#define NPCPID_EnclaveSniper     (492) 						 // Снайпер Анклава
+#define NPCPID_RoboEye  	     (76)						 // Робоглаз
+#define NPCPID_SentryRobot       (77)						 // Сентри Бот
+#define NPCPID_Ghul		  	     (102)						 // Гуль
+#define NPCPID_VBat		  	     (507)						 // Кажан
+
+//Багажники
+#define BAG_TermPtrn1		     (276)
+#define BAG_TermPtrn2		     (277)
+#define BAG_TermPtrn3		     (278)
+#define BAG_TermPtrn4		     (279)		
+#define BAG_SniperPtrn1          (270)
+#define BAG_SniperPtrn2          (271)
+#define BAG_SniperPtrn3          (272)
+#define BAG_SniperPtrn4          (273)
+#define BAG_RoboEye         	 (139)
+#define BAG_SentryRobot        	 (144)
+
+// Подбор багажника, в зависимости от уровня
+int GetBagSniper(int level)
+{
+	if(level<3) return BAG_SniperPtrn1;
+	if(level<6) return BAG_SniperPtrn2;
+	if(level<9) return BAG_SniperPtrn3;
+	else return BAG_SniperPtrn4;	
+}
+
+int GetBagTerm(int level)
+{
+	if(level<3) return BAG_TermPtrn1;
+	if(level<6) return BAG_TermPtrn2;
+	if(level<8) return BAG_TermPtrn3;
+	else return BAG_TermPtrn4;
+}
+
+// Атака на собор.
+void SetupCathedralWaves(int8 bosWave, int level)
+{
+	Map @ map=GetMapByPid(MAP_cath_enter,0);
+	if (!valid(map)) return;
+
+	if (!FractionInMap(map))
+	{	
+		ClearBase(map);		
+		return;
+	}
+
+	if(bosWave!=ORG_MOB)
+	{
+		Critter@[] trooper;
+		Critter@[] snipper;
+		//Critter@[] slayer;
+		int[] paramsTrooper={
+			ST_TEAM_ID, (bosWave!=ORG_BOS?TEAM_BoSTrooper:TEAM_EnclaveTrooper), 
+			ST_BAG_ID, (GetBagTerm(level)),
+			ST_CRITICAL_RESISTANCE, 45,
+			MODE_NO_DROP, 1,
+			ST_KILL_EXPERIENCE, 100,
+			ST_REPLICATION_TIME, -1,
+			ST_NPC_ROLE_CITY, 32};
+		int[] paramsSniper={
+			ST_TEAM_ID, (bosWave!=ORG_BOS?TEAM_BoSTrooper:TEAM_EnclaveTrooper), 
+			ST_BAG_ID, (GetBagSniper(level)),
+			PE_SILENT_RUNNING, 1,
+			SK_SNEAK, 300,
+			MODE_HIDE, 1,
+			MODE_NO_DROP, 1,
+			ST_PERCEPTION, 10,
+			ST_AGILITY, 10,
+			ST_KILL_EXPERIENCE, 80,
+			ST_REPLICATION_TIME, -1,
+			ST_NPC_ROLE_CITY, 32};
+	
+	// Группа штурмовиков.
+	trooper=addGroupNpc(map, (bosWave==ORG_BOS?NPCPID_EnclaveTrooper:NPCPID_BosTrooper), paramsTrooper, 147, 89, 100, 5, 
+			  bosWave!=ORG_BOS?(Random(2,3)+level):(Random(2,3)+level), "pattern_term@_CritterInit");
+	// Группа снайперов.
+	snipper=addGroupNpc(map, (bosWave==ORG_BOS?NPCPID_EnclaveSniper:NPCPID_BosSniper), paramsSniper, 147, 89, 100, 5, 
+			  bosWave!=ORG_BOS?(Random(1,2)+level):(Random(1,2)+level/2), "pattern_sniper@_CritterInit");
+
+	GroupInit(trooper);
+	GroupInit(snipper);
+	addEnemyGroupsNpc(map, 			 trooper);
+
+	// Группа снайперов старается передвигатся
+	moveGroupsNpc(map, snipper, 0, 0, 101, 0, 100, true);
+	addEnemyGroupsNpc(map,			 snipper);
+
+	// Группа штурмовиков передвигается
+	moveGroupsNpc(map, trooper, 0, 0, 102, 0, 0, true);
+	}
+	else 
+	{
+		Critter@[] attackingGroup;
+		if(Random(0,(100+level*5))>80)
+		{
+			int[] paramsGhoul={
+				ST_TEAM_ID, TEAM_Mob1, 
+				ST_BAG_ID, BAG_SniperPtrn1,
+				MODE_NO_DROP, 1,
+				ST_MAX_LIFE, 110,
+				ST_KILL_EXPERIENCE, 20,
+				ST_REPLICATION_TIME, -1,
+				ST_NPC_ROLE_CITY, 32};
+			attackingGroup=addGroupNpc(map, NPCPID_Ghul, paramsGhoul, 147, 89, 100, 5, Random(12,14)+level*4, "mob@_MobInit");
+		}
+		else
+		{
+			int[] paramsVBat={
+				ST_TEAM_ID, TEAM_Mob1,
+				MODE_NO_DROP, 1,
+				PE_SILENT_RUNNING, 1,
+				SK_SNEAK, 300,
+				MODE_HIDE, 1,
+				ST_MELEE_DAMAGE, 25,
+				ST_KILL_EXPERIENCE, 150,
+				ST_REPLICATION_TIME, -1,
+				ST_NPC_ROLE_CITY, 32};
+			attackingGroup=addGroupNpc(map, NPCPID_VBat, paramsVBat, 147, 89, 100, 5, Random(3,6)+level, "pattern_term@_CritterInit");
+		}
+		
+		moveGroupsNpc(map, attackingGroup, 0, 0, 102, 0, 0, true);
+		addEnemyGroupsNpc(map, 			 attackingGroup);
+		GroupInit(attackingGroup);
+	}
+}
+
+// Атака на Сиерру.
+void SetupSierraWaves(int8 bosWave, int level)
+{
+	Map @ map=GetMapByPid(MAP_sad_enter,0);
+	if (!valid(map))	return;
+
+	if (!FractionInMap(map))
+	{			
+		ClearBase(map);		
+		return;
+	}
+
+	if(bosWave!=ORG_MOB)
+	{
+		Critter@[] trooper;
+		Critter@[] snipper;
+		Critter@[] slayer;
+		int[] paramsTrooper={
+			ST_TEAM_ID, (bosWave!=ORG_BOS?TEAM_BoSTrooper:TEAM_EnclaveTrooper), 
+			ST_BAG_ID, (GetBagTerm(level+2)),
+			ST_CRITICAL_RESISTANCE, 50,
+			ST_KILL_EXPERIENCE, 100,
+			MODE_NO_DROP, 1,
+			ST_REPLICATION_TIME, -1,
+			ST_NPC_ROLE_CITY, 32};
+		int[] paramsSniper={
+			ST_TEAM_ID, (bosWave!=ORG_BOS?TEAM_BoSTrooper:TEAM_EnclaveTrooper), 
+			ST_BAG_ID, (GetBagSniper(level+2)),
+			PE_SILENT_RUNNING, 1,
+			SK_SNEAK, 300,
+			MODE_HIDE, 1,
+			MODE_NO_DROP, 1,
+			ST_PERCEPTION, 10,
+			ST_AGILITY, 10,
+			ST_KILL_EXPERIENCE, 80,
+			ST_REPLICATION_TIME, -1,
+			ST_NPC_ROLE_CITY, 32};
+
+	// Группа штурмовиков.
+	trooper=addGroupNpc(map, (bosWave==ORG_BOS?NPCPID_EnclaveTrooper:NPCPID_BosTrooper), paramsTrooper, 84, 84, 100, 5, 
+			  bosWave!=ORG_BOS?(Random(2,3)+level):(Random(2,3)+level), "pattern_term@_CritterInit");
+	// Группа снайперов.
+	snipper=addGroupNpc(map, (bosWave==ORG_BOS?NPCPID_EnclaveSniper:NPCPID_BosSniper), paramsSniper, 84, 84, 100, 5, 
+			  bosWave!=ORG_BOS?(Random(1,2)+level):(Random(1,2)+level), "pattern_sniper@_CritterInit");
+
+	GroupInit(trooper);
+	GroupInit(snipper);
+	addEnemyGroupsNpc(map, 			trooper);
+
+	// Группа снайперов старается передвигатся за внешней стороной ограждения.
+	moveGroupsNpc(map, snipper, 0, 0, 101, 0, 100, true);
+	addEnemyGroupsNpc(map, snipper);
+
+	// Группа штурмовиков передвигается внутрь заграждения.
+	moveGroupsNpc(map, trooper, 0, 0, 102, 0, 0, true);
+
+	}
+	else 
+	{
+		Critter@[] FloatingEyeballs;
+		Critter@[] SentryBots;
+
+		int[] paramFloatingEyeballs={
+			ST_TEAM_ID, TEAM_Mob0, 
+			ST_BAG_ID, BAG_SentryRobot,
+			MODE_NO_DROP, 1,
+			ST_VAR2, 13,
+			ST_REPLICATION_TIME, -1,
+			ST_NPC_ROLE_CITY, 32};
+		int[] paramSentryBots={
+			ST_TEAM_ID, TEAM_Mob0, 
+			ST_BAG_ID, BAG_RoboEye,
+			MODE_NO_DROP, 1,
+			ST_REPLICATION_TIME, -1,
+			ST_NPC_ROLE_CITY, 32};
+
+		FloatingEyeballs=addGroupNpc(map, NPCPID_RoboEye, paramFloatingEyeballs, 84, 84, 100, 5, Random(3,4)+level*2, "pattern_term@_CritterInit");
+		SentryBots=addGroupNpc(map, NPCPID_SentryRobot, paramSentryBots, 84, 84, 100, 5, Random(1,2)+level, "pattern_term@_CritterInit");
+
+		GroupInit(FloatingEyeballs);
+		GroupInit(SentryBots);
+
+		addEnemyGroupsNpc(map, FloatingEyeballs);
+		addEnemyGroupsNpc(map, SentryBots);
+
+		moveGroupsNpc(map, FloatingEyeballs, 0, 0, 101, 0, 0, true);
+		moveGroupsNpc(map, SentryBots, 0, 0, 102, 0, 0, true);
+	}
+}
+
+//Атака на Марипозу.
+void SetupMariposaWaves(int8 bosWave, int level)
+{
+	Map @ map=GetMapByPid(MAP_mariposa_enter,0);
+	if (!valid(map))	return;
+
+	if (!FractionInMap(map))
+	{		
+		ClearBase(map);	
+		return;
+	}
+	
+	if(bosWave!=ORG_MOB)
+	{
+		Critter@[] trooper;
+		Critter@[] snipper;
+		Critter@[] slayer;
+		int[] paramsTrooper={
+			ST_TEAM_ID, (bosWave!=ORG_BOS?TEAM_BoSTrooper:TEAM_EnclaveTrooper), 
+			ST_BAG_ID, (GetBagTerm(level)),
+			ST_RADIATION_RESISTANCE, 95,
+			ST_CRITICAL_RESISTANCE, 45,
+			ST_KILL_EXPERIENCE, 100,
+			MODE_NO_DROP, 1,
+			ST_REPLICATION_TIME, -1,
+			ST_NPC_ROLE_CITY, 32};
+		int[] paramsSniper={
+			ST_TEAM_ID, (bosWave!=ORG_BOS?TEAM_BoSTrooper:TEAM_EnclaveTrooper), 
+			ST_BAG_ID, (GetBagSniper(level)),
+			PE_SILENT_RUNNING, 1,
+			SK_SNEAK, 300,
+			MODE_HIDE, 1,
+			MODE_NO_DROP, 1,
+			ST_RADIATION_RESISTANCE, 95,
+			ST_PERCEPTION, 10,
+			ST_AGILITY, 10,
+			ST_KILL_EXPERIENCE, 80,
+			ST_REPLICATION_TIME, -1,
+			ST_NPC_ROLE_CITY, 32};
+
+	// Группа штурмовиков.
+	trooper=addGroupNpc(map, (bosWave==ORG_BOS?NPCPID_EnclaveTrooper:NPCPID_BosTrooper), paramsTrooper, 84, 84, 100, 5, 
+			  bosWave!=ORG_BOS?(Random(2,3)+level):(Random(2,3)+level), "pattern_term@_CritterInit");
+	// Группа снайперов.
+	snipper=addGroupNpc(map, (bosWave==ORG_BOS?NPCPID_EnclaveSniper:NPCPID_BosSniper), paramsSniper, 84, 84, 100, 5, 
+			  bosWave!=ORG_BOS?(Random(1,2)+level/2):(Random(1,2)+level/2), "pattern_sniper@_CritterInit");
+
+	GroupInit(trooper);
+	GroupInit(snipper);
+
+	addEnemyGroupsNpc(map, trooper);
+	
+	// Группа снайперов старается передвигатся за внешней стороной ограждения.
+	moveGroupsNpc(map, snipper, 0, 0, 101, 0, 100, true);
+	addEnemyGroupsNpc(map, snipper);
+		
+	// Группа штурмовиков передвигается внутрь заграждения.
+	moveGroupsNpc(map, trooper, 0, 0, 102, 0, 0, true);
+	}
+	else
+	{
+		Critter@[] attackingGroup;
+		if(Random(0,(100+level*5))>80)
+		{
+			int[] params;
+			attackingGroup=addGroupNpc(map, NPCPID_Dog, params, 84, 84, 100, 5, Random(15,17)+level*4, "pattern_term@_CritterInit");
+		}
+		else
+		{
+			int[] params;
+			attackingGroup=addGroupNpc(map, NPCPID_Alien, params, 84, 84, 100, 5, Random(6,8)+level, "pattern_term@_CritterInit");
+		}
+
+		moveGroupsNpc(map, attackingGroup, 0, 0, 102, 0, 0, true);
+		addEnemyGroupsNpc(map, 			 attackingGroup);
+		GroupInit(attackingGroup);
+	}
+}
+
+//Очистка базы вручную
+//~run base CBase 0 0 0
+void CBase(Critter& cr, int param0, int param1, int param2)
+{
+	Map@ map=cr.GetMap();
+	if(not valid(map)) return;
+	ClearBase(map);
+}

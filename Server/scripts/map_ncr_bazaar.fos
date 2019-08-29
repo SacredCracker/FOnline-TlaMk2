@@ -1,0 +1,41 @@
+#include "_macros.fos"
+#include "time.fos"
+
+void _MapInit(Map & bazaar, bool firstTime)
+{
+	uint16 year=0,month=0,day=0,dayOfWeek=0,hour=0,minute=0,second=0;
+	uint[] values;
+	values.insertLast(1);
+	Location@ loc=bazaar.GetLocation();
+	if (!valid(loc))
+	{
+		Log("Error: location not valid");
+		return;
+	}
+	values.insertLast(loc.Id);
+	if(CreateTimeEvent(GetNearFullSecond(0,0,0,6,0,0),"e_DisableForceField",values,false)==0)
+	{
+		Log("Time event DisableForceField create fail, "+GetLastError());
+	}
+	if(CreateTimeEvent(GetNearFullSecond(0,0,0,20,0,0),"e_EnableForceField",values,false)==0)
+	{
+		Log("Time event EnableForceField create fail, "+GetLastError());
+	}
+	GetGameTime(__FullSecond,year,month,day,dayOfWeek,hour,minute,second);
+	if ((hour>=20) or (hour<5))
+	{
+		CreateTimeEvent(__FullSecond,"energy_barier@e_EnableForceField",values,false);
+	}
+}
+
+uint e_DisableForceField(uint[]@ values)
+{
+	CreateTimeEvent(__FullSecond,"energy_barier@e_DisableForceField",values,false);
+	return 24*60*60;
+}
+
+uint e_EnableForceField(uint[]@ values)
+{
+	CreateTimeEvent(__FullSecond,"energy_barier@e_EnableForceField",values,false);
+	return 24*60*60;
+}

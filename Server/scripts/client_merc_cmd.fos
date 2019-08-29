@@ -1,0 +1,129 @@
+
+#include "_client_defines.fos"
+#include "client_gui_h.fos"
+#include "_colors.fos"
+#include "_macros.fos"
+
+#define MODE_MOVE (2)
+#define MODE_ATTACK (1)
+#define MODE_DEFAULT (0)
+
+int LastX,LastY;
+
+import void merc_setmode(uint mode) from "client_main";
+import int[] GetIfaceCoords(string Key) from "client_main";
+
+class CloseButton : IGUIElementCallbackMouseClick
+{
+	void OnMouseClick(int click)
+	{
+	::HideScreen(0,2,2,2);
+	}
+}
+
+class CmdScreen : IGUIScreenCallbackShow
+{
+	void OnShow(int p0, int p1, int p2)
+	{
+		@ScreenOpt=GUI_GetScreenOptions();
+		ScreenOpt.Position(p0, p1);
+		LastX=p0;
+		LastY=p1;
+		
+	}
+	
+	IGUIScreenOpt@ ScreenOpt;
+	
+}
+
+class AttackButton : IGUIElementCallbackMouseClick
+{
+	void OnMouseClick(int click)
+	{
+	
+	merc_setmode(MODE_ATTACK);
+		::HideScreen(0,2,2,2);
+	}
+}
+
+class MoveButton : IGUIElementCallbackMouseClick
+{
+	void OnMouseClick(int click)
+	{
+	
+	
+	merc_setmode(MODE_MOVE);
+	::HideScreen(0,2,2,2);
+	}
+}
+
+class CancelButton : IGUIElementCallbackMouseClick
+{
+	void OnMouseClick(int click)
+	{
+	 RunServerScriptUnsafe("merc@unsafe_MercCmd",0,0,2,null,null);
+	}
+}
+
+
+void InitCMDScreen()
+{
+	
+	
+	AttackButton AttackBtn;
+	MoveButton MoveBtn;
+	CancelButton CancelBtn;
+	CloseButton CloseBtn;
+	CmdScreen showScreen;
+	
+
+	
+	
+	GUI_CreateScreen(CLIENT_SCREEN_MERCS,GetIfaceIniStr("mercMenuPic"))
+		.CanMove(true)
+		.CallbackShow(showScreen)
+		.Modal(false)
+		.CloseOnMiss(true)
+		.Multiinstance(false);
+
+	int[] AttackCoords=GetIfaceCoords("mAttackBtnCoords");
+	GUI_AddScreenElement(CLIENT_SCREEN_MERCS,"",AttackCoords[0],AttackCoords[1])
+		.CallbackMouseClick(AttackBtn)
+		.Text("",FONT_FALLOUT,COLOR_DGREEN,COLOR_RED,FT_CENTERX|FT_CENTERY)
+		.DownPic(GetIfaceIniStr("mercAttackPic"));
+
+	int[] MoveCoords=GetIfaceCoords("mMoveBtnCoords");
+	GUI_AddScreenElement(CLIENT_SCREEN_MERCS,"",MoveCoords[0],MoveCoords[1])
+		.CallbackMouseClick(MoveBtn)
+		.Text("",FONT_FALLOUT,COLOR_DGREEN,COLOR_RED,FT_CENTERX|FT_CENTERY)
+		.DownPic(GetIfaceIniStr("mercMovePic"));
+		
+	int[] StopCoords=GetIfaceCoords("mStopBtnCoords");	
+	GUI_AddScreenElement(CLIENT_SCREEN_MERCS,"",StopCoords[0],StopCoords[1])
+		.CallbackMouseClick(CancelBtn)
+		.Text("",FONT_FALLOUT,COLOR_DGREEN,COLOR_RED,FT_CENTERX|FT_CENTERY)
+		.DownPic(GetIfaceIniStr("mercStopPic"));
+		
+	int[] CloseCoords=GetIfaceCoords("mCloseBtnCoords");	
+	GUI_AddScreenElement(CLIENT_SCREEN_MERCS,"",CloseCoords[0],CloseCoords[1])
+		.CallbackMouseClick(CloseBtn)
+		.Text("",FONT_FALLOUT,COLOR_DGREEN,COLOR_RED,FT_CENTERX|FT_CENTERY)
+		.DownPic(GetIfaceIniStr("mercClosePic"));
+
+	
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

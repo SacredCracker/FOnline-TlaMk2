@@ -1,0 +1,317 @@
+[comment]
+
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+6 1010 D _param p ST_INTELLECT < 4 #
+2 1020 D _param p ST_INTELLECT > 3 D _var p racing_event < 2 #
+26 1030 D _var p racing_event = 2 @
+2 2000 None 0 #
+3 2010 D _var p q_den_bill_racing_opening > 0 #
+3 2020 D _var p q_den_bill_racing_opening = 0 R _var p q_den_bill_racing_opening = 1 #
+0 2030 #
+22 2040 D _var p q_den_bill_racing_win = 5 #
+23 2050 D _var p q_den_bill_racing_win = 4 R _script game_event_racing@r_StopEvent 0  @
+3 3000 None 0 #
+17 3010 D _param p ST_LEVEL } 36 D _var p q_den_bill_racing_win ! 7 D _script game_event@d_GameEventStatus 2 3 1 D _var p q_den_bill_racing_win ! 1 #
+5 3020 #
+18 3030 D _param p ST_LEVEL < 36 D _var p q_den_bill_racing_win ! 7 D _script game_event@d_GameEventStatus 2 3 1 D _var p q_den_bill_racing_win ! 1 #
+0 3040 #
+4 3050 #
+20 3060 D _var p name_mem_npc_player = 1 D _var p q_den_bill_racing_win = 1 #
+24 3070 D _var p racing_event = 1 D _var p q_den_bill_racing_win ! 7 #
+21 3080 D _var p q_den_bill_racing_win = 7 @
+4 4000 None 0 #
+5 4010 #
+0 4020 @
+5 5000 None 0 #
+7 5010 #
+8 5020 #
+9 5030 #
+12 5040 #
+16 5050 #
+15 5060 #
+25 5070 #
+0 5080 #
+14 5090 @
+6 6000 None 0 @
+7 7000 None 0 #
+8 7010 D _param p ST_LEVEL } 36 #
+18 7020 D _param p ST_LEVEL < 36 D _script game_event@d_GameEventStatus 2 3 1 D _var p q_den_bill_racing_win ! 1 #
+0 7030 @
+8 8000 None 0 #
+0 8010 #
+17 8020 D _script game_event@d_GameEventStatus 2 3 1 D _var p q_den_bill_racing_win ! 1 @
+9 9000 None 0 #
+10 9010 #
+5 9020 #
+0 9030 @
+10 10000 None 0 #
+11 10010 #
+0 10020 @
+11 11000 None 0 #
+5 11010 #
+17 11020 D _param p ST_LEVEL } 36 D _script game_event@d_GameEventStatus 2 3 1 D _var p q_den_bill_racing_win ! 1 #
+0 11030 @
+12 12000 None 0 #
+17 12010 D _param p ST_LEVEL } 36 D _script game_event@d_GameEventStatus 2 3 1 #
+18 12020 D _param p ST_LEVEL < 36 D _script game_event@d_GameEventStatus 2 3 1 #
+13 12030 #
+5 12040 #
+0 12050 #
+14 12060 @
+13 13000 None 0 #
+5 13010 #
+17 13020 D _param p ST_LEVEL } 36 D _script game_event@d_GameEventStatus 2 3 1 @
+14 14000 None 0 #
+5 14010 #
+17 14020 D _param p ST_LEVEL } 36 D _script game_event@d_GameEventStatus 2 3 1 @
+15 15000 None 0 #
+16 15010 #
+5 15020 #
+0 15030 @
+16 16000 game_event_racing@dlg_RacingWhen 0 #
+5 16010 #
+0 16020 #
+17 16030 D _param p ST_LEVEL } 36 D _script game_event@d_GameEventStatus 2 3 1 @
+17 17000 None 0 #
+19 17010 D _item p PID_BOTTLE_CAPS } 17000 D _var p q_den_bill_racing_win ! 1 D _var p q_den_bill_racing_win ! 7 R _item p PID_BOTTLE_CAPS - 17000 R _var p q_den_bill_racing_win = 1 #
+0 17020 @
+18 18000 None 0 #
+0 18010 #
+5 18020 @
+19 19000 None 0 #
+0 19010 D _var p q_den_bill_racing_opening < 2 R _var p name_mem_npc_player = 1 R _param p ST_EXPERIENCE + 12000 R _var p q_den_bill_racing_opening = 2 #
+5 19020 D _var p q_den_bill_racing_opening < 2 R _var p name_mem_npc_player = 1 R _param p ST_EXPERIENCE + 12000 R _var p q_den_bill_racing_opening = 2 #
+0 19030 D _var p q_den_bill_racing_opening = 2 @
+20 20000 None 0 #
+0 20010 @
+21 21000 None 0 #
+0 21010 @
+22 22000 None 0 #
+0 22010 D _var p q_den_bill_racing_win = 5 R _item p PID_POWERED_ARMOR + 1 R _item p PID_BLUE_CONDOM + 1 R _item p PID_ROT_GUT + 1 R _var p q_den_bill_racing_win = 7 @
+23 23000 None 0 #
+0 23010 D _var p q_den_bill_racing_win = 4 R _param p ST_EXPERIENCE + 12000 R _item p PID_MAGIC_8_BALL + 1 R _item p PID_NUKA_COLA + 30 R _var p q_den_bill_racing_win = 6 @
+24 24000 None 0 #
+0 24010 @
+25 25000 None 0 #
+5 25010 #
+0 25020 #
+16 25030 @
+26 26000 game_event_racing@dlg_Winner 0 #
+22 26010 D _var p q_den_bill_racing_win = 5 #
+23 26020 D _var p q_den_bill_racing_win = 4 &
+
+[russ]
+{100}{}{Билли}
+{200}{}{Вы видите распорядителя гонок}
+{210}{}{Широко улыбающийся молодой человек в костюме и лаковых штиблетах}
+{210}{}{Странный какой-то. Накрашеный весь, напомаженый, как баба. Одно слово - румын.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{идиотина}
+{1020}{}{ну так, терпимо}
+{1030}{}{гонки кончились}
+{2000}{}{Приветствую. Зачем вы здесь?}
+{2010}{}{Ну так, иду мимо, дай думаю, зайду.@@Говорят, тут проходит запись на гонки по пустоши?}
+{2020}{}{Ну так, иду мимо, дай думаю, зайду.@@Говорят, тут проходит запись на гонки по пустоши?}
+{2030}{}{Ой, просто не та дверь}
+{2040}{}{Мне бы насчет приза бы...}
+{2050}{}{Мне бы насчет приза бы...}
+{3000}{}{Вы собираетесь принять участие в гонках?}
+{3010}{}{Да, за этим я здесь.}
+{3020}{}{Да, за этим я здесь, но хотелось бы знать подробности.}
+{3030}{}{Да, за этим я здесь.}
+{3040}{}{Только как зритель}
+{3050}{}{Что это за гонки?}
+{3060}{}{Да, за этим я здесь.}
+{3070}{}{Да, я хочу записаться}
+{3080}{}{Да, я хочу записаться}
+{4000}{}{Ну как же! Всесезонные Смертельные Гонки Западного побережья Гранд-Пасифик-Американ! На приз семьи Бишопов из Нью-Рено! Разве вы не в курсе? Я произвожу запись претендентов.}
+{4010}{}{А поподробней можно?}
+{4020}{}{Звучит устрашающе. Я лучше пойду.}
+{5000}{}{Я готов ответить на все ваши вопросы.}
+{5010}{}{Кто допускается к участию в гонках?}
+{5020}{}{Как мне зарегистрироваться?}
+{5030}{}{Не расскажете о маршруте гонок?}
+{5040}{}{Какой приз получит победитель?}
+{5050}{}{Когда и где начало?}
+{5060}{}{А я успею подать заявку??}
+{5070}{}{А зрителям вход свободный?}
+{5080}{}{Не буду больше вас задерживать...}
+{5090}{}{А как и где будут выдаваться призы?}
+{6000}{}{Тут не место недоумкам.@@Вон, тупое животное!}
+{7000}{}{Принять участие может любой желающий, независимо от того, есть у него автомобиль или нет. Главное требование опыт. Зеленые новички нам не интересны. Отбор кандидатов провожу я.}
+{7010}{}{Это здорово. А как записаться?}
+{7020}{}{ А я могу  записаться?}
+{7030}{}{Не буду больше вас задерживать...}
+{8000}{}{Для регистрации необходимо внести 17 000 в общий призовой фонд. После этого кандидатура соискателя утверждается и он может принять участие в гонках. Прием денег провожу я.}
+{8010}{}{Хм. недешево, конечно. Пойду подумаю...}
+{8020}{}{Хм. недешево, конечно. Но я в деле.}
+{9000}{}{Гонки начинаются и заканчиваются здесь, на заправке. Каждому участнику будет выдан индивидуальный маршрут прохождения.}
+{9010}{}{Гм. А если, я , к примеру выберу маршрут покороче?}
+{9020}{}{Ясно. Я ещё спрошу...}
+{9030}{}{Не буду больше вас задерживать...}
+{10000}{}{Участник должен пройти все чекпойнты на трассе. Время прохождения фиксируется. Для избежания жульничества, вы понимаете.}
+{10010}{}{То есть у меня будет карта со всеми чекпойнтами?}
+{10020}{}{Спасибо, но мне пора...}
+{11000}{}{При выезде из города вы получите информацию по расположению первого чекпойнта. Прибыв туда, вы получаете информацию по расположению второго, и так далее и так далее. Пока не вернетесь сюда, на заправку.}
+{11010}{}{Ясно. Я ещё спрошу...}
+{11020}{}{Ясно. Я готов записаться...}
+{11030}{}{Спасибо, но мне пора...}
+{12000}{}{Ооо, призы, призы это нечто. Главный приз - Силовая броня! А? Каково? Второй - за волю к победе - скорей утешительный. Третье место не присуждается.}
+{12010}{}{Святое небо! Запишите меня скорее, я участвую!}
+{12020}{}{Святое небо! Запишите меня скорее, я участвую!}
+{12030}{}{А если какой-нибудь хитрожопый долбаный русский на самой быстой машине будет каждые гонки выигрывать?}
+{12040}{}{Так, я ещё хочу спросить}
+{12050}{}{Спасибо, но мне пора...}
+{12060}{}{А как и где будут выдаваться призы?}
+{13000}{}{Это исключено. Человек, выигравший гонки, к следующим не допускается. Иначе пропадет азарт.}
+{13010}{}{Это вы толково придумали. У меня еще вопросы.}
+{13020}{}{Вы меня убедили. Я записываюсь.}
+{14000}{}{Приз сможете получить здесь, у меня, по окончании гонок.}
+{14010}{}{А могу я спросить...}
+{14020}{}{Отлично. Сервис на высоте. Записывайте меня.}
+{15000}{}{Запись кандидатов заканчивается за 3 часа да начала гонок. }
+{15010}{}{А когда старт-то?}
+{15020}{}{Понятно. Но есть еще вопрос.}
+{15030}{}{Ладно, это конечно интересно, но мне пора...}
+{16000}{}{Старт гонок будет здесь, @lex when@.}
+{16010}{}{Понятно. Но есть еще вопрос.}
+{16020}{}{Ладно, это конечно интересно, но мне пора...}
+{16030}{}{Теперь я всё знаю, запишите меня.}
+{17000}{}{Хотите записаться? Потрудитесь внести 17000.}
+{17010}{}{Вот деньги. }
+{17020}{}{Сейчас в банк сбегаю.}
+{18000}{}{К сожалению, у вас недостаточно опыта для участия. Мы не можем вас принять.}
+{18010}{}{Говорила мне мама, не ходи туда....}
+{18020}{}{А могу я спросить...}
+{19000}{}{Благодарю, вы добавлены в состав участников. До начала осталось совсем немного времени.}
+{19010}{}{Непременно подойду.}
+{19020}{}{А могу я спросить...}
+{19030}{}{Непременно подойду.}
+{20000}{}{Позвольте, вы уже есть в списке. Попрошу не нарушать безобразия и удалиться отсюда.}
+{20010}{}{Уже ухожу.}
+{21000}{}{Нет, это невозможно. Вы выиграли прошлые гонки. Повторное участие не допускается.}
+{21010}{}{Суки!}
+{22000}{}{Да, да, конечно! Наш чемпион. С удовольствием вручаю вам приз! Помните, что только благодаря Бишопам вы владеете Силовой броней.}
+{22010}{}{О да!!!}
+{23000}{}{Ага, почетное второе место. Получите вашу награду. Ждем вас на следующих гонках.}
+{23010}{}{Ага, непременно. Если не подохну...}
+{24000}{}{Запись окончена, извините. Приходите в следующий раз. И без опозданий.}
+{24010}{}{Суки!}
+{25000}{}{Да, зрителей, гостей, болельшиков и просто бездельников, придурков и наркоманов мы ждём здесь в день старта.}
+{25010}{}{А еще можно спросить??}
+{25020}{}{О! Хоть тут меня кто-то ждет.Неременно подойду.}
+{25030}{}{А когда старт-то?}
+{26000}{}{Гонки завершились. Победитель-@lex winner@. О начале следующих гонок мы сообщим дополнительно.}
+{26010}{}{Мне бы насчет приза бы...}
+{26020}{}{Мне бы насчет приза бы...}
+
+[engl]
+{100}{}{Bill}
+{200}{}{You see racing administrator}
+{210}{}{A widely smiling young man dressed in suit in varnished shoes.}
+{210}{}{A strange one. Maked up, lipsticked, like a chick. In one word – Romanian.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{идиотина}
+{1020}{}{ну так, терпимо}
+{1030}{}{гонки кончились}
+{2000}{}{Hello there. What are you here for?}
+{2010}{}{I was just passing by and thought why not to visit you.@@It it said the wastelands race starts here?}
+{2020}{}{I was just passing by and thought why not to visit you.@@It it said the wastelands race starts here?}
+{2030}{}{Oh, wrong door.}
+{2040}{}{I’m about the prize...}
+{2050}{}{I’m about the prize...}
+{3000}{}{Are you going to participate in the race?}
+{3010}{}{Yes, I’m here to do it.}
+{3020}{}{Yes, I’m here to do it, but I want to know the details.}
+{3030}{}{Yes, I’m here to do it.}
+{3040}{}{Only as a spectator.}
+{3050}{}{Tell me about this race.}
+{3060}{}{Yes, I’m here to do it.}
+{3070}{}{Yes, I want to sign up.}
+{3080}{}{Yes, I want to sign up.}
+{4000}{}{Oh you don’t know! Year-round West Coast Grand-Pacific-American Death Race! Fight for Bishop family’s prize! Aren’t you informed? I’m signing up the contestants.}
+{4010}{}{Can you tell me in details, please?}
+{4020}{}{Sound frightening. I’d better go.}
+{5000}{}{I’m ready to answer all your questions.}
+{5010}{}{Who is allowed to participate in the race?}
+{5020}{}{How can I be registered?}
+{5030}{}{Can you tell me about race route?}
+{5040}{}{What prize will the winner gain?}
+{5050}{}{When and where the race starts?}
+{5060}{}{Have I time to sign up??}
+{5070}{}{Is there free entrance for the spectators?}
+{5080}{}{You may leave now...}
+{5090}{}{When and how will the prized be given?}
+{6000}{}{There’s no places for such idiot.@@Go away, stupid animal!}
+{7000}{}{Everyone who wishes can participate regardless of whether he has or not the auto. The main demand is your experience. Green newbies are not welcome here. I choose the candidates.}
+{7010}{}{That’s cool. And how can I sign up?}
+{7020}{}{Can I sign up?}
+{7030}{}{You may leave now...}
+{8000}{}{You need to contribute $ 17000 to the common prize money. After that, the competitor’s candidature is approved and he can participate in the race. I’m the money collector.}
+{8010}{}{Hm, considerable price. I must think for a while...}
+{8020}{}{Hm, considerable price. But I agree.}
+{9000}{}{The race starts and finishes here, on the gasoline. To every contestant an individual route will be given.}
+{9010}{}{Hm, but if I choose a shorter route?}
+{9020}{}{Clear. I want to ask...}
+{9030}{}{You may leave now...}
+{10000}{}{The contestant must pass all the checkpoints on the race. Passing time is recorded. To avoid tricking, you know.}
+{10010}{}{Another words, will I have a map with all the checkpoints?}
+{10020}{}{Thanks, time to leave for me...}
+{11000}{}{When you leave the town you receive the information about the first checkpoint. When you get there, you’ll receive the information about the second checkpoint and so on until you come back here.}
+{11010}{}{Clear. I want to ask...}
+{11020}{}{Clear. I’m ready to sign up...}
+{11030}{}{Thanks, time to leave for me...}
+{12000}{}{Oooh, the prizes are tremendous. The main prize is Powered Armor! Huh! The second prize is mostly comforting for the will to win. Third place is not awarded.}
+{12010}{}{Holy shit! Register me faster, I will participate!}
+{12020}{}{Holy shit! Register me faster, I will participate!}
+{12030}{}{And if any kind of sly fucking Russian on the fastest car will win every race?}
+{12040}{}{Okay, I want to ask more.}
+{12050}{}{Thanks, time to leave for me...}
+{12060}{}{When and how will the prized be given?}
+{13000}{}{This is ruled out. Once you win the race you can’t participate no more. Otherwise the excitement will die.}
+{13010}{}{That’s a good rule. I have more question.}
+{13020}{}{You’ve persuaded me. I’m signing up.}
+{14000}{}{You can get the prize here after the race ends.}
+{14010}{}{And can I ask...}
+{14020}{}{Fine. The service is up to mark. Sign me up.}
+{15000}{}{Candidates registration starts a 3 hours before the race beginning.}
+{15010}{}{And when the race starts?}
+{15020}{}{Clear. But I have more questions.}
+{15030}{}{Well, that’s interesting, but I gotta go...}
+{16000}{}{The race starts here at @lex when@.}
+{16010}{}{Clear. But I have more questions.}
+{16020}{}{Well, that’s interesting, but I gotta go...}
+{16030}{}{Now I know everything. Sign me up.}
+{17000}{}{Do you want to be registered? Contribute me $ 17000 firstly.}
+{17010}{}{Here’s the money. }
+{17020}{}{One moment, I’m on my way to the bank.}
+{18000}{}{Unfortunately you’re not enough experienced for participation. We can’t accept your candidature.}
+{18010}{}{My mom said me not to go there....}
+{18020}{}{And can I ask...}
+{19000}{}{Thank you, now you’re a contestant. It is very little time till the beginning.}
+{19010}{}{I will definitely come.}
+{19020}{}{And can I ask...}
+{19030}{}{I will definitely come.}
+{20000}{}{Wait, you are already in the contestants list. I ask you not to break disgraceful and to take yourself off from here.}
+{20010}{}{I’m leaving.}
+{21000}{}{No, it is impossible. You’ve won the race once. You can’t participate more.}
+{21010}{}{Bitches!}
+{22000}{}{Oh yes, our champion! I happily present you the prize! Remember that you got this Powered Armor owing to Bishops.}
+{22010}{}{Oh yes!!!}
+{23000}{}{Well, honorable second place. Take your prize. We’re waiting for you on the next race.}
+{23010}{}{Yes, certainly... If I don’t kick the bucklet...}
+{24000}{}{Registration is ended. Come the next time. And without being late.}
+{24010}{}{Bitches!}
+{25000}{}{Yes, we’re waiting for the spectators, guests, fans, idlers, dolts and drug addicts at the start day.}
+{25010}{}{Can I ask more??}
+{25020}{}{Oh! At least here somebody waits for me. Certainly, I will come.}
+{25030}{}{And when the race starts?}
+{26000}{}{The race is finished. The winner is @lex winner@. We will let you know about the next race additionally.}
+{26010}{}{I’m about the prize...}
+{26020}{}{I’m about the prize...}

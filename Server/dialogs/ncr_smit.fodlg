@@ -1,0 +1,373 @@
+[comment]
+
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 NOT_ANSWER_CLOSE_DIALOG 1#
+2 1010d*_var p name_mem_npc_player = 0 #
+12 1020d*_var n loyality = 0 *_var p name_mem_npc_player = 1 #
+10 1030d*_var p name_mem_npc_player = 1 *_var n loyality > 0 *_var p ncr_smit_position = 0 #
+25 1040d*_var p name_mem_npc_player = 1 *_var n loyality > 0 *_var p ncr_smit_position = 4 #
+12 1050d*_var p ncr_smit_position > 0 *_var p ncr_smit_position < 4 #
+50 1060d*_var p ncr_smit_vs_vestin_status = 2 *_var p ncr_smit_position = 6 #
+12 1070d*_var p ncr_smit_position = 5 @
+2 2000 NOT_ANSWER_CLOSE_DIALOG 0#
+3 2010d*_param p ST_INTELLECT > 3 r*_var p name_mem_npc_player = 1 #
+4 2020d*_param p ST_INTELLECT > 3 r*_var n loyality - 1 #
+0 2030d*_param p ST_INTELLECT < 4 #
+0 2040d*_param p ST_INTELLECT > 3 @
+3 3000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 3010#
+5 3020r*_var n loyality + 1 #
+6 3030r*_var n loyality - 1 @
+4 4000 NOT_ANSWER_CLOSE_DIALOG 0@
+5 5000 NOT_ANSWER_CLOSE_DIALOG 0#
+7 5010#
+0 5020@
+6 6000 NOT_ANSWER_CLOSE_DIALOG 0@
+7 7000 NOT_ANSWER_CLOSE_DIALOG 0#
+8 7010r*_var p loyality + 1 #
+9 7020r*_var p loyality - 1 #
+0 7030@
+8 8000 NOT_ANSWER_CLOSE_DIALOG 0@
+9 9000 NOT_ANSWER_CLOSE_DIALOG 0@
+10 10000 NOT_ANSWER_CLOSE_DIALOG 0#
+13 10010r*_var n loyality - 1 #
+15 10020r*_var n loyality + 1 #
+6 10030r*_var n loyality - 1 #
+18 10040d*_var n loyality < 10 *_var p ncr_smit_position = 0 #
+19 10050d*_var n loyality > 9 *_var p ncr_player_lead_smit_2_dustybar = 0 *_var p ncr_smit_position = 0 #
+24 10060d*_var p ncr_player_lead_smit_2_dustybar > 0 *_var p ncr_player_lead_smit_2_dustybar < 3 *_var p ncr_smit_position = 0 r*_var p ncr_player_lead_smit_2_dustybar = 3 *_script ncr_smit@r_SmitGoToGates 0  #
+0 10070@
+12 11000 NOT_ANSWER_CLOSE_DIALOG 0@
+13 12000 NOT_ANSWER_CLOSE_DIALOG 0#
+14 12010#
+0 12020@
+14 13000 NOT_ANSWER_CLOSE_DIALOG 0@
+15 14000 NOT_ANSWER_CLOSE_DIALOG 0#
+16 14010r*_var n loyality - 1 #
+17 14020r*_var n loyality + 1 @
+16 15000 NOT_ANSWER_CLOSE_DIALOG 0@
+17 16000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 16010#
+0 16020r*_var n loyality - 1 @
+18 17000 NOT_ANSWER_CLOSE_DIALOG 0@
+19 18000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 18010#
+20 18020@
+20 19000 NOT_ANSWER_CLOSE_DIALOG 0#
+21 19010r*_var n loyality - 1 #
+22 19020@
+21 20000 NOT_ANSWER_CLOSE_DIALOG 0@
+22 21000 NOT_ANSWER_CLOSE_DIALOG 0#
+23 21010r*_var p ncr_player_lead_smit_2_dustybar = 1 *_var p q_ncr_lead_smit_2_dustybar = 1 #
+0 21020@
+23 22000 NOT_ANSWER_CLOSE_DIALOG 0#
+24 22010r*_var p ncr_player_lead_smit_2_dustybar = 3 *_script ncr_smit@r_SmitGoToGates 0  #
+0 22020@
+24 23000 NOT_ANSWER_CLOSE_DIALOG 0@
+25 24000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 24010#
+26 24020d*_var p ncr_player_lead_smit_2_dustybar = 4 r*_var p ncr_player_lead_smit_2_dustybar = 5 *_param p ST_EXPERIENCE + 450 *_item p PID_BOTTLE_CAPS + 200 *_var p q_ncr_lead_smit_2_dustybar = 4 #
+30 24030d*_var p ncr_player_lead_smit_2_dustybar > 4 *_var p ncr_smit_vs_vestin_status = 0 #
+30 24040d*_var p ncr_player_lead_smit_2_dustybar = 0 *_var p ncr_smit_vs_vestin_status = 0 #
+44 24050d*_var p ncr_smit_vs_vestin_status = 1 r*_var p ncr_smit_vs_vestin_status = 2 *_script ncr_smit@r_SmitGoToPolice 0  #
+52 24060d*_var p ncr_smit_vs_vestin_result = 2 *_var p ncr_smit_vs_vestin_status = 3 #
+53 24070d*_var p ncr_smit_vs_vestin_status = 3 *_var p ncr_smit_vs_vestin_result = 3 @
+26 25000 NOT_ANSWER_CLOSE_DIALOG 0@
+30 26000 NOT_ANSWER_CLOSE_DIALOG 0#
+31 26010d*_item p PID_BOTTLE_CAPS > 9 r*_item p PID_BOTTLE_CAPS - 10 #
+0 26020@
+31 27000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 27010#
+32 27020@
+32 28000 NOT_ANSWER_CLOSE_DIALOG 0#
+33 28010@
+33 29000 NOT_ANSWER_CLOSE_DIALOG 0#
+34 29010#
+30 29020#
+0 29030@
+34 30000 NOT_ANSWER_CLOSE_DIALOG 0#
+35 30010#
+0 30020@
+35 31000 NOT_ANSWER_CLOSE_DIALOG 0#
+36 31010#
+41 31020@
+36 32000 NOT_ANSWER_CLOSE_DIALOG 0#
+37 32010@
+37 33000 NOT_ANSWER_CLOSE_DIALOG 0#
+38 33010@
+38 34000 NOT_ANSWER_CLOSE_DIALOG 0#
+39 34010@
+39 35000 NOT_ANSWER_CLOSE_DIALOG 0#
+40 35010#
+41 35020@
+40 36000 NOT_ANSWER_CLOSE_DIALOG 0@
+41 37000 NOT_ANSWER_CLOSE_DIALOG 0#
+42 37010@
+42 38000 NOT_ANSWER_CLOSE_DIALOG 0#
+43 38010r*_var p ncr_smit_vs_vestin_status = 1 #
+0 38020@
+43 39000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 39010#
+44 39020r*_var p ncr_smit_vs_vestin_status = 2 *_script ncr_smit@r_SmitGoToPolice 0  @
+44 40000 NOT_ANSWER_CLOSE_DIALOG 0@
+50 41000 NOT_ANSWER_CLOSE_DIALOG 0#
+51 41010@
+51 42000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 42010r*_var p ncr_smit_position = 7 *_script ncr_smit@r_SmitGoToRanch 0  @
+52 43000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 43010r*_var p ncr_smit_vs_vestin_status = 4 *_param p ST_EXPERIENCE + 1500 *_item p PID_BOTTLE_CAPS + 200 @
+53 44000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 44010r*_var p ncr_smit_vs_vestin_status = 4 *_param p ST_EXPERIENCE + 5100 *_item p PID_BOTTLE_CAPS + 500 &
+
+[russ]
+{100}{}{Cмит}
+{200}{}{Вы видите Смита.}
+{210}{}{Вы видите человека, одетого в строгий костюм, черный галстук, белую рубашку. Он выглядит очень уверенным.}
+{210}{}{На лице Смита играет легкая улыбка. Он совершенно точно знает что, где и когда нужно делать.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{не знаком}
+{1020}{}{лояльность = 0. разговаривать с игроком смит не будет}
+{1030}{}{лояльность выше 0. Смит находится на Базаре.}
+{1040}{}{Смит в баре Дасти в центре города}
+{1050}{}{Во время перемещений смит не разговаривает ваще}
+{1060}{}{смит стоит перед полицейским у дома вейстина}
+{1070}{}{Во время перемещений смит не разговаривает ваще}
+{2000}{}{Чем могу помочь?}
+{2010}{}{День добрый, меня зовут @pname@. Мы не могли с вами где-то встречаться раньше?}
+{2020}{}{Ты очень подозрительный тип. Предъяви документы!}
+{2030}{}{Ррра! ха! [Уйти]}
+{2040}{}{Не берите в голову, я ухожу. [Уйти]}
+{3000}{}{Сомневаюсь@sex@|, друг мой|||. Разрешите представиться, Смит.}
+{3010}{}{Рад@sex@|||а| знакомству, Смит. [Уйти]}
+{3020}{}{Секретный агент Смит?}
+{3030}{}{А чем занимаетесь в НКР?}
+{4000}{}{На каких основаниях?}
+{5000}{}{[Улыбается] Хорошее чувство юмора. Просто Смит.}
+{5010}{}{Жаль. Всегда мечтал@sex@|||а| познакомиться с каким-нибудь секретным агентом!}
+{5020}{}{Увидимся [Уйти]}
+{6000}{}{Это вас не касается, @pname@}
+{7000}{}{Зачем вам это, @pname@?}
+{7010}{}{Ну как же, Смит. Неужели вы не понимаете? У них же такая интересная, насыщенная и полная риска жизнь. Наверняка есть, что рассказать.}
+{7020}{}{Я схвачу его, отрублю руки и сдам властям.}
+{7030}{}{Не важно, прощайте. [Уйти]}
+{8000}{}{Не знаю, не знаю. К сожалению, не доводилось сталкиваться ни с одним из них.}
+{9000}{}{Хороший план... Вы наверняка прославитесь...}
+{10000}{}{Снова вы, @pname@?}
+{10010}{}{Слушай, Смит. А чего это ты вырядился, как клоун? Костюмчик натянул, галстучек подобрал.}
+{10020}{}{В этом городе редко встретишь достойного человека, такого, как вы, Смит.}
+{10030}{}{Так чем вы занимаетесь, Смит? Вы не вписываетесь в эту тусовку на Базаре.}
+{10040}{}{Смит, я бы с удовольствием угостил вас выпивкой. Предлагаю заглянуть к Дарси у Штаба Армии.}
+{10050}{}{Смит, я бы с удовольствием угостил вас выпивкой. Предлагаю заглянуть к Дарси у Штаба Армии.}
+{10060}{}{Смит, мое приглашение к Дарси в силе. Мы можем идти прямо сейчас!}
+{10070}{}{Заглянул@sex@|||а| засвидетельствовать вам свое почтение. Прощайте. [Уйти]}
+{11000}{}{Я слишком занят. Уходите.}
+{12000}{}{Меньше всего меня интересует ваше мнение о моем внешнем виде. Еще вопросы?}
+{12010}{}{Да ладно тебе, чего заводишься? Я тебя просто хочу узнать получше.}
+{12020}{}{Никаких вопросов, бывай, Смит. [Уйти]}
+{13000}{}{В таком случае, выбирайте выражения.}
+{14000}{}{Ну почему же, здесь много славных ребят. Каждый занимается своим делом. А чем промышляете вы?}
+{14010}{}{Я занимаюсь тем, что кривляюсь перед одним умником в галстуке.}
+{14020}{}{Никаких особенных планов на текущий момент у меня нет... Убиваю время и надеюсь, что подвернется хорошее дельце.}
+{15000}{}{Я помогу вам избежать этого, прощайте.}
+{16000}{}{Мне знакомо это состояние, @sex@|друг мой||@pname@|. Желаю вам скорее найти хорошую работенку.}
+{16010}{}{Спасибо, Смит. Рад@sex@|||а| бы еще поболтать, но мне пора. [Уйти]}
+{16020}{}{Обойдусь без твоих идиотских пожеланий, @sex@|приятель||красавчик|. [Уйти]}
+{17000}{}{Благодарю за приглашение, но вынужден вам отказать.}
+{18000}{}{Хорошая идея! Но увы, я не могу составить вам компанию.}
+{18010}{}{Придется напиться в одиночку, удачи. [Уйти]}
+{18020}{}{Почему, Смит? }
+{19000}{}{Ммм... Характер деятельности не позволяет мне светиться на виду у местного руководства. Поэтому дорога в город для меня закрыта.}
+{19010}{}{Я так и знал@sex@|||а|! Ты преступник и скрываешься от правосудия!}
+{19020}{}{Ну, меня характер вашей деятельности не касается. Но, думаю, мы сможем решить эту проблему.}
+{20000}{}{Не ожидал такой реакции, видимо, я в вас ошибся.}
+{21000}{}{Каким образом?}
+{21010}{}{Я договорюсь с охраной, и вы пройдете вместе со мной.}
+{21020}{}{Я обязательно придумаю. А пока я вас покину. [Уйти]}
+{22000}{}{Можно попробовать, хотя я и не верю в успех. Когда отправимся?}
+{22010}{}{Можем идти прямо сейчас!}
+{22020}{}{Минутку, я только завершу свои дела. [Уйти]}
+{23000}{}{Отлично, @pname@. Я следую за вами. Если пройдем ворота - найдите меня в баре у Дасти.}
+{24000}{}{А вот и @sex@|мой друг||наша милая| @pname@! Рад вас видеть!}
+{24010}{}{Аналогично, Смит. [Уйти]}
+{24020}{}{Я тоже рад@sex@|||а| встрече. Выпьем?}
+{24030}{}{Я бы хотел@sex@|||а| угостить вас выпивкой.}
+{24040}{}{Я бы хотел@sex@|||а| угостить вас выпивкой.}
+{24050}{}{Я готов навестить Вейстина.}
+{24060}{}{Как прошла ваша вылазка к Вейстину, Смит?}
+{24070}{}{Вейстин мертв. Теперь я знаю, что вы имели в виду, когда собирались "припугнуть Вейстина".}
+{25000}{}{Безусловно. Прошу принять мой скромный дар за вашу помощь там, на входе в город.}
+{26000}{}{С удовольствием выпью с вами!}
+{26010}{}{[Подозвать бармена и заказать выпивку]}
+{26020}{}{Совсем из памяти вылетело. Я на мели, совершенно нет денег на ром. [Уйти]}
+{27000}{}{[Вы пьете со Смитом и обращаете внимание на то, как он смотрит на вас.] }
+{27010}{}{Мне это надоело. Я ухожу. [Уйти]}
+{27020}{}{Что вы пытаетесь рассмотреть, Смит? Вы с меня взгляд не сводите.}
+{28000}{}{Я давно за вами наблюдаю, @pname@. Вертитесь, как белка в колесе, что-то пытаетесь сделать, боретесь за существование...}
+{28010}{}{Ну и?}
+{29000}{}{А тем временем, упускаете прекрасную возможность неплохо заработать, не прилагая серьезных усилий...}
+{29010}{}{О чем это вы?}
+{29020}{}{Бред. У меня и так все замечательно. Выпьем еще?}
+{29030}{}{У меня нет настроения выслушивать нравоучения. [Уйти]}
+{30000}{}{Есть одна несложная работа. Нужно заглянуть к одному подлецу и припугнуть его.}
+{30010}{}{Имя "подлеца"?}
+{30020}{}{Мне это не интересно. [Уйти]}
+{31000}{}{Интересующего меня человека зовут... [Смит наклоняется к вам и шепчет] Вейстин.}
+{31010}{}{Ох, черт! Вы с ума сошли, Смит. Это же один из членов Совета!}
+{31020}{}{Что требуется от меня?}
+{32000}{}{Последний Советник, если быть точным.}
+{32010}{}{Что вы имеете в виду?}
+{33000}{}{Именно Вейстин помог Шейману прибрать всю власть в свои руки и распустить Совет. Карлсон является президентом лишь формально. Фактически республикой управляют военные, и Вейстин сыграл в этом не последнюю роль.}
+{33010}{}{А чем лично вам Вейстин насолил?}
+{34000}{}{Мне плевать на советника. Я представляю интересы одного влиятельного человека из Нью-Рено. За Вейстином старый долг перед ним.}
+{34010}{}{Кто этот влиятельный человек?}
+{35000}{}{Извините, @pname@. Но называть его имя я не имею права. }
+{35010}{}{Я не хочу вмешиваться в политику. Найдите себе другого помощника. [Уйти]}
+{35020}{}{Что требуется от меня?}
+{36000}{}{Ну что ж, я вас понимаю. Желаю удачи.}
+{37000}{}{Ничего особенного, мой друг. Я сделаю основную работу. Вы должны всего лишь ненадолго отвлечь охрану на входе, чтобы я мог добраться до Вейстина.}
+{37010}{}{А что вы имели в виду, когда говорили о возможности заработать?}
+{38000}{}{За вашу помощь я хорошо заплачу. У меня есть деньги. Вы получите достаточно, чтобы несколько дней не отказывать себе ни в чем.}
+{38010}{}{Пожалуй, я поверю вам, Смит. Когда мы приступаем?}
+{38020}{}{Нет Смит, я не хочу в этом участвовать. [Уйти]}
+{39000}{}{Как только будете готовы, дайте знать. Я подожду вас здесь.}
+{39010}{}{Договорились. Я скоро вернусь. [Уйти]}
+{39020}{}{Я готов навестить Вейстина.}
+{40000}{}{Отлично. Отправляемся прямо сейчас.}
+{41000}{}{Мы на месте. Видите того полицейского около ворот?}
+{41010}{}{Да, я должен отвлечь его?}
+{42000}{}{Именно. Я постараюсь обойти его незамеченным. Заговорите с ним, уведите, все, что угодно. Если все пройдет нормально, встретимся в баре.}
+{42010}{}{ Договорились.}
+{43000}{}{Благодарю вас, @sex|мой друг||@pname@|, все прошло отлично. Вот моя благодарность за ваше участие.}
+{43010}{}{Без проблем, Смит. [Уйти]}
+{44000}{}{Благодарю за помощь. Вы подоспели весьма кстати. }
+{44010}{}{Мне показалось, что вам нужна моя помощь. [Уйти]}
+{100000001}{}{Эй! Ты чего здесь делаешь? Подслушиваешь? Это большая ошибка!}
+
+[engl]
+{100}{}{Cмит}
+{200}{}{you see Smith.}
+{210}{}{you see the person dressed in a strict suit, a black tie, a white shirt. It looks very assured.}
+{210}{}{Smith's person is played by a faint smile. He knows beyond doubt that, where and when it is necessary to do.}
+{1000}{}{Predialogue installations}
+{1010}{}{it is not familiar}
+{1020}{}{loyalty = 0. Will not talk to the player smit}
+{1030}{}{loyalty above 0. Smith is on the Market.}
+{1040}{}{Smith in a bar of Dasti in city centre}
+{1050}{}{During movings smit does not talk vashche}
+{1060}{}{smit faces the policeman at the house vejstina}
+{1070}{}{During movings smit does not talk vashche}
+{2000}{}{Than I can help?}
+{2010}{}{Day kind, my name is @pname. We could not meet somewhere you earlier?}
+{2020}{}{You very much the suspicious person. Show documents!}
+{2030}{}{Rrra! ha! [To Leave]}
+{2040}{}{do not get into the head, I leave. [To leave]}
+{3000}{}{Somnevajus@sex |, my friend |||. May I introduce myself, Smith.}
+{3010}{}{Rad@sex ||| and | to acquaintance, Smith. [To leave]}
+{3020}{}{Confidential agent Smith?}
+{3030}{}{And than be engaged in NKR?}
+{4000}{}{On what bases?}
+{5000}{}{[the Good sense of humour Smiles]. Simply Smith.}
+{5010}{}{It is a pity. Always мечтал@sex ||| and | to get acquainted with any confidential agent!}
+{5020}{}{we Will meet [to Leave]}
+{6000}{}{It you does not concern, @pname}
+{7000}{}{What for to you it, @pname?}
+{7010}{}{Well as, Smith. Really you do not understand? At them life such interesting, sated and full of risk. For certain is what to tell.}
+{7020}{}{I will seize it, I will chop off hands and I will hand over to the authorities.}
+{7030}{}{it is not important, farewell. [To leave]}
+{8000}{}{I do not know, I do not know. Unfortunately, it was not possible to face one of them.}
+{9000}{}{the Good plan... You for certain will become famous...}
+{10000}{}{Again you, @pname?}
+{10010}{}{Listen, Smith. And that it you have dressed up, how the clown? The suit has pulled, galstuchek has picked up.}
+{10020}{}{In this city you will seldom meet the worthy person, such, as you, Smith.}
+{10030}{}{So than you are engaged, Smith? You are not entered in this party on the Market.}
+{10040}{}{Smith, I with pleasure would treat you with binge. I suggest to glance to Darsi at the Army Staff.}
+{10050}{}{Smith, I with pleasure would treat you with binge. I suggest to glance to Darsi at the Army Staff.}
+{10060}{}{Smith, my invitation to Darsi in force. We can go right now!}
+{10070}{}{Zagljanul@sex ||| and | to testify to you the respect. Farewell. [To leave]}
+{11000}{}{I am too occupied. Leave.}
+{12000}{}{Least me your opinion on my appearance interests. Still questions?}
+{12010}{}{Yes it is fine to you that you are got? I simply want to learn you better.}
+{12020}{}{Any questions, happen, Smith. [To leave]}
+{13000}{}{In that case, choose expressions.}
+{14000}{}{Well why, here many nice children. Everyone is engaged in the business. And than you trade?}
+{14010}{}{I am engaged in that I wriggle before one clever man in a tie.}
+{14020}{}{No especial plans at me are present by the current moment... I Kill time and I hope that will turn up good the businessman.}
+{15000}{}{I will help you to avoid it, farewell.}
+{16000}{}{this condition, @sex | my friend || @pname | is familiar To me. I wish you to find a good job more likely.}
+{16010}{}{Thanks, Smith. Рад@sex ||| and | still to chat, but it is time to me. [To Leave]}
+{16020}{}{I Will do without your idiotic wishes, @sex | the friend || the handsome man |. [To Leave]}
+{17000}{}{I Thank for the invitation, but is compelled to refuse to you.}
+{18000}{}{Good idea! But alas, I cannot keep your the company.}
+{18010}{}{It is necessary to get drunk alone, good luck. [To leave]}
+{18020}{}{Why, Smith?}
+{19000}{}{Mmm... Character of activity does not allow me to be shone on a kind at a local management. Therefore the road to a city for me is closed.}
+{19010}{}{I and знал@sex ||| and |! You the criminal also disappear from justice!}
+{19020}{}{Well, me character of your activity does not concern. But, I think, we can solve this problem.}
+{20000}{}{did not expect such reaction, probably, I was mistaken in you.}
+{21000}{}{How?}
+{21010}{}{I will agree with protection, and you will pass together with me.}
+{21020}{}{I will necessarily think up. For now I will leave you. [To leave]}
+{22000}{}{It is possible to try, though I and do not trust in success. When we will go?}
+{22010}{}{we Can go right now!}
+{22020}{}{Minute, I only will finish the affairs. [To leave]}
+{23000}{}{it is excellent, @pname. I follow you. If we will pass gate - find me in a bar at Dasti.}
+{24000}{}{Here @sex | my friend || our darling | @pname! To see glad you!}
+{24010}{}{it is similar, Smith. [To leave]}
+{24020}{}{I too рад@sex ||| and | to a meeting. We will drink?}
+{24030}{}{I хотел@sex ||| and | to treat you with binge.}
+{24040}{}{I хотел@sex ||| and | to treat you with binge.}
+{24050}{}{I am ready to visit Vejstina.}
+{24060}{}{As there has passed your sortie to Vejstinu, Smith?}
+{24070}{}{Vejstin is dead. Now I know that you meant, when were going "to intimidate Vejstina".}
+{25000}{}{it is unconditional. I ask to accept my modest gift for your help there, on an input in a city.}
+{26000}{}{With pleasure a bittern with you!}
+{26010}{}{[to Call up the barman and to order binge]}
+{26020}{}{Absolutely from memory has taken off. I aground, absolutely was not present money for rum. [To leave]}
+{27000}{}{[you drink with Smith and pay attention to how he looks at you.]}
+{27010}{}{it has bothered Me. I leave. [To leave]}
+{27020}{}{That you try to consider, Smith? You from me do not reduce a sight.}
+{28000}{}{I observe for a long time of you, @pname. Spin, as the squirrel in a wheel, something try to make, struggle for existence...}
+{28010}{}{Well and?}
+{29000}{}{And in the meantime, miss fine possibility not bad to earn, without applying serious efforts...}
+{29010}{}{About what it you?}
+{29020}{}{Brad. At me and so all is remarkable. We will drink still?}
+{29030}{}{I do not have mood to listen to a moral. [To leave]}
+{30000}{}{There is one simple work. It is necessary to glance to one rascal and to intimidate it.}
+{30010}{}{the Name of "rascal"?}
+{30020}{}{it is not interesting To me. [To leave]}
+{31000}{}{the person Interesting me call... [Smith bends to you and Vejstin whispers].}
+{31010}{}{Oh, lines! You have become crazy, Smith. Same one of councillors!}
+{31020}{}{That is required from me?}
+{32000}{}{Last Adviser if to be exact.}
+{32010}{}{That you mean?}
+{33000}{}{Vejstin has helped Sheiman to tidy up all power in the hands and to dismiss Council. Carlson is the president only formally. Actually republic military men operate, and Vejstin has played in it not last role.}
+{33010}{}{And than personally to you Vejstin has salted?}
+{34000}{}{To me to spit on the adviser. I represent interests of one influential person from Nju-Reno. Beyond Vejstinom an old debt to it.}
+{34010}{}{Who this influential person?}
+{35000}{}{Excuse, @pname. But to name his name I have no right.}
+{35010}{}{I do not want to interfere with a policy. Find to itself other assistant. [To leave]}
+{35020}{}{That is required from me?}
+{36000}{}{Well, I understand you. I wish good luck.}
+{37000}{}{Anything especial, my friend. I will make the basic work. You should distract for a short while only protection on an input that I could reach Vejstina.}
+{37010}{}{And what you meant, when spoke about possibility to earn?}
+{38000}{}{For your help I will well begin to cry. I have money. You receive enough that some days not to refuse to itself what.}
+{38010}{}{Perhaps, I will believe to you, Smith. When we start?}
+{38020}{}{There is no Smith, I do not want to participate in it. [To leave]}
+{39000}{}{As soon as will be ready, let know. I will wait for you here.}
+{39010}{}{Have agreed. I will soon return. [To leave]}
+{39020}{}{I am ready to visit Vejstina.}
+{40000}{}{it is excellent. We go right now.}
+{41000}{}{We on a place. See that policeman about gate?}
+{41010}{}{Yes, I should distract it?}
+{42000}{}{. I will try to bypass its not noticed. Start talking to it, withdraw, everything, everything. If all passes normally, we will meet in a bar.}
+{42010}{}{Have agreed.}
+{43000}{}{I Thank you, @sex|мой the friend || @pname |, all has passed perfectly. Here my gratitude for your participation.}
+{43010}{}{Without problems, Smith. [To leave]}
+{44000}{}{I Thank for the help. You have appeared in time very opportunely.}
+{44010}{}{it seemed To me that my help is necessary to you. [To leave]}
+{100000001}{}{Hey! You of that here do? You overhear? It is the big error!}

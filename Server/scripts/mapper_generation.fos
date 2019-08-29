@@ -1,0 +1,702 @@
+// Autor Cracker
+// Скрипт генерации карт.
+
+#include "_mapper_defines.fos"
+
+#define CFG_FILE_NAME "KawaiiConfigGeneration.cfg"
+
+KawaiiConfigGeneration@ cfgGener;
+CGeneration@ Generat;
+
+// Класс гекса
+class CHex
+{
+	CHex(uint16 x, uint16 y, MapperMap@ m)
+	{
+		X=x;
+		Y=y;
+		@M=m;
+		Values.resize(10);
+		HashTileImg=0;
+		LObs=0;
+	}
+	
+	void DrawTile()
+	{
+		if(HashTileImg>0)
+			M.AddTile(X,Y,0,0,0,false,HashTileImg);
+		for(uint i=0;i<LObs;i++)
+			M.AddObject(X,Y,OType[i],OPids[i]);
+	}
+	
+	void AddObj(uint16 pid,int type)
+	{
+		LObs+=1;
+		OPids.insertLast(pid);
+		OType.insertLast(type);
+	}
+	
+	bool IsFreeScenery(uint[] pids)
+	{
+		for(uint i=0; i<LObs;i++)
+		{
+			for(uint l=0, lm=pids.length();l<lm;l++)
+			{
+				if(OPids[i]==pids[l] && OType[i]==MAP_OBJECT_SCENERY) return false;
+			}
+		}
+		return true;
+	}
+	
+	bool IsFreeScenery()
+	{
+		return (LObs==0);
+	}
+	
+	MapperMap@ M;
+	uint64 HashTileImg;
+	uint16 X;
+	uint16 Y;
+	private int[] Values;
+	private uint LObs;
+	private uint16[] OPids;
+	private int[] OType;
+}
+
+uint GetDifferentTime(uint FT)
+{
+	return (GetTick()-FT);
+}
+
+// Главный класс менеджмента генерации.
+class CGeneration
+{
+	#define DifferentTime	(GetDifferentTime(StartTime))
+	CGeneration(MapperMap& map, uint type)
+	{
+		if(cfgGener is null || cfgGener.TypeSeed.length()<=type) 
+		{
+			Message("Произошла ошибка во время генерации маски");
+			return;
+		}
+		StartTime=GetTick();
+		@M=map;
+		if(not (M is null))
+		{
+			uint MaxX=M.Width;
+			uint MaxY=M.Height;
+			LengthX=0;
+			LengthY=0;
+			
+			mainTileset=cfgGener.TypeSeed[type].MineTilesHash;
+			//Определяем карту, заливая все поле главным тайлом.
+			for(uint16 HexX=0; HexX<MaxX;HexX++)
+			{	
+				if(HexX % 2 !=0)
+				{
+					LengthX+=1;
+					CHex@[] HexXs;
+					for(uint16 HexY=0; HexY<MaxY;HexY++)
+						if(HexY % 2 !=0)
+						{
+							CHex@ hex=CHex(HexX,HexY,M);
+							hex.HashTileImg=mainTileset[Random(0,mainTileset.length()-1)];
+							HexXs.insertLast(hex);
+							LengthY+=1;
+						}
+					MemoryMapHex.insertLast(HexXs);
+				}
+			}
+			LengthY=LengthY/LengthX;
+			xModif=LengthX/100*(LengthY/100);
+			
+			// Отрисовка второстепенных тайлов.
+			for(uint s=0,sm=cfgGener.TypeSeed[type].second.length();s<sm;s++)
+			{
+				SecondSeed@ sec=cfgGener.TypeSeed[type].second[s];
+				/*
+				uint MinCount;
+				uint MaxCount;
+				uint MinSize;
+				uint MaxSize;
+				uint64[] TilesHash;
+				*/
+				uint64[] secondTileset=sec.TilesHash;
+				if(secondTileset.length()>0)
+				{
+					for(uint i=0, im=Random(sec.MinCount,sec.MaxCount);i<im;i++)
+					{
+						uint16 memX=Random(0,LengthX-1);
+						uint16 memY=Random(0,LengthY-1);
+						
+						MemoryMapHex[memX][memY].HashTileImg=secondTileset[Random(0,secondTileset.length()-1)];
+						
+						CHex@[] Seedsi;
+						
+						for(uint j=0,size=Random(sec.MinSize,sec.MaxSize);j<size;j++)
+						{
+							uint iRandDirection=Random(0,3);
+
+							switch (iRandDirection)
+							{
+								case 0:memX-=1; break;
+								case 1:memY+=1; break;
+								case 2:memX+=1; break;
+								case 3:memY-=1; break;
+								default: break;
+							}
+
+							if(memX >=(LengthX) || memY >=(LengthY) || memX==0 || memY==0)
+							{
+								memX=Random(0,LengthX-1);
+								memY=Random(0,LengthY-1);
+							}
+							Seedsi.insertLast(MemoryMapHex[memX][memY]);
+							MemoryMapHex[memX][memY].HashTileImg=secondTileset[Random(0,secondTileset.length()-1)];
+						}
+						// Заполняем гексы Сида Сценери.
+						/*
+						uint8 DrawType;
+						uint MinDistDraw;
+						uint MaxDistDraw;
+						uint[] SceneryPid;
+						*/
+						for(uint isc=0,iscm=sec.Scenery.length(); isc<iscm;isc++)
+						{
+							ScenerySeed@ scen=sec.Scenery[isc];
+							if((scen is null) || scen.SceneryPid.length()==0) continue;
+							for(uint j=0, jm=Seedsi.length();j<jm;j+=Random(scen.MinDistDraw,scen.MaxDistDraw))
+							{
+								CHex@ hex=Seedsi[j];
+								if(IsHexFreeScenery(hex.X/2,hex.Y/2,Random(scen.MinDistDraw,scen.MaxDistDraw),scen.SceneryPid))
+								{
+									hex.AddObj(Random(scen.SceneryPid[0],scen.SceneryPid[scen.SceneryPid.length()-1]),MAP_OBJECT_SCENERY);
+								}
+							}
+						}
+					}
+				}
+			}
+			
+			// Расставляем блокираторы
+			if(__MapHexagonal)
+			{
+				CHex starth(MaxX/2,0,M);
+				CHex angle=starth;
+				
+				angle.AddObj(4012,MAP_OBJECT_SCENERY);
+				CHex block1=angle;
+				SkrollBlocker.insertLast(block1);
+				uint CountBlock=0;
+				for(;angle.X>0;CountBlock++)
+				{
+					MoveHexByDir(angle.X,angle.Y,1,1);
+					CHex block1=angle;
+					block1.AddObj(4012,MAP_OBJECT_SCENERY);
+					SkrollBlocker.insertLast(block1);
+				}
+				CHex angle1=angle;
+				angle=starth;
+				for(CHex end(MaxX-1,MaxY-(angle1.Y+1),M);angle.X<MaxX;)
+				{
+					MoveHexByDir(angle.X,angle.Y,GetDirection(angle.X,angle.Y,end.X,end.Y),1);
+					CHex block1=angle;
+					block1.AddObj(4012,MAP_OBJECT_SCENERY);
+					SkrollBlocker.insertLast(block1);
+				}
+
+				for(uint countBlock=0;countBlock<=CountBlock;countBlock++)
+				{
+					MoveHexByDir(angle.X,angle.Y,1,1);
+					CHex block1=angle;
+					block1.AddObj(4012,MAP_OBJECT_SCENERY);
+					SkrollBlocker.insertLast(block1);
+				}
+				for(;GetDistantion(angle.X, angle.Y,angle1.X,angle1.Y)!=0;)
+				{
+					MoveHexByDir(angle.X,angle.Y,GetDirection(angle.X,angle.Y,angle1.X,angle1.Y),1);
+					CHex block1=angle;
+					block1.AddObj(4012,MAP_OBJECT_SCENERY);
+					SkrollBlocker.insertLast(block1);
+				}
+			}
+			else
+			{
+				for(uint16 x=MaxX/2,y=1;y<MaxY/2; y++)
+				{
+					CHex block1(x,y,M);
+					block1.AddObj(4012,MAP_OBJECT_SCENERY);
+					SkrollBlocker.insertLast(block1);
+					x--;
+					CHex block2(x,y,M);
+					block2.AddObj(4012,MAP_OBJECT_SCENERY);
+					SkrollBlocker.insertLast(block2);
+				}
+				for(uint16 x=MaxX/2,y=1;y<MaxY/2; y++)
+				{
+					CHex block1(x,y,M);
+					block1.AddObj(4012,MAP_OBJECT_SCENERY);
+					SkrollBlocker.insertLast(block1);
+					x++;
+					CHex block2(x,y,M);
+					block2.AddObj(4012,MAP_OBJECT_SCENERY);
+					SkrollBlocker.insertLast(block2);
+				}
+				for(uint16 y=MaxY,x=MaxX/2;x<MaxX; x++)
+				{
+					CHex block1(x,y,M);
+					block1.AddObj(4012,MAP_OBJECT_SCENERY);
+					SkrollBlocker.insertLast(block1);
+					y--;
+					CHex block2(x,y,M);
+					block2.AddObj(4012,MAP_OBJECT_SCENERY);
+					SkrollBlocker.insertLast(block2);
+				}
+				for(uint16 y=MaxY/2,x=1;x<MaxX/2; x++)
+				{
+					CHex block1(x,y,M);
+					block1.AddObj(4012,MAP_OBJECT_SCENERY);
+					SkrollBlocker.insertLast(block1);
+					y++;
+					CHex block2(x,y,M);
+					block2.AddObj(4012,MAP_OBJECT_SCENERY);
+					SkrollBlocker.insertLast(block2);
+				}
+			}
+		}
+	}
+	
+	void DrawMap()
+	{
+		for(uint X=0, j=MemoryMapHex.length();X<j;X++)
+			for(uint Y=0, i=MemoryMapHex[X].length();Y<i;Y++)
+			{
+				StartTime=GetTick();
+				MemoryMapHex[X][Y].DrawTile();
+			}
+		for(uint b=0, l=SkrollBlocker.length();b<l;b++)
+			SkrollBlocker[b].DrawTile();
+	}
+	
+	bool IsHexFreeScenery(uint x, uint y, uint Radius, uint[] pids)
+	{
+		for(uint ix=x-Radius, ixm=Radius+x+1; ix<ixm;ix++)
+			for(uint iy=y-Radius, iym=Radius+y+1; iy<iym;iy++)
+				if(!MemoryMapHex[ix<LengthX?ix:x][iy<LengthY?iy:y].IsFreeScenery(pids)) return false;
+		return true;
+	}
+	
+	bool IsHexFreeScenery(uint x, uint y, uint Radius)
+	{
+		for(uint ix=x-Radius, ixm=Radius+x+1; ix<ixm;ix++)
+			for(uint iy=y-Radius, iym=Radius+y+1; iy<iym;iy++)
+				if(!MemoryMapHex[ix<LengthX?ix:x][iy<LengthY?iy:y].IsFreeScenery()) return false;
+		return true;
+	}
+	
+	CHex@[] SkrollBlocker;
+	uint StartTime;
+	uint64[] mainTileset;
+	uint xModif;
+	uint16 LengthX;
+	uint16 LengthY;
+	MapperMap@ M;
+	CHex@[][] MemoryMapHex;
+}
+
+class SeedGener
+{
+	SeedGener(string@[] maint,SecondSeed@[] seconds)
+	{
+		MineTilesHash.resize(maint.length());
+		for(uint i=0, im=MineTilesHash.length(); i<im;i++)
+			{
+				MineTilesHash[i]=GetStrHash(maint[i]);
+			}
+		second=seconds;
+	}
+	
+	uint64[] MineTilesHash;
+	SecondSeed@[] second;
+	ScenerySeed@[] Scenery;
+	uint8 DrawType;
+}
+
+class SecondSeed
+{
+	
+	SecondSeed(string@[] secondt)
+	{
+		TilesHash.resize(secondt.length());
+		for(uint i=0, im=TilesHash.length(); i<im;i++)
+			{
+				TilesHash[i]=GetStrHash(secondt[i]);
+			}
+	}
+	
+	void RefreshTiles(string@[] secondt)
+	{
+		TilesHash.resize(secondt.length());
+		for(uint i=0, im=TilesHash.length(); i<im;i++)
+			{
+				TilesHash[i]=GetStrHash(secondt[i]);
+			}
+	}
+	
+	void RefreshScenery(ScenerySeed@[] scenery)
+	{
+		Scenery.resize(scenery.length());
+		for(uint i=0, im=Scenery.length(); i<im;i++)
+			{
+				Scenery[i]=scenery[i];
+			}
+	}
+	
+	void AddScenery(ScenerySeed@ scenery)
+	{
+		Scenery.insertLast(scenery);
+	}
+	
+	uint MinCount;
+	uint MaxCount;
+	uint MinSize;
+	uint MaxSize;
+	ScenerySeed@[] Scenery;
+	uint64[] TilesHash;
+}
+
+class ScenerySeed
+{
+	
+	ScenerySeed(uint[] pid)
+	{
+		SceneryPid=pid;
+	}
+	
+	void AddPid(uint pid)
+	{
+		SceneryPid.insertLast(pid);
+	}
+	
+	uint8 DrawType;
+	uint MinDistDraw;
+	uint MaxDistDraw;
+	uint[] SceneryPid;
+}
+
+class KawaiiConfigGeneration
+{
+	KawaiiConfigGeneration()
+	{
+		dictionary d;
+		file cfg;
+		if(cfg.open(CFG_FILE_NAME, "r")==0)
+		{			
+			while(not cfg.isEndOfFile())
+			{
+				string@ Propety=cfg.readWord();
+				if(Propety.length()<1 || Propety[0]=='#') 
+				{
+					cfg.readLine(Propety);
+					continue;
+				}
+				if(Propety=="TypesNames{" || (Propety=="TypesNames" && cfg.readWord()[0]=='{'))
+				{
+					string@ str="";
+					cfg.readLine(str);
+					while(str[0]!='}' && not cfg.isEndOfFile())
+					{
+						if(str.length()>5 && str[0]!='#')
+						{
+							str=substring(str,0,str.length()-2);
+							TypesName.insertLast(str);
+							uint setd=TypesName.length()-1;
+							d.set(str,setd);
+						}
+						cfg.readLine(str);
+					}
+				}
+				else
+				{
+					for(uint i=0, im=TypesName.length();i<im;i++)
+					{
+						if(Propety==TypesName[i]+"{" || TypesName[i]==Propety && cfg.readWord()[0]=='{')
+						{
+							string@[] maineAdress;
+							string@[] secondAdress;
+							uint8 type=0;
+							uint end=1;
+							string@ adr="";
+							uint CountScenerySet=0;
+							SecondSeed@[] secs;
+							while(end!=0 && not cfg.isEndOfFile())
+							{
+								@adr=cfg.readWord();
+								if(adr.length()==0 || adr[0]=='#')
+								{
+									cfg.readLine(Propety);
+									continue;
+								}
+								if(substring(adr,0,10)=="DrawTypes=")
+								{
+									if(adr.length()>9)
+									{
+										int param=0;
+										StrToInt(substring(adr,10,adr.length()-10),param);
+										type=param;
+									}
+									continue;
+								}
+								if(substring(adr,0,16)=="CountScenerySet=")
+								{
+									if(adr.length()>15)
+									{
+										int param=0;
+										StrToInt(substring(adr,16,adr.length()-16),param);
+										CountScenerySet=param;
+									}
+									continue;
+								}
+								if(adr=="NewSecond{" || adr=="NewSecond" && cfg.readWord()[0]=='{')
+								{
+									string@ adr=" ";
+									SecondSeed sec;
+									while(adr[0]!='}')
+									{
+										if(cfg.isEndOfFile()) break;
+										adr=cfg.readWord();
+										if(adr[0]=='#') 
+										{
+											cfg.readLine(adr);
+											continue;
+										}
+										if(substring(adr,0,19)=="MinCountSeedSecond=")
+										{
+											if(adr.length()>18) 
+											{
+												int param=0;
+												StrToInt(substring(adr,19,adr.length()-19),param);
+												sec.MinCount=param;
+											}
+											continue;
+										}
+										if(substring(adr,0,19)=="MaxCountSeedSecond=")
+										{
+											if(adr.length()>18)
+											{
+												int param=0;
+												StrToInt(substring(adr,19,adr.length()-19),param);
+												sec.MaxCount=param;
+											}
+											continue;
+										}
+										if(substring(adr,0,21)=="MinSizeSecondTileSet=")
+										{
+											if(adr.length()>20)
+											{
+												int param=0;
+												StrToInt(substring(adr,21,adr.length()-21),param);
+												sec.MinSize=param;
+											}
+											continue;
+										}
+										if(substring(adr,0,21)=="MaxSizeSecondTileSet=")
+										{
+											if(adr.length()>20) 
+											{
+												int param=0;
+												StrToInt(substring(adr,21,adr.length()-21),param);
+												sec.MaxSize=param;
+											}
+											continue;
+										}
+										if(adr=="secondTilset{" || (adr=="secondTilset" && cfg.readWord()[0]=='{'))
+										{
+											string@ adr="";
+											cfg.readLine(adr);
+											string@[] secondAdress;
+											while(adr[0]!='}')
+											{
+												if(cfg.isEndOfFile()) break;
+												if(adr.length()>2 && adr[0]!='#')
+												{
+													adr=substring(adr,0,adr.length()-2);
+													string newstr=adr;
+													secondAdress.insertLast(newstr);
+												}
+												cfg.readLine(adr);
+											}
+											sec.RefreshTiles(secondAdress);
+										}
+										else if(adr=="NewScenerySet{" || (adr=="NewScenerySet" && cfg.readWord()[0]=='{'))
+										{
+											string@ adr=" ";
+											ScenerySeed scseed;
+											while(adr[0]!='}')
+											{
+												@adr=cfg.readWord();
+												if(cfg.isEndOfFile()) break;
+												if(adr[0]=='#')
+												{
+													cfg.readLine(adr);
+													continue;
+												}
+												if(substring(adr,0,9)=="DrawType=")
+												{
+													if(adr.length()>8) 
+													{
+														int param=0;
+														StrToInt(substring(adr,9,adr.length()-9),param);
+														scseed.DrawType=param;
+													}
+													continue;
+												}
+												if(substring(adr,0,12)=="MinDistDraw=")
+												{
+													
+													if(adr.length()>11) 
+													{
+														int param=0;
+														StrToInt(substring(adr,12,adr.length()-12),param);
+														scseed.MinDistDraw=param;
+													}
+													continue;
+												}
+												if(substring(adr,0,12)=="MaxDistDraw=")
+												{
+													if(adr.length()>11) 
+													{
+														int param=0;
+														StrToInt(substring(adr,12,adr.length()-12),param);
+														scseed.MaxDistDraw=param;
+													}
+													continue;
+												}
+												if(adr=="Pids{" || (adr=="Pids" && cfg.readWord()[0]=='{'))
+												{
+													string@ adr=" ";
+													while(adr[0]!='}')
+													{
+														@adr=cfg.readWord();
+														if(cfg.isEndOfFile()) break;
+														if(adr[0]!='#')
+														{
+															int pid=0;
+															if(StrToInt(adr,pid))
+															{
+																scseed.AddPid(pid);
+															}
+														}
+													}
+												}
+											}
+											if(not(scseed is null)) sec.AddScenery(scseed);
+										}
+									}
+									secs.insertLast(sec);
+									continue;
+								}
+								if(adr=="mainTilset{" || adr=="mainTilset" && cfg.readWord()[0]=='{')
+								{
+									string@ adr="";
+									cfg.readLine(adr);
+									while(adr[0]!='}')
+									{
+										if(cfg.isEndOfFile()) break;
+										if(adr.length()>2 && adr[0]!='#')
+										{
+											adr=substring(adr,0,adr.length()-2);
+											string newstr=adr;
+											maineAdress.insertLast(newstr);
+										}
+										cfg.readLine(adr);
+									}
+								}
+							}
+							TypeSeed.insertLast(SeedGener(maineAdress,secs));
+						}
+					}
+				}
+			}
+		}
+		Message("TypeSeed.length()="+TypeSeed.length());
+		cfg.close();
+		@TypeLibrary=d;
+	}
+	
+	string[] TypesName;
+	dictionary@ TypeLibrary;
+	SeedGener@[] TypeSeed;
+}
+
+string GenerationMap(string str)
+{
+	if(not(cfgGener is null))
+	{
+		if(not(cfgGener.TypeLibrary is null))
+		{
+			if(cfgGener.TypeLibrary.exists(str))
+			{
+				MapperMap@ m=GetActiveMap();
+				if(m is null) return "Для генерации маски необходима карта.";
+				uint type=0;
+				cfgGener.TypeLibrary.get(str,type);
+				@Generat=CGeneration(m,type);
+				return "Маска карты сгенерированна по типу "+str+".";
+			}
+			else return "Типа "+str+" не существует в вашей конфигурации.";
+		}
+		return "Библиотека соответствий типов не найдена, скорее всего конфигурация была собрана неправильно.";
+	}
+	else return "В памяти нету готовых конфигураций генератора.";
+}
+
+string GenerationMap(int type)
+{
+	if(not(cfgGener is null))
+	{
+		if(not(cfgGener.TypeLibrary is null))
+		{
+			if(cfgGener.TypesName.length()>type)
+			{
+				MapperMap@ m=GetActiveMap();
+				if(m is null) return "Для генерации маски необходима карта.";
+				@Generat=CGeneration(m,type);
+				return "Маска карты сгенерированна по типу номер "+type+".";
+			}
+			else return "Типа с номером "+type+" не существует в вашей конфигурации.";
+		}
+		return "Библиотека соответствий типов не найдена, скорее всего конфигурация была собрана неправильно.";
+	}
+	else return "В памяти нету готовых конфигураций генератора.";
+}
+
+string DrawMap()
+{
+	if(not(Generat is null))
+	{
+		uint st=GetTick();
+		Generat.DrawMap();
+		return "Сгенерированная карта удачно отрисованна за "+((GetTick()-st)/1000)+" секунд.";
+	}
+	else return "В памяти нету сгенерированных масок.";
+}
+
+string RegistrConfig()
+{
+	@cfgGener=KawaiiConfigGeneration();
+	string name="";
+	for(uint i=0, im=cfgGener.TypesName.length();i<im;i++)
+	{
+		name+=cfgGener.TypesName[i]+"; ";
+	}
+	return "Конфигурация генератора собрана. Собраны следующие наборы: "+name;
+}
+
+MapperMap@ GetActiveMap()
+{
+	MapperMap@[] maps;
+	int cur=GetLoadedMaps(maps);
+	if(cur==-1) return null;
+	return maps[cur];
+}

@@ -1,0 +1,608 @@
+// Author: rifleman17
+// Радиоуправляемые НПЦ
+#include "_macros.fos"
+#include "_msgstr.fos"
+#include "entire.fos"
+
+#define VAR_OWNER              (200) // Номер переменной для нпц, в которой хранится Id владельца
+#define VAR_RADIO              (201) // Номер переменной для нпц, в которой хранится номер радиоканала
+#define VAR_LAST_COMMAND       (202) // Номер переменной для нпц, в которой хранится время последней команды.
+#define VAR_LAST_ORDER         (204) // Номер переменной для нпц, в которой хранится время принятия последнего приказа
+#define VAR_ORDER_TYPE         (203) // Тип приказа, выполняемого нпц
+#define VAR_PARAM_1            (205) // Номер переменной для нпц, в которой хранится некий параметр приказа
+#define VAR_PARAM_2            (206) // Номер переменной для нпц, в которой хранится второй параметр приказа
+#define VAR_LAST_REPORT        (207) // Время последнего рапорта
+
+#define TYPE_ORDER_ROUTE       (1)   // Тип приказа "маршрут"
+#define TYPE_ORDER_CAMERA      (2)   // Тип приказа "камера", просмотр местности, на которой находится бегемот
+#define TYPE_ORDER_MESSAGE     (3)   // Робот произносит реплику игрока
+#define TYPE_ORDER_MOVE        (4)   // Робот двигается вперед на икс гексов
+#define TYPE_ORDER_PATROL      (5)   // Робот сообщает о тех, кого видит
+#define TYPE_ORDER_ATTACK      (6)   // Робот атакует других бегемотов
+
+#define STR_EXECUTE            (606) // Выполняю...
+#define STR_CANNOT_EXECUTE     (605) // Не могу выполнить...
+#define STR_PLANES_EXECUTED    (607) // Все приказы выполнены
+
+#define _GetOwnerId            # (crId) (GetLocalVar(VAR_OWNER, crId).GetValue())
+#define _GetRadioChannel       # (crId) (GetLocalVar(VAR_RADIO, crId).GetValue())
+#define _GetLastCommandTime    # (crId) (GetLocalVar(VAR_RADIO, crId).GetValue())
+#define _GetOrderType          # (crId) (GetLocalVar(VAR_ORDER_TYPE, crId).GetValue())
+#define _GetParam1             # (crId) (GetLocalVar(VAR_PARAM_1, crId).GetValue())
+#define _GetParam2             # (crId) (GetLocalVar(VAR_PARAM_2, crId).GetValue())
+#define _GetLastReport         # (crId) (GetLocalVar(VAR_LAST_REPORT, crId).GetValue())
+
+#define _GetLocationTo         # (crId) (_GetOrderType(crId)==TYPE_ORDER_ROUTE ? GetLocation(_GetParam1(crId)) : null)
+
+#define _IsCmdRoute            # (cmdText)           (cmdText==commands[ 0 ]  || cmdText==commands[ 1 ])
+#define _IsCmdCamera           # (cmdText)           (cmdText==commands[ 2 ]  || cmdText==commands[ 3 ])
+#define _IsCmdMSG              # (cmdText)           (cmdText==commands[ 4 ]  || cmdText==commands[ 5 ])
+#define _IsCmdMove             # (cmdText)           (cmdText==commands[ 6 ]  || cmdText==commands[ 7 ])
+#define _IsCmdPatrol           # (cmdText)           (cmdText==commands[ 8 ]  || cmdText==commands[ 9 ])
+#define _IsCmdChannel          # (cmdText)           (cmdText==commands[ 10 ] || cmdText==commands[ 11 ])
+#define _IsCmdAttack           # (cmdText)           (cmdText==commands[ 12 ] || cmdText==commands[ 13 ])
+
+#define ENTER_ENTIRE           (0)
+#define EXIT_ENTIRE            (0)
+
+#define PLANE_EXIT_MAP         (17)
+#define PLANE_MOVE             (18)
+
+#define DL                     # (s) (Log(s))
+// #define DL#(s)
+// todo: сделать периодическую очистку планов если они не выполнены длительное время
+import bool AddWalkPlane(Critter& npc, uint priority, int identifier, uint identifierExt, uint16 hexX, uint16 hexY, uint8 dir, bool run, uint cut) from "npc_planes";
+import bool AddMiscPlane(Critter& npc, uint priority, uint waitSecond, string@ funcName) from "npc_planes";
+import bool AddAttackPlane(Critter& npc, uint priority, Critter& target) from "npc_planes";
+
+uint16[] restrictedLocations={ LOCATION_Replication1, LOCATION_Replication2, LOCATION_Replication3, LOCATION_Replication4, LOCATION_ReplicationHell };
+
+string[] commands={ "МАРШРУТ", "ROUTE", "КАМЕРА", "CAMERA", "СООБЩЕНИЕ", "MESSAGE", "ХОД", "MOVE", "ПАТРУЛЬ", "PATROL", "СМЕНАКАНАЛА", "CHANGECHANNEL", "АТАКА", "ATTACK" };
+
+int[] behemoths;
+int[] listenedChannels;
+
+void RememberBehemoth(Critter& cr)
+{
+    if(behemoths.find(cr.Id)<0)
+        behemoths.insertLast(cr.Id);
+    int channel=_GetRadioChannel(cr.Id);
+    if(listenedChannels.find(channel)<0)
+    {
+        DL("adding channel " + channel);
+        listenedChannels.insertLast(channel);
+        AddTextListener(SAY_RADIO, "КОМАНДА", channel, "behemoth@listen_Behemoth");
+        // AddTextListener(SAY_RADIO, "COMMAND", channel, "behemoth@listen_Behemoth");
+    }
+}
+
+void ChangeChannel(Critter& cr, uint newChannel)
+{
+    DL("change channel");
+    GameVar@ channel=GetLocalVar(VAR_RADIO, cr.Id);
+    if(valid(channel))
+        channel=newChannel;
+    RememberBehemoth(cr);
+    bool usedChannel=true;
+    for(int i=0, l=listenedChannels.length(); i<l; i++)
+    {
+        DL("channel " + i);
+        usedChannel=false;
+        for(int j=0, k=behemoths.length(); j<k; j++)
+        {
+            DL("_Get " + _GetRadioChannel(behemoths[ j ]) + "; LIST" + int(listenedChannels[ i ]));
+            if(_GetRadioChannel(behemoths[ j ])==int(listenedChannels[ i ]))
+                usedChannel=true;
+        }
+        if(!usedChannel)
+        {
+            DL("erasing channel");
+            EraseTextListener(SAY_RADIO, "КОМАНДА", listenedChannels[ i ]);
+            // EraseTextListener(SAY_RADIO, "COMMAND", listenedChannels[i]);
+            listenedChannels.removeAt(i);
+            l--;
+            i--;
+        }
+    }
+}
+
+void listen_Behemoth(Critter& player, string& text)
+{
+    Critter@ cr;
+    Item@[] items;
+    Item@    item;
+    for(uint i=0, l=behemoths.length(); i<l; i++)
+    {
+        if(_GetOwnerId(behemoths[ i ])==int(player.Id))
+        {
+            items.resize(0);
+            player.GetItems(-1, items);
+            for(uint j=0, k=items.length(); j<k; j++)
+            {
+                @item=items[ j ];
+                if(valid(item) && item.GetProtoId()==PID_RADIO &&
+                    item.RadioChannel==_GetRadioChannel(behemoths[ i ]) &&
+                    (int(__FullSecond) > _GetLastCommandTime(behemoths[ i ]) + REAL_SECOND(5)))
+
+                    BehemothCommand(behemoths[ i ], text);
+            }
+        }
+    }
+}
+
+
+void BehemothCommand(uint behemothId, string cmd)
+{
+    if(!valid(GetCritter(behemothId)))
+    {
+        Log("invalid Behemoth");
+        return;
+    }
+    int16 globalX=0;
+    int16 globalY=0;
+    string@[] @ valuesStr=splitEx(cmd, " ");
+    if(valuesStr.length() > 1)
+    {
+        string firstKeyWord=strupr(valuesStr[ 1 ]);
+        if(_IsCmdRoute(firstKeyWord))
+        {
+            globalX=GetIntValue(valuesStr, 2, -1);
+            globalY=GetIntValue(valuesStr, 3, -1);
+            Location@[] locations;
+            // Переданы координаты, куда нужно двигаться.
+            if(globalX > 0 && globalY > 0 && GetLocations(globalX, globalY, __GlobalMapZoneLength, locations) > 0)
+            {
+                for(uint i=0, l=locations.length(); i<l; i++)
+                {
+                    Location@ loc=locations[ i ];
+                    if(valid(loc) && loc.Visible==true && restrictedLocations.find(loc.GetProtoId())==-1)
+                    {
+                        Map@ map=loc.GetMapByIndex(0);
+                        if(valid(map) && map.CountEntire(ENTER_ENTIRE) > 0)
+                        {
+                            SetOrder(behemothId, TYPE_ORDER_ROUTE, loc.Id, 0);
+                            RadioMessageMsg(_GetRadioChannel(behemothId), TEXTMSG_TEXT, 600, "$where@msg GM " + STR_GM_NAME(loc.GetProtoId()) + "@");
+                            RunOrder(behemothId, TYPE_ORDER_ROUTE);
+                            return;
+                        }
+                    }
+                }
+            }
+            RadioMessageMsg(_GetRadioChannel(behemothId), TEXTMSG_TEXT, 601);
+        }
+        else if(_IsCmdCamera(firstKeyWord))
+        {
+            RunOrder(behemothId, TYPE_ORDER_CAMERA);
+        }
+        else if(_IsCmdMSG(firstKeyWord))
+        {
+            string message="";
+            for(uint i=2, l=valuesStr.length(); i<l; i++)
+            {
+                message +=valuesStr[ i ] + " ";
+            }
+            RunOrder(behemothId, TYPE_ORDER_MESSAGE, message);
+        }
+        else if(_IsCmdMove(firstKeyWord))
+        {
+            // второе слово число гексов, на которое надо перейти, третье - направление в котором надо двигаться
+            // если число гексов=0, просто будет изменено направление
+            // если второго слова нет, движение будет производиться в существующем  направлении
+            int steps=GetIntValue(valuesStr, 2, 0);
+            int dir=GetIntValue(valuesStr, 3, 6);
+            SetOrder(behemothId, TYPE_ORDER_MOVE, steps, dir);
+            RunOrder(behemothId, TYPE_ORDER_MOVE);
+            return;
+        }
+        else if(_IsCmdPatrol(firstKeyWord))
+        {
+            // указывается радиус, но не больше 10 гексов, в пределах которого робот передает по радио ники всех игроков, кого встречает
+            int radius=CLAMP(GetIntValue(valuesStr, 2, 0), 0, 30);
+            SetOrder(behemothId, TYPE_ORDER_PATROL, radius, 0);
+            RunOrder(behemothId, TYPE_ORDER_PATROL);
+        }
+        else if(_IsCmdChannel(firstKeyWord))
+        {
+            int channel=GetIntValue(valuesStr, 2, _GetRadioChannel(behemothId));
+            ChangeChannel(GetCritter(behemothId), channel);
+            RadioMessageMsg(_GetRadioChannel(behemothId), TEXTMSG_TEXT, 612);
+        }
+        else if(_IsCmdAttack(firstKeyWord))
+        {
+            RunOrder(behemothId, TYPE_ORDER_ATTACK);
+        }
+    }
+}
+
+// Orders
+
+void SetOrder(uint crId, uint orderType, int orderParam, int orderParam2)
+{
+    GameVar@ oWhen=GetLocalVar(VAR_LAST_ORDER, crId);
+    if(valid(oWhen))
+        oWhen=__FullSecond;
+    GameVar@ oType=GetLocalVar(VAR_ORDER_TYPE, crId);
+    if(valid(oType))
+        oType=orderType;
+    GameVar@ oParam1=GetLocalVar(VAR_PARAM_1, crId);
+    if(valid(oParam1))
+        oParam1=orderParam;
+    GameVar@ oParam2=GetLocalVar(VAR_PARAM_2, crId);
+    if(valid(oParam2))
+        oParam2=orderParam2;
+}
+
+void CancelOrder(uint crId, bool noMessage)
+{
+    GameVar@ oWhen=GetLocalVar(VAR_LAST_ORDER, crId);
+    if(valid(oWhen))
+        oWhen=0;
+    GameVar@ oType=GetLocalVar(VAR_ORDER_TYPE, crId);
+    if(valid(oType))
+        oType=0;
+    GameVar@ oParam1=GetLocalVar(VAR_PARAM_1, crId);
+    if(valid(oParam1))
+        oParam1=0;
+    GameVar@ oParam2=GetLocalVar(VAR_PARAM_2, crId);
+    if(valid(oParam2))
+        oParam2=0;
+    if(!noMessage)
+        RadioMessageMsg(_GetRadioChannel(crId), TEXTMSG_TEXT, 602);
+}
+
+void RunOrder(uint crId, uint orderType, string param)
+{
+    Critter@ cr=GetCritter(crId);
+    if(!valid(cr))
+        return;
+    switch(orderType)
+    {
+    case TYPE_ORDER_MESSAGE:
+        RunOrderMessage(cr, param);
+        break;
+    }
+
+}
+
+void RunOrder(uint crId, uint orderType)
+{
+    DL("RunOrder " + orderType + "; beh " + crId);
+    Critter@ cr=GetCritter(crId);
+    if(!valid(cr))
+        return;
+    switch(orderType)
+    {
+    case TYPE_ORDER_ROUTE:
+        RunOrderRoute(cr);
+        break;
+    case TYPE_ORDER_CAMERA:
+        RunOrderCamera(cr);
+        break;
+    case TYPE_ORDER_MOVE:
+        RunOrderMove(cr);
+        break;
+    case TYPE_ORDER_PATROL:
+        RunOrderPatrol(cr);
+        break;
+    case TYPE_ORDER_ATTACK:
+        RunOrderAttack(cr);
+    default:
+        return;
+    }
+}
+
+
+// Скрипт бегемота
+void _BehemothInit(Critter& cr, bool firstTime)
+{
+    RememberBehemoth(cr);
+    cr.SetEvent(CRITTER_EVENT_GLOBAL_PROCESS, "_BehemothOnGlobal");
+    cr.SetEvent(CRITTER_EVENT_IDLE, "_BehemothIdle");
+    cr.SetEvent(CRITTER_EVENT_PLANE_END, "_BehemothPlaneEnd");
+    cr.SetEvent(CRITTER_EVENT_SMTH_DEAD, "_BehemothSmthDead");
+    cr.SetEvent(CRITTER_EVENT_ATTACKED, "_BehemothAttacked");
+    cr.SetEvent(CRITTER_EVENT_SHOW_CRITTER_1, "_BehemothShowCritter1");
+    cr.SetEvent(CRITTER_EVENT_USE_ITEM_ON_ME, "_BehemothUseItemOnMe");
+    cr.SetEvent(CRITTER_EVENT_USE_SKILL_ON_ME, "_BehemothUseSkillOnMe");
+}
+
+bool _BehemothOnGlobal(Critter& cr, int type, Item@ car, float& x, float& y, float& toX, float& toY, float& speed, uint& encounterDescriptor, bool& waitForAnswer)
+{
+    if(encounterDescriptor !=0)
+    {
+        return false;         // Энкаунтер
+    }
+    if(_GetOrderType(cr.Id)==TYPE_ORDER_ROUTE)
+    {
+        Location@ locTo=_GetLocationTo(cr.Id);
+        if(valid(locTo))
+        {
+            if(x==locTo.WorldX && y==locTo.WorldY)
+            {
+                if(cr.TransitToMap(locTo.GetMapByIndex(0).Id, ENTER_ENTIRE, false))
+                {
+                    cr.SetHomePos(cr.HexX, cr.HexY, cr.Dir);
+                    RadioMessageMsg(_GetRadioChannel(cr.Id), TEXTMSG_TEXT, 603, "$where@msg GM " + STR_GM_NAME(locTo.GetProtoId()) + "@$x" + cr.HexX + "$y" + cr.HexY);
+                }
+                CancelOrder(cr.Id, true);
+                return true;
+            }
+            speed=GLOBAL_MAP_BASE_SPEED;
+            if(toX !=locTo.WorldX || toY !=locTo.WorldY)
+            {
+                toX=locTo.WorldX;
+                toY=locTo.WorldY;
+                return true;
+            }
+        }
+        else
+        {
+            CancelOrder(cr.Id, false);
+            return true;
+        }
+    }
+    else
+    {
+        if(toX !=x || toY !=y)
+        {
+            toX=x;
+            toY=y;
+            return true;
+        }
+    }
+    return false;
+}
+
+void _BehemothIdle(Critter& cr)
+{
+    int       orderCurrent=_GetOrderType(cr.Id);
+    Map@      map=cr.GetMap();
+    Location@ loc;
+    Location@ locTo;
+
+    switch(orderCurrent)
+    {
+    case TYPE_ORDER_ROUTE:
+        if(valid(map))
+            @loc=map.GetLocation();
+        @locTo=_GetLocationTo(cr.Id);
+        if(valid(locTo) && valid(loc) && locTo.Id !=loc.Id)
+        {
+            RadioMessageMsg(_GetRadioChannel(cr.Id), TEXTMSG_TEXT, 604);
+            RunOrderRoute(cr);
+        }
+        else
+            CancelOrder(cr.Id, false);
+        break;
+    default:
+        break;
+    }
+}
+
+int _BehemothPlaneEnd(Critter& cr, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem)
+{
+    if(plane.Identifier==PLANE_MOVE && valid(cr.GetMap()) && cr.IsLife())
+    {
+        cr.SetHomePos(cr.HexX, cr.HexY, cr.Dir);
+        CancelOrder(cr.Id, false);
+        RadioMessageMsg(_GetRadioChannel(cr.Id), TEXTMSG_TEXT, STR_PLANES_EXECUTED);
+    }
+    return PLANE_RUN_GLOBAL;
+}
+
+void _BehemothShowCritter1(Critter& cr, Critter& showCrit)
+{
+    if(_GetOrderType(cr.Id)==TYPE_ORDER_PATROL)
+    {
+        if(showCrit.IsPlayer() && showCrit.IsLife())
+        {
+            cr.SayMsg(SAY_NORM, TEXTMSG_TEXT, 608, "$pname" + GetPlayerName(showCrit.Id));
+            RadioMessageMsg(_GetRadioChannel(cr.Id), TEXTMSG_TEXT, 608, "$pname" + GetPlayerName(showCrit.Id));
+        }
+    }
+}
+
+void _BehemothSmthDead(Critter& cr, Critter& fromCr, Critter@ killer)
+{
+    if(valid(killer) && fromCr.IsPlayer() && killer.Id==cr.Id)
+        RadioMessageMsg(_GetRadioChannel(cr.Id), TEXTMSG_TEXT, 609, "$pname" + GetPlayerName(fromCr.Id));
+}
+
+bool _BehemothAttacked(Critter& cr, Critter& attacker)
+{
+    GameVar@ rpt=GetLocalVar(VAR_LAST_REPORT, cr.Id);
+    string   attackerName="некто";
+    if(valid(rpt) && rpt<(__FullSecond - REAL_MINUTE(1)))
+    {
+        if(attacker.IsPlayer())
+            attackerName=GetPlayerName(attacker.Id);
+        else
+            attackerName="@msg DLG " + STR_NPC_NAME(attacker.Stat[ ST_DIALOG_ID ], attacker.GetProtoId()) + "@";
+        RadioMessageMsg(_GetRadioChannel(cr.Id), TEXTMSG_TEXT, 610, "$pname" + attackerName);
+    }
+    return false;
+}
+
+bool _BehemothUseItemOnMe(Critter& cr, Critter& whoUse, Item& item)
+{
+    if(item.GetProtoId()==PID_SUPER_TOOL_KIT)
+    {
+        if(cr.Stat[ ST_CURRENT_HP ] >=cr.Stat[ ST_MAX_LIFE ])
+        {
+            whoUse.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 613);
+
+        }
+        else
+        {
+            int hp=int(500 * whoUse.Skill[ SK_REPAIR ] / 300) + Random(300, 500);
+            hp=CLAMP(hp, 0, cr.Stat[ ST_MAX_LIFE ] - cr.Stat[ ST_CURRENT_HP ]);
+            whoUse.StatBase[ ST_EXPERIENCE ] +=hp * (CLAMP(whoUse.Stat[ ST_LEVEL ], 0, 10) / 10);
+            cr.StatBase[ ST_CURRENT_HP ] +=hp;
+            _SubItem(item, 1);
+            whoUse.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 614);
+        }
+    }
+    else
+    {
+        whoUse.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_USE_NOTHING);
+    }
+    return true;
+}
+
+bool _BehemothUseSkillOnMe(Critter& cr, Critter& whoUse, int skill)
+{
+    whoUse.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_USE_NOTHING);
+    return true;
+}
+
+// Маршрут/Route
+void RunOrderRoute(Critter& cr)
+{
+    Map@ map=cr.GetMap();
+    if(valid(map))
+    {
+        uint16 hx=cr.HexX;
+        uint16 hy=cr.HexY;
+        GetNearEntire(map, EXIT_ENTIRE, hx, hy);
+        if(GetNearEntire(map, EXIT_ENTIRE, hx, hy))
+        {
+            AddWalkPlane(cr, AI_PLANE_WALK_PRIORITY, PLANE_EXIT_MAP, __FullSecond, hx, hy, 0, false, 3);
+        }
+        AddMiscPlane(cr, AI_PLANE_MISC_PRIORITY, __FullSecond + REAL_SECOND(5), "behemoth@plane_ToGlobal");
+    }
+}
+
+
+void plane_ToGlobal(Critter& cr)
+{
+    cr.TransitToGlobal(false);
+}
+
+// Камера
+void RunOrderCamera(Critter& cr)
+{
+    Map@ map=cr.GetMap();
+    if(!valid(map))
+    {
+        RadioMessageMsg(_GetRadioChannel(cr.Id), TEXTMSG_TEXT, STR_CANNOT_EXECUTE);
+        return;
+    }
+    else
+    {
+        uint[] values={ _GetOwnerId(cr.Id), map.Id, cr.HexX, cr.HexY, cr.Dir };
+        RadioMessageMsg(_GetRadioChannel(cr.Id), TEXTMSG_TEXT, STR_EXECUTE);
+        CreateTimeEvent(__FullSecond + REAL_SECOND(2), "e_ShowCamera", values, false);
+    }
+}
+
+uint e_ShowCamera(uint[] @ values)
+{
+    Critter@ player=GetCritter(values[ 0 ]);
+    if(valid(player) && player.IsPlayer())
+    {
+        Map@ map=GetMap(values[ 1 ]);
+        if(valid(map))
+            player.ViewMap(map, 50, values[ 2 ], values[ 3 ], values[ 4 ]);
+    }
+    return 0;
+}
+
+// Сообщение
+void RunOrderMessage(Critter& cr, string message)
+{
+    cr.Say(SAY_NORM, message);
+}
+
+// Движение
+void RunOrderMove(Critter& cr)
+{
+    Map@ map=cr.GetMap();
+    if(!valid(map))
+    {
+        RadioMessageMsg(_GetRadioChannel(cr.Id), TEXTMSG_TEXT, STR_CANNOT_EXECUTE);
+        return;
+    }
+    uint16 hx=cr.HexX;
+    uint16 hy=cr.HexY;
+    uint8  dir=_GetParam2(cr.Id);
+    if(dir > 5)
+        dir=cr.Dir;
+    uint steps=CLAMP(_GetParam1(cr.Id), 0, 30);
+    map.MoveHexByDir(hx, hy, dir, steps);
+    cr.SetDir(dir);
+    AddWalkPlane(cr, AI_PLANE_WALK_PRIORITY, PLANE_MOVE, __FullSecond, hx, hy, dir, false, 0);
+}
+
+// Атака
+void RunOrderAttack(Critter& cr)
+{
+    Map@ map=cr.GetMap();
+    Critter@[] critters;
+    if(valid(map) && map.GetCritters(528, FIND_LIFE | FIND_ONLY_NPC, critters) > 0)
+    {
+        for(uint i=0, l=critters.length(); i<l; i++)
+        {
+            AddAttackPlane(cr, 0, critters[ i ]);
+        }
+        RadioMessageMsg(_GetRadioChannel(cr.Id), TEXTMSG_TEXT, 616, "$targets" + critters.length());
+    }
+    else
+    {
+        RadioMessageMsg(_GetRadioChannel(cr.Id), TEXTMSG_TEXT, 615);
+    }
+}
+
+// Патруль
+void RunOrderPatrol(Critter& cr)
+{
+    DL("patrol, radius=" + cr.ShowCritterDist1);
+    cr.ShowCritterDist1 =_GetParam1(cr.Id);
+    RadioMessageMsg(_GetRadioChannel(cr.Id), TEXTMSG_TEXT, 611);
+}
+
+// Utils
+
+int GetIntValue(string@[] @ values, uint idx, int defaultValue)
+{
+    int value=defaultValue;
+    if(valid(values) && values.length() > idx)
+    {
+        StrToInt(values[ idx ], value);
+    }
+    return value;
+}
+
+void RadioMessageMsgtmp(uint16 channel, uint16 textMsg, uint strNum, string&  lexems)
+{
+    switch(textMsg)
+    {
+    case TEXTMSG_TEXT:
+        RadioMessage(channel, "@msg TEXT " + strNum + "@" + lexems);
+        break;
+    default:
+        RadioMessageMsg(channel, textMsg, strNum);
+    }
+}
+
+// debug 528 ~run behemoth Addbehemoth 1 0 0
+void Addbehemoth(Critter& cr, int crId, int, int)
+{
+    Critter@ npc=cr.GetMap().AddNpc(528, cr.HexX + 3, cr.HexY + 3, 6, null, null, "_BehemothInit");
+    npc.AddItem(546, 1);
+    GameVar@ owner=GetLocalVar(VAR_OWNER, npc.Id);
+    owner=crId;
+    Critter@ player=GetCritter(crId);
+    if(valid(player))
+    {
+        Item@ item=player.AddItem(PID_HOLODISK, 1);
+        item.HolodiskNumber=110;
+        item.Update();
+    }
+}
+
+void WhereNpc(Critter& cr, int id, int, int)
+{
+    Critter@ npc=GetCritter(id);
+    if(valid(npc))
+        cr.Say(SAY_NETMSG, "Global X=" + npc.WorldX + "; Y=" + npc.WorldY);
+}

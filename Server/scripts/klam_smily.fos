@@ -1,0 +1,542 @@
+// Author: heX
+// Групповой квест: Охота на Гекко
+// Выдает Смайли в Кламате
+// ver 2.2
+
+#include "_macros.fos"
+#include "_npc_pids.fos"
+#include "_vars.fos"
+#include "_teams.fos"
+#include "_bags.fos"
+
+// отладка
+//#define debag
+
+#include "pids_groups.fos"
+#include "utils_for_array.fos"
+
+#ifdef debag
+#define MIN_PLAYERS (1)
+#endif
+#ifndef debag
+#define MIN_PLAYERS (3)
+#endif
+#define MAX_PLAYERS (6)
+
+// выше этого уровня уже не возьмут
+#define MAX_LEVEL (3)
+
+// опыт за гекко  GetKillExperience
+#define GECKO_EX (85)
+// жизней у гекко  MaxHp
+#define GECKO_HP (25)
+// макс гекко
+#define MAX_GECKO	(16)
+
+#define KLAMATH_POS_X (375)
+#define KLAMATH_POS_Y (125)
+
+// надобы часть этих данных хранить в базе - на случай перезагрузки.
+// но в общем это быстрые квесты, пока прокатит и так.
+uint[] GlobalGroups;
+uint GlobalMapId;
+int GlobalGeckoMax;
+int GlobalGeckoCount;
+int GlobalHumanCount;
+
+////////////////////////////////////////////////
+
+string i2s(int val) //lib
+{
+	string tmp=val;
+	return tmp;
+}
+
+void SetQuestState(Critter& player, int Status)
+{
+	GameVar@ quest=GetLocalVar(LVAR_q_klam_smily_gecko, player.Id);
+	if(not valid(quest)) return;
+	quest=Status;
+}
+
+int GetQuestState(Critter& player)
+{
+	GameVar@ quest=GetLocalVar(LVAR_q_klam_smily_gecko, player.Id);
+	if(not valid(quest)) return 0;
+	return quest.GetValue();
+}
+
+// удаляем локацию с выводком гекко
+void DeleteGeckoMap()
+{
+	GameVar@ game_map=GetGlobalVar(GVAR_klam_smily_gecko_location);
+	if(not valid(game_map)) return;
+
+	if(game_map.GetValue() !=0) {
+		Location@ loc=GetLocation(game_map.GetValue());
+		//if(loc.GeckCount>0) loc.GeckCount--;
+		if(not valid(loc)) {
+			//Log("GetLocation fail. Error in GVAR_klam_smily_gecko_mapid?");
+			game_map=0;
+			return;
+		}
+
+		DeleteLocation(loc.Id); // но всетаки мы ее добьем
+		// возможно это плохое решение - тамже могут быть люди...
+		game_map=0;// зануляем
+	}
+}
+
+//////////////////////////////////////////////////
+
+// тотальная проверка группы
+uint r_CheckGroup(Critter& player, Critter@ npc, int val)
+{
+	Critter@[] groups;
+	groups.insertLast(@player);
+	player.GetFollowGroup(FIND_ALL,groups);
+
+	// проверка на способность быть лидером
+	if(player.Stat[ST_CHARISMA]<MIN_PLAYERS) return 61; // "Ну и рожа у тебя... С твоим обаянием мало кто за тобой пойдет. Найди лучше лидера поприятнее."
+
+#ifndef debag
+	// проверка на пустую группу
+	if(groups.length()==1)
+	{
+		return 57; // "А я вот вижу только тебя. У тебя нет никакой группы.  Идиот!"
+		// нужна еще проверка на близость его лидера - если подошел не лидер, а участник группы
+		//return 60; // "Так, где лидер вашей группы?"
+	}
+#endif
+
+	// мало людей
+	if(groups.length()<MIN_PLAYERS) return 58;
+
+	// много людей
+	if(groups.length()>MAX_PLAYERS) return 59;
+
+	// тут будет проверка на уровень
+	// и еще проверка на наличия крутого снаряжения
+	for(uint i=0, iMax=groups.length();i<iMax;i++)
+		if ((groups[i].Stat[ST_LEVEL]>MAX_LEVEL)) return 56; // вы слишком круты
+
+	// проверка на колво и видимость
+	for(uint i=0, iMax=groups.length();i<iMax;i++)
+		if(GetDistantion(npc.HexX, npc.HexY, groups[i].HexX, groups[i].HexY)>7)
+		{ // ктото ходит слишком далеко от НПС
+			return 55;
+		}
+	// цикл прошел - значит все стоят рядом.
+
+	return 53; // все окей. Поехали!
+}
+
+// группа очень плоха?
+bool d_GroupLevelIsBad(Critter& player, Critter@ npc, int val)
+{
+	Critter@[] groups;
+	groups.insertLast(@player);
+	player.GetFollowGroup(FIND_ALL,groups);
+	for(uint i=0, iMax=groups.length();i<iMax;i++)
+		if(groups[i].Cond==COND_LIFE)
+			if ((groups[i].Stat[ST_LEVEL]>1) and (valid(_CritGetItemArmor(groups[i]))))
+				return false; // ну если есть ктото выше второго уровня значит не пропадут
+	return true; // все ньюбы, им конец.
+}
+
+// группа нормальная?
+bool d_GroupLevelIsOk(Critter& player, Critter@ npc, int val)
+{
+	Critter@[] groups;
+	groups.insertLast(@player);
+	player.GetFollowGroup(FIND_ALL,groups);
+	for(uint i=0, iMax=groups.length();i<iMax;i++)
+		if(groups[i].Cond==COND_LIFE)
+			if ((groups[i].Stat[ST_LEVEL]==MAX_LEVEL) or (groups[i].Stat[ST_STRENGTH]==10) or (groups[i].Stat[ST_ENDURANCE]==10))
+				return true; // есть ктото сильный
+
+	return false;
+}
+
+// подсказка
+void r_HintCreationGroup(Critter& player, Critter@ npc, int val)
+{
+	string text=
+		"Чтобы СОЗДАТЬ ГРУППУ: вы ВСЕ должны ВЫБРАТЬ ОДНОГО лидера. "+
+		"Это делается через меню (правой кнопкой) на игроке который будет лидером, "+
+		"и выборе пункта с изображением стрелочки указывающей на группу людей.";
+
+	player.Say(SAY_NETMSG, "-=[ Подсказка: ]=-");
+	player.Say(SAY_NETMSG, text);
+
+	// и если научимся в ПИП добавлять инфу...
+	//player.Say(SAY_NETMSG, "См Архивы в [PIP] (в правом нижнем углу)");
+}
+
+// эмоции если группа слаба
+void r_BadHunterWisper(Critter& player, Critter@ npc, int val)
+{
+	if(Random(1,2)==1)
+		npc.Say(SAY_WHISP_ON_HEAD, "Эх, совсем зеленые еще...");
+		else
+		npc.Say(SAY_EMOTE_ON_HEAD, "тяжело вздыхает");
+}
+
+// предупреждает всех кто идет с игроком в поход.
+void r_WarnToBadHunter(Critter& player, Critter@ npc, int val)
+{
+	Critter@[] groups;
+	player.GetFollowGroup(FIND_ALL,groups);
+	for(uint i=0, iMax=groups.length();i<iMax;i++)
+		if(GetDistantion(npc.HexX, npc.HexY, groups[i].HexX, groups[i].HexY)<5)
+			RunDialog(groups[i], 222, npc.HexX, npc.HexY,false);
+}
+
+// квест доступен?
+bool r_CheckQuestAvailable(Critter& player, Critter@ npc, int val)
+{
+	return true;
+}
+
+// проверка: квест уже выполняют?
+bool r_CheckQuestIsRun(Critter& player, Critter@ npc, int val)
+{
+	GameVar@ game_map=GetGlobalVar(GVAR_klam_smily_gecko_location);
+	GameVar@ timeout=GetGlobalVar(GVAR_klam_smily_gecko_timeout);
+
+	// убиваем карту если квест устарел.
+	// Цитата из мануала:
+	// "Не рекомендуется выполнять какие-либо конкретные действия в функции-условии, она для этого не предназначена."
+	// Ну да фиг с ним, ничего плохого не должно произойти... (heX посмотрел взглядом налево, затем направо, и продолжил писать...)
+	if(
+		(uint(timeout.GetValue()) > __FullSecond) or
+		(timeout.GetValue()==0) or
+		(game_map.GetValue()==0)
+		)
+	{ // Если прошло больше суток но квест невыполнен то
+		DeleteGeckoMap(); // удаляем карту
+		for(uint i=0, iMax=GlobalGroups.length();i<iMax;i++)
+		{
+			QuestCompleteNotify(GlobalGroups[i]);
+		}
+		timeout=0;
+	}
+
+	if(game_map.GetValue()==0)
+		return val==0; // true
+	else
+		return val!=0; // false
+}
+
+///////////////////////////////////////////
+
+// охотники идут!
+void r_GotoHunter(Critter& player, Critter@ npc, int val)
+{
+	Critter@[] groups;
+	groups.insertLast(@player);
+	player.GetFollowGroup(FIND_ALL,groups);
+
+	// инициализирует квест!
+	for(uint i=0, iMax=groups.length();i<iMax;i++)
+		SetQuestState(groups[i],1); // квест взят
+
+	////////////////////////////////////////////
+
+	// лучше конешно анализ крутости и создание гекко делать по приходу на карту
+	// иначе читерить будут
+	// но с другой стороны это нечестно, да и кто будет читерить на десятке ящеров???
+
+	// анализ крутости группы
+	int gecko=0;
+	int groupHp=0; // сумма жизней группы
+	for(uint i=0, iMax=groups.length();i<iMax;i++)
+	{ // проходимся по всей группе и делаем оценку
+		groupHp=groupHp + groups[i].Stat[ST_MAX_LIFE];
+
+ 		gecko+=CLAMP(groups[i].Stat[ST_LEVEL],1,MAX_LEVEL) * 2;
+		if(not valid(_CritGetItemArmor(groups[i]))) gecko--;
+	}
+
+	//!!! нужно делать более подробное исследование и тестирование
+	int hp_tmp=0;
+	if(groupHp>gecko*GECKO_HP) {
+		Log("hp rebalance detect");//DEBAG
+		gecko=gecko + ((groupHp - gecko*GECKO_HP)/GECKO_HP); // все честно.
+	}
+
+	int mather_type=NPC_PID_ToughSilverGecko;
+	if(gecko>30) mather_type=NPC_PID_FireGecko;
+	else if(gecko>20) mather_type=NPC_PID_ToughGoldenGecko;
+	else if(gecko>10) mather_type=NPC_PID_GoldenGecko;
+	gecko=CLAMP(gecko,3,MAX_GECKO);
+	if(gecko>8) gecko=gecko + Random(-1,2); // небольшой рандом
+
+	////////////////////////////////////
+
+	// создали позицию
+	int x,y;
+	if(Random(1,4)!=1) {
+			// это клетка где в F2 была радиоактивная пещера
+			x=-1;
+			y=-1;
+		} else {
+		x=Random(-1,1);
+		y=Random(-1,1);
+		if(x==0 and y==0)
+			{x=-2; y=-2;} // неповезло...
+		}
+
+	GameVar@ game_map=GetGlobalVar(GVAR_klam_smily_gecko_location);
+	GameVar@ game_time=GetGlobalVar(GVAR_klam_smily_gecko_timeout);
+	game_time=__FullSecond + (60 * 60 * 24);
+
+	// удаляем старую карту если она есть
+	DeleteGeckoMap();
+
+	// создали карту
+	GlobalMapId=CreateLocation(
+		Random(LOCATION_DesertEncounter1, LOCATION_DesertEncounter12), // диапазон локаций
+		KLAMATH_POS_X + x*__GlobalMapZoneLength + Random(-(__GlobalMapZoneLength/2),(__GlobalMapZoneLength/2)),
+		KLAMATH_POS_Y + y*__GlobalMapZoneLength + Random(-(__GlobalMapZoneLength/2),(__GlobalMapZoneLength/2)),
+		groups);
+
+	// записали в глобальную игровую переменную
+	game_map=GlobalMapId;
+
+	Location@ loc=GetLocation(GlobalMapId);
+	loc.Visible=false;
+	//loc.GeckEnabled=true;//?
+	//loc.GeckCount++;
+	loc.AutoGarbage=false;
+	loc.Radius=8;
+
+	if(not valid(loc)) return;
+	Map@ map=loc.GetMapByIndex(0);
+
+	map.SetEvent(MAP_EVENT_IN_CRITTER, "map_incoming");
+	map.SetEvent(MAP_EVENT_OUT_CRITTER, "map_leave");
+	map.SetEvent(MAP_EVENT_FINISH, "map_deleting");
+
+	////////////////////////////////////////////
+
+	uint16 x_=0,y_=0;
+	if(not map.GetEntireCoords(0, 0, x_, y_))
+	{
+		x=110;
+		y=110;
+	}
+	else
+	{
+		x=x_;
+		y=y_;
+	}
+
+	// создадим каждой тваре по паре =)
+	Critter@ cr;
+	for(int i=0;i<gecko;i++)
+	{
+		if(mather_type!=0) {
+			// добавим маму
+			int[] params={ST_DIALOG_ID,DIALOG_mob_silver_gecko,ST_TEAM_ID,TEAM_Mob0,ST_BAG_ID,BAG_Empty,ST_REPLICATION_TIME,-1};
+			@cr=map.AddNpc(mather_type, x, y, Random(0,5), params, null, "mob@_MobInit");
+			mather_type=0;
+		} else {
+			// начинаем добавлять мобов
+			int[] params={ST_DIALOG_ID,DIALOG_mob_silver_gecko,ST_TEAM_ID,TEAM_Mob0,ST_BAG_ID,BAG_Empty,ST_REPLICATION_TIME,-1};
+			@cr=map.AddNpc(NPC_PID_SmallSilverGecko, x+Random(0,10), y+Random(0,10), Random(0,5), params, null, "mob@_MobInit");
+		}
+
+		if(valid(cr)) {
+			cr.StatBase[ST_VAR1]=cr.Stat[ST_CURRENT_HP]; // запоминаем текущие жизни
+			// прерывания
+			cr.SetEvent(CRITTER_EVENT_ATTACKED, "gecko_damage");
+			cr.SetEvent(CRITTER_EVENT_DEAD, "gecko_dead");
+		} else
+			Log("Critter creation error");
+	}
+
+	// глобалы
+	GlobalGeckoCount=gecko;
+	GlobalGeckoMax=gecko;
+	GlobalHumanCount=0;
+
+	// записываем id игроков
+	GlobalGroups.resize(groups.length());
+	for(uint i=0, iMax=groups.length(); i<iMax; i++)
+		GlobalGroups[i]=groups[i].Id;
+}
+
+///////////////////////////////////////////////////////
+
+// выдача опыта в зависимости от счетчиков
+int GetExpa(Critter& player)
+{
+	if(player.Stat[ST_LEVEL]>MAX_LEVEL*2) return 0;
+	int dmg=player.StatBase[ST_VAR1];// бил гекков
+	int kls=player.StatBase[ST_VAR2];// килсы
+	int aid=player.StatBase[ST_VAR3];// хиляние
+	if(dmg==0 and kls==0 and aid==0) return 0; // фиг вам халявщики, а не опыт!
+	int expa=800;
+	if(dmg>GECKO_HP*2 or aid>0 or kls>0)
+		expa+=CLAMP(player.Stat[ST_LEVEL], 1, MAX_LEVEL)*300;
+
+	return expa;
+}
+
+// квест выполнен! поздравляем игрока!
+void QuestCompleteNotify(uint playerId)
+{
+	Critter@ player=GetCritter(playerId);
+
+	// игрок вышел
+	if(not valid(player))
+		return;
+
+	if(GetQuestState(player)==2) { // пришол и
+		SetQuestState(player, 3); // победил!
+		#ifdef debag
+		player.Say(SAY_NETMSG, "Квест выполнен!");
+		player.Say(SAY_NETMSG, "Убщий урон: "+i2s(player.StatBase[ST_VAR1]));
+		player.Say(SAY_NETMSG, "Убито Гекко: "+i2s(player.StatBase[ST_VAR2]));
+		player.Say(SAY_NETMSG, "Лечений: "+i2s(player.StatBase[ST_VAR3]));
+		#endif
+		player.StatBase[ST_EXPERIENCE]+=GetExpa(player); // УРА!!!
+	} else
+		if(GetQuestState(player)==1) // не заходил на локацию
+			SetQuestState(player, 5); else // не пришол
+			SetQuestState(player, 0); // сбрасываем нафиг
+}
+
+/////////////////////////////////////////////////
+// обработчики прерываний
+
+// игрок уходит с карты
+void map_leave(Map& map, Critter& crit)
+{
+	if(crit.IsPlayer())
+	{
+		GlobalHumanCount--;
+		if(GlobalHumanCount==0) // если больше нет никого
+			DeleteGeckoMap();
+
+		remove_events(crit);
+
+		if(not crit.IsDead()) { // если еще жив
+			if(GlobalGeckoCount>0) { // если гекко еще остались
+				if(GetQuestState(crit)==2) {
+					SetQuestState(crit,6);// сбежал
+				}
+			}
+		}
+		crit.StatBase[ST_VAR1]=0;
+		crit.StatBase[ST_VAR2]=0;
+		crit.StatBase[ST_VAR3]=0;
+	}
+}
+
+// игрок пришол на карту
+void map_incoming(Map& map, Critter& player)
+{
+	// Begin turn based combat
+	if(not map.IsTurnBased() && map.IsTurnBasedAvailability()) map.BeginTurnBased(player);
+
+	if(player.IsPlayer()) {
+		if(GlobalHumanCount > 0) { // есть ктото уже есть то
+			Location@ loc=GetLocation(map.Id);
+			//if(loc.GeckCount>0) loc.GeckCount--;
+		}
+
+		SetQuestState(player,2);//пришли
+		GlobalHumanCount++;
+		player.StatBase[ST_VAR1]=0;// дамаг
+		player.StatBase[ST_VAR2]=0;// килсы
+		player.StatBase[ST_VAR3]=0;// хиляние
+		player.SetEvent(CRITTER_EVENT_USE_SKILL, "player_doctor");
+		player.SetEvent(CRITTER_EVENT_DEAD, "player_dead");
+	}
+}
+
+// удаляем прерывания у игрока
+void remove_events(Critter& player)
+{
+	player.SetEvent(CRITTER_EVENT_USE_SKILL, "");
+	player.SetEvent(CRITTER_EVENT_DEAD, "");
+}
+
+// игрок умер во время квеста
+void player_dead(Critter& player, Critter@ killer)
+{
+	remove_events(player);
+	SetQuestState(player,4); // умер
+	if(player.StatBase[ST_VAR2] > GlobalGeckoMax/2) { // убил больше половины
+		SetQuestState(player,4);
+		player.StatBase[ST_EXPERIENCE]+=1500;
+	} else {
+		SetQuestState(player,4);
+		player.StatBase[ST_EXPERIENCE]+=450;
+	}
+}
+
+// AHTUNG - карта сворачиваеться нафиг
+void map_deleting(Map& map, bool deleted)
+{
+	Location@ loc=map.GetLocation();
+	for(uint i=0, iMax=GlobalGroups.length();i<iMax;i++)
+	{
+		Critter@ player=GetCritter(GlobalGroups[i]);
+		if(valid(player))
+		{
+			player.UnsetKnownLoc(true, loc.Id);
+		}
+	}
+
+	GameVar@ mapid=GetGlobalVar(GVAR_klam_smily_gecko_location);
+	mapid=0;
+}
+
+bool player_doctor(Critter& crit, int skill, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+	// цепочка if
+	if(skill==SK_FIRST_AID)
+	if(valid(onCritter))
+	if(onCritter.IsPlayer()) // игрока
+	if(crit.Id !=onCritter.Id) // не сам себя
+	if(crit.Timeout[TO_SK_FIRST_AID]<=0) // уже можно
+		crit.StatBase[ST_VAR3]++ ; // и всетаки он вылечил его (ну или пытался, что тоже важно)
+	return false;// вызываем глобальный обработчик
+}
+
+bool gecko_damage(Critter& crit, Critter& attacker)
+{
+	// а тут мы считаем damage игрока
+	int hp=(crit.Stat[ST_CURRENT_HP]<0 ? 0 : crit.Stat[ST_CURRENT_HP]);// с ограничением при минусах
+	if(crit.Stat[ST_CURRENT_HP]>crit.StatBase[ST_VAR1]) hp=crit.StatBase[ST_VAR1]; // значит регенерация
+	//int hp=crit.Stat[ST_CURRENT_HP]; // без ограничений
+	int dmg=crit.StatBase[ST_VAR1]-hp;
+	if(dmg>GECKO_HP) dmg=GECKO_HP; // ограничение от читеров (а то будут еще динамитом рвать...)
+	crit.StatBase[ST_VAR1]=hp;
+	attacker.StatBase[ST_VAR1]=attacker.StatBase[ST_VAR1]+dmg;
+
+	return false; // по умолчанию
+}
+
+void gecko_dead(Critter& crit, Critter@ killer)
+{
+	if(killer.IsPlayer())
+		killer.StatBase[ST_VAR2]++;
+	GlobalGeckoCount--;
+	// если гекко кончились
+	if(GlobalGeckoCount==0) {
+		// квест выполнен!
+		// нужно уведомить участников
+		for(uint i=0, iMax=GlobalGroups.length();i<iMax;i++)
+			QuestCompleteNotify(GlobalGroups[i]);
+		GameVar@ mapid=GetGlobalVar(GVAR_klam_smily_gecko_location);
+		if(valid(mapid) && mapid.GetValue() !=0) {
+			Location@ loc=GetLocation(mapid.GetValue());
+			loc.AutoGarbage=true; // разрешаем сбор карты мусорщиком (на всякий случай)
+			mapid=0; // снимаем метку
+		}
+	}
+}

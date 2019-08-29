@@ -1,0 +1,143 @@
+[comment]
+
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 D _var p name_mem_npc_player = 0 #
+8 1020 D _var p name_mem_npc_player = 1 D _var p q_newbie_rats = 0 #
+9 1030 D _script q_newbie_scripts@d_NotEnoughPeople 0  D _var p q_newbie_rats = 1 #
+10 1040 D _script q_newbie_scripts@d_EnoughPeople 0  D _var p q_newbie_mickey_loot = 0 D _var p q_newbie_rats = 1 R _var p q_newbie_mickey_loot = 1 R _var p q_newbie_rats = 2 #
+11 1050 D _var p q_newbie_rats = 2 #
+12 1060 D _var p q_newbie_rats = 3 #
+13 1070 D _var p q_newbie_rats = 4 #
+15 1080 D _var p q_newbie_rats = 5 #
+16 1090 D _var p q_newbie_mickey_loot = 1 D _script q_newbie_scripts@d_EnoughPeople 0  D _var p q_newbie_rats = 2 @
+2 2000 None 0 #
+0 2010 #
+3 2020 R _script dialog@r_TeamAttack 0  #
+4 2030 R _var p name_mem_npc_player = 1 @
+3 3000 None 0 @
+4 4000 None 0 #
+5 4010 @
+5 5000 None 0 #
+6 5010 #
+7 5020 @
+6 6000 None 0 @
+7 7000 None 0 #
+6 7010 #
+0 7020 R _var p q_newbie_rats = 1 @
+8 8000 None 0 #
+6 8010 #
+7 8020 @
+9 9000 None 0 @
+10 10000 q_newbie_scripts@dlg_LetsKillSomeRats 0 #
+0 10010 @
+11 11000 None 0 @
+12 12000 None 0 #
+14 12010 R _script q_newbie_scripts@r_FinishQuest 0  #
+0 12020 @
+13 13000 None 0 #
+14 13010 R _script q_newbie_scripts@r_FinishQuest 0  #
+0 13020 @
+14 14000 None 0 #
+0 14010 @
+15 15000 None 0 @
+16 16000 None 0 &
+
+[russ]
+{100}{}{Микки}
+{200}{}{Раб с свирепым выражением лица.}
+{210}{}{Раб Микки, призывающий людей присоединиться к борьбе с крысами.}
+{1000}{}{Predialogue installations}
+{1010}{}{не знаком}
+{1020}{}{знаком, не брал задание}
+{1030}{}{Взял квест на сбор группы, людей < 3}
+{1040}{}{Взял квест на сбор группы, людей > 2, лут не давал}
+{1050}{}{взял квест, собрал группу, условия по убийствам не выполнены}
+{1060}{}{Перебили >29 крыс}
+{1070}{}{Перебили >29 крыс и королеву}
+{1080}{}{квест выполнен}
+{1090}{}{Взял квест на сбор группы, людей > 2, лут давал}
+{2000}{}{Ты тоже хочешь присодиниться к протесту? Не позволим относиться к нам, как к скоту на забой!}
+{2010}{}{Нет-нет, моя хата с краю.@@Уф, я просто проходил мимо.}
+{2020}{}{Со стороны вы и выглядите, как тупое стадо. Будь моя воля, приказал бы вас бы всех перезать!}
+{2030}{}{Ух, полегче. Кто ты и что вы тут затеваете?}
+{3000}{}{Ребята, он один из крысятников! Перережем ему глотку!}
+{4000}{}{Меня зовут Микки! [Гордо поднимает голову вверх] Мы не собираемся мириться с произволом и наплевательским отношением к нашим жизням, мы будем сами управлять своей судьбой! Больше никаких смертей!}
+{4010}{}{Думаю, тебе стоит вести себя потише, пока ни у кого из охранников не возникла мысль придти сюда и разрулить ситуацию парой очередей. Расскажи лучше, чем вы так возмущены?}
+{5000}{}{Черт, ты прав. Этим крысячьим мордам только дай повод, вмиг разбросают твои мозги по округе. Но и терпеть мы больше не можем. Кротокрыссы стали нападать все чаще, каждый утаскивают по два-три человека в чащу, а охранникам и дела нет. Последнему рабу, который попытался пожаловаться Сэму, он раскроил череп своим сапогом. Так что, мы решили дать врагу отпор сообща. Хочешь помочь нам?}
+{5010}{}{Звучит жутковато. Предпочту держаться подальше.}
+{5020}{}{Навалять люлей крысиным ублюдышам? Это мне по душе!}
+{6000}{}{Ну и проваливай, мягкотелый.@@Черты твоего лица определенно смахивают на крысиные.@@Когда кротокрысс будет вырывать твои кишки, тебе никто не придет на помощь!}
+{7000}{}{Рад слышать, что ты не такой мягкотелый, как большинство. Чмошники. [Сплевывает]
+Слушай наш план. Мы заметили, что кротокрыссы и их поросячьи прихвостни ведут себя на редкость организованно и нападают на людей только когда они одни. Мы думаем, что они приходят из одного места и, возможно, ими кто-то или что-то управляет. Найди место, откуда они появляются и нанеси удар в сердце их логова! Но одному тебе не справиться, найди еще хотя бы трех человек, столь же храбрых, как ты.}
+{7010}{}{Тут становится жарковато. Я на такое подписываться не стану.}
+{7020}{}{Хорошо, я соберу группу крысоненавистников. Тебе не придется долго ждать!}
+{8000}{}{Ты передумал? Готов растоптать крысиные черепа?}
+{8010}{}{Нет-нет, моя хата с краю.@@Уф, я просто проходил мимо.}
+{8020}{}{Навалять люлей крысиным ублюдышам? Это мне по душе!}
+{9000}{}{Собери сначала достаточно людей.@@Я не вижу с тобой достаточно единомышленников.}
+{10000}{}{Вижу, ты собрал свою армию. Я приготовил для вас небольшой набор снаряжения, чтобы вы сумели вернуться живыми из крысиного ада. Возьмите эти вещи и помните, от вашего успеха зависят жизни многих людей!}
+{10010}{}{Не сомневайся, Микки, мы справимся!}
+{11000}{}{Возвращайся с добрыми вестями!}
+{12000}{}{[Глаза Микки возбужденно горят] Говори же скорей, вы расправились с крысами?}
+{12010}{}{Клянусь, мы уничтожили не меньше трех десятков уродливых тварей, но до королевы добраться не смогли! Они теперь не скоро посмеют высунуть свои рыла из пещеры.}
+{12020}{}{Нет, мы еще не закончили.}
+{13000}{}{[Глаза Микки возбужденно горят] Говори же скорей, вы расправились с крысами?}
+{13010}{}{Мы перебили, мать их, целое крысиное стадо, прежде чем добрались до их королевы, которой вспороли брюхо и нассали в глазницы!}
+{13020}{}{Нет, мы еще не закончили.}
+{14000}{}{@pname@, вашу отвагу и храбрость люди будут помнить вечно. Мы с ребятами собрали со всех по немного монет в честь наших избавителей, теперь все могут работать в спокойствии за свою жизнь. Благодарим тебя, @pname@!}
+{14010}{}{Спасать мир, привычное дело...}
+{15000}{}{@pname@, люди помнят тебя!@@Благодарим за избавление, @pname@!@@Твоя храбрость не имеет границ, @pname@!}
+{16000}{}{Возвращайся с добрыми вестями!}
+
+[engl]
+{100}{}{Mickey}
+{200}{}{A slave with ferocious look on his face.}
+{210}{}{Slave Mickey, calling people to fight the rats.}
+{1000}{}{Predialogue installations}
+{1010}{}{не знаком}
+{1020}{}{знаком, не брал задание}
+{1030}{}{Взял квест на сбор группы, людей < 3}
+{1040}{}{Взял квест на сбор группы, людей > 2, лут не давал}
+{1050}{}{взял квест, собрал группу, условия по убийствам не выполнены}
+{1060}{}{Перебили >29 крыс}
+{1070}{}{Перебили >29 крыс и королеву}
+{1080}{}{квест выполнен}
+{1090}{}{Взял квест на сбор группы, людей > 2, лут давал}
+{2000}{}{Do you want to join the protest? Let's not let them treat us like swine in the pigsty!}
+{2010}{}{No, I don't want any trouble.@@Err, I was just passing by.}
+{2020}{}{Well you sure do look like swine. I'd command to slaughter you all if it was for me!}
+{2030}{}{Hey, easy. Who are you and what are you up to?}
+{3000}{}{Guys, he's one of those rats! Cut his throat!}
+{4000}{}{My name is Mickey! [Raises his head proudly] We're not going to put up with outrageous indifference to our lives. We're gonna make our own fate from now on! No more deaths!}
+{4010}{}{I think you'd better keep it down, before any of the guards gets the idea to come here and solve your problem with a couple of bursts. Better tell me what are you so indignant about?}
+{5000}{}{Damn, you're right. All these rat scumbags want is a reason to splatter your brains around the place. But we can't take it anymore. Molerats attack more and more often, every day they drag two or three men into the woods, and the guards don't give a shit. Sam smashed the head of the last slave that tried to complain with his boot. So we decided to stand for ourselves together. Want to help us?}
+{5010}{}{Sounds rather frightening. I'd rather stay away.}
+{5020}{}{Kick some rat ass? I like the sound of it!}
+{6000}{}{Get the fuck out then, wussie.@@You resemble a fucking rat yourself.@@Don't call us for help when a molerat rips your guts off!}
+{7000}{}{Glad to hear you're not a wussie like the majority. Faggots. [Spits] Here's the plan. We noticed that molerats and their piggy sidekicks act far too organized and attack people only when they are alone. We think they all come from one place, and probably something controls them. Find where they come from and strike them right into their heart! But you can't make it alone, Find at least three more people as brave as you.}
+{7010}{}{It's getting too hot. I'm not going to sign up for this.}
+{7020}{}{Okay, I'll gather a group of rat haters. It won't take long!}
+{8000}{}{You changed your mind? Ready to crush rat skulls?}
+{8010}{}{No way, It doesn't concern me.@@I was just passing by.}
+{8020}{}{Gut some rat motherfuckers? Hell yeah!}
+{9000}{}{Get enough men first.@@I don't see enough accomplices with you.}
+{10000}{}{I see you've got your army. I prepared a little pack of equipment for you, it will help you to get out of rat hell alive. Take these things and remember: many lives depend on your success!}
+{10010}{}{Have no doubt, Mickey. We'll do it!}
+{11000}{}{Come back with good news!}
+{12000}{}{[Mickey's eyes shine with excitement] Tell me, did you take care of the rats?}
+{12010}{}{I swear, we finished off not less than thirty of those damn rats, but we couldn't get to the queen! They won't dare to stick their rat muzzles out of the hole for a long time.}
+{12020}{}{No, we're not done yet.}
+{13000}{}{[Mickey's eyes shine with excitement] Tell me, did you take care of the rats?}
+{13010}{}{We killed off the whole motherfucking rat nest before we could get to the queen, which we gutted and pissed upon!}
+{13020}{}{No, we're not done yet.}
+{14000}{}{@pname@, your courage will be remembered. We clubbed together for a little reward for you. Now everyone can work without fear for life. Thank you again, @pname@!}
+{14010}{}{Saving the world, the usual thing...}
+{15000}{}{@pname@, people don't forget you!@@Thank you for ridding us of the danger, @pname@!@@Your courage is exceptional, @pname@!}
+{16000}{}{Come back with good news!}
+

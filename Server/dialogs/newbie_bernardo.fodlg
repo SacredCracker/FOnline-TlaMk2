@@ -1,0 +1,337 @@
+[comment]
+
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 D _param p ST_INTELLECT > 0 @
+2 2000 None 0 #
+3 2010 D _param p ST_INTELLECT > 3 #
+65506 2020 D _param p ST_INTELLECT > 3 #
+3 2030 D _param p ST_INTELLECT > 3 D _var p newbie_bernardo_lj_count < 25 #
+11 2040 D _param p ST_INTELLECT > 3 D _var p q_newbie_bernardo_pelt = 0 #
+17 2050 D _param p ST_INTELLECT > 3 D _var p q_newbie_bernardo_pelt = 1 D _var p newbie_bernardo_p_count < 100 #
+2 2060 D _param p ST_INTELLECT < 4 #
+65506 2070 D _param p ST_INTELLECT < 4 #
+3 2080 D _param p ST_INTELLECT < 4 D _var p newbie_bernardo_lj_count < 25 #
+11 2090 D _param p ST_INTELLECT < 4 D _var p q_newbie_bernardo_pelt = 0 #
+17 2100 D _param p ST_INTELLECT < 4 D _var p q_newbie_bernardo_pelt = 1 D _var p newbie_bernardo_p_count < 100 #
+10 2110 D _var p newbie_bernardo_lj_count > 24 D _param p ST_INTELLECT > 3 #
+10 2120 D _var p newbie_bernardo_lj_count > 24 D _param p ST_INTELLECT < 4 #
+18 2130 D _param p ST_INTELLECT > 3 D _var p newbie_bernardo_p_count > 99 D _var p q_newbie_bernardo_pelt = 1 R _var p q_newbie_bernardo_pelt = 2 #
+18 2140 D _param p ST_INTELLECT < 4 D _var p newbie_bernardo_p_count > 99 D _var p q_newbie_bernardo_pelt = 1 R _var p q_newbie_bernardo_pelt = 2 #
+20 2150 D _var p newbie_bernardo_fl_stolen = 0 D _param p ST_INTELLECT > 3 D _var p q_newbie_petra_knife = 1 #
+19 2160 D _var p newbie_bernardo_fl_stolen = 1 D _param p ST_INTELLECT > 3 D _var p q_newbie_petra_knife = 1 D _var p q_newbie_bernardo_flint < 3 R _var p q_newbie_petra_knife = 3 #
+20 2170 D _var p newbie_bernardo_fl_stolen = 0 D _param p ST_INTELLECT < 4 D _var p q_newbie_petra_knife = 1 #
+19 2180 D _var p newbie_bernardo_fl_stolen = 1 D _param p ST_INTELLECT < 4 D _var p q_newbie_petra_knife = 1 D _var p q_newbie_bernardo_flint < 3 R _var p q_newbie_petra_knife = 3 #
+20 2190 D _param p ST_INTELLECT > 3 D _var p q_newbie_bernardo_flint = 3 D _var p q_newbie_petra_knife = 1 D _var p newbie_bernardo_fl_stolen = 1 #
+20 2200 D _param p ST_INTELLECT < 4 D _var p q_newbie_bernardo_flint = 3 D _var p q_newbie_petra_knife = 1 D _var p newbie_bernardo_fl_stolen = 1 #
+22 2210 D _param p ST_INTELLECT > 3 D _var p q_newbie_bernardo_flint = 1 D _item p PID_FLINT > 0 R _item p PID_FLINT - 1 #
+22 2220 D _param p ST_INTELLECT < 4 D _var p q_newbie_bernardo_flint = 1 D _item p PID_FLINT > 0 R _item p PID_FLINT - 1 #
+2 2230 D _param p ST_INTELLECT > 3 D _var p q_newbie_bernardo_flint = 1 #
+2 2240 D _param p ST_INTELLECT < 4 D _var p q_newbie_bernardo_flint = 1 #
+2 2250 D _var p q_newbie_petra_knife = 4 D _param p SK_STEAL > 29 D _var p newbie_bernardo_fl_stolen = 0 R _item p PID_FLINT + 1 R _var p newbie_bernardo_fl_stolen = 1 #
+2 2260 D _var p q_newbie_bender_flint = 1 D _param p SK_STEAL > 29 D _var p newbie_bernardo_fl_stolen = 0 R _var p newbie_bernardo_fl_stolen = 1 R _item p PID_FLINT + 1 @
+3 3000 None 0 #
+4 3010 D _param p ST_INTELLECT > 3 #
+5 3020 D _param p ST_INTELLECT > 3 #
+0 3030 #
+4 3040 D _param p ST_INTELLECT < 4 #
+5 3050 D _param p ST_INTELLECT < 4 @
+4 4000 None 0 #
+6 4010 D _param p ST_INTELLECT > 3 D _item p PID_BOTTLE_CAPS > 399 D _item p PID_ROPE > 0 D _item p PID_GECKO_PELT > 1 D _item p PID_LEATHER_JACKET > 0 D _item p PID_BOTTLE_FULL > 0 R _item p PID_BOTTLE_CAPS - 400 R _item p PID_BOTTLE_FULL - 1 R _item p PID_ROPE - 1 R _item p PID_GECKO_PELT - 2 R _item p PID_LEATHER_JACKET - 1 #
+2 4020 D _param p ST_INTELLECT > 3 #
+6 4030 D _param p ST_INTELLECT < 4 D _item p PID_BOTTLE_CAPS > 399 D _item p PID_ROPE > 0 D _item p PID_GECKO_PELT > 1 D _item p PID_LEATHER_JACKET > 0 D _item p PID_BOTTLE_FULL > 0 R _item p PID_BOTTLE_CAPS - 400 R _item p PID_BOTTLE_FULL - 1 R _item p PID_ROPE - 1 R _item p PID_GECKO_PELT - 2 R _item p PID_LEATHER_JACKET - 1 #
+2 4040 D _param p ST_INTELLECT < 4 #
+6 4050 D _param p ST_INTELLECT > 3 D _item p PID_BOTTLE_CAPS > 299 D _param p SK_SPEECH > 29 D _item p PID_ROPE > 0 D _item p PID_GECKO_PELT > 1 D _item p PID_LEATHER_JACKET > 0 D _item p PID_BOTTLE_FULL > 0 R _item p PID_BOTTLE_CAPS - 300 R _item p PID_BOTTLE_FULL - 1 R _item p PID_ROPE - 1 R _item p PID_GECKO_PELT - 2 R _item p PID_LEATHER_JACKET - 1 @
+5 5000 None 0 #
+8 5010 D _param p ST_INTELLECT > 3 D _item p PID_BOTTLE_CAPS > 399 D _item p PID_ROPE > 2 D _item p PID_GECKO_PELT > 1 D _item p PID_BOTTLE_FULL > 0 R _item p PID_BOTTLE_CAPS - 400 R _item p PID_BOTTLE_FULL - 1 R _item p PID_ROPE - 3 R _item p PID_GECKO_PELT - 2 #
+2 5020 D _param p ST_INTELLECT > 3 #
+8 5030 D _param p ST_INTELLECT < 4 D _item p PID_BOTTLE_CAPS > 399 D _item p PID_ROPE > 2 D _item p PID_GECKO_PELT > 1 D _item p PID_BOTTLE_FULL > 0 R _item p PID_BOTTLE_CAPS - 400 R _item p PID_BOTTLE_FULL - 1 R _item p PID_ROPE - 3 R _item p PID_GECKO_PELT - 2 #
+2 5040 D _param p ST_INTELLECT < 4 #
+8 5050 D _param p ST_INTELLECT > 3 D _item p PID_BOTTLE_CAPS > 299 D _param p SK_SPEECH > 29 D _item p PID_ROPE > 2 D _item p PID_GECKO_PELT > 1 D _item p PID_BOTTLE_FULL > 0 R _item p PID_BOTTLE_CAPS - 300 R _item p PID_BOTTLE_FULL - 1 R _item p PID_ROPE - 3 R _item p PID_GECKO_PELT - 2 @
+6 6000 None 0 #
+7 6010 @
+7 7000 None 0 #
+2 7010 D _param p ST_INTELLECT > 3 R _var p newbie_bernardo_lj_count + 1 R _item p PID_CURED_LEATHER_ARMOR + 1 #
+2 7020 D _param p ST_INTELLECT < 4 R _var p newbie_bernardo_lj_count + 1 R _item p PID_CURED_LEATHER_ARMOR + 1 @
+8 8000 None 0 #
+9 8010 @
+9 9000 None 0 #
+2 9010 D _param p ST_INTELLECT > 3 R _item p PID_LEATHER_ARMOR + 1 R _var p newbie_bernardo_lj_count + 1 #
+2 9020 D _param p ST_INTELLECT < 4 R _item p PID_LEATHER_ARMOR + 1 R _var p newbie_bernardo_lj_count + 1 @
+10 10000 None 0 #
+2 10010 D _param p ST_INTELLECT > 3 #
+2 10020 D _param p ST_INTELLECT < 4 @
+11 11000 None 0 #
+12 11010 @
+12 12000 None 0 #
+0 12010 D _var p q_newbie_bernardo_pelt = 0 D _param p ST_INTELLECT > 3 D _param p ST_INTELLECT > 3 R _var p q_newbie_bernardo_pelt = 1 #
+2 12020 D _param p ST_INTELLECT > 3 R _var p q_newbie_bernardo_pelt = 3 #
+0 12030 D _var p q_newbie_bernardo_pelt = 0 D _param p ST_INTELLECT > 3 D _param p ST_INTELLECT < 4 R _var p q_newbie_bernardo_pelt = 1 #
+2 12040 D _param p ST_INTELLECT < 4 D _param p ST_INTELLECT < 4 R _var p q_newbie_bernardo_pelt = 3 #
+14 12050 D _param p PE_GECKO_SKINNING < 1 D _param p ST_INTELLECT > 3 #
+14 12060 D _param p PE_GECKO_SKINNING < 1 D _param p ST_INTELLECT < 4 @
+14 13000 None 0 #
+0 13010 @
+17 14000 None 0 #
+17 14010 D _item p PID_GECKO_PELT > 0 R _var p newbie_bernardo_p_count + 1 R _param p ST_EXPERIENCE + 15 R _item p PID_BOTTLE_CAPS + 15 R _item p PID_GECKO_PELT - 1 #
+17 14020 D _item p PID_GOLDEN_GECKO_PELT > 0 R _var p newbie_bernardo_p_count + 1 R _param p ST_EXPERIENCE + 15 R _item p PID_BOTTLE_CAPS + 35 R _item p PID_GOLDEN_GECKO_PELT - 1 #
+17 14030 D _item p PID_GECKO_PELT > 4 R _var p newbie_bernardo_p_count + 4 R _param p ST_EXPERIENCE + 100 R _item p PID_BOTTLE_CAPS + 75 R _item p PID_GECKO_PELT - 5 #
+17 14040 D _item p PID_GOLDEN_GECKO_PELT > 4 R _var p newbie_bernardo_p_count + 4 R _param p ST_EXPERIENCE + 100 R _item p PID_BOTTLE_CAPS + 180 R _item p PID_GOLDEN_GECKO_PELT - 5 #
+17 14050 D _item p PID_GECKO_PELT > 0 D _param p SK_SPEECH > 29 R _var p newbie_bernardo_p_count + 1 R _param p ST_EXPERIENCE + 15 R _item p PID_BOTTLE_CAPS + 20 R _item p PID_GECKO_PELT - 1 #
+17 14060 D _item p PID_GOLDEN_GECKO_PELT > 0 D _param p SK_SPEECH > 29 R _var p newbie_bernardo_p_count + 1 R _param p ST_EXPERIENCE + 15 R _item p PID_BOTTLE_CAPS + 40 R _item p PID_GOLDEN_GECKO_PELT - 1 #
+17 14070 D _item p PID_GECKO_PELT > 4 D _param p SK_SPEECH > 29 R _var p newbie_bernardo_p_count + 4 R _param p ST_EXPERIENCE + 100 R _item p PID_BOTTLE_CAPS + 100 R _item p PID_GECKO_PELT - 5 #
+17 14080 D _item p PID_GOLDEN_GECKO_PELT > 4 D _param p SK_SPEECH > 29 R _var p newbie_bernardo_p_count + 4 R _param p ST_EXPERIENCE + 100 R _item p PID_BOTTLE_CAPS + 200 R _item p PID_GOLDEN_GECKO_PELT - 5 #
+2 14090 @
+18 15000 None 0 #
+2 15010 D _param p ST_INTELLECT > 3 #
+2 15020 D _param p ST_INTELLECT < 4 @
+19 16000 None 0 #
+2 16010 D _param p ST_INTELLECT > 3 R _var n q_newbie_bernardo_flint = 1 #
+2 16020 D _param p ST_INTELLECT > 3 R _var n q_newbie_bernardo_flint = 2 #
+20 16030 D _param p ST_INTELLECT > 3 D _item p PID_FLINT > 0 R _item p PID_FLINT - 1 R _var n q_newbie_bernardo_flint = 3 R _param n ST_EXPERIENCE + 150 #
+2 16040 D _param p ST_INTELLECT < 4 R _var n q_newbie_bernardo_flint = 1 #
+2 16050 D _param p ST_INTELLECT < 4 R _var n q_newbie_bernardo_flint = 2 #
+20 16060 D _param p ST_INTELLECT < 4 D _item p PID_FLINT > 0 R _item p PID_FLINT - 1 R _var n q_newbie_bernardo_flint = 3 R _param n ST_EXPERIENCE + 150 @
+20 17000 None 0 #
+21 17010 D _item p PID_KNIFE > 0 R _item p PID_KNIFE - 1 R _item p PID_COMBAT_KNIFE + 1 R _var p q_newbie_petra_knife = 2 #
+0 17020 D _param p ST_INTELLECT > 3 #
+0 17030 D _param p ST_INTELLECT < 4 @
+21 18000 None 0 #
+0 18010 @
+22 19000 None 0 #
+2 19010 D _param p ST_INTELLECT > 3 R _item p PID_BOTTLE_CAPS + 50 R _param p ST_EXPERIENCE + 150 R _var p q_newbie_bernardo_flint = 3 #
+2 19020 D _param p ST_INTELLECT < 4 R _item p PID_BOTTLE_CAPS + 50 R _param p ST_EXPERIENCE + 150 R _var p q_newbie_bernardo_flint = 3 #
+2 19030 D _param p ST_INTELLECT > 3 D _param p SK_SPEECH > 29 R _item p PID_BOTTLE_CAPS + 100 R _param p ST_EXPERIENCE + 150 R _var p q_newbie_bernardo_flint = 3 #
+2 19040 D _param p ST_INTELLECT < 4 D _param p SK_SPEECH > 29 R _item p PID_BOTTLE_CAPS + 100 R _param p ST_EXPERIENCE + 150 R _var p q_newbie_bernardo_flint = 3 &
+
+[russ]
+{100}{}{Бернардо}
+{200}{}{Вы видите Бернардо.}
+{210}{}{Вы видите Бернардо, одного из бывших солдат, а ныне скорняка на Ферме.}
+{220}{}{Вы видите Бернардо.}
+{230}{}{Вы видите Бернардо, одного из бывших солдат, а ныне скорняка на Ферме. Что-то с ним случилось.}
+{240}{}{Вы видите Бернардо.}
+{250}{}{Вы видите труп Бернардо, одного из бывших солдат, а ныне мёртвого скорняка на ферме.}
+{260}{}{Вы видите Бернардо.}
+{270}{}{Вы видите останки жестоко убитого Бернардо, одного из бывших солдат, охранявших ферму.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{ }
+{2000}{}{Чем Бернардо тебе может помочь?@@Что ты хотел@sex@|||а| от Бернардо?}
+{2010}{}{Привет, что ты делаешь здесь?@@Привет, а чем ты занимаешься?}
+{2020}{}{Покажи, что у тебя есть. [Бартер]@@Я хотел бы кое-что купить. [Бартер]@@У меня есть кое-что на продажу. [Бартер]}
+{2030}{}{Бернардо, сошьёшь мне куртку?}
+{2040}{}{Подзаработать хочу. Помощь не нужна?@@Помощь не требуется? Я б поработал@sex@|||а|.}
+{2050}{}{Я тебе шкуры прин@sex@|ёс||есла|.@@Ты шкуры просил.@@Ты сказал, что тебе шкуры нужны...}
+{2060}{}{Здрасте! Ты чё?@@Хто твоя здеся?}
+{2070}{}{Моя меняться! [Бартер]@@Моя хочет менять штуки! [Бартер]}
+{2080}{}{Моя хочеть одежду! Твоя помогать?}
+{2090}{}{Моя хочит дениг! Моя работник!}
+{2100}{}{Моя принёс шкур! Давай денюх!}
+{2110}{}{Бернардо, сошьёшь мне куртку?}
+{2120}{}{Моя хочеть одежду! Твоя помогать?}
+{2130}{}{Я тебе шкуры прин@sex@|ёс||есла|.@@Ты шкуры просил.@@Ты сказал, что тебе шкуры нужны...}
+{2140}{}{Моя принёс шкур! Давай денюх!}
+{2150}{}{Петра попросила заточить для неё нож...}
+{2160}{}{Петра попросила заточить для неё нож...}
+{2170}{}{Петра хотеть острый ножик! Точи ножик!}
+{2180}{}{Петра хотеть острый ножик! Точи ножик!}
+{2190}{}{Петра попросила заточить для неё нож...}
+{2200}{}{Петра хотеть острый ножик! Точи ножик!}
+{2210}{}{Я принёс кремень. Вот бери.}
+{2220}{}{Моя притаскивать кремль. Бери.}
+{2230}{}{Ты, знаешь. Я, пожалуй, не стану искать кремень для тебя.}
+{2240}{}{Моя ни будет приносить кремль! Сам носи кремль!}
+{2250}{}{[Вы видите лежащий на краю стола кремень. Пока Бернардо не видит, аккуратно берёте его и прячете в карман]}
+{2260}{}{[На краю стола лежит кусок кремня. Аккуратно берёте его и прячете в карман]}
+{3000}{}{Без проблем! Я могу кожаную куртку подлатать, так что будет лучше новой и броню кожаную сшить, недорого. Только шкуры мне нужны и ещё кое-что...  И учти, носить одежду ты тут не можешь. Охранники не позволят.}
+{3010}{}{Я хочу улучшить свою кожанку.}
+{3020}{}{Сшей мне броню из кожи.}
+{3030}{}{Ничего. [Уходите]}
+{3040}{}{Моя куртка надо улучшать.}
+{3050}{}{Хочу кожаную одёжу! Делай!}
+{4000}{}{У меня достаточно браминьих шкур, но мне ещё нужна верёвка, пара шкур гекко и вода. Ну, и сама куртка, которую улучшать будем... Это будет стоить 400 монет. И учти, носить одежду ты тут не можешь. Охранники не позволят.}
+{4010}{}{Отлично, вот куртка и деньги...}
+{4020}{}{Ой, нет... Я передумал.}
+{4030}{}{На!.. [Протягиваете предметы и деньги]}
+{4040}{}{Уххррр!.. [Чешите затылок]}
+{4050}{}{У меня только 300 монет, этого хватит?}
+{5000}{}{У меня достаточно браминьих шкур, но мне ещё нужны пара шкур гекко, три верёвки и вода. Это будет стоить 400 монет.  И учти, носить одежду ты тут не можешь. Охранники не позволят.}
+{5010}{}{Отлично, вот всё что нужно... И 400 монет, за работу.}
+{5020}{}{Ой, нет... Я передумал.}
+{5030}{}{На!.. [Протягиваете предметы и деньги]}
+{5040}{}{Уххррр!.. [Ковыряете в носу]}
+{5050}{}{У меня только 300 монет, этого хватит?}
+{6000}{}{Давай сюда. Подожди, немного...}
+{6010}{}{[Ждать]}
+{7000}{}{Вот, всё готово. Держи.}
+{7010}{}{Вот, спасибо!.. [Забираете куртку]}
+{7020}{}{Моя радый! [Забираете куртку]}
+{8000}{}{Давай сюда. Подожди, немного...}
+{8010}{}{[Ждать]}
+{9000}{}{Вот, всё готово. Держи.}
+{9010}{}{Вот, спасибо!.. [Забираете куртку]}
+{9020}{}{Моя радый! [Забираете куртку]}
+{10000}{}{Извини, я сейчас занят. В другой раз.}
+{10010}{}{Ну, ладно.}
+{10020}{}{Ыхх!..}
+{11000}{}{Хочешь подзаработать? Хорошо! Я шью куртки, одежду и всё прочее... В браминьих шкурах у меня нет недостатка, но мне б ещё шкуры гекконов не помешали б...}
+{11010}{}{[Далее]}
+{12000}{}{Плачу по 15 монет за шкуру гекко и 35 за шкуры золотых гекко.}
+{12010}{}{Будут тебе шкуры! Жди... [Уходите за шкурам]}
+{12020}{}{У-у-у... Нет. Я такими вещами не занимаюсь.}
+{12030}{}{Угу... [Усиленно киваете головой в знак согласия. Уходите за шкурам]}
+{12040}{}{Сам ящерку лови! Моя воин!}
+{12050}{}{Ну, я не против. Только я шкуры снимать не умею.}
+{12060}{}{Моя ни знаит как ящерку раздевать...}
+{13000}{}{Тогда тебе стоит обратиться к старому трапперу Логану, уж он научит тебя всем премудростям. Ты можешь найти в хибаре, западнее от центрального въезда в лагерь.}
+{13010}{}{Что ж, отправлюсь к нему.}
+{14000}{}{Плачу по 15 монет за шкуру гекко и 35 за шкуры золотых гекко.}
+{14010}{}{[Отдаёте шкуру гекко]}
+{14020}{}{[Отдаёте шкуру золотого гекко]}
+{14030}{}{[Отдаёте пять шкур гекко]}
+{14040}{}{[Отдаёте пять шкур золотых гекко]}
+{14050}{}{Отдаю за 20. [Отдаёте шкуру гекко]}
+{14060}{}{35 мало, давай за 40. [Отдаёте шкуру золотого гекко]}
+{14070}{}{По 45 отдам пять штук. [Отдаёте пять шкур гекко]}
+{14080}{}{Что-то дёшево. Давай хоть по 40. [Отдаёте пять шкур золотых гекко]}
+{14090}{}{Нету шкур.}
+{15000}{}{Спасибо, но мне пока больше не нужны шкуры.}
+{15010}{}{Очень жаль.}
+{15020}{}{Агрхххх...}
+{16000}{}{Не могу. Какая-то сволочь упёрла у меня кремень. Принесёшь кремень - наточу.}
+{16010}{}{Хорошо, я достану тебе кремень.}
+{16020}{}{Ну, не-е-т... Я не собираюсь искать никакой кремень.}
+{16030}{}{У меня есть кремень. Бери, точи.}
+{16040}{}{Моя найдёт кремль! Моя быстро приносить!}
+{16050}{}{Моя ни будет приносить кремль! Сам носи кремль!}
+{16060}{}{А у моя ест!!! У моя есть! Вота кремль! Точи!}
+{17000}{}{Эт, запросто... Давай сюда.}
+{17010}{}{[Отдаёте Бернардо нож]}
+{17020}{}{Я нож кажется потерял... [Уходите]}
+{17030}{}{Моя ножик потерять... [Уходите]}
+{18000}{}{Ну, вот. Всё готово. Петре привет передавай. [Бернардо быстро затачивает нож и отдаёт его вам]}
+{18010}{}{Спасибо... [Забираете нож и уходите]}
+{19000}{}{Вот, спасибо! Выручил! Держи за работу полтинник.}
+{19010}{}{Да, мне было не трудно...}
+{19020}{}{Моя хороший!}
+{19030}{}{Вообще-то он стоил сотню.}
+{19040}{}{Моя хочит больши. Сто давай!}
+
+[engl]
+{100}{}{Bernardo}
+{200}{}{You see Bernardo.}
+{210}{}{You see Bernardo, former soldier, being a skinner at present.}
+{220}{}{You see Bernardo.}
+{230}{}{You see Bernardo, former soldier, being a skinner at present. Something had happened to him.}
+{240}{}{You see Bernardo.}
+{250}{}{Вы видите труп Bernardo, одного из бывших солдат, а ныне мёртвого скорняка на Ферме.}
+{260}{}{You see Bernardo.}
+{270}{}{Вы видите останки жестоко убитого Bernardo, одного из бывших солдат, охранявших Ферму.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{ }
+{2000}{}{How can Bernardo help you?@@What do you want from Bernardo?}
+{2010}{}{Hi, what’re you doin’ here?}
+{2020}{}{Show me what you have. [Barter]@@I want to buy something. [Barter]@@I have stuff to trade. [Barter]}
+{2030}{}{Bernardo, could you make me a jacket?}
+{2040}{}{I want to earn a little money. Do you need help?@@Do you need help? I could work for a little money.}
+{2050}{}{I’ve brought pelts for you.@@You said you needed pelts...}
+{2060}{}{Hellah! What ya?@@What ya here?}
+{2070}{}{Me bartah! [Barter]@@Me wanna bartah things! [Barter]}
+{2080}{}{Me wanna clohes! Ya help?}
+{2090}{}{Me wanna money! Me a work!}
+{2100}{}{Me pelt here! Me money!}
+{2110}{}{Bernardo, could you make me a jacket?}
+{2120}{}{Me wanna clohes! Ya help?}
+{2130}{}{I’ve brought pelts for you.@@You said you needed pelts...}
+{2140}{}{Me pelt here! Me money!}
+{2150}{}{Petra asked to sharpen a knife for her...}
+{2160}{}{Petra asked to sharpen a knife for her...}
+{2170}{}{Petra wann shaarp ‘nife! Sarp ‘nife!}
+{2180}{}{Petra wann shaarp ‘nife! Sarp ‘nife!}
+{2190}{}{Petra asked to sharpen a knife for her...}
+{2200}{}{Petra wann shaarp ‘nife! Sarp ‘nife!}
+{2210}{}{I’ve brought a flint for you. Here it is.}
+{2220}{}{Me brin’ flinch, take.}
+{2230}{}{You know, I won’t look for a flint for you.}
+{2240}{}{Me not gona find fling! You find fling!}
+{2250}{}{[You see a flint lying on the edge of the table. While Bernardo doesn’t see, you take it carefully and hide into your pocket]}
+{2260}{}{[You see a flint lying on the edge of the table. You take it carefully and hide into your pocket]}
+{3000}{}{No problem! I can patch up a leather jacket the way it would be better than a new one or make a leather armor, inexpensively. I only need pelts and something else... And take into account, you can’t wear any clothes here. Guards won’t let you.}
+{3010}{}{I want to improve my leather jacket.}
+{3020}{}{Make a leather armor for me.}
+{3030}{}{Never mind. [Leave]}
+{3040}{}{Me good leather jack.}
+{3050}{}{Me wan’ leazer wear! Do!}
+{4000}{}{I am not short of brahmin hides, but I still need a rope, a couple of gecko skins and water. And of course the leather jacket which we want to improve. It will cost you 400 $. And take into account, you can’t wear any clothes here. Guards won’t let you.}
+{4010}{}Fine, here’s the money and the jacket...}
+{4020}{}{Oh, no.. I’ve changed my mind.}
+{4030}{}{Her!.. [Give him items and money]}
+{4040}{}{Uhh-r-r!.. [Scratch yours head]}
+{4050}{}{I have only 300 $, is it enough?}
+{5000}{}{I am not short of brahmin hides, but I still need a rope, a couple of gecko skins and water. It will cost you 400 $. And take into account, you can’t wear any clothes here. Guards won’t let you.}
+{5010}{}{Fine, that’s all is needed... And 400 $, for the work.}
+{5020}{}{Oh, no.. I’ve changed my mind.}
+{5030}{}{Her!.. [Give him items and money]}
+{5040}{}{Uhh-r-r!.. [Scratch yours head]}
+{5050}{}{I have only 300 $, is it enough?}
+{6000}{}{Gimme. Wait a little...}
+{6010}{}{[Wait]}
+{7000}{}{All’s done. Take it.}
+{7010}{}{Thanks!.. [Take the jacket]}
+{7020}{}{Me glaad! [Take the jacket]}
+{8000}{}{Gimme. Wait a little...}
+{8010}{}{[Wait]}
+{9000}{}{All’s done. Take it.}
+{9010}{}{Thanks!.. [Take the jacket]}
+{9020}{}{Me glaad! [Take the jacket]}
+{10000}{}{Sorry, I’m busy right now. Come back later.}
+{10010}{}{Okay.}
+{10020}{}{Uhh!..}
+{11000}{}{Wanna have a job? Fine! I use to make jackets, clothes, other stuff... I am not short of brahmin hides, but I need gecko pelts.}
+{11010}{}{[More]}
+{12000}{}{I pay 15 $ for gecko pelt and 35 $ for a golden one.}
+{12010}{}{You’ll have pelts! Just wait... [Leave]}
+{12020}{}{U-uh, no. I don’t use to do such things.}
+{12030}{}{Uhu... [You nod several times intensively and leave ]}
+{12040}{}{You catch lizars! Me warrior!}
+{12050}{}{I have nothing against. I only don’t know how to skin geckos.}
+{12060}{}{Me don’ know how lizard skin...}
+{13000}{}{Then you should address to the old trapper Logan, he can teach you everything about that. You can find him in his hovel, to the west from the central entrance of the Camp.}
+{13010}{}{Okay, I’m gonna find him.}
+{14000}{}{I pay 15 $ for gecko pelt and 35 $ for a golden one.}
+{14010}{}{[Give him gecko pelt]}
+{14020}{}{[Give him golden gecko pelt]}
+{14030}{}{[Give him five gecko pelts]}
+{14040}{}{[Give him five gloden gecko pelts]}
+{14050}{}{I’ll give it for 20 $. [Give him gecko pelt]}
+{14060}{}{55 $ is not enough, I want 60 $. [Give him golden gecko pelt]}
+{14070}{}{I’ll give you five pelts, each for 20 $. [Give him five gecko pelts]}
+{14080}{}{Too cheap. Give 60 $ at least. [Give him five gloden gecko pelts]}
+{14090}{}{No pelts.}
+{15000}{}{Thanks, I don’t need pelts for now. Come back later}
+{15010}{}{It is a pity.}
+{15020}{}{Argh-h...}
+{16000}{}{I can’t. Some bastard has stolen my flint. If you find for me a new one  - I’ll sharpen it.}
+{16010}{}{Okay, I’ll find a flint.}
+{16020}{}{No-o. I’m not gonna seeking for a flint.}
+{16030}{}{I have a flint. You can take it}
+{16040}{}{Me finda flinch! Me be fast!}
+{16050}{}{Me not finda flinch! You finda flinch!}
+{16060}{}{Uh, I has!!! I has! Her flinch! Sharp!}
+{17000}{}{Easily... Gimme.}
+{17010}{}{[Give Bernardo the knife]}
+{17020}{}{It seems, I’ve lost the knife... [Leave]}
+{17030}{}{Me lose knif... [Leave]}
+{18000}{}{Here, done. My regard to Petra. [Bernardo sharpens the knife and gives it to you]}
+{18010}{}{Thanks. [Take the knife and leave]}
+{19000}{}{Oh, thanks! You helped me! Take 50 $ for your troubles.}
+{19010}{}{It wasn’t too much trouble...}
+{19020}{}{Me good!}
+{19030}{}{In fact, it costed 100 $.}
+{19040}{}{Me wann more. Give hudred!}
+

@@ -1,0 +1,164 @@
+[comment]
+
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 D _script caravan@d_IsCaravanStatus 1 1 D _script caravan@d_NotHasPlayerRequest 0  D _var p scen_ranger_rank < 6000 D _var p scen_ranger = 1 R _param n ST_STRENGTH = 10 R _param n ST_ENDURANCE = 10 R _param n MODE_UNLIMITED_AMMO = 1 R _var n q_ncr_hate_patrol = 2 R _param n ST_EXPLODE_RESIST = 200 #
+10 1020 D _script caravan@d_IsCaravanStatus 1 1 D _script caravan@d_HasPlayerRequest 0  D _var p scen_ranger_rank < 6000 #
+12 1030 D _script caravan@d_IsCaravanStatus 1 4 #
+14 1040 D _script caravan@d_IsCaravanStatus 1 5 D _var p q_ncr_hate_patrol = 8 D _var p scen_ranger_rank < 6000 #
+16 1050 D _script caravan@d_IsCaravanStatus 1 5 D _var p q_ncr_hate_patrol ! 8 D _var p scen_ranger_rank < 6000 #
+17 1060 D _var p scen_ranger_rank } 6000 D _var p scen_ranger = 1 #
+16 1070 D _script caravan@d_IsCaravanStatus 1 0 #
+16 1080 D _var p scen_ranger = 0 @
+2 2000 None 0 #
+4 2010 D _param p ST_INTELLECT > 3 #
+7 2020 D _var p q_ncr_hate_patrol < 2 #
+3 2030 D _var p q_ncr_hate_patrol } 2 @
+3 3000 None 0 #
+0 3010 @
+4 4000 None 0 #
+5 4010 @
+5 5000 None 0 #
+6 5010 @
+6 6000 None 0 #
+0 6010 #
+7 6020 D _var p q_ncr_hate_patrol = 0 @
+7 7000 None 0 #
+8 7010 D _script caravan@d_NotHasPlayerRequest 0  D _script caravan@d_NotIsFullParty 0  R _script caravan@r_PutPlayerRequest2Info 0  R _var p q_ncr_hate_patrol = 1 #
+9 7020 D _script caravan@d_NotHasPlayerRequest 0  D _script caravan@d_IsFullParty 0  #
+0 7030 @
+8 8000 None 0 #
+0 8010 @
+9 9000 None 0 #
+0 9010 D _script caravan@d_NotHasPlayerRequest 0  R _script caravan@r_PutPlayerRequest2Info 0  R _var p q_ncr_hate_patrol = 1 #
+0 9020 @
+10 10000 None 0 #
+0 10010 #
+11 10020 @
+11 11000 None 0 #
+0 11010 @
+12 12000 None 0 #
+13 12010 @
+13 13000 None 0 #
+0 13010 #
+0 13020 R _script caravan@r_ContinueCaravan 0  @
+14 14000 None 0 #
+15 14010 D _var p q_ncr_hate_patrol = 8 R _var p q_ncr_hate_patrol = 11 R _item p PID_BOTTLE_CAPS + 1000 R _param p ST_EXPERIENCE + 5000 R _var p scen_ranger_rank + 500 R _var p scen_ranger_rank + 1 R _param p REPUTATION_NCR + 1 @
+15 15000 None 0 #
+0 15010 @
+16 16000 None 0 @
+17 17000 None 0 #
+0 17010 &
+
+[russ]
+{100}{}{Хейт}
+{200}{}{Капрал Хейт.}
+{200}{}{Вы видите капрала Хейта.}
+{210}{}{Вы видите капрала Хейта. Это начальник патруля Рейнджеров НКР.}
+{1000}{}{Predialogue installations}
+{1010}{}{Перед отправлением, игрок не в составе каравана}
+{1020}{}{Перед отправлением, игрок в составе каравана}
+{1030}{}{На энкаунтере}
+{1040}{}{Прибыли обратно, игрок выполнил квест на патруль}
+{1050}{}{Прибыли обратно, игрок не был в патруле}
+{1060}{}{Игрок дослужился до сержанта}
+{1070}{}{Караван не начался}
+{1080}{}{Игрок не рейнджер}
+{2000}{}{[Капрал ухмыляется] Новое пушечное мясо от моего старого друга сержанта Кайла, так?}
+{2010}{}{Что значит, "пушечное мясо"?}
+{2020}{}{Капрал, я хочу записаться в патруль рейнджеров.}
+{2030}{}{Капрал, я хочу записаться в патруль рейнджеров.}
+{3000}{}{Не в этот раз, рядовой. Все места укомплектованы, больше люди мне не требуются. У меня не балаган, и не цирк, а патрульный взвод, черт подери!}
+{3010}{}{Ясно.@@Ухожу.}
+{4000}{}{Ты здесь ради того, чтобы записаться в патруль, так?}
+{4010}{}{Я пока не уверен@sex@|||а|... А что, есть какие-то подводные камни?}
+{5000}{}{Камни? Нет, никаких камней. Все нормально, @sex@|дружок||крошка|. Это будет похоже на воскресный пикничек с тетушкой и дядющкой. Прогуляемся, пожрем, развлечемся. [Ржет, довольный своей шуткой]}
+{5010}{}{Что-то как-то я тебе не очень верю, в чем дело, капрал?}
+{6000}{}{[Лицо капрала темнеет, он больше не улыбается] Пожалуй, ты долж@sex@|ен||на| знать, на что соглашаешься. Это - опасный контракт. Шансы на возвращение живыми в столицу лично я, а поверь, я знаю, о чем говорю, оцениваю.... Ну, скажем, если очень повезет, процентов в 12. Ситуация сейчас неспокойная, рейдеры, мятежники, бандиты... Все они будут просто счастливы, если им удастся содрать с патрульного шкуру. Хорошо подумай, прежде чем согласиться идти в патруль Рейнджеров.}
+{6010}{}{Я подумаю.}
+{6020}{}{Ерунда, если бы я боял@sex@|cя||ась| рейдеров, ты меня бы здесь не увидел. Записывай.}
+{7000}{}{Ты точно, хорошо подумал@sex@|||а|, цыпленочек? Не сбежишь в ответственный момент?}
+{7010}{}{Да, я готов@sex@|||а| рискнуть.}
+{7020}{}{Да, я готов@sex@|||а| рискнуть.}
+{7030}{}{Пожалуй, мне потребуется пара минут, чтобы принять решение.}
+{8000}{}{Запомни, никто тебя не тянул за язык. В общем, в 22:00 выдвигаемся. Будь у меня на виду, иначе уйдем без тебя. Вернемся обратно живыми, заплачу подъемные - штуку наличными. Вопросы есть?}
+{8010}{}{Договорились.}
+{9000}{}{[Смотрит в записную книжку] Гм, сегодня уже все места распределены, взвод укомплектован. Можешь попробовать завтра, в это же время, или подожди здесь, вдруг кто-то не придет...}
+{9010}{}{Я лучше подожду здесь.}
+{9020}{}{В таком случае, увидимся завтра.}
+{10000}{}{Опять, ты? Не мельтеши, скоро выходим. Начало в 22:00.}
+{10010}{}{Ладно.}
+{10020}{}{Сколько я получу, напомни?}
+{11000}{}{Тысячу наличными. Больше ко мне не приставай, иначе я могу рассердиться.}
+{11010}{}{Есть, сэр!}
+{12000}{}{Будьте бдительны. Эта тишина - только видимость.@@Сейчас не лучшее время для разговоров.@@Не сейчас.@@А, это ты... Доложить обстановку.}
+{12010}{}{Капрал, вроде все спокойно, мы можем идти дальше?}
+{13000}{}{Все готовы?}
+{13010}{}{Сейчас проверю.}
+{13020}{}{Да, можно продолжать патрулирование.}
+{14000}{}{А вот и наш старый знакомый. Ну что ж, в этот раз нам повезло, можно сказать. Ты здесь, чтобы получить деньги?}
+{14010}{}{Именно.}
+{15000}{}{Хорошо, вот твоя плата. Приходи через месяц. Будет еще один патруль.}
+{15010}{}{Счастливо, капрал.}
+{16000}{}{Не сейчас.@@Отвали.@@Мне некогда.}
+{17000}{}{Ого! А тебе быстро удалось заслужить звание сержанта! Поздравляю! Но сержанты в мой взвод не нужны. Мы не можем терять командирский состав. [Ржет]}
+{17010}{}{Счастливо, капрал.}
+
+[engl]
+{100}{}{Hejt}
+{200}{}{Corporal Hejt.}
+{200}{}{you see corporal Hejta.}
+{210}{}{you see corporal Hejta. He/she is the chief of patrol of Rangers NKR.}
+{1000}{}{Predialogue installations}
+{1010}{}{Before departure, the player not as a part of a caravan}
+{1020}{}{Before departure, the player as a part of a caravan}
+{1030}{}{On enkauntere}
+{1040}{}{Have arrived back, the player has executed a quest on patrol}
+{1050}{}{Have arrived back, the player was not in patrol}
+{1060}{}{the Player has served to the sergeant}
+{1070}{}{the Caravan has not begun}
+{1080}{}{the Player not the ranger}
+{2000}{}{[the Corporal grins] New gun meat from my old friend of sergeant Kajla, so?}
+{2010}{}{That means, "gun meat"?}
+{2020}{}{the Corporal, I want to register in patrol of rangers.}
+{2030}{}{the Corporal, I want to register in patrol of rangers.}
+{3000}{}{Not this time, the private soldier. All places are completed, more people to me are not required. At me not buffoonery, and not circus, and a patrol platoon, damn it!}
+{3010}{}{it is clear. @@ I leave.}
+{4000}{}{You here to register in patrol, so?}
+{4010}{}{I yet уверен@sex ||| and |... And what, there are any reefs?}
+{5000}{}{Stones? No, any stones. All is normal, @sex | the friend || a crumb |. It will be similar on Sunday piknichek with the aunt and djadjushchkoj. We will walk, we will devour, we will have a good time. [Neighs, happy with the joke]}
+{5010}{}{Something somehow I not so trust you, in what business, the corporal?}
+{6000}{}{[the Person of the corporal darkens, he any more does not smile] Perhaps, you долж@sex | en || on | the nobility, on what agree. It is the dangerous contract. Chances of returning live in capital personally I, and believe, I know, about what I speak, I estimate.... Well, say, if very much will carry, percent in 12. A situation now restless, raiders, rebels, gangsters... All of them will be simply happy, if they manage to tear off from the patrolman a skin. Well think before to agree to go to patrol of Rangers.}
+{6010}{}{I will think.}
+{6020}{}{Nonsense if I боял@sex | cя || as | raiders, you here would not see me. Write down.}
+{7000}{}{You are exact, good подумал@sex ||| and |, tsyplenochek? You will not run away during the responsible moment?}
+{7010}{}{Yes, I готов@sex ||| and | to risk.}
+{7020}{}{Yes, I готов@sex ||| and | to risk.}
+{7030}{}{Perhaps, me the pair of minutes is required to make the decision.}
+{8000}{}{Remember, anybody did not make you talk. In general, at 22:00 we are put forward. Be at me on a kind, differently we will leave without you. We will return back live, I will begin to cry elevating - a piece cash. Questions are?}
+{8010}{}{Have agreed.}
+{9000}{}{[Looks in a notebook] H'm, today already all places are distributed, the platoon is completed. You can try tomorrow, during the same time, or wait here, suddenly someone will not come...}
+{9010}{}{I will better wait here.}
+{9020}{}{In that case, we will meet tomorrow.}
+{10000}{}{Again, you? Do not flicker, soon we leave. The beginning at 22:00.}
+{10010}{}{it is fine.}
+{10020}{}{How many I will receive, remind?}
+{11000}{}{One thousand cash. It is more to me do not stick, differently I can become angry.}
+{11010}{}{Is, the sir!}
+{12000}{}{Be vigilant. This silence - only visibility. @@ now not the best time for conversations. @@ not now. @@ And, it you... To Report conditions.}
+{12010}{}{the Corporal, like all it is quiet, we can go further?}
+{13000}{}{All are ready?}
+{13010}{}{Now I will check up.}
+{13020}{}{Yes, it is possible to continue patrol.}
+{14000}{}{Here our old acquaintance. Well, this time to us has carried, it is possible to tell. You here to receive money?}
+{14010}{}{.}
+{15000}{}{it is good, here your payment. Come in a month. There will be one more patrol.}
+{15010}{}{it is happy, the corporal.}
+{16000}{}{Not now. @@ Otvali. @@ I have.}
+{17000}{}{Ogo! And you quickly managed to deserve a rank of the sergeant! I congratulate! But sergeants in my platoon are not necessary. We cannot lose komandirsky structure. [Neighs]}
+{17010}{}{it is happy, the corporal.}

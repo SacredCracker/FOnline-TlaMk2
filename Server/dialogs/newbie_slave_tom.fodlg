@@ -1,0 +1,175 @@
+[comment]
+
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+20 1010 D _param p ST_LEVEL < 4 #
+2 1020 D _param p ST_INTELLECT > 3 D _param p ST_LEVEL > 3 D _item p PID_EXP_COLLAR > 0 #
+12 1030 D _param p ST_INTELLECT < 4 D _param p ST_LEVEL > 3 D _item p PID_EXP_COLLAR > 0 R _var p q_newbie_escape = 1 #
+13 1040 @
+2 2000 None 1 #
+3 2010 D _var p q_newbie_escape = 0 #
+4 2020 D _var p q_newbie_escape = 1 #
+0 2030 #
+5 2040 D _var p q_newbie_escape = 2 D _param p ST_INTELLECT } 4 #
+12 2050 D _var p q_newbie_escape = 2 D _param p ST_INTELLECT < 4 @
+3 3000 None 1 #
+4 3010 R _var p q_newbie_escape = 1 #
+0 3020 @
+4 4000 None 0 #
+5 4010 R _var p q_newbie_escape = 1 #
+21 4020 #
+0 4030 D _param p ST_INTELLECT } 4 #
+0 4040 D _param p ST_INTELLECT < 4 @
+5 5000 None 0 #
+7 5010 D _item p PID_BOTTLE_CAPS < 500 #
+6 5020 D _item p PID_BOTTLE_CAPS > 499 R _var p q_newbie_escape = 2 R _var p q_newbie_redemption = 7 R _item p PID_BOTTLE_CAPS - 500 R _script q_newbie_scripts@r_GetOut 0  #
+8 5030 D _param p SK_BARTER } 60 D _item p PID_BOTTLE_CAPS > 249 R _var p q_newbie_escape = 2 R _var p q_newbie_redemption = 7 R _item p PID_BOTTLE_CAPS - 250 R _script q_newbie_scripts@r_GetOut 0  #
+9 5040 D _param p ST_CHARISMA > 4 D _item p PID_BOTTLE_CAPS > 249 D or D _param p SK_SPEECH } 60 D _item p PID_BOTTLE_CAPS > 249 R _var p q_newbie_escape = 2 R _var p q_newbie_redemption = 7 R _item p PID_BOTTLE_CAPS - 250 R _script q_newbie_scripts@r_GetOut 0  #
+10 5050 D _param p ST_STRENGTH > 7 R _var p q_newbie_escape = 2 R _var p q_newbie_redemption = 7 R _script q_newbie_scripts@r_GetOut 0  #
+11 5060 D _param p SK_SCIENCE } 60 R _var p q_newbie_escape = 2 R _var p q_newbie_redemption = 7 R _script q_newbie_scripts@r_GetOut 0  #
+0 5070 @
+7 6000 None 0 @
+6 7000 None 0 @
+8 8000 None 0 @
+9 9000 None 0 @
+10 10000 None 0 @
+11 11000 None 0 @
+12 12000 None 0 #
+6 12010 D _item p PID_BOTTLE_CAPS > 499 R _var p q_newbie_escape = 2 R _var p q_newbie_redemption = 7 R _item p PID_BOTTLE_CAPS - 500 R _script q_newbie_scripts@r_GetOut 0  #
+6 12020 D _param p ST_CHARISMA > 4 D _item p PID_BOTTLE_CAPS > 249 R _var p q_newbie_escape = 2 R _var p q_newbie_redemption = 7 R _item p PID_BOTTLE_CAPS - 250 R _script q_newbie_scripts@r_GetOut 0  #
+10 12030 D _param p ST_STRENGTH > 7 R _var p q_newbie_escape = 2 R _var p q_newbie_redemption = 7 R _script q_newbie_scripts@r_GetOut 0  #
+24 12040 @
+13 13000 None 0 @
+20 14000 None 0 @
+21 15000 None 0 #
+22 15010 #
+22 15020 #
+0 15030 #
+5 15040 @
+22 16000 None 0 #
+23 16010 #
+5 16020 @
+23 17000 None 0 #
+5 17010 #
+0 17020 @
+24 18000 None 0 &
+
+[russ]
+{100}{}{Том}
+{200}{}{Вы видите одного из рабов, Тома.}
+{210}{}{Это Том, один из рабов в лагере.}
+{1000}{}{Predialogue installations}
+{1010}{}{мал лвл}
+{1020}{}{умный}
+{1030}{}{тупой}
+{1040}{}{другое}
+{2000}{}{Чего тебе?@@Аа, ты снова живой.. С чем пожаловал?}
+{2010}{}{Да вот, осматриваюсь. Чем занимаешься?}
+{2020}{}{Так что насчет ошейника?}
+{2030}{}{Просто хотелось поздороваться.}
+{2040}{}{Меня снова окольцевали. Нужна твоя помощь.}
+{2050}{}{Твоя помочь моя снова? [Указываете рукой на шею]}
+{3000}{}{Просто пытаюсь выжить. Все мы здесь рабы и должны  держаться друг за друга.}
+{3010}{}{Значит, у тебя есть что-то интересное для меня?}
+{3020}{}{Возможно, стоит об этом поговорить позже.}
+{4000}{}{Я могу рассказать тебе как снять ошейник, но это будет кое-чего стоить.}
+{4010}{}{Что ты хочешь?}
+{4020}{}{И почему я должен тебе поверить?}
+{4030}{}{О нет, так нельзя делать! Охрана меня увидит и будет очень плохо. Лучше я упорным трудом докажу свою пользу.}
+{4040}{}{Охрана делать больно. Моя боится.}
+{5000}{}{Какие-то жалкие 500 монет и ты будешь очень близко к свободе.}
+{5010}{}{У меня не хватает денег.}
+{5020}{}{Просто расскажи мне это. [Даете деньги]}
+{5030}{}{250 монет и по рукам? [Протягиваете руку]}
+{5040}{}{Могу отдать только 250 монет, их будет достаточно? [Добродушно улыбаетесь]}
+{5050}{}{Как ты смотришь на то, что я сейчас скормлю твой труп тем недоразвитым в клетке?}
+{5060}{}{И как вы предлагаете открыть этот магнитоплазменный замок?}
+{5070}{}{Давайте вернемся к этом разговору потом.}
+{6000}{}{Приходи когда сможешь себе это позволить.}
+{7000}{}{[Том рассказывает вам как можно с минимальными познаниями в науке открыть замок на ошейнике]}
+{8000}{}{А вы умеете торговаться. По рукам. [Том рассказывает вам как можно с минимальными познаниями в науке открыть замок на ошейнике]}
+{9000}{}{Мне довольно трудно вам отказать. Хорошо. [Том рассказывает вам как можно с минимальными познаниями в науке открыть замок на ошейнике]}
+{10000}{}{[Он нервно сглотнул и рассказал как можно с минимальными познаниями в науке открыть замок на ошейнике]}
+{11000}{}{О да ты разбираешся в технике! [Вы увлеченно обсуждаете с ним все тонкости открытия замка. С вашими познаниями в науке это будет плевое дело]}
+{12000}{}{Смотрю ты не очень разговорчив. Эй, могу тебе помочь сбежать отсюда. Покажу как открыть замок на ошейнике. 1000 монет, дружище.}
+{12010}{}{Угу-угу! [Даете деньги]}
+{12020}{}{Уииииии. Иметь только 250. [Очаровательно улыбаетесь и подмигиваете Тому]}
+{12030}{}{Гррррр! Если твоя не снять ошейник, моя долго убивать твою! [Угрожающе размахиваете руками]}
+{12040}{}{Тьфу!}
+{13000}{}{Больше мне нечего тебе предложить.}
+{14000}{}{Возможно, когда вы будете более опытны, мы можем обсудить кое-что интересное.}
+{15000}{}{Я множество раз участвовал в процессе их сборки и хорошо изучил. Работорговцы используют примитивный механизм. Для нормального замка у них нет ни технологии, ни средств. Впрочем, верить или нет, - дело твое.}
+{15010}{}{Хотелось бы верить, но удивительно, почему ты сам ещё в этом ужасном месте?}
+{15020}{}{А если ошейник взорвется во время взлома?}
+{15030}{}{Раскажешь эту сказку другому придурку.}
+{15040}{}{Ну припустим. Какова цена?}
+{16000}{}{[Поднимает волосы с шеи. К вашему удивлению, под ними нет ни следа от ошейника] По правде говоря, мне и здесь неплохо. Часть дохода от таких, как ты, я отстегиваю некоторым охранникам. Оставшегося мне хватает на нормальную еду, спокойный сон и шлюх, которых приводит охрана. Что ещё нужно человеку в наше время? Но видимо тебе промыли мозги так. что ты не в курсе идиллии происходящей вне этого лагеря..}
+{16010}{}{А ты не боишься, что я тебя сейчас просто сдам?}
+{16020}{}{Так бы сразу и говорил. О какой плате была речь? }
+{17000}{}{Тогда тебя просто акуратно пристрелят мои старшие знакомые  и мы увидимся позже. Ты же не знаешь к кому обратиться, не так ли, дружок? [Весело подмигивает вам] Но мне надоел этот спектакль, либо плати деньги, либо иди гуляй с полкилограмом тротила на шее.}
+{17010}{}{Не гарячись, давай обсуждать цену.}
+{17020}{}{Посмотрим что ты скажешь, когда вылупишся с новым грузилом на шее и свежими мозгами.}
+{18000}{}{Приноси деньги, твердолобый.}
+
+[engl]
+{100}{}{Tom}
+{200}{}{You see Tom, one of the slaves.}
+{210}{}{Tom, one of the camp slaves.}
+{1000}{}{Predialogue installations}
+{1010}{}{мал лвл}
+{1020}{}{умный}
+{1030}{}{тупой}
+{1040}{}{другое}
+{2000}{}{What do you want?@@Ah, you still alive. What is it?}
+{2010}{}{Just looking around. What is it?}
+{2020}{}{What about the collar?}
+{2030}{}{Just wanted to day hello.}
+{2040}{}{I was ringed again. Need your help.}
+{2050}{}{You help my again? [Point at your neck]}
+{3000}{}{Just trying to survive. We slaves should stand for each other.}
+{3010}{}{So you have something of interest for me?}
+{3020}{}{Maybe, we should talk about it later.}
+{4000}{}{I can tell you how to take off the collar, but it will cost you.}
+{4010}{}{How much?}
+{4020}{}{Why should I trust you?}
+{4030}{}{Oh no, we can't do it!The guard will see us. I'd rather make my way out of here with hard labor.}
+{4040}{}{Guard make hurt. Me scared.}
+{5000}{}{Just $500, and you'll be closer to freedom than ever.}
+{5010}{}{I don't have enough money.}
+{5020}{}{Tell me. [Give the money]}
+{5030}{}{How about $250 and we settle this matter? [Hold out your hand]}
+{5040}{}{I can only give you $250, will it be enough? [Smile friendly]}
+{5050}{}{How about I feed your corpse to those retards in the cage?}
+{5060}{}{And how exactly are you planning to open this plasma-magnetic lock?}
+{5070}{}{Let's continue our conversation later.}
+{6000}{}{Come back when you can afford it.}
+{7000}{}{[Tom tells you how to take off the collar with minimal scientific knowledge]}
+{8000}{}{You're good at bargaining, heh. All right. [Tom tells you how to take off the collar with minimal scientific knowledge]}
+{9000}{}{It's hard to refuse you. All right. [Tom tells you how to take off the collar with minimal scientific knowledge]}
+{10000}{}{[Tom gulps nervously and tells you how to take off the collar with minimal scientific knowledge]}
+{11000}{}{Hey, I see you know about electronics! [You get carried away discussing different aspects of electronic lock-picking. With your knowledge it'll be a piece of cake to take off this collar]}
+{12000}{}{Hey, you're not talkative, are you. I can help ypu get out of this place. I know how to open the lock on your ciollar. $1000 and I'll tell you, bro.}
+{12010}{}{Uh-huh, Uh-huh! [Give the money]}
+{12020}{}{Wheeeee. Have only 250. [Smile charmingly and wink at Tom]}
+{12030}{}{Grrrrr! If you no take of collar, me kill you! [Wave your arms threateningly]}
+{12040}{}{Damn!}
+{13000}{}{I have nothing else to offer.}
+{14000}{}{Maybe when you're more experienced I'll have something interesting to talk to you about.}
+{15000}{}{I took part in assembling these things many times and I've studied them through and through. Slavers use a primitive mechanism. They don't have neither the technology, nor the means to make a proper lock. Anyway, it's up to you to believe me or not.}
+{15010}{}{I want to believe, but why then are you still here?}
+{15020}{}{What if the collar explodes in the process?}
+{15030}{}{Tell this to some other fool.}
+{15040}{}{Let's do it. How much do you want?}
+{16000}{}{[Lifts up his hair. To your surprise there's not a trace of the collar underneath] Frankly speaking it's not too bad for me in here. I share a part of what I get from guys like you with some of the guards. The rest is enough for a good meal, a sound sleep, and whores that guards bring in here. After all, what else does a man need? But apparently you've been brainwashed enough not to see what a paradise it is compared to the world outside.}
+{16010}{}{Aren't you afraid that I'll tip off the guards?}
+{16020}{}{You should have started from this. How much is it?}
+{17000}{}{Then my good friends among the guards will gently shoot you. You've no Idea whom you can trust, do you, bro? [Teasingly winks at you] I'm sick of this show, pay or keep on walking around with half a pound of explosives on your neck.}
+{17010}{}{Easy, man. Let's negotiate the price.}
+{17020}{}{Let's see what you'll say when you hatch with a new load on your neck and some fresh brains.}
+{18000}{}{error}
+

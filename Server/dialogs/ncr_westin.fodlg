@@ -1,0 +1,273 @@
+[comment]
+Ваши комментарии / Your comments.
+начиная с 20 диалога - квест на таблетки для сердца Вейстина
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 NOT_ANSWER_CLOSE_DIALOG 0#
+6 1010d*_param p ST_INTELLECT < 4 *_var p ncr_smit_vs_vestin_result = 0 #
+5 1020d*_var n name_mem_npc_player = 0 *_var p ncr_smit_vs_vestin_result = 0 r*_var n name_mem_npc_player = 1 #
+4 1030d*_var n name_mem_npc_player = 1 *_var p ncr_smit_vs_vestin_result = 0 #
+14 1040d*_var p ncr_smit_vs_vestin_result = 1 r*_var p ncr_smit_vs_vestin_result = 0 #
+10 1050d*_var p ncr_smit_vs_vestin_result = 4 r*_var p ncr_smit_vs_vestin_result = 0 #
+65507 1060d*_var p ncr_smit_vs_vestin_result = 3 #
+65507 1070d*_var p ncr_smit_vs_vestin_result = 5 @
+2 2000 NOT_ANSWER_CLOSE_DIALOG 0#
+3 2010@
+3 3000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 3010@
+4 4000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 4010#
+20 4020d*_var p ncr_vestin_position_global = 0 *_var p ncr_westin_pills_status = 0 r*_var p ncr_westin_pills_status = 1 #
+22 4030d*_var p ncr_westin_pills_status = 0 *_var p ncr_vestin_position_global = 1 #
+24 4040d*_var p ncr_vestin_position_global = 1 *_var p ncr_westin_pills_status = 1 #
+38 4050d*_var p ncr_westin_pills_status = 2 #
+40 4060d*_var p ncr_westin_player_get_prepayment = 1 *_item p PID_HEART_PILLS > 0 *_var p ncr_westin_pills_status > 2 *_var p ncr_westin_pills_status < 6 r*_item p PID_HEART_PILLS - 1 *_var p ncr_westin_pills_status = 6 *_param p ST_EXPERIENCE + 4500 *_item p PID_BOTTLE_CAPS + 1000 *_var p q_ncr_westin_pills = 5 *_param p REPUTATION_NCR + 1 #
+41 4070d*_var p ncr_westin_player_get_prepayment = 0 *_item p PID_HEART_PILLS > 0 *_var p ncr_westin_pills_status > 2 *_var p ncr_westin_pills_status < 6 r*_item p PID_HEART_PILLS - 1 *_var p ncr_westin_pills_status = 6 *_param p ST_EXPERIENCE + 4500 *_item p PID_BOTTLE_CAPS + 2000 *_var p q_ncr_westin_pills = 5 *_param p REPUTATION_NCR + 1 @
+5 5000 NOT_ANSWER_CLOSE_DIALOG 0#
+2 5010@
+6 6000 NOT_ANSWER_CLOSE_DIALOG 0@
+10 7000 NOT_ANSWER_CLOSE_DIALOG 0#
+11 7010@
+11 8000 NOT_ANSWER_CLOSE_DIALOG 0#
+12 8010@
+12 9000 NOT_ANSWER_CLOSE_DIALOG 0#
+13 9010r*_param p ST_EXPERIENCE + 1500 *_item p PID_BOTTLE_CAPS + 500 @
+13 10000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 10010@
+14 11000 NOT_ANSWER_BEGIN_BATTLE 0#
+65507 11010@
+20 12000 NOT_ANSWER_CLOSE_DIALOG 0#
+65507 12010#
+21 12020@
+21 13000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 13010@
+22 14000 NOT_ANSWER_CLOSE_DIALOG 0#
+23 14010@
+23 15000 NOT_ANSWER_CLOSE_DIALOG 0@
+24 16000 NOT_ANSWER_CLOSE_DIALOG 0#
+25 16010@
+25 17000 NOT_ANSWER_CLOSE_DIALOG 0#
+27 17010r*_var p ncr_westin_pills_status = 0 #
+26 17020#
+28 17030@
+26 18000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 18010r*_var p ncr_westin_pills_status = 0 @
+27 19000 NOT_ANSWER_CLOSE_DIALOG 0@
+28 20000 NOT_ANSWER_CLOSE_DIALOG 0#
+29 20010#
+31 20020#
+30 20030@
+29 21000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 21010r*_var p ncr_westin_pills_status = 0 @
+30 22000 NOT_ANSWER_CLOSE_DIALOG 0#
+31 22010r*_var p ncr_westin_pills_status = 0 #
+32 22020@
+31 23000 NOT_ANSWER_CLOSE_DIALOG 0@
+32 24000 NOT_ANSWER_CLOSE_DIALOG 0#
+33 24010@
+33 25000 NOT_ANSWER_CLOSE_DIALOG 0#
+34 25010@
+34 26000 NOT_ANSWER_CLOSE_DIALOG 0#
+35 26010d*_param p SK_BARTER > 100 #
+36 26020d*_param p SK_BARTER < 101 #
+0 26030r*_var p ncr_westin_pills_status = 2 *_var p q_ncr_westin_pills = 1 #
+0 26040r*_var p ncr_westin_pills_status = 0 @
+35 27000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 27010r*_item p PID_BOTTLE_CAPS + 1000 *_param p ST_EXPERIENCE + 300 *_var p ncr_westin_pills_status = 2 *_var p ncr_westin_player_get_prepayment = 1 *_var p q_ncr_westin_pills = 1 #
+0 27020@
+36 28000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 28010#
+37 28020r*_var p ncr_westin_pills_status = 2 *_var p q_ncr_westin_pills = 1 @
+37 29000 NOT_ANSWER_CLOSE_DIALOG 0@
+38 30000 NOT_ANSWER_CLOSE_DIALOG 0#
+39 30010@
+39 31000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 31010@
+40 32000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 32010@
+41 33000 NOT_ANSWER_CLOSE_DIALOG 0#
+0 33010&
+
+[russ]
+{100}{}{Советник Вестин}
+{200}{}{Вы видите человека одетого в причудливую фермерскую одежду.}
+{210}{}{Это советник Вестин.}
+{210}{}{Серебряные и бирюзовые кольца, серебряная пряжка на ремне, пистолет на боку, этот парень, очевидно, привык иметь деньги и поступать по-своему.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{тупой}
+{1020}{}{не знаком}
+{1030}{}{знаком. обычный режим}
+{1040}{}{Вейстин убивает Смита. Игрок не принимал участия.}
+{1050}{}{Игрок помогает убить Смита, Смит мертв, Вейстин жив, игрок не нападал на Вейстина.}
+{1060}{}{игрок помогал убить Вейстина. Вейстин не простит :)}
+{1070}{}{игрок помогал убить Вейстина. Вейстин не простит :)}
+{2000}{}{Я - Роджер Вестин, ты не можешь здесь торговаться. Чего ты хочешь?}
+{2010}{}{Я здесь насчет работы.}
+{3000}{}{Нет у меня никакой работы. Пошёл вон!}
+{3010}{}{До свидания.}
+{4000}{}{Снова ты? @sex@|Пошёл||Пошла| вон!}
+{4010}{}{Ясно.}
+{4020}{}{Мистер Вейстин, я ищу работу.}
+{4030}{}{Мистер Вейстин, я ищу работу.}
+{4040}{}{Мистер Вейстин, я ищу работу.}
+{4050}{}{Мистер Вейстин, я насчет работы...}
+{4060}{}{Мистер Вейстин, ваше лекарство у меня.}
+{4070}{}{Мистер Вейстин, ваше лекарство у меня.}
+{5000}{}{Еще один придурок здесь шляется!}
+{5010}{}{Кто вы?}
+{6000}{}{Еще один придурок здесь шляется!}
+{7000}{}{Кто ты?!}
+{7010}{}{Меня зовут @pname@.}
+{8000}{}{Если бы не твоя помощь... Я был бы убит. Я твой должник.}
+{8010}{}{Еще немного, и я мог бы опоздать. }
+{9000}{}{Возьми это, в знак моей благодарности.}
+{9010}{}{Спасибо, деньги мне пригодятся.}
+{10000}{}{Ты только что очень помог Республике, @pname@. Я попрошу Сантьягу оформить для тебя специальный ночной пропуск.}
+{10010}{}{Благодарю. [Уйти]}
+{11000}{}{Что? Еще один убийца?!}
+{11010}{}{Подождите, Вейстин, я...}
+{12000}{}{Я не даю работу сборщикам навоза и бомжам. Убирайся.}
+{12010}{}{Ты слишком дерзок, Вейстин. Я научу тебя хорошим манерам. [Атаковать] }
+{12020}{}{Я не бомж.}
+{13000}{}{Проваливай, @sex@|придурок||дура|, пока я не позвал охрану. Я занят, неужели не понятно? Найди меня вечером на ранчо. Там поговорим.}
+{13010}{}{Ухожу. [Уйти]}
+{14000}{}{У меня нет никакой работы для тебя.}
+{14010}{}{А если подумать?}
+{15000}{}{Я тебя не приглашал. Если сейчас же не уберешься, будешь иметь дело с охраной.}
+{16000}{}{О, небо! Опять ты? Сколько можно повторять, у меня нет работы.}
+{16010}{}{Мне показалось, что вы сказали "найди меня позже".}
+{17000}{}{Стой. Вопрос: Тебе доводилось бывать в Городе-Убежище?}
+{17010}{}{Не был@sex@|||а| и в ближайшее время не собираюсь.}
+{17020}{}{Конечно. Я там по жизни тусуюсь, дружки мои местную крышу держат.}
+{17030}{}{Доводилось. А что?}
+{18000}{}{Какую крышу? Что за язык? Как меня утомили эти отбросы пустоши...}
+{18010}{}{Че за базар! Ты кого отбросом назвал, мудрила!}
+{19000}{}{Тогда убирайся отсюда.}
+{20000}{}{Если уж ты так сильно жаждешь работы, то сможешь выполнить простую задачу?}
+{20010}{}{Запросто! Что нужно сделать? Спасти мир? Поработить Город-Убежище? Поднять Танди из могилы?}
+{20020}{}{Чтобы я занимал@sex@|ся||ась| чем-то по заданию такого урода, как ты? Да никогда в жизни! [Уйти]}
+{20030}{}{Что нужно сделать?}
+{21000}{}{Не смешно. Про Танди - совсем неудачная шутка. Проваливай. Охрана!}
+{21010}{}{Я просто пошутил@sex@|||а|... Уже ухожу...}
+{22000}{}{У меня заканчиваются таблетки для сердца. В НКР таких не достать. Только в Городе-Убежище есть.}
+{22010}{}{Ха! Ты сдохнешь без своих таблеток! Да! Это кара Господня! [Уйти]}
+{22020}{}{У кого в Городе-Убежище можно найти эти колеса?}
+{23000}{}{Иди, иди. Не задерживайся, @sex@|идиот||дура|.}
+{24000}{}{Мой человек покупал таблетки у Элен Трой. И на этой неделе он должен был их принести. Но что-то случилось, и до сих пор его нет.}
+{24010}{}{Ты хочешь, чтобы я наш@sex@|ел||ла| твоего человека? Или просто купил@sex@|||а| таблетки?}
+{25000}{}{Со своими людьми я разбирусь сам. От тебя требуется купить таблетки и доставить мне. Когда вернешься, я заплачу их полную стоимость.}
+{25010}{}{Сколько я получу?}
+{26000}{}{За лекарство Элен попросит 1000 монет. Принеси мне таблетки, и получишь их стоимость, плюс 1000 сверху.}
+{26010}{}{Деньги вперед! Иначе я даже пальцем не шевельну!}
+{26020}{}{Деньги вперед! Иначе я даже пальцем не шевельну!}
+{26030}{}{Можешь считать, что таблетки уже у тебя в тумбочке. [Уйти]}
+{26040}{}{Нет, мне некогда мотаться к черту на кулички. [Уйти]}
+{27000}{}{Хорошо. Но попробуй только меня обмануть, ты поплатишься за это. Я дам тебе 1000, остальное получишь, когда вернешься ко мне.}
+{27010}{}{Я не подведу. Это не в моих правилах [Уйти]}
+{27020}{}{Я передумал@sex@|||а|. До свидания. [Уйти]}
+{28000}{}{Не пойдет. Я тебя не знаю, и доверять тебе не могу. Приноси таблетки, деньги получишь после. }
+{28010}{}{Ищи другого дурака. Пока [Уйти]}
+{28020}{}{Хорошо, я соглас@sex@|ен||на|.}
+{29000}{}{Все. Разговор закончен.}
+{30000}{}{Ты достал@sex|||а| таблетки?}
+{30010}{}{Пока нет. Где я могу найти доктора Элен?}
+{31000}{}{Проклятье, ты убиваешь меня. Отправляйся в Город-Убежище. Найди главного врача Элен Трой. Возьми у нее таблетки! Неужели это так сложно?}
+{31010}{}{Уже в пути. [Уйти]}
+{32000}{}{Наконец-то. Ты провозил@sex@|ся||ась| слишком долго. Тем не менее я держу слово. Вот твоя плата, 1000 монет.}
+{32010}{}{Спасибо. Увидимся. [Уйти]}
+{33000}{}{Наконец-то. Ты провозил@sex@|ся||ась| слишком долго. Тем не менее я держу слово. Вот твоя плата, 2000 монет.}
+{33010}{}{Спасибо. Увидимся. [Уйти]}
+
+[engl]
+{100}{}{Adviser Vestin}
+{200}{}{you see the person dressed in freakish farmer clothes.}
+{210}{}{It is adviser Vestin.}
+{210}{}{Silver and turquoise rings, a silver buckle on a belt, a pistol on one side, this guy, obviously, has got used to have money and to arrive in own way.}
+{1000}{}{Predialogue installations}
+{1010}{}{stupid}
+{1020}{}{it is not familiar}
+{1030}{}{a sign. A usual mode}
+{1040}{}{Vejstin kills Smith. The player did not accept participation.}
+{1050}{}{the Player helps to kill Smith, Smith is dead, Vejstin is live, the player did not attack Vejstina.}
+{1060}{}{the player helped to kill Vejstina. Vejstin will not forgive:)}
+{1070}{}{the player helped to kill Vejstina. Vejstin will not forgive:)}
+{2000}{}{I am Roger Vestin, you cannot bargain here. That do you want?}
+{2010}{}{I here about work.}
+{3000}{}{There is at me no work. Get out!}
+{3010}{}{Good-bye.}
+{4000}{}{Again you? @sex | Has gone || Has gone |!}
+{4010}{}{it is clear.}
+{4020}{}{Mr. Vejstin, I search for work.}
+{4030}{}{Mr. Vejstin, I search for work.}
+{4040}{}{Mr. Vejstin, I search for work.}
+{4050}{}{Mr. Vejstin, I about work...}
+{4060}{}{Mr. Vejstin, your medicine at me.}
+{4070}{}{Mr. Vejstin, your medicine at me.}
+{5000}{}{One more moron here gads!}
+{5010}{}{Who you?}
+{6000}{}{One more moron here gads!}
+{7000}{}{Who you?!}
+{7010}{}{My name is @pname.}
+{8000}{}{If not your help... I would be killed. I your debtor.}
+{8010}{}{it is A little more, and I could be late.}
+{9000}{}{Take it, as a sign of my gratitude.}
+{9010}{}{Thanks, money to me will be useful.}
+{10000}{}{You just have very much helped Republic, @pname. I will ask Santjagu to issue for you the special night admission.}
+{10010}{}{I Thank. [To leave]}
+{11000}{}{That? One more murderer?!}
+{11010}{}{Wait, Vejstin, I...}
+{12000}{}{I do not give work to collectors of manure and vagabonds. Be cleaned.}
+{12010}{}{You too derzok, Vejstin. I will teach you to good manners. [To attack]}
+{12020}{}{I not the vagabond.}
+{13000}{}{Ruin, @sex | the moron || the silly woman | while I have not called protection. I am occupied, really it is not clear? Find me in the evening on ranch. There we will talk.}
+{13010}{}{I Leave. [To leave]}
+{14000}{}{I do not have any work for you.}
+{14010}{}{And if to think?}
+{15000}{}{I did not invite you. If now you will not be cleaned, you will deal with protection.}
+{16000}{}{About, the sky! Again you? How many it is possible to repeat, I do not have work.}
+{16010}{}{it seemed To me that you have told "find me later".}
+{17000}{}{Stand. A question: You could happen in the City-refuge?}
+{17010}{}{Not был@sex ||| and | and in the near future I do not gather.}
+{17020}{}{Certainly. I there on life hang out, my friends hold a local roof.}
+{17030}{}{It was possible. And what?}
+{18000}{}{What roof? What for language? As I was tired with this garbage of a heathland...}
+{18010}{}{Che for a market! You of whom otbrosom named, subtilized!}
+{19000}{}{Then be cleaned from here.}
+{20000}{}{If you so strongly thirst for works you can carry out a simple problem?}
+{20010}{}{Easily! What it is necessary to make? To save the world? To enslave the City-refuge? To lift Tandi from a tomb?}
+{20020}{}{That I занимал@sex | sja || as | something on the instructions of such freak, how are you? Yes never in life! [To leave]}
+{20030}{}{That it is necessary to make?}
+{21000}{}{it is not ridiculous. About Tandi - absolutely unsuccessful joke. Ruin. Protection!}
+{21010}{}{I am simple пошутил@sex ||| and |... Already I leave...}
+{22000}{}{At me tablets for heart come to an end. In NKR such not to get. Only in the City-refuge is.}
+{22010}{}{Ha! You will die without the tablets! Yes! It is a penalty of Gospodnja! [To Leave]}
+{22020}{}{At whom it is possible to find these wheels in the City-refuge?}
+{23000}{}{Go, go. Be not late, @sex | the idiot || the silly woman |.}
+{24000}{}{My person bought tablets from Elen of Troys. And this week it should bring them. But something happens, and till now it is not present.}
+{24010}{}{You want, that I наш@sex | ate || la | your person? Or it is simple купил@sex ||| and | tablets?}
+{25000}{}{With the people I razbirus itself. From you it is required to buy tablets and to deliver to me. When you will return, I will pay their overall cost.}
+{25010}{}{How many I will receive?}
+{26000}{}{For a medicine of Elen will ask 1000 coins. Bring to me tablets, and you will receive their cost, plus 1000 from above.}
+{26010}{}{Money forward! Otherwise I even will not stir a finger!}
+{26020}{}{Money forward! Otherwise I even will not stir a finger!}
+{26030}{}{you Can consider that tablets already at you in a bedside table. [To leave]}
+{26040}{}{No, I have no time to be wound to the other end of the world. [To leave]}
+{27000}{}{it is good. But try to deceive only me, you will pay for it. I will give to you 1000, the rest will receive, when will return to me.}
+{27010}{}{I will not bring. It not in my rules [to Leave]}
+{27020}{}{I передумал@sex ||| and |. Good-bye. [To leave]}
+{28000}{}{will not go. I do not know you, and trust you I can not. Bring tablets, money you will receive after.}
+{28010}{}{Search for other fool. While [to Leave]}
+{28020}{}{it is good, I соглас@sex | en || on |.}
+{29000}{}{All. Conversation is finished.}
+{30000}{}{You достал@sex ||| and | tablets?}
+{30010}{}{While is not present. Where I can find doctor Elen?}
+{31000}{}{Prokljate, you kill me. Go to the City-refuge. Find head physician Elen of Troys. Take from it tablets! Really it so is difficult?}
+{31010}{}{Already in a way. [To leave]}
+{32000}{}{At last. You провозил@sex | sja || as | too long. Nevertheless I keep a word. Here your payment, 1000 coins.}
+{32010}{}{Thanks. We will meet. [To leave]}
+{33000}{}{At last. You провозил@sex | sja || as | too long. Nevertheless I keep a word. Here your payment, 2000 coins.}
+{33010}{}{Thanks. We will meet. [To leave]}

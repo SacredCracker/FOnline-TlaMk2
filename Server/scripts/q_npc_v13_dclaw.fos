@@ -1,0 +1,95 @@
+// Name:	q_npc_v13_dclaw
+// Author:	Sufir
+
+// Uses
+#include "_macros.fos"
+#include "v13_q_dclaw_lib.fos"
+#include "merc.fos"
+
+// Defines
+
+
+// Инициализация ошейника.
+void _InitDclaw(Critter& merc, bool firstTime)
+{
+	
+	merc.SetEvent(CRITTER_EVENT_SMTH_DEAD,	"e_DclawMasterDead");
+	merc.SetEvent(CRITTER_EVENT_DEAD,		"e_DclawDead");
+	merc.SetEvent(CRITTER_EVENT_FINISH,	"e_DclawFinish");
+	merc.StatBase[ ST_KILL_EXPERIENCE ]=10;
+	_MercInit(merc, firstTime);
+
+}
+
+
+// Смерть смертокогта.
+void e_DclawDead(Critter& dclaw, Critter@ killer)
+{
+
+	// Закладываем в труп ошейник.
+	Item@ Collar=dclaw.AddItem(PID_PSYCHIC_NULLIFIER, 1);
+	if(Collar.IsNotValid) return;
+	Collar.SetScript("q_item_v13_collar@_CollarInit");
+	Collar.Update();
+	// Меняем стадию квеста у игроков в группе с "квест взят или самка поймана" на "ошейник потерян".
+	Critter@ master=GetMaster(dclaw);
+	int[] ChangeStages={ 1, 2 };
+	if(valid(master)){
+		SetGroupQuestStage(master, ChangeStages, 3);
+	}
+	// Разрешаем лутать труп.
+	dclaw.ModeBase[MODE_NO_STEAL]=0;
+	dclaw.ModeBase[MODE_NO_LOOT]=0;
+	// Запускаем событие мерка merc.fos.
+	e_MercDead(dclaw, killer);
+
+}
+
+
+// Деструктор смертокогта.
+void e_DclawFinish(Critter& dclaw, bool deleted)
+{
+
+	// Меняем стадию квеста у игроков в группе с "квест взят или самка поймана" на "ошейник потерян".
+	Critter@ master=GetMaster(dclaw);
+	int[] ChangeStages={ 1, 2 };
+	if(valid(master)){
+		SetGroupQuestStage(master, ChangeStages, 3);
+	}
+	// Запускаем деструктор мерка из merc.fos.
+	//e_MercFinish(dclaw, deleted);
+
+}
+
+
+// Смерть хозяина.
+void e_DclawMasterDead(Critter& dclaw, Critter& deadCr, Critter@ killer)	
+{
+
+	// Если хозяин был убит, меняем стадию квеста у игроков в группе с "квест взят или самка поймана" на "ошейник потерян".
+	Critter@ master=GetMaster(dclaw);
+	int[] ChangeStages={ 1, 2 };
+	if(valid(master)){
+		if(deadCr.Id==master.Id) {
+			if(GetLeaderId(deadCr) > 0) {
+				if(!Merc2Player(GetCritter(GetLeaderId(deadCr)), dclaw, MERC_FOLLOWER_HARMLESS)) SetGroupQuestStage(master, ChangeStages, 3);
+				dclaw.StatBase[ ST_NPC_ROLE ]=1001;
+			} else {
+				SetGroupQuestStage(master, ChangeStages, 3);
+			}
+		}
+		
+	}
+	// Запускаем событие смерти криттера из merc.fos.
+	e_MercSmthDead(dclaw, deadCr, killer);
+
+}
+
+
+// Удаляем смертокогта.
+void DclawFinish(Critter& dclaw)
+{
+
+	DeleteNpc(dclaw);
+
+}

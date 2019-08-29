@@ -1,0 +1,78 @@
+[comment]
+23/09/09: rifleman17 
+-------------------------------------------------
+Охранник с проблемами. Кто-то свистнул у него пистолет. Купит пушку за 200 монет у персонажа с обаянием > 4. Остальных пошлет куда подальше.
+Если игрок подогнал ему пушку, радушно поздоровается. Чтобы запретить многократное выполнение квеста используется переменная name_mem_npc_player .
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 NOT_ANSWER_CLOSE_DIALOG 1#
+2 1010d*var p name_mem_npc_player = 0#
+9 1020d*var p name_mem_npc_player = 1@
+2 2000 NOT_ANSWER_CLOSE_DIALOG 0#
+3 2010d*stat p ST_CHARISMA > 4#
+4 2020d*stat p ST_CHARISMA < 5@
+3 3000 NOT_ANSWER_CLOSE_DIALOG 0#
+5 3010@
+4 4000 NOT_ANSWER_CLOSE_DIALOG 0@
+5 5000 NOT_ANSWER_CLOSE_DIALOG 0#
+6 5010@
+6 6000 NOT_ANSWER_CLOSE_DIALOG 0#
+7 6010@
+7 7000 NOT_ANSWER_CLOSE_DIALOG 0#
+8 7010d*item p 8 > 0r*item p 8 - 1*var p name_mem_npc_player = 1*item p 41 + 400*stat p ST_KARMA + 10#
+0 7020#
+0 7030@
+8 8000 NOT_ANSWER_CLOSE_DIALOG 0@
+9 9000 NOT_ANSWER_CLOSE_DIALOG 0&
+
+[russ]
+{100}{}{Охранник}
+{200}{}{Вы видите человека крепкого телосложения. }
+{210}{}{Вы видите Охранника. Он выглядит чем-то обеспокоенным.Оглядывается по сторонам, бормочет что-то себе под нос.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{игрок не приносил пушки охраннику}
+{1020}{}{игрок раньше принес пушку охраннику, теперь охранник к нему благосклонен}
+{2000}{}{Тебе чего?}
+{2010}{}{Мне только кажется, или у тебя какие-то проблемы? }
+{2020}{}{Мне только кажется, или у тебя какие-то проблемы? }
+{3000}{}{Мои проблемы тебя не касаются. Проваливай отсюда..}
+{3010}{}{Да нет же, что-то не так. Колись, что случилось?}
+{4000}{}{Не задерживайся, иди по своим делам.}
+{5000}{}{Да ворюги оборзели в конец. Я тут слегка прикемарил на посту, так сразу пушку свистнули. Только никому не слова!}
+{5010}{}{Вот дела! Не свезло тебе, @sex@|друг||красавчик|, ой не свезло. И что теперь?}
+{6000}{}{Да что теперь... Влетит мне от шефа, как пить дать. Боюсь, как бы не турнули. У нас с порядком строго...}
+{6010}{}{Может, я тебе помочь смогу чем-нибудь?}
+{7000}{}{[Смотрит на вас с надеждой] Слушай... А ведь дело говоришь. Может, ты мне сумеешь пушку похожую подогнать? Пистолет, 10 мм, заплачу 400 монет?}
+{7010}{}{Без проблем! Гони монеты, есть у меня такая пушка.}
+{7020}{}{Попробую найти, сейчас нет такого пистолета.}
+{7030}{}{Ну нет, дружище. А как же я без ствола? Без ствола в пустоши не выжить. [Уйти]}
+{8000}{}{Спасибо, @sex@|друг||крошка|. Выручил ты меня. Я твой должник.}
+{9000}{}{Здравствуй, @pname@. Рад тебя видеть снова.@@О, бродяга, и ты здесь? Сейчас смена закончится, куплю тебе пива.@@Привет! Здорово ты мне в тот раз с пушкой помог@sex@|||ла|. Слава богу, никто не заметил подмены.}
+
+[engl]
+{100}{}{the Security guard}
+{200}{}{you see the person of a strong constitution.}
+{210}{}{you see the Security guard. It looks something disturbed. Looks around, speaks something in beard.}
+{1000}{}{Predialogue installations}
+{1010}{}{the player did not bring a gun to the security guard}
+{1020}{}{the player has brought a gun to the security guard earlier, now the security guard is favourable to it}
+{2000}{}{to You of that?}
+{2010}{}{only it seems To me, or at you any problems?}
+{2020}{}{only it seems To me, or at you any problems?}
+{3000}{}{My problems you do not concern. Ruin from here.}
+{3010}{}{Yes is not present, something not so. Be pricked, what happens?}
+{4000}{}{be not late, go on the affairs.}
+{5000}{}{Yes thieves оборзели in the end. I here slightly прикемарил on a post then for a gun have whistled. Only to nobody of a word!}
+{5010}{}{Here affairs! Has not brought to you, @sex | the friend || the handsome man |, oh has not brought. Also what now?}
+{6000}{}{Yes that now... Will fly to me from the chief, for sure. I am afraid, as though have not chucked out. At us with order strictly...}
+{6010}{}{Perhaps I to you to help a smog something?}
+{7000}{}{[Looks at you with hope] Listen... And after all you talk sense. Perhaps you to me will manage similar to adjust a gun? A pistol, 10 mm, 400 coins will begin to cry?}
+{7010}{}{Without problems! Drive coins, there is at me such gun.}
+{7020}{}{I Will try to find, now there is no such pistol.}
+{7030}{}{Well is not present, дружище. And how I without a trunk? Without a trunk in a heathland not to survive. [To leave]}
+{8000}{}{Thanks, @sex | the friend || a crumb |. You have gained me. I your debtor.}
+{9000}{}{Hi, @pname. To see glad you again. @@ About, the tramp, and you here? Now change will end, the purchase to you of beer. @@ greetings! Fine you to me that time with a gun помог@sex ||| ла |. Thank God, nobody has noticed substitutions.}

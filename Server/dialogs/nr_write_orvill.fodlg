@@ -1,0 +1,235 @@
+[comment]
+Ваши комментарии / Your comments.
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _script q_nr_wri_kidnap@d_NotQuestActive 0  D _var p q_nr_wri_kidnap = 0 #
+16 1020 D _var p q_nr_wri_kidnap = 0 D _script q_nr_wri_kidnap@d_QuestActive 0  D _script dialog@d_TimeoutOk 0  D _var p q_nr_wri_kidnap = 0 #
+3 1030 D _script dialog@d_NotTimeoutOk 0  D _var p q_nr_wri_kidnap = 0 D _script q_nr_wri_kidnap@d_QuestActive 0  D _var p q_nr_wri_kidnap = 0 #
+17 1040 D _var p q_nr_wri_kidnap } 1 D _var p q_nr_wri_kidnap { 8 @
+2 2000 None 0 #
+0 2010 @
+3 3000 None 0 #
+4 3010 #
+0 3020 @
+4 4000 Attack 0 @
+5 5000 None 0 #
+6 5010 @
+6 6000 None 0 #
+7 6010 R _script dialog@r_SetUniqTO 1 90 #
+9 6020 @
+7 7000 None 0 #
+0 7010 #
+8 7020 @
+8 8000 Attack 0 @
+9 9000 None 0 #
+10 9010 R _script dialog@r_SetUniqTO 1 90 #
+11 9020 @
+10 10000 None 0 #
+0 10010 @
+11 11000 None 0 #
+0 11010 #
+12 11020 #
+13 11030 @
+12 12000 None 0 #
+13 12010 @
+13 13000 None 0 #
+14 13010 @
+14 14000 None 0 #
+0 14010 #
+15 14020 R _script dialog@r_InfoMessage 1 1 R _var p q_nr_wri_kidnap = 1 R _script q_nr_wri_kidnap@r_ShowLocation 0  @
+15 15000 None 0 #
+0 15010 @
+16 16000 None 0 #
+5 16010 #
+3 16020 R _script dialog@r_SetUniqTO 1 60 #
+3 16030 R _script dialog@r_SetUniqTO 1 90 @
+17 17000 None 0 #
+18 17010 #
+19 17020 D _var p q_nr_wri_kidnap = 5 #
+23 17030 D _var p q_nr_wri_kidnap = 7 #
+25 17040 D _var p q_nr_wri_kidnap = 8 #
+28 17050 D _var p q_nr_wri_kidnap = 6 @
+18 18000 None 0 #
+0 18010 @
+19 19000 None 0 #
+20 19010 D _var p q_nr_wri_kidnap = 5 R _var p q_nr_wri_kidnap = 9 R _script dialog@r_QuestReward1 0  #
+21 19020 D _var p q_nr_wri_kidnap = 5 @
+20 20000 None 0 #
+0 20010 @
+21 21000 None 0 #
+22 21010 D _var p q_nr_wri_kidnap = 5 R _script dialog@r_QuestReward1 0  R _var p q_nr_wri_kidnap = 9 R _item p PID_BOTTLE_CAPS + 5000 @
+22 22000 None 0 #
+0 22010 @
+23 23000 None 0 #
+24 23010 D _var p q_nr_wri_kidnap = 7 R _var p q_nr_wri_kidnap = 10 @
+24 24000 None 0 #
+0 24010 @
+25 25000 None 0 #
+26 25010 @
+26 26000 None 0 #
+27 26010 D _var p q_nr_wri_kidnap = 8 R _script dialog@r_QuestReward1 0  R _item p PID_BOTTLE_CAPS + 5000 R _var p q_nr_wri_kidnap = 12 @
+27 27000 None 0 #
+0 27010 @
+28 28000 None 0 #
+0 28010 D _var p q_nr_wri_kidnap = 6 R _script dialog@r_QuestReward2 0  R _var p q_nr_wri_kidnap = 11 R _item p PID_BOTTLE_CAPS + 7000 &
+
+[russ]
+{100}{}{Орвилл}
+{200}{}{Вы видите Орвилла Райта.}
+{210}{}{Вы видите хорошо одетого джентльмена. Он похоже постоянно чего-то опасается. Поэтому, наверное, его волосы поседели по краям.}
+{210}{}{Вы видите Орвилла Райта, ворчащего себе под нос. Похоже, он собирается вырвать у себя остатки волос.}
+{210}{}{Вы видите Орвилла Райта, ворчащего себе под нос. Он расстроен и часто вздыхает.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{обычный}
+{1020}{}{квест на спасение сына не взят. Локация доступна. Игрок НПЦ не грубил}
+{1030}{}{квест на спасение сына не взят. Локация доступна. Игрок нагрубил нпц}
+{1040}{}{квест взят, не доделан}
+{2000}{}{Говори, дикарь. Кто ты и что тебе нужно?}
+{2010}{}{Эээ... Я уже ухожу.}
+{3000}{}{[Хмурится] Уйди с глаз моих. Еще раз здесь увижу - застрелю, слышишь?@@Знаешь, лучше тебе УБИРАТЬСЯ, и побыстрее. Даю тебе пять секунд, потом стреляю.}
+{3010}{}{Ты, старик, слишком высокого о себе мнения! Я поставлю тебя на место.}
+{3020}{}{Ну ладно. Я, наверное, пойду.}
+{4000}{}{Дети! У нас тут посетитель, ищет место на Голгофе! Идите сюда!}
+{5000}{}{Я не обеспокоен, о нет. Я в ярости! Этот лоботряс снова угодил в ту же ловушку. Черт его подери.}
+{5010}{}{О чем вы, сэр?}
+{6000}{}{[Хмурится и оценивает вас взглядом] О чем? А откуда ты так@sex@|ой||ая| любопытн@sex@|ый||ая| взял@sex@|ся||ась|?}
+{6010}{}{Да просто, мимо проходил@sex@|||а|, решил@sex@|||а| заглянуть.}
+{6020}{}{Я наслышан@sex@|||а| о Райтах, и глубоко уважаю вашу семью. Если я только смогу чем-то помочь..}
+{7000}{}{Ага, похоже, у тебя дурная привычка бегать туда-сюда. Наверное, нам стоит поработать над этой твоей проблемой.}
+{7010}{}{Я ухожу.}
+{7020}{}{О чем вы го...?}
+{8000}{}{Ну прям моя мысль. Готовься к смерти.}
+{9000}{}{Ну ладно, допустим. Возможно, то, что ты не в семье, это и хорошо. Так случилось, что МОЯ семья - ЭТО семья Райт. Мы сильны тем, что помним о своем родстве...}
+{9010}{}{Хватит этой пурги. Ближе к делу.}
+{9020}{}{Понимаю... Ну, гм, мне кажется, что понимаю.}
+{10000}{}{[Лицо мистера Райта искажается гневом, и он начинает орать] Ты действуешь мне на нервы! Вон! Убирайся отсюда!}
+{10010}{}{Ухожу, прошу прощения.}
+{11000}{}{Один из моих сыновей попал в переплет. Его взяли в заложники. Опять. Грязные подонки, они даже не представляют, с кем связались!}
+{11010}{}{Мне это неинтересно.}
+{11020}{}{"Опять"? Это происходит не впервые?}
+{11030}{}{Можете рассказать подробнее, что случилось, мистер Райт?}
+{12000}{}{Да, но к делу это не относится. Если хочешь помочь Райтам, спаси моего сына. Я хорошо отблагодарю тебя.}
+{12010}{}{Думаю, мы сумеем договориться. Ближе к делу.}
+{13000}{}{Мой сын отправился в Пустошь, по важному делу. Подробности дела тебя не касаются. На месте его уже ждали мародеры Пустоши. Их оказалось слишком много. Они схватили моего сына, потом связались со мной и потребовали выкуп.}
+{13010}{}{Сколько нужно денег?}
+{14000}{}{Райты никогда не заплатят шантажисту. И дело не в деньгах. Их нужно проучить. Если справишься с ними, я заплачу тебе те 5 000, что они просили. Если, конечно, мой сын останется жив.}
+{14010}{}{Это слишком опасно, я не готов@sex@|||а| рисковать своей жизнью.}
+{14020}{}{Нет проблем. Где мне искать вашего сына?}
+{15000}{}{Это палаточный лагерь, глубоко в Пустоши. Вот здесь. Поспеши, времени очень мало.}
+{15010}{}{Да, займусь этим прямо сейчас.}
+{16000}{}{[Морщины покрывают лицо этого старика... похоже, с него никогда не сходило раздраженное выражение. В его густой седой шевелюре осталось лишь несколько каштановых волосков]}
+{16010}{}{Мистер Райт, возможно, это не мое дело, но вы выглядите чем-то обеспокоенным. Что случилось?}
+{16020}{}{Эй, Райт, выкладывай, что за проблема у тебя!}
+{16030}{}{Я приш@sex@|ел||ла| за работой. И ты мне ее дашь, ясно?}
+{17000}{}{Есть новости?}
+{17010}{}{Пока нет...}
+{17020}{}{Мистер Райт. Ваш сын в безопасности.}
+{17030}{}{У меня плохие новости, сэр.}
+{17040}{}{У меня плохие новости, сэр.}
+{17050}{}{Все в порядке, мистер Райт. Ваш сын скоро должен быть здесь. Мародеры отправлены на небеса.}
+{18000}{}{[Выражение надежды на лице Райта сменяет разочарование] Проклятье! Нельзя было поручать такое чужаку не из Семьи. Прочь с глаз моих...}
+{18010}{}{Не все еще потеряно, я работаю над этой проблемой.}
+{19000}{}{А что с рейдерами? Они мертвы?}
+{19010}{}{Да. Все до единого! Это была форменная бойня!}
+{19020}{}{Они были слишком сильны. Предо мной стоял выбор, вступить в бой или уйти с миром. Слишком высок был шанс потерять вашего сына, Мистер Райт.}
+{20000}{}{[Райт багровеет и выплевывает через сжатые зубы] Ты! Вздумал@sex@|||а|! Обмануть! Меня?! Орвила Райта?! Я все, все знаю! Убирайся отсюда!}
+{20010}{}{Эй, что за дела! А где деньги?}
+{21000}{}{Проклятье! Черт бы побрал этого мальчишку, и тебя, и мародеров! Это же такой удар по репутации Райтов!}
+{21010}{}{Сэр, вы считаете, мы должны были рисковать?}
+{22000}{}{Да, черт возьми, да! Да кому я это объясняю? Ты - не Райт, и никогда им не станешь. Ладно. Сын жив, это главное. Вот твоя награда. И больше здесь не появляйся.}
+{22010}{}{Без проблем.}
+{23000}{}{Так. Говори.}
+{23010}{}{Ваш сын мертв. Эти сволочи оказались мне не по зубам.}
+{24000}{}{[Райт мрачнеет и отводит взгляд] Больше ничего не говори. Уходи.}
+{24010}{}{[Уйти]}
+{25000}{}{Так. Говори.}
+{25010}{}{Ваш сын мертв.}
+{26000}{}{Что с мародерами?}
+{26010}{}{Мародеры убиты, мистер Райт. Но с задачей я не справил@sex@|ся||ась|...}
+{27000}{}{Это тяжелый день для Райтов. Но, я ценю, что тебе удалось разобраться с мародерами. Ты получишь награду.}
+{27010}{}{Не было никакой возможности его спасти, сэр...}
+{28000}{}{Вот это я называю отличной работой, @pname@! Я очень доволен! Думаю, что смогу заплатить тебе немного больше.}
+{28010}{}{Спасибо. Эти подонки заслуживали смерти.}
+{100000001}{}{[Расположение лагеря бандитов отмечено на карте.]}
+
+[engl]
+{100}{}{Orville}
+{200}{}{You see Orville Wright.}
+{210}{}{You see a well-dressed gentleman. He looks very apprehensive. Could be the reason his hair tips turned grey.}
+{1000}{}{Predialogue installations}
+{1010}{}{usual}
+{1020}{}{the quest on rescue of the son is not taken. The location is accessible. Player NPTS was not rude}
+{1030}{}{the quest on rescue of the son is not taken. The location is accessible. The player has insulted npts}
+{1040}{}{the quest is taken, is not completed}
+{2000}{}{Speak, the savage. Who you also what are necessary for you?}
+{2010}{}{Eee... I already leave.}
+{3000}{}{[Frowns] Leave from my eyes. Once again here I will see - I will shoot, you hear? @@ you know, it is better to be cleaned to you, and faster. I give to you five seconds, then I shoot.}
+{3010}{}{You, the old man, too high opinion on! I will put you into place.}
+{3020}{}{Well it is fine. I, probably, will go.}
+{4000}{}{Children! At us here the visitor, searches for a place on Golgotha! Go here!}
+{5000}{}{I am not disturbed, about was not present. I in fury! This goof - off has again got into the same trap. Its lines poderi.}
+{5010}{}{About what you, the sir?}
+{6000}{}{[Frowns and estimates you a sight] About what? And whence you так@sex | oh || aja | любопытн@sex | yj || aja | взял@sex | sja || as |?}
+{6010}{}{Yes it is simple, by проходил@sex ||| and |, решил@sex ||| and | to glance.}
+{6020}{}{I наслышан@sex ||| and | about Rights, and deeply respect your family. If I only can help something.}
+{7000}{}{Aha, seemingly, at you bad habit to run there-here. Probably, we should work over this your problem.}
+{7010}{}{I leave.}
+{7020}{}{About what you go...?}
+{8000}{}{Well it is direct my thought. Prepare for death.}
+{9000}{}{Well it is fine, we will admit. Probably, that you not in a family, it and is good. So happens that my family is a family Right. We are strong that we remember the relationship...}
+{9010}{}{this snowstorm Will suffice. Keep to the point.}
+{9020}{}{I Understand... Well, h'm, it seems to me that I understand.}
+{10000}{}{[the Person of Mr. Right is deformed by anger, and it starts to shout] You irritate me!! Be cleaned from here!}
+{10010}{}{I Leave, I am sorry.}
+{11000}{}{One of my sons has got into trouble. It took in hostages. Again. Dirty geeks, they at all do not represent, with whom have communicated!}
+{11010}{}{To me it is uninteresting.}
+{11020}{}{"Again"? It occurs not for the first time?}
+{11030}{}{Can tell more in detail, what happens, Mr. Right?}
+{12000}{}{Yes, but it does not concern business. If you want to help Rights, rescue my son. I will well thank you.}
+{12010}{}{I Think, we will manage to agree. Keep to the point.}
+{13000}{}{My son has gone to the Heathland, on an important issue. Details of business you do not concern. On its place marauders of the Heathland already waited. Them it has appeared too much. They have seized my son, have then communicated with me and have demanded the repayment.}
+{13010}{}{How many it is necessary money?}
+{14000}{}{Rights never will pay to the blackmailer. And matter is not in money. They need to be taught a good lesson. If you will cope with them, I will begin to cry to you those 5 000 that they asked. If, of course, my son remains is live.}
+{14010}{}{It is too dangerous, I not готов@sex ||| and | to risk the life.}
+{14020}{}{There are no problems. Where to me to search for your son?}
+{15000}{}{It is a camp, it is deep in the Heathland. Here. Hasten, time has not enough.}
+{15010}{}{Yes, I will be engaged in it right now.}
+{16000}{}{[Wrinkles cover the person of this old man... Similar, angry expression never descended from it. In its dense grey-haired head of hear there were some chestnut hairs]}
+{16010}{}{Mr. Right, probably, it not my business, but you look something disturbed. What happens?}
+{16020}{}{Hey, Right, spread that for a problem at you!}
+{16030}{}{I приш@sex | ate || la | behind work. And you will give it to me, clearly?}
+{17000}{}{There are news?}
+{17010}{}{While is not present...}
+{17020}{}{Mr. Right. Your son in safety.}
+{17030}{}{At me bad news, the sir.}
+{17040}{}{At me bad news, the sir.}
+{17050}{}{Everything is all right, Mr. Right. Your son soon should be here. Marauders are sent on heavens.}
+{18000}{}{[hope Expression on Right's person replaces disappointment] Prokljate! It was impossible to charge such to a stranger not from the Family. Away from my eyes...}
+{18010}{}{it is not still lost, I work over this problem.}
+{19000}{}{And what with raiders? They are dead?}
+{19010}{}{Yes. All to the uniform! It was the uniform slaughter-house!}
+{19020}{}{They were too strong. predo the choice stood me, to engage or leave with the world. The chance to lose your son, Mr. Right was too high.}
+{20000}{}{[Right flushes and You spit out through the clenched teeth]! Вздумал@sex ||| and |! To deceive! Me?! Orvila Right?! I everything, know all! Be cleaned from here!}
+{20010}{}{Hey that for affairs! And where money?}
+{21000}{}{Prokljate! Lines pobral this boy, and you, and marauders! Same such blow on Right's reputation!}
+{21010}{}{the Sir, you consider, we should risk?}
+{22000}{}{Yes, devil take it, yes! Yes to whom I explain it? You - not Right, and never it will become. All right. The son is live, this main thing. Here your award. And more here do not appear.}
+{22010}{}{Without problems.}
+{23000}{}{So. Speak.}
+{23010}{}{your son is dead. These swine have appeared to me too hard.}
+{24000}{}{[Right grows dark and looks away] More speak than nothing. Leave.}
+{24010}{}{[to Leave]}
+{25000}{}{So. Speak.}
+{25010}{}{your son is dead.}
+{26000}{}{That with marauders?}
+{26010}{}{Marauders are killed, Mr. Right. But with a problem I not справил@sex | sja || as |...}
+{27000}{}{It is an unlucky day for Rights. But, I appreciate that you managed to understand with marauders. You will receive an award.}
+{27010}{}{was not any possibility it to rescue, the sir...}
+{28000}{}{Here it I name excellent work, @pname! I am very happy! I think that I can pay to you a bit more.}
+{28010}{}{Thanks. These geeks deserved death.}
+{100000001}{}{[the Arrangement of camp of gangsters is noted on a card.]}

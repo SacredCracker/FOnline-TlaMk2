@@ -1,0 +1,143 @@
+// Смещение всплывающего при наведении текста на кнопках главного меню, относительно основного.
+int[]LogTextOffset;
+// Шрифт текста кнопок главного меню.
+int LogTextFont;
+int[] TopicCoords;
+
+// Координаты текста кнопок главного меню.
+int[] LogPlayTextCoords;
+int[] LogRegTextCoords;
+int[] LogOptionsTextCoords;
+int[] LogCreditsTextCoords;
+int[] LogExitTextCoords;
+
+// Цвета текста кнопок главного меню.
+uint8[] LogPlayTextColor;
+uint8[] LogRegTextColor;
+uint8[] LogOptionsTextColor;
+uint8[] LogCreditsTextColor;
+uint8[] LogExitTextColor;
+
+// Цвета текста кнопок главного меню, при наведении мышей.
+uint8[] LogPlayTextColorAktive;
+uint8[] LogRegTextColorAktive;
+uint8[] LogOptionsTextColorAktive;
+uint8[] LogCreditsTextColorAktive;
+uint8[] LogExitTextColorAktive;
+
+string@[] OrgNames={""};
+bool KeyIsBinded=false;
+uint FormerMode=0;
+int8 track=0;
+string@[] names;
+string topic="";
+string mainScreenMess="";/* \n Для получения уровня, введите в консоль: ~LVL \n Для получения вещей, введите в консоль: ~LUT";*/
+int[] trCoords;
+uint radarId;
+uint mainSpriteId;
+uint lampaAnimSpriteId;
+uint buttonSpriteId;
+bool showTimeouts=true;
+bool ifaceHidden=false;
+bool ifaceHiddenBufer=false;
+bool altDown=false;
+bool showHealth=true;
+uint8 ShowHealthMode=0;
+bool showNames=true;
+bool fractionDataAccepted=false;
+bool crAimed=false;
+bool shiftDown=false;
+int8 curLoginButton=-1;
+bool loginButtonSound=false;
+bool[] drugEffectEnabled={false, false};
+string[] drugEffect={"2D_BlackWhite_ext.fx", "2D_Contrast.fx"};
+bool cycleSound=false;
+bool wasDying=false;
+string cycleSoundName="heartbeat.ogg";
+uint cycleSoundEndTick=0;
+uint cycleSoundDuration=1000;
+uint playersOnline=0;
+uint updateServerInfoDuration=5000;
+uint updateServerInfoNextTick=0;
+CritterCl@ aimedCr;
+uint8[] hotKeys;
+uint16[] hotKeyItems;
+uint lastMode=0;
+uint16 lastWeapon=0;
+uint lastAttacked=0;
+bool isKeyQDown=false;
+CritterCl@[] critters;
+uint[] crittersId;
+uint AssistId=0;
+uint SpriteAssistId;
+int AssistWidth=0;
+int AssistHeight=0;
+uint16 AssistHexX=0;
+uint16 AssistHexY=0;
+uint[] FractionColors;
+bool ShowHotkeys=true;
+bool TDown=false;
+bool ctrl=false; 
+bool first_time=true;
+bool[] MouseDown={false, false, false, false, false, false, false, false, false, false};
+string message_text("");
+uint message_tick=0;
+bool message_enabled;
+
+uint merc_click_mode=MODE_DEFAULT;  // 1 - attack 2 - move
+
+const string[] keyNames={"","Escape","1","2","3","4","5","6","7","8","9","0","-","=","Backspace","TAB","Q","W","E","R","T","Y",
+					"U","I","O","P","{","}","Enter","LControl","A","S","D","F","G","H","J","K","L",":","'","|","LShift",
+					"Backslash","Z","X","C","V","B","N","M",",",".","/","RShift","*","LAlt","Space","CapsLock","F1",
+					"F2","F3","F4","F5","F6","F7","F8","F9","F10","NumLock","ScrollLock","Num7","Num8","Num9","Num-","Num4",
+					"Num5","Num6","Num+","Num1","Num2","Num3","Num0","Num.","84","85","OEM_102","F11","F12","89","90","91","92","93","94","95","96","97","98","99",
+					"F13","F14","F15","103","104","105","106","107","108","109","110","111","KANA","113","114",
+					"ABNT_C1","116","117","118","119","120",
+					"Convert","122","NoConvert","124","Yen","ABNT_C2","127","128","129","130","131","132","133","134","135","136","137","138","139","140",
+					"Num=","142","143","PrevTrack","At","Colon","UnderLine","Kanji",
+					"Stop","Ax","Unlabeled","152","NextTrack","154","155","NumEnter","RControl","158","159","Mute","Calculator","PlayPause","163","MediaStop",
+					"165","166","167","168","169","170","171","172","173",
+					"VolumeDown","175","VolumeUp","177","WebHome","NumComma","180","/","182","SysRq","RAlt","185", "186","187","188","189","190",
+					"191","192","193","194","195","196","Pause","198","Home","Up","Prior","202","Left","204",
+					"Right","206","End","Down","Next","Insert","Delete","212","213","214","215","216","217","218",
+					"LWin","RWin","Apps","Power","Sleep","Wake","WebSearch",
+					"WebFavorites","WebRefresh","WebStop","MyComputer","Mail","MediaSelect"};
+				
+//TabaK. Интерфейс Теслы				
+IGUIElementOpt@ TeslaButton;
+IGUIElementOpt@ TeslaPanel;
+IGUIElementOpt@ TeslaDisplay;
+uint8 TeslaCharge=0;
+
+//TabaK. Интерфейс автовыстрела
+
+
+bool AutoAimRestore=false;
+uint8 LastAutoAimLocation=0;
+uint8 AutoAimLocation;
+string@ TorsoButtonPic;
+string@ TorsoButtonActPic;
+string@ GroinButtonPic;
+string@ GroinButtonActPic;
+string@ HeadButtonPic;
+string@ HeadButtonActPic;
+string@ EyesButtonPic;
+string@ EyesButtonActPic;
+string@ RHandButtonPic;
+string@ RHandButtonActPic;
+string@ LHandButtonPic;
+string@ LHandButtonActPic;
+string@ RLegButtonPic;
+string@ RLegButtonActPic;
+string@ LLegButtonPic;
+string@ LLegButtonActPic;
+
+IGUIElementOpt@ ButtonAimTorso;
+IGUIElementOpt@ ButtonAimHead;
+IGUIElementOpt@ ButtonAimEyes;
+IGUIElementOpt@ ButtonAimRHand;
+IGUIElementOpt@ ButtonAimLHand;
+IGUIElementOpt@ ButtonAimRLeg;
+IGUIElementOpt@ ButtonAimLLeg;
+IGUIElementOpt@ ButtonAimGroin;
+IGUIElementOpt@ AimInd;

@@ -1,0 +1,31 @@
+#include "_macros.fos"
+#include "_teams.fos"
+
+import void _SetupCaravanLeader(uint idCaravan, Critter & leader) from "caravan";
+
+void _SelmaInit(Critter & cr, bool firstTime)
+{
+	cr.StatBase[ST_VAR0]=8;
+	cr.SkillBase[SK_SMALL_GUNS]=200;
+	cr.StatBase[ST_TEAM_ID]=TEAM_QuestNpc;
+	_SetupCaravanLeader(8, cr);
+}
+
+void _LaumerInit(Critter & cr, bool firstTime)
+{
+	cr.StatBase[ST_VAR0]=10;
+	cr.SkillBase[SK_SMALL_GUNS]=250;
+	cr.StatBase[ST_TEAM_ID]=TEAM_QuestNpc;
+	_SetupCaravanLeader(10, cr);
+}
+
+void _GayZumInit(Critter & cr, bool firstTime)
+{
+	cr.SkillBase[SK_SMALL_GUNS]=250;
+	cr.StatBase[ST_VAR0]=9;
+	cr.StatBase[ST_TEAM_ID]=TEAM_QuestNpc;
+	cr.PerkBase[PE_BETTER_CRITICALS]=1;	
+	cr.PerkBase[PE_SNIPER]=1;
+	_SetupCaravanLeader(9, cr);
+}
+

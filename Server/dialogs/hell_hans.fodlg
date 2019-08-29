@@ -1,0 +1,460 @@
+[comment]
+Переменные name_mem для игрока - используются по назначению.
+name_mem_npc_player для нпц - проверка, давал ли уже гуль игроку счётчик.
+
+Dagnir, 03.03.2010.
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 D _var p name_mem_npc_player = 0 D _var p name_mem_player_npc = 0 D _param p ST_INTELLECT > 3 D _var p q_hell_reactor < 4 #
+25 1020 D _var p name_mem_player_npc = 1 D _var p name_mem_npc_player = 0 D _param p ST_INTELLECT > 3 D _var p q_hell_reactor < 4 #
+33 1030 D _var p name_mem_player_npc = 1 D _var p name_mem_npc_player = 1 D _param p ST_INTELLECT > 3 D _var p q_hell_reactor < 4 #
+30 1040 D _param p ST_INTELLECT < 4 D _var p q_hell_reactor < 4 #
+38 1050 D _var p q_hell_reactor > 3 @
+2 2000 None 1 #
+8 2010 #
+6 2020 #
+0 2030 #
+0 2040 @
+3 3000 None 1 #
+4 3010 #
+5 3020 D _param p ST_RADIATION_LEVEL > 100 #
+6 3030 #
+0 3040 @
+4 4000 None 1 #
+8 4010 #
+6 4020 #
+0 4030 #
+0 4040 @
+5 5000 None 1 #
+8 5010 #
+6 5020 #
+0 5030 #
+0 5040 @
+6 6000 None 1 #
+65507 6010 #
+8 6020 #
+7 6030 #
+0 6040 @
+7 7000 None 1 @
+8 8000 None 1 #
+9 8010 R _var p name_mem_player_npc = 1 #
+9 8020 R _var p name_mem_player_npc = 1 #
+9 8030 R _var p name_mem_player_npc = 1 #
+9 8040 R _var p name_mem_player_npc = 1 #
+0 8050 @
+9 9000 None 1 #
+10 9010 R _var p name_mem_npc_player = 1 #
+11 9020 #
+12 9030 @
+10 10000 None 1 #
+11 10010 #
+12 10020 D _var p q_hell_reactor < 3 #
+13 10030 #
+0 10040 @
+11 11000 None 1 #
+12 11010 #
+13 11020 #
+14 11030 #
+0 11040 @
+12 12000 None 1 #
+20 12010 D _var p q_hell_reactor = 1 R _var p q_hell_reactor = 2 R _param p ST_EXPERIENCE + 1000 #
+15 12020 D _param p SK_SPEECH < 50 D _var n name_mem_npc_player = 0 #
+16 12030 D _param p SK_SPEECH > 49 D _var n name_mem_npc_player = 0 #
+34 12040 D _var n name_mem_npc_player = 1 #
+13 12050 #
+11 12060 #
+0 12070 @
+13 13000 None 1 #
+12 13010 #
+11 13020 #
+0 13030 @
+14 14000 None 1 #
+12 14010 #
+13 14020 #
+0 14030 @
+15 15000 None 1 #
+16 15010 D _var p q_hell_reactor = 1 #
+0 15020 #
+10 15030 @
+16 16000 None 1 #
+20 16010 D _var p q_hell_reactor = 1 R _var p q_hell_reactor = 2 R _param p ST_KARMA + 10 R _param p ST_EXPERIENCE + 1000 #
+17 16020 @
+17 17000 None 1 #
+18 17010 R _item p PID_GEIGER_COUNTER + 1 R _item p PID_SMALL_ENERGY_CELL + 5 R _var n name_mem_npc_player = 1 #
+19 17020 #
+0 17030 R _item p PID_GEIGER_COUNTER + 1 R _var n name_mem_npc_player = 1 #
+20 17040 D _var p q_hell_reactor = 1 R _var p q_hell_reactor = 2 R _item p PID_GEIGER_COUNTER + 1 R _item p PID_SMALL_ENERGY_CELL + 5 R _var n name_mem_npc_player = 1 R _param p ST_EXPERIENCE + 1000 @
+18 18000 None 1 #
+0 18010 R _var n name_mem_npc_player = 1 #
+20 18020 D _var p q_hell_reactor = 1 R _var p q_hell_reactor = 2 R _param p ST_EXPERIENCE + 1000 @
+19 19000 None 1 @
+20 20000 None 1 #
+24 20010 #
+21 20020 @
+21 21000 None 1 #
+23 21010 #
+22 21020 #
+65507 21030 @
+22 22000 None 1 #
+39 22010 @
+23 23000 None 1 #
+39 23010 @
+24 24000 None 1 #
+21 24010 #
+21 24020 @
+25 25000 None 1 #
+35 25010 D _var p hell_reactor_dclaws > 0 #
+36 25020 D _var p hell_reactor_power > 0 #
+37 25030 D _var p hell_reactor_dclaws > 0 D _var p hell_reactor_power > 0 #
+28 25040 D _var p q_hell_reactor < 3 #
+6 25050 #
+29 25060 #
+26 25070 #
+0 25080 @
+33 26000 None 0 #
+35 26010 D _var p hell_reactor_dclaws > 0 #
+36 26020 D _var p hell_reactor_power > 0 #
+37 26030 D _var p hell_reactor_dclaws > 0 D _var p hell_reactor_power > 0 #
+10 26040 #
+10 26050 R _var p name_mem_npc_player = 1 #
+6 26060 #
+0 26070 @
+26 27000 None 1 #
+0 27010 #
+27 27020 @
+27 28000 None 1 @
+28 29000 None 1 #
+11 29010 #
+12 29020 #
+13 29030 #
+0 29040 @
+29 30000 None 1 @
+30 31000 None 1 #
+31 31010 #
+0 31020 #
+32 31030 @
+31 32000 None 1 #
+32 32010 #
+0 32020 #
+0 32030 @
+32 33000 None 1 #
+0 33010 #
+0 33020 @
+34 34000 None 0 @
+35 35000 None 0 #
+39 35010 #
+39 35020 D _var p hell_reactor_dclaws = 2 @
+36 36000 None 0 #
+21 36010 D _var p hell_reactor_power = 2 #
+21 36020 @
+37 37000 None 0 @
+38 38000 None 0 @
+39 39000 None 0 &
+
+[russ]
+{100}{}{Ганс}
+{200}{}{Вы видите: Ганс.}
+{210}{}{Гуль в рабочей жилетке, из кармана которой торчит ручка.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{Не знакомы.}
+{1020}{}{Знакомы, не знает имени игрока.}
+{1030}{}{Знакомы, совсем.}
+{1040}{}{Низкий интеллект.}
+{1050}{}{Выполнил квест.}
+{2000}{}{Эй, а тебе чего здесь надо?}
+{2010}{}{А что вы тут делаете, а?}
+{2020}{}{Я ищу выход.}
+{2030}{}{О, прости, что помешал@sex@|||а|, я думал@sex@|||а|, что ты один из психов нижних уровней.}
+{2040}{}{Ошиб@sex@|ся||лась| дверью.}
+{3000}{}{Похоже, хабологи потеряли одного из своих клонов. Тебя что, приняли за труп и бросили в яму? Я бы тоже перепутал, с такой-то рожей. Хе-хе.}
+{3010}{}{Эй! На себя посмотри! Ты сам сплошной кусок гнилого мяса.}
+{3020}{}{Это всё радиация, @sex@|мужик||мистер|. Пара доз рад-эвея - и я как @sex@|новенький||будто только что из матери|.}
+{3030}{}{Припрячь свои шутки и скажи лучше, как мне отсюда выбраться.}
+{3040}{}{Отвали, ублюдок.}
+{4000}{}{Окей, окей, 1:1. Теперь говори, что тебе тут надо.}
+{4010}{}{Куда я вообще попал@sex@|||а|?}
+{4020}{}{Я ищу выход.}
+{4030}{}{Искал@sex@|||а|, чего бы пожрать, но ты не выглядишь аппетитным.}
+{4040}{}{Да я на самом деле дверью ошиб@sex@|ся||лась| и уже собираюсь уходить.}
+{5000}{}{Окей, окей, считай отмазал@sex@|ся||ась|. Теперь говори, что тебе тут надо.}
+{5010}{}{Куда я вообще попал@sex@|||а|?}
+{5020}{}{Я ищу выход.}
+{5030}{}{Искал@sex@|||а|, чего бы пожрать, но ты не выглядишь аппетитным.}
+{5040}{}{Да я на самом деле дверью ошиб@sex@|ся||лась| и уже собираюсь уходить.}
+{6000}{}{Из этой комнаты направо, потом налево по коридору и идёшь, пока не увидишь по левую руку круглую дверь. Но там столько всяких тварей ползает, что тебе, наверное, проще будет умереть и возродиться сверху, хе-хе.}
+{6010}{}{Тогда убей меня, пучеглазый.}
+{6020}{}{А это что вообще за место?}
+{6030}{}{Тогда я останусь у тебя жить.}
+{6040}{}{Да я порву их на куски! Спасибо, гуль, и пока!}
+{7000}{}{@sex@|Эй, эй, у меня не хватит на тебя еды!||Эй, я уже слишком стар для того, чтоб исполнять с тобой супружеский долг!|}
+{8000}{}{Ты видишь кучи нашинкованной биомассы, кровь на стенах, кишки в углу и страшных вонючих гулей с острыми ножами. Ну и как ты думаешь, куда ты попал@sex@|||а|?}
+{8010}{}{На ежегодное собрание клуба анонимных гулей-мясников?}
+{8020}{}{На конкурс выкладывания узоров из трупов?}
+{8030}{}{Ээээ... На склад мёртвых репликантов?}
+{8040}{}{Да в Ад, я отсюда и не выходил@sex@|||а|.}
+{8050}{}{Куда бы я не попал, я сваливаю отсюда... прямо сейчас.}
+{9000}{}{Хех, почти угадал@sex@|||а|. Мы работаем на хабологов, перерабатываем трупы, которые появляются в Аду, чтобы биомасса зря не пропадала. Там, сверху, наши кореши собирают их по уровню и скидывают вниз. Да, меня Гансом зовут, если что.}
+{9010}{}{А меня - @pname@. Слушай, Ганс, я вот что хочу узнать...}
+{9020}{}{Перерабатываете? В смысле?}
+{9030}{}{Что-то дохрена тел вокруг. Не справляетесь с объёмом? Там, сверху, просто фабрика по производству трупов.}
+{10000}{}{Ну?@@Что?}
+{10010}{}{Во что вы тут трупы перерабатываете, что-то не понимаю.}
+{10020}{}{Что-то дохрена тел вокруг. Не справляетесь с объёмом? Там, сверху, просто фабрика по производству трупов.}
+{10030}{}{Ну и быстро ты так свой долг отработаешь?}
+{10040}{}{Хотя мне уже пора идти.}
+{11000}{}{Ну... Видел@sex@|||а| там зелёную жижу? Это раствор для репликационных чанов. Туда надо постоянно херачить органику, чтобы тельца репликантов не голодали. А органики в Пустоши не так много, вот и экономим, используем трупы.}
+{11010}{}{Что-то дохрена тел вокруг. Не справляетесь с объёмом? Там, сверху, просто фабрика по производству трупов.}
+{11020}{}{Ну и быстро ты так свой долг отработаешь?}
+{11030}{}{Фууу, я щас сблевану. То есть я плавал в жиже, которую добывали из вонючих трупов?}
+{11040}{}{Ух... Пойду, понаблюдаю за процессом.}
+{12000}{}{Да какие-то уроды сломали генератор, от которого питались мясорубки. Руками разделывать влом, так что почти и не работаем.}
+{12010}{}{Что за уроды? Мне надо знать. Меня хабологи прислали разобраться.}
+{12020}{}{Эй, а ты не боишься, что я всё расскажу твоему начальству?}
+{12030}{}{Эй, а ты не боишься, что я всё расскажу твоему начальству?}
+{12040}{}{Эй, а ты не боишься, что я всё расскажу твоему начальству?}
+{12050}{}{Ну и быстро ты так свой долг отработаешь?}
+{12060}{}{Нахрена вы их рубите, не понимаю. В фарш, а потом в столовую к хабологам?}
+{12070}{}{Ясно, я пойду.}
+{13000}{}{Не, я не один из тех, кто тут на пол-ставки. Я попал в Ад ещё во времена бесплатной репликации. Проще говоря, меня использовали в опытах для испытания этой чёртовой системы и больше никогда не выпустят. Но я уже привык к этому месту. Всегда много разных людей, есть с кем поболтать.}
+{13010}{}{Понятно. А чего тут всё в трупах? Не успеваете перемалывать?}
+{13020}{}{Вообще, зачем вы трупы перерабатываете?}
+{13030}{}{Да, есть такое. Ну, поболтали, и пока!}
+{14000}{}{Хе-хе. Именно так. Но не парься, там всё стерилизуется. Считай, что эти баки - как твой желудок. Внутри всё херачится до молекул, чтобы потом всосаться твоими клетками. Ну и вообще много ступеней, сложный процесс.}
+{14010}{}{Много работы, наверное? Столько тел валяется.}
+{14020}{}{Ну и что, много тебе на счёт за эту работу переводят?}
+{14030}{}{Не думаю, что ты меня успокоил.}
+{15000}{}{Ха, ну и что они мне сделают? Ещё не один хаболог не решился спуститься сюда вниз.}
+{15010}{}{Вообще-то это они меня сюда и послали.}
+{15020}{}{Посмотрим, как ты заговоришь, когда за тобой придут надзиратели...}
+{15030}{}{Ладно, забей. Хотел@sex@|||а| тебя вот что спросить...}
+{16000}{}{О, чёрт. Слушай, не говори им, что мы халтурим, а? Пожалей старых немощных гулей. Я тебе даже подарю кое-что за это.}
+{16010}{}{Да забей, не скажу, хорошо. Ты мне объясни, что тут произошло. Мне надо разобраться, а то я не получу своих бабок.}
+{16020}{}{Ну, и что же ты мне можешь предложить?}
+{17000}{}{Хм... Ну... [Достаёт что-то из-под стола] На вот, держи. Я называю этот прибор "Детектор Ганса Г-1". Он начинает потрескивать, если рядом находятся гули. Может, это не покажется тебе чем-то интересным, но никогда не знаешь, что может пригодиться.}
+{17010}{}{Ух ты. И как ты это собрал?}
+{17020}{}{Иди к чёрту, старик, мне не нужна эта ерунда. У тебя есть что-то стоящее?}
+{17030}{}{Здорово, дай мне это! Всё, считай, мой рот на замке.}
+{17040}{}{дорово, дай мне это! Всё, считай, мой рот на замке. Теперь расскажи, что тут произошло.}
+{18000}{}{Ну, как это обычно бывает... Взял вакуумную трубку, припаял какие-то детали из старой электроники, нашёл подходящий корпус в мусоре... Заработало.}
+{18010}{}{Это круто. Ладно, договорились, мой рот на замке.}
+{18020}{}{Это круто. Ладно, договорились, мой рот на замке. Теперь расскажи, что тут произошло.}
+{19000}{}{Нет у меня ничего! Делай что хочешь! Кто ты такой вообще? Я тебя не звал! Иди нахрен!}
+{20000}{}{Да есть тут какие-то три уродца, когти смерти. У них вообще большая семья, они нас не трогают, а эти пока мелкие, с шилом в жопе. Так вот, они сломали наш генератор, чтобы наш генератор, чтобы оставались трупы, и они могли их воровать. И какой идиот догадался ящериц умными делать...}
+{20010}{}{Откуда они тут вообще?}
+{20020}{}{Ладно, я попробую с ними разобраться. Где их искать?}
+{21000}{}{Выходишь отсюда, сразу налево, идёшь мимо мясорубок, там круглая дверь... Хотя стой, там не пройдёшь. В обход тогда надо, по коридору. Они обычно землей перепачканы - наверное, их каких-то нор вылезают.}
+{21010}{}{Спасибо, гуль. Попробую разобраться.}
+{21020}{}{Эй, я не полезу в какие-то там норки. Скажу халогам, что делать, пусть сами разбираются.}
+{21030}{}{А теперь быстро давай все деньги, стимпаки, драгоценности!}
+{22000}{}{Ну хоть генератор посмотри, что с ним. Он тут, за стеной.}
+{22010}{}{А где этот генератор найти?}
+{23000}{}{Буду благодарен, если ты ещё и генератор сделаешь. А то крыс развелось, страшно спать.}
+{23010}{}{А где этот генератор найти?}
+{24000}{}{Хаб их знает. Они из говорящих, но какие-то дикие. Видимо, тоже в опытах использовали.}
+{24010}{}{Говорящих? Значит, с ними можно будет договориться. Где их искать?}
+{24020}{}{Не был бы это Ад, они бы поговорили с моим стволом. Ладно, найду арматурину. Где эти засранцы сидят?}
+{25000}{}{Хэй, @pname@, что тебя опять принесло в эту дыру? Заснул у дыры и свалился вниз? Это, наверное, было больно.}
+{25010}{}{Эй, Ганс, я разобрал@sex@|ся||ась| с этими уродами.}
+{25020}{}{Эй, Ганс, я починил@sex@|||а| генератор.}
+{25030}{}{Эй, Ганс, я починил@sex@|||а| генератор и разобрал@sex@|ся||ась| с этими уродами.}
+{25040}{}{Не поверишь - пешком дош@sex@|ёл||ла|. Эй, Ганс, напомни, что вы тут в этом подвале делаете.}
+{25050}{}{Да, что-то вроде. Напомни, где тут выход, мне что-то не по себе на этой трупосвалке.}
+{25060}{}{Я сидел@sex@|||а|, и думал@sex@|||а|: как там Ганс? Всё ли хорошо у него? И вот я решил@sex@|||а| спуститься и узнать, как у тебя дела!}
+{25070}{}{Херня, Ганс, обронил@sex@|||а| колечко золотое, укатилось, свалилось куда-то сюда. Ты не видел?}
+{25080}{}{Да я тут так, чисто поржать. Пойду дальше!}
+{26000}{}{Хэй, что старик Ганс может сделать для тебя?}
+{26010}{}{Эй, Ганс, я разобрал@sex@|ся||ась| с этими уродами.}
+{26020}{}{Эй, Ганс, я починил@sex@|||а| генератор.}
+{26030}{}{Эй, Ганс, я починил@sex@|||а| генератор и разобрал@sex@|ся||ась| с этими уродами.}
+{26040}{}{Хочу узнать кое-что...}
+{26050}{}{Меня зовут @pname@, я разве не представил@sex@|ся||ась|? Хотел@sex@|||а| узнать кое-что...}
+{26060}{}{Эй, гуль, напомни, где тут выход?}
+{26070}{}{Да я тут так, чисто поржать. Пойду дальше!}
+{27000}{}{Не, да тут хрен что разглядишь. Сочувствую, @sex@|чувак||дорогая|.}
+{27010}{}{Эхх... Моя прелесть...}
+{27020}{}{Я знаю! Оно у тебя! Отдай! Отдай! Моя прелесть!}
+{28000}{}{Эй, да ты укушенный!}
+{29000}{}{Перемалываем трупы, @sex@|чувак||подруга|.}
+{29010}{}{Перемалываете? В смысле?}
+{29020}{}{Что-то дохрена тел вокруг. Не справляетесь с объёмом? Там, сверху, просто фабрика по производству трупов.}
+{29030}{}{Ну и быстро ты так свой долг отработаешь?}
+{29040}{}{Ух. Круто. Удачи, что ли.}
+{30000}{}{Спасибо, @sex@|друг||подруга|, у меня всё зашибись! Да я скоро светиться начну, как мой дружок!}
+{31000}{}{Привет, красав@sex@|ец||ица|, чего тебе надо?}
+{31010}{}{Ра-рра!}
+{31020}{}{Грррр!}
+{31030}{}{Га-га!}
+{32000}{}{А! А! А!}
+{32010}{}{Га-га!}
+{32020}{}{Атата!}
+{32030}{}{Гррр!}
+{33000}{}{Улала!}
+{33010}{}{Моя твоя ням!}
+{33020}{}{А?}
+{34000}{}{Эй, ты же обещал никому не рассказывать!}
+{35000}{}{Ух ты, круто. Теперь мы можем спокойно работать. Хабологи тебе должны хорошо заплатить за это. Если бы ты ещё и электрогенератор починил...}
+{35010}{}{А где этот генератор найти?}
+{35020}{}{Уже заплатили! Где этот ваш генератор найти?}
+{36000}{}{Ух ты, круто. Правда, никто не гарантирует, что эти уроды не вернутся и не сломают его. Но, думаю, хабологи тебе всё равно заплатят за работу.}
+{36010}{}{Уже заплатили! Где этих уродов найти?}
+{36020}{}{Где этих уродов найти?}
+{37000}{}{Ух ты, круто. Теперь мы можем спокойно работать. Хабологи тебе, наверное, хорошо заплатят.}
+{38000}{}{Извини, слишком много работы.@@Извини, я занят.@@Извини, у меня сейчас нет времени на разговоры. Благодаря тебе, хе-хе.}
+{39000}{}{В соседней комнате, рядом с выходом из шахты.}
+
+[engl]
+{100} {} {Hans} 
+{200} {} {You see Hans.}
+{210} {} {Gul in a working vest, which protrudes out his pen.}
+{1000} {} {} set Preddialogovye
+{1010} {} {Do not know.}
+{1020} {} {familiar, does not know the name of the player.}
+{1030} {} {familiar, at all.}
+{1040} {} {low intelligence.}
+{1050} {} {complete the quest.}
+{2000} {} {Hey, what you want here?}
+{2010} {} {What are you doing here, eh?}
+{2020} {} {I'm looking for a way out.}
+{2030} {} {Oh, sorry, that prevented the @ sex @ | | | a |, I thought @ sex @ | | | a |, that you are one of the loonies of the lower levels.}
+{2040} {} {Fault @ sex @ | Xia | | las | the door.}
+{3000} {} {It seems habologi lost one of its clones. You that have taken over the body and thrown into a pit? I would also mixed up with such and such a mug. Heh-heh.}
+{3010} {} {Hey! Look at yourself! You yourself are a solid piece of rotten meat.}
+{3020} {} {It's radiation, @ sex @ | man | | Mr. |. A pair of happy-dose eveya - and I like @ sex @ | brand new | | if only that of mother |.}
+{3030} {} {Pripryach his jokes and tell me better as I get out of here.}
+{3040} {} {Fuck off, you bastard.}
+{4000} {} {OK, OK, 1-1. Now tell me what you need here.}
+{4010} {} {Where do I even got @ sex @ | | | a |?}
+{4020} {} {I'm looking for a way out.}
+{4030} {} {I was looking @ sex @ | | | a |, which would eat, but you do not look appetizing.}
+{4040} {} {Yeah I'm actually a door errors @ sex @ | Xia | | las | and is going to go.}
+{5000} {} {OK, OK, count otmazatsya @ sex @ | Xia | | eh |. Now tell me what you need here.}
+{5010} {} {Where do I even got @ sex @ | | | a |?}
+{5020} {} {I'm looking for a way out.}
+{5030} {} {I was looking @ sex @ | | | a |, which would eat, but you do not look appetizing.}
+{5040} {} {Yeah I'm actually a door errors @ sex @ | Xia | | las | and is going to go.}
+{6000} {} {From this room to the right, then left down the hallway and go until you see on the left hand round the door. But there are so many creatures crawling all that you probably will be easier to die and be reborn from above, he-he.}
+{6010} {} {Then kill me, bug-eyed.}
+{6020} {} {What's that all over the place?}
+{6030} {} {Then I'll stay with you to live.}
+{6040} {} {Well, I will tear them to pieces! Thank you, ghoul, and yet!}
+{7000} {} {@ sex @ | Hey, hey, I did not have enough food for you! | | Hey, I'm too old for the order to perform the conjugal duty with you! |}
+{8000} {} {You see a pile of chopped biomass on the walls of the blood, guts and scary at the corner of stinking ghouls with sharp knives. Well, what do you think, where did you get @ sex @ | | | a |?}
+{8010} {} {At the annual meeting of the club ghouls, faceless butcher?}
+{8020} {} {The competition pattern of the corpses laid out?}
+{8030} {} {Um ... At the warehouse the dead replicants?}
+{8040} {} {Yeah Hell, I did not come out here and @ sex @ | | | a |.}
+{8050} {} {Wherever I went, I dump here ... right now.}
+{9000} {} {Heh, almost guessed @ sex @ | | | a |. We are working on habologov, recycle the corpses that appear in Hell that the biomass is not for nothing was lost. There, on top, our pal collect them on a level and take off down. Yes, my name is Hans, if that.}
+{9010} {} {And I - @ pname @. Hey, Hans, that's what I want to know ...}
+{9020} {} {process? What?}
+{9030} {} {Something dohrena bodies around. Not cope with the volume? There, on top, just a factory for the production of corpses.}
+{10000} {} {Well? @ @ What?}
+{10010} {} {What do you recycle the corpses here, something I do not understand.}
+{10020} {} {Something dohrena bodies around. Not cope with the volume? There, on top, just a factory for the production of corpses.}
+{10030} {} {Well, you're so quick to work out your debt?}
+{10040} {} {Although I have to go.}
+{11000} {} {Well ... Saw @ sex @ | | | a | where the green goo? This is a solution for replication vats. There must be constantly organic herachit to calf replicants are not starving. And the organics in the wasteland is not so much here and save, use the dead.}
+{11010} {} {Something dohrena bodies around. Not cope with the volume? There, on top, just a factory for the production of corpses.}
+{11020} {} {Well, you're so quick to work out your debt?}
+{11030} {} {thanked, I am right now sblevanu. That is, I swam in the mire, which is extracted from the stinking corpses?}
+{11040} {} {Uh ... I will go and watch the process.}
+{12000} {} {Yes, some monsters have broken generator, which is fed from the grinder. Hands carve broke, so that almost no work.}
+{12010} {} {What kind of monsters? I need to know. I understand habologi sent.}
+{12020} {} {Hey, you're not afraid, I'll tell your boss?}
+{12030} {} {Hey, you're not afraid, I'll tell your boss?}
+{12040} {} {Hey, you're not afraid, I'll tell your boss?}
+{12050} {} {Well, you're so quick to work out your debt?}
+{12060} {} {fuck you chop them, do not understand. In stuffing, and then into the dining room to the habologam?}
+{12070} {} {It is clear, I'll go.}
+{13000} {} {No, I'm not one of those who are here on a half-rate. I'm in Hell during the time free of replication. Simply put, I have used in experiments to test this system and the devil will never be released. But I'm used to this place. Always a lot of different people who have someone to talk.}
+{13010} {} {clear. And what is there all the corpses? Do not have time to grind?}
+{13020} {} {Actually, why do you recycle the corpses?}
+{13030} {} {Yes, there is. Well, a chat, and so far!}
+{14000} {} {Heh-heh. That's it. But do not worry, everything is sterilized. Consider that these tanks - like your stomach. Inside all herachitsya to molecules to cells and then absorbed yours. So do a lot of steps, a complex process.}
+{14010} {} {A lot of work, perhaps? So many bodies lying around.}
+{14020} {} {Well, what a lot of you on the bill for this work translated?}
+{14030} {} {I do not think you have reassured me.}
+{15000} {} {Ha, so what they do to me? Not yet a habolog not dare to come down here down.}
+{15010} {} {Actually, this is it, and sent me here.}
+{15020} {} {Let's see how you speak, when the guards come after you ...}
+{15030} {} {Well, forget it. I wish @ sex @ | | | a | is what you ask for ...}
+{16000} {} {Oh, shit. Listen, do not tell them that we are trash as well? Have pity on the weak old ghouls. I'll give you even a few things for it.}
+{16010} {} {Yes, forget it, I will not say good. You explain to me what happened here. I've got to understand, and I do not get their attendants.}
+{16020} {} {Well, and what you can offer me?}
+{17000} {} {Hmm ... Well ... [He pulls something from under the table] Here, take hold. I call this device "Detector Hans G-1." He begins to crackle, if there are ghouls. Maybe it does not seem to you something interesting, but you never know what might be useful.}
+{17010} {} {Wow. And how did you collected?}
+{17020} {} {Go to hell, man, I do not need this nonsense. Do you have something worthwhile?}
+{17030} {} {Wow, give it to me! All you count my mouth shut.}
+{17040} {} {Fedorov, give it to me! All you count my mouth shut. Now tell me what happened here.}
+{18000} {} {Well, as usual ... He took a vacuum tube, soldered some parts of the old electronics, found a suitable building in the trash ... To work.}
+{18010} {} {It's cool. Okay, agreed, my mouth shut.}
+{18020} {} {It's cool. Okay, agreed, my mouth shut. Now tell me what happened here.}
+{19000} {} {I have nothing! Do what you want! Who are you all? I'm not calling! Go fuck!}
+{20000} {} {Yes, there is some kind of monster three, the claws of death. They do a big family, they do not touch us, but these still small, with an awl in the ass. So, they broke our generator to our generator to remain dead, and they could steal them. And what idiot thought of intelligent lizards do ...}
+{20010} {} {How do they do here?}
+{20020} {} {OK, I'll try to deal with them. Where to find them?}
+{21000} {} {You come out here, just to the left, walk past the meat grinder, there is round the door ... Although simple, it will not pass. Bypassing if necessary, along the corridor. They are usually smeared earth - probably to get out of some holes.}
+{21010} {} {Thanks, gul. I'll try to sort out.}
+{21020} {} {Hey, I did not climb there in some mink. I will say halogam what to do, let them understand.}
+{21030} {} {And now let all the money quickly, stimpaks, jewelry!}
+{22000} {} {Well, at least the generator look what happened to him. It is here, behind the wall.}
+{22010} {} {Where to find this generator?}
+{23000} {} {I would be grateful if you still do and the generator. And then the rats bred and terribly sleep.}
+{23010} {} {Where to find this generator?}
+{24000} {} {Hubbard knows. They're from the speakers, but some wild. Apparently, also used in experiments.}
+{24010} {} {Talking? So, to them it will be possible to agree. Where to find them?}
+{24020} {} {Would not it Hell, they would have talked with my trunk. Okay, I'll find armaturinu. Where are these assholes sitting?}
+{25000} {} {Hey, @ pname @, again, that you brought into this hole? Asleep at the hole and fell down? It must have been hurt.}
+{25010} {} {Hey, Hans, I made out @ sex @ | Xia | | eh | these monsters.}
+{25020} {} {Hey, Hans, I fixed the @ sex @ | | | a | a generator.}
+{25030} {} {Hey, Hans, I fixed the @ sex @ | | | a | a generator and make out @ sex @ | Xia | | eh | these monsters.}
+{25040} {} {Do not believe it - on foot doshas @ sex @ | el | | la |. Hey, Hans, remind you here in the basement doing.}
+{25050} {} {Yeah, something like that. Remind me, where is the output, something I did not by itself at this truposvalke.}
+{25060} {} {I sat @ sex @ | | | a |, and thought @ sex @ | | | a |: as there is Hans? Do all the good in him? So I decided to @ sex @ | | | a | down and learn how you doing!}
+{25070} {} {Garbage, Hans dropped @ sex @ | | | a | a ring of gold, rolled away, had fallen away here. Do not you see?}
+{25080} {} {Yeah I'm here so pure neighing. I will go on!}
+{26000} {} {Hey, that old Hans can do for you?}
+{26010} {} {Hey, Hans, I made out @ sex @ | Xia | | eh | these monsters.}
+{26020} {} {Hey, Hans, I fixed the @ sex @ | | | a | a generator.}
+{26030} {} {Hey, Hans, I fixed the @ sex @ | | | a | a generator and make out @ sex @ | Xia | | eh | these monsters.}
+{26040} {} {I want to know something ...}
+{26050} {} {My name @ pname @, I did not introduced the @ sex @ | Xia | | eh |? I wish @ sex @ | | | a | find out something ...}
+{26060} {} {Hey, gul, remind, where is the solution?}
+{26070} {} {Yeah I'm here so pure neighing. I will go on!}
+{27000} {} {no, yes there is hell to make out what. I sympathize, @ sex @ | man | | expensive |.}
+{27010} {} {Ehh ... My beauty ...}
+{27020} {} {I know! It is you! Give! Give! My lovely!}
+{28000} {} {Hey, you're bitten!}
+{29000} {} {grind the corpses, @ sex @ | man | | girlfriend |.}
+{29010} {} {grinds? What?}
+{29020} {} {Something dohrena bodies around. Not cope with the volume? There, on top, just a factory for the production of corpses.}
+{29030} {} {Well, you're so quick to work out your debt?}
+{29040} {} {Uh. Cool. Good luck, I guess.}
+{30000} {} {Thanks, @ sex @ | each | | girlfriend |, I have all zashibis! Yes, I will soon begin to glow, as my friend!}
+{31000} {} {Hello krasav @ sex @ | en | | Itza |, what do you want?}
+{31010} {} {Ra-PPA!}
+{31020} {} {Grrrr!}
+{31030} {} {Ha-ha!}
+{32000} {} {A! But! A!}
+{32010} {} {Ha-ha!}
+{32020} {} {Atata!}
+{32030} {} {Grrr!}
+{33000} {} {Ulala!}
+{33010} {} {My yours yum!}
+{33020} {} {A}
+{34000} {} {Hey, you promised not to tell anyone!}
+{35000} {} {Wow, cool. Now we can work in peace. Habologi you have to pay well for it. If you have an electric generator and repaired ...}
+{35010} {} {Where to find this generator?}
+{35020} {} {already paid for! Where is your generator to find}
+{36000} {} {Wow, cool. However, there is no guarantee that these monsters will not come back and do not break it. But I think habologi you still pay for the work.}
+{36010} {} {already paid for! Where to find these freaks?}
+{36020} {} {Where to find these freaks?}
+{37000} {} {Wow, cool. Now we can work in peace. Habologi you are probably well paid.}
+{38000} {} {I'm sorry, too much work. @ @ I'm sorry, I'm busy. @ @ I'm sorry, I have not got time to talk. Thanks to you, hehe.}
+{39000} {} {In the next room, near the exit from the mine.}
+

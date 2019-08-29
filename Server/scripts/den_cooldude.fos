@@ -1,0 +1,48 @@
+// Author: heX
+// Крутой чувак, поет "Maybe"
+// ToDo: сделать чтобы иногда пел в полный голос.
+#include "_macros.fos"
+
+int currentMsg;
+
+void _CooldudeInit(Critter& npc, bool firstTime)
+{
+	currentMsg=0;
+	CreateTimeEvent(__FullSecond+10*60,"e_Sing",npc.Id,false);
+}
+
+void _ZakInit(Critter& npc, bool firstTime)
+{
+	currentMsg=0;
+	CreateTimeEvent(__FullSecond+5*60,"e_ZakScream",npc.Id,false);
+}
+
+uint e_Sing(uint[]@ values)
+{
+	Critter@ npc=GetCritter(values[0]);
+	if(valid(npc))
+		npc.SayMsg(SAY_WHISP_ON_HEAD/*SAY_NORM_ON_HEAD*/,TEXTMSG_DLG,DLGSTR(npc.Stat[ST_DIALOG_ID],currentMsg));
+
+	currentMsg++;
+	if(currentMsg>5)
+	{
+		currentMsg=0;
+		return REAL_SECOND(Random(30,60));
+	}
+	return REAL_SECOND(5);
+}
+
+uint e_ZakScream(uint[]@ values)
+{
+	Critter@ npc=GetCritter(values[0]);
+	if(valid(npc))
+		npc.SayMsg(SAY_NORM_ON_HEAD,TEXTMSG_DLG,DLGSTR(npc.Stat[ST_DIALOG_ID],currentMsg));
+
+	currentMsg++;
+	if(currentMsg>5)
+	{
+		currentMsg=0;
+		return REAL_SECOND(Random(30,60));
+	}
+	return REAL_SECOND(50);
+}

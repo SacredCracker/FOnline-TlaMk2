@@ -1,0 +1,150 @@
+// Author: rifleman17
+// Майкл хочет пройти внутрь города, игроки ему помогают
+// после того, как диалогом вызывается соотвествующая функция, майrл отправляется к воротам, происходит небольшая сценка с охраной и он проходит внутрь
+// движение нужно начинать не сразу, а через некоторое время
+// Для квеста "Пропуск"
+
+#include "_macros.fos"
+#include "_maps.fos"
+#include "entire.fos"
+
+#define HEX_EXIT_GRID 							(17) // гекс перехода базар/центр города
+#define NPC_ROLE_PRIVATE						(317) // рядовой на воротах (юг)
+#define NPC_ROLE_MAIN							(318) // командир охраны на воротах (север)
+#define MSG_NUM_INCOMING_MIKE					(317) // номер сообщения - Майк приблежается.
+#define MSG_NUM_INCOMING_MIKE_GUARD				(318) // номер сообщения - Майк приблежается.
+#define HEX_NEW_MIKE_HOME						(171) // номер гекса новой домашней позиции майка
+
+#define MSG_NUM_START_MOVE						(2910) // {2910}{}{Посмотрим, что изменилось в Республике...}
+#define MSG_NUM_SEE_MIKE						(2911) // {2911}{}{Бог ты мой, это же Майкл! Майкл, какими судьбами?}
+#define MSG_NUM_SHOUT							(2912) // {2912}{}{Отставить базар! Ему разрешено пройти.}
+
+import bool AddMiscPlane(Critter& npc, uint priority, uint waitSecond, string@ funcName) from "npc_planes";
+
+// вызов из диалога - начало движения
+void r_PrepareComing(Critter& player, Critter@ npc, int val)
+{
+	// движение начинаем через 3 игровые минуты
+	AddMiscPlane(npc,2,__FullSecond+3*60,"ncr_michael@plane_StartMichaelMove");
+
+	npc.StatBase[ST_VAR1]=	MSG_NUM_INCOMING_MIKE;
+	npc.SetEvent(CRITTER_EVENT_PLANE_END,"_MichaelPlaneEnd");
+}
+
+// начало движения
+void plane_StartMichaelMove(Critter& npc)
+{
+	// сообщаем миру о начале движения
+	npc.SayMsg(SAY_NORM_ON_HEAD,TEXTMSG_TEXT,MSG_NUM_START_MOVE);//"Посмотрим, что изменилось в Республике...");
+		// координаты гекса, до которого должен дойти майкл
+	uint16 hx=npc.HexX;
+	uint16 hy=npc.HexY;
+	// не найден гекс, идти некуда
+	if (!GetNearEntire(npc.GetMap(), HEX_EXIT_GRID, hx, hy)){Log("Entire Hex not found, "+GetLastError());return;}
+	// при установке новой домащней позиции, Майкл туда проследует, когда закончит все текущие планы
+	npc.SetHomePos(hx, hy, Random(0,5));
+}
+
+// завершение выполнения некоего плана
+int _MichaelPlaneEnd(Critter& npc, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem)
+{
+	//npc.Say(SAY_NORM_ON_HEAD, "Plane end. ID: " + plane.Identifier + " reason: " + reason);
+	// завершен план следования к экзит гриду
+	uint mapId=0;
+	uint16 hx=0, hy=0;
+	uint8 dir=0;
+	npc.GetHomePos(mapId, hx, hy, dir);
+
+	if(npc.Stat[ST_VAR1]==MSG_NUM_INCOMING_MIKE && npc.GetMapId()==mapId && npc.HexX==hx && npc.HexY==hy)
+	{
+		npc.StatBase[ST_VAR1]=0;
+		// майкл отправляет сообщение "Я пришел" для охранников на входе города
+		npc.SendMessage(MSG_NUM_INCOMING_MIKE, 0, MESSAGE_TO_WHO_SEES_ME);
+		// телепорт майкла в центр города. Будет торчать в баре Дасти
+		Map@ map=GetMapByPid(MAP_ncr_downtown, 0);
+		Map@ map_bazaar=npc.GetMap();
+		if(not valid(map))
+		{
+			Log("Michael teleport map not found error");
+			return PLANE_RUN_GLOBAL;
+		}
+
+		// транзит
+		if(npc.TransitToMap(map.Id, HEX_NEW_MIKE_HOME)==false)
+		{
+			Log("Michael teleport error "+GetLastError());
+			return PLANE_RUN_GLOBAL;
+		}
+
+		npc.SetHomePos(npc.HexX, npc.HexY, npc.Dir);
+		// если будет очищена карта центра города, прощаемся с Майком, он свою роль уже выполнил
+		// а вот если будет очищена карта Базара, а Майкл уже телепортирован в центр города, копию в центре городу нужно удалить, иначе будет существовать два майкла
+		map_bazaar.SetData(0,npc.Id);
+		map_bazaar.SetEvent(MAP_EVENT_FINISH,"_eOnFinishMap");
+	}
+
+	return PLANE_RUN_GLOBAL;
+}
+
+// для рядового охранника, слева у входа стоит
+void _PrivateGuardInit(Critter&npc, bool firstTime)
+{
+	if(firstTime){
+		npc.StatBase[ST_NPC_ROLE] =NPC_ROLE_PRIVATE;
+		npc.SetEvent(CRITTER_EVENT_MESSAGE,"_NpcOnMessage");
+	}
+}
+
+// для главного охранника (справа у входа в город)
+void _MainGuardInit(Critter&npc, bool firstTime)
+{
+	if(firstTime){
+		npc.StatBase[ST_NPC_ROLE] =NPC_ROLE_MAIN;
+		npc.SetEvent(CRITTER_EVENT_MESSAGE,"_NpcOnMessage");
+	}
+}
+
+// обработка сообщения от майкла "я пришел"
+void _NpcOnMessage(Critter& npcB, Critter& npcA, int num, int val)
+{
+	// сначала говорит рядовой
+	if(num==MSG_NUM_INCOMING_MIKE&& npcB.Stat[ST_NPC_ROLE]==NPC_ROLE_PRIVATE)
+	{
+		npcB.SayMsg(SAY_NORM_ON_HEAD,TEXTMSG_TEXT,MSG_NUM_SEE_MIKE);//Say(SAY_NORM_ON_HEAD,"Бог ты мой, это же Майкл! Майкл, какими судьбами?");
+
+		npcB.SendMessage(MSG_NUM_INCOMING_MIKE_GUARD, 0, MESSAGE_TO_WHO_SEES_ME);
+	}
+	// ему отвечает сержант
+	if(num==MSG_NUM_INCOMING_MIKE_GUARD&& npcB.Stat[ST_NPC_ROLE] ==NPC_ROLE_MAIN)
+	{
+		// отвечает не мгновенно, иначе непонятно. кто первым прокомментировал появление Майкла
+		AddMiscPlane(npcB,2,__FullSecond+60,"ncr_michael@plane_MainGuardAnswer");
+
+	}
+}
+// ответ Сержанта у ворот
+void plane_MainGuardAnswer(Critter& npc)
+{
+	npc.SayMsg(SAY_SHOUT_ON_HEAD,TEXTMSG_TEXT,MSG_NUM_SHOUT);//npc.Say(SAY_SHOUT_ON_HEAD,"Отставить базар! Ему разрешено пройти.");
+
+}
+// при очистке карты базара, если Майкл уже там нужно удалить его копию
+// иначе будет существовать два Майкла одновременно
+void _eOnFinishMap(Map& map, bool deleted)
+{
+	Map @ map_downtown=GetMapByPid(MAP_ncr_downtown,0);
+	if (!valid(map_downtown)) return;
+	Critter @ npc=map_downtown.GetCritter(map.GetData(0));
+	if (!valid(npc)) return;
+	DeleteNpc(npc);
+}
+
+
+
+
+
+
+
+
+
+

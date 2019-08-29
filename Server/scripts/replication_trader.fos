@@ -1,0 +1,202 @@
+// Name: replication_trader
+// Author: Sufir
+// Edited by:
+
+// Uses
+#include "_macros.fos"
+import void SetDeterioration(Item& item, int deteriorationProcent) from "repair";
+
+// Defines
+uint FreeEquipTime=0;
+uint FreeEquipPlayer=0;
+
+
+void r_GiveEquip(Critter& player, Critter@ npc)
+{
+
+	GiveArmor(player);
+	GiveDrugs(player);
+	GiveWeapon(player);
+	GiveAnything(player);
+	// ”станавливаем таймаут. Ѕесплатное снар€жение даетс€ не чаще двух раз в сутки и не даетс€ два раза подр€д одному игроку.
+	FreeEquipTime=__FullSecond;
+	FreeEquipPlayer=player.Id;
+
+}
+
+
+bool d_EquipAllow(Critter& player, Critter@ npc)
+{
+
+	// ≈сли прошло 6 часов и не этот игрок в последний раз просил снар€жение, даем ему комплект.
+	if(FreeEquipTime + (60 * 60 * 6)<__FullSecond && player.Id !=FreeEquipPlayer){
+		return true;
+	// ≈сли прошло 24 часов и этот игрок в последний раз просил снар€жение, даем ему ещЄ один комплект.
+	} else if(FreeEquipTime + (60 * 60 * 24)<__FullSecond && player.Id==FreeEquipPlayer){
+		return true;
+	}
+	return false;
+
+}
+
+
+void GiveWeapon(Critter& player)
+{
+
+	uint Roll=Random(0, player.Stat[ST_LUCK]) + player.Skill[SK_SPEECH]/10;
+	uint ItemPid=PID_KNIFE;
+	if(Roll > 0 && Roll<=10){
+		if(Random(0,1)==0){
+			ItemPid=PID_KNIFE;
+		} else {
+			ItemPid=PID_SPIKED_KNUCKLES;
+		}
+	}
+	if(Roll > 10 && Roll<=15){
+		if(Random(0,1)==0){
+			ItemPid=PID_SHOTGUN;
+			player.AddItem(PID_SHOTGUN_SHELLS, Random(0, player.Stat[ST_LUCK] * 2));
+		} else {
+			ItemPid=PID_10MM_PISTOL;
+			player.AddItem(PID_10MM_JHP, Random(0, player.Stat[ST_LUCK] * 2));
+		}
+	}
+	if(Roll > 15 && Roll<=20){
+		if(Random(0,1)==0){
+			ItemPid=PID_HUNTING_RIFLE;
+			player.AddItem(PID_223_FMJ, Random(0, player.Stat[ST_LUCK] * 2));
+		} else {
+			ItemPid=PID_DESERT_EAGLE;
+			player.AddItem(PID_44_MAGNUM_JHP, Random(0, player.Stat[ST_LUCK] * 2));
+		}
+	}
+	if(Roll > 20){
+		if(Random(0,1)==0){
+			ItemPid=PID_223_PISTOL;
+			player.AddItem(PID_223_FMJ, Random(0, player.Stat[ST_LUCK] * 2));
+		} else {
+			ItemPid=PID_COMBAT_SHOTGUN;
+			player.AddItem(PID_SHOTGUN_SHELLS, Random(0, player.Stat[ST_LUCK] * 2));
+		}
+	}
+	Item@ Weapon=player.AddItem(ItemPid, 1);
+	if(!valid(Weapon)) return;
+	Weapon.Cost=Roll;
+	if(Weapon.IsDeteriorable()) {
+		SetDeterioration(Weapon, Random(9, 99 - Roll));
+		switch(Random(0, 8)){
+			case 0: SETFLAG(Weapon.BrokenFlags, BI_LOWBROKEN); break;
+			case 1: SETFLAG(Weapon.BrokenFlags, BI_NORMBROKEN); break;
+			case 2: SETFLAG(Weapon.BrokenFlags, BI_HIGHBROKEN); break;
+			case 3: SETFLAG(Weapon.BrokenFlags, BI_NOTRESC); break;
+			case 4: SETFLAG(Weapon.BrokenFlags, BI_BROKEN); break;
+			case 5: SETFLAG(Weapon.BrokenFlags, BI_SERVICE); break;
+			case 6: SETFLAG(Weapon.BrokenFlags, BI_SERVICE_EXT); break;
+			case 7: SETFLAG(Weapon.BrokenFlags, BI_ETERNAL); break;
+			case 8: break;
+			default: break;
+		}
+	}
+	Weapon.Update();
+
+}
+
+
+void GiveArmor(Critter& player)
+{
+
+	uint Roll=Random(0, player.Stat[ST_LUCK]) + player.Skill[SK_SPEECH]/10;
+	uint ItemPid=PID_LEATHER_JACKET;
+	if(Roll > 0 && Roll<=10){
+		if(Random(0,1)==0){
+			ItemPid=PID_LEATHER_JACKET;
+		} else {
+			ItemPid=PID_PURPLE_ROBE;
+		}
+	}
+	if(Roll > 10 && Roll<=15){
+		if(Random(0,1)==0){
+			ItemPid=PID_LEATHER_ARMOR;
+		} else {
+			ItemPid=PID_LEATHER_JACKET;
+		}
+	}
+	if(Roll > 15 && Roll<=30){
+		if(Random(0,1)==0){
+			ItemPid=PID_METAL_ARMOR;
+		} else {
+			ItemPid=PID_LEATHER_ARMOR;
+		}
+	}
+	if(Roll > 30){
+		if(Random(0,1)==0){
+			ItemPid=PID_METAL_ARMOR;
+		} else {
+			ItemPid=PID_METAL_ARMOR_MK_II;
+		}
+	}
+	Item@ Armor=player.AddItem(ItemPid, 1);
+	if(!valid(Armor)) return;
+	Armor.Cost=Roll;
+	if(Armor.IsDeteriorable()) {
+		SetDeterioration(Armor, Random(19, 99 - Roll));
+		switch(Random(0, 8)){
+			case 0: SETFLAG(Armor.BrokenFlags, BI_LOWBROKEN); break;
+			case 1: SETFLAG(Armor.BrokenFlags, BI_NORMBROKEN); break;
+			case 2: SETFLAG(Armor.BrokenFlags, BI_HIGHBROKEN); break;
+			case 3: SETFLAG(Armor.BrokenFlags, BI_NOTRESC); break;
+			case 4: SETFLAG(Armor.BrokenFlags, BI_BROKEN); break;
+			case 5: SETFLAG(Armor.BrokenFlags, BI_SERVICE); break;
+			case 6: SETFLAG(Armor.BrokenFlags, BI_SERVICE_EXT); break;
+			case 7: SETFLAG(Armor.BrokenFlags, BI_ETERNAL); break;
+			case 8: break;
+			default: break;
+		}
+	}
+	Armor.Update();
+
+}
+
+
+void GiveDrugs(Critter& player)
+{
+
+	switch(Random(0, player.Stat[ST_LUCK])){
+		case 0: break;
+		case 1: player.AddItem(PID_NUKA_COLA, 1); break;
+		case 2: player.AddItem(PID_BOTTLE_FULL, 1); break;
+		case 3: player.AddItem(PID_ANTIDOTE, 1); break;
+		case 4: player.AddItem(PID_STIMPAK, 1); break;
+		case 5: player.AddItem(PID_STIMPAK, 2); break;
+		case 6: player.AddItem(PID_BUFFOUT, 1); break;
+		case 7: player.AddItem(PID_RAD_X, 1); break;
+		case 8: player.AddItem(PID_SUPER_STIMPAK, 1); break;
+		case 9: player.AddItem(PID_RADAWAY, 1); break;
+		case 10: player.AddItem(PID_MENTATS, 1); break;
+		default: break;
+	}
+
+}
+
+
+void GiveAnything(Critter& player)
+{
+
+	if(player.Skill[SK_SPEECH] > 90){
+		switch(Random(0, (player.Stat[ST_LUCK]+player.Stat[ST_CHARISMA])/2)){
+			case 0: break;
+			case 1: player.AddItem(PID_NUKA_COLA, 1); break;
+			case 2: player.AddItem(PID_BOTTLE_FULL, 1); break;
+			case 3: player.AddItem(PID_LIGHTER, 1); break;
+			case 4: player.AddItem(PID_ROPE, 1); break;
+			case 5: player.AddItem(PID_LOCKPICKS, 1); break;
+			case 6: player.AddItem(PID_FIRST_AID_KIT, 1); break;
+			case 7: player.AddItem(PID_FIRST_AID_BOOK, 1); break;
+			case 8: player.AddItem(PID_SCOUT_HANDBOOK, 1); break;
+			case 9: player.AddItem(PID_PSYCHO, 1); break;
+			case 10: player.AddItem(PID_JET_ANTIDOTE, 1); break;
+			default: break;
+		}
+	}
+
+}

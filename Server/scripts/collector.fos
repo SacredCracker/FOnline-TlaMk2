@@ -1,0 +1,158 @@
+// Author: rifleman17
+// Собиратель мусора
+// каждые NEXT_SEARCH_TIME собирает предметы на карте  в радиусе 5*PE от домашней позиции
+// если на карте есть контейнер, расположенный на EntireHex'e с номером ENTIRE_CONTAINER, после того, как соберет все предметы, идет их складывать в этот контейнер
+// Внимание! используется ST_VAR0 для определения времени следующего поиска
+// заняты события: CRITTER_EVENT_IDLE, CRITTER_EVENT_PLANE_END
+
+#include "_macros.fos"
+
+#define NEXT_SEARCH_TIME      ( REAL_MINUTE( 5 ) )
+#define HELL_SEARCH_TIME      ( REAL_MINUTE( 1 ) )
+#define ENTIRE_CONTAINER      ( 87 )
+#define PUT_ITEMS_PRIORITY    ( 178 )
+
+import bool AddPickPlane( Critter& npc, uint priority, Item@ item, uint useItemId, bool toOpen ) from "npc_planes";
+
+void _CollectorInit( Critter& cr, bool firstTime )
+{
+    cr.SetEvent( CRITTER_EVENT_IDLE, "_CollectorIdle" );
+    cr.SetEvent( CRITTER_EVENT_PLANE_END, "_CollectorPlaneEnd" );
+    cr.StatBase[ ST_VAR0 ] = __FullSecond + NEXT_SEARCH_TIME;
+}
+
+void _HellCollectorInit( Critter& cr, bool firstTime )
+{
+    cr.SetEvent( CRITTER_EVENT_IDLE, "_CollectorIdle" );
+    cr.SetEvent( CRITTER_EVENT_PLANE_END, "_CollectorPlaneEnd" );
+    cr.StatBase[ ST_VAR0 ] = __FullSecond + HELL_SEARCH_TIME;
+	cr.StatBase[ST_MAX_LIFE]+=300;
+	cr.StatBase[ST_CURRENT_HP]+=300;
+	cr.StatBase[ST_CRITICAL_CHANCE]+=30;
+	cr.StatBase[ST_ACTION_POINTS]+=12;
+	cr.ModeBase[MODE_NO_ENEMY_STACK]=1;
+	cr.ModeBase[MODE_NO_PUSH]=1;
+	cr.StatBase[ST_CRITICAL_RESISTANCE]=85;
+	cr.PerkBase[PE_MORE_CRITICALS]=3;
+	cr.PerkBase[PE_BETTER_CRITICALS]=1;
+	cr.ModeBase[MODE_NO_SUPPLY]=1;
+	cr.StatBase[ST_NORMAL_RESIST]+=30;
+	cr.StatBase[ST_LASER_RESIST]+=30;
+	cr.StatBase[ST_FIRE_RESIST]+=30;
+	cr.StatBase[ST_PLASMA_RESIST]+=40;
+	cr.StatBase[ST_ELECTRO_RESIST]+=30;
+	cr.StatBase[ST_EXPLODE_RESIST]+=30;
+}
+
+void _CollectorIdle( Critter& cr )
+{
+    if( uint( cr.Stat[ ST_VAR0 ] ) < __FullSecond )
+    {
+        SearchForItems( cr );
+        cr.StatBase[ ST_VAR0 ] = __FullSecond + NEXT_SEARCH_TIME;       // Следующий поиск
+    }
+    else
+    {
+        MoveItemsToContainer( cr );
+    }
+}
+
+
+void MoveItemsToContainer( Critter& cr ) // Складывает все предметы из инвентаря в контейнер
+{
+    Item@[] items;
+    Item@[] containers;
+    Map@ map = cr.GetMap();
+    if( cr.GetItems( SLOT_INV, items ) > 0 && valid( map ) )
+    {
+        uint entires = map.CountEntire( ENTIRE_CONTAINER );
+        if( entires > 0 )
+        {
+            uint16 hx = 0;
+            uint16 hy = 0;
+            if( map.GetEntireCoords( ENTIRE_CONTAINER, Random( 0, entires - 1 ), hx, hy ) )
+            {
+                if( map.GetItems( hx, hy, containers ) > 0 )
+                {
+                    for( uint i = 0, l = containers.length(); i < l; i++ )
+                    {
+                        if( containers[ i ].GetType() == ITEM_TYPE_CONTAINER )
+                        {
+                            AddPickPlane( cr, PUT_ITEMS_PRIORITY, containers[ i ], 0, true );
+                            return;
+                        }
+                    }
+                    @containers;
+                }
+
+            }
+        }
+        // если нет спецконтейнера, кладем в ближайший
+        map.GetItemsByType( ITEM_TYPE_CONTAINER, containers );
+        uint distMin = map.GetWidth();
+        uint distCur = 0;
+        int  ind = -1;
+        for( int i = 0, l = containers.length(); i < l; i++ )
+        {
+            distCur = map.GetPathLength( cr.HexX, cr.HexY, containers[ i ].HexX, containers[ i ].HexY, 1 );
+            if( distCur > 0 && distMin > distCur )
+            {
+                distMin = distCur;
+                ind = i;
+            }
+        }
+        if( ind >= 0 )
+        {
+            AddPickPlane( cr, PUT_ITEMS_PRIORITY, containers[ ind ], 0, true );
+        }
+    }
+
+}
+
+void SearchForItems( Critter& cr ) // Поиск предметов, валяющихся на карте
+{
+    Map@ map = cr.GetMap();        // Карта с криттером, на которой будем искать вещи
+    if( !valid( map ) )
+        return;
+    Item@[] items;
+    if( map.GetItems( cr.HexX, cr.HexY, cr.Stat[ ST_PERCEPTION ] * 5, 0, items ) == 0 )
+        return;
+    int   type;
+    Item@ item;
+    for( uint i = 0, l = items.length(); i < l; i++ )
+    {
+        @item = items[ i ];
+        if( valid( item ) )
+        {
+            if( FLAG( item.Flags, ITEM_GAG ) )
+                continue;
+            type = item.GetType();
+            if( type >= ITEM_TYPE_ARMOR && type <= ITEM_TYPE_KEY && map.GetPathLength( cr, item.HexX, item.HexY, 0 ) > 0 )
+                AddPickPlane( cr, 0, item, 0, true );
+        }
+    }
+}
+
+int _CollectorPlaneEnd( Critter& cr, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem )
+{
+    if( plane.Type == AI_PLANE_PICK && plane.Priority == PUT_ITEMS_PRIORITY )
+    {
+        Map@  map = cr.GetMap();
+        Item@ cont = map.GetItem( plane.Pick_HexX, plane.Pick_HexY, plane.Pick_Pid );
+        if( valid( cont ) && reason == REASON_SUCCESS && cont.GetType() == ITEM_TYPE_CONTAINER )
+        {
+            Item@[] items;
+            if( cr.GetItems( SLOT_INV, items ) > 0 )
+                MoveItems( items, cont, 0 );
+
+        }
+    }
+    return PLANE_RUN_GLOBAL;
+}
+
+
+void AddCollector( Critter& cr, int, int, int )
+{
+    Critter@ npc = cr.GetMap().AddNpc( 1, cr.HexX, cr.HexY, 3, null, null, null );
+    npc.SetScript( "_CollectorInit" );
+}

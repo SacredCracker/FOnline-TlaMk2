@@ -1,0 +1,1278 @@
+// Author: cvet
+// Client GUI
+
+#define CLIENT_GUI
+#include "client_gui_h.fos"
+#include "_defines.fos"
+#include "_client_defines.fos"
+#include "sprite.fos"
+#include "_colors.fos"
+#include "_macros.fos"
+
+#define IS_COLLISION #(x1,y1,x2,y2,w,h)  ((x1)>=(x2) && (x1)<=(x2)+(w) && (y1)>=(y2) && (y1)<=(y2)+(h))
+
+GUIScreen@[] AllScreens;
+GUIScreen@[] ActiveScreens;
+bool[] KeyPressed;
+KeybData@[] KbData;
+IGUIScreenOpt@ LastScreenOpt=null;
+IGUIElementOpt@ LastElementOpt=null;
+bool ctrl=false;
+class KeybData
+{
+	KeybData(int8 r, int8 rs, int8 e, int8 es){Char.resize(4); Char[0]=r; Char[1]=rs; Char[2]=e; Char[3]=es;}
+	uint8[] Char; // Russian, Rissian Shift, English, English Shift
+}
+
+class GUIElement : IGUIElementOpt
+{
+	GUIElement(string@ sprName, int path)
+	{
+		if(@sprName!=null) Surface.Load(sprName,path);
+		DefaultPath=path;
+		PosX=0;
+		PosY=0;
+		IsTextInput=false;
+		InputMaxLen=0;
+		TextColorFocused=0;
+		TextColorDown=0;
+		IsFocused=false;
+		txtFrameX=0;
+		txtFrameY=0;
+		MousePressed.resize(MOUSE_CLICK_EXT4+1);
+		for(uint i=0,j=MousePressed.length();i<j;i++) MousePressed[i]=false;
+		SwitchEnabled=false;
+		isHidden=false;
+		isScrollableText=false;
+		isScrollBar=false;
+		sbInitialized=false;
+		sbReversed=false;
+		isListBox=false;
+		autoCursor=false;
+		isAutoCursor=false;
+		frameId=-1;
+		firstFrame=0;
+		lastFrame=0;
+		textOffset=0;
+		SoundClick="";
+		@InitCallback=null;
+		@DrawCallback=null;
+		@MouseClickCallback=null;
+		@MouseDownCallback=null;
+		@MouseMoveCallback=null;
+		@KeyPressCallback=null;
+	}
+
+	void Draw(int screenX, int screenY)
+	{
+		scrX=screenX;
+		scrY=screenY;
+		if(!isHidden)
+		{
+			uint16 dx=0;
+			uint16 dy=0;
+			uint8 index=0;
+			
+			for(uint16 i=0, iMax=MultiSprite.length(); i<iMax; i++)
+			{
+				MultiSprite[i].Draw(screenX+PosX+dx, screenY+PosY+dy, MultiWidth, MultiHeight, MultiColor);
+
+				// Смещение
+				index++;
+				dx +=MultiSpriteDX+MultiWidth;
+				if(index==MultiSpriteCountOfLine)
+				{
+					index=0;
+					dy +=MultiSpriteDY + MultiHeight;
+					dx=0;
+				}
+			}
+			
+			index=0;
+			dx=0;
+			dy=0;
+			for(uint16 i=0, iMax=multiText.length(); i<iMax; i++)
+			{
+				DrawText(multiText[i],screenX+PosX+dx+MultiTextStartDx, screenY+PosY+dy+MultiTextStartDy, 200, 200, MultiTextColor, MultiTextFont, MultiTextFlag);
+				
+				// Смещение
+				index++;
+				dx +=MultiTextDX;
+				if(index==MultiTextCountOfLine)
+				{
+					index=0;
+					dy +=MultiTextDY;
+					dx=0;
+				}
+			}
+			
+			if(Surface.Id!=0) DrawSprite(Surface.Id,-1,screenX+PosX,screenY+PosY,0);
+			bool isDown=((MousePressed[MOUSE_CLICK_LEFT] || SwitchEnabled) && DownSpr.Id!=0);
+			if(isDown) DrawSprite(DownSpr.Id,-1,screenX+PosX,screenY+PosY,0);
+			
+			if(isScrollableText && !isListBox)
+			{
+				text="";
+				uint lines;
+				if((scrollText.length()-textOffset)>maxTextLines) lines=maxTextLines+textOffset;
+				else lines=scrollText.length();
+				for(uint n=textOffset; n<lines;n++)
+				{
+					text+=scrollText[n]+"\n";
+				}
+			}
+			
+			
+			if(isScrollBar && sbInitialized)
+			{
+				int curPos=0;
+				if(sbReversed) curPos=(sbRange-sbCurrentValue)*sbStep;
+				else curPos=sbCurrentValue*sbStep;
+				DrawSprite(Scroll.Id,-1,screenX+PosX,(screenY+PosY+curPos)-Scroll.Height/2,0);
+			}
+			if(!isListBox)
+			{
+				if(text!="") DrawText(text,screenX+PosX+txtFrameX,screenY+PosY+txtFrameY,
+					Surface.Width!=0?Surface.Width-txtFrameX:__ScreenWidth-txtFrameX,(Surface.Height!=0?Surface.Height-txtFrameY:__ScreenHeight-txtFrameY)-(isDown?2:0),
+					IsTextInput && IsFocused?TextColorFocused:(isDown && TextColorDown!=0?TextColorDown:TextColor),font,TextFlags);
+			}
+			else
+			{
+				if(scrollText.length()>0)
+				{
+					uint8 m;
+					if(textOffset+maxTextLines<=int(scrollText.length())) m=uint(maxTextLines-1);
+					else m=uint(maxTextLines-textOffset);
+					uint color;
+					for(uint8 n=0; n<=m; n++)
+					{
+						if(lbIndex>=0 && lbIndex==textOffset+n)
+						{
+							if(MousePressed[MOUSE_CLICK_LEFT]) color=TextColorDown;
+							else color=TextColorFocused;
+						}
+						else color=TextColor;
+						if(int(scrollText.length())-1>=n+textOffset) DrawText(scrollText[n+textOffset], screenX+PosX+txtFrameX, screenY+PosY+n*fontHeight+txtFrameY, Surface.Width!=0?Surface.Width-txtFrameX:__ScreenWidth-txtFrameX,
+							Surface.Height!=0?Surface.Height-txtFrameY:__ScreenHeight-txtFrameY, color, font, TextFlags);
+					}
+				}
+			}
+				
+			if(not (DrawCallback is null)) DrawCallback.OnDraw();
+		}
+	}
+
+	bool MouseDown(int click)
+	{
+		if(SoundClick.length()>0) PlaySound(SoundClick);
+		if(click==MOUSE_CLICK_WHEEL_DOWN && isScrollableText && maxTextLines+textOffset<int(scrollText.length())) textOffset+=1;
+		if(click==MOUSE_CLICK_WHEEL_UP && isScrollableText && textOffset>0) textOffset-=1;
+		if(click==MOUSE_CLICK_LEFT && isScrollBar && sbInitialized)
+		{
+			if(mouseY<0) sbCurrentValue=sbReversed?sbRange:0;
+			else if(mouseY> Surface.Height && sbReversed) sbCurrentValue=0;
+			else
+			{
+				float x=float(mouseY)/sbStep;
+				if(fraction(x)*10>5) sbCurrentValue=sbReversed?uint(floor(x)):uint(ceil(x));
+				else sbCurrentValue=sbReversed?uint(ceil(x)):uint(floor(x));
+				if(sbReversed) sbCurrentValue=sbRange-sbCurrentValue;
+			}
+			if(sbCurrentValue> sbRange) sbCurrentValue=sbRange;
+		}
+		
+		if(not (MouseDownCallback is null)) MouseDownCallback.OnMouseDown(click);
+		
+		if(DownSpr.Id!=0 || not (MouseClickCallback is null) || IsTextInput || isScrollBar ||  not (MouseMoveCallback is null) || isListBox)
+		{
+			MousePressed[click]=true;
+			return true;
+		}
+		return false;
+	}
+
+	void MouseUp(int click, bool isCollision)
+	{
+		if(not (MouseClickCallback is null) && MousePressed[click] && isCollision)
+		{
+			MouseClickCallback.OnMouseClick(click);
+		}
+		MousePressed[click]=false;
+	}
+
+	void MouseMove(int x, int y)
+	{
+		mouseX=x-scrX-PosX;
+		mouseY=y-scrY-PosY;
+		if(autoCursor)
+		{
+			if(mouseX>0 && mouseY>0 && mouseX<Surface.Width && mouseY<Surface.Height && !isAutoCursor && GetCurrentCursor()!=setCursor && !isHidden)
+			{
+				lastCursor=GetCurrentCursor();
+				ChangeCursor(setCursor);
+				isAutoCursor=true;
+			}
+			if(mouseX<0 || mouseY<0 || mouseX>Surface.Width || mouseY>Surface.Height)
+			{
+				if(isAutoCursor)
+				{
+					isAutoCursor=false;
+					ChangeCursor(lastCursor);
+				}
+			}
+		}
+		if(MousePressed[MOUSE_CLICK_LEFT] && isScrollBar) 
+		{
+			if(mouseY<0) sbCurrentValue=sbReversed?sbRange:0;
+			else if(mouseY> Surface.Height && sbReversed) sbCurrentValue=0;
+			else
+			{
+				float x=float(mouseY)/sbStep;
+				if(fraction(x)*10>5) sbCurrentValue=sbReversed?uint(floor(x)):uint(ceil(x));
+				else sbCurrentValue=sbReversed?uint(ceil(x)):uint(floor(x));
+				if(sbReversed) sbCurrentValue=sbRange-sbCurrentValue;
+			}
+			if(sbCurrentValue> sbRange) sbCurrentValue=sbRange;
+		}
+		if(isListBox && fontHeight>0)
+		{
+			if((mouseY-txtFrameY)/fontHeight<maxTextLines && mouseY>=0+txtFrameY && mouseX>=0+txtFrameX && mouseX<=Surface.Width-txtFrameX)
+			{
+				lbIndex=(mouseY-txtFrameY)/fontHeight+textOffset;
+			}
+			else lbIndex=-1;
+		}
+		if(!isHidden && not (MouseMoveCallback is null) && ((mouseX>0 && mouseY>0 && mouseX<Surface.Width && mouseY<Surface.Height) ||  isScrollBar)) MouseMoveCallback.OnMouseMove(MousePressed[MOUSE_CLICK_LEFT]);
+	}
+
+	bool KeyPress(uint8 key)
+	{
+		uint8 letter=0;
+		bool result=ProcessKey(key,text,letter);
+		if(text.length()>InputMaxLen) text.resize(InputMaxLen);
+		if(not (KeyPressCallback is null)) KeyPressCallback.OnKeyPress(key,letter);
+		return result;
+	}
+
+	void InputLost()
+	{
+		for(uint i=0,j=MousePressed.length();i<j;i++) MousePressed[i]=false;
+	}
+
+	GUIElement@ GetNewInstance()
+	{
+		GUIElement newElement=this;
+		return @newElement;
+	}
+	
+	// Options
+	IGUIElementOpt@ CallbackInit(IGUIElementCallbackInit@ callback) { @InitCallback=callback; return this; }
+	IGUIElementOpt@ CallbackDraw(IGUIElementCallbackDraw@ callback) { @DrawCallback=callback; return this; }
+	IGUIElementOpt@ CallbackMouseClick(IGUIElementCallbackMouseClick@ callback) { @MouseClickCallback=callback; return this; }
+	IGUIElementOpt@ CallbackMouseDown(IGUIElementCallbackMouseDown@ callback) { @MouseDownCallback=callback; return this; }
+	IGUIElementOpt@ CallbackMouseMove(IGUIElementCallbackMouseMove@ callback) { @MouseMoveCallback=callback; return this; }
+	IGUIElementOpt@ CallbackKeyPress(IGUIElementCallbackKeyPress@ callback) { @KeyPressCallback=callback; return this; }
+	IGUIElementOpt@ Position(int x, int y)
+	{
+		PosX=x;
+		PosY=y;
+		return this;
+	}
+
+	IGUIElementOpt@ Position(int x, int y, int w, int h)
+	{
+		PosX=x;
+		PosY=y;
+		Surface.Width=w;
+		Surface.Height=h;
+		return this;
+	}
+
+	IGUIElementOpt@ Position(string& iniKey)
+	{
+		PosX=0;
+		PosY=0;
+		Surface.Width=0;
+		Surface.Height=0;
+
+		// Parse four values from ini option
+		string@ str=GetIfaceIniStr(iniKey);
+		if(@str==null || str=="") return this;
+
+		string@[]@ valuesStr=splitEx(str," ");
+		if(valuesStr.length()!=4) return this;
+
+		int[] values(4);
+		for(int i=0;i<4;i++)
+			if(not StrToInt(valuesStr[i],values[i])) return this;
+
+		PosX=values[0];
+		PosY=values[1];
+		Surface.Width=values[2]-values[0]+1;
+		Surface.Height=values[3]-values[1]+1;
+		return this;
+	}
+
+	IGUIElementOpt@ DownPic(string@ sprName)
+	{
+		if(@sprName!=null) DownSpr.Load(sprName,DefaultPath);
+		else DownSpr.Id=0;
+
+		if(DownSpr.Id!=0 && Surface.Width==0 && Surface.Height==0)
+		{
+			Surface.Width=DownSpr.Width;
+			Surface.Height=DownSpr.Height;
+		}
+		return this;
+	}
+
+	IGUIElementOpt@ Text(string@ t, int f, uint color, uint downColor, int flags)
+	{
+		if(text is null) text="";
+		else text=t; font=f;
+		TextColor=color;
+		if(!isListBox) TextColorDown=downColor;
+		TextFlags=flags;
+		int w=0;
+		int h=0;
+		int lines=0;
+		GetTextInfo("TEST", 200, 200,font,flags, w, h, lines);
+		fontHeight=h+1;
+		maxTextLines=(Surface.Height+1-txtFrameY*2)/fontHeight;
+		if(isScrollableText)
+		{
+			scrollText=splitEx(text,"\n");
+			if(scrollText.last().length()<2) scrollText.removeLast();
+		}
+		return this;
+	}
+
+	IGUIElementOpt@ TextInput(bool enabled, uint maxLen, uint colorFocused)
+	{
+		IsTextInput=enabled;
+		InputMaxLen=maxLen;
+		TextColorFocused=colorFocused;
+		return this;
+	}
+
+	IGUIElementOpt@ Switch(bool enabled)
+	{
+		SwitchEnabled=enabled;
+		return this;
+	}
+
+	IGUIElementOpt@ ToHide(bool hide)
+	{
+		isHidden=hide;
+		if(isAutoCursor && hide)
+		{
+			isAutoCursor=false;
+			ChangeCursor(lastCursor);
+		}
+		return this;
+	}
+	
+	IGUIElementOpt@ ScrollableText(bool scrollable)
+	{
+		isScrollableText=scrollable;
+		return this;
+	}
+	
+	IGUIElementOpt@ SetScroll(bool add, int val)
+	{
+		if(isScrollableText)
+		{
+			if(add && maxTextLines+textOffset+val<int(scrollText.length()+1) && textOffset+val>=0) textOffset+=val;
+			if(!add && val>=0 && maxTextLines+val<int(scrollText.length()+1)) textOffset=val;
+		}
+		return this;
+	}
+	
+	IGUIElementOpt@ SBSetRange(uint range)
+	{
+		if(range>0)
+		{
+			sbRange=range;
+			sbStep=float(Surface.Height)/range;
+			sbCurrentValue=0;
+			sbInitialized=true;
+		}
+		return this;
+	}
+	
+	IGUIElementOpt@ SBScrollPic(string@ sprName)
+	{
+		Scroll.Load(sprName, DefaultPath);
+		Scroll.Width=Surface.Width;
+		return this;
+	}
+	
+	IGUIElementOpt@ SBSetValue(uint val)
+	{
+		if(sbInitialized) sbCurrentValue=val;
+		return this;
+	}
+	
+	IGUIElementOpt@ IsScrollBar(bool scroll)
+	{
+		isScrollBar=scroll;
+		return this;
+	}
+	
+	IGUIElementOpt@ IsListBox(bool listbox, uint highlight, uint down)
+	{
+		isListBox=listbox;
+		TextColorFocused=highlight;
+		TextColorDown=down;
+		return this;
+	}
+	
+	IGUIElementOpt@ List(string@[]@ list)
+	{
+		font=FONT_FALLOUT;
+		TextFlags=FT_ALIGN|FT_UPPER;
+		fontHeight=10;
+		maxTextLines=(Surface.Height+1-txtFrameY*2)/fontHeight;
+		scrollText=list;
+		return this;
+	}
+	
+	IGUIElementOpt@ Font(int font, uint color)
+	{
+		font=font;
+		TextColor=color;
+		int w=0;
+		int h=0;
+		int lines=0;
+		GetTextInfo("TEST", 200, 200,font,TextFlags, w, h, lines);
+		fontHeight=h+1;
+		maxTextLines=(Surface.Height+1-txtFrameY*2)/fontHeight;
+		return this;
+	}
+	
+	IGUIElementOpt@ TextFrame(int8 x, int8 y)
+	{
+		txtFrameX=x;
+		txtFrameY=y;
+		if(isScrollableText || isListBox)
+		{
+			if(fontHeight>0) maxTextLines=(Surface.Height+1-txtFrameY*2)/fontHeight;
+		}
+		return this;
+	}
+	
+	IGUIElementOpt@ MultiText(string[] texts, int16 startDx, int16 startDy, uint16 dX, uint16 dY, uint8 countOfLine, int font, uint color, int flags)
+	{
+		MultiTextStartDx=startDx;
+		MultiTextStartDy=startDy;
+		MultiTextDX=dX;
+		MultiTextDY=dY;
+		MultiTextCountOfLine=countOfLine;
+		MultiTextFont=font;
+		MultiTextColor=color;
+		MultiTextFlag=flags;
+		
+		uint16 textCount=texts.length();
+		multiText=texts;
+		MultiTextCountOfLine=countOfLine;
+		return this;
+	}
+	
+	IGUIElementOpt@ MultiPicture(uint[] hashs,	uint8 dir, uint16 height, uint16 width, uint16 dX, uint16 dY, uint8 countOfLine, uint color)
+	{
+		uint16 hashsCount=hashs.length();			
+		
+		MultiSpriteDX=dX;
+		MultiSpriteDY=dY;
+		MultiWidth=width;
+		MultiHeight=height;
+		MultiColor=color;
+		MultiSpriteCountOfLine=countOfLine;
+		MultiSprite.resize(hashsCount);
+		for(uint16 i=0; i<hashsCount; i++)
+		{
+			MultiSprite[i].Load(hashs[i], dir);
+		}
+		return this;
+	}
+	
+	IGUIElementOpt@ Picture(string sprName)
+	{
+		Surface.Load(sprName,DefaultPath);
+		return this;
+	}
+	
+	IGUIElementOpt@ Picture(string sprName, int path)
+	{
+		Surface.Load(sprName,path);
+		return this;
+	}
+	
+	IGUIElementOpt@ Picture(uint hash, uint8 dir)
+	{
+		Surface.Load(hash, dir);
+		return this;
+	}
+	
+	
+	IGUIElementOpt@ ForceCallbackMouseClick(int click)
+	{
+		MouseClickCallback.OnMouseClick(click);
+		return this;
+	}
+	
+	IGUIElementOpt@ AutoCursor(int cursor)
+	{
+		autoCursor=true;
+		setCursor=cursor;
+		return this;
+	}
+	
+	IGUIElementOpt@ SetFocus(bool set)
+	{
+		IsFocused=set;
+		return this;
+	}
+	
+	IGUIElementOpt@ Flags(int flags)
+	{
+		TextFlags=flags;
+		return this;
+	}
+	
+	
+	IGUIElementOpt@ Push(bool push)
+	{
+		MousePressed[MOUSE_CLICK_LEFT]=push;
+		return this;
+	}
+	
+	IGUIElementOpt@ SBReversed(bool set)
+	{
+		sbReversed=set;
+		return this;
+	}
+	
+	IGUIElementOpt@ ClickSound(string@ sound)
+	{
+		SoundClick=sound;
+		return this;
+	}
+	
+	// Info
+	int GetPosX() { return PosX; }
+	int GetPosY() { return PosY; }
+	bool IsHidden() { return isHidden; }
+	int GetTextScroll()
+	{
+		if(int(scrollText.length())-maxTextLines>0) return int(scrollText.length())-maxTextLines;
+		else return 0;
+	}
+	
+	int GetListElement() {return lbIndex;}
+	
+	string GetListElementStr() {return scrollText[lbIndex];}
+	
+	int GetTextOffset() { return textOffset; }
+	
+	uint GetSBScrollValue() {return sbCurrentValue;}
+	string@ GetText()
+	{
+		if(!isScrollableText) return text;
+		else return join(scrollText, "\n");
+	}
+	uint GetElementsNumber() {return scrollText.length();}
+	// Data
+	bool isAutoCursor;
+	bool autoCursor;
+	int lastCursor;
+	int setCursor;
+	bool isScrollableText; 
+	bool isScrollBar;
+	string@[] scrollText;  
+	int textOffset;
+	int8 fontHeight;
+	int maxTextLines;
+	int PosX;
+	int PosY;
+	int scrX;
+	int scrY;
+	int mouseX;
+	int mouseY;
+	Sprite[] MultiSprite;
+	uint16 MultiSpriteDX;
+	uint16 MultiSpriteDY;
+	uint16 MultiWidth;
+	uint16 MultiHeight;
+	string[] multiText;
+	uint16 MultiTextDX;
+	uint16 MultiTextDY;
+	int16 MultiTextStartDx;
+	int16 MultiTextStartDy;
+	uint MultiColor;
+	uint8 MultiSpriteCountOfLine;
+	uint8 MultiTextCountOfLine;
+	int MultiTextFont;
+	uint MultiTextColor;
+	int MultiTextFlag;
+	Sprite Surface;
+	Sprite DownSpr;
+	
+	int frameId;
+	int firstFrame;
+	int lastFrame;
+	uint8 fps;
+	uint lastTick;
+	
+	Sprite Scroll;
+	uint sbRange;
+	float sbStep;
+	uint sbCurrentValue;
+	bool sbInitialized;
+	bool sbReversed;
+	
+	int8 txtFrameX;
+	int8 txtFrameY;
+	
+	bool isListBox;
+	int lbIndex;
+	int DefaultPath;
+	string text;
+	int font;
+	uint TextColor;
+	uint TextColorFocused;
+	uint TextColorDown;
+	int TextFlags;
+	bool IsTextInput;
+	uint InputMaxLen;
+	bool IsFocused;
+	bool[] MousePressed;
+	bool SwitchEnabled;
+	bool isHidden;
+	string SoundClick;
+	IGUIElementCallbackInit@ InitCallback;
+	IGUIElementCallbackDraw@ DrawCallback;
+	IGUIElementCallbackMouseClick@ MouseClickCallback;
+	IGUIElementCallbackKeyPress@ KeyPressCallback;
+	IGUIElementCallbackMouseDown@ MouseDownCallback;
+	IGUIElementCallbackMouseMove@ MouseMoveCallback;
+}
+
+class GUIScreen : IGUIScreenOpt
+{
+	GUIScreen(string@ sprName, int path)
+	{
+		if(@sprName!=null) Surface.Load(sprName,path);
+		Index=0;
+
+		IsCanMove=true;
+		IsModal=true;
+		IsMultiinstance=false;
+		IsIgnoreBorders=false;
+		IsCloseOnMiss=false;
+		IsAutoCursor=false;
+
+		AutoCursorType=CURSOR_DEFAULT;
+		AutoCursorPrev=CURSOR_DEFAULT;
+
+		IsHardcoded=false;
+		IsLMouseDown=false;
+
+		PosX=__ScreenWidth/2-Surface.Width/2;
+		PosY=__ScreenHeight/2-Surface.Height/2;
+		LastX=0;
+		LastY=0;
+		@ShowCallback=null;
+		@HideCallback=null;
+		@MoveCallback=null;
+	}
+
+	void Draw()
+	{
+		if(Surface.Id!=0) DrawSprite(Surface.Id,-1,PosX,PosY,0);
+		for(uint i=0,j=Elements.length();i<j;i++) Elements[i].Draw(PosX,PosY);
+	}
+
+	bool MouseDown(int click, int x, int y)
+	{
+		for(uint i=0,j=Elements.length();i<j;i++) Elements[i].IsFocused=false;
+		for(uint i=Elements.length();i>0;)
+		{
+			i--;
+			GUIElement@ e=Elements[i];
+			if(IS_COLLISION(x,y,PosX+e.PosX,PosY+e.PosY,e.Surface.Width,e.Surface.Height) && e.MouseDown(click) && !e.IsHidden())
+			{
+				e.IsFocused=true;
+				return true;
+			}
+		}
+
+		if(not IsHardcoded && click==MOUSE_CLICK_LEFT)
+		{
+			if(IS_COLLISION(x,y,PosX,PosY,Surface.Width,Surface.Height))
+			{
+				IsLMouseDown=true;
+				LastX=x;
+				LastY=y;
+				return true;
+			}
+			else if(IsCloseOnMiss)
+			{
+				::HideScreen(0,0,0,0);
+				return true;
+			}
+		}
+		return false;
+	}
+
+	bool MouseUp(int click, int x, int y)
+	{
+		IsLMouseDown=false;
+		bool result=false;
+		for(uint i=Elements.length();i>0;)
+		{
+			i--;
+			GUIElement@ e=Elements[i];
+			if(IS_COLLISION(x,y,PosX+e.PosX,PosY+e.PosY,e.Surface.Width,e.Surface.Height))
+			{
+				e.MouseUp(click,true);
+				result=true;
+			}
+			else
+			{
+				e.MouseUp(click,false);
+			}
+		}
+		return result;
+	}
+
+	void MouseMove(int x, int y)
+	{
+		if(IsCanMove && IsLMouseDown)
+		{
+			int lastPosX=PosX;
+			int lastPosY=PosY;
+			int offsX=x-LastX;
+			int offsY=y-LastY;
+			LastX=x;
+			LastY=y;
+			PosX+=offsX;
+			PosY+=offsY;
+
+			// Check screen borders
+			if(not IsIgnoreBorders)
+			{
+				int px=PosX;
+				int py=PosY;
+				if(PosX<0) PosX=0;
+				if(PosY<0) PosY=0;
+				if(PosX+Surface.Width>__ScreenWidth) PosX=__ScreenWidth-Surface.Width;
+				if(PosY+Surface.Height>__ScreenHeight) PosY=__ScreenHeight-Surface.Height;
+				LastX+=PosX-px;
+				LastY+=PosY-py;
+			}
+			if(not (MoveCallback is null) && (lastPosX!=PosX || lastPosY!=PosY)) MoveCallback.OnMove(PosX,PosY);
+		}
+
+		for(uint i=0,j=Elements.length();i<j;i++) Elements[i].MouseMove(x,y);
+	}
+
+	bool KeyPress(uint8 key)
+	{
+		for(uint i=0,j=Elements.length();i<j;i++)
+		{
+			GUIElement@ e=Elements[i];
+			if(e.IsFocused && e.IsTextInput) return e.KeyPress(key);
+		}
+		return false;
+	}
+
+	void InputLost()
+	{
+		IsLMouseDown=false;
+		for(uint i=0,j=Elements.length();i<j;i++) Elements[i].InputLost();
+	}
+
+	GUIScreen@ GetNewInstance()
+	{
+		GUIScreen screen=this;
+		IGUIScreenCallbackShow@ newCallback=ShowCallback;
+		for(uint i=0,j=Elements.length();i<j;i++) @screen.Elements[i]=Elements[i].GetNewInstance();
+		return @screen;
+	}
+
+	// Options
+	IGUIScreenOpt@ CallbackShow(IGUIScreenCallbackShow@ callback){@ShowCallback=callback; return this;}
+	IGUIScreenOpt@ CallbackHide(IGUIScreenCallbackHide@ callback){@HideCallback=callback; return this;}
+	IGUIScreenOpt@ CallbackMove(IGUIScreenCallbackMove@ callback){@MoveCallback=callback; return this;}
+	IGUIScreenOpt@ Position(int x, int y){PosX=x; PosY=y; return this;}
+	IGUIScreenOpt@ CanMove(bool enabled){IsCanMove=enabled; return this;}
+	IGUIScreenOpt@ Modal(bool enabled){IsModal=enabled; return this;}
+	IGUIScreenOpt@ Multiinstance(bool enabled){IsMultiinstance=enabled; return this;}
+	IGUIScreenOpt@ IgnoreBorders(bool enabled){IsIgnoreBorders=enabled; return this;}
+	IGUIScreenOpt@ CloseOnMiss(bool enabled){IsCloseOnMiss=enabled; return this;}
+	IGUIScreenOpt@ AutoCursor(bool enabled, int cursorType){IsAutoCursor=enabled; AutoCursorType=cursorType; return this;}
+
+	// Info
+	int GetPosX() { return PosX; }
+	int GetPosY() { return PosY; }
+/*	IGUIElementOpt@[]@ GetElements()
+	{
+		IGUIElementOpt@[] result;
+		result.resize(Elements.length());
+		for(uint i=0,j=Elements.length();i<j;i++) @result[i]=Elements[i];
+		return result;
+	}*/
+
+	// Data
+	int Index;
+	int PosX;
+	int PosY;
+	int LastX;
+	int LastY;
+	Sprite Surface;
+
+	bool IsCanMove;
+	bool IsModal;
+	bool IsMultiinstance;
+	bool IsIgnoreBorders;
+	bool IsCloseOnMiss;
+	bool IsAutoCursor;
+
+	int AutoCursorType;
+	int AutoCursorPrev;
+
+	bool IsHardcoded;
+	bool IsLMouseDown;
+	IGUIScreenCallbackShow@ ShowCallback;
+	IGUIScreenCallbackHide@ HideCallback;
+	IGUIScreenCallbackMove@ MoveCallback;
+	GUIElement@[] Elements;
+}
+
+//
+// API
+//
+
+// Create new screen
+IGUIScreenOpt@ GUI_CreateScreen(int screenIndex, string@ sprName)
+{
+	if(screenIndex==0) return null;
+	DeleteScreen(screenIndex);
+	return CreateScreen(screenIndex,sprName);
+}
+
+// Delete old screen, hardcoded screens included
+void GUI_DeleteScreen(int screenIndex)
+{
+	if(screenIndex==0) return;
+	DeleteScreen(screenIndex);
+}
+
+// Add element on screen
+IGUIElementOpt@ GUI_AddScreenElement(int screenIndex, string@ sprName, int x, int y)
+{
+	if(screenIndex==0) return null;
+	if(GetScreen(screenIndex) is null) CreateScreen(screenIndex,null);
+
+	GUIScreen@ screen=GetScreen(screenIndex);
+	GUIElement element(sprName,PT_ART_INTRFACE);
+	element.Position(x,y);
+
+	screen.Elements.insertLast(@element);
+	return @element;
+}
+
+// Screen options
+IGUIScreenOpt@ GUI_GetScreenOptions(int screenIndex)
+{
+	return GetScreen(screenIndex);
+}
+
+// Valid only on IGUIScreenCallbackShow::OnShow callback
+IGUIScreenOpt@ GUI_GetScreenOptions()
+{
+	return LastScreenOpt;
+}
+
+// Valid only on IGUIElementCallbackInit::OnInit callback
+IGUIElementOpt@ GUI_GetElementOptions()
+{
+	return LastElementOpt;
+}
+
+//
+// Engine callbacks
+//
+
+void GUI_Init()
+{
+	AllScreens.resize(0);
+	ActiveScreens.resize(0);
+	KeyPressed.resize(0x100);
+	for(uint i=0,j=KeyPressed.length();i<j;i++) KeyPressed[i]=false;
+
+	// Register hardcoded screens
+	CreateScreen(CLIENT_MAIN_SCREEN_LOGIN,null);
+	CreateScreen(CLIENT_MAIN_SCREEN_REGISTRATION,null);
+	CreateScreen(CLIENT_MAIN_SCREEN_OPTIONS,null);
+	CreateScreen(CLIENT_MAIN_SCREEN_CREDITS,null);
+	CreateScreen(CLIENT_MAIN_SCREEN_GAME,null);
+	CreateScreen(CLIENT_MAIN_SCREEN_GLOBAL_MAP,null);
+	CreateScreen(CLIENT_MAIN_SCREEN_WAIT,null);
+	CreateScreen(CLIENT_SCREEN_INVENTORY,null);
+	CreateScreen(CLIENT_SCREEN_PICKUP,null);
+	CreateScreen(CLIENT_SCREEN_MINIMAP,null);
+	CreateScreen(CLIENT_SCREEN_CHARACTER,null);
+	CreateScreen(CLIENT_SCREEN_DIALOG,null);
+	CreateScreen(CLIENT_SCREEN_BARTER,null);
+	CreateScreen(CLIENT_SCREEN_PIP_BOY,null);
+	CreateScreen(CLIENT_SCREEN_FIX_BOY,null);
+	CreateScreen(CLIENT_SCREEN_MENU,null);
+	CreateScreen(CLIENT_SCREEN_AIM,null);
+	CreateScreen(CLIENT_SCREEN_TEST,null);
+	CreateScreen(CLIENT_SCREEN_SPLIT,null);
+	CreateScreen(CLIENT_SCREEN_TIMER,null);
+	CreateScreen(CLIENT_SCREEN_DIALOGBOX,null);
+	CreateScreen(CLIENT_SCREEN_ELEVATOR,null);
+	CreateScreen(CLIENT_SCREEN_SAY,null);
+	CreateScreen(CLIENT_SCREEN_CHA_NAME,null);
+	CreateScreen(CLIENT_SCREEN_CHA_AGE,null);
+	CreateScreen(CLIENT_SCREEN_CHA_SEX,null);
+	CreateScreen(CLIENT_SCREEN_GM_TOWN,null);
+	CreateScreen(CLIENT_SCREEN_INPUT_BOX,null);
+	CreateScreen(CLIENT_SCREEN_SKILLBOX,null);
+	CreateScreen(CLIENT_SCREEN_USE,null);
+	CreateScreen(CLIENT_SCREEN_PERK,null);
+	CreateScreen(CLIENT_SCREEN_TOWN_VIEW,null);
+	CreateScreen(CLIENT_SCREEN_SAVE_LOAD,null);
+	for(uint i=0, iMax=AllScreens.length(); i<iMax; i++) AllScreens[i].IsHardcoded=true;
+
+	// Keyboard init
+	KbData.resize(0x100);
+	@KbData[DIK_1]=				KeybData('1','!','1','!');
+	@KbData[DIK_2]=				KeybData('2','"','2','@');
+	@KbData[DIK_3]=				KeybData('3','№','3','#');
+	@KbData[DIK_4]=				KeybData('4',';','4','$');
+	@KbData[DIK_5]=				KeybData('5','%','5','%');
+	@KbData[DIK_6]=				KeybData('6',':','6','^');
+	@KbData[DIK_7]=				KeybData('7','?','7','&');
+	@KbData[DIK_8]=				KeybData('8','*','8','*');
+	@KbData[DIK_9]=				KeybData('9','(','9','(');
+	@KbData[DIK_0]=				KeybData('0',')','0',')');
+	@KbData[DIK_MINUS]=			KeybData('-','_','-','_');
+	@KbData[DIK_EQUALS]=		KeybData('=','+','=','+');
+	@KbData[DIK_Q]=				KeybData('й','Й','q','Q');
+	@KbData[DIK_W]=				KeybData('ц','Ц','w','W');
+	@KbData[DIK_E]=				KeybData('у','У','e','E');
+	@KbData[DIK_R]=				KeybData('к','К','r','R');
+	@KbData[DIK_T]=				KeybData('е','Е','t','T');
+	@KbData[DIK_Y]=				KeybData('н','Н','y','Y');
+	@KbData[DIK_U]=				KeybData('г','Г','u','U');
+	@KbData[DIK_I]=				KeybData('ш','Ш','i','I');
+	@KbData[DIK_O]=				KeybData('щ','Щ','o','O');
+	@KbData[DIK_P]=				KeybData('з','З','p','P');
+	@KbData[DIK_LBRACKET]=		KeybData('х','Х','[','{');
+	@KbData[DIK_RBRACKET]=		KeybData('ъ','Ъ',']','}');
+	@KbData[DIK_A]=				KeybData('ф','Ф','a','A');
+	@KbData[DIK_S]=				KeybData('ы','Ы','s','S');
+	@KbData[DIK_D]=				KeybData('в','В','d','D');
+	@KbData[DIK_F]=				KeybData('а','А','f','F');
+	@KbData[DIK_G]=				KeybData('п','П','g','G');
+	@KbData[DIK_H]=				KeybData('р','Р','h','H');
+	@KbData[DIK_J]=				KeybData('о','О','j','J');
+	@KbData[DIK_K]=				KeybData('л','Л','k','K');
+	@KbData[DIK_L]=				KeybData('д','Д','l','L');
+	@KbData[DIK_SEMICOLON]=		KeybData('ж','Ж',';',':');
+	@KbData[DIK_APOSTROPHE]=	KeybData('э','Э', 39, 39); // 39=='
+	@KbData[DIK_Z]=				KeybData('я','Я','z','Z');
+	@KbData[DIK_X]=				KeybData('ч','Ч','x','X');
+	@KbData[DIK_C]=				KeybData('с','С','c','C');
+	@KbData[DIK_V]=				KeybData('м','М','v','V');
+	@KbData[DIK_B]=				KeybData('и','И','b','B');
+	@KbData[DIK_N]=				KeybData('т','Т','n','N');
+	@KbData[DIK_M]=				KeybData('ь','Ь','m','M');
+	@KbData[DIK_COMMA]=			KeybData('б','Б',',','<');
+	@KbData[DIK_PERIOD]=		KeybData('ю','Ю','.','>');
+	@KbData[DIK_SLASH]=			KeybData('.',',','/','?');
+	@KbData[DIK_MULTIPLY]=		KeybData('*','*','*','*');
+	@KbData[DIK_SPACE]=			KeybData(' ',' ',' ',' ');
+	@KbData[DIK_GRAVE]=			KeybData('ё','Ё','`','~');
+	@KbData[DIK_NUMPAD1]=		KeybData('1','1','1','1');
+	@KbData[DIK_NUMPAD2]=		KeybData('2','2','2','2');
+	@KbData[DIK_NUMPAD3]=		KeybData('3','3','3','3');
+	@KbData[DIK_NUMPAD4]=		KeybData('4','4','4','4');
+	@KbData[DIK_NUMPAD5]=		KeybData('5','5','5','5');
+	@KbData[DIK_NUMPAD6]=		KeybData('6','6','6','6');
+	@KbData[DIK_NUMPAD7]=		KeybData('7','7','7','7');
+	@KbData[DIK_NUMPAD8]=		KeybData('8','8','8','8');
+	@KbData[DIK_NUMPAD9]=		KeybData('9','9','9','9');
+	@KbData[DIK_NUMPAD0]=		KeybData('0','0','0','0');
+	@KbData[DIK_SUBTRACT]=		KeybData('-','-','-','-');
+	@KbData[DIK_ADD]=			KeybData('+','+','+','+');
+	@KbData[DIK_DECIMAL]=		KeybData('.','.','.','.');
+	@KbData[DIK_NUMPADEQUALS]=	KeybData('=','=','=','=');
+	@KbData[DIK_NUMPADCOMMA]=	KeybData(',',',',',',',');
+	@KbData[DIK_DIVIDE]=		KeybData('/','/','/','/');
+	@KbData[DIK_RETURN]=		KeybData('\n','\n','\n','\n');
+	@KbData[DIK_NUMPADENTER]=	KeybData('\n','\n','\n','\n');
+	@KbData[DIK_TAB]=			KeybData('\t','\t','\t','\t');
+}
+
+int GUI_GetActiveMainScreen()
+{
+	return ActiveScreens.length() > 0 ? ActiveScreens.first().Index : CLIENT_SCREEN_NONE;
+}
+
+int GUI_GetActiveScreen()
+{
+	return ActiveScreens.length() > 0 ? ActiveScreens.last().Index : CLIENT_SCREEN_NONE;
+}
+
+void GUI_GetActiveScreens(int[]& result)
+{
+	result.resize(ActiveScreens.length());
+	for(uint i=0, iMax=result.length(); i<iMax; i++) result[i]=ActiveScreens[i].Index;
+}
+
+void GUI_ShowScreen(int screenIndex, int p0, int p1, int p2)
+{
+	GUIScreen@ screen=GetScreen(screenIndex);
+	if(not (screen is null))
+	{
+		if(not screen.IsMultiinstance)
+		{
+			// Close all another instances
+			for(uint i=ActiveScreens.length();i>0;) // From end
+			{
+				i--;
+				if(ActiveScreens[i].Index==screenIndex)
+				{
+					ActiveScreens.removeAt(i);
+					if(not (screen.HideCallback is null)) screen.HideCallback.OnHide(p0,p1,p2);
+				}
+			}
+		}
+
+		// Create new instance
+		@screen=screen.GetNewInstance();
+		ActiveScreens.insertLast(@screen);
+
+		// Set screen cursor
+		if(screen.IsAutoCursor)
+		{
+			screen.AutoCursorPrev=::GetCurrentCursor();
+			::ChangeCursor(screen.AutoCursorType);
+		}
+
+		// Call init callbacks
+		@LastScreenOpt=screen;
+		// First init elements
+		for(uint i=0, iMax=screen.Elements.length(); i<iMax; i++)
+		{
+			GUIElement@ e=screen.Elements[i];
+			if(not (e.InitCallback is null))
+			{
+				@LastElementOpt=e;
+				e.InitCallback.OnInit();
+				@LastElementOpt=null;
+			}
+		}
+		// Then show
+		if(not (screen.ShowCallback is null))
+		{
+			screen.ShowCallback.OnShow(p0,p1,p2);
+		}
+		@LastScreenOpt=null;
+	}
+}
+
+void GUI_HideScreen(int screenIndex, int p0, int p1, int p2)
+{
+	for(uint i=ActiveScreens.length();i>0;) // From end
+	{
+		i--;
+		GUIScreen@ screen=ActiveScreens[i];
+		if(screen.Index==screenIndex)
+		{
+			// Remove
+			ActiveScreens.removeAt(i);
+
+			// Hide callback
+			if(not (screen.HideCallback is null))
+			{
+				screen.HideCallback.OnHide(p0,p1,p2);
+			}
+
+			// Restore cursor
+			if(screen.IsAutoCursor)
+			{
+				::ChangeCursor(screen.AutoCursorPrev);
+			}
+
+			// Store position for non-multiinstance screens
+			if(not screen.IsMultiinstance)
+			{
+				GUIScreen@ instance=GetScreen(screenIndex);
+				instance.PosX=screen.PosX;
+				instance.PosY=screen.PosY;
+			}
+			break;
+		}
+	}
+}
+
+void GUI_Render()
+{
+	for(uint i=0, iMax=ActiveScreens.length(); i<iMax;i++)
+	{
+		GUIScreen@ screen=ActiveScreens[i];
+		if(screen.IsHardcoded)
+		{
+			::DrawHardcodedScreen(screen.Index);
+			::GetHardcodedScreenPos(screen.Index,screen.PosX,screen.PosY);
+		}
+		screen.Draw();
+	}
+}
+
+bool GUI_MouseDown(int click, int x, int y)
+{
+	uint len=ActiveScreens.length();
+	if(len!=0)
+	{
+		GUIScreen@ screen=ActiveScreens[len-1];
+		bool result=screen.MouseDown(click,x,y);
+		if(result)
+		{
+			if(click==MOUSE_CLICK_WHEEL_UP || click==MOUSE_CLICK_WHEEL_DOWN) return GUI_MouseUp(click,x,y);
+			return true;
+		}
+
+		if(len>1 && not screen.IsHardcoded && not screen.IsModal && click==MOUSE_CLICK_LEFT &&
+			not IS_COLLISION(x,y,screen.PosX,screen.PosY,screen.Surface.Width,screen.Surface.Height))
+		{
+			for(uint i=ActiveScreens.length()-1;i>0;) // From end
+			{
+				i--;
+				GUIScreen@ nextScreen=ActiveScreens[i];
+				if(IS_COLLISION(x,y,nextScreen.PosX,nextScreen.PosY,nextScreen.Surface.Width,nextScreen.Surface.Height))
+				{
+					// Swap screens
+					GUIScreen@ tmpScreen=ActiveScreens[i];
+					@ActiveScreens[i]=ActiveScreens[len-1];
+					@ActiveScreens[len-1]=tmpScreen;
+					return GUI_MouseDown(click,x,y); // Click new screen
+				}
+			}
+		}
+	}
+	return false;
+}
+
+bool GUI_MouseUp(int click, int x, int y)
+{
+	//Message("3.1");
+	uint len=ActiveScreens.length();
+	if(len!=0) return ActiveScreens[len-1].MouseUp(click,x,y);
+	return false;
+}
+
+void GUI_MouseMove(int x, int y)
+{
+	uint len=ActiveScreens.length();
+	if(len!=0) ActiveScreens[len-1].MouseMove(x,y);
+}
+
+bool GUI_KeyDown(uint8 key)
+{
+	if(key==DIK_LCONTROL|| key==DIK_RCONTROL) ctrl=true;
+	
+	if(KeyPressed.length()!=0) KeyPressed[key]=true;
+	uint len=ActiveScreens.length();
+	if(len!=0) return ActiveScreens[len-1].KeyPress(key);
+	return false;
+}
+
+bool GUI_KeyUp(uint8 key)
+{
+	if(key==DIK_LCONTROL|| key==DIK_RCONTROL) ctrl=false;
+	if(KeyPressed.length()!=0) KeyPressed[key]=false;
+	return false;
+}
+
+void GUI_InputLost()
+{
+	for(uint i=0,iMax=KeyPressed.length();i<iMax;i++) KeyPressed[i]=false;
+	uint len=ActiveScreens.length();
+	if(len!=0) ActiveScreens[len-1].InputLost();
+}
+
+//
+// Internal
+//
+
+IGUIScreenOpt@ CreateScreen(int screenIndex, string@ sprName)
+{
+	GUIScreen screen(sprName,PT_ART_INTRFACE);
+	screen.CanMove(true);
+	screen.Position(__ScreenWidth/2-screen.Surface.Width/2,__ScreenHeight/2-screen.Surface.Height/2);
+	screen.Index=screenIndex;
+	AllScreens.insertLast(@screen);
+	return @screen;
+}
+
+void DeleteScreen(int screenIndex)
+{
+	for(uint i=0;i<ActiveScreens.length();)
+	{
+		if(ActiveScreens[i].Index==screenIndex)
+		{
+			ActiveScreens.removeAt(i);
+			i=0;
+		}
+		else
+		{
+			i++;
+		}
+	}
+
+	for(uint i=0,j=AllScreens.length();i<j;i++)
+	{
+		if(AllScreens[i].Index==screenIndex)
+		{
+			AllScreens.removeAt(i);
+			break;
+		}
+	}
+}
+
+GUIScreen@ GetScreen(int screenIndex)
+{
+	if(screenIndex==0) return null;
+	for(uint i=0,iMax=AllScreens.length();i<iMax;i++) if(AllScreens[i].Index==screenIndex) return @AllScreens[i];
+	return null;
+}
+
+bool ProcessKey(uint8 key, string& text, uint8& letter)
+{
+	if(KeyPressed.length()==0) return false;
+
+	if(key==DIK_BACK)
+	{
+		if(text.length()>0) text.resize(text.length()-1);
+		return true;
+	}
+
+	KeybData@ k=KbData[key];
+	if(not (k is null))
+	{
+		bool shiftDown=(KeyPressed[DIK_LSHIFT] || KeyPressed[DIK_RSHIFT]);
+		uint len=text.length();
+		text.resize(text.length()+1);
+		text[len]=k.Char[::GetKeybLang()*2+(shiftDown?1:0)];
+		letter=text[len];
+		return true;
+	}
+	return false;
+}

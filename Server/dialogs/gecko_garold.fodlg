@@ -1,0 +1,375 @@
+[comment]
+Ваши комментарии / Your comments.
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 0 #
+6 1010 D _var n name_mem_npc_player = 0 #
+2 1020 D _var n loyality = 1 #
+3 1030 D _var n loyality = 2 #
+4 1040 D _var n loyality = 3 #
+4 1050 D _var n loyality = 4 @
+2 2000 Attack 0 #
+65507 2010 #
+5 2020 D _item p PID_BOTTLE_CAPS > 99 R _item p PID_BOTTLE_CAPS - 100 R _item n PID_BOTTLE_CAPS + 100 R _var n loyality = 2 @
+3 3000 None 0 #
+22 3010 D _var n click_counter { 19 D _item p PID_REFINED_ORE > 0 D _var p click_counter = 99 #
+22 3020 D _var p click_counter = 99 D _item p PID_REFINED_ORE > 0 D _script dialog@d_TimeoutCheck 0  D _var n click_counter } 20 R _var n click_counter = 0 #
+29 3030 D _var p click_counter = 99 D _item p PID_REFINED_ORE > 0 D _script dialog@d_NotTimeoutCheck 0  D _var n click_counter } 20 #
+28 3040 D _var p click_counter > 99 D _item p PID_REFINED_ORE < 1 D _item p PID_URANIUM_ORE > 0 #
+10 3050 #
+11 3060 #
+13 3070 D _var n loyality = 3 #
+9 3080 D _var n loyality > 1 #
+15 3090 D _var n loyality = 4 D _var p geck_garold_train = 0 #
+0 3100 @
+4 4000 None 0 #
+22 4010 D _var n click_counter { 19 D _var p click_counter = 99 D _item p PID_REFINED_ORE > 0 #
+22 4020 D _var p click_counter = 99 D _item p PID_REFINED_ORE > 0 D _script dialog@d_TimeoutCheck 0  D _var n click_counter } 20 R _var n click_counter = 0 #
+29 4030 D _var p click_counter = 99 D _item p PID_REFINED_ORE > 0 D _script dialog@d_NotTimeoutCheck 0  D _var n click_counter } 20 #
+28 4040 D _var p click_counter > 99 D _item p PID_REFINED_ORE < 1 D _item p PID_URANIUM_ORE > 0 #
+3 4050 #
+0 4060 @
+5 5000 None 0 #
+3 5010 #
+0 5020 @
+6 6000 None 0 #
+7 6010 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 R _var n loyality = 2 #
+8 6020 D _var n name_mem_player_npc = 0 R _var n name_mem_player_npc = 1 R _var n loyality = 2 #
+0 6030 @
+7 7000 None 0 #
+3 7010 #
+0 7020 @
+8 8000 None 0 #
+3 8010 #
+0 8020 @
+9 9000 None 0 #
+3 9010 D _item p PID_BOTTLE_CAPS > 999 R _item p PID_BOTTLE_CAPS - 1000 R _item n PID_BOTTLE_CAPS + 1000 R _var n loyality = 3 #
+0 9020 D _item p PID_BOTTLE_CAPS < 1000 #
+0 9030 @
+10 10000 None 0 #
+3 10010 #
+0 10020 @
+11 11000 None 0 #
+12 11010 #
+17 11020 #
+0 11030 @
+12 12000 None 0 #
+3 12010 #
+0 12020 @
+13 13000 None 0 #
+14 13010 D _var n loyality > 1 R _var n loyality = 4 #
+0 13020 @
+14 14000 None 0 #
+3 14010 #
+0 14020 @
+15 15000 None 0 #
+16 15010 D _item p PID_BOTTLE_CAPS > 2199 R _item p PID_BOTTLE_CAPS - 2200 R _item n PID_BOTTLE_CAPS + 2200 R _param p SK_SMALL_GUNS + 3 R _param p SK_MELEE_WEAPONS + 3 R _param p SK_UNARMED + 3 R _var p geck_garold_train = 1 R _param p SK_ENERGY_WEAPONS + 3 R _param p SK_BIG_GUNS + 3 #
+3 15020 D _item p PID_BOTTLE_CAPS < 2200 #
+0 15030 @
+16 16000 None 0 #
+3 16010 #
+0 16020 @
+17 17000 None 0 #
+18 17010 #
+3 17020 #
+0 17030 @
+18 18000 None 0 #
+19 18010 #
+3 18020 #
+0 18030 @
+19 19000 None 0 #
+20 19010 #
+3 19020 R _var p click_counter = 99 #
+21 19030 R _var p click_counter = 99 #
+0 19040 @
+20 20000 None 0 #
+0 20010 #
+21 20020 R _var p click_counter = 99 #
+21 20030 R _var p click_counter = 99 #
+3 20040 R _var p click_counter = 99 @
+21 21000 None 0 @
+22 22000 None 0 #
+23 22010 D _item p PID_REFINED_ORE > 0 #
+0 22020 D _item p PID_REFINED_ORE > 0 #
+0 22030 D _item p PID_REFINED_ORE < 1 @
+23 23000 None 0 #
+24 23010 D _item p PID_REFINED_ORE > 0 D _var n click_counter < 19 R _item p PID_REFINED_ORE - 1 R _item p PID_BOTTLE_CAPS + 600 R _param p ST_EXPERIENCE + 350 R _var n click_counter + 1 #
+24 23020 D _item n PID_REFINED_ORE > 0 D _var n click_counter } 19 R _var n click_counter + 1 R _item p PID_REFINED_ORE - 1 R _item p PID_BOTTLE_CAPS + 600 R _param p ST_EXPERIENCE + 350 R _script dialog@r_TimeoutSet 1 24 #
+25 23030 D _item p PID_REFINED_ORE > 0 D _param p SK_SPEECH < 69 #
+26 23040 D _item p PID_REFINED_ORE > 0 D _param p SK_SPEECH > 70 #
+0 23050 D _item p PID_REFINED_ORE > 0 #
+0 23060 D _item p PID_REFINED_ORE < 1 @
+24 24000 None 1 #
+24 24010 D _item p PID_REFINED_ORE > 0 D _var n click_counter < 20 R _item p PID_REFINED_ORE - 1 R _item p PID_BOTTLE_CAPS + 600 R _param p ST_EXPERIENCE + 350 R _var n click_counter + 1 #
+29 24020 D _item p PID_REFINED_ORE > 0 D _var n click_counter } 20 R _script dialog@r_TimeoutSet 1 24 #
+0 24030 @
+25 25000 None 0 #
+24 25010 D _item p PID_REFINED_ORE > 0 D _var n click_counter < 19 R _var n click_counter + 1 R _item p PID_REFINED_ORE - 1 R _item p PID_BOTTLE_CAPS + 600 R _param p ST_EXPERIENCE + 350 #
+24 25020 D _item p PID_REFINED_ORE > 0 D _var n click_counter } 19 R _var n click_counter + 1 R _item p PID_REFINED_ORE - 1 R _item p PID_BOTTLE_CAPS + 600 R _param p ST_EXPERIENCE + 350 #
+0 25030 D _item p PID_REFINED_ORE > 0 #
+0 25040 D _item p PID_REFINED_ORE < 1 @
+26 26000 None 0 #
+27 26010 D _item p PID_REFINED_ORE > 0 D _var n click_counter < 19 R _item p PID_REFINED_ORE - 1 R _item p PID_BOTTLE_CAPS + 700 R _param p ST_EXPERIENCE + 500 R _var n click_counter + 1 #
+27 26020 D _item n PID_REFINED_ORE > 0 D _var n click_counter } 19 R _var n click_counter + 1 R _item p PID_REFINED_ORE - 1 R _item p PID_BOTTLE_CAPS + 700 R _param p ST_EXPERIENCE + 500 R _script dialog@r_TimeoutSet 1 24 #
+0 26030 @
+27 27000 None 1 #
+27 27010 D _item p PID_REFINED_ORE > 0 D _var n click_counter < 20 R _item p PID_REFINED_ORE - 1 R _item p PID_BOTTLE_CAPS + 700 R _param p ST_EXPERIENCE + 500 R _var n click_counter + 1 #
+29 27020 D _item p PID_REFINED_ORE > 0 D _var n click_counter } 20 R _script dialog@r_TimeoutSet 1 24 #
+0 27030 @
+28 28000 None 0 @
+29 29000 None 0 #
+0 29010 &
+
+[russ]
+{100}{}{Гарольд}
+{200}{}{Вы видите мертвяка.}
+{200}{}{Вы видите Гарольда.}
+{210}{}{Вы видите мертвяка. По его манере общения с другими вы понимаете, что он здесь главный.}
+{210}{}{Вы видите Гарольда. Кажется, что этот мертвяк такой же древний, как время.}
+{210}{}{Вы видите Гарольда. Старина даже еще не развалился от времени.}
+{210}{}{Вы видите Гарольда. Кажется, его дерево плодоносит!}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{Имя игрока - Неизвестно [Всем привет от TEMPLAR`а ^_^]}
+{1020}{}{Лояльность - Враг}
+{1030}{}{Лояльность - Нейтрален}
+{1040}{}{Лояльность - Друг}
+{1050}{}{Лояльность - Собрат}
+{2000}{}{Это опять ты, ублюдок? Что, вернулся за добавкой?! Ну, сейчас я тебе наваляю.}
+{2010}{}{Ты мне некогда не нравился, гад, сейчас я тебе снова сломаю твою гнилую челюсть.}
+{2020}{}{Стой, подожди! Я понял свою ошибку, вот держи 100 монет в знак дружбы, прости за всё.}
+{3000}{}{Так чем я могу тебе помочь, гладкокожий?@@Что тебе нужно?@@Зашёл поздороватся?@@Давно я тебя здесь не видел.@@Всё бродишь по пустоши?@@А мы тут Гекко отстраиваем...@@О, ты как раз к ужину зашёл!@@Что мне тебе расказать?@@Устал я что-то, что там у тебя?@@Хочешь что-то сказать?@@Что ты хочешь узнать?@@О чём будем говорить?@@Какие дела обсудим?}
+{3010}{}{Эй, Гарольд, угадай, что у меня для тебя есть? Немного урана, чтобы порадовать старого гуля!}
+{3020}{}{Эй, Гарольд, угадай, что у меня для тебя есть? Немного урана, чтобы порадовать старого гуля!}
+{3030}{}{Эй, Гарольд, угадай, что у меня для тебя есть? Немного урана, чтобы порадовать старого гуля!}
+{3040}{}{Эй, Гарольд, я притащил тебе кусок самого настоящего урана на продажу!}
+{3050}{}{Что тут интересного происходит?}
+{3060}{}{Расскажи о городе.}
+{3070}{}{Ты, вроде, военным раньше был, что можешь расказать по этому поводу?}
+{3080}{}{Может помочь чего надо?}
+{3090}{}{Давай обговорим наши тренировки с оружием.}
+{3100}{}{Так зашёл поздороватся, не болей. [Уходите]}
+{4000}{}{Рад тебя видеть, друг, заходи располагайся.}
+{4010}{}{Эй, Гарольд, угадай, что у меня для тебя есть? Немного урана, чтобы порадовать старого гуля!}
+{4020}{}{Эй, Гарольд, угадай, что у меня для тебя есть? Немного урана, чтобы порадовать старого гуля!}
+{4030}{}{Эй, Гарольд, угадай, что у меня для тебя есть? Немного урана, чтобы порадовать старого гуля!}
+{4040}{}{Эй, Гарольд, я притащил тебе кусок самого настоящего урана на продажу!}
+{4050}{}{Здарова, я тоже рад тебя видеть, раскажи мне о городе.}
+{4060}{}{Привет и пока, я тороплюсь. [Уходите]}
+{5000}{}{[Берёт деньги] Хм, а ты оказывается не такой уж подонок, каким показался на первый взгляд. Но не раслабляйся - я всё равно слежу за тобой, и тебе лучше в этот раз следить за своими руками.}
+{5010}{}{Да, накатило что-то, не принимай близко к сердцу.}
+{5020}{}{Ну ладно, ладно, я понял. Пойду лучше займусь своими делами. [Уходите]}
+{6000}{}{Здравствуйте, я Гарольд, мэр этого славного городка.}
+{6010}{}{Осторожность - моё второе имя. Кстати я @pname@.}
+{6020}{}{Здравствуйте, господин мэр! [Треплите ему руку]}
+{6030}{}{Ага, как скажешь, я вообще-то мимо проходил.}
+{7000}{}{@pname@? Хорошее имя, у меня до войны кошака так звали, были раньше такие небольшие волосатые животные, их люди дома держали. Правда сейчас их уже не осталось, съели наверное.}
+{7010}{}{Да, да! Я таких на картинках в журнале видел, вроде "Хрустящий Кот" назывался он. Ну ладно, ближе к делу. Мне надо разобраться с некоторыми вещами.}
+{7020}{}{Да ну, бред все это. Мне пора.}
+{8000}{}{[Внезапно в руке мертвяка что-то щёлкнуло] Опа, что это было?.. [Мертвяк жмёт кистью и в ответ происходит ответный щелчок] Во, теперь всё отлично. А ты забавный.}
+{8010}{}{[Бьёте его по плечу] Ну, Гарольд, давай к делу.}
+{8020}{}{[Смотрите на руку, потом на Гарольда, снова на руку] Очень приятно, но мне кажется пора. [В спешке уходите]}
+{9000}{}{Нет, вроде бы пока не нужна. Но ты знаешь, я бы не отказался от пожертвования в тысячу монет на нужды нашего города. Говорят, деньги сближают людей. [Хитро улыбается]}
+{9010}{}{Хм, уболтал, чертяка языкастый. Вот тебе 1000 монет - пусть этот город станет ещё лучше!}
+{9020}{}{У меня столько нет.}
+{9030}{}{Сближать? Мы и так в одной комнате находимся, куда ещё ближе. К тому же у меня нет лишних денег.}
+{10000}{}{Народу много в последнее время в синих трико, как у тебя. Что-то рыщут, бродят, бегают, ящики тут у меня все переболамутили... К счастью, в них нечего ценого нет [Хе-Хе]. Электростанция работает, посевы созревают... Вобшем, всё у нас хорошо.}
+{10010}{}{А, ясно. У меня есть ещё вопросы.}
+{10020}{}{Вот оно как, ну ладно, пора мне... [Уходите]}
+{11000}{}{У нас маленький городишко. Многие мертвяки пришли из Некрополиса, что лежит далеко на юге. Живем тем что добываем и продаем энергию, занимаемся фермерством. Загляни в местный бар - там частенько бывает довольно шумно и всегда можно услышать пару новых баек от Вузза.}
+{11010}{}{А торговцы у вас водятся?}
+{11020}{}{Эй, Гарольд, а чем вы свою станцию кочегарите? Ещё довоенным топливом, небось?}
+{11030}{}{Стой, я всё понял, сам найду, у меня от твоего тарахтения голова заболела. [Уходите]}
+{12000}{}{Если пойдешь на свалку, там прямо у входа увидишь лачугу Перси. Так вот, у него часто всякие нужные вещички оседают. Где-то посреди свалки должен быть Скитер, он починкой и ремонтом вских фигулин занимается.}
+{12010}{}{Ага, запомнил, у меня ещё вопросы.}
+{12020}{}{Ясно, теперь понятно. Пойду я тогда осмотрю город.}
+{13000}{}{До войны я был военным. Служил капралом в армии США и одним из первых испробовал моторизированую боевую броню при борьбе с китайцами. Эти узкоглазые впадали в панику при виде наших стальных легионов. Но через пару лет посыпались боеголовки как снег на голову и я скрылся в убежище...}
+{13010}{}{И как навыки ещё остались?}
+{13020}{}{Занимательная история, ну я пошёл. [Уходите]}
+{14000}{}{Я могу научить тебя стрелять из лёгкого огнестрельного оружия, как правильно обращаться с ножом, и как эффективно двигаться в рукопашном бою. Ты мне действительно нравишся, я редко кому рассказывал о своём прошлом.}
+{14010}{}{Мне кажется, это будет очень полезно.}
+{14020}{}{Да, оказывается вы, мертвяки, такие же люди как и мы. Пойду опрокину стаканчик за тебя. [Уходите]}
+{15000}{}{Я довольно занятой, сам понимаешь. Думаю я преподам пару уроков ну, скажем... За 2200 монет.}
+{15010}{}{Хорошо, старик, думаю игра стоит свеч. Вот твои 2200 монет. Сделай из меня Рембо!}
+{15020}{}{У меня нет с собой такой суммы.}
+{15030}{}{Старик, жди здесь. Сейчас я сгоняю за деньгами! [Убегаете]}
+{16000}{}{Ну вот, на сегодня думаю хватит. Теперь ты ещё лучше умеешь обращаться с оружием. [Улыбается]}
+{16010}{}{Ага, я всё понял, у меня к тебе ещё пара вопросов.}
+{16020}{}{Да, это было познавательно, пойду опробую новые знания.}
+{17000}{}{Когда мы только пришли, то ещё могли использовать довоенное топливо. А потом долгое время закупали уран в Брокен Хиллс, приятно было иметь с ними дело. Мы, мертвяки, никогда не обманываем друг друга.}
+{17010}{}{Эй, а почему в прошедшем времени? Неужели поссорились?}
+{17020}{}{У меня есть ещё вопросы...}
+{17030}{}{Это всё, мне пора!}
+{18000}{}{Да всё эти хреновы хабологи. Одна станция репликации жрёт энергии больше, чем целый город. Тянуть провода до нас они не хотят, устанавливают мини-реакторы. Ну и, конечно, им нужен сраный уран, много его! Поэтому они дают караванщикам хорошую цену, которую мы уже не можем побить. Ох, не знаю, что будет, у нас запас на пять лет максимум.}
+{18010}{}{Что, может, надо как-то помочь с закупкой?}
+{18020}{}{Дааа, вечно эти хабологи куда-нибудь влезут. Ладно, у меня есть ещё вопрос...}
+{18030}{}{Спасибо за рассказ, мне пора!}
+{19000}{}{Ооо, если ты сможешь закупать уран в Брокен Хиллс и доставлять его сюда, я буду щедро оплачивать твои затраты. Где-то по 100 баксов за килограмм обогащённого урана.}
+{19010}{}{100 баксов? Звучит маловато. Что мне мешает пойти и продать за хорошую цену хабологам?}
+{19020}{}{Ух, я даже и не знаю. Надо подумать. Ладно, у меня тут назрел ещё вопрос, вопросище!}
+{19030}{}{100 баксов? Так, если тащить 20 килограмм не напрягаясь, то это уже две штуки. А если взять ещё и друзей... Звучит как дело по мне. Эй, гуль, я берусь. Скоро у тебя будет уран, хороший, очищенный, теплёнький уран.}
+{19040}{}{Эй, гуль, да тебе мозг проело дерево! Иди таскай свой уран сам за такие бабки. Или просто полезай в реактор - сам, наверное, излучаешь как два урановых стержня.}
+{20000}{}{Хабологи имеют дело только с крупными партиями и известными дельцами, они просто не обратят на тебя внимания. Нам хватит и того, что может изредка приносить на себе пара человек.}
+{20010}{}{Эй, ты не понял, я и есть хозяин крупной компании. Пока, спасибо за наводку на скупщиков.}
+{20020}{}{Ну ладно, предположим, я соглашаюсь. Ничего не гарантирую, но могу в один день заявиться с партией урана.}
+{20030}{}{Окей, гуль, мы будем делать бизнес! Жди меня и я достану тебе какого-нибудь супер-пупер обогащённого урана.}
+{20040}{}{Знаешь, я подумаю над твоим предложением, а то мне оно как снег на голову. Не знаю, что такое "снег", но так говорили у меня дома. Да, и это, мне тут ещё кое-что из-под тебя нужно...}
+{21000}{}{Смотри, не таскай уран в карманах, а то @sex@|не будет стоять||дети родятся уродами|!@@Смотри, не облучись сильно, а то будешь как я!@@Если собараешься заводить детей, не таскай уран в рюкзаке, пользуйся тачкой!@@Не грей об уран руки по ночам, а то их придётся отрезать @sex@|и нечем будет дрочить|||, хе-хе!}
+{22000}{}{Ух ты, да это сюрприз! Давай посмотрим, что ты мне притащил, нука-нука, порадуй старого гуля!}
+{22010}{}{О какой! [Достать кусок обогащённого урана]}
+{22020}{}{Обломись гуль, я просто решил@sex@|||а| тебя подразнить.}
+{22030}{}{Мать твою, а уран-то спёрли!}
+{23000}{}{Ооо, вижу отличный продукт центрифуги в Брокен Хиллс! На вид килограмм шесть, то есть тебе полагается 600 баксов!}
+{23010}{}{Зашибись, меняемся!}
+{23020}{}{Зашибись, меняемся!}
+{23030}{}{Эй, гуль, а по мне так этот кусок вполне тянет на хорошие семь килограмм. Ну уж точно не меньше, чем шесть с половиной!}
+{23040}{}{Эй, гуль, а по мне так этот кусок вполне тянет на хорошие семь килограмм. Ну уж точно не меньше, чем шесть с половиной!}
+{23050}{}{600 баксов мне бы реально пригодились, но что-то я думаю, что я оставлю этот уран себе. Слишком я к нему привязал@sex@|ся||ась| за время наших путешествий.}
+{23060}{}{Мать твою, уран спёрли!}
+{24000}{}{Вот твои деньги, мой друг, ты их честно заработал@sex@|||а|.}
+{24010}{}{Эй, я у меня есть ещё!@@Смотри, а у меня ещё один!@@Постой, это не всё, вот ещё один!@@А что у нас тут? Оп-па, ещё один кусок урана для Гарольда!@@Хэй, ты что, думал, что это всё? Вот ещё один!}
+{24020}{}{Эй, я у меня есть ещё!@@Смотри, а у меня ещё один!@@Постой, это не всё, вот ещё один!@@А что у нас тут? Оп-па, ещё один кусок урана для Гарольда!@@Хэй, ты что, думал, что это всё? Вот ещё один!}
+{24030}{}{Спасибо, это всё!}
+{25000}{}{Эй, не пытайся надурить старого гуля! Да я ураном торговал, когда тебе ещё с патронами от дробовика играть не давали! 600 баксов и не долларом больше, ты чебуррашка!}
+{25010}{}{Окей, держи за 600.}
+{25020}{}{Окей, держи за 600.}
+{25030}{}{НЕТ ТЫ!}
+{25040}{}{Мать твою, уран спёрли!}
+{26000}{}{Э... Ну, да, мог и ошибиться, старый гуль, с кем не бывает. Они в Брокенах всегда по шесть кило делали, сколько себя помню! Окей, 700 баксов.}
+{26010}{}{Супер, держи!}
+{26020}{}{Супер, держи!}
+{26030}{}{А хабологи дают 800! Ахаха, умойся!}
+{27000}{}{Вот твои деньги, мой друг, ты их честно заработал@sex@|||а|.}
+{27010}{}{Эй, я у меня есть ещё!@@Смотри, а у меня ещё один!@@Постой, это не всё, вот ещё один!@@А что у нас тут? Оп-па, ещё один кусок урана для Гарольда!@@Хэй, ты что, думал, что это всё? Вот ещё один!}
+{27020}{}{Эй, я у меня есть ещё!@@Смотри, а у меня ещё один!@@Постой, это не всё, вот ещё один!@@А что у нас тут? Оп-па, ещё один кусок урана для Гарольда!@@Хэй, ты что, думал, что это всё? Вот ещё один!}
+{27030}{}{Спасибо, это всё!}
+{28000}{}{Эй, кого ты пытаешься обмануть? Это простая руда, её ещё колошматить год в центрифугах до обогащения!}
+{29000}{}{Извини, @sex@|брат||сестрёнка|, но мне так много приносили урана за последнее время, что я просто не смогу с тобой расплатиться. Зайди через день-другой, я добуду деньжат.}
+{29010}{}{По рукам.}
+
+[engl]
+{100}{}{Harold}
+{200}{}{You see Harold.}
+{210}{}{You see a very old but still spry-looking ghoul.}
+{210}{}{You see a particularly leathery-looking Ghoul.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{Имя игрока - Неизвестно [Всем привет от TEMPLAR`а ^_^]}
+{1020}{}{Лояльность - Враг}
+{1030}{}{Лояльность - Нейтрален}
+{1040}{}{Лояльность - Друг}
+{1050}{}{Лояльность - Собрат}
+{2000}{}{Is that you again, bastard? What, wanna to get more?! I’ll kick your ass now.}
+{2010}{}{I never liked you, skunk, now I’m gonna break your rotten jaw again.}
+{2020}{}{Stop, wait! I’ve understood my mistake, take $ 100 as a gift of friendship.}
+{3000}{}{So, how can I help you, smoothskin?@@Whatcha need?@@You came to say hello?@@Pretty long time since I’ve seen you here.@@Are you still wandering across wastelands?@@We’re building Gecko here...@@Oh, you came exactly to dinner time!@@Whatcha can I tell you?@@I’ve got tired somehow… Whatcha need?@@Whatcha want to tell me?@@Whatcha want to know?@@What will we speak about?@@What business do you have?}
+{3010}{}{Эй, Гарольд, угадай, что у меня для тебя есть? Немного урана, чтобы порадовать старого гуля!}
+{3020}{}{Hey, Harold, guess what I have for you! Some uranium to make an old ghoul happy!}
+{3030}{}{Эй, Гарольд, угадай, что у меня для тебя есть? Немного урана, чтобы порадовать старого гуля!}
+{3040}{}{Hey, Harold, I’ve brought some real uranium for you!}
+{3050}{}{Hello, Harold. What do you do here?}
+{3060}{}{Tell me about the town.}
+{3070}{}{It seems you was a military man in old times, what can you tell about this?}
+{3080}{}{Maybe I can help you somehow?}
+{3090}{}{Lets discuss our weapons training.}
+{3100}{}{I came to say hello, don’t get sick. [Leave]}
+{4000}{}{Glad to see you, friend, make yourself comfortable.}
+{4010}{}{Эй, Гарольд, угадай, что у меня для тебя есть? Немного урана, чтобы порадовать старого гуля!}
+{4020}{}{Hey, Harold, guess what I have for you! Some uran to make an old ghoul happy!}
+{4030}{}{Эй, Гарольд, угадай, что у меня для тебя есть? Немного урана, чтобы порадовать старого гуля!}
+{4040}{}{Hey, Harold, I’ve brought some real uran for you!}
+{4050}{}{Hi there, glad to see you too. Tell me about the town.}
+{4060}{}{Hello and bye for now, I’m in a hurry. [Leave]}
+{5000}{}{[Takes money] Hm, you’re not such a bastard as you looked at first blush. But don’t relax – I’m gonna watch you and it's better for you to keep you hands.}
+{5010}{}{Something had gotten into me, don’t take it to heart.}
+{5020}{}{Okay, well, I understood. I’d get back to my business [Leave]}
+{6000}{}{Hello, I’m the mayor of this nice town.}
+{6010}{}{Caution is my second name. By the way, I’m @pname@.}
+{6020}{}{Hello, sir mayor [Shake his hand]}
+{6030}{}{Ok, as you like. Just passing through.}
+{7000}{}{@pname@? Good name, my cat had the same name before the war.  There were such animals in the old days, people used to keep them at home. Though now there are none of them, maybe they all were eaten.}
+{7010}{}{Yes, yes! I saw them in some magazine, it seems  "Crispy Cat" was its name. Anyway, lets get down to business. I have to deal with some things.}
+{7020}{}{Well, that’s all bullshit. I’m gotta go.}
+{8000}{}{[Suddenly something clicked in ghoul’s hand] Wow, whatcha was it?.. [Ghoul squeezes his hand and return crunch happens] Here, much better now. You’re a funny guy.}
+{8010}{}{[Slap ghoul on the back] Harold, lets get down to business.}
+{8020}{}{[Look at the hand, then at Harold and again at the hand] Nice to meet you, Harold, but I have to go. [Leave in a hurry]}
+{9000}{}{It seems I don’t need help for now. But you know, I wouldn’t refuse a donation of $ 1000 for our town’s needs. It is said that money make people closer. [Smiles cunningly]}
+{9010}{}{Uh, you persuaded me, devil sharp-tongued. Here’s $ 1000 for you, I hope the town will become much better!}
+{9020}{}{I haven’t such a sum.}
+{9030}{}{Makes closer? We are already in one room, no way we can become closer. Besides, I haven’t excess money.}
+{10000}{}{I see lot’s of people in blue suit like you wear. They prowl, roam, run everywhere, they’ve turned over all boxed here. Luckily there isn’t anything valuable in them. [Hah-hah] Power plant works well, the crops are coming up… In general we are doing fine.}
+{10010}{}{Huh, clear. I have more questions.}
+{10020}{}{I see. I have to go... [Leave]}
+{11000}{}{We have little town. Many ghouls came from Necropolis which lies far away in the south. We live on producing and selling energy, also we do farming. Drop at a local bar – it’s often rather noisy and you can always hear a couple of new tales from Wuzz.}
+{11010}{}{Is there someplace I can barter or re-supply here?}
+{11020}{}{Hey, Harold, what do you use to feed your plant? Pre-war fuel, huh?}
+{11030}{}{Stop, I understood. I’m gonna find it by myself, I gotta headache because of your gabble. [Leave]}
+{12000}{}{If you go to the garbage, you can find Persi’s hovel just near the entrance. So that’s where different useful thing often settle. Somewhere in the middle of the garbage Skeeter repairs every sort of junk.}
+{12010}{}{Ok, I understood, got more questions.}
+{12020}{}{Ok, now I understand. I’m gonna have a look around.}
+{13000}{}{Before the war I was a military man. I was a corporal in the US army and I was one of the first who tried the motorized power armor against Chinese. Asian bastards became panic-stricken as they saw our steel legions. But a couple years later nuclear warheads were falling from the skies like a snow and I hided in the vault.}
+{13010}{}{And so, have you still your skills?}
+{13020}{}{Exciting story, now I have to go. [Leave]}
+{14000}{}{I can teach you how to shoot pistols and rifles, how to handle knife rightly or how to move efficiently in unarmed fight. I really like you, it’s a rare occasion when I can tell somebody about my past.}
+{14010}{}{I think it will be very useful.}
+{14020}{}{Hm, it turns out that ghouls are likely to be much the same as we, humans. I’m gonna knock back a glass for ya. [Leave]}
+{15000}{}{You know I’m rather busy. I think I could give you a couple of lessons for… let it be $ 2200.}
+{15010}{}{Okay, old man, I suppose the game is worth the candle. Here’s your $ 2200. Make me a Rambo, man!}
+{15020}{}{I can’t afford to waste such a sum right now.}
+{15030}{}{Old man, wait here. I’m gonna find money right now and be back! [Run away]}
+{16000}{}{There is to it for today. Now you can handle weapons much better. [Smiles]}
+{16010}{}{Okay, I got it. Still have some questions.}
+{16020}{}{Yeah, it was very informative, I’m gonna go and your lessons in practice.}
+{17000}{}{When we just came here we were able to use pre-war fuel. But then we used to buy uran in Broken Hills, it was pleasant to do business with them. We, ghouls, never trick each other.}
+{17010}{}{Hey, why do you speak in past tense? Have you fallen out?}
+{17020}{}{I have more questions...}
+{17030}{}{That’s all, I gotta go!}
+{18000}{}{That’s because of lousy habbologists. One replication station eats up more energy than the whole town.  They don’t want to extend wires to us, so they set up mini reactors. And of course they need the goddamned uran, piles of it! That’s why the offer a good price to the caravanners that we can’t break. I don’t know what we’re gonna do, we have supplies running out in five years maximum.}
+{18010}{}{Maybe I can help with purchase somehow?}
+{18020}{}{Yeah these habbologists always meddling everywhere. Well, I have another question…}
+{18030}{}{Thanks for the story, I gotta go!}
+{19000}{}{Oh, if you can purchase uran in Broken Hills and deliver it here, I’ll cover your expenses generously. About $ 100 per 1 kilogram of enriched uran.}
+{19010}{}{Only $ 100? Sounds not too attractive. Why don’t I go to habbologists and sell them for a really good price?}
+{19020}{}{Uh, I don’t know… I’m gonna think for a while. Now the question cannot be put off…}
+{19030}{}{$ 100? Okay, if I drag to you 20 kilogramms without exerting myself, so it gonna be two thousands. And if take a couple of friends to help… Sounds like a nice business. Soon you’ll have your good refined warm uran!}
+{19040}{}{Hey, ghoul, the tree has eaten your brain! Go drag the uran by yourself for such a sum. Or you’d better just get yourself into the reactor, you certainly radiate like two uranium bars.}
+{20000}{}{Habologs deal only with large consignments and famous dealers, they just won’t pay attention to you. The amount that a couple of people can bring to us rarely is enough for us.}
+{20010}{}{Huh, you don’t understand, that is I the owner of large company. Bye and thanks for tipping about the buyer-ups.}
+{20020}{}{Oh, okay. Lets assume that I agree. I don’t guarantee anything, but there’s a chance that one day you’ll see me with a batch of uran.}
+{20030}{}{Okay, ghoul, we’re gonna do business! Wait for me and I’ll obtain some kind of super-puper enriched uranium.}
+{20040}{}{I’ll think about your offer, it’s like a bolt from the blue for me. I don’t know what the bolt is it, by it was used to say in such way at my home. And also I need something else…}
+{21000}{}{Watch that you don’t carry uranium in your pants or @sex@|your balls will look like hard-boiled||your child gonna be a supermute|!@@See not too be irradiated or you’re gonna look like I do!@@If you’re gonna have children, don’t carry the uranium in your bag, use a wheelbarrow!@@Dont warm your hands by uranium at nights or you’ll have to cut them off @sex@|and learn how to jerk using your legs|||, heh heh!}
+{22000}{}{Wow, what a surprise! Let’s look what you have to make an old ghoul happy for a while!}
+{22010}{}{What a nice one! [Take a piece of enriched uranium]}
+{22020}{}{You won’t get anything here, ghoul, I’ve just decided to tease you.}
+{22030}{}{Holy shit, the uranium is stolen!}
+{23000}{}{Oooh, I see a wonderful product of Broken Hills centrifuges! It looks like six kilos, so you are to have $ 600!}
+{23010}{}{Cool, let’s barter!}
+{23020}{}{Зашибись, меняемся!}
+{23030}{}{Hey, ghoul, I think this uranium piece weighs mighty 7 kilos. For sure, not less than six and a half!}
+{23040}{}{Hey, ghoul, I think this uranium piece weighs mighty 7 kilos. For sure, not less than six and a half!}
+{23050}{}{$ 600 could be really useful for me, but I incline that I keep this uranium with me. I’ve become too much attached to it during our travels.}
+{23060}{}{Holy shit, the uranium is stolen!}
+{24000}{}{Here’s your money, my friend, you've earned them honestly.}
+{24010}{}{Hey, I’ve got more!@@Look here, I’ve got one more!@@Wait, that’s not all, I’ve got another one!@@What we’ve got here? One more uranium piece for Harold!@@Hey, did you thinks that’s all? Take one more!}
+{24020}{}{Эй, я у меня есть ещё!@@Смотри, а у меня ещё один!@@Постой, это не всё, вот ещё один!@@А что у нас тут? Оп-па, ещё один кусок урана для Гарольда!@@Хэй, ты что, думал, что это всё? Вот ещё один!}
+{24030}{}{Thanks, that’s all!}
+{25000}{}{Hey, don’t try to get an old ghoul tricked! I’ve been trading this uranium when you even haven’t been allowed to play with shotgun shells! $ 600 and not a dollar more, you fucker!}
+{25010}{}{Okay, here’s $ 600.}
+{25020}{}{Окей, держи за 600.}
+{25030}{}{NO U!}
+{25040}{}{Holy shit, the uranium is stolen!}
+{26000}{}{Eh… Yes, I can be mistaken, an old ghoul, happens with everybody. They always produced six kilos in Broken Hills as I remember myself! Okay, $ 700.}
+{26010}{}{Cool, take it!}
+{26020}{}{Супер, держи!}
+{26030}{}{Habbologists give 800! Hahah, eat this!}
+{27000}{}{Here’s your money, my friend, you've earned them honestly.}
+{27010}{}{Hey, I’ve got more!@@Look here, I’ve got one more!@@Wait, that’s not all, I’ve got another one!@@What we’ve got here? One more uranium piece for Harold!@@Hey, did you thinks that’s all? Take one more!}
+{27020}{}{Эй, я у меня есть ещё!@@Смотри, а у меня ещё один!@@Постой, это не всё, вот ещё один!@@А что у нас тут? Оп-па, ещё один кусок урана для Гарольда!@@Хэй, ты что, думал, что это всё? Вот ещё один!}
+{27030}{}{Thanks, that’s all!}
+{28000}{}{Hey, whom are you trying to swindle? This is just a simple ore, it needs at least a year of centrifuging.}
+{29000}{}{Извини, @sex@|брат||сестрёнка|, но мне так много приносили урана за последнее время, что я просто не смогу с тобой расплатиться. Зайди через день-другой, я добуду деньжат.}
+{29010}{}{По рукам.}
+

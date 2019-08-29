@@ -1,0 +1,178 @@
+// Функции для использования в диалогах
+// **************************************** Функции - условия **************************************/
+// НПЦ является чьим-то мерком
+bool d_NpcIsMerc(Critter& player, Critter@ npc)
+{
+	if (!valid(npc)) return false;
+	return IsMerc(npc);
+}
+// НПЦ не является чьим-то мерком
+bool d_NpcIsNotMerc(Critter& player, Critter@ npc)
+{
+	return !d_NpcIsMerc(player, npc);
+}
+// НПЦ - мерк данного игрока
+bool d_NpcIsPlayerMerc(Critter& player, Critter@ npc)
+{
+	if (!valid(npc)) return false;
+	if (!IsMerc(npc)) return false;
+	return (uint(npc.MasterId)==player.Id);
+}
+// НПЦ - не мерк данного игрока
+bool d_NpcIsNotPlayerMerc(Critter& player, Critter@ npc)
+{
+	return !d_NpcIsPlayerMerc(player, npc);
+}
+// Проверка какого-то из параметров мерка
+// param - номер параметра (см. MERC_... параметры в _defines.fos)
+// value - проверяемое значение.
+// true - значение параметра мерка равно указанному значению
+// false - npc не мерк, или значение параметра не равно указанному значению
+bool d_CheckMercParamIsValue(Critter & player, Critter @npc, int param, int value)
+{
+	if (!valid(npc)) return false;
+	if (!IsMerc(npc)) return false;
+	if(param<MERC_BEGIN||param>MERC_END) return false;
+	return (npc.Merc[param]==value);
+	
+}
+// инверсия проверки d_CheckMercParamIsValue
+bool d_CheckMercParamIsNotValue(Critter & player, Critter @npc, int param, int value)
+{
+	return !d_CheckMercParamIsValue(player, npc, param, value);
+}
+
+// Проверка: У лидера группы, в которой находится игрок, достаточно харизмы для найма ОДНОГО нпц
+bool d_CharismaOk(Critter & player, Critter @ npc)
+{
+	Critter @ leader=player.GetFollowLeader();
+	if (!valid(leader)) @leader=player;
+	int grLen=leader.GetFollowGroup(FIND_ALL, null);
+	return (grLen<leader.Stat[ST_CHARISMA]);	
+}
+
+bool d_NotCharismaOk(Critter & player, Critter @ npc)
+{
+	return (!d_CharismaOk(player, npc));
+}
+
+// Проверка, что мерк с Id, сохраненным в переменной находится неподалеку
+bool d_CheckMercNear(Critter & player, Critter @ npc, int varNum, int radius)
+{
+	if(varNum==0) return false;
+	GameVar @ id=GetLocalVar(varNum, player.Id);
+	if (!valid(id)) return false;
+	if(id.GetValue()==0) return false;
+	Critter @ merc=GetCritter(id.GetValue());
+	if (!valid(merc)) return false;
+	if(uint(merc.MasterId)!=player.Id) return false;
+	Map @ masterMap=player.GetMap();
+	Map @ mercMap=merc.GetMap();
+	if (!valid(mercMap)||!valid(masterMap)) return false;
+	if(mercMap.Id!=masterMap.Id) return false;
+	return (GetCrittersDistantion(merc,player)<=uint(radius));
+	
+}
+
+bool d_NotMercNear(Critter & player, Critter @ npc, int varNum, int radius)
+{
+	return !d_CheckMercNear(player, npc, varNum, radius);
+}
+// **************************************** Функции - результаты **************************************/
+// Добавление мерка игроку
+// производится добавление стандартного спутника (см. таблицу _mercInfo)
+// Добавление производится только для нпц, который не является чьим то мерком
+void r_AddMerc2Player(Critter & player, Critter @ npc)
+{
+	if (!valid(npc)) return;
+	if(IsMerc(npc)) return;
+	
+	Merc2Player(player, npc);
+}
+
+void r_AddMerc2Player(Critter & player, Critter @ npc, int type)
+{
+	if (!valid(npc)) return;
+	if(IsMerc(npc)) return;
+	
+	Merc2Player(player, npc, uint16(type));
+}
+// Отмена мерка у игрока, мерк необязательно является мерком именно этого игрока
+void r_CancelMerc(Critter & player, Critter @ npc)
+{
+	if (!valid(npc)) return;
+	if (!IsMerc(npc)) return;
+	
+	CancelMerc(npc);
+}
+// Отмена мерка данного игрока. Если нпц - чужой мерк, отмены не будет
+void r_CancelPlayerMerc(Critter & player, Critter @ npc)
+{
+	if (!valid(npc)) return;
+	if (!IsMerc(npc)) return;
+	if(uint(npc.MasterId)!=player.Id) return;
+	
+	CancelMerc(npc);
+}
+// Установка параметров мерка
+// сработает только, если нпц является чьим-то мерком
+// param - номер параметра (см. MERC_... параметры в _defines.fos)
+// value - значение
+void r_SetMercParameter(Critter & player, Critter @ npc, int param, int value)
+{
+	if (!valid(npc)) return;
+	if (!IsMerc(npc)) return;
+	if(param<MERC_BEGIN||param>MERC_END) return; //Неправильный номер параметра
+	npc.MercBase[param]=value;
+}
+
+// Специальный метод для сохранения Id мерка в переменную
+void r_SaveMercId(Critter & player, Critter @ npc, int varNum)
+{
+	if (!valid(npc)) return;
+	GameVar @ var=GetLocalVar(varNum, player.Id);
+	if(valid(var))
+	{
+		var=npc.Id;
+	}
+}
+// Отмена мерка через Id, в переменной
+void r_CancelMerc(Critter & player, Critter @ npc, int varNum)
+{
+	GameVar @ var=GetLocalVar(varNum, player.Id);
+	if(valid(var))
+	{
+		Critter @ merc=GetCritter(var.GetValue());
+		if(valid(merc))
+		{
+			CancelMerc(merc);
+		}
+	}
+}
+
+void r_WaitMaster(Critter& player, Critter@ npc)
+{
+	Map@ map=player.GetMap();
+	if (!valid(map) || !valid(npc))
+		return;
+	Location@ loc=map.GetLocation();
+	if(valid(loc) && loc.AutoGarbage==true && !player.IsKnownLoc(true, loc.Id))
+		player.SetKnownLoc(true, loc.Id);
+	npc.MercBase[MERC_WAIT_FOR_MASTER]=1;
+}
+
+void r_FollowMaster(Critter& player, Critter@ npc)
+{
+	if(valid(npc))
+		npc.MercBase[MERC_WAIT_FOR_MASTER]=0;		
+}
+
+// Функции-диалоги
+// Имя хозяина
+void dlg_Master(Critter& player, Critter@ npc, string@ masterName)
+{	
+	if (!IS_DIALOG_GENERATED(masterName) || !valid(npc)) 
+		return;
+	masterName="$mastername";
+	masterName +=GetPlayerName(npc.MasterId);
+}

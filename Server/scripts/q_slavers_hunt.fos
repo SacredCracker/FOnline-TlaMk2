@@ -1,0 +1,642 @@
+#include "_macros.fos"
+#include "_npc_pids.fos"
+#include "_dialogs.fos"
+#include "_bags.fos"
+#include "_ai.fos"
+#include "_teams.fos"
+#include "_animation.fos"
+
+#define SLAVER_TYPE_COMBAT 		(1)
+#define SLAVER_TYPE_HEALER		(2)
+#define SLAVER_TYPE_MELEE		(3)
+#define SLAVER_TYPE_SNIPE		(4)
+#define NPC_PID_LeatherJacketAllAnimations      (296)
+#define NPC_PID_SLAVER1			(260) //91 small guns madmax
+#define NPC_PID_SLAVER2			(359) //56 small guns leather
+#define NPC_PID_SLAVER3			(23) //31 sg female leather
+#define MSG_NUM_HEAL_ME			(10)
+#define MSG_NUM_STOP			(12)// сообщение "срочно остановись!" используется нпц-хилерами, когда они хотят вылечить напарника
+#define MSG_NUM_ATTACKED		(13)// атакован игрок
+#define MSG_NUM_GALARM			(14)// ктото убит
+
+#define PLANE_HEAL_SLAVER		(11)
+#define PLANE_HEAL_PRIORITY		(101)
+#define PLANE_STOP_PRIORITY 	(102)
+
+#define PHRASE_NUM_MEET_PLAYER  (1)
+#define PHRASE_NUM_WAIT_FOR_HEAL (2)
+
+#define STR_NUM_MAP_ENTER		(2700)// номер строки в файле FOTEXT.msg где хранится описание карты с работорговцами
+#define STR_NUM_MAP_ITEM_USE	(2701)// строка при использовании итема "карта элизы"
+
+//#define __DEBUG__		// Для отладки.
+//#define DIALOG_all_mslaver_elize_quest				(4211)
+//#define DIALOG_all_fslaver_elize_quest				(4212)
+//#define LVAR_q_ncr_elize_slvrs_hunting     			(4246)
+//#define LVAR_ncr_elize_slvrs_hunting_status			(4247)
+
+import bool AddAttackPlane(Critter& npc, uint priority, uint critId) from "npc_planes";
+import void UseDrugOn(Critter& cr, Critter& onCr, Item& drug) from "drugs";
+import bool AddWalkPlane(Critter& npc, uint priority, int identifier, uint identifierExt, uint16 hexX, uint16 hexY, uint8 dir, bool run, uint cut) from "npc_planes";
+import bool AddMiscPlane(Critter& npc, uint priority, uint waitSecond, string@ funcName) from "npc_planes";
+
+// координаты и допустимые типы поведения для гекса на карте
+// в таком гексе может появиться один из типов работорговцев
+class EncSpawnHexDescr
+{
+	uint HexX;
+	uint HexY;
+
+	EncSpawnHexDescr(uint hX, uint hY)
+	{
+		this.HexX=hX;
+		this.HexY=hY;
+	}
+
+	int[] SlaverTypes;
+
+	void PushSlaverType(int sType)
+	{
+		// уже назначен такой тип в разрешенных
+		if(this.CheckSTypeAllow(sType)){return;}
+
+		this.SlaverTypes.insertLast(sType);
+
+	}
+	// проверка, можно ли поставить работорговца выбранного типа на данный гекс
+	bool CheckSTypeAllow(int sType)
+	{
+		for(uint i=0, iMax=this.SlaverTypes.length(); i<iMax; i++)
+		{
+			if(this.SlaverTypes[i]==sType)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+}
+
+// описание энкаунтера
+class EncSlaversDescr
+{
+	uint MapPid;
+	EncSpawnHexDescr [] Hexes;
+
+	EncSlaversDescr()
+	{
+
+	}
+}
+
+EncSlaversDescr @ GetEncDescr(uint mapPid)
+{
+	switch (mapPid)
+	{
+	    case LOCATION_DesertEncounter6:
+			return Desert06Enc();
+	   case LOCATION_DesertEncounter11:
+			return Desert11Enc();
+	    case LOCATION_DesertEncounter12:
+			return Desert12Enc();
+		default:
+			break;
+	}
+	return null;
+}
+
+// EDesert6 - дом в пустыне, есть брамины|||[Area 106] name=Desert 6 size=6 map_0=e_desert6 geck_enabled=1
+// EDesert11 - дом в лесу, там где пять бутылок пива на полу |||[Area 111] name=Desert 11 size=6 map_0=e_desert11 geck_enabled=1
+// EDesert12 - энк с большим фермерским домиком (джет в холодилнике)|||[Area 112] name=Desert 12 size=6 map_0=e_desert12 geck_enabled=1
+EncSlaversDescr @ Desert06Enc()
+{
+	EncSlaversDescr eDescr=EncSlaversDescr();
+	eDescr.MapPid=LOCATION_DesertEncounter6;
+
+	eDescr.Hexes.insertLast(EncSpawnHexDescr(60,38));
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_SNIPE);
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_COMBAT);
+	//71/43
+	eDescr.Hexes.insertLast(EncSpawnHexDescr(71,43));
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_COMBAT);
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_HEALER);
+	//75/43
+	eDescr.Hexes.insertLast(EncSpawnHexDescr(75,43));
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_COMBAT);
+	//72/44
+	eDescr.Hexes.insertLast(EncSpawnHexDescr(72,44));
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_COMBAT);
+	//42/58 +h
+	eDescr.Hexes.insertLast(EncSpawnHexDescr(42,58));
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_COMBAT);
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_HEALER);
+	//41/65
+	eDescr.Hexes.insertLast(EncSpawnHexDescr(41,65));
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_COMBAT);
+	//46/63 +h
+	eDescr.Hexes.insertLast(EncSpawnHexDescr(46,63));
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_COMBAT);
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_HEALER);
+	//29/53 +s
+	eDescr.Hexes.insertLast(EncSpawnHexDescr(29,53));
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_COMBAT);
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_SNIPE);
+	//32/66
+	eDescr.Hexes.insertLast(EncSpawnHexDescr(32,66));
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_COMBAT);
+	//30/45
+	eDescr.Hexes.insertLast(EncSpawnHexDescr(30,45));
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_COMBAT);
+	//39/42 +h +s
+	eDescr.Hexes.insertLast(EncSpawnHexDescr(39,42));
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_COMBAT);
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_SNIPE);
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_HEALER);
+	//110/74
+	eDescr.Hexes.insertLast(EncSpawnHexDescr(110,74));
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_COMBAT);
+
+	return eDescr;
+}
+
+EncSlaversDescr @ Desert11Enc()
+{
+	EncSlaversDescr eDescr=EncSlaversDescr();
+	eDescr.MapPid=LOCATION_DesertEncounter11;
+	//59/42
+	eDescr.Hexes.insertLast(EncSpawnHexDescr(59,42));
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_COMBAT);
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_HEALER);
+	//57/47
+	eDescr.Hexes.insertLast(EncSpawnHexDescr(57,47));
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_COMBAT);
+	//65/41
+	eDescr.Hexes.insertLast(EncSpawnHexDescr(65,41));
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_COMBAT);
+	//64/49 +h
+	eDescr.Hexes.insertLast(EncSpawnHexDescr(64,49));
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_COMBAT);
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_HEALER);
+	//39/45
+	eDescr.Hexes.insertLast(EncSpawnHexDescr(39,45));
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_COMBAT);
+	//41/46 +s
+	eDescr.Hexes.insertLast(EncSpawnHexDescr(41,46));
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_COMBAT);
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_SNIPE);
+	//41/53
+	eDescr.Hexes.insertLast(EncSpawnHexDescr(41,53));
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_COMBAT);
+	//84/62
+	eDescr.Hexes.insertLast(EncSpawnHexDescr(84,62));
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_COMBAT);
+	//97/57 +s
+	eDescr.Hexes.insertLast(EncSpawnHexDescr(97,57));
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_COMBAT);
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_SNIPE);
+	//98/53 +h
+	eDescr.Hexes.insertLast(EncSpawnHexDescr(98,53));
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_COMBAT);
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_HEALER);
+	return eDescr;
+}
+
+EncSlaversDescr @ Desert12Enc ()
+{
+	EncSlaversDescr eDescr=EncSlaversDescr();
+	eDescr.MapPid=LOCATION_DesertEncounter12;
+	//70/22 +s
+	eDescr.Hexes.insertLast(EncSpawnHexDescr(70,22));
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_COMBAT);
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_SNIPE);
+	//52/34 s
+	eDescr.Hexes.insertLast(EncSpawnHexDescr(52,34));
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_COMBAT);
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_SNIPE);
+	//65/32 s
+	eDescr.Hexes.insertLast(EncSpawnHexDescr(65,32));
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_COMBAT);
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_SNIPE);
+	//72/50
+	eDescr.Hexes.insertLast(EncSpawnHexDescr(72,50));
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_COMBAT);
+	//73/49
+	eDescr.Hexes.insertLast(EncSpawnHexDescr(73,49));
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_COMBAT);
+	//84/30
+	eDescr.Hexes.insertLast(EncSpawnHexDescr(84,30));
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_COMBAT);
+	//88/33h
+	eDescr.Hexes.insertLast(EncSpawnHexDescr(88,33));
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_COMBAT);
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_HEALER);
+	//92/33
+	eDescr.Hexes.insertLast(EncSpawnHexDescr(92,33));
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_COMBAT);
+	//102/44
+	eDescr.Hexes.insertLast(EncSpawnHexDescr(102,44));
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_COMBAT);
+	//112/55 s
+	eDescr.Hexes.insertLast(EncSpawnHexDescr(112,55));
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_COMBAT);
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_SNIPE);
+	//103/44 h
+	eDescr.Hexes.insertLast(EncSpawnHexDescr(103,44));
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_COMBAT);
+	eDescr.Hexes[eDescr.Hexes.length()-1].PushSlaverType(SLAVER_TYPE_HEALER);
+	return eDescr;
+}
+
+import void InviteToEncounter(Critter@[]& group, Item@ car, uint encounterDescriptor, int combatMode, uint& mapId, uint16& hexX, uint16& hexY, uint8& dir) from "worldmap";
+
+bool _CheckRightGlobalZone(uint wX, uint wY)
+{
+	if(wX<318||wX>542){return false;}
+	if(wY<174||wY>325){return false;}
+	return true;
+	// зона поисков Х: от 318 до 542
+	// зона поисков У: от 174 до 325
+}
+
+bool e_OnPlayerInvite(Critter& cr, Item@ car, uint encounterDescriptor, int combatMode, uint& mapId, uint16& hexX, uint16& hexY, uint8& dir)
+// Обработка глобальной карты для перехода на карту.
+// При возвращении true - глобальный обработчик не запускается, false - запуск глобального обработчика. ~loadscript q_slavers_hunt
+{
+	Critter@[]@ group=cr.GetGlobalGroup();
+
+	InviteToEncounter(group, null, encounterDescriptor,combatMode, mapId, hexX, hexY, dir);
+
+	// проверяем, что у лидера есть нужный квест
+	if (!cr.IsPlayer()){return true;}
+	GameVar @ qVar=GetLocalVar(LVAR_ncr_elize_slvrs_hunting_status, cr.Id);
+	if (!valid(qVar)){return true;}
+	if(qVar<1||qVar>21){return true;}
+	// состояние квеста правильное, идем дальше
+	// потенциально мощный эксплоит для набора лута и экспы: группа заходит, ведомая человеком с квестом
+	// человек с квестом никого не убивает, зато остальные бьют мобов, так они могут шариться бесконечно и мочить работорговцев
+	// пока используется дубовый вариант: если в группе больше одного человека, лутать трупы слейверов нельзя и опыта за них не дается
+	bool noLoot=false;
+
+	if(group.length()>1)
+	{
+		noLoot=true;
+	}
+
+
+	Map @ map=GetMap(mapId);
+	int maxLvl=cr.StatBase[ST_LEVEL];
+	for(uint j=0, jMax=group.length(); j<jMax; j++)
+	{
+		maxLvl=(group[j].StatBase[ST_LEVEL]>maxLvl)?group[j].StatBase[ST_LEVEL]:maxLvl;
+	}
+	if(valid(map))
+	{
+
+		Location @ loc=map.GetLocation();
+		if (!valid(loc)){return true;}
+		// проверяем, что находимся в нужном регионе
+
+		EncSlaversDescr@ d=GetEncDescr(loc.GetProtoId());
+
+			if(valid(d))
+			{
+				if (!_CheckRightGlobalZone(loc.WorldX, loc.WorldY)){
+					return true;
+#ifdef __DEBUG__
+					Log("\nWRONG ZONE");
+#endif
+				}
+			for(uint i=0, iMax=CLAMP(group.length()+uint(Random(2,8)),4,d.Hexes.length()); i<iMax; i++)
+			{
+				Critter @slaver=_GetSlaver(map,d.Hexes[i],maxLvl, noLoot);
+			}
+			// отправляем мессагу игроку
+			cr.SayMsg(SAY_NETMSG,TEXTMSG_TEXT,STR_NUM_MAP_ENTER);
+		}
+	}
+
+	return true;
+}
+
+Critter @ _GetSlaver(Map @ map, EncSpawnHexDescr hDesc, uint crLvl, bool noLoot)
+{
+	uint slaverPid=NPC_PID_SLAVER1;
+	uint type=SLAVER_TYPE_COMBAT;
+	// приоритеты снайпер-лекарь-милишник-автоматчик
+	if(hDesc.CheckSTypeAllow(SLAVER_TYPE_MELEE)){slaverPid=NPC_PID_SLAVER1; type=SLAVER_TYPE_MELEE;}
+	if(hDesc.CheckSTypeAllow(SLAVER_TYPE_HEALER)){slaverPid=NPC_PID_SLAVER3; type=SLAVER_TYPE_HEALER;}
+	if(hDesc.CheckSTypeAllow(SLAVER_TYPE_SNIPE)){slaverPid=NPC_PID_SLAVER2; type=SLAVER_TYPE_SNIPE;}
+
+	int[] params={ST_DIALOG_ID, slaverPid==NPC_PID_SLAVER3?DIALOG_all_fslaver_elize_quest : DIALOG_all_mslaver_elize_quest,
+		ST_BAG_ID, type==SLAVER_TYPE_SNIPE ? BAG_RDRC_GCaravan_ReactorGhoul+Random(0,1) : BAG_All_Slaves_MaleSlaver,
+		ST_TEAM_ID, TEAM_Slaver, ST_AI_ID, AIPACKET_BOUNTY_HUNTER, ST_LEVEL, crLvl+Random(4,8)};
+	Critter @ slaver=map.AddNpc(slaverPid, hDesc.HexX, hDesc.HexY, Random(1,5), params, null, "encounter_npc@_NpcInit");
+	if(not valid(slaver)) return null;
+
+	// чем выше уровень работорговцев, тем у них круче меткость
+	switch (uint(crLvl/5))
+	{
+		case 2:
+			slaver.SkillBase[SK_SMALL_GUNS]=120;
+			break;
+		case 3:
+			slaver.SkillBase[SK_SMALL_GUNS]=Random(150,200);
+			break;
+		case 4:
+			slaver.SkillBase[SK_SMALL_GUNS]=250;
+			break;
+		case 5:
+			slaver.SkillBase[SK_SMALL_GUNS]=300;
+			break;
+		default:
+			break;
+	}
+	if(noLoot)
+	{
+		// борьба с эксплоитами
+		// группа не получит халявного лута и экспы..
+#ifdef __DEBUG__
+	Log("\nNoLoot mode on");
+#endif
+		slaver.ModeBase[MODE_NO_BARTER]=1;
+		slaver.ModeBase[MODE_NO_STEAL]=1;
+		slaver.StatBase[ST_KILL_EXPERIENCE]=Random(1,3);
+	}
+	slaver.StatBase[ST_REPLICATION_TIME]=-1;
+	slaver.StatBase[ST_NPC_ROLE]=type;
+	slaver.ShowCritterDist1=Random(10, 30);//проверить, мало это или много
+
+	slaver.SetEvent(CRITTER_EVENT_MESSAGE, "_SlaverMessage");
+
+	switch (type){
+		case SLAVER_TYPE_HEALER:
+			slaver.AddItem(PID_STIMPAK, Random(4,8));
+			// у хилеров персональная обработка сообщений
+			slaver.SetEvent(CRITTER_EVENT_MESSAGE, "_SlaverHealerMessage");
+			slaver.SetEvent(CRITTER_EVENT_PLANE_END, "_SlaverHealerPlaneEnd");
+			slaver.SetEvent(CRITTER_EVENT_SMTH_DEAD, "_SlaverHealerSmthDead");
+			slaver.ModeBase[MODE_NO_HOME]=1;
+			slaver.SkillBase[SK_SMALL_GUNS]=150;
+#ifdef __DEBUG__
+			Log("Healer Added");
+#endif
+			break;
+		case SLAVER_TYPE_SNIPE:
+			slaver.ShowCritterDist1=50;
+			slaver.SkillBase[SK_SMALL_GUNS]=300;
+			slaver.ModeBase[MODE_HIDE]=1;
+		default:
+			break;
+
+	}
+
+	slaver.SetEvent(CRITTER_EVENT_SHOW_CRITTER_1, "_SlaverShowCritterDist1");
+	slaver.SetEvent(CRITTER_EVENT_ATTACKED, "_SlaverAttacked");
+	slaver.SetEvent(CRITTER_EVENT_DEAD, "_SlaverDead");
+
+	return slaver;
+}
+
+	// CRITTER_EVENT_DEAD
+void _SlaverDead(Critter& cr, Critter@ killer)
+{
+	if (!valid(killer)){return;}
+
+	cr.SendMessage(MSG_NUM_GALARM, killer.Id, MESSAGE_TO_ALL_ON_MAP);
+
+	if (!killer.IsPlayer()){return;}
+	//статус
+	GameVar @qVar=GetLocalVar(LVAR_ncr_elize_slvrs_hunting_status, killer.Id);
+	if (!valid(qVar)){return;}
+	//квест не взят
+	if(qVar<1||qVar>20){return;}
+	// квестовая
+	GameVar @sVar=GetLocalVar(LVAR_q_ncr_elize_slvrs_hunting, killer.Id);
+	if (!valid(sVar)){return;}
+	qVar=qVar+1;
+	switch(qVar.GetValue())
+	{
+		case 2:
+			sVar=2;
+			break;
+		case 6:
+			sVar=3;
+			break;
+		case 11:
+			sVar=4;
+			break;
+		case 16:
+			sVar=5;
+			break;
+		case 21:
+			sVar=6;
+			// отписываемся от события
+			killer.SetEvent(CRITTER_EVENT_GLOBAL_INVITE,"");
+			break;
+		default:
+			// состояние квестовой переменной не изменилось
+			return;
+	}
+}
+
+// Появился новый криттер в дистанции определенной uint Critter::ShowCritterDistX.
+// CRITTER_EVENT_SHOW_CRITTER_X
+void _SlaverShowCritterDist1(Critter& cr, Critter& showCrit)
+{
+	if(showCrit.IsPlayer()){
+		//Log("distcnce "+GetCrittersDistantion(cr,showCrit) + " radius" + cr.ReactRadius);
+
+			if (!cr.CheckEnemyInStack(showCrit.Id))
+			{
+				cr.AddEnemyInStack(showCrit.Id);
+				AddAttackPlane(cr,AI_PLANE_ATTACK_PRIORITY,showCrit.Id);
+				cr.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(cr.Stat[ST_DIALOG_ID],PHRASE_NUM_MEET_PLAYER));
+				// TODO: добавить удвоенный приоритет если игрок с квестом
+			}
+
+	}
+}
+
+	// CRITTER_EVENT_SMTH_DEAD
+	// убили того, кого хотели полечить, нужно забыть про него
+void _SlaverHealerSmthDead(Critter& cr, Critter& fromCr, Critter@ killer)
+{
+	if(fromCr.StatBase[ST_TEAM_ID]==TEAM_Slaver)
+	{
+		NpcPlane@[] planes;
+		if(cr.GetPlanes(PLANE_HEAL_SLAVER,fromCr.Id,planes)>0)
+		{
+			for(uint i=0, iMax=planes.length(); i<iMax; i++)
+			{
+				if(planes[i].Identifier==PLANE_HEAL_SLAVER&& planes[i].IdentifierExt==fromCr.Id)
+				{
+					cr.ErasePlane(i);
+					return;
+				}
+			}
+		}
+	}
+}
+
+void _WaitForHeal(Critter & cr)
+{
+	// ничего не делаем, главное постоять на месте 2 сек, чтобы подошел хилер
+	return;
+}
+
+	// CRITTER_EVENT_PLANE_END
+int _SlaverHealerPlaneEnd(Critter& cr, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem)
+{
+	if(plane.Identifier==PLANE_HEAL_SLAVER&&reason==REASON_SUCCESS)
+	{
+		Critter @ toCr=GetCritter(plane.IdentifierExt);
+		if(valid(toCr))
+		{
+			// лечить особо нечего
+			if(toCr.Stat[ST_CURRENT_HP]*2>toCr.Stat[ST_MAX_LIFE]) return PLANE_RUN_GLOBAL;
+
+			cr.SetDir(GetDirection(cr.HexX, cr.HexY, toCr.HexX, toCr.HexY));
+			//uint GetCrittersDistantion(Critter& cr1, Critter& cr2) расстояние в гексах
+			if(GetCrittersDistantion(cr,toCr)>1)
+			{
+				cr.SayMsg(2* Random(1,2), TEXTMSG_DLG, DLGSTR(cr.Stat[ST_DIALOG_ID],PHRASE_NUM_WAIT_FOR_HEAL));
+				AddWalkPlane(cr, PLANE_HEAL_PRIORITY, PLANE_HEAL_SLAVER, toCr.Id, toCr.HexX, toCr.HexY, GetDirection(cr.HexX, cr.HexY, toCr.HexX, toCr.HexY), true, 1);
+				// одну игровую минут цель будет ждать на месте, пока подбежит лекарь
+				AddMiscPlane(toCr, PLANE_STOP_PRIORITY, __FullSecond+60, "q_slavers_hunt@_WaitForHeal");
+
+				return PLANE_RUN_GLOBAL;
+			}
+
+			Item@ item=cr.GetItem(PID_STIMPAK, -1);
+			if(valid(item))
+			{
+				UseDrugOn(cr, toCr, item) ;
+				_CritAnimateUse(cr);
+			}
+		}
+	}
+	return PLANE_RUN_GLOBAL;
+}
+
+	// CRITTER_EVENT_MESSAGE
+void _SlaverHealerMessage(Critter& cr, Critter& fromCr, int message, int value)
+{
+	if(message==MSG_NUM_HEAL_ME&&fromCr.StatBase[ST_TEAM_ID]==TEAM_Slaver)
+	{
+		// проверяем, что нет текущих планов кого-то полечить
+		if(cr.GetPlanes(PLANE_HEAL_SLAVER,null)!=0){return;}
+
+		if(cr.CountItem(PID_STIMPAK)==0){return;}
+
+		// сам себя не лечит пока
+		if(cr.Id==fromCr.Id){return;}
+
+		AddWalkPlane(cr, PLANE_HEAL_PRIORITY, PLANE_HEAL_SLAVER, fromCr.Id, fromCr.HexX, fromCr.HexY, GetDirection(cr.HexX, cr.HexY, fromCr.HexX, fromCr.HexY), true, 1);
+		return;
+	}
+
+}
+
+// получение сообщений рядовым работорговцем
+// если один из работорговцев атакован - к нему сползутся те, кто его видят
+// если один из работорговцев убит - прибегут все на карте
+void _SlaverMessage(Critter& cr, Critter& fromCr, int message, int value)
+{
+	if(message==MSG_NUM_ATTACKED ||message==MSG_NUM_GALARM)
+	{
+		if (!cr.CheckEnemyInStack(value))
+		{
+			cr.AddEnemyInStack(value);
+			AddAttackPlane(cr,0,value);
+		}
+	}
+}
+
+//GetDirection(cr.HexX, cr.HexY, fromCr.HexX, fromCr.HexY)
+bool _SlaverAttacked(Critter& cr, Critter& attacker)
+{
+	// зовем хилера
+	//if(	cr.Stat[ST_CURRENT_HP]*2<cr.Stat[ST_MAX_LIFE])
+	//{
+		// проверка
+		cr.SendMessage(MSG_NUM_HEAL_ME, cr.Id, MESSAGE_TO_ALL_ON_MAP);
+		cr.SendMessage(MSG_NUM_ATTACKED, attacker.Id, MESSAGE_TO_WHO_SEES_ME);
+
+	//	Log("Sent Message");
+	//}
+
+	return false;
+}
+
+// уидели игрока
+void e_SlaverShowCritter(Critter& cr, Critter& showCrit)
+{
+
+}
+
+//~run q_slavers_hunt GG 1 0 0
+void GG(Critter& cr, int crId, int val, int)
+{
+	cr.SetEvent(CRITTER_EVENT_GLOBAL_INVITE,"e_OnPlayerInvite");
+
+	GameVar @ qVar=GetLocalVar(LVAR_ncr_elize_slvrs_hunting_status, cr.Id);
+	qVar=1;
+	_AddElizeSlaversMap(cr);
+}
+
+// добавление игроку карты расположения лагерей работорговцев
+void _AddElizeSlaversMap(Critter & player)
+{
+	if (!player.IsPlayer()){return;}
+
+	// проверяем что нет такой карты у игрока с таким инфо
+	Item @item=player.GetItem(PID_RANGER_MAP,-1);
+	if(valid(item))
+	{
+		if(item.Info==2){return;}
+	}
+
+	GameVar @ qVar=GetLocalVar(LVAR_ncr_elize_slvrs_hunting_status, player.Id);
+
+	if (!valid(qVar)){return;}
+	if(qVar<1||qVar>20){return;}
+
+	Item @ map=player.AddItem(PID_RANGER_MAP, 1);
+	map.SetScript("q_slavers_hunt@_ElizeMapInit");
+	map.Update();
+}
+
+// инициализация карты элизы
+void _ElizeMapInit(Item& map, bool firstTime)
+{
+	// специальное описание для итема
+	map.Info=2;
+	// возможность использования для итема
+	SETFLAG(map.Flags, ITEM_CAN_USE);
+	// подписываемся на событие использования итема
+	map.SetEvent(ITEM_EVENT_USE,"e_ElizeMapUse");
+	// подтверждение изменений
+	map.Update();
+}
+
+// обработка
+bool e_ElizeMapUse(Item& item, Critter& player, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+	if (!player.IsPlayer()){return false;}
+	GameVar @ qVar=GetLocalVar(LVAR_ncr_elize_slvrs_hunting_status, player.Id);
+	if (!valid(qVar)){return false;}
+	if(qVar<1||qVar>21){return false;}
+
+	player.SayMsg(SAY_NETMSG,TEXTMSG_TEXT,STR_NUM_MAP_ITEM_USE);//"Вы сверяетесь с картой Элизы.\nСкорее всего работорговцев нужно искать между Кламатом и Ямой. ");
+	// подписываемся снова на событие входа на карту.
+	player.SetEvent(CRITTER_EVENT_GLOBAL_INVITE,"e_OnPlayerInvite");
+
+	return true;
+}
+
+// выдача карты и подписка на CRITTER_EVENT_GLOBAL_INVITE из диалога с элизой
+void r_GetMap(Critter& player, Critter@ cr)
+{
+	_AddElizeSlaversMap(player);
+	player.SetEvent(CRITTER_EVENT_GLOBAL_INVITE,"e_OnPlayerInvite");
+}

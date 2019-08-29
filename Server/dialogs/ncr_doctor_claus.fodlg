@@ -1,0 +1,291 @@
+[comment]
+20 - сдача стимпаков/аптечек (раз в три игровых часа по таймауту)
+30 - миниквест, в котором можно услышать историю о докторе Генри
+40 - бонус нкр +стамина/восприятие за 50к монет
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 D _var p name_mem_npc_player = 0 #
+5 1020 D _var p name_mem_npc_player = 1 @
+2 2000 None 0 #
+0 2010 D _param p ST_INTELLECT > 3 #
+0 2020 D _param p ST_INTELLECT < 4 #
+3 2030 D _param p ST_INTELLECT > 3 R _var p name_mem_npc_player = 1 @
+3 3000 None 0 #
+4 3010 @
+4 4000 None 0 #
+0 4010 @
+5 5000 None 0 #
+4 5010 #
+0 5020 #
+6 5030 D _var p q_ncr_kess_med_board_status = 1 #
+20 5040 D _script dialog@d_TimeoutOk 0  #
+49 5050 D _script dialog@d_NotTimeoutOk 0  #
+30 5060 D _param p SK_SPEECH < 50 #
+31 5070 D _param p SK_SPEECH > 49 #
+40 5080 D _param p REPUTATION_NCR > 29 D _param p PE_NCR_PERCEPTION = 0 D _param p PE_NCR_ENDURANCE = 0 @
+6 6000 None 0 #
+7 6010 @
+7 7000 None 0 #
+8 7010 @
+8 8000 None 0 #
+0 8010 #
+9 8020 @
+9 9000 None 0 #
+10 9010 @
+10 10000 None 0 #
+11 10010 @
+11 11000 None 0 #
+12 11010 D _param p ST_STRENGTH < 9 #
+13 11020 D _param p ST_STRENGTH > 8 #
+15 11030 @
+12 12000 None 0 @
+13 13000 None 0 #
+14 13010 @
+14 14000 None 0 #
+0 14010 R _var p q_ncr_kess_med_board_status = 2 @
+15 15000 None 0 #
+16 15010 @
+16 16000 None 0 #
+17 16010 @
+17 17000 None 0 #
+0 17010 #
+18 17020 D _item p PID_BOTTLE_CAPS > 299 R _var p q_ncr_kess_med_board_status = 2 R _item p PID_BOTTLE_CAPS - 300 @
+18 18000 None 0 @
+20 19000 None 0 #
+0 19010 #
+21 19020 D _item p PID_STIMPAK > 1 R _script dialog@r_SetUniqTO 1 180 R _param p ST_EXPERIENCE + 800 R _item p PID_STIMPAK - 2 R _item p PID_BOTTLE_CAPS + 100 #
+21 19030 D _item p PID_FIRST_AID_KIT > 0 R _script dialog@r_SetUniqTO 1 180 R _param p ST_EXPERIENCE + 800 R _item p PID_FIRST_AID_KIT - 1 R _item p PID_BOTTLE_CAPS + 90 @
+21 20000 None 0 #
+0 20010 @
+30 21000 None 0 @
+31 22000 None 0 #
+32 22010 @
+32 23000 None 0 #
+33 23010 @
+33 24000 None 0 #
+34 24010 @
+34 25000 None 0 #
+35 25010 @
+35 26000 None 0 #
+0 26010 D _var p ncr_claus_history = 0 R _var p ncr_claus_history = 1 R _param p ST_EXPERIENCE + 800 R _script dialog@r_InfoMessage 1 1 R _param p REPUTATION_NCR + 1 #
+0 26020 D _var p ncr_claus_history = 1 @
+40 27000 None 0 #
+41 27010 @
+41 28000 None 0 #
+42 28010 @
+42 29000 None 0 #
+43 29010 @
+43 30000 None 1 #
+44 30010 #
+45 30020 #
+0 30030 @
+44 31000 None 0 #
+0 31010 #
+46 31020 D _param p PE_NCR_ENDURANCE = 0 D _param p PE_NCR_PERCEPTION = 0 D _item p PID_BOTTLE_CAPS > 49999 R _param p PE_NCR_ENDURANCE = 1 R _item p PID_BOTTLE_CAPS - 50000 R _param p ST_EXPERIENCE + 28000 @
+45 32000 None 0 #
+46 32010 D _param p PE_NCR_ENDURANCE = 0 D _param p PE_NCR_PERCEPTION = 0 D _item p PID_BOTTLE_CAPS > 49999 R _param p PE_NCR_PERCEPTION = 1 R _item p PID_BOTTLE_CAPS - 50000 R _param p ST_EXPERIENCE + 28000 #
+0 32020 @
+46 33000 None 0 #
+47 33010 @
+47 34000 None 0 #
+48 34010 @
+48 35000 None 0 #
+0 35010 @
+49 36000 None 0 &
+
+[russ]
+{100}{}{Доктор Клаус}
+{200}{}{Вы видите доктора Клауса.}
+{210}{}{Вы видите человека в халате доктора.}
+{210}{}{Это доктор Клаусс. Прекрасный врач, способный поставить на ноги любого больного.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{не знаком}
+{1020}{}{знаком}
+{2000}{}{Добрый день, чем могу быть полезен?}
+{2010}{}{Я уже ухожу. [Уйти]}
+{2020}{}{Пока! [Уйти]}
+{2030}{}{Здравствуйте, вы - доктор?}
+{3000}{}{Да, доктор. Меня зовут Клаус.}
+{3010}{}{Вы можете мне помочь?}
+{4000}{}{Я не практикую. Если вам нужна медицинская помощь, обратитесь к доктору Юбилею.}
+{4010}{}{Понятно, спасибо. [Уйти]}
+{5000}{}{Снова вы? Чем могу помочь?}
+{5010}{}{Мне нужна медицинская помощь.}
+{5020}{}{Я уже ухожу. [Уйти]}
+{5030}{}{Док, я слышал@sex@|||а|, что вы проводите медицинскую комиссию всех кандидатов в Рейнджеры?}
+{5040}{}{Доктор, возможно, я чем-то смогу помочь в вашей непростой работе?@@Насколько мне известно, вы закупаете медикаменты?@@Вам нужны аптечки, стимуляторы, противоядия? Готов@sex@|||а| стать вашим постоянным поставщиком.}
+{5050}{}{Доктор, возможно, я чем-то смогу помочь в вашей непростой работе?@@Насколько мне известно, вы закупаете медикаменты?@@Вам нужны аптечки, стимуляторы, противоядия? Готов@sex@|||а| стать вашим постоянным поставщиком.}
+{5060}{}{А у вас неплохая лаборатория, док!}
+{5070}{}{А у вас неплохая лаборатория, док!}
+{5080}{}{Док, а вы можете меня сделать силачом или красавцем?}
+{6000}{}{Да, это так. Многие хотят вступить, но Элизе нужны только лучшие бойцы.}
+{6010}{}{А я смогу пройти эту комиссию?}
+{7000}{}{[Смотрит на вас с интересом] Сложно сказать. Вам потребуется сдать ряд анализов, сделать несколько рентгеновских снимков, пройти полное обследование. Плюс, вы должны быть в превосходной спортивной форме.}
+{7010}{}{Ого! Неслабо так. А что насчет вредных привычек?}
+{8000}{}{Разумеется, никаких вредных привычек. Курение, алкоголизм, или, упаси бог, наркомания сразу ставят крест на возможности вступления в рейнджеры.}
+{8010}{}{Ясно. Нет, не настолько сильно я хочу в рейнджеры. [Уйти]}
+{8020}{}{Кесс по какому критерию не прошел?}
+{9000}{}{[Хмурится] Кесс? Этот алкоголик? Откуда вы о нем знаете?}
+{9010}{}{Это мой знакомый. Жалуется, он очень расстроен, что вылетел из Рейнджеров.}
+{10000}{}{Ваш знакомый провалил плановую проверку по физической подготовке. Вердикт один - исключение из членов.}
+{10010}{}{Неужели ничего нельзя сделать?}
+{11000}{}{Если Кесс поменяет образ жизни, бросит пить и курить, займется здоровьем... То, возможно, лет через 5 он сможет пройти медкомиссию.}
+{11010}{}{Док, ты издеваешься? ПЯТЬ лет! А если я возьму вот этот скальпель, и проковыряю в тебе пару дырок?}
+{11020}{}{Док, ты издеваешься? ПЯТЬ лет! А если я возьму вот этот скальпель, и проковыряю в тебе пару дырок?}
+{11030}{}{Доктор, это абсурд! Кесс обязательно выполнит все требования, но пять лет он не может ждать.}
+{12000}{}{Немедленно покиньте помещение. Иначе я вызову полицию.}
+{13000}{}{Спокойно, не нужно насилия!}
+{13010}{}{Не вынуждай меня перейти от слов к делу. Я хочу, чтобы Кесс прошел Медкомиссию. Если не пройдет, я тобой займусь!}
+{14000}{}{Я все сделаю, можете сказать Кессу!!}
+{14010}{}{Так то лучше, эскулап. Я проверю. [Уйти]}
+{15000}{}{Не верю я, что Кесс способен измениться.}
+{15010}{}{Может быть, я смогу каким-то образом повлиять на ваше мнение?}
+{16000}{}{Что вы имеете в виду?}
+{16010}{}{Вам наверняка нужны средства для приобретения инструментов и медикаментов. Я смогу с этим помочь.}
+{17000}{}{Хорошо. Думаю, 300 монет мне пригодятся, в качестве пожертвования на исследования...}
+{17010}{}{Как только я найду деньги, я вернусь. [Уйти]}
+{17020}{}{Чего не сделаешь, для поддержания исследований! [Отдать 300 монет]}
+{18000}{}{Хорошо. Не распространяйтесь об этом. Кесс может прийти ко мне завтра для оформления документов.}
+{19000}{}{Хм. Действительно, я всегда заинтересован в пополнении банка лекарств и медикаментов. Готов у вас купить стимуляторы (100 монет за пару) и аптечки (90 монет за штуку).@@Если у вас найдутся аптечки первой помощи, я заплачу 90 монет за каждую. Также возьму стимуляторы, два стимулятора за 100 монет.@@Мне нужны стимуляторы и аптечки первой помощи.  За два стимулятора получите 100 монет, за аптечку - 90.}
+{19010}{}{В данный момент у меня нет стимуляторов и аптечек. Возможно, вернусь позже. [Уйти]@@Я запомню. [Уйти]@@Аптечки, стимуляторы... Все ясно. [Уйти]}
+{19020}{}{Стимуляторы у меня с собой. [Отдать 2 стимпака за 100 монет]@@Готов@sex@|||а| поделиться стимпаками. [Отдать 2 стимпака за 100 монет]}
+{19030}{}{90 монет, конечно, не самая лучшая цена за аптечку... Надеюсь, она вам пригодится. [Отдать аптечку за 90 монет]@@За аптечку могли бы и накинуть немного монет. Эх! Чего только не сделаешь ради здоровья ближнего. [Отдать аптечку за 90 монет]}
+{20000}{}{Прекрасно! С вами приятно иметь дело, @pname@.@@Ваш вклад в развитие медицины НКР не пропадет зря! Вы очень помогли.@@Достойный поступок! Эти медикаменты пойдут на благое дело.@@Благодарю за помощь. Возможно, вы спасли сейчас чью-то жизнь!}
+{20010}{}{Мне пора. [Уйти]@@Не стоит благодарностей. [Уйти]}
+{21000}{}{Не отвлекайте меня. Я очень занят.}
+{22000}{}{Хммм... да.. Досталась мне по наследству...}
+{22010}{}{По наследству? От кого?}
+{23000}{}{Доктор Генри, ученый, талантливый генетик основал эту лабораторию. Вы наверняка слышали о нем.}
+{23010}{}{Чем он так знаменит?}
+{24000}{}{Он разработал радикальную концепцию решения проблемы мутаций ФЕВ. Доказал, что мутации обратимы и практически открыл рецепт сыворотки, которая могла излечить супермутанта...}
+{24010}{}{И где он сейчас?}
+{25000}{}{Он слишком много работал... В какой-то момент он принял слишком ответственное решение и вколол сыворотку себе.}
+{25010}{}{И отбросил коньки?}
+{26000}{}{Скончался... Не учел какой-то фактор. Теперь эти работы остановлены... Но кто знает, может быть, найдется еще человек, который завершит начатое доктором Генри.}
+{26010}{}{Понятно. Ну, мне пора. [Уйти]}
+{26020}{}{Да, жаль, что Генри не закончил начатое. [Уйти]}
+{27000}{}{Друг мой, я не оперирую с косметическими целями, если вы об этом.}
+{27010}{}{А с какими целями оперируете?}
+{28000}{}{Ну, хм, если у вас имеются проблемы со зрениям, я могу с этим помочь. В исключительных случаях я использую лазерную коррекцию зрения. Никто пока не жаловался. [Зловеще смеется]}
+{28010}{}{Что-нибудь еще?}
+{29000}{}{Кроме того, я могу предложить вам испытать новейшую технологию укрепления сердечных мышц. Через грудину пациента пропускается специальный заряд тока высокой частоты, это позволяет стимулировать работу сердца, и, в большинстве случаев, приводит к положительному результату...}
+{29010}{}{Что значит "в большинстве случаев"? А что происходит в "меньшинстве"?}
+{30000}{}{Не берите в голову, друг мой. Ну так что, желаете укрепить здоровье?}
+{30010}{}{Да, я готов@sex@|||а| к операции на сердце. [+1 Выносливости]}
+{30020}{}{Да, я готов@sex@|||а| к операции на глазах. [+1 Восприятия]}
+{30030}{}{Нет, мне нужно подумать, я вернусь позже. [Уйти]}
+{31000}{}{Операция стоит 50 000 монет. Даже для вас, хотя вы и заслуживаете всяческого доверия, я не могу сделать скидки.}
+{31010}{}{У меня нет таких денег. [Уйти]}
+{31020}{}{Да, деньги у меня с собой, начинайте.}
+{32000}{}{Операция стоит 50 000 монет. Даже для вас, хотя вы и заслуживаете всяческого доверия, я не могу сделать скидки.}
+{32010}{}{Да, деньги у меня с собой, начинайте.}
+{32020}{}{У меня нет таких денег. [Уйти]}
+{33000}{}{Вы даже не заметили, как доктор сделал вам укол. Вы потеряли сознание и пропустили самое интересное. Придя в себя на больничной койке, вы поняли, что ваше тело изменилось.}
+{33010}{}{Док, что со мной было?}
+{34000}{}{Все нормально, мой друг. Операция прошла без осложнений. Почти...}
+{34010}{}{Что значит "ПОЧТИ"?!!}
+{35000}{}{Робопес снова сожрал один из скальпелей. Еще один такой промах, и мне нечем будет резать моих любимых пациентов... А в остальном, все отлично, мой друг, все отлично... Можете идти...}
+{35010}{}{Хорошо, благодарю вас, док.}
+{36000}{}{Пока ничего не надо, приходите попозже.}
+{100000001}{}{Вы прослушали историю Клауса о докторе Генри.}
+
+[engl]
+{100}{}{Doctor Klaus}
+{200}{}{you see doctor Klausa.}
+{210}{}{you see the person in a dressing gown of the doctor.}
+{210}{}{It is doctor Klauss. The fine doctor, capable to put on feet of any patient.}
+{1000}{}{Predialogue installations}
+{1010}{}{it is not familiar}
+{1020}{}{a sign}
+{2000}{}{Good afternoon, than I can be useful?}
+{2010}{}{I already leave. [To leave]}
+{2020}{}{So long! [to Leave]}
+{2030}{}{Hello, you are a doctor?}
+{3000}{}{Yes, the doctor. My name is Klaus.}
+{3010}{}{you can help me?}
+{4000}{}{I do not practise. If medical aid is necessary to you, address to the doctor to Anniversary.}
+{4010}{}{it is clear, thanks. [To leave]}
+{5000}{}{Again you? Than I can help?}
+{5010}{}{medical aid is necessary To me.}
+{5020}{}{I already leave. [To leave]}
+{5030}{}{Dock, I слышал@sex ||| and |, what you spend medical board of all candidates in Rangers?}
+{5040}{}{the Doctor, probably, I something can help with your uneasy work? @@ as far as I know, you buy medicines? @@ first-aid sets, stimulators, antidotes are necessary to you? Готов@sex ||| and | to become your constant supplier.}
+{5050}{}{the Doctor, probably, I something can help with your uneasy work? @@ as far as I know, you buy medicines? @@ first-aid sets, stimulators, antidotes are necessary to you? Готов@sex ||| and | to become your constant supplier.}
+{5060}{}{And at you quite good laboratory, dock!}
+{5070}{}{And at you quite good laboratory, dock!}
+{5080}{}{Dock, and you can make me the athlete or a handsome man?}
+{6000}{}{Yes, it so. Many want to enter, but Elize are necessary only the best fighters.}
+{6010}{}{And I can pass this commission?}
+{7000}{}{[Looks at you with interest] Difficult to tell. You will need to hand over a number of analyses, to make some x-ray pictures, to pass full inspection. Plus, you should be in the excellent sports form.}
+{7010}{}{Ogo! Mighty well so. And what about bad habits?}
+{8000}{}{Certainly, any bad habits. Smoking, alcoholism, or, upasi god, a narcotism give up at once as a bad job introduction possibility in rangers.}
+{8010}{}{it is clear. No, not so strongly I want in rangers. [To leave]}
+{8020}{}{Kess by what criterion has not passed?}
+{9000}{}{[Kess Frowns]? This alcoholic? Whence you know about it?}
+{9010}{}{It is my acquaintance. Complains, he is very upset that has taken off from Rangers.}
+{10000}{}{your acquaintance has ruined planned check on physical preparation. A verdict one - an exception of members.}
+{10010}{}{Really nothing can be made?}
+{11000}{}{If Kess will change a way of life, will stop to drink and smoke, will be engaged in health... That, probably, years through 5 it can pass medical board.}
+{11010}{}{Dock, you scoff? FIVE years! And if I take here this scalpel, and I will make a hole in you in pair of holes?}
+{11020}{}{Dock, you scoff? FIVE years! And if I take here this scalpel, and I will make a hole in you in pair of holes?}
+{11030}{}{the Doctor, is absurdity! Kess it will necessarily fulfil all requirements, but five years cannot wait.}
+{12000}{}{Immediately leave a premise. Otherwise I will cause police.}
+{13000}{}{it is quiet, it is not necessary violence!}
+{13010}{}{do not compel me to pass from words to business. I want, that Kess has passed Medical board. If will not pass, I will be engaged in you!}
+{14000}{}{I will make all, can tell Kessu!!}
+{14010}{}{So that is better, the doctor. I will check up. [To leave]}
+{15000}{}{I do not believe that Kess is capable to change.}
+{15010}{}{Perhaps, I can affect your opinion somehow?}
+{16000}{}{That you mean?}
+{16010}{}{means for acquisition of tools and medicines are for certain necessary to you. I can help with it.}
+{17000}{}{it is good. I think, 300 coins will be useful to me, as a donation on researches...}
+{17010}{}{As soon as I will find money, I will return. [To leave]}
+{17020}{}{That you will not make, for maintenance of researches! [To give 300 coins]}
+{18000}{}{it is good. Do not extend about it. Kess can come to me tomorrow for official registration of papers.}
+{19000}{}{Hm. Really, I am always interested in replenishment of bank of medicines and medicines. It is ready to buy from you stimulators (100 coins for pair) and first-aid sets (90 coins for a piece). @@ If you will have first aid first-aid sets, I will pay 90 coins for everyone. Also I will take the stimulators, two stimulators for 100 coins. @@ stimulators and first aid first-aid sets are necessary to me. For two stimulators receive 100 coins, for the first-aid set - 90.}
+{19010}{}{At present I do not have stimulators and first-aid sets. Probably, I will return later. [To Leave] @@ I will remember. [To leave] @@ First-aid sets, stimulators... All is clear. [To leave]}
+{19020}{}{Stimulators at me with itself. [To Give 2 stimpaka for 100 coins] @@ Gotov@sex ||| and | to share stimpakami. [To Give 2 stimpaka for 100 coins]}
+{19030}{}{90 coins, of course, not the best price for the first-aid set... I Hope, it is useful to you. [To Give the first-aid set for 90 coins] @@ For the first-aid set could and throw a few coins. Eh! That only you will not make for the sake of health near. [To give the first-aid set for 90 coins]}
+{20000}{}{it is fine! It is pleasant to deal with you, @pname. @@ your contribution to development of medicine NKR will not be gone in vain! You have very much helped. @@ a worthy act! These medicines will go on good business. @@ I thank for the help. Probably, you have saved now someone's life!}
+{20010}{}{it is time To me. [To Leave] @@ It is not necessary thanks. [To leave]}
+{21000}{}{do not distract me. I am very occupied.}
+{22000}{}{Hmmm... Yes. Has got to me by right of succession...}
+{22010}{}{By right of succession? From whom?}
+{23000}{}{Doctor Henry, scientific, talented genetik has based this laboratory. You for certain heard about it.}
+{23010}{}{Than it so is well-known?}
+{24000}{}{He has developed the radical concept of a solution of a problem of mutations FEV. Has proved that mutations are reversible and has practically opened the recipe of whey which could cure a supermutant...}
+{24010}{}{And where it now?}
+{25000}{}{It worked too much... At some instant it has accepted too a critical decision and has stuck whey to itself.}
+{25010}{}{Also has rejected the fads?}
+{26000}{}{Has died... Has not considered any factor. Now these works are stopped... But who knows, maybe, there will be still a person who will finish begun by doctor Henry.}
+{26010}{}{it is clear. Well, it is time to me. [To Leave]}
+{26020}{}{Yes, it is a pity that Henry has not finished the begun. [To leave]}
+{27000}{}{my Friend, I do not operate with the cosmetic purposes, if you about it.}
+{27010}{}{And with what purposes operate?}
+{28000}{}{Well, hm if you have problems with zrenijam, I can help with it. In exceptional cases I use laser correction of sight. Anybody did not complain yet. [Ominously laughs]}
+{28010}{}{Something else?}
+{29000}{}{Besides, I can suggest to test to you the newest technology of strengthening of cardiac muscles. Through a breast of the patient the special charge of a current of high frequency is passed, it allows to stimulate heart work, and, in most cases, leads to positive result...}
+{29010}{}{That means "in most cases"? And what occurs in "minority"?}
+{30000}{}{do not get into the head, my friend. Well so, wish to strengthen health?}
+{30010}{}{Yes, I готов@sex ||| and | to a heart operation. [+1 endurances]}
+{30020}{}{Yes, I готов@sex ||| and | to operation in the face of. [+1 perceptions]}
+{30030}{}{No, I need to think, I will return later. [To Leave]}
+{31000}{}{Operation costs 50 000 coins. Even for you though you also deserve all trust, I cannot give a discount.}
+{31010}{}{I do not have such money. [To leave]}
+{31020}{}{Yes, money at me with itself, begin.}
+{32000}{}{Operation costs 50 000 coins. Even for you though you also deserve all trust, I cannot give a discount.}
+{32010}{}{Yes, money at me with itself, begin.}
+{32020}{}{I do not have such money. [To leave]}
+{33000}{}{you at all have not noticed, how the doctor has made to you a prick. You have fainted and have passed the most interesting. Having come to the senses on a hospital cot, you have understood that your body has changed.}
+{33010}{}{Dock, what with me was?}
+{34000}{}{All is normal, my friend. Operation has passed without complications. Almost...}
+{34010}{}{That means "ALMOST"?!!}
+{35000}{}{Robopes has again gobbled up one of scalpels. One more such miss, and me will nothing to cut my favourite patients... And in the rest, all is excellent, my friend, all is excellent... Can go...}
+{35010}{}{it is good, I thank you, dock.}
+{36000}{}{While it is necessary nothing, come later.}
+{100000001}{}{you have heard to history of Klausa about doctor Henry.}

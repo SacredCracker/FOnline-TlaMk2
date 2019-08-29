@@ -1,0 +1,328 @@
+[comment]
+Ваши комментарии / Your comments.
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 0 #
+20 1010 D _param p ST_INTELLECT < 4 #
+2 1020 D _param p ST_INTELLECT > 3 D _var p name_mem_npc_player = 0 R _var p name_mem_npc_player = 1 #
+95 1030 D _param p ST_INTELLECT > 3 D _var p name_mem_npc_player = 1 D _script caravan@d_IsCaravanStatus 1 1 D _script caravan@d_HasPlayerRequest 0  #
+98 1040 D _param p ST_INTELLECT > 3 D _script caravan@d_IsCaravanStatus 1 4 D _script caravan@d_PlayerHasNoCaravanFailures 0  #
+105 1050 D _param p ST_INTELLECT > 3 D _var p name_mem_npc_player = 1 D _var p q_redd_stan_caravan_escort = 8 D _script caravan@d_IsCaravanReversed 0  R _script map_redding_miners@r_PrepareCaravan 0  #
+113 1060 D _param p ST_INTELLECT > 3 D _var p name_mem_npc_player = 1 D _script caravan@d_HasPlayerRequest 0  D _script caravan@d_IsCaravanStatus 1 1 D _script caravan@d_IsCaravanReversed 0  #
+112 1070 D _param p ST_INTELLECT > 3 D _var p name_mem_npc_player = 1 D _var p q_redd_stan_caravan_escort = 8 D _script caravan@d_IsCaravanReversed 0  D _script caravan@d_NotHasPlayerRequest 0  #
+106 1080 D _param p ST_INTELLECT > 3 D _var p name_mem_npc_player = 1 D _var p q_redd_stan_caravan_escort = 10 D _script caravan@d_CaravanEndedOrNotStarted 0  D _script caravan@d_NotIsCaravanReversed 0  R _var p q_redd_stan_caravan_escort = 0 R _item p PID_BOTTLE_CAPS + 4000 R _script dialog@r_QuestReward3 0  #
+106 1090 D _param p ST_INTELLECT > 3 D _var p q_redd_stan_caravan_escort = 8 D _script caravan@d_CaravanEndedOrNotStarted 0  D _script caravan@d_NotIsCaravanReversed 0  R _var p q_redd_stan_caravan_escort = 0 R _item p PID_BOTTLE_CAPS + 4000 R _script dialog@r_QuestReward3 0  #
+101 1100 D _var p q_redd_stan_caravan_escort = 4 #
+102 1110 D _var p q_redd_stan_caravan_escort = 3 #
+103 1120 D _var p q_redd_stan_caravan_escort = 5 #
+104 1130 D _var p q_redd_stan_caravan_escort = 6 #
+4 1140 D _var p name_mem_npc_player = 1 D _script caravan@d_IsCaravanStatus 1 1 D _script caravan@d_PlayerHasNoCaravanFailures 0  D _script caravan@d_NotHasPlayerRequest 0  #
+2 1150 D _var p name_mem_npc_player = 1 D _script caravan@d_CaravanEndedOrNotStarted 0  @
+2 2000 None 1 #
+4 2010 #
+5 2020 #
+9 2030 D _param p ST_GENDER = 0 #
+10 2040 D _param p ST_GENDER = 1 #
+3 2050 @
+3 3000 None 0 @
+4 4000 None 1 #
+6 4010 #
+8 4020 #
+7 4030 #
+9 4040 D _param p ST_GENDER = 0 #
+10 4050 D _param p ST_GENDER = 1 #
+0 4060 @
+5 5000 None 1 #
+6 5010 #
+8 5020 #
+7 5030 #
+9 5040 D _param p ST_GENDER = 0 #
+10 5050 D _param p ST_GENDER = 1 #
+0 5060 @
+6 6000 None 1 #
+8 6010 #
+7 6020 #
+9 6030 D _param p ST_GENDER = 0 #
+10 6040 D _param p ST_GENDER = 1 #
+0 6050 @
+7 7000 None 1 #
+8 7010 #
+9 7020 D _param p ST_GENDER = 0 #
+10 7030 D _param p ST_GENDER = 1 #
+0 7040 @
+8 8000 None 1 #
+7 8010 #
+9 8020 D _param p ST_GENDER = 0 #
+10 8030 D _param p ST_GENDER = 1 #
+0 8040 @
+9 9000 None 1 #
+12 9010 D _script caravan@d_IsCaravanStatus 1 1 R _script caravan@r_PutPlayerRequest2Info 0  R _var p q_redd_stan_caravan_escort = 1 #
+0 9020 @
+10 10000 None 1 #
+11 10010 D _script caravan@d_IsCaravanStatus 1 1 R _script caravan@r_PutPlayerRequest2Info 0  R _var p q_redd_stan_caravan_escort = 1 #
+11 10020 D _script caravan@d_IsCaravanStatus 1 1 R _script caravan@r_PutPlayerRequest2Info 0  R _var p q_redd_stan_caravan_escort = 1 #
+0 10030 @
+11 11000 None 1 #
+12 11010 @
+12 12000 None 1 #
+0 12010 #
+0 12020 @
+13 13000 None 1 @
+14 14000 None 1 @
+15 15000 None 1 @
+16 16000 None 1 #
+17 16010 @
+17 17000 None 1 @
+20 18000 None 1 @
+95 19000 None 1 #
+14 19010 #
+15 19020 #
+16 19030 #
+0 19040 @
+98 20000 None 1 #
+0 20010 D _script caravan@d_HasPlayerRequest 0  R _script caravan@r_ContinueCaravan 0  #
+0 20020 @
+100 21000 Attack 1 @
+101 22000 None 1 #
+115 22010 D _param p SK_SPEECH < 50 #
+114 22020 D _param p SK_SPEECH > 49 #
+0 22030 @
+102 23000 None 1 @
+103 24000 None 1 #
+12 24010 #
+111 24020 @
+104 25000 None 1 #
+12 25010 R _var p q_redd_stan_caravan_escort = 0 #
+111 25020 @
+105 26000 None 1 #
+110 26010 D _var p q_redd_stan_caravan_escort = 8 R _var p q_redd_stan_caravan_escort = 11 R _item p PID_BOTTLE_CAPS + 4000 R _script dialog@r_QuestReward3 0  #
+111 26020 D _var p q_redd_stan_caravan_escort = 10 R _var p q_redd_stan_caravan_escort = 11 R _item p PID_BOTTLE_CAPS + 4000 R _script dialog@r_QuestReward3 0  @
+106 27000 None 1 #
+0 27010 #
+0 27020 #
+0 27030 @
+110 28000 None 1 #
+0 28010 @
+111 29000 None 1 @
+112 30000 None 1 #
+113 30010 D _script caravan@d_NotHasPlayerRequest 0  D _script caravan@d_PlayerHasNoCaravanFailures 0  R _script caravan@r_PutPlayerRequest2Info 0  #
+0 30020 @
+113 31000 None 1 @
+114 32000 None 1 #
+12 32010 R _var p q_redd_stan_caravan_escort = 0 #
+0 32020 @
+115 33000 None 1 &
+
+[russ]
+{100}{}{Савинелли}
+{200}{}{Вы видите мужчину с давно не мытой головой. Он присыпан пылью.}
+{210}{}{Перед вами Энрико Савинелли, тот самый тип, который заведует караванами, идущими из Нью-Рино в Реддинг и обратно.}
+{210}{}{Вы видите невысокого, нервного мужчину с волосами, зачесанными назад.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{не знаком. Караван не начинался, норм инт. Провалов квеста раньше не было.}
+{1020}{}{знаком караван не начинался, норм инт. Провалов квеста раньше не было}
+{1030}{}{низкий интеллект}
+{1040}{}{игрок в составе каравана. Караван еще не вышел из точки старта. Норм инт. У игрока не было провалов данного каравана}
+{1050}{}{караван на энкаунтере, все спокойно. Норм инт. Реплика для всех,  а не только игрока с квестом. У игрока не было провалов}
+{1060}{}{Провал: игрок убил караванщика на энкаунтере}
+{1070}{}{Провал: игрок покинул караван во время маршрута. Норм инт}
+{1080}{}{Провал: игрок нападал на караван или пытался ограбить}
+{1090}{}{Провал: игрок погиб во время каравана}
+{1100}{}{Провал: проводника убили во время каравана, кто-то кроме игрока}
+{1110}{}{Успех: игрок выполнил квест впервые. Норм инт}
+{1120}{}{Успех: игрок выполнил квест повторно. Норм инт}
+{1130}{}{знаком - доступен квест на караван. Норм инт. Не было провалов. Группа не полная}
+{1140}{}{знаком - доступен квест на караван. Норм инт. Не было провалов. Группа полная}
+{1150}{}{незнаком. Доступен квест на караван. Норм инт, не было провалов. Группа неполная}
+{1160}{}{незнаком. Квест доступен, но группа полная. Норм инт}
+{2000}{}{Привет. Меня зовут Энрико Савинелли. Только я вожу караваны в Нью-Рено из Реддинга, и никто другой. Мне не помешает пара надежных ребят для охраны груза. Хочешь пойти с нами?}
+{2010}{}{Тебе нужен охранник, да?}
+{2020}{}{Чем вы торгуете? }
+{2030}{}{Когда пойдете?}
+{2040}{}{Не думаю, что это для меня. До свидания. }
+{3000}{}{Да, в чем дело?}
+{3010}{}{Тебе нужен охранник, да?}
+{3020}{}{Чем вы торгуете?}
+{3030}{}{А почему нельзя выйти раньше?}
+{3040}{}{Нет, ничего. До свидания.}
+{3050}{}{А пораньше выйти никак?}
+{4000}{}{Чтоб не толкаться с другими караванами на выходе, мы идем по своей очереди, в 3 часа дня.Подходи ко мне, если захочешь получить работу.}
+{4010}{}{Чем вы торгуете?}
+{4020}{}{Ясно. До свидания.}
+{5000}{}{Мне нужны охранники, ясен пень. Приходи , если захочешь получить работу. Понятно объясняю?}
+{5010}{}{А во сколько?}
+{5020}{}{Чем вы торгуете?}
+{5030}{}{Я пожалуй пойду. До свидания.}
+{6000}{}{Ну, мы по большей части берем, уф, медицинские товары - да, назвовем это медицинскими товарами - в Нью-Рено, и меняем их в Реддинге на золото.}
+{6010}{}{Это интересно. Говоришь, вам нужны охранники?}
+{6020}{}{Хочу спросить еще кое-что.}
+{6030}{}{Хмм. Ясно. До свидания.}
+{7000}{}{Черт его знает, сколько еще эти сраные шахтеры будут грузить мою партию золота. Ладно, как бы то ни было, мы отчаливаем в 15 часов ноль-ноль минут. Если все еще будет нужна работа, подойди  ко мне заранее.}
+{7010}{}{Понятно. Так что вы перевозите?}
+{7020}{}{Это все, что мне нужно было знать. До свидания.}
+{8000}{}{О-па. Еще один придурок. Пошел нахрен!}
+{8010}{}{Моя убивать! Твоя страдать! [Атака]}
+{8020}{}{Фу, тебе! [Уйти]}
+{9000}{}{Ну здесь, в Нью-Рино, не стоит торопиться, знаешь ли. Ребята, с которыми я веду дела, не любят торопыг. Если сильно приспичило разобраться, что да как, сам@sex@|||а| у них спроси. }
+{9010}{}{Чем вы торгуете? }
+{9020}{}{Ясно. До свидания. [Уйти]}
+{10000}{}{Вовремя ты появил@sex@|ся||ась|. Выходим сегодня в 15 часов. Плачу полтора куска, когда доберемся до места. Что скажешь?}
+{10010}{}{Нет, мне это не интересно.[Уйти]}
+{10020}{}{Ладно, я с тобой.}
+{11000}{}{Привет, меня зовут Энрико Савинелли. Если хочешь заработать, то ты обратил@sex@|ся||ась| по адресу. Я вожу караваны из Нью-Рено в Реддинг.И у меня есть место в караване для опытного охранника.}
+{11010}{}{А что перевозит твой караван?}
+{11020}{}{Нет, не хочу. [Уйти]}
+{11030}{}{Сколько заплатишь?}
+{12000}{}{Не сейчас. Все вопросы задавай в другой день. }
+{12010}{}{Ладно, пока. [Уйти]}
+{13000}{}{Я плачу полторы косых каждому охраннику. Деньги получишь, когда прибудем на место. Ну, принимай решение, у меня туча дел.}
+{13010}{}{Я подумаю. [Уйти]}
+{13020}{}{Неплохие деньги. Я соглас@sex@|ен||на|.}
+{14000}{}{Ты кто? Не помню тебя. В любом случае не важно, я очень занят.}
+{14010}{}{А чем занят то? Ты проводник каравана?}
+{14020}{}{Увидимся. [Уйти]}
+{15000}{}{Отлично. Отправляемся в 15 часов. Будь рядом.}
+{15010}{}{Договорились.@@Буду неподалеку. @@Ясно.}
+{16000}{}{Где ты возишься? На сегодня голяк, все места заняты. Я не Красный Крест, чтобы таскать за собой долбаную тучу кретинов, которым нужен безопасный переход через Пустошь.}
+{16010}{}{Ладно, забудь. [Уйти]}
+{16020}{}{Но, может, не придет кто?}
+{17000}{}{Хм. Да, всякое бывает. Будь здесь на всякий случай, если что, дам знать. В 15 часов все решится. Если попадешь в мою охрану, получишь 1500 монет, как закончим.}
+{17010}{}{Мне не подходит. Походу, слишком дешево ты ценишь свой караван. [Уйти]}
+{17020}{}{Хорошо, подожду здесь. [Уйти]}
+{18000}{}{Не путайся под ногами. Скоро выходим.}
+{18010}{}{Долго ждать еще?}
+{19000}{}{В 15 часов будь рядом, чтобы я тебя видел. Опоздавших ждать не буду.}
+{19010}{}{Поскорей бы уже.[Уйти]@@Ясно. [Уйти]@@Хорошо, подождем. [Уйти]}
+{20000}{}{Не на таких напали, этот караван вам не обчистить.@@Эти гондоны решили, что они могут трахнуть караван Савинелли!@@Вот уроды, я вам кишки по деревьям развешу!@@Долбаные придурки. Опять они здесь.}
+{20010}{}{Не бери в голову. [Уйти]}
+{20020}{}{Хватит здесь торчать, погнали дальше?}
+{21000}{}{Да, самое время. Может, это была подстава, и сейчас подкатят еще ребята.}
+{21010}{}{Все готовы. Можно выходить.}
+{22000}{}{Зайдешь сюда снова, с тобой может случиться неприятный инцидент.}
+{22010}{}{Че за дела?!}
+{23000}{}{Ты бросил@sex@|||а| мой караван и теперь явил@sex@|ся||ась| вымаливать себе работу? Вон отсюда!}
+{23010}{}{Эй, полегче!}
+{24000}{}{Я уважаю грабителей... но только которые орудуют по-крупному. А ты просто шестерка. Вон с глаз моих, пока тебе не поплохело.}
+{24010}{}{Грабителей? Я тебе это припомню! [Уйти]}
+{24020}{}{Поплохело? Ну, попробуй, сделай что-нибудь! [Атака]}
+{25000}{}{Слушай, @sex@|друг||подруга|, ты точно долж@sex@|ен||на| знать, когда сказать "нет". Вот я, например, знаю. Так что НЕТ!}
+{25010}{}{Э, минутку. Меня там приложили, в твоем караване, и ты не хочешь платить?}
+{25020}{}{ А, ладно. [Уйти]}
+{26000}{}{А, это ты? Ну что ж, на первый раз неплохо. Не ожидал от зеленого новичка подобной прыти. Вот твоя плата. Решишь еще подработать, найди меня.}
+{26010}{}{Спасибо, я подумаю. [Уйти]}
+{27000}{}{Вот так должны ходить все караваны! Чисто-гладко, как попка младенца. Вот тебе твои 1500 монет, и еще 200 премии за отличную работу.}
+{27010}{}{Рад@sex@|||а| встретить человека, который ценит качество. Может, еще увидимся. До свидания. [Уйти]@@Спасибо за премию, Энрико. До свидания. [Уйти]}
+{28000}{}{Тебя предупредили. Теперь вон отсюда к чертовой матери.}
+{29000}{}{Я сказал - вон. Ты не только желторот@sex@|ый||ая|, а еще и глух@sex@|ой||ая|?}
+{30000}{}{Закрой пасть. Знал я, надо было нанимать профи. Давай, проваливай отсюда, бесполезный мешок говна.}
+{30010}{}{А в бубен не хочешь? [Атака]}
+{30020}{}{Ну ты и урод, Савинелли. [Уйти]}
+
+[engl]
+{100}{}{Savinelly}
+{200}{}{You see a man with greasy hairs. He covered with dust.}
+{210}{}{You see Savinelly, New Reno – Redding chief caravaneer.}
+{210}{}{You see a low, nervous guy with slicked back hair.}
+{1000}{}{Predialogue installations}
+{1010}{}{it is not familiar. The caravan did not begin, norms int. Quest failures was not earlier.}
+{1020}{}{the caravan did not begin a sign, norms int. Quest failures was not} earlier
+{1030}{}{low intelligence}
+{1040}{}{the player as a part of a caravan. The caravan did not leave yet a start point. Norms int. The player did not have failures of the given caravan}
+{1050}{}{a caravan on enkauntere, all is quiet. Norms int. A remark for everything, and not just the player with a quest. The player did not have failures}
+{1060}{}{the Failure: the player has killed the caravaneer on enkauntere}
+{1070}{}{the Failure: the player has left a caravan during a route. Norms int}
+{1080}{}{the Failure: the player attacked a caravan or tried to plunder}
+{1090}{}{the Failure: the player was lost during a caravan}
+{1100}{}{the Failure: a conductor have killed during a caravan, someone except the player}
+{1110}{}{Success: the player has executed a quest for the first time. Norms int}
+{1120}{}{Success: the player has executed a quest repeatedly. Norms int}
+{1130}{}{a sign - the quest on a caravan is accessible. Norms int. There were no failures. Group not full}
+{1140}{}{a sign - the quest on a caravan is accessible. Norms int. There were no failures. Group full}
+{1150}{}{it is unfamiliar. The quest on a caravan is accessible. Norms int, there were no failures. Group incomplete}
+{1160}{}{it is unfamiliar. The quest is accessible, but group full. Norms int}
+{2000}{}{Greetings. My name is Enriko Savinelli. Only I drive caravans in Nju-Reno from Reddinga, and anybody another. I will be not not prevented by pair of reliable children for cargo protection. You want to go with us?}
+{2010}{}{the security guard, yes is necessary to You?}
+{2020}{}{Than you trade?}
+{2030}{}{When will go?}
+{2040}{}{I do not think that it for me. Good-bye.}
+{3000}{}{Yes, what is the matter?}
+{3010}{}{the security guard, yes is necessary to You?}
+{3020}{}{Than you trade?}
+{3030}{}{And why it is impossible to leave earlier?}
+{3040}{}{No, anything. Good-bye.}
+{3050}{}{And before to leave in any way?}
+{4000}{}{not to be pushed with other caravans on an exit, we go in the turn, to 3 o'clock in the afternoon. Approach to me if you will want to get a job.}
+{4010}{}{Than you trade?}
+{4020}{}{it is clear. Good-bye.}
+{5000}{}{security guards are necessary To me, the stub is clear. Come, if you will want to get a job. Clearly I explain?}
+{5010}{}{And in how many?}
+{5020}{}{Than you trade?}
+{5030}{}{I perhaps will go. Good-bye.}
+{6000}{}{Well, we generally take, uf, the medical goods - yes, nazvovem it is the medical goods - in Nju-Reno, and we change them in Reddinge for gold.}
+{6010}{}{It is interesting. You speak, security guards are necessary to you?}
+{6020}{}{I Want to ask still something.}
+{6030}{}{Hmm. Clearly. Good-bye.}
+{7000}{}{The devil only knows, how many still these sranye miners will load my party of gold. All right, anyway, we sail away at 15 o'clock a zero-zero of minutes. If work is still necessary, approach to me in advance.}
+{7010}{}{it is clear. So you transport?}
+{7020}{}{It is everything that it was necessary for me the nobility. Good-bye.}
+{8000}{}{the O-pas. One more moron. Has gone nahren!}
+{8010}{}{Washing to kill! You to suffer! [Attack]}
+{8020}{}{Faugh, you! [To leave]}
+{9000}{}{Well here, in Nju-Rino, it is not necessary to hurry up, whether you know. Children with whom I run business, do not love toropyg. If strongly was impatient to understand, what yes as, сам@sex ||| and | them ask.}
+{9010}{}{Than you trade?}
+{9020}{}{it is clear. Good-bye. [To leave]}
+{10000}{}{In time you появил@sex | sja || as |. We leave today at 15 o'clock. To crying of one and a half piece when we will reach a place. What you will tell?}
+{10010}{}{No, it is not interesting to me. [To leave]}
+{10020}{}{it is fine, I with you.}
+{11000}{}{Greetings, my name is Enriko Savinelli. If you want to earn, you обратил@sex | sja || as | to the address. I drive caravans from Nju-Reno in Redding. And I have a place in a caravan for the skilled security guard.}
+{11010}{}{And what transports your caravan?}
+{11020}{}{No, I do not want. [To leave]}
+{11030}{}{How many you will pay?}
+{12000}{}{Not now. All questions set in other day.}
+{12010}{}{it is fine, while. [To Leave]}
+{13000}{}{I cry one and a half slanting to each security guard. Money you will receive, when we will arrive into place. Well, make the decision, at me a cloud of affairs.}
+{13010}{}{I will think. [To leave]}
+{13020}{}{Quite good money. I соглас@sex | en || on |.}
+{14000}{}{You who? I do not remember you. Anyway it is not important, I am very occupied.}
+{14010}{}{And than it is occupied that? You a caravan conductor?}
+{14020}{}{we Will meet. [To leave]}
+{15000}{}{it is excellent. We go at 15 o'clock. Be a number.}
+{15010}{}{Have agreed. @@ I will be nearby. @@ it is clear.}
+{16000}{}{Where you potter? For today goljak, all places are occupied. I not the Red Cross to drag behind myself a fucking cloud of cretins to which safe transition through the Heathland is necessary.}
+{16010}{}{it is fine, forget. [To leave]}
+{16020}{}{But, can, who will not come?}
+{17000}{}{Hm. Yes, everyone happens. Be here just in case if that, I will let know. At 15 o'clock all will dare. If you will get to my protection, you will receive 1500 coins as we will finish.}
+{17010}{}{To me does not approach. To a campaign, too cheaply you appreciate the caravan. [To leave]}
+{17020}{}{it is good, I will wait here. [To Leave]}
+{18000}{}{be not in the way. Soon we leave.}
+{18010}{}{Long to wait still?}
+{19000}{}{At 15 o'clock be a number that I you saw. Late I will not wait.}
+{19010}{}{is faster already. [To Leave] @@ it is clear. [To leave] @@ it is good, we will wait. [To leave]}
+{20000}{}{Not the such have attacked, this caravan to you not to clean. @@ these gondony have decided that they can bang a caravan of Savinelli! @@ Here freaks, I to you on trees will hang out guts! @@ fucking morons. Again they here.}
+{20010}{}{do not get into the head. [To leave]}
+{20020}{}{Will suffice here to stick out, have sent on errands further?}
+{21000}{}{Yes, it is a high time. Perhaps it was the setup, and still children now will drive.}
+{21010}{}{All are ready. It is possible to leave.}
+{22000}{}{you Will come here again, with you there can be an unpleasant incident.}
+{22010}{}{Che for affairs?!}
+{23000}{}{You бросил@sex ||| and | my caravan and now явил@sex | sja || as | to beg to itself for work? From here!}
+{23010}{}{Hey, easier!}
+{24000}{}{I respect robbers... But only which boss in a large way. And you simply six. From my eyes, while to you not poplohelo.}
+{24010}{}{Robbers? I to you will remember it! [To leave]}
+{24020}{}{Poplohelo? Well, try, make something! [Attack]}
+{25000}{}{Listen, @sex | the friend || the girlfriend |, you are exact долж@sex | en || on | the nobility when to tell "are not present". Here I, for example, know. So is not present!}
+{25010}{}{E, minute. Me there have put, in your caravan, and you do not want to pay?}
+{25020}{}{And, all right. [To leave]}
+{26000}{}{And, it you? Well, on the first time not bad. Did not expect from the green beginner of similar speed. Here your payment. You will decide to earn additionally still, find me.}
+{26010}{}{Thanks, I will think. [To leave]}
+{27000}{}{Here so all caravans should go! Purely-smoothly, as a bottom of the baby. Here to you yours 1500 coins, and 200 more awards for excellent work.}
+{27010}{}{Rad@sex ||| and | to meet the person who appreciates quality. Perhaps still we will meet. Good-bye. [To leave] @@ Thanks for the award, Enriko. Good-bye. [To leave]}
+{28000}{}{You have warned. Now from here to hell.}
+{29000}{}{I have told-. You not only желторот@sex | yj || aja |, but also глух@sex | oh || aja |?}
+{30000}{}{Close a mouth. I knew, it was necessary to employ the pro. Give, ruin from here, a useless bag of a shit.}
+{30010}{}{And in a tambourine you do not want? [Attack]}
+{30020}{}{Well you and the freak, Savinelli. [To Leave]}

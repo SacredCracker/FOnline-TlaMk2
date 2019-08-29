@@ -1,0 +1,212 @@
+[comment]
+Ваши комментарии / Your comments.
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _param p ST_INTELLECT > 3 D _var p q_klam_torr_cowboy = 0 #
+4 1020 D _param p ST_INTELLECT < 4 D _var p q_klam_torr_cowboy = 0 #
+18 1030 D _var p q_klam_torr_cowboy = 1 #
+19 1040 D _var p q_klam_torr_cowboy = 2 #
+21 1050 D _var p q_klam_torr_cowboy = 3 #
+20 1060 D _var p q_klam_torr_cowboy = 4 #
+17 1070 D _var p q_klam_torr_cowboy > 4 @
+2 2000 None 0 #
+3 2010 @
+3 3000 None 0 #
+10 3010 D _var p klam_cowboy = 0 D _script klam_cowboy@d_VerifyTime 1 1 #
+22 3020 D _script klam_cowboy@d_VerifyTime 1 0 D _var p klam_cowboy = 0 #
+23 3030 D _var p klam_cowboy > 0 #
+0 3040 @
+10 4000 None 0 #
+11 4010 #
+0 4020 @
+4 5000 None 0 #
+15 5010 D _var p klam_cowboy = 0 D _script klam_cowboy@d_VerifyTime 1 1 #
+22 5020 D _script klam_cowboy@d_VerifyTime 1 0 D _var p klam_cowboy = 0 #
+23 5030 D _var p klam_cowboy > 0 #
+5 5040 @
+11 6000 None 0 #
+0 6010 #
+0 6020 #
+0 6030 D _var p klam_cowboy = 0 R _script klam_cowboy@r_StartQuest 1 0 @
+15 7000 None 0 #
+16 7010 #
+0 7020 @
+16 8000 None 0 #
+0 8010 D _var p klam_cowboy = 0 R _script klam_cowboy@r_StartQuest 1 0 #
+0 8020 @
+5 9000 None 0 #
+6 9010 #
+7 9020 #
+8 9030 #
+9 9040 #
+0 9050 @
+6 10000 None 0 #
+5 10010 #
+0 10020 @
+7 11000 None 0 #
+0 11010 #
+5 11020 #
+0 11030 @
+8 12000 None 0 #
+5 12010 #
+0 12020 @
+9 13000 None 0 #
+5 13010 #
+0 13020 @
+18 14000 None 0 @
+19 15000 None 0 @
+17 16000 None 0 #
+0 16010 D _param p ST_INTELLECT > 3 R _script klam_cowboy@r_AddExperience 0  #
+0 16020 D _param p ST_INTELLECT < 4 R _script klam_cowboy@r_AddExperience 0  @
+20 17000 None 0 #
+0 17010 D _param p ST_INTELLECT > 3 R _item p PID_SLEDGEHAMMER + 1 R _script klam_cowboy@r_AddExperience 0  #
+0 17020 D _param p ST_INTELLECT < 4 R _item p PID_SLEDGEHAMMER + 1 R _script klam_cowboy@r_AddExperience 0  @
+21 18000 None 0 #
+0 18010 R _var p q_klam_torr_cowboy = 0 @
+22 19000 None 0 @
+23 20000 None 0 &
+
+[russ]
+{100}{}{Торр}
+{200}{}{Вы видите очень большого человека, покрытого грязью, с маленькой улыбкой и пустым взглядом.}
+{210}{}{Вы видите Торра Бакнера, городского дурачка.}
+{210}{}{Вы видите большого, мускулистого человека в грязной одежде, покрытого грязью и пылью, с забитой улыбкой на лице.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{умный}
+{1020}{}{тупой}
+{1030}{}{Квест взят- обращение к Торру до нападений}
+{1040}{}{Квест взят- обращение к Торру во время нападений}
+{1050}{}{Квест провален.}
+{1060}{}{Квест завершен удачно, все брамины живы.}
+{1070}{}{Квест завершен удачно, часть браминов умерла.}
+{2000}{}{Я Торр.}
+{2010}{}{Привет, Торр. Что ты тут делаешь?}
+{3000}{}{Моя помогать Дантону.}
+{3010}{}{Тебе нужна помощь?}
+{3020}{}{Тебе нужна помощь?}
+{3030}{}{Тебе нужна помощь?}
+{3040}{}{Черт, ну кажется вам виднее.}
+{4000}{}{Да! Торр нужна помощь! Злые твари приходить поздно и убивать му-му, Торр охранять му-му, но Торр бояться злые твари.}
+{4010}{}{А, ты хочешь, чтобы я помог@sex@|||ла| тебе охранять браминов?}
+{4020}{}{Я слишком занят.}
+{5000}{}{Я Торр [Меня зовут Торр. Чем могу помочь?]}
+{5010}{}{Надо помочь? [Торр, ты выглядишь озабоченным. Тебе помочь?]}
+{5020}{}{Надо помочь? [Торр, ты выглядишь озабоченным. Тебе помочь?]}
+{5030}{}{Надо помочь? [Торр, ты выглядишь озабоченным. Тебе помочь?]}
+{5040}{}{Вы Торр [Привет, Торр. У меня к тебе несколько вопросов.]}
+{6000}{}{Да, Торр хотеть, чтобы ваша помогла Торр!}
+{6010}{}{Я не могу помочь тебе, Торр. Прости.}
+{6020}{}{Отвали, дебил.}
+{6030}{}{Хорошо, я помогу тебе.}
+{7000}{}{Торр нужна помощь. Злые твари гнать му-му отсюда.}
+{7010}{}{Угук! Ааргх! [Да, конечно, я помогу тебе с охраной браминов.]}
+{7020}{}{Умкг. [Нет, извини, я сейчас очень занят. Может, позже.]}
+{8000}{}{Торр рад!}
+{8010}{}{Хааа! [Хорошо, я пойду на пастбище.]}
+{8020}{}{Моя тоже бояться! [Нет, извини. Я сейчас очень занят.]}
+{9000}{}{Торр скажи? [Что вам угодно знать, мой друг?]}
+{9010}{}{Здесь! [Расскажите мне о том, что здесь происходит.]}
+{9020}{}{Ззззз. Окей? [Мне нужно переночевать где-то.]}
+{9030}{}{Xотеть! [Вы показываете на вещь] [Где я могу поменять вещи или приобрести новые?]}
+{9040}{}{Торр? [Простите, а чем вы занимаетесь в городе?]}
+{9050}{}{Идти Торр. [Это все, что мне нужно знать. До свидания, Торр.]}
+{10000}{}{Торр ух! [В последнее время не происходит ничего необычного.]}
+{10010}{}{Да! [Кажется я упустил из виду какую-то деталь, расскажите мне еще что-нибудь.]}
+{10020}{}{Окей! [Этого достаточно. До свидания.]}
+{11000}{}{Зззз? Торр зззз. [Ну, можешь поспать в поей комнате бесплатно.]}
+{11010}{}{Торр ззззз? [Ты позволишь мне остаться в твоей комнате? Это очень благородно с твоей стороны, я тогда прямо сейчас и воспользуюсь твоим предложением.]}
+{11020}{}{Ззз? [Я не думаю, что мне сейчас хочется спать. Может, в другой раз. У меня к тебе еще несколько вопросов.]}
+{11030}{}{Зззз, нет Торр. [Я совсем не хочу сейчас спать. Спасибо за твое благородное предложение, До свидания.]}
+{12000}{}{Акнер! Зууги! [Я думаю, что здесь вам предложат лучшие цены. А в Золотом Гекко над вами только посмеются.]}
+{12010}{}{Акнер Зууги? [Спасибо. Я здесь сделаю все покупки. Позвольте вас спросить еще кое о чем.]}
+{12020}{}{Зууги нет. [Xороший совет. Я не думаю, что мне нужно что-то еще сейчас. До свидания.]}
+{13000}{}{Торр, датон  [Раньше у меня был дело на ферме, но последнее время я сотрудничаю с джентельменом Дантоном]}
+{13010}{}{Что! [Мне кажется вы неправильно мыслите, Дантоны не очень хорошие люди. Позвольте еще спросить.]}
+{13020}{}{Ну, Торр [Спасибо за информацию, Торр! Всего хорошего.]}
+{14000}{}{Приходить в дом му-му в полночь.}
+{15000}{}{Злые твари здесь! Помогите му-му!}
+{16000}{}{Торр благодарить @pname@!}
+{16010}{}{Не за что.}
+{16020}{}{Да нуу! [Всегда рад@sex@|||да| помочь.]}
+{17000}{}{Все му-му жить! Торр рад! Торр давать твоя кое-что.}
+{17010}{}{О, спасибо.}
+{17020}{}{Моя говорить спасибо.}
+{18000}{}{Му-му умереть. Торр не хотеть видеть ваша!}
+{18010}{}{[Уйти]}
+{19000}{}{Нет. Приходить позже.}
+{20000}{}{Торр уже найти помощь.}
+
+[engl]
+{100}{}{Torr}
+{200}{}{You see a very big man covered with dirt, with little smile and empty eyes.}
+{210}{}{You see Torr Bakner, the village idiot.}
+{210}{}{You see a big, muscular man wearing dirty clothes. He is looking somewhere with a blank expression in his eyes.}
+{1000}{}{Predialogue installations}
+{1010}{}{clever}
+{1020}{}{stupid}
+{1030}{}{the Quest is taken - the reference to Torru to attacks}
+{1040}{}{the Quest is taken - the reference to Torru during attacks}
+{1050}{}{the Quest is ruined.}
+{1060}{}{the Quest is finished successfully, all braminy are live.}
+{1070}{}{the Quest is finished successfully, the part braminov has died.}
+{2000}{}{I Torr.}
+{2010}{}{Greetings, Torr. What you here do?}
+{3000}{}{Washing to help Dantonam.}
+{3010}{}{the help is necessary to You?}
+{3020}{}{the help is necessary to You?}
+{3030}{}{the help is necessary to You?}
+{3040}{}{Lines, well it seems to you more visibly.}
+{4000}{}{Yes! Torr the help is necessary! Malicious creatures to come late and to kill mu, Torr to protect mu, but Torr to be afraid malicious creatures.}
+{4010}{}{And, you want, that I помог@sex ||| la | to you to protect braminov?}
+{4020}{}{I am too occupied.}
+{5000}{}{I Torr [My name is Torr. Than I can help?]}
+{5010}{}{It is necessary to help? [Torr, you look anxious. To you to help?]}
+{5020}{}{It is necessary to help? [Torr, you look anxious. To you to help?]}
+{5030}{}{It is necessary to help? [Torr, you look anxious. To you to help?]}
+{5040}{}{you Torr [Greetings, Torr. At me to you some questions.]}
+{6000}{}{Yes, Torr to want, that you has helped Torr!}
+{6010}{}{I cannot help you, Torr. Forgive.}
+{6020}{}{Otvali, the moron.}
+{6030}{}{it is good, I will help you.}
+{7000}{}{Torr is necessary the help. Malicious creatures to drive mu from here.}
+{7010}{}{Uguk! Aargh! [Yes, of course, I will help you with protection braminov.]}
+{7020}{}{Umkg. [No, excuse, I am now very occupied. Perhaps later.]}
+{8000}{}{Torr is glad!}
+{8010}{}{Haaa! [It is good, I will go on a pasture.]}
+{8020}{}{Mine too to be afraid! [No, excuse. I am now very occupied.]}
+{9000}{}{Torr tell? [That you need to know, my friend?]}
+{9010}{}{Here! [Tell to me that here occurs.]}
+{9020}{}{Zzzzz. Okej? [I need to spend the night somewhere.]}
+{9030}{}{Xотеть! [You show on a thing] [Where I can change things or get the new?]}
+{9040}{}{Torr? [Forgive, and than you are engaged in a city?]}
+{9050}{}{To go Torr. [It is everything that I need to know. Good-bye, Torr.]}
+{10000}{}{Torr uh! [Recently there is nothing unusual.]}
+{10010}{}{Yes! [I Seem have lost sight of any detail, tell to me still something.]}
+{10020}{}{Okej! [It is enough of It. Good-bye.]}
+{11000}{}{Zzzz? Torr zzzz. [Well, you can have a sleep in poej to a room free of charge.]}
+{11010}{}{Torr zzzzz? [You will allow me to remain in your room? It is very noble from your party, I then and will use right now your offer.]}
+{11020}{}{Zzz? [I do not think that I now would like to sleep. Perhaps another time. At me to you some more questions.]}
+{11030}{}{Zzzz, is not present Torr. [I at all do not want to sleep now. Thanks for your noble offer, Good-bye.]}
+{12000}{}{Akner! Zuugi! [I think that here to you will offer the best prices. And in Zolotom Gekko over you only will laugh.]}
+{12010}{}{Akner Zuugi? [Thanks. I here will make all purchases. Allow to ask you still which about what.]}
+{12020}{}{Zuugi is not present. [Xороший council. I do not think that I need something else now. Good-bye.]}
+{13000}{}{Torr, daton [Earlier at me was business with gentlemen of Dantonami, but lately I co-operate c mister Ejdenom.]}
+{13010}{}{That! [It seems To me you incorrectly think, Dantony not so good people. Allow to ask still.]}
+{13020}{}{Well, Torr [Thanks for the information, Torr! All good.]}
+{14000}{}{to Come to the house mu at midnight.}
+{15000}{}{Malicious creatures here! Help mu!}
+{16000}{}{Torr to thank @pname!}
+{16010}{}{there is nothing.}
+{16020}{}{Yes nuu! [Always рад@sex ||| yes | to help.]}
+{17000}{}{All mu to live! Torr it is glad! Torr to give you something.}
+{17010}{}{About, thanks.}
+{17020}{}{Washing to tell thanks.}
+{18000}{}{Mu to die. Torr not to want to see you!}
+{18010}{}{[to Leave]}
+{19000}{}{No. To come later.}
+{20000}{}{Torr already to find the help.}

@@ -1,0 +1,548 @@
+[comment]
+rifleman17 26/10/09
+начиная с 50 - реплики для квеста "потерянные караваны Даппо"
+начиная с 60 - реплики для квеста "бракованная партия винтовок"
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _param p ST_INTELLECT < 4 #
+2 1020 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 #
+3 1030 D _var n name_mem_npc_player = 1 @
+2 2000 None 0 #
+65506 2010 #
+0 2020 @
+3 3000 None 0 #
+65506 3010 #
+7 3020 #
+5 3030 #
+0 3040 #
+20 3050 D _var p ncr_buster_doroty_status = 0 D _var p ncr_rondo_doroty_status = 1 D _var p ncr_dusty_party_status_char = 1 D _var p ncr_dusty_party_status_global = 1 #
+28 3060 D _var p ncr_rondo_doroty_status > 1 D _var p ncr_buster_doroty_status < 3 D _var p ncr_buster_doroty_status > 0 R _var p ncr_buster_doroty_status = 3 #
+28 3070 D _var p ncr_buster_doroty_status = 2 R _var p ncr_buster_doroty_status = 3 #
+50 3080 D _var p ncr_dappo_lost_c_status = 1 #
+53 3090 D _var p ncr_buster_lost_c_status = 2 #
+60 3100 D _var p q_ncr_buster_brokenrifles = 0 D _var p q_ncr_dappo_lost_c > 3 D _param p ST_INTELLECT > 3 D _param p REPUTATION_NCR > 5 D _param p ST_KARMA > 0 D _param p KILL_MEN > 49 #
+66 3110 D _var p q_ncr_buster_brokenrifles = 3 #
+70 3120 D _var p q_ncr_buster_brokenrifles = 2 #
+74 3130 D _var p q_ncr_buster_brokenrifles = 4 #
+77 3140 D _var p q_ncr_buster_brokenrifles = 6 #
+82 3150 D _var p q_ncr_buster_brokenrifles = 10 #
+83 3160 D _var p q_ncr_buster_brokenrifles = 14 @
+4 4000 None 0 #
+65506 4010 #
+7 4020 #
+5 4030 #
+0 4040 @
+5 5000 None 0 #
+6 5010 #
+4 5020 @
+6 6000 None 0 #
+4 6010 #
+0 6020 @
+7 7000 None 0 #
+8 7010 D _item p PID_BOTTLE_CAPS > 499 D _item p PID_HUNTING_RIFLE > 0 R _item p PID_BOTTLE_CAPS - 500 R _item n PID_BOTTLE_CAPS + 500 R _item p PID_HUNTING_RIFLE - 1 R _item p PID_SCOPED_HUNTING_RIFLE + 1 #
+4 7020 @
+8 8000 None 0 #
+0 8010 @
+9 9000 None 0 #
+65506 9010 #
+0 9020 @
+20 10000 None 0 #
+21 10010 @
+21 11000 None 0 #
+22 11010 #
+23 11020 @
+22 12000 None 0 @
+23 13000 None 0 #
+24 13010 @
+24 14000 None 0 #
+25 14010 @
+25 15000 None 0 #
+26 15010 @
+26 16000 None 0 #
+27 16010 @
+27 17000 None 0 #
+0 17010 R _var p ncr_buster_doroty_status = 1 @
+28 18000 None 0 #
+29 18010 D _param p SK_SPEECH < 65 #
+30 18020 D _param p SK_SPEECH > 64 #
+33 18030 #
+37 18040 D _var p ncr_rondo_doroty_status = 2 #
+40 18050 D _var p ncr_buster_doroty_status = 2 @
+29 19000 None 0 @
+30 20000 None 0 #
+31 20010 @
+31 21000 None 0 #
+32 21010 R _item p PID_GAMMA_GULP_BEER + 1 R _param p ST_EXPERIENCE + 325 @
+32 22000 None 0 @
+33 23000 None 0 #
+34 23010 @
+34 24000 None 0 #
+35 24010 @
+35 25000 None 0 #
+36 25010 @
+36 26000 None 0 #
+0 26010 R _param p ST_EXPERIENCE + 300 R _item p PID_GAMMA_GULP_BEER + 1 @
+37 27000 None 0 #
+38 27010 @
+38 28000 None 0 #
+39 28010 R _param p ST_EXPERIENCE + 300 @
+39 29000 None 0 #
+0 29010 @
+40 30000 None 0 #
+41 30010 @
+41 31000 None 0 #
+42 31010 R _param p ST_EXPERIENCE + 50 @
+42 32000 None 0 @
+50 33000 None 0 #
+0 33010 #
+51 33020 R _var p ncr_dappo_lost_c_status = 2 R _var p ncr_buster_lost_c_status = 1 R _var p q_ncr_dappo_lost_c = 2 @
+51 34000 None 0 #
+52 34010 @
+52 35000 None 0 #
+0 35010 @
+53 36000 None 0 #
+54 36010 @
+54 37000 None 0 #
+55 37010 @
+55 38000 None 0 #
+56 38010 D _script q_dappo_lost_c_robot@d_HasHolodisk 1 51 R _var p ncr_buster_lost_c_status = 3 R _param p ST_EXPERIENCE + 3500 R _item p PID_BOTTLE_CAPS + 1500 R _script q_dappo_lost_c_robot@r_RemoveHolodisk 1 15 @
+56 39000 None 0 #
+0 39010 @
+60 40000 None 0 #
+0 40010 #
+61 40020 @
+61 41000 None 0 #
+62 41010 #
+63 41020 @
+62 42000 None 0 @
+63 43000 None 0 #
+64 43010 #
+0 43020 @
+64 44000 None 0 #
+0 44010 #
+65 44020 @
+65 45000 None 0 #
+0 45010 R _var p q_ncr_buster_brokenrifles = 1 #
+0 45020 @
+66 46000 None 0 #
+68 46010 #
+67 46020 @
+67 47000 None 0 #
+68 47010 @
+68 48000 None 0 #
+0 48010 D _var p q_ncr_buster_brokenrifles = 3 R _param p ST_EXPERIENCE + 4000 R _param p ST_KARMA + 20 R _param p REPUTATION_NCR + 1 R _var p q_ncr_buster_brokenrifles = 7 #
+69 48020 @
+69 49000 None 0 #
+69 49010 D _var p q_ncr_buster_brokenrifles = 3 R _param p ST_EXPERIENCE + 4000 R _item p PID_VINDICATOR_MINIGUN + 1 R _var p q_ncr_buster_brokenrifles = 7 #
+69 49020 D _var p q_ncr_buster_brokenrifles = 3 R _param p ST_EXPERIENCE + 4000 R _item p PID_M72_GAUSS_RIFLE + 1 R _var p q_ncr_buster_brokenrifles = 7 #
+69 49030 D _var p q_ncr_buster_brokenrifles = 3 R _param p ST_EXPERIENCE + 4000 R _item p PID_PLASMA_RIFLE + 1 R _var p q_ncr_buster_brokenrifles = 7 @
+70 50000 None 0 #
+71 50010 #
+79 50020 @
+71 51000 None 0 #
+72 51010 @
+72 52000 None 0 #
+0 52010 #
+73 52020 R _var p q_ncr_buster_brokenrifles = 4 @
+73 53000 None 0 #
+74 53010 @
+74 54000 None 1 #
+76 54010 D _var p q_ncr_buster_brokenrifles = 4 R _var p q_ncr_buster_brokenrifles = 5 R _item p PID_BOTTLE_CAPS + 5000 #
+75 54020 D _param p SK_BARTER < 101 D _var p q_ncr_buster_brokenrifles = 4 #
+76 54030 D _param p SK_BARTER > 100 D _var p q_ncr_buster_brokenrifles = 4 R _var p q_ncr_buster_brokenrifles = 5 R _item p PID_BOTTLE_CAPS + 8000 R _param p ST_EXPERIENCE + 1500 #
+75 54040 D _param p SK_BARTER < 201 D _var p q_ncr_buster_brokenrifles = 4 #
+76 54050 D _param p SK_BARTER > 200 D _var p q_ncr_buster_brokenrifles = 4 R _var p q_ncr_buster_brokenrifles = 5 R _item p PID_BOTTLE_CAPS + 10000 R _param p ST_EXPERIENCE + 3000 #
+75 54060 #
+0 54070 @
+75 55000 None 0 @
+76 56000 None 0 @
+77 57000 None 0 #
+78 57010 @
+78 58000 None 0 #
+0 58010 D _var p q_ncr_buster_brokenrifles = 6 R _var p q_ncr_buster_brokenrifles = 9 R _param p ST_EXPERIENCE + 3000 @
+79 59000 None 0 #
+0 59010 #
+80 59020 @
+80 60000 None 0 #
+0 60010 #
+81 60020 @
+81 61000 None 0 #
+81 61010 D _var p q_ncr_buster_brokenrifles = 2 R _var p q_ncr_buster_brokenrifles = 10 @
+82 62000 None 0 #
+0 62010 @
+83 63000 None 0 #
+84 63010 @
+84 64000 None 0 #
+85 64010 @
+85 65000 None 1 #
+0 65010 D _var p q_ncr_buster_brokenrifles = 14 R _item p PID_BOTTLE_CAPS + 2000 R _var p q_ncr_buster_brokenrifles = 15 R _param p ST_EXPERIENCE + 4000 #
+0 65020 D _var p q_ncr_buster_brokenrifles = 14 R _item p PID_ROBOT_MOTIVATOR + 1 R _var p q_ncr_buster_brokenrifles = 15 R _param p ST_EXPERIENCE + 4000 #
+0 65030 D _var p q_ncr_buster_brokenrifles = 14 R _var p q_ncr_buster_brokenrifles = 15 R _param p ST_EXPERIENCE + 4000 R _param p REPUTATION_NCR + 1 R _param p ST_KARMA + 2 &
+
+[russ]
+{100}{}{Бастер}
+{200}{}{Вы видите засаленного парня.}
+{210}{}{Вы смотрите на Бастера, парня с пушкой.}
+{210}{}{Одежда парня порвана и у него пороховая гарь на руках и лице, но тем не менее он весел.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{тупой}
+{1020}{}{не знаком}
+{1030}{}{знаком}
+{2000}{}{Добро пожаловать в Оружейный магазин Бастера. Я Бастер и здесь больше никого нет. Возьмите какие-нибудь вещи здесь и на моих полках. Проверьте их. Я готов к делу.}
+{2010}{}{Что у вас есть на продажу?}
+{2020}{}{Пока.}
+{3000}{}{Xей, опять вы? Что я могу для вас сделать?}
+{3010}{}{Что у вас есть на продажу?}
+{3020}{}{Может вы можете предложить мне что-нибудь особенное?}
+{3030}{}{У меня есть к вам вопросы.}
+{3040}{}{Пока.}
+{3050}{}{А что вы можете сказать о вашем споре с Рондо?}
+{3060}{}{Бастер, я только что от Дороти...}
+{3070}{}{Бастер, я только что от Дороти...}
+{3080}{}{Я слышал@sex@|||а|, ты сейчас "на ножах" с Даппо? В чем дело?}
+{3090}{}{Бастер, помнится, ты тут на Даппо бочку катил, с караваном история случилась...}
+{3100}{}{Бастер, как дела?}
+{3110}{}{Я поговорил с Даппо.}
+{3120}{}{Бастер, я повидал@sex@|ся||ась| с Даппо.}
+{3130}{}{Будем с Даппо договариваться?}
+{3140}{}{Бастер, я заплатил Даппо.}
+{3150}{}{Бастер, а у тебя нет идей, где мне найти караванщиков Даппо?}
+{3160}{}{Бастер, больше у тебя нет никаких проблем с Даппо.}
+{4000}{}{Что-нибудь еще?}
+{4010}{}{Что у вас есть на продажу?}
+{4020}{}{Может вы можете предложить мне что-нибудь особенное?}
+{4030}{}{У меня есть к вам вопросы.}
+{4040}{}{Пока.}
+{5000}{}{Конечно, что вы хотите знать, незнакомец?}
+{5010}{}{Расскажи мне про НКР.}
+{5020}{}{Нет мне это не нужно.}
+{6000}{}{Калифорнийская Республика, вот что это. Шейман и его шайка говорят, что они пытаются перестроить все по довоенному образцу. По-моему, они просто пытаются прибрать себе все, до чего их руки дотягиваются. Чёрт, да я и не жалуюсь: время, которое они пытаются вернуть, закончилось еще задолго до моего рождения. Кстати, они к тому же достаточно ханжеская шайка: не одобряют рабство, азартные игры и тому подобное. Именно поэтому я обосновался здесь: не люблю правила, никогда не любил.}
+{6010}{}{Понятно.}
+{6020}{}{Пока.}
+{7000}{}{Может. У меня тут завалялся прекрасный 10-ти кратный оптический прицел для охотничей винтовки, всего за 500 монет.}
+{7010}{}{Да, это дело. [Вы отдаете 500 монет и винтовку Бастеру]}
+{7020}{}{Нет, спасибо.}
+{8000}{}{Вот держи свою красавицу.}
+{8010}{}{Эээ... спасибо. [Вы придирчиво смотрите на свою охотничью винтовку с присобаченным кое-как оптическим прицелом]}
+{9000}{}{Что я могу для вас сделать?}
+{9010}{}{Менять вещи!}
+{9020}{}{Пака!}
+{10000}{}{Какого черта? А, понимаю, Рондо, болтун, растрепал историю уже всему городу?}
+{10010}{}{Только в общих чертах. Помочь меня попросил.}
+{11000}{}{[Хмыкает] Помочь? Свечку подержать чтоли? У меня в магазине свечек не найти. К доктору обращайтесь. У него есть такие, которые Рондо пригодятся!}
+{11010}{}{Очень смешно, ага. Ладно, пойду я}
+{11020}{}{Рондо робота боится.}
+{12000}{}{Пока-пока. Привет Рондо.}
+{13000}{}{[Бастер хватается за бока и ржет] Бу-га-га! Робота? Мы же с ним не насчет робота спорили! Он, видимо, совершенно уже одурел.}
+{13010}{}{Да нет же. Он думает, что робот помешает ему сделать все как надо...}
+{14000}{}{Слушай, @sex@|парень||крошка|. Думаю, ты не будешь против перейти "на ты"? Так вот. Объясни, зачем ты рассказываешь о сексуальных проблемах Рондо с роботами МНЕ?}
+{14010}{}{Гм, дело в том, что Рондо попросил меня договориться с Дороти. И пообещал заплатить.}
+{15000}{}{Дороти пошлет тебя так же, как и меня, и Рондо. И робот тут не причем. }
+{15010}{}{А Дороти тебя уже отшила?}
+{16000}{}{Ага. И меня, и Рондо, и не один раз.}
+{16010}{}{А чего мне тогда Рондо про робота тер?}
+{17000}{}{Это ты у него спроси. В общем, если ты уболтаешь Дороти со мной зажечь, бутылку пива я тебе подгоню!}
+{17010}{}{Договорились! [Уйти]}
+{18000}{}{О! Отлично, она тебя отшила, да?}
+{18010}{}{Наоборот! Она, как твое имя услышала, аж побледнела. Роботу пендаля дала, и давай затирать "Ах, Бастер, красавчик, где же он"}
+{18020}{}{Наоборот! Она, как твое имя услышала, аж побледнела. Роботу пендаля дала, и давай затирать "Ах, Бастер, красавчик, где же он"}
+{18030}{}{Можно сказать и так, отшила. }
+{18040}{}{Насчет тебя поговорить не удалось... А вот про Рондо я успел заикнуться.}
+{18050}{}{Увы. Типа того. Не хочет с тобой ничего общего иметь.}
+{19000}{}{Не верю. И не смешно, кстати.}
+{20000}{}{Да ну? Серьезно? Ну и как она тебе, симпатяга, правда?}
+{20010}{}{Девчонка, что надо. Ее еще если помыть, да одеть прилично - вообще красотка получится.}
+{21000}{}{Твоя правда. Ну ничего, я об этом позабочусь. Все, поздравь меня, скоро я зажгу с Дороти!}
+{21010}{}{Поздравляю. Где мое пиво обещанное!}
+{22000}{}{Без вопросов, @sex@|друг||подруга|. Твое пиво, честно заработанное, забирай!}
+{23000}{}{Ха, так я и думал. Она вообще людей не любит.}
+{23010}{}{Дело в другом. Она от Рондо тащится. }
+{24000}{}{Что, правда?}
+{24010}{}{Ага. Я ей - про тебя, а она мне Рондо нахваливает, какой он молодец, и ремонтировать может, и с рейнджерами туда-сюда...}
+{25000}{}{С рейнджерами туда-сюда? Тьфу ты, блин. Рондо - он же кретин полоумный! Толку то, от этих рейнджеров?}
+{25010}{}{Согласен с тобой. Рондо Дороти не пара. Но что делать, она упрямая, как брамин.}
+{26000}{}{Да, характерец у нее - огонь. Ну ладно, дружище, выпей пива за мое здоровье.}
+{26010}{}{Спасибо, Бастер. Не расстраивайся, может изменится чего.}
+{27000}{}{Только не говори мне, что она по Рондо сохнет.}
+{27010}{}{Не скажу. Она, как его имя услышала, чуть на меня не бросилась. Чем он ей так насолил? Дороти по бедолаге Рондо прошлась конкретно.}
+{28000}{}{Ха. Рондо - неудачник.}
+{28010}{}{Точно. Как там насчет моего пива?}
+{29000}{}{Прости, @pname@. Пива нет. Я его сам выпил. Да и не получилось у тебя мне помочь. Вопросы?}
+{29010}{}{Эх. Нет вопросов. Пока. [Уйти]}
+{30000}{}{Понятно. Не скажу, что ты меня удивил.}
+{30010}{}{Ты от нее эти слова уже слышал?}
+{31000}{}{Ага. Сунулся к ней на днях, цветочки притащил. Она этот букет мне в лицо и швырнула.}
+{31010}{}{Печально. Я так понимаю, пивом ты со мной не поделишься?}
+{32000}{}{Было бы за что, а так, извини.}
+{33000}{}{Ха! А что мне, ножки ему целовать, после того, что он сделал?}
+{33010}{}{По барабану. Делайте что хотите. [Уйти]}
+{33020}{}{А чего он такого особенного сделал?}
+{34000}{}{Груз мой спер, вот что! Я ему поверил, заказал доставку ОЧЕНЬ ценного груза, а он говорит - караван пропал. Себе заныкал, падла, как пить дать!}
+{34010}{}{А что за груз?}
+{35000}{}{Тебе то какое дело? Что ты тут все вынюхиваешь? Убирайся!}
+{35010}{}{Спокойно, Бастер. Я ухожу. [Уйти]}
+{36000}{}{Точно. Сволочь Даппо. Прибрал к лапам мой груз.}
+{36010}{}{Боевого робота?}
+{37000}{}{Черт! Ты откуда знаешь, колись?!}
+{37010}{}{Я наш@sex@|ел||ла| остатки каравана. Робот вылез из ящика и всех перекрошил.}
+{38000}{}{Ого! Тоесть, Даппо тут не причем?}
+{38010}{}{Да, черт его знает, что там случилось. Но я наш@sex@|ел||ла|на роботе вот это. [Отдать Бастеру голодиск]}
+{39000}{}{Записи видеокамеры робота. Интересно. Я посмотрю. Спасибо тебе, @pname@. Возьми это в знак признательности.}
+{39010}{}{Да не за что, Бастер. Бывай! [Уйти]}
+{40000}{}{Да так... Все как обычно...}
+{40010}{}{Ну, если ничего особенного, то бывай, Бастер!}
+{40020}{}{Что-то случилось? Может смогу помочь?}
+{41000}{}{Ты же с Даппо знаком@sex@|||а|? У нас давно с ним бизнес налажен. Я его ребят снабжаю оружием по сниженной цене, он мне скидку на доставку делает... }
+{41010}{}{Кто на ком паразитирует, что-то я не пойму?}
+{41020}{}{Ну вроде все логично, а проблема в чем?}
+{42000}{}{Да пош@sex@|ел||шла| ты!}
+{43000}{}{Если бы я знал... Вчера пришел один крендель от Даппо, передал записку. Даппо кроет меня матом, не объяснив, что стряслось. Говорить со мной не хочет.}
+{43010}{}{Нужно вернуть записку обратно Даппо? Я тебе не почтальон!}
+{43020}{}{Меня это не интересует.}
+{44000}{}{Нахрена записку возвращать-то? Нужно тактично с Даппо потрындеть, то, да се. Выяснить, что он такое съел, что на меня наехал.}
+{44010}{}{Сами разбирайтесь, некогда мне в ваши разборки врубаться.}
+{44020}{}{Допустим, я это сделаю. А что мне за это будет?}
+{45000}{}{Там видно будет. Не обижу, не бойся.}
+{45010}{}{Ладно, попробую разузнать. Скоро вернусь.}
+{45020}{}{Нет, извини, может быть, позже.}
+{46000}{}{Ага! Ну, чего он тупит? В чем дело?}
+{46010}{}{Да ничего особенного, проблема улажена, можешь не париться.}
+{46020}{}{Даппо тебя обвиняет в том, что ты ему бракованные стволы подсунул.}
+{47000}{}{Бракованные стволы? Что за бред. И ты ему поверил@sex@|||а|?}
+{47010}{}{Поверил@sex@|||а| или нет, какая разница? Главное, что проблема вроде как решена...}
+{48000}{}{Я тебе что-нибудь должен?}
+{48010}{}{Забей, не стоит благодарности. Хорошие ребята должны помогать друг другу.}
+{48020}{}{Конечно, должен, черт тебя подери. Я потратил@sex@|||а| уйму бабла на то, чтобы уладить этот конфликт!}
+{49000}{}{Я тебя об этом не просил, если что. Ну да ладно, могу подогнать тебе хороший ствол. Выбирай, что тебе по вкусу?}
+{49010}{}{Миниган "Виндикатор"}
+{49020}{}{Гаусс-винтовка M72}
+{49030}{}{Плазменное ружье Винчестер P94}
+{50000}{}{Выяснил@sex@|||а|, с какого жира он бесится? }
+{50010}{}{Угу. Что же ты молчал, что подсунул ему бракованную партию винтовок?}
+{50020}{}{Даппо обвиняет тебя в том, что ты ему поставил партию бракованного оружия.}
+{51000}{}{Ты о чем? Какая партия, что за ерунду ты несешь?}
+{51010}{}{Схема прозрачная: ты подгоняешь кривые стволы Даппо. Видимо решил, что обойдется в этот раз. На караван нападают рейдеры, и охранники оказываются в жопе! Без оружия они не смогли груз защитить.}
+{52000}{}{Сам@sex@|||а| схему сочинил@sex@|||а|? Да ты талант! И до сих пор на свободе? Вот только нахрена мне это нужно?}
+{52010}{}{Ладно, беру таймаут, надо подумать.}
+{52020}{}{Эх, Бастер-Бастер. Не нужно держать меня за кругл@sex@|лого||лую| дур@sex@|ака||у|! Я тебя насквозь вижу. Слил караванщику сломанные винтовки, и теперь хочешь оказаться в шоколаде?}
+{53000}{}{[Бастер хмурит брови и смотрит на вас с явной ненавистью] Черт тебя подери. Ты можешь думать все что угодно, но мне от этого ни тепло, ни холодно. Чего делать будем?}
+{53010}{}{Придется платить, Бастер. Иначе хрен ты еще когда закажешь доставку у Даппо.}
+{54000}{}{Мля. Почему я вообще тебя слушаю? Ладно, проблема серьезная, надо раскошеливаться. Сколько нужно Даппо отдать?}
+{54010}{}{5 000}
+{54020}{}{8 000}
+{54030}{}{8 000}
+{54040}{}{10 000}
+{54050}{}{10 000}
+{54060}{}{Миллион, не меньше!}
+{54070}{}{Я вернусь позже. Мне нужно время, чтобы подумать.}
+{55000}{}{Идиотская шутка.}
+{56000}{}{Проклятье. Я разорюсь таким макаром! Забирай бабло и тащи Даппо. Вернешься потом ко мне, расскажешь, как все прошло.}
+{57000}{}{Черт, это были мои деньги!}
+{57010}{}{Ты сам виноват, ты же давно с ним работаешь, зачем было его подставлять?}
+{58000}{}{Я никого не подставлял! А, к черту, все равно не поверишь. Ладно, спасибо за помощь.}
+{58010}{}{И это все, что ты мне можешь сказать? Жмот! }
+{59000}{}{Че? Он с ума сошел?}
+{59010}{}{Возможно. Мне пора.}
+{59020}{}{Он в этом уверен. На караван напали рейдеры, охрана не смогла его защитить - оружие отказало.}
+{60000}{}{Это невозможно. Я никогда не торгую фуфлом. Мои поставщики - все, как один, проверенные ребята.}
+{60010}{}{Объясняй это Даппо, а мне пора.}
+{60020}{}{ Тогда что могло произойти, по-твоему?}
+{61000}{}{Ума не приложу. Нужно найти кого-то из охранников каравана, всех подробно расспросить. Здесь что-то не чисто.}
+{61010}{}{Я попробую это сделать. Как что-нибудь выясню, вернусь к тебе.}
+{62000}{}{Попробуй отыскать Хэла, он вечно торчит около Ранчо Вейстина. Если не ушел с караваном. Может он что-нибудь расскажет?}
+{62010}{}{Точно, Хэл! Как я мог@sex@|||ла| о нем забыть!}
+{63000}{}{Да ну! Скажи, пушки не причем?}
+{63010}{}{Да. Один из караванщиков просто подменил боевые патроны холостыми. Надеялся, что никто не заметит, а вон оно как вышло.}
+{64000}{}{Ха! Иди, расскажи об этом Даппо. }
+{64010}{}{Уже. Даппо в курсе, у него нет к тебе претензий.}
+{65000}{}{Ух ты. Отличные новости. Я тебе очень благодарен. И заплачу 2 штуки за помощь. А может, ты хочешь эту диковину вместо монет?}
+{65010}{}{Я возьму деньги.}
+{65020}{}{О! Двигатель робота. Интересная штука, возьму ее.}
+{65030}{}{Мне не нужны деньги. Твоей благодарности достаточно.}
+
+[engl]
+{100}{}{Buster}
+{200}{}{You see a little grease-stained guy.}
+{210}{}{You see Buster, the gun guy.}
+{210}{}{This guy's clothes are ragged and he's got gun-bluing all over his hands, arms, and face. Still, he seems pretty cheerful.}
+{1000}{}{Predialogue installations}
+{1010}{}{stupid}
+{1020}{}{it is not familiar}
+{1030}{}{a sign}
+{2000}{}{Welcome to Weapon shop of Basseterre. I Basseterre here again more than anybody was not present. Take any things here and on my regiments. Check up them. I am ready to business.}
+{2010}{}{That at you is on sale?}
+{2020}{}{While.}
+{3000}{}{Xей, again you? What can I make for you?}
+{3010}{}{That at you is on sale?}
+{3020}{}{Can you can offer me something especial?}
+{3030}{}{I have to you questions.}
+{3040}{}{While.}
+{3050}{}{And what you can tell about your dispute from the Rondo?}
+{3060}{}{Basseterre, I just from Doroti...}
+{3070}{}{Basseterre, I just from Doroti...}
+{3080}{}{I слышал@sex ||| and |, you now "on knifes" with Dappo? What is the matter?}
+{3090}{}{Basseterre, is remembered, you here on Dappo rolled a butt, with a caravan the history has happened...}
+{3100}{}{Basseterre, how are you doing?}
+{3110}{}{I have talked to Dappo.}
+{3120}{}{Basseterre, I повидал@sex | sja || as | with Dappo.}
+{3130}{}{with Dappo we Will agree?}
+{3140}{}{Basseterre, I have paid Dappo.}
+{3150}{}{Basseterre, and at you is not present ideas where me to find caravaneers of Dappo?}
+{3160}{}{Basseterre, is more at you there are no problems with Dappo.}
+{4000}{}{Something else?}
+{4010}{}{That at you is on sale?}
+{4020}{}{Can you can offer me something especial?}
+{4030}{}{I have to you questions.}
+{4040}{}{While.}
+{5000}{}{Certainly, what you want to know, the stranger?}
+{5010}{}{Tell to me about NKR.}
+{5020}{}{do not Have I it it is not necessary.}
+{6000}{}{the Californian Republic, here that it. Sheiman and its gang say that they try to reconstruct all on the pre-war sample. In my opinion, they simply try to tidy up to themselves everything what their hands reach. Lines, yes I also do not complain: time which they try to return, has ended long before my birth. By the way, they besides sanctimonious enough gang: do not approve slavery, gamblings and so forth. For this reason I have located here: I do not love a rule, never loved.}
+{6010}{}{it is clear.}
+{6020}{}{While.}
+{7000}{}{Can. At me the fine 10 multiple optical sight for ohotnichej rifles, all for 500 coins here was overlooked.}
+{7010}{}{Yes, this business. [You give 500 coins and a rifle to Basseterre]}
+{7020}{}{No, thanks.}
+{8000}{}{Here hold the beauty.}
+{8010}{}{Eee... Thanks. [You captiously look at the hunting rifle with prisobachennym somehow an optical sight]}
+{9000}{}{That I can make for you?}
+{9010}{}{to Change things!}
+{9020}{}{Paka!}
+{10000}{}{What the hell? And, I understand, the Rondo, the talker, has disarranged history already to all city?}
+{10010}{}{Only in general. To help me has asked.}
+{11000}{}{[Hems] to Help? A candle to take chtoli? At me in shop of candles not to find. To the doctor address. It has such, which Rondos will be useful!}
+{11010}{}{it is very ridiculous, aha. All right, I will go}
+{11020}{}{the Rondo of the robot is afraid.}
+{12000}{}{While-while. Rondo greetings.}
+{13000}{}{[Basseterre splits the sides and the Bu-hectare-hectare neighs]! The robot? We with it not about the robot argued! It, probably, absolutely has already become stupid.}
+{13010}{}{Yes is not present. He thinks that the robot will prevent it to make all as it is necessary...}
+{14000}{}{Listen, @sex | the guy || a crumb |. I think, you against will not pass "on you"? And so. Explain, what for you tell about sexual problems of the Rondo with robots to me?}
+{14010}{}{H'm the matter is that the Rondo has asked me to agree with Doroti. Also has promised to pay.}
+{15000}{}{Doroti will send you the same as also me, and the Rondo. And the robot here not and.}
+{15010}{}{And Doroti you already otshila?}
+{16000}{}{Aha. And me, and the Rondo, and not once.}
+{16010}{}{And that to me then the Rondo about the robot rubbed?}
+{17000}{}{It you it ask. In general if you uboltaesh Doroti with me to light, I to you will adjust a bottle of beer!}
+{17010}{}{Have agreed! [To leave]}
+{18000}{}{About! Perfectly, it you otshila, yes?}
+{18010}{}{On the contrary! She, has what is your name heard, has already turned pale. To the robot pendalja has given, and allow to rub clean "Ah, Basseterre, the handsome man, where it"}
+{18020}{}{On the contrary! She, has what is your name heard, has already turned pale. To the robot pendalja has given, and allow to rub clean "Ah, Basseterre, the handsome man, where it"}
+{18030}{}{It is possible to tell and so, otshila.}
+{18040}{}{About you it was not possible to talk... And here about the Rondo I have had time to give a hint.}
+{18050}{}{Alas. That type. Does not want with you anything the general to have.}
+{19000}{}{I do not trust. And it is not ridiculous, by the way.}
+{20000}{}{Yes well? Seriously? Well and how it to you, simpatjaga, truth?}
+{20010}{}{the Little girl that is necessary. Her still if to wash, yes to dress decently - in general the beauty will turn out.}
+{21000}{}{Your truth. Well anything, I will take care of it. Everything, congratulate me, soon I will light with Doroti!}
+{21010}{}{I Congratulate. Where my beer promised!}
+{22000}{}{Without questions, @sex | the friend || the girlfriend |. Your beer fairly earned, take away!}
+{23000}{}{Ha so I also thought. She in general does not love people.}
+{23010}{}{Business in other. It from the Rondo is dragged.}
+{24000}{}{That, truth?}
+{24010}{}{Aha. I to it - about you, and it to me extol the Rondo, what it the good fellow, and can repair, and with rangers there-here...}
+{25000}{}{With rangers there-here? Fie you, a pancake. A rondo - it the cretin the madman! To sense that, from these rangers?}
+{25010}{}{It agree with you. A rondo of Doroti not pair. But what to do, it obstinate, as bramin.}
+{26000}{}{Yes, harakterets at it - fire. Well it is fine, druzhishche, bitterns of beer for my health.}
+{26010}{}{Thanks, Basseterre. Be not upset, can will change that.}
+{27000}{}{Only do not say to me that it on the Rondo dries.}
+{27010}{}{I will not tell. She, as has heard his name, hardly on me has not rushed. Than it to it so has salted? Doroti on poor fellow Rondo has walked particularly.}
+{28000}{}{Ha. A rondo - the loser.}
+{28010}{}{it is exact. How there about my beer?}
+{29000}{}{Forgive, @pname. Beer is not present. I have drunk him. And it has not turned out to help at you to me. Questions?}
+{29010}{}{Eh. There are no questions. While. [To Leave]}
+{30000}{}{it is clear. I will not tell that you have surprised me.}
+{30010}{}{You from it already heard these words?}
+{31000}{}{Aha. It was put to it one of these days, florets has dragged. It to me in the person also has thrown this bouquet.}
+{31010}{}{It is sad. I so understand, you will not share beer with me?}
+{32000}{}{Would be for what and so, excuse.}
+{33000}{}{Ha! And that to me, legs to it to kiss, after what it has made?}
+{33010}{}{On a drum. Do that want. [To leave]}
+{33020}{}{And that it has made such especial?}
+{34000}{}{my Cargo has filched, here that! I to it have believed, have ordered delivery of very valuable cargo, and he speaks - the caravan was gone. To itself zanykal, padla, for sure!}
+{34010}{}{And what for cargo?}
+{35000}{}{to You that what business? What you here sniff up all? Be cleaned!}
+{35010}{}{it is quiet, Basseterre. I leave. [To leave]}
+{36000}{}{it is exact. Swine Dappo. Has tidied up to paws my cargo.}
+{36010}{}{the Fighting robot?}
+{37000}{}{Lines! You whence know, be pricked?!}
+{37010}{}{I наш@sex | ate || la | the caravan rests. The robot has got out of a box and all perekroshil.}
+{38000}{}{Ogo! Toest, Dappo here not and?}
+{38010}{}{Yes, the devil only knows, that there happens. But I наш@sex | ate || ла|на the robot here it. [To give to Basseterre golodisk]}
+{39000}{}{Records of a videocamera of the robot. Interesting. I will look. Thanks you, @pname. Take it in acknowledgement.}
+{39010}{}{Yes there is nothing, Basseterre. Happen! [To leave]}
+{40000}{}{Yes so... All as usual...}
+{40010}{}{Well, if anything especial happen, Basseterre!}
+{40020}{}{Something happens? Can I can help?}
+{41000}{}{You with Dappo знаком@sex ||| and |? At us for a long time with it business is adjusted. I supply its children with the weapon at reduced price, it to me does a discount for delivery...}
+{41010}{}{Who on whom parasitizes, I will not understand something?}
+{41020}{}{Well like all it is logical, and a problem in what?}
+{42000}{}{Yes пош@sex | ate || there was | you!}
+{43000}{}{If I knew... One pretzel from Dappo Yesterday has come, has transferred a note. Dappo covers me with a floor-mat, without having explained that has befallen. To speak with me does not want.}
+{43010}{}{It is necessary to return a note back Dappo? I to you not the postman!}
+{43020}{}{Me it does not interest.}
+{44000}{}{Nahrena a note to return? That is necessary tactfully with Dappo potryndet, yes se. To find out that he such has eaten that into me has driven.}
+{44010}{}{understand, there is no time me to be cut into your dismantlings.}
+{44020}{}{It is admissible, I will make it. And what to me for it will be?}
+{45000}{}{There it will be visible. I will not offend, be not afraid.}
+{45010}{}{it is fine, I will try to find out. I will soon return.}
+{45020}{}{No, excuse, maybe, later.}
+{46000}{}{Aha! Well, that it tupit? What is the matter?}
+{46010}{}{Yes anything especial, the problem is settled, can not be soared.}
+{46020}{}{Dappo accuses you that you have palmed off the rejected trunks on it.}
+{47000}{}{the Rejected trunks? That for delirium. And you to it поверил@sex ||| and |?}
+{47010}{}{Poveril@sex ||| and | or not, what difference? The main thing that the problem like as is solved...}
+{48000}{}{I something should you?}
+{48010}{}{Hammer, do not mention it. Good children should help each other.}
+{48020}{}{Certainly, should, lines you poderi. I потратил@sex ||| and | a great lot babla on settling this conflict!}
+{49000}{}{I about it did not ask you, if that. Well it is fine, I can adjust to you a good trunk. Choose, what to you to taste?}
+{49010}{}{Minigan "Vindikator}
+{49020}{}{Gauss-rifle M72}
+{49030}{}{the Plasma gun Winchester P94}
+{50000}{}{Vyjasnil@sex ||| and |, from what fat it rages?}
+{50010}{}{Ugu. What were you silent, what have palmed off on it the rejected party of rifles?}
+{50020}{}{Dappo accuses you that you have put it party of the rejected weapon.}
+{51000}{}{You about what? What party, what for nonsense you bear?}
+{51010}{}{the Scheme transparent: you adjust curve trunks of Dappo. Has probably decided that will manage this time. The caravan is attacked by raiders, and security guards appear in an ass! Without the weapon they could not protect cargo.}
+{52000}{}{Sam@sex ||| and | the scheme сочинил@sex ||| and |? Yes you talent! And till now on freedom? Here only nahrena it is necessary for me?}
+{52010}{}{it is fine, I take tajmaut, it is necessary to think.}
+{52020}{}{Eh, Basseterre-Basseterre. It is not necessary to hold me for кругл@sex | logo || luju | дур@sex | aka || at |! I you through see. Has merged to the caravaneer the broken rifles, and now it want to appear in chocolate?}
+{53000}{}{[Basseterre frowns and looks at you with obvious hatred] Lines you poderi. You can think anything you like, but me from it neither warmly, nor is cold. That we will do?}
+{53010}{}{It is necessary to pay, Basseterre. Otherwise a horse-radish you still when will order delivery in Dappo.}
+{54000}{}{Mlja. Why I in general listen to you? All right, a problem serious, it is necessary to fork up. How many it is necessary for Dappo to give?}
+{54010}{}{5 000}
+{54020}{}{8 000}
+{54030}{}{8 000}
+{54040}{}{10 000}
+{54050}{}{10 000}
+{54060}{}{One million, is not less!}
+{54070}{}{I will return later. I need time to think.}
+{55000}{}{the Idiotic joke.}
+{56000}{}{Prokljate. I will be ruined such makarom! Take away bablo and drag Dappo. You will return then to me, you will tell, how all has passed.}
+{57000}{}{Lines, it were my money!}
+{57010}{}{You are guilty, you with it work for a long time, what for were it to substitute?}
+{58000}{}{I substituted nobody! And, to hell, all the same you will not believe. All right, thanks for the help.}
+{58010}{}{Also it is everything, what you to me can tell? The miser!}
+{59000}{}{Che? He has become crazy?}
+{59010}{}{it is possible. It is time to me.}
+{59020}{}{He is assured of it. The caravan was attacked by raiders, protection could not protect it - the weapon has refused.}
+{60000}{}{It is impossible. I never trade in a garbage. My suppliers - everything, as one, the checked up children.}
+{60010}{}{Explain this Dappo, and it is time to me.}
+{60020}{}{Then that could occur, your way?}
+{61000}{}{Mind I will not put. It is necessary to find someone from security guards of a caravan, all in detail to ask. Here something is not pure.}
+{61010}{}{I will try to make it. As something I will find out, I will return to you.}
+{62000}{}{Try to find Hela, it eternally sticks out about Ranch Vejstina. If has not left with a caravan. It can something will tell?}
+{62010}{}{it is exact, Hel! As I мог@sex ||| la | to forget about it!}
+{63000}{}{Yes well! Tell, guns not and?}
+{63010}{}{Yes. One of caravaneers has simply changed fighting cartridges single. Hoped that nobody will notice, and it as left.}
+{64000}{}{Ha! Go, tell about this Dappo.}
+{64010}{}{Already. Dappo in a course, it does not have to you claims.}
+{65000}{}{Uh you. Excellent news. I am very grateful to you. 2 pieces for the help also will begin to cry. And can, you want this wonder instead of coins?}
+{65010}{}{I will take money.}
+{65020}{}{About! The robot engine. An interesting piece, I will take it.}
+{65030}{}{money is not necessary To me. Your gratitude has enough.}
+

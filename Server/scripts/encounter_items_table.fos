@@ -1,0 +1,146 @@
+#define ETYPE_ANY          (0) //Может встретиться везде
+#define ETYPE_MOUNTAINS    (1) //Горы
+#define ETYPE_DESERT       (2) //Пустыня
+#define ETYPE_CAVERN       (3) //Пещеры
+#define ETYPE_CITY         (4) //Город
+#define ETYPE_COAST        (5) //Берег
+#define ETYPE_OCEAN        (6) //Океан
+#define ETYPE_DEFAULT      (7) //Не используется
+
+#define ENT_NAT            (11) // Природные ресурсы
+#define ENT_TRASH          (12) // Хлам
+#define ENT_RES            (13) // Ресурсы для крафта
+#define ENT_CONT1          (14) // Контейтер уровень 1
+#define ENT_CONT2          (15) // Контейнер уровень 2
+// Таблица гексов
+const uint16[] gex_table={
+	ENT_NAT, ENT_TRASH, ENT_RES, ENT_CONT1, ENT_CONT2
+};
+
+/* На энкаунтере есть по 5-10 гексов респауна итемов.
+Т.е., если взять шанс выпадения в 70%, то на энкаунтере будет
+по 3-7 предметов в среднем. Гексов специально выставлено больше,
+чтобы предметы каждый раз спавнились в новом месте. */
+
+// Таблица появляющихся итемов.
+// Ревизия 2 (19.08.2010).
+const uint16[] items_table={
+//  КодПрототипа,   		ТипЭнка,  			КолВоМин,   КолВоМакс,	Шанс, 	НомерГекса
+
+							//Пустыни
+	PID_ROCK,				ETYPE_DESERT,			1,			2,			100, 	ENT_NAT,
+	PID_BROC_FLOWER,		ETYPE_DESERT,			1,			1,			90, 	ENT_NAT,
+	PID_XANDER_ROOT,		ETYPE_DESERT,			1,			1,			90, 	ENT_NAT,
+	PID_BOTTLE_CAPS,		ETYPE_DESERT,			1,			50,			80, 	ENT_TRASH,
+	PID_REAL_BOTTLE_CAPS,	ETYPE_CITY,				1,			35,			90,		ENT_TRASH,
+	PID_BEER,				ETYPE_DESERT,			1,			1,			90, 	ENT_TRASH,
+	PID_BOOZE,				ETYPE_DESERT,			1,			1,			80, 	ENT_TRASH,
+	PID_MUTATED_FRUIT,		ETYPE_DESERT,			1,			1,			90, 	ENT_TRASH,
+	PID_HEALING_POWDER,		ETYPE_DESERT,			1,			1,			80, 	ENT_TRASH,
+	PID_KNIFE,				ETYPE_DESERT,			1,			1,			70, 	ENT_TRASH,
+	PID_AXE,				ETYPE_DESERT,			1,			1,			80, 	ENT_TRASH,
+	PID_SHOVEL,				ETYPE_DESERT,			1,			1,			80, 	ENT_TRASH,
+	PID_BOTTLE_GLASS,		ETYPE_DESERT,			1,			2,			90, 	ENT_TRASH,
+	PID_GECKO_PELT,			ETYPE_DESERT,			1,			1,			50, 	ENT_TRASH,
+	PID_ROPE,				ETYPE_DESERT,			1,			2,			75, 	ENT_TRASH,
+	PID_FLINT,				ETYPE_DESERT,			1,			2,			90, 	ENT_TRASH,
+	PID_MOUSE_SKIN,			ETYPE_DESERT,			0,			1,			60, 	ENT_TRASH,
+	PID_EMPTY_JET,			ETYPE_DESERT,			1,			3,			40, 	ENT_TRASH,
+	PID_JET,				ETYPE_DESERT,			1,			2,			30, 	ENT_TRASH,
+	PID_POCKET_LINT,		ETYPE_DESERT,			1,			5,			90, 	ENT_TRASH,
+	PID_RUBBER_BOOTS,		ETYPE_DESERT,			1,			1,			80, 	ENT_TRASH,
+	PID_PUMP_PARTS,			ETYPE_DESERT,			1,			2,			70, 	ENT_TRASH,
+	PID_METAL_TRASH,		ETYPE_DESERT,			1,			1,			70, 	ENT_TRASH,
+	PID_PUMP_PARTS,			ETYPE_DESERT,			1,			1,			80, 	ENT_CONT1,
+	PID_POCKET_LINT,		ETYPE_DESERT,			1,			5,			95, 	ENT_CONT1,
+	PID_MUTATED_FRUIT,		ETYPE_DESERT,			1,			2,			60, 	ENT_CONT1,
+	PID_EMPTY_JET,			ETYPE_DESERT,			1,			1,			20, 	ENT_CONT1,
+	PID_JET,				ETYPE_DESERT,			1,			1,			50, 	ENT_CONT1,
+	PID_HEALING_POWDER,		ETYPE_DESERT,			1,			1,			90, 	ENT_CONT1,
+	PID_KNIFE,				ETYPE_DESERT,			1,			1,			75, 	ENT_CONT1,
+							//Горы и пещеры снаружи
+	PID_ROCK,				ETYPE_MOUNTAINS,		1,			1,			90,		ENT_NAT,
+	PID_FLINT,				ETYPE_MOUNTAINS,		1,			1,			70,		ENT_NAT,
+	PID_BROC_FLOWER,		ETYPE_MOUNTAINS,		1,			1,			60,		ENT_NAT,
+	PID_XANDER_ROOT,		ETYPE_MOUNTAINS,		1,			1,			60,		ENT_NAT,
+	PID_FLINT,				ETYPE_MOUNTAINS,		1,			1,			80,		ENT_TRASH,
+	PID_AXE,				ETYPE_MOUNTAINS,		1,			1,			90,		ENT_TRASH,
+	PID_RUBBER_BOOTS,		ETYPE_MOUNTAINS,		1,			1,			90,		ENT_TRASH,
+	PID_ROPE,				ETYPE_MOUNTAINS,		1,			2,			80,		ENT_TRASH,
+	PID_BOTTLE_GLASS,		ETYPE_MOUNTAINS,		1,			5,			90,		ENT_TRASH,
+	PID_SCORPION_TAIL,		ETYPE_MOUNTAINS,		1,			1,			90,		ENT_TRASH,
+	PID_REAL_BOTTLE_CAPS,	ETYPE_CITY,				1,			35,			90,		ENT_TRASH,
+	PID_RAGS,				ETYPE_MOUNTAINS,		1,			5,			90,		ENT_TRASH,
+	PID_HEALING_POWDER,		ETYPE_MOUNTAINS,		1,			1,			60,		ENT_CONT1,
+	PID_POCKET_LINT,		ETYPE_MOUNTAINS,		1,			5,			80, 	ENT_CONT1,
+	PID_SCORPION_TAIL,		ETYPE_MOUNTAINS,		1,			1,			75,		ENT_CONT1,
+	PID_PUMP_PARTS,			ETYPE_MOUNTAINS,		0,			2,			60,		ENT_CONT1,
+							//Пещеры внутри
+	PID_ROCK,				ETYPE_CAVERN,			1,			1,			100,	ENT_NAT,
+	PID_FLINT,				ETYPE_CAVERN,			1,			1,			50,		ENT_NAT,
+	PID_PUMP_PARTS,			ETYPE_CAVERN,			1,			1,			90,		ENT_TRASH,
+	PID_METAL_TRASH,		ETYPE_CAVERN,			1,			1,			90,		ENT_TRASH,
+	PID_ANTIDOTE,			ETYPE_CAVERN,			1,			1,			80,		ENT_TRASH,
+	PID_GREEN_CONDOM,		ETYPE_CAVERN,			1,			1,			60,		ENT_TRASH,
+	PID_PART_OF_ROPE,		ETYPE_CAVERN,			1,			1,			80,		ENT_TRASH,
+	PID_JET,				ETYPE_CAVERN,			1,			1,			50,		ENT_TRASH,
+	PID_9MM_AMMO,			ETYPE_CAVERN,			15,			35,			50,		ENT_TRASH,
+	PID_JET,				ETYPE_CAVERN,			1,			1,			40,		ENT_TRASH,
+	PID_LEATHER_JACKET,		ETYPE_CAVERN,			1,			1,			2,		ENT_TRASH,
+	PID_GUNPOWDER,			ETYPE_CAVERN,			1,			1,			50,		ENT_TRASH,
+	PID_TUBE,				ETYPE_CAVERN,			1,			1,			40,		ENT_TRASH,
+	PID_NITROGLYCERIN,		ETYPE_CAVERN,			1,			1,			20,		ENT_TRASH,
+	PID_BOTTLE_EMPTY,		ETYPE_CAVERN,			1,			1,			60,		ENT_TRASH,
+							//Города
+	PID_ROCK,				ETYPE_CITY,				1,			1,			90,		ENT_NAT,
+	PID_PUMP_PARTS,			ETYPE_CITY,				1,			3,			100,	ENT_RES,
+	PID_METAL_TRASH,		ETYPE_CITY,				1,			2,			100,	ENT_RES,
+	PID_TUBE,				ETYPE_CITY,				1,			1,			90,		ENT_TRASH,
+	PID_SHOVEL,				ETYPE_CITY,				1,			1,			60,		ENT_TRASH,
+	PID_BOTTLE_GLASS,		ETYPE_CITY,				1,			5,			95,		ENT_TRASH,
+	PID_STEEL,				ETYPE_CITY,				1,			1,			80,		ENT_TRASH,
+	PID_HYPODERMIC_NEEDLE,	ETYPE_CITY,				1,			3,			95,		ENT_TRASH,
+	PID_RAGS,				ETYPE_CITY,				1,			5,			95,		ENT_TRASH,
+	PID_ROPE,				ETYPE_CITY,				1,			1,			60,		ENT_TRASH,
+	PID_REAL_BOTTLE_CAPS,	ETYPE_CITY,				1,			35,			90,		ENT_TRASH,
+	PID_ZIP_GUN,			ETYPE_CITY,				1,			1,			5,		ENT_TRASH,
+	PID_MUTATED_FRUIT,		ETYPE_CITY,				1,			2,			80,		ENT_CONT1,
+	PID_CROWBAR,			ETYPE_CITY,				1,			1,			70,		ENT_CONT1,
+	PID_CIGARETTES,			ETYPE_CITY,				1,			1,			60,		ENT_CONT1,
+	PID_POCKET_LINT,		ETYPE_CITY,				1,			3,			95,		ENT_CONT1,
+	PID_HYPODERMIC_NEEDLE,	ETYPE_CITY,				1,			3,			80,		ENT_CONT1,
+	PID_REAL_BOTTLE_CAPS,	ETYPE_CITY,				1,			35,			50,		ENT_CONT1,
+	PID_JET,				ETYPE_CITY,				1,			1,			25,		ENT_CONT1,
+	PID_TUBE,				ETYPE_CITY,				1,			1,			90,		ENT_CONT1,
+	PID_GUNPOWDER,			ETYPE_CITY,				1,			1,			75,		ENT_CONT1,
+	PID_KNIFE,				ETYPE_CITY,				1,			1,			95,		ENT_CONT1,
+	PID_BOOZE,				ETYPE_CITY,				1,			1,			60,		ENT_CONT1,
+	PID_BEER,				ETYPE_CITY,				1,			1,			40,		ENT_CONT1,
+	PID_CIGARETTES,			ETYPE_CITY,				1,			2,			95,		ENT_CONT2,
+	PID_COMBAT_KNIFE,		ETYPE_CITY,				1,			1,			50,		ENT_CONT2,
+	PID_MOLOTOV_COCKTAIL,	ETYPE_CITY,				1,			1,			50,		ENT_CONT2,
+	PID_ZIP_GUN,			ETYPE_CITY,				1,			1,			15,		ENT_CONT2,
+	PID_SHOTGUN_SHELLS,		ETYPE_CITY,				12,			30,			90,		ENT_CONT2,
+	PID_7_62MM_AMMO,		ETYPE_CITY,				10,			20,			60,		ENT_CONT2,
+	PID_10MM_JHP,			ETYPE_CITY,				5,			30,			90,		ENT_CONT2,
+	PID_9MM_AMMO,			ETYPE_CITY,				10,			20,			80,		ENT_CONT2,
+	PID_44_FMJ_MAGNUM,		ETYPE_CITY,				10,			20,			50,		ENT_CONT2,
+	PID_223_FMJ,			ETYPE_CITY,				5,			10,			50,		ENT_CONT2,
+	PID_GUNPOWDER,			ETYPE_CITY,				1,			1,			80,		ENT_CONT2,
+							//Побережже
+	PID_ROCK,				ETYPE_COAST,			1,			1,			95,		ENT_NAT,
+	PID_BROC_FLOWER,		ETYPE_COAST,			1,			1,			90,		ENT_NAT,
+	PID_XANDER_ROOT,		ETYPE_COAST,			1,			1,			90,		ENT_NAT,
+	PID_BOTTLE_CAPS,		ETYPE_COAST,			1,			20,			70, 	ENT_TRASH,
+	PID_BEER,				ETYPE_COAST,			1,			1,			50, 	ENT_TRASH,
+	PID_AXE,				ETYPE_COAST,			1,			1,			80, 	ENT_TRASH,
+	PID_SHOVEL,				ETYPE_COAST,			1,			1,			80, 	ENT_TRASH,
+	PID_RUBBER_BOOTS,		ETYPE_COAST,			1,			1,			70, 	ENT_TRASH,
+	PID_HEALING_POWDER,		ETYPE_COAST,			1,			1,			80, 	ENT_CONT1,
+	PID_KNIFE,				ETYPE_COAST,			1,			1,			95, 	ENT_CONT1,
+	PID_ROPE,				ETYPE_COAST,			1,			2,			85, 	ENT_CONT1,
+	PID_FLINT,				ETYPE_COAST,			1,			2,			70, 	ENT_CONT1,
+							//Это не попадётся.
+	PID_LIL_JESUS_WEAPON,	ETYPE_DEFAULT,		1,			1,			0,		ENT_NAT	
+};
+//*/

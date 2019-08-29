@@ -1,0 +1,485 @@
+[comment]
+Ваши комментарии / Your comments.
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _param p ST_INTELLECT < 4 #
+5 1020 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 #
+4 1030 D _var n name_mem_npc_player = 1 D _var p q_bh_marcus_escort ! 3 D _var p q_bh_marcus_escort ! 2 D _var p q_bh_marcus_escort ! 5 #
+46 1040 D _var p q_bh_marcus_escort > 0 D _var p q_bh_marcus_escort < 3 #
+48 1050 D _var p q_bh_marcus_escort = 3 D _script dialog@d_TimeoutOk 0  #
+50 1060 D _var p q_bh_marcus_escort = 5 D _var p click_counter < 13 R _var p click_counter + 1 #
+53 1070 D _var p q_bh_marcus_escort = 3 D _script dialog@d_NotTimeoutOk 0  #
+4 1080 D _var p q_bh_marcus_escort = 5 D _var p click_counter } 13 @
+2 2000 None 0 #
+3 2010 @
+3 3000 None 0 #
+6 3010 @
+4 4000 None 0 #
+10 4010 #
+11 4020 #
+8 4030 #
+0 4040 #
+36 4050 D _var p q_bh_marcus_escort = 0 D _param p SK_SPEECH > 79 D _param p SK_OUTDOORSMAN > 99 D _param p KILL_MEN > 66 D _param p ST_INTELLECT > 4 @
+5 5000 None 0 #
+10 5010 #
+11 5020 #
+8 5030 #
+0 5040 @
+6 6000 None 0 #
+7 6010 #
+9 6020 @
+7 7000 None 0 #
+8 7010 #
+9 7020 @
+8 8000 None 0 @
+9 9000 None 0 #
+0 9010 @
+10 10000 None 0 #
+11 10010 #
+0 10020 #
+0 10030 @
+11 11000 None 0 #
+12 11010 #
+13 11020 #
+4 11030 #
+0 11040 @
+12 12000 None 0 #
+4 12010 #
+0 12020 @
+13 13000 None 0 #
+14 13010 @
+14 14000 None 0 #
+15 14010 @
+15 15000 None 0 #
+16 15010 @
+16 16000 None 0 #
+18 16010 #
+17 16020 #
+0 16030 @
+17 17000 None 0 #
+35 17010 #
+0 17020 @
+18 18000 None 0 #
+19 18010 #
+0 18020 @
+19 19000 None 0 #
+20 19010 #
+0 19020 @
+20 20000 None 0 #
+21 20010 #
+20 20020 #
+0 20030 @
+21 21000 None 0 #
+22 21010 #
+4 21020 #
+0 21030 @
+22 22000 None 0 #
+23 22010 @
+23 23000 None 0 #
+24 23010 @
+24 24000 None 0 #
+26 24010 @
+25 25000 None 0 #
+25 25010 @
+26 26000 None 0 #
+27 26010 #
+33 26020 #
+26 26030 #
+29 26040 @
+27 27000 None 0 #
+28 27010 #
+0 27020 @
+28 28000 None 0 #
+4 28010 #
+0 28020 @
+29 29000 None 0 #
+30 29010 #
+32 29020 #
+0 29030 @
+30 30000 None 0 #
+32 30010 #
+22 30020 @
+31 31000 None 0 #
+4 31010 #
+0 31020 @
+32 32000 None 0 #
+4 32010 #
+0 32020 @
+33 33000 None 0 #
+33 33010 #
+32 33020 #
+0 33030 @
+34 34000 None 0 #
+19 34010 #
+0 34020 @
+35 35000 None 0 #
+4 35010 #
+0 35020 @
+36 36000 None 0 #
+0 36010 #
+37 36020 @
+37 37000 None 0 #
+38 37010 @
+38 38000 None 0 #
+39 38010 @
+39 39000 None 0 #
+40 39010 @
+40 40000 None 0 #
+41 40010 #
+0 40020 @
+41 41000 None 0 #
+42 41010 @
+42 42000 None 0 #
+43 42010 @
+43 43000 None 0 #
+44 43010 #
+0 43020 @
+44 44000 None 0 #
+45 44010 #
+0 44020 @
+45 45000 None 0 #
+0 45010 R _var p q_bh_marcus_escort = 1 @
+46 46000 None 0 #
+0 46010 #
+47 46020 D _var p q_bh_marcus_escort = 2 D _script merc@d_CheckMercNear 2 3609 10 #
+51 46030 D _var p q_bh_marcus_escort = 2 D _var p bh_escort_npc_id > 0 D _script merc@d_NotMercNear 2 3609 10 @
+47 47000 None 0 #
+0 47010 R _script merc@r_CancelMerc 1 3609 R _var p q_bh_marcus_escort = 3 R _script dialog@r_SetUniqTO 1 1440 @
+48 48000 None 0 #
+49 48010 @
+49 49000 None 0 #
+0 49010 D _var p q_bh_marcus_escort = 3 R _param p SK_BIG_GUNS + 10 R _param p SK_UNARMED + 8 R _param p ST_EXPERIENCE + 8000 R _item p PID_BOTTLE_CAPS + 1000 R _item p PID_5MM_AP + 500 R _item p PID_AVENGER_MINIGUN + 1 R _var p q_bh_marcus_escort = 4 R _script dialog@r_InfoMessage 1 1 R _param p REPUTATION_BROKEN_HILLS + 1 @
+50 50000 None 0 @
+51 51000 None 0 #
+52 51010 @
+52 52000 None 0 #
+0 52010 D _var p q_bh_marcus_escort = 2 D _var p bh_escort_npc_id > 0 R _var p bh_escort_npc_id = 0 R _var p q_bh_marcus_escort = 1 R _script merc@r_CancelMerc 1 3609 #
+0 52020 D _var p q_bh_marcus_escort = 2 D _var p bh_escort_npc_id > 0 R _var p bh_escort_npc_id = 0 R _var p q_bh_marcus_escort = 0 R _script merc@r_CancelMerc 1 3609 @
+53 53000 None 0 &
+
+[russ]
+{100}{}{Маркус}
+{200}{}{Вы видите грузного старого мутанта.}
+{210}{}{Вы видите грузного старого мутанта с усталым выражением лица. Тем не менее он по прежнему выглядит величественно и внушительно.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{Тупой}
+{1020}{}{Не знаком}
+{1030}{}{Знаком}
+{1040}{}{квест на проститутку получен}
+{1050}{}{Маркус удовлетворился со шлюхой.}
+{1060}{}{Заложил Маркуса Зиусу}
+{1070}{}{проститутку привел, сутки не прошли}
+{1080}{}{Заложил маркуса Зайусу, но уже 13 раз с ним пробовал заговорить}
+{2000}{}{Ну надо же. Я не видел народу в подобном снаряжении уже очень, очень давно. Это наводит меня на воспоминания.}
+{2010}{}{Ыгы.}
+{3000}{}{Что тебе нужно, человек?@@Что-нибудь еще?}
+{3010}{}{Ыгы.}
+{4000}{}{Что тебе нужно, человек?@@Что-нибудь еще?}
+{4010}{}{Кто вы?}
+{4020}{}{Какова история этого города?}
+{4030}{}{Почему вы, мутанты, не нападаете на меня?}
+{4040}{}{Пока.}
+{4050}{}{Может быть, я смогу тебе чем-то помочь? За разумную плату, разумеется.}
+{5000}{}{Ну надо же. Я не видел народу в подобном снаряжении уже очень, очень давно. Это наводит меня на воспоминания.}
+{5010}{}{Кто вы?}
+{5020}{}{Какова история этого города?}
+{5030}{}{Почему вы, мутанты, не нападаете на меня?}
+{5040}{}{Пока.}
+{6000}{}{Да, я уродливый мутант. Еще я управляю этим городом. Ты что-то имеешь против?}
+{6010}{}{Ух!}
+{6020}{}{Эп.}
+{7000}{}{Хочешь биться со мной?}
+{7010}{}{Ух!}
+{7020}{}{Эп.}
+{8000}{}{Ну что ж, целься как следует, человек.}
+{9000}{}{Хорошо.@@Не суй свой нос куда не надо, и у тебя не будет проблем.}
+{9010}{}{Ась?}
+{10000}{}{Я Маркус. Я помогал строить этот город. Теперь я шериф.}
+{10010}{}{Ты помогал строить этот город? Сколько же лет назад это было?}
+{10020}{}{Чушь собачья. Как это тебе удалось так хорошо сохраниться с тех времен?}
+{10030}{}{Пока.}
+{11000}{}{Это долгая история. Хочешь, чтобы я тебе рассказал ее в подробностях или вкратце?}
+{11010}{}{Если можно, покороче.}
+{11020}{}{Да хрен с ним, у меня не слишком много дел. Давай, рассказывай всю.}
+{11030}{}{Вообще не стоит. У меня есть другие вопросы.}
+{11040}{}{Не стоит. Увидимся.}
+{12000}{}{Ну хорошо. Я и человек по имени Джейкоб построили этот город вокруг вон того старого банка около 60 лет назад. Теперь мы рады видеть каждого, если он не нарушает порядок.}
+{12010}{}{Отлично. У меня есть еще вопросы.}
+{12020}{}{Что ж, по крайней мере, честно. Пока.}
+{13000}{}{Ну... после того, как Создатель и Чаны были уничтожены, я отправился куда глаза глядят. Мне некуда было идти. Однажды на меня напал какой-то идиот в силовой броне.}
+{13010}{}{Правда?}
+{14000}{}{Идиота звали Джейкоб, он был из Братства Стали. Он дал клятву уничтожать мутантов. Мы немного с ним подрались - день или два, по-моему. В какой-то момент мы не выдержали и давай ржать. И чего мы не поделили?}
+{14010}{}{Что потом?}
+{15000}{}{Мы стали друзьями. Пошли дальше вместе. Другие люди присоединялись к нам по пути. Наверное, понимали, что безопаснее, чем с мутантом и Стальным Рыцарем, им уже нигде не будет.}
+{15010}{}{А почему вы остановились здесь?}
+{16000}{}{Урановая шахта. Я знал, что она должна быть где-то здесь - посмотрел по старым картам. Теперь сюда может прийти кто угодно - и жить здесь мирно, пока не нарушает законов. Другие, может быть, не очень-то хорошего мнения о нас, но мы свободны как никто другой. Так-то.}
+{16010}{}{Постой-ка... то есть ты подружился с человеком из Братства?}
+{16020}{}{Что, то есть вы больше не убиваете людей?}
+{16030}{}{Спасибо. Ну, мне пора. Пока.}
+{17000}{}{Из какой дыры ты вылез? Мутанты и натуралы живут в мире и согласии уже очень давно.}
+{17010}{}{Я ээ... оттуда. [Вы махнули рукой в неопределённом направлении]}
+{17020}{}{О, должно быть, я ошибся. Что ж, спасибо. До встречи.}
+{18000}{}{Да, черт побери. Лучший друг из всех, что у меня были.}
+{18010}{}{Ну да, как же, ты бы его макнул в чан, как любого другого.}
+{18020}{}{Пока.}
+{19000}{}{Черт возьми, да. Макнул бы. Какой замечательный мутант из него бы получился...}
+{19010}{}{Не думаю, что ему бы понравилось то, что ты говоришь.}
+{19020}{}{Пока.}
+{20000}{}{[Смеётся] Мы с ним столько раз об этом спорили. [Вздыхает] Грустно мне без этого болвана.}
+{20010}{}{Но ведь Создатель ненавидел людей?}
+{20020}{}{Я все же думаю, что это - гнилая судьба.}
+{20030}{}{Пока.}
+{21000}{}{Ты говоришь о давних временах. Мир изменился с тех пор. Хочешь услышать древнюю историю?}
+{21010}{}{Точно.}
+{21020}{}{Не сейчас. У меня есть другие вопросы.}
+{21030}{}{Не сейчас. Позже поговорим.}
+{22000}{}{Ладно. Хотя вообще-то, мы никогда по-настоящему не ненавидели людей. Мы просто выбрали лучший путь. Эти новые правительства - они думали, что знают ответы на все вопросы. Бла-бла-бла, везде были, все знаем, мы круты.}
+{22010}{}{И каков же был этот ваш лучший путь?}
+{23000}{}{Создатель хотел поднять всех и каждого до своего уровня. После этого нам бы не пришлось больше сражаться друг с другом. Он убедил нас, что мы не сможем это сделать сами. Нас надо было заставить эволюционировать.}
+{23010}{}{Ты согласен с этим?}
+{24000}{}{Когда Джейкоб был еще жив, я думал, что Создатель ошибался. Но потом я понял, что лишь немногие люди способны откликнуться на зов гуманизма; большинство просто убегают.}
+{24010}{}{Так ты думаешь, что Создатель был прав?}
+{25000}{}{Джейкоб услышал зов и принял его. Так же, как и Выходец из Убежища. Но как бы высоко ни поднялись немногие, толпа всегда их задавит, верно?}
+{25010}{}{Может быть.}
+{26000}{}{Создатель хотел, чтобы каждый прозрел. Выходец из Убежища разбил эту мечту.}
+{26010}{}{Похоже, ты одновременно ненавидел Выходца из Убежища и восхищался им.}
+{26020}{}{Ты был человеком. Как ты можешь оправдать то, что с тобой сделал Создатель?}
+{26030}{}{Так ты думаешь, план Создателя был верен?}
+{26040}{}{Я, между прочим, видел прямого потомока Выходца из Убежища.}
+{27000}{}{Это верно. Если бы все люди сражались за то, во что они верили, план Создателя бы просто не понадобился.}
+{27010}{}{Создатель хотел поработить человечество!}
+{27020}{}{Интересный поворот сюжета. Пойду-ка я.}
+{28000}{}{Не забывай, я лично знал тех, о ком речь. Они были лучшими представителями человечества. Твой народ расскажет другую версию этой истории, верно?}
+{28010}{}{Э-эээ... ну, может быть. У меня есть еще вопросы.}
+{28020}{}{Неверно!}
+{29000}{}{Потомка Выходца из Убежища? Того самого, который убил Создателя и разрушил чаны?}
+{29010}{}{М-мммм... ну да.}
+{29020}{}{Именно. Тебе что-то не нравится, мутантская морда?}
+{29030}{}{Нет-нет, это не он. Я не знаю, о чем ты.}
+{30000}{}{Без проблем. Как я уже говорил, это было очень давно.}
+{30010}{}{Я тебя не боюсь.}
+{30020}{}{Почему вы тогда ненавидели людей?}
+{31000}{}{Тебе ничего не грозит, пока ты не встанешь на пути у меня или кого-нибудь в моем городе. Веди себя порядочно, это все, чего я прошу.}
+{31010}{}{Буду иметь в виду. У меня есть еще вопросы.}
+{31020}{}{Буду иметь в виду. Пока.}
+{32000}{}{Давай внесем ясность: ничего тебе не грозит, если не будешь активно нарываться. Просто веди себя порядочно, пока ты в моем городе.}
+{32010}{}{Ладно, хорошо. У меня есть еще вопросы.}
+{32020}{}{Ладно. Всего доброго.}
+{33000}{}{Честно говоря, я уже плохо помню себя человеком, но все же я помню мелочность, ненависть, ревность... Мне больше нравится быть мутантом.}
+{33010}{}{Так ты думаешь, план Создателя был верен?}
+{33020}{}{Ага. Так ты намного уродливее. Чао.}
+{33030}{}{Тогда все в порядке. Пока.}
+{34000}{}{Все пошло не так. Мы должны были взять только самое лучшее. Оглянись вокруг. У большинства мутантов не хватает ума или воли жить в таком виде. [Вздыхает] Если бы мы выбрали лучшее...}
+{34010}{}{Так ты бы макнул Джейкоба в чан? Или Выходца из Убежища?}
+{34020}{}{Да, это трагедия. Ну, увидимся!}
+{35000}{}{Если ты когда-нибудь вернешься туда, скажи им, что война закончилась. Давно закончилась.}
+{35010}{}{М-ммм. Хорошо. У меня есть еще вопросы.}
+{35020}{}{Именно. Пока.}
+{36000}{}{Я ведь, кажется, рассказывал тебе, как  путешествовал с  Жителем Убежища, ну, ты знаешь, о ком  я.}
+{36010}{}{Да, я достаточно наслушался. Лучше целый день чинить кожаную броню, чем это слушать  [Выход]}
+{36020}{}{Что-то вроде было такое... А к чему это ты?}
+{37000}{}{[Cмотрит в сторону] Ну, в общем, интересное было время, хотя и туго иногда приходилось. Приключения,  всё такое... [Чешет голову] ну и это, эээ...}
+{37010}{}{Так. Что-то ты темнишь. Говори уж, раз начал, чего тянуть. Я ведь вижу, тебе нужно от меня что-то.}
+{38000}{}{[Оглядываясь по сторонам] Хотел попросить тебя об одном личном одолжении.}
+{38010}{}{Да? Ну слушаю тебя, говори.}
+{39000}{}{Мне кажется, ты надежный человек, которому можно довериться, и слышал я о тебе много хорошего...}
+{39010}{}{Ой-ой-ой. Ну судя по количеству лести, просьба  явно нестандартная. Давай ближе к телу, хорошо?}
+{40000}{}{Да, верно.  Повторяю, просьба личная, и возьмешься ты или откажешься, лучше чтобы об этом никто не знал.}
+{40010}{}{Ладно, как скажешь. Я умею хранить тайны.}
+{40020}{}{Что-то мне не нравится эта секретность. Иди ты, со своими тайнами мадридского двора... [Выход]}
+{41000}{}{Ну так вот, возвращаясь в прошлое. Как-то раз  я был в Рено. Есть там такое заведение - «Кошачья Лапка». Очень приличное и достойное. И там была одна девушка...}
+{41010}{}{Мама дорогая! Не иначе ты хочешь отправить ей букет? Так  я не думаю, что она до сих пор  там работает. С  возрастом  срок годности истекает, сам понимаешь.}
+{42000}{}{Нет, всё на самом деле проще. Мне просто хотелось бы ещё раз воспользоваться услугами профессионалки. У нас ведь тут все друг друга знают, Брокенхилл, в общем-то, просто деревня. Так что с местными никак, сам понимаешь. Да глаз положить тут не на кого, если уж  честно.}
+{42010}{}{Ну так сходи в Рено. Или тебе дорогу нарисовать, чтобы проще было? Что от меня-то нужно?}
+{43000}{}{Так, ты, @sex@|шутник ||шутница|, я вот сейчас... [Глубоко вздыхает и сдерживается] Нужно. От тебя нужно. Дела требуют, чтобы я был здесь. Да и сам я не тот, что раньше. Поэтому, я прошу тебя сходить в Рено, в «Кошачью Лапку», и привести мне оттуда девушку. Посимпатичнее, да.}
+{43010}{}{Да уж, чего угодно можно было ожидать, но не этого. Ну там шахту починить, уничтожить армию Повелителя, а тут... Удивил ты меня.}
+{43020}{}{Ага, щас. Еще я шлюх по пустошам не @sex@|водил||водила|!}
+{44000}{}{Берешься? Если всё получится как надо, я в долгу не останусь.}
+{44010}{}{Да почему бы и нет. Даже занятно. Возьмусь.}
+{44020}{}{Нет, не @sex@|готов|| готова| я к такому повороту сюжета. [Выход]}
+{45000}{}{Ну и отлично. Соглашайся на её любые условия, я не бедный и не жадный. Жду вас  здесь.}
+{45010}{}{Хорошо.}
+{46000}{}{Как там наш уговор?}
+{46010}{}{Я старюсь. Скоро всё будет.}
+{46020}{}{Маркус, посмотри, кто здесь.}
+{46030}{}{Тут такое дело... В общем, потерялась девчонка в Пустоши...}
+{47000}{}{Ох ты, ну наконец-то! [К девушке] Сударыня, прошу в моё скромное жилище! [К вам] Ну, а с тобой попозже поговорим, уж извини.}
+{47010}{}{Наслаждайся.}
+{48000}{}{Ну порадовал! Давненько я не брал в руки шашек ...гм. Ну ладно. Ты помог мне, и я тебе помогу. Я ведь не зря рассказываю про свои походы в пустошах, я много чего умею. И теперь готов с тобой поделиться. Только помни уговор - никому ни слова.}
+{48010}{}{Хорошо.}
+{49000}{}{Всегда говорил, что с людьми можно иметь дело! Есть среди вас, козлов, вполне  порядочные экземпляры!}
+{49010}{}{Ну спасибо...}
+{50000}{}{Уйди, трепло.@@Просил ведь не говорить никому. Уйди.@@С трепачами говорить не желаю.@@Отойди, болтливая задница.@@Отвязни, сплетня ходячая.}
+{51000}{}{Ээээ... Ну и что? Эта - последняя была, что ли?}
+{51010}{}{Ну, конечно, не последняя.}
+{52000}{}{Приведи другую? Или что?}
+{52010}{}{Да, без проблем. Другую, значит другую.}
+{52020}{}{Нет, сейчас никак не получится. Найди другого помощника.}
+{53000}{}{Не сейчас.@@Позже приходи.@@Завтра, все завтра, ладно?}
+{100000001}{}{После разговора с Маркусом ваши навыки Больших Пушек и Рукопашного Боя увеличены.}
+
+[engl]
+{100}{}{Marcus}
+{200}{}{You see a burly old mutant.}
+{210}{}{You see a burly old mutant with a weary cast to his face. He still looks vigorous and tough.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{Тупой}
+{1020}{}{Не знаком}
+{1030}{}{Знаком}
+{1040}{}{квест на проститутку получен}
+{1050}{}{Маркус удовлетворился со шлюхой.}
+{1060}{}{Заложил Маркуса Зиусу}
+{1070}{}{проститутку привел, сутки не прошли}
+{1080}{}{Заложил маркуса Зайусу, но уже 13 раз с ним пробовал заговорить}
+{2000}{}{Well, what the hell. I haven’t seen one of those outfits for a long, long time. Takes me back.}
+{2010}{}{Uggie.}
+{3000}{}{Who are you?}
+{3010}{}{Uggie.}
+{4000}{}{Who are you?}
+{4010}{}{Who are you?}
+{4020}{}{What’s the story with this place?}
+{4030}{}{Why aren’t you mutants attacking me?}
+{4040}{}{Bye.}
+{4050}{}{You got anything to help? For a reasonable price, of course.}
+{5000}{}{Well, what the hell. I haven’t seen one of those outfits for a long, long time. Takes me back.}
+{5010}{}{Who are you?}
+{5020}{}{What’s the story with this place?}
+{5030}{}{Why aren’t you mutants attacking me?}
+{5040}{}{Bye.}
+{6000}{}{Yeah, I’m a ugly mutant. I also run this place. You got a problem with that?}
+{6010}{}{Uh!}
+{6020}{}{Nuh.}
+{7000}{}{You wanna fight me?}
+{7010}{}{Uh!}
+{7020}{}{Nuh.}
+{8000}{}{Take your best shot, human.}
+{9000}{}{Good.@@Keep your nose clean and you won’t get into trouble.}
+{9010}{}{Uh?}
+{10000}{}{I’m Marcus. Helped build the place. Now I’m sheriff.}
+{10010}{}{You helped build this place? That must have been a long time ago...}
+{10020}{}{Bullshit. How could you have been around that long}
+{10030}{}{Bye.}
+{11000}{}{Long story. Want it short or the whole thing?}
+{11010}{}{Give me the short version.}
+{11020}{}{Hell, I’m not too busy. Let’s hear it all.}
+{11030}{}{Neither. I have more questions.}
+{11040}{}{Neither. See ya.}
+{12000}{}{Right. Me and a human named Jacob built this place around that old bank about 60 years ago. Anyone’s welcome here, long as they keep the peace.}
+{12010}{}{Great. I have more questions.}
+{12020}{}{Fair enough. Bye.}
+{13000}{}{Right...After the Master and the vats were destroyed, I wandered a bit. No place to go. One day got attacked by this fool wearin’ power armor.}
+{13010}{}{Really?}
+{14000}{}{That was Jacob, from the Brotherhood of Steel. He’d sworn some oath to destroy muties. We tussled for a while – probably a day or two. After a while, we just started laughing. What was the point?}
+{14010}{}{Then what?}
+{15000}{}{We became friends. Headed off together. Then other people started following us. Guess they figured if they weren’t safe with a mutie and a Steel Knight, safe just wasn’t going to happen.}
+{15010}{}{So you set up here. Why?}
+{16000}{}{Uranium mine. I knew there was one around from old maps. Now anybody’s welcome here – ‘long as they act right. Others might not think much of us, but nobody’s more free than we are. There ya go.}
+{16010}{}{Wait... you were friends with a guy from the Brotherhood?}
+{16020}{}{What, you’re not killing humans anymore?}
+{16030}{}{Thanks. There I go. Bye.}
+{17000}{}{Oh, what sinkhole are you from? Muties and normals made peace a long time ago.}
+{17010}{}{I’m from a.. [You gave up in the vague direction]}
+{17020}{}{Oh. My mistake. Well, thanks. Bye.}
+{18000}{}{Damn right. Best friend I ever had.}
+{18010}{}{Yeah, right, you would’ve dipped him just like everyone else.}
+{18020}{}{Bye.}
+{19000}{}{Hell, yes, I would've. What a great mutant he would’ve been...}
+{19010}{}{I don't think he'd be happy to hear you say that.}
+{19020}{}{Bye.}
+{20000}{}{[laughs] We had this argument all the time. [sigh] I miss that hard-head.}
+{20010}{}{What about the Master’s hatred for humans?}
+{20020}{}{I still think it’s a rotten fate.}
+{20030}{}{Bye.}
+{21000}{}{You’re talking a long time ago. The world’s moved on. You want to hear ancient history?}
+{21010}{}{Definitely.}
+{21020}{}{Not right now. I’d like to ask some other questions, though.}
+{21030}{}{Not right now. I’ll talk to you later.}
+{22000}{}{Right. Well, never really HATED humans. We just had a better way. These new governments, they think they've got all the answers.  Blah, blah. Been there, seen that, got the scars.}
+{22010}{}{So what was the better way?}
+{23000}{}{The Master wanted to elevate everyone to his level, so we wouldn’t fight each other anymore. He was convinced we wouldn’t do it by ourselves – couldn’t. We had to be forced to evolve.}
+{23010}{}{Do you agree?}
+{24000}{}{While Jacob was alive, I thought the Master was wrong. But it seems that while some men can heed the call and rise above it all, most just run away.}
+{24010}{}{So you think the Master was right?}
+{25000}{}{Jacob heard the call and embraced it. So did the Vault Dweller. But no matter how many rise above, the masses will always destroy them, right?}
+{25010}{}{Maybe.}
+{26000}{}{The Master just wanted everyone to see clearly. The Vault Dweller ended that dream.}
+{26010}{}{Sounds like you admired and hated the Vault Dweller at the same time.}
+{26020}{}{You were a human. How can you justify what the Master did to you?}
+{26030}{}{So you think the Master’s plan was right?}
+{26040}{}{I’m descended from the original Vault Dweller, you know.}
+{27000}{}{You’re right. If all humans fought for what they believed in like that, we wouldn’t have needed the Master’s plan in the first place.}
+{27010}{}{The Master wanted to enslave humanity!}
+{27020}{}{Interesting spin. I gotta go.}
+{28000}{}{Don't forget, I knew the folks involved. They were the best humanity had to offer. Your people are going to tell the story a different way, right?}
+{28010}{}{Err... maybe. Umm, I have more questions.}
+{28020}{}{Wrong!}
+{29000}{}{The "original Vault Dweller"? You mean the one who killed the Master and destroyed the vats?}
+{29010}{}{Ummm... yes.}
+{29020}{}{Damn right. Gonna do something about it, mutie?}
+{29030}{}{Nooo... this is someone else. I don’t know what you’re talking about.}
+{30000}{}{Not a problem. Like I said, that was a long time ago.}
+{30010}{}{I’m not afraid of you.}
+{30020}{}{Why did you hate humans back then?}
+{31000}{}{No reason to be, unless you cross me or someone in my town. Be civilized, that’s all I ask.}
+{31010}{}{I’ll keep it in mind. I have more questions.}
+{31020}{}{I’ll keep it in mind. Bye.}
+{32000}{}{Lemme make this clear: Nothing’s going to happen here unless you start it. Just stay civilized while you’re in my town.}
+{32010}{}{Yeah, right. I have more questions.}
+{32020}{}{Yeah, right. Bye.}
+{33000}{}{My memories of being a human aren't as clear as they once were, but I remember pettiness, hatred, jealousy... I prefer being a mutant.}
+{33010}{}{So you think the Master’s plan was right?}
+{33020}{}{Huh. You’re a lot uglier this way. Bye.}
+{33030}{}{Then you’re fine. Bye.}
+{34000}{}{It was flawed. We should have only taken the best. Look around. Most mutants didn't have the mind or will to withstand the strain. [sigh] If only we had chosen better...}
+{34010}{}{So you would have dipped Jacob? Or the Vault Dweller?}
+{34020}{}{Yeah, that’s a tragedy. Well, see ya later!}
+{35000}{}{You ever get back there, tell them the war’s over. It's been over a long time.}
+{35010}{}{Ummm. Okay. I have more questions.}
+{35020}{}{Sure thing. Bye.}
+{36000}{}{I think I've told you before how I used to travel with the Vault Dweller, well, you know who I'm talking about.}
+{36010}{}{Yeah, I've heard enough. I'd rather patch my leather armor than listen to that.[Leave]}
+{36020}{}{Yeah, I guess so... Why?}
+{37000}{}{[Looks away] Well, it was a wonderful time, though quite tough at times. Adventures, you know... [Scratches his head] so, what was I... Err...}
+{37010}{}{Hey. Come on. Since you started you might as well finish. I see you need something from me.}
+{38000}{}{[Looks around] I wanted to ask you of a personal favor.}
+{38010}{}{Really? Well, I'm listening.}
+{39000}{}{You seem like a reliable man who can be trusted. I've heard a lot about you...}
+{39010}{}{Hmm. Judging by the amount of flatter, this favor must really be something special. Stick to the point, all right?}
+{40000}{}{Yeah, right.  This favor is personal, I repeat, so whether you agree or not, it's best that nobody knows about it.}
+{40010}{}{Fine, whatever you say. I can keep a secret.}
+{40020}{}{I don't like all this secrecy. I'll leave you alone with your mysteries... [Leave]}
+{41000}{}{So, I once was in Reno. There's this establishment, "Cat's Paw". Quite a decent one I should say. And there was that girl...}
+{41010}{}{Good Lord! Looks like yo want to send her flowers! It's not likely that she still works there. This line of work puts quite a limit on age, you know.}
+{42000}{}{No, it's simpler actually. I just want to use a professional girl's services once again. Here in Broken Hills everyone knows everyone. It's just a big village basically. So the local girls are not really an option. And it's not like there are any hotties round here anyway.}
+{42010}{}{So go to Reno. Or should I draw you a map so that you don't get lost? What do you need me for?}
+{43000}{}{Hey, funny, @sex@|guy||girl|, I'll... [Takes a deep breath and restrains himself] Yeah, I do need you. I have important business to take care of here. And I am not the one I used to be anyway. So I ask you to go to "Cat's Paw" and bring me a girl. A cute one.}
+{43010}{}{I was expecting anything but that. I mean fix a mine, destroy Master's army, whatever... But that! You're really full of surprises.}
+{43020}{}{No way! I won't drag whores around the wasteland. What am I, a pimp or something?}
+{44000}{}{So will you? If it works out fine, I won't leave you unanswered.}
+{44010}{}{Why the hell not. It's gonna be amusing. I'll do it.}
+{44020}{}{No, I'm not ready for such a turn of events. [Leave]}
+{45000}{}{Great. Agree for whatever she demands, I'm neither poor nor greedy. I'll be waiting.}
+{45010}{}{Fine.}
+{46000}{}{What about our arrangement?}
+{46010}{}{I'm on it.}
+{46020}{}{Marcus, look who's there to see you.}
+{46030}{}{Well, you see... Ahem, so... The girl is lost in the wasteland...}
+{47000}{}{Hell, it's about time! [To the girl] Madam, I invite you to my humble apartment! [To you] We'll talk a little bit later, he-he.}
+{47010}{}{Have fun.}
+{48000}{}{Now that's something! Didn't do it in quite a while, heh... Ghm. All right. You helped me out so I'll help you. I wasn't talking about my adventures in the wasteland for no reason. I've learned a lot of stuff. And I'm ready to share it with you. Just remember - keep your mouth shut.}
+{48010}{}{All right.}
+{49000}{}{I always said that humans are ok! There are quite decent folks among your kind!}
+{49010}{}{Well thanks...}
+{50000}{}{Go away, blabbermouth.@@I asked you not to tell anybody. Get lost.@@I'm not talking to flapjaws.@@Get lost, you rat.@@Get out, scandalmonger.}
+{51000}{}{Err, so? Was that the last one or what?}
+{51010}{}{Of course not the last one.}
+{52000}{}{Get another one? Or what?}
+{52010}{}{No problem, another one it is.}
+{52020}{}{No, I can't do it now. Find somebody else.}
+{53000}{}{Not now.@@Come later.@@We'll talk tomorrow, ok?}
+{100000001}{}{Marcus shares his knowledge of big guns and unarmed combat. Your skills in those fields improve.}

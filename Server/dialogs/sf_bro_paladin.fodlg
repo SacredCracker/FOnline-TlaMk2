@@ -1,0 +1,91 @@
+[comment]
+
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 @
+2 2000 None 0 #
+0 2010 #
+3 2020 D _param p ST_LEVEL > 9 D _var p q_sf_invasion_mirelurk_kills = 0 #
+4 2030 D _param p ST_LEVEL > 9 D _var p q_sf_invasion_mirelurk_kills > 0 D _param p ST_STRENGTH > 3 D _var p sf_invasion_sandbags_taken < 5 #
+5 2040 D _var p q_sf_invasion_mirelurk_kills = 6 @
+3 3000 None 0 #
+0 3010 D _var p q_sf_invasion_mirelurk_kills = 0 R _var p q_sf_invasion_mirelurk_kills = 1 #
+4 3020 D _var p sf_invasion_sandbags_taken < 5 D _param p ST_STRENGTH > 3 #
+0 3030 @
+4 4000 None 0 #
+6 4010 @
+5 5000 None 0 #
+0 5010 D _var p q_sf_invasion_mirelurk_kills = 6 R _var p q_sf_invasion_mirelurk_kills = 7 R _param p ST_EXPERIENCE + 12000 R _item p PID_4_7MM_CASELESS + 200 #
+0 5020 D _var p q_sf_invasion_mirelurk_kills = 6 R _var p q_sf_invasion_mirelurk_kills = 7 R _param p ST_EXPERIENCE + 12000 R _item p PID_7_62MM_AMMO + 400 #
+0 5030 D _var p q_sf_invasion_mirelurk_kills = 6 R _var p q_sf_invasion_mirelurk_kills = 7 R _param p ST_EXPERIENCE + 12000 R _item p PID_ROCKET_AP + 15 #
+0 5040 D _var p q_sf_invasion_mirelurk_kills = 6 R _var p q_sf_invasion_mirelurk_kills = 7 R _param p ST_EXPERIENCE + 12000 R _item p PID_223_FMJ + 150 #
+0 5050 D _var p q_sf_invasion_mirelurk_kills = 6 R _var p q_sf_invasion_mirelurk_kills = 7 R _param p ST_EXPERIENCE + 12000 R _param p REPUTATION_SF + 3 #
+0 5060 @
+6 6000 None 0 #
+0 6010 D _var n sf_invasion_sandbags_given > 0 D _var n sf_invasion_sandbags_taken < 5 D _item p PID_SANDBAG_1 < 1 D _item p PID_SANDBAG_2 < 1 D _item p PID_SANDBAG_3 < 1 D _item p PID_SANDBAG_4 < 1 D _item p PID_SANDBAG_5 < 1 R _item p PID_SANDBAG_1 + 1 R _var n sf_invasion_sandbags_given - 1 R _var p sf_invasion_sandbags_taken + 1 #
+0 6020 &
+
+[russ]
+{100}{}{Паладин Братства}
+{200}{}{Вы видите младшего рыцаря Братства.}
+{200}{}{Вы видите одного из паладинов Братства Стали.}
+{210}{}{Вы видите одного из бойцов Братства Стали.}
+{210}{}{Паладины - военная элита Братства. Только лучшие Рыцари Братства могут получить это звание.}
+{1000}{}{Predialogue installations}
+{1010}{}{Answer text}
+{2000}{}{Никаких разговоров. У меня здесь сотня крабов-переростков атакует город. Я занят.@@Сейчас не лучшее время для разговоров. Надеюсь, это что-то действительно срочное.@@Вы что, ослепли? Неужели не видите, что у нас здесь происходит? Уходите.@@По всем вопросам обращайтесь в бункер. Если сейчас снова пойдет волна, тут будет жарко.}
+{2010}{}{Ухожу.}
+{2020}{}{Как я могу помочь?}
+{2030}{}{Как я могу помочь?}
+{2040}{}{Я убил@sex@|||а| пять гигантских насекомых.}
+{3000}{}{Убивайте болотников. Их слишком много, наши люди не справляются. Ваш вклад будет оценен по достоинству. Убейте 5 болотников и обратитесь к любому паладину здесь.}
+{3010}{}{Годится.}
+{3020}{}{Нет, это не для меня. Может быть, еще что-то?}
+{3030}{}{Нет, это слишком опасно.}
+{4000}{}{Эти твари ломают наши баррикады. Нужно постоянно обновлять укрепления. Если сможете поднять мешок с песком - укрепляйте баррикаду. Это поможет сдержать этих долбаных болотников.}
+{4010}{}{Где взять мешки?}
+{5000}{}{Благодарю за помощь, выбирайте, какие патроны вам нужны.}
+{5010}{}{[4.7 безгильзовые 200 шт]}
+{5020}{}{[7.62 бронебойные 400 шт]}
+{5030}{}{[Ракеты для гранатомета 15 шт]}
+{5040}{}{[.223 калибр 150 шт]}
+{5050}{}{Нет, мне не нужна награда.}
+{5060}{}{Мне нужно время, чтобы подумать.}
+{6000}{}{Мешки можете получить у меня или других паладинов. У меня осталось: @lex sandbags@ мешков.}
+{6010}{}{[Взять мешок с песком]}
+{6020}{}{[Уйти]}
+
+[engl]
+{100}{}{Paladin of the Brotherhood}
+{200}{}{you see the younger knight of the Brotherhood.}
+{200}{}{you see one of paladinov Steel Brotherhoods.}
+{210}{}{you see one of fighters of the Brotherhood of the Steel.}
+{210}{}{Paladiny - military elite of the Brotherhood. Only the best Knights of the Brotherhood can receive this rank.}
+{1000}{}{Predialogue installations}
+{1010}{}{Answer text}
+{2000}{}{Any conversations. At me here one hundred crabs-overages attacks a city. I am occupied. @@ now not the best time for conversations. I hope, it something really urgent. @@ you that, have gone blind? Really do not see, what at us here occurs? Leave. @@ on all questions address in the bunker. If now the wave again goes, here will be hot.}
+{2010}{}{I Leave.}
+{2020}{}{As I can help?}
+{2030}{}{As I can help?}
+{2040}{}{I убил@sex ||| and | five huge insects.}
+{3000}{}{Kill bolotnikov. It is too much them, our people do not consult. Your contribution will be appreciated. Kill 5 bolotnikov and address to any paladinu here.}
+{3010}{}{Suits.}
+{3020}{}{No, it not for me. Perhaps, still something?}
+{3030}{}{No, it is too dangerous.}
+{4000}{}{These creatures break our barricades. It is necessary to update strengthenings constantly. If can lift a bag with sand - strengthen a barricade. It will help to constrain these fucking bolotnikov.}
+{4010}{}{Where to take bags?}
+{5000}{}{I Thank for the help, choose, what cartridges are necessary to you.}
+{5010}{}{[4.7 bezgilzovye 200 sht]}
+{5020}{}{[7.62 armour-piercing 400 sht]}
+{5030}{}{[Rockets for a grenade cup discharge 15 sht]}
+{5040}{}{[.223 calibre 150 sht]}
+{5050}{}{No, the award is not necessary to me.}
+{5060}{}{I need time to think.}
+{6000}{}{Bags can receive at me or others paladinov. At me remains: @lex sandbags bags.}
+{6010}{}{[to Take a bag with sand]}
+{6020}{}{[to Leave]}

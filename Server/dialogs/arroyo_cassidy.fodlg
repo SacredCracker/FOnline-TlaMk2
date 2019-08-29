@@ -1,0 +1,346 @@
+[comment]
+Диалог: Пончик.
+Переменные и пр.: Дагнир.
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _param p ST_INTELLECT < 4 #
+3 1020 D _param p ST_INTELLECT > 3 D _var p name_mem_player_npc = 0 #
+5 1030 D _param p ST_INTELLECT > 3 D _var p name_mem_player_npc = 1 D _var p q_arroyo_cassidy_letter ! 1 D _var p q_arroyo_cassidy_letter ! 2 #
+20 1040 D _param p ST_INTELLECT > 3 D _var p name_mem_player_npc = 1 D _var p q_arroyo_cassidy_letter } 1 D _var p q_arroyo_cassidy_letter { 2 @
+2 2000 None 0 #
+6 2010 #
+0 2020 @
+3 3000 None 0 #
+4 3010 R _var p name_mem_player_npc = 1 #
+65506 3020 #
+0 3030 @
+5 4000 None 0 #
+65506 4010 R _var p trade_was = 0 #
+12 4020 #
+17 4030 D _var p q_arroyo_cassidy_letter = 0 D _script dialog@d_TimeoutCheck 0  #
+28 4040 D _var p q_arroyo_cassidy_letter = 0 D _script dialog@d_NotTimeoutCheck 0  #
+23 4050 #
+29 4060 D _var p q_arroyo_cassidy_letter = 3 D _script dialog@d_NotTimeoutOk 0  #
+30 4070 D _var p q_arroyo_cassidy_letter = 3 D _script dialog@d_NotTimeoutCheck 0  D _script dialog@d_TimeoutOk 0  #
+31 4080 D _var p q_arroyo_cassidy_letter = 3 D _script dialog@d_TimeoutCheck 0  D _script dialog@d_TimeoutOk 0  #
+0 4090 @
+6 5000 None 0 #
+0 5010 @
+4 6000 None 0 #
+7 6010 @
+7 7000 None 0 #
+8 7010 #
+0 7020 @
+8 8000 None 0 #
+9 8010 #
+10 8020 @
+9 9000 None 0 #
+10 9010 @
+10 10000 None 0 #
+11 10010 @
+11 11000 None 0 #
+12 11010 #
+0 11020 @
+12 12000 None 0 #
+13 12010 #
+0 12020 @
+13 13000 None 0 #
+14 13010 #
+0 13020 @
+14 14000 None 0 #
+15 14010 @
+15 15000 None 0 #
+16 15010 #
+0 15020 @
+16 16000 None 0 #
+0 16010 #
+0 16020 @
+17 17000 None 0 #
+18 17010 @
+18 18000 None 0 #
+19 18010 R _var p q_arroyo_cassidy_letter = 1 R _item p PID_LETTER_TO_SINDY + 1 R _script dialog@r_TimeoutSet 1 240 #
+0 18020 @
+19 19000 None 0 @
+20 20000 None 1 #
+21 20010 D _var p q_arroyo_cassidy_letter = 2 D _var p q_vc_cindy_letter = 2 D _item p PID_LETTER_TO_CASSIDY > 0 R _var p q_arroyo_cassidy_letter = 3 R _var p q_vc_cindy_letter = 3 R _item p PID_LETTER_TO_CASSIDY - 1 R _param p ST_EXPERIENCE + 5555 R _param p ST_KARMA + 15 R _script dialog@r_SetUniqTO 1 44640 R _item p PID_BOTTLE_CAPS + 1500 #
+21 20020 D _var p q_arroyo_cassidy_letter = 2 D _var p q_vc_cindy_letter = 1 D _item p PID_LETTER_TO_CASSIDY > 0 R _var p q_arroyo_cassidy_letter = 3 R _var p q_vc_cindy_letter = 3 R _item p PID_LETTER_TO_CASSIDY - 1 R _param p ST_EXPERIENCE + 3500 R _param p ST_KARMA + 10 R _script dialog@r_SetUniqTO 1 44640 R _item p PID_BOTTLE_CAPS + 1500 #
+24 20030 D _var p q_arroyo_cassidy_letter = 2 D _var p q_vc_cindy_letter = 0 R _var p q_arroyo_cassidy_letter = 3 R _param p ST_EXPERIENCE + 2500 R _script dialog@r_SetUniqTO 1 44640 R _item p PID_BOTTLE_CAPS + 1200 #
+22 20040 D _var p q_arroyo_cassidy_letter = 2 D _var p q_vc_cindy_letter } 1 D _var p q_vc_cindy_letter { 2 D _item p PID_LETTER_TO_CASSIDY = 0 R _var p q_arroyo_cassidy_letter = 3 R _param p ST_EXPERIENCE + 2500 R _param p ST_KARMA + 10 R _script dialog@r_SetUniqTO 1 44640 #
+26 20050 #
+27 20060 #
+0 20070 #
+25 20080 D _var p q_arroyo_cassidy_letter = 1 D _item p PID_LETTER_TO_SINDY = 0 R _var p q_arroyo_cassidy_letter = 4 @
+21 21000 None 0 #
+0 21010 @
+22 22000 None 0 #
+0 22010 @
+24 23000 None 0 #
+0 23010 R _param p ST_KARMA - 15 #
+0 23020 @
+23 24000 None 0 #
+0 24010 @
+25 25000 None 0 @
+26 26000 None 0 #
+65506 26010 D _var p trade_was = 0 R _var p trade_was = 1 #
+27 26020 D _var p trade_was = 0 #
+0 26030 D _var p trade_was = 0 #
+65506 26040 D _var p trade_was = 1 #
+27 26050 D _var p trade_was = 1 #
+0 26060 D _var p trade_was = 1 @
+27 27000 None 0 #
+12 27010 #
+23 27020 #
+17 27030 D _var p q_arroyo_cassidy_letter = 0 D _script dialog@d_TimeoutCheck 0  #
+28 27040 D _var p q_arroyo_cassidy_letter = 0 D _script dialog@d_NotTimeoutCheck 0  #
+29 27050 D _var p q_arroyo_cassidy_letter = 3 D _script dialog@d_NotTimeoutOk 0  #
+30 27060 D _var p q_arroyo_cassidy_letter = 3 D _script dialog@d_NotTimeoutCheck 0  D _script dialog@d_TimeoutOk 0  #
+31 27070 D _var p q_arroyo_cassidy_letter = 3 D _script dialog@d_TimeoutCheck 0  D _script dialog@d_TimeoutOk 0  #
+26 27080 R _var p trade_was = 0 #
+0 27090 @
+28 28000 None 0 #
+26 28010 R _var p trade_was = 0 #
+27 28020 #
+0 28030 @
+29 29000 None 0 #
+26 29010 R _var p trade_was = 0 #
+27 29020 #
+0 29030 @
+30 30000 None 0 #
+26 30010 R _var p trade_was = 0 #
+27 30020 #
+0 30030 @
+31 31000 None 0 #
+0 31010 R _item p PID_LETTER_TO_SINDY + 1 R _var p q_arroyo_cassidy_letter = 1 R _script dialog@r_TimeoutSet 1 240 &
+
+[russ]
+{100}{}{Кэссиди}
+{200}{}{Вы видите: Кэссиди}
+{210}{}{Похоже, это тот самый легендарный Кэссиди!}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{Тупой}
+{1020}{}{Не знаком}
+{1030}{}{Знаком}
+{1040}{}{Взял квест.}
+{2000}{}{Надо сказать Миноку, чтоб не пускал в город животных@Вызвать тебе ветеринара?@У нас как раз день открытых дверей для анацефалов@Вернись в свой загон@Где твой хозяин?}
+{2010}{}{Даа ягга! Иип ооп оп!}
+{2020}{}{Незна.}
+{3000}{}{Привет! Выпьешь что-нибудь?}
+{3010}{}{Кто вы?}
+{3020}{}{Давай. Что у тебя есть?}
+{3030}{}{Извините, я не туда попал@sex@|||а|.}
+{4000}{}{Снова ты? Налить?}
+{4010}{}{Давай. Что у тебя есть в наличии?}
+{4020}{}{Чуть позже. Можешь рассказать опять об Избранном?}
+{4030}{}{У тебя не будет какой-нибудь работы? Я на мели...}
+{4040}{}{У тебя не будет какой-нибудь работы? Я на мели...}
+{4050}{}{Слушай, а ты не хотел бы пойти со мной искать Избранного?}
+{4060}{}{Не надо отнести ещё одно письмо?}
+{4070}{}{Не надо отнести ещё одно письмо?}
+{4080}{}{Не надо отнести ещё одно письмо?}
+{4090}{}{Ничего.@@Ладно, неважно. Пока.}
+{5000}{}{Послушай, браминчик, мне жаль, что у тебя нет мозгов, но здесь тебе не место. Беги отсюда.@@У меня на двери табличка - вход для животных запрещен.@@Извини, я не говорю на языке имбецилов.}
+{5010}{}{[Готово]}
+{6000}{}{Я Кесседи. И это - мой бар.}
+{6010}{}{Вон как? А я @pname@. И бара у меня нет.}
+{7000}{}{Да? Не позавидуешь тебе. Ну, в любом случае - рад знакомству. Предлагаю выпить по этому поводу за счет заведения. [Наливает виски в стакан и ставит на стол]}
+{7010}{}{Благодарю, не откажусь…}
+{7020}{}{Не пью, и в рот не беру.}
+{8000}{}{Ну, вот и познакомились…Ты издалека, я думаю. Есть интересные новости?}
+{8010}{}{Да какие там новости. Всё как везде. Пустошь. Стрельба, грабежи, отморозки…}
+{8020}{}{Ничего интересного. Может ты мне что-нибудь расскажешь?}
+{9000}{}{Знакомая картина.}
+{9010}{}{Давай лучше я тебя послушаю…}
+{10000}{}{А что ты хочешь услышать?}
+{10010}{}{Ну вот например: Ты знал Избранного?}
+{11000}{}{Да, знал. Мы путешествовали вместе.  Но в этом месте многие его знают. Некоторые с детства.}
+{11010}{}{Расскажешь?}
+{11020}{}{Вон как? Ну пойду других порасспрашиваю…}
+{12000}{}{Хм, да трудновато будет рассказать всё. Путешествия с ним были весьма насыщены событиями, хотя многие эти события были однообразны - пустошь, стрельба, отморозки….}
+{12010}{}{Продолжай…}
+{12020}{}{Тогда я лучше пойду.}
+{13000}{}{[Кэссиди пускается в длительный рассказ. Вы замечаете, что многие люди вокруг подсаживаются поближе и слушают]…Ну, уже после освобождения своих людей с вышки Анклава, Избранный вернулся сюда, на родину. И я пришел с ним. Он хорошо знал, что такое благодарность, и предложил мне остаться здесь. Его стараниями у меня есть этот бар. Здесь я нашел жену и у меня родился сын. Бродить по пустоши я уже староват, а здесь я имею верный доход, и постоянно общаюсь с путешественниками, вроде тебя.}
+{13010}{}{Я собственно, что хочу узнать. Избанный ведь ушел, так?}
+{13020}{}{Очень занятно, но мне пора. Спасибо за рассказ.}
+{14000}{}{Так, верно.}
+{14010}{}{Ты не знаешь, куда? Он ничего не говорил?}
+{15000}{}{Нет, на оба вопроса. Он был достаточно скрытным, и не любил делиться замыслами. Поговорить, обсудить прошедшие события - пожалуйста, но планов своих он не раскрывал никому.}
+{15010}{}{Хм. Я хочу его разыскать…}
+{15020}{}{Понятно. Пойду я тогда, спасибо.}
+{16000}{}{Хахаха [некоторое время хохочет, хлопая ладонью по стойке бара]. Да ты представляешь себе хотя бы примерно, сколько народу в своё время хотело его разыскать? Рейдеры, мафиозные кланы из Рино, Анклав, Френк  Хорриган…Ну ты знаешь, чем всё это кончилось. Ищи, конечно, если охота, но шансов мало, уж извини.}
+{16010}{}{Да, я понимаю. Но мне нужно. Спасибо, приятно было поговорить.}
+{16020}{}{Ладно, ладно. Вот посмотрим, что вы все скажете, когда я его найду.}
+{17000}{}{Хм, ну есть у меня одно дело, как раз для путешественни@sex@|ка||цы| вроде тебя. Видишь, я когда уходил с Избранным, оставил свой бар на подругу, Синди. Очень толковая женщина, как сейчас помню. Но с тех пор ничего от неё не слышал. Не собираешься в сторону этой дыры, Города-Убежища? Я бы передал с тобой письмо.}
+{17010}{}{Ну, может и не сразу, но собираюсь заглянуть в те края. Письмо передам, почему бы и нет. И не такое носили...}
+{18000}{}{Это не срочно, но просто не потеряй это письмо. Берешься?}
+{18010}{}{Да, конечно.}
+{18020}{}{Ну на самом деле, у меня другие планы, извини.}
+{19000}{}{Хорошо, жду тебя с известиями.}
+{20000}{}{О, это снова ты, @pname@. Как там моё письмишко?}
+{20010}{}{Письмо доставлено, ответ получен. Держи.}
+{20020}{}{Письмо доставлено, ответ получен. Держи.}
+{20030}{}{Письмо доставлено, Синди передавала тебе привет и обещала написать ответ при возможности.}
+{20040}{}{Письмо доставлено, Синди передавала тебе привет и письмо, но дон@sex@|ёс||есла| я только привет, к сожалению.}
+{20050}{}{Пока ещё не успел@sex@|||а| доставить. Хочу купить припасов перед дорогой.}
+{20060}{}{Пока не было времени. Случай, у меня есть к тебе один вопрос...}
+{20070}{}{Пока не было на это времени.}
+{20080}{}{Извини, но пустошь забрала у меня письмо.}
+{21000}{}{О, отлично! Вот, возьми за работу.}
+{21010}{}{Благодарю.[Выход]}
+{22000}{}{Мда...Жаль. Ну ладно, пустошь сурова, как известно... Ничего, возьми свою награду. Напишет ещё.}
+{22010}{}{Благодарю.[Выход]}
+{23000}{}{Что, у неё даже не нашлось возможности ответить сразу? Эх. Вот такие у нас друзья.}
+{23010}{}{Да, как мне показалось, она вообще без радости это письмо приняла...}
+{23020}{}{Да не, просто я приш@sex@|ёл||ла| прямо в середине дня, у неё было очень много посетителей. Расслабься, она ответит.}
+{24000}{}{Да я бы пошел, конечно...Хм...Но на самом деле я уже не мальчик. Сердце всё чаще шалить стало. Да и потом - у меня ведь жена здесь, ребенок. Нет, не смогу я с тобой пойти. }
+{24010}{}{Ладно, я всё понимаю}
+{25000}{}{Мда...Жаль. Ну ладно, пустошь сурова, как известно...}
+{26000}{}{Смотри на полках, выбирай, чего тебе налить. Меню закусок вон там висит.}
+{26010}{}{[Бартер]}
+{26020}{}{На самом деле мне ничего не надо. Хотел@sex@|||а| спросить кое о чём...}
+{26030}{}{На самом деле я не голоден@sex@|||а|.}
+{26040}{}{Хочу купить ещё кое-что...}
+{26050}{}{Слушай, я тут кое-что хотел@sex@|||а| узнать...}
+{26060}{}{Это всё, спасибо.}
+{27000}{}{Чего тебе?}
+{27010}{}{Расскажи ещё раз об Избранном.}
+{27020}{}{Слушай, а ты не хотел бы пойти со мной искать Избранного?}
+{27030}{}{У тебя не будет какой-нибудь работы? Я на мели...}
+{27040}{}{У тебя не будет какой-нибудь работы? Я на мели...}
+{27050}{}{Не надо отнести ещё одно письмо?}
+{27060}{}{Не надо отнести ещё одно письмо?}
+{27070}{}{Не надо отнести ещё одно письмо?}
+{27080}{}{На самом деле ничего. Лучше налей.}
+{27090}{}{Ладно, неважно. Пока.}
+{28000}{}{Нет, в данный момент ничего нет.}
+{28010}{}{Ну тогда налей!}
+{28020}{}{Ответь ещё на один вопрос...}
+{28030}{}{Эх... Ни у кого нет!}
+{29000}{}{Нет, ты же совсем недавно относил@sex@|||а| предыдущее.}
+{29010}{}{Ну тогда налей!}
+{29020}{}{Ответь ещё на один вопрос...}
+{29030}{}{Ну не надо, так не надо, я пойду.}
+{30000}{}{Нет, я уже нанял одного посыльного.}
+{30010}{}{Ну тогда налей!}
+{30020}{}{Ответь ещё на один вопрос...}
+{30030}{}{Чёрт. В следующий раз дождись меня!}
+{31000}{}{О! Я как раз недавно подумал, что давно ей не писал, и накатал письмо. Не было только посыльного. Возьмёшься?}
+{31010}{}{Давай, почему бы и нет.}
+
+[engl]
+{100}{}{Cassidy}
+{200}{}{You see: Cassidy}
+{210}{}{Looks like it's legendary Cassidy himself!}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{Тупой}
+{1020}{}{Не знаком}
+{1030}{}{Знаком}
+{1040}{}{Взял квест.}
+{2000}{}{Should tell Mynog not to let apes to town@Should I call you a vet?@What is it, an open day for imbeciles?@Go back to your pen@Where's your master?}
+{2010}{}{Ug Nog!}
+{2020}{}{Dunno.}
+{3000}{}{Hello. Care for a drink?}
+{3010}{}{Who are you?}
+{3020}{}{What have you got on tap?}
+{3030}{}{Sorry, I got the wrong door.}
+{4000}{}{You again? Want something to drink?}
+{4010}{}{What do you have to drink here?}
+{4020}{}{Maybe later. Can you tell me about the Chosen One?}
+{4030}{}{Do you have any work that needs to be done? I'm kind of broke here...}
+{4040}{}{Do you have any work that needs to be done? I'm kind of broke here...}
+{4050}{}{Hey, why don't you come along with me to look for the chosen one?}
+{4060}{}{Want me to deliver any more letters?}
+{4070}{}{Want me to deliver any more letters?}
+{4080}{}{Want me to deliver any more letters?}
+{4090}{}{Nothing.@@Never mind, see you.}
+{5000}{}{Look, brahmin brain, it's no place for you. Beat your feet.@@There's a sign on the door - no animals allowed.@@Sorry, but I don't speak imbecilish.}
+{5010}{}{[Done]}
+{6000}{}{I'm Cassidy. And this is my bar.}
+{6010}{}{And I'm @pname@. And I don't have a bar.}
+{7000}{}{Really? That's sad. Anyway I'm pleased to meet you. Have a drink on the house. [Pours a glass of whiskey]}
+{7010}{}{Great, thank you…}
+{7020}{}{I don't drink.}
+{8000}{}{I'm always glad to see a new face. Looks like you've come from afar. Any interesting news?}
+{8010}{}{No news. It's all the same everywhere. Wasteland. Shooting, looting, cutthroats everywhere…}
+{8020}{}{Nothing interesting. Maybe you could tell me something?}
+{9000}{}{Yeah, I know what it's like.}
+{9010}{}{I'd rather listen to you…}
+{10000}{}{What do you want to hear?}
+{10010}{}{Did you know he Chosen One for instance?}
+{11000}{}{Yeah, I did. We traveled together.  A lot of people know Chosen One here. Some even since childhood.}
+{11010}{}{Can you tell me about it?}
+{11020}{}{Is that so? I'll go ask around then…}
+{12000}{}{It's rather difficult to tell everything. The travels with him were always event rich, though many were similar - wasteland, shootouts, cutthroats….}
+{12010}{}{Go on…}
+{12020}{}{I'd better go.}
+{13000}{}{[Cassidy starts ranting. You notice that many people around draw closer]…So, after freeing his people from the Enclave rig, Chosen One came back here to his homeland. I came here with him. He knew gratitude well, and so he offered me to stay. Thanks to him I have this bar. Here I found a wife that gave birth to my son. I'm a bit too old to wander the wasteland, and here I have a steady income and can always have a word with travelers like yourself.}
+{13010}{}{There's something I want to find out. Chosen One left, right?}
+{13020}{}{Very interesting, but I go to go. Thanks for the story.}
+{14000}{}{Yes, that's right.}
+{14010}{}{Do you have any idea where he was going? Maybe he said something?}
+{15000}{}{It's a "no" to both your questions. He was quite reserved, never liked to share his thoughts. We used to talk about past adventures a lot, but he never disclosed his intentions to anyone.}
+{15010}{}{Hmm. You see, I want to find him…}
+{15020}{}{I see. I'd better be going.}
+{16000}{}{Hahahah [Laughs for some time, slamming his hand no the bar]. Do you have the slightest idea how many people tried to fing him back in the day? Raiders, New Reno mafia clans, Enclave, Frank Horrigan… Well, you know what became of him. Go look for him if you want, but you have little chance to say the least.}
+{16010}{}{Yes, I see. But I really need to. Thanks, it's been nice talking to you.}
+{16020}{}{Yeah, yeah. I wish I could see the looks on you faces when you find out I found him.}
+{17000}{}{Well, I got one small assignment for a traveler like you. You see, when I left with Chosen One, I left my place to a friend, Cindy. A knowing woman, I still remember her clearly. But I haven't heard from her ever since. Are you going any way near that Vault City shithole? You could deliver her a letter.}
+{17010}{}{Well, maybe not right away, but I certainly will go round there. I could give her your letter, why not...}
+{18000}{}{It's not urgent, just don't lose it. So will you?}
+{18010}{}{Yeah, sure.}
+{18020}{}{No, actually I have other plans.}
+{19000}{}{All right, I'll be waiting.}
+{20000}{}{Oh, it's you again, @pname@. How's my letter?}
+{20010}{}{I delivered the letter, here's the reply.}
+{20020}{}{I delivered the letter, here's the reply.}
+{20030}{}{I delivered the letter. Cindy asked me to give you her regards. She will write you as soon as she can.}
+{20040}{}{I delivered the letter. Cindy asked me to give you her regards and the reply, but I only have the regards.}
+{20050}{}{I haven't delivered it yet. I want to buy some supplies before I set out.}
+{20060}{}{I haven't delivered it so far. Can I ask you something?}
+{20070}{}{I had no time to deliver it so far.}
+{20080}{}{I'm sorry but I lost the letter along the way.}
+{21000}{}{Great! Here's something for your work.}
+{21010}{}{Thank you.[Leave]}
+{22000}{}{Hmm...What a pity. Nah, never mind, the wasteland is rough... Take this for your work. She'll write another one.}
+{22010}{}{Thank you.[Leave]}
+{23000}{}{So she couldn't even reply at once? That's the kind of friends you get round there.}
+{23010}{}{Yeah, it looked like she wasn't very happy to receive it...}
+{23020}{}{Don't think bad of her. I came right in the middle of the day, she had a lot of customers. Easy, she'll write you back.}
+{24000}{}{I would of course... Hmm... But I'm not that young already. And my heart plays tricks on me more and more often. And I got a wife and a kid here. No, I couldn't come with you. }
+{24010}{}{It's ok, I understand.}
+{25000}{}{Hmm...What a pity. Nah, never mind, the wasteland is rough...}
+{26000}{}{Look at the shelves and chose. And there's the snack menu.}
+{26010}{}{[Barter]}
+{26020}{}{I don't really need anything. Let me just ask you something...}
+{26030}{}{I'm not really hungry.}
+{26040}{}{I want to buy something...}
+{26050}{}{I wanted to ask you something...}
+{26060}{}{That's it, thank you.}
+{27000}{}{What do you want?}
+{27010}{}{Tell me about Chosen One again.}
+{27020}{}{Hey, why don't you come along with me to look for the chosen one?}
+{27030}{}{Do you have any work that needs to be done? I'm kind of broke here...}
+{27040}{}{Do you have any work that needs to be done? I'm kind of broke here...}
+{27050}{}{Want me to deliver any more letters?}
+{27060}{}{Want me to deliver any more letters?}
+{27070}{}{Want me to deliver any more letters?}
+{27080}{}{Nothing actually. Just pour me a drink.}
+{27090}{}{Never mind, bye.}
+{28000}{}{No, nothing at the moment.}
+{28010}{}{Pour me a drink, than!}
+{28020}{}{I want to ask you something...}
+{28030}{}{[Sigh]... Nobody's got any work!}
+{29000}{}{No, you've just delivered one.}
+{29010}{}{Pour me a drink, than!}
+{29020}{}{I want to ask you something...}
+{29030}{}{Well, no is no. I'll be going.}
+{30000}{}{No, I've already hired a messenger.}
+{30010}{}{Pour me a drink, than!}
+{30020}{}{I want to ask you something...}
+{30030}{}{Damn! Wait for me next time!}
+{31000}{}{Oh! I just thought I didn't write her for too long and composed a letter. I need someone to deliver it. Will you?}
+{31010}{}{Sure, why not.}

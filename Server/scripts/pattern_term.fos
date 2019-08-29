@@ -1,0 +1,397 @@
+#include "pattern_common.fos"
+
+/*
+	Терминатор
+	на большой дистанции стреляет из ракетницы
+	при расстоянии до цели меньше 9 подходит на 5 гексов и стреляет из пулемета
+	использует психо и суперстимпаки~ToMapEntire 98 0 0
+	психо - когда атакован новой целью
+	стимпаки, когда здоровья ниже 50%
+	бросает фонарики по сникерам и выводит их из стелса, если они ближе 30 гексов
+----------------------------------------------------------------------------------
+    Общие особенности для термов
+	ST_CRITICAL_RESISTANCE=85
+	PE_BONUS_RATE_OF_FIRE
+	TRAIT_FAST_SHOT
+	ST_PERCEPTION=8
+---------------------------------------------------------------------------------------
+    Параметры для ур  1            2            3            4            5
+-   Тяжелое оружие    140..150     150..200     180..220     220..260     230..300
+-   Метательное       140..160     160..220     200..230     230..260     250..300
+-   Сила              8            9            9            10           10
+-   Выносливость      8            8            9            9            10
+-   АР                10           12           14           16           20
+-   HP                200          240          280          310          350
+-   Резисты           20..40       20..45       30..50       35..55       40..65
+---------------------------------------------------------------------------------------
+*/
+const int[] termStats_={
+//  ТоМин   ТоМакс МОМин  МоМакс СЛ   ВН   АР     НР     РезМин  РезМакс
+    140,    190,   140,   160,   8,   8,    8,    300,   35,     40,
+    150,    200,   160,   220,   9,   8,    8,    400,   60,     55,
+    180,    220,   200,   230,   9,   9,   10,    500,   40,     60,
+    220,    260,   230,   260,   10,  9,   12,    570,   60,     80,
+    230,    300,   250,   300,   10,  10,  16,    650,   70,     90
+};
+#define T_COUNT                      (5)
+#define T_POS #(pos) (((pos<T_COUNT)?pos:0)*10)
+#define T_HEAVY #(pos)(Random(termStats_[T_POS(pos)], termStats_[T_POS(pos)+1]))
+#define T_THRWN #(pos)(Random(termStats_[T_POS(pos)+2], termStats_[T_POS(pos)+3]))
+#define T_ST #(pos)(termStats_[T_POS(pos)+4])
+#define T_EN #(pos)(termStats_[T_POS(pos)+5])
+#define T_AP #(pos)(termStats_[T_POS(pos)+6])
+#define T_HP #(pos)(termStats_[T_POS(pos)+7])
+#define T_RES #(pos)(Random(termStats_[T_POS(pos)+8], termStats_[T_POS(pos)+9]))
+
+#define FLAMER_USE_DIST_MAX               (5)
+#define MINIGUN_USE_DIST_MAX              (30)
+
+
+
+#define SNEAKERS_SRCH_RADIUS			 (25)
+
+class TermPattern: CommonPattern
+{
+	int _PlaneBegin(Critter& cr, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem)
+	{
+		if(plane.Type==AI_PLANE_ATTACK)
+		{
+			Critter @ target=GetCritter(plane.Attack_TargId);
+			if(valid(target))
+			{
+				if(target.Stat[ST_TEAM_ID]==cr.Stat[ST_TEAM_ID]) return PLANE_DISCARD; // Отмена атаки криттера из своей группы.
+			}
+		}
+		return PLANE_RUN_GLOBAL;
+	}
+
+	void _Message(Critter& term, Critter& fromCr, int message, int value)
+	{
+		if(message==MSG_ATTACK_TARGET)
+		{
+			if(term.IsCurPlane(AI_PLANE_ATTACK)) return;
+			if(term.Stat[ST_TEAM_ID]!=fromCr.Stat[ST_TEAM_ID]) return;
+			if(_MsgReact(term, fromCr, message)) return;
+
+			Critter @target=GetCritter(value);
+			if(valid(target))
+			{
+				this.AttackPlayer(term, target);
+			}
+		}
+	}
+
+	int _PlaneRun(Critter& cr, NpcPlane& plane, int reason, uint& result0, uint& result1, uint& result2)
+	{
+		if(reason==REASON_ATTACK_WEAPON)
+		{
+			//DL("Term Plane Run");
+			Critter @ target=GetCritter(plane.Attack_TargId);
+			if(valid(target))
+			{
+				 _SelectRightWeapon(cr, target);
+			}
+		}
+		return PLANE_RUN_GLOBAL;
+	}
+
+	bool _Attack(Critter& term, Critter& target)
+	{
+		//DL("term attack");
+		_SelectRightWeapon(term, target);
+		return false;
+	}
+
+	void _Idle(Critter& term)
+	{
+		if(!term.IsLife())
+			return;
+	//Log("term idle");
+		Critter @[] players;
+		if(term.GetCritters(false, FIND_LIFE|FIND_ONLY_PLAYERS, players)>0)
+		{
+			for(uint i=0, iMax=players.length(); i<iMax; i++)
+			{
+				//Log("added attackplane");
+				this.AttackPlayer(term, players[i]);
+				return;
+			}
+		}
+		//Log("len " + players.length());
+		// Во время простоя терм ищет сникеров в радиусе дальности
+		TryCatchSneakers(term);
+	}
+
+	int _PlaneEnd(Critter& sniper, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem)
+	{
+		//DL("PLANE END");
+		return PLANE_RUN_GLOBAL;
+	}
+
+	void SetEvents(Critter & cr)
+	{
+		//cr.SetEvent(CRITTER_EVENT_ATTACK, "_TermAttack");
+		cr.SetEvent(CRITTER_EVENT_ATTACKED, "_TermAttacked");
+		cr.SetEvent(CRITTER_EVENT_PLANE_END, "_TermPlaneEnd");
+		cr.SetEvent(CRITTER_EVENT_IDLE, "_TermIdle");
+		cr.SetEvent(CRITTER_EVENT_PLANE_RUN, "_TermPlaneRun");
+		cr.SetEvent(CRITTER_EVENT_MESSAGE, "_TermMessage");
+		cr.SetEvent(CRITTER_EVENT_PLANE_BEGIN, "_TermPlaneBegin");
+		cr.SetEvent(CRITTER_EVENT_SHOW_CRITTER, "_TermShowCritter");
+		cr.SetEvent(CRITTER_EVENT_DEAD, "_TermDead");
+
+	}
+
+	// выбор наиболее подходящего оружия на дистанции до цели
+	bool _SelectRightWeapon(Critter & cr, Critter & target)
+	{
+		//DL("Try select weapon");
+		uint dist=GetCrittersDistantion(cr, target);
+
+
+		bool takeFlamer=false;
+		bool takeMinigun=false;
+		bool takeLauncher=false;
+
+
+		if(dist<=FLAMER_USE_DIST_MAX) takeFlamer=true;
+		if(FLAMER_USE_DIST_MAX<dist&&dist<=MINIGUN_USE_DIST_MAX) takeMinigun=true;
+		if(MINIGUN_USE_DIST_MAX<dist) takeLauncher=true;
+
+		Item @ handItem=_CritGetItemHand(cr);
+
+		Item @ weapon;
+
+		if(takeFlamer)
+		{
+			uint[] flamerPids={PID_FLAMER, PID_IMPROVED_FLAMETHROWER};
+			@ weapon=GetCritterWeapon(cr, flamerPids);
+		}
+		if(takeMinigun)
+		{
+			uint[] mingunPids={PID_MINIGUN, PID_AVENGER_MINIGUN, PID_VINDICATOR_MINIGUN, PID_BOZAR, PID_LIGHT_SUPPORT_WEAPON, PID_M60};
+			@ weapon=GetCritterWeapon(cr, mingunPids);
+		}
+
+		if(takeLauncher)
+		{
+			uint[] launcherPids={PID_ROCKET_LAUNCHER};
+			@ weapon=GetCritterWeapon(cr, launcherPids);
+		}
+		if (!valid(weapon)) return false;
+		if(valid(handItem))
+		{
+			if(weapon.Id==handItem.Id)
+			{
+				return false;
+			}
+			//_CritMoveItem(cr, handItem, SLOT_INV);
+		}
+		cr.StatBase[ST_LAST_WEAPON_ID]=weapon.Id;
+		//_CritMoveItem(cr, weapon, SLOT_HAND1);
+		//DL("Select item "+weapon.GetProtoId());
+		//cr.SetFavoriteItem(SLOT_HAND1,weapon.GetProtoId());
+		return true;
+
+	}
+}
+
+
+#ifndef _NoBaseInstance
+TermPattern pattern; // Для наследников нужно определить _NoBaseInstance
+#endif
+
+
+void SetTermStats(Critter & cr, uint8 lvl)
+{
+	if(lvl<1) return;
+	cr.StatBase[ST_PERCEPTION]=8;
+	cr.StatBase[ST_STRENGTH]=T_ST(lvl);
+	cr.StatBase[ST_ENDURANCE]=T_EN(lvl);
+	cr.StatBase[ST_LEVEL]=24;
+
+	cr.StatBase[ST_MAX_LIFE]=T_HP(lvl);
+	cr.StatBase[ST_ACTION_POINTS]=T_AP(lvl);
+	cr.StatBase[ST_CURRENT_HP]=cr.Stat[ST_MAX_LIFE];
+
+	for(int i=ST_NORMAL_RESIST; i<=ST_POISON_RESISTANCE;i++)
+	{
+		if(i!=ST_EMP_RESIST)
+		{
+			cr.StatBase[i]=T_RES(lvl);
+		}
+	}
+
+
+	cr.TraitBase[TRAIT_FAST_SHOT]=1;
+
+	if(lvl>2) cr.PerkBase[PE_BONUS_RATE_OF_FIRE]=1;
+	if(lvl>2) cr.StatBase[ST_CRITICAL_RESISTANCE]=85;
+	cr.PerkBase[PE_PYROMANIAC]=1;
+	if(lvl>2) cr.PerkBase[PE_LIVING_ANATOMY]=1;
+
+	cr.SkillBase[SK_BIG_GUNS]=T_HEAVY(lvl);
+	cr.SkillBase[SK_THROWING]=T_THRWN(lvl);
+}
+
+void _TermInit(Critter & cr, bool firstTime)
+{
+	_CritterInit(cr, firstTime);
+}
+
+bool _TermAttacked(Critter& sniper, Critter& attacker)
+{
+	return pattern._Attacked(sniper, attacker);
+}
+
+void _TermShowCritter(Critter& cr, Critter& showCrit)
+{
+	pattern._ShowCritter(cr, showCrit);
+}
+
+void _TermDead (Critter& cr, Critter@ killer)
+{
+	pattern._Dead(cr, killer);
+}
+
+int _TermPlaneBegin(Critter& cr, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem)
+{
+	return pattern._PlaneBegin(cr, plane, reason, someCr, someItem);
+}
+
+void _TermMessage(Critter& term, Critter& fromCr, int message, int value)
+{
+	pattern._Message(term, fromCr, message, value);
+}
+
+int _TermPlaneRun(Critter& cr, NpcPlane& plane, int reason, uint& result0, uint& result1, uint& result2)
+{
+	return pattern._PlaneRun(cr, plane, reason, result0, result1, result2);
+}
+
+bool _TermAttack(Critter& term, Critter& target)
+{
+	return pattern._Attack(term, target);
+}
+
+void _TermIdle(Critter& term)
+{
+	pattern._Idle(term);
+}
+
+int _TermPlaneEnd(Critter& term, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem)
+{
+	return pattern._PlaneEnd(term, plane, reason, someCr, someItem);
+}
+
+// вспомогательные методы
+Item @ GetCritterWeapon (Critter & cr, uint[] weapPids)
+{
+	Item @handItem=_CritGetItemHand(cr);
+	if(valid(handItem))
+	{
+		for(uint i=0, iMax=weapPids.length(); i<iMax; i++)
+		{
+			if(handItem.GetProtoId()==weapPids[i])
+			{
+				return handItem;
+			}
+		}
+	}
+	for(uint i=0, iMax=weapPids.length(); i<iMax; i++)
+	{
+		if(cr.CountItem(weapPids[i])>0)
+		{
+			Item @ weapon=cr.GetItem(weapPids[i], -1);
+			if (!valid(weapon)) continue;
+
+			if(!cr.IsAnim1(weapon.Proto.Weapon_Anim1)) continue;
+			
+			if(GetDeteriorationProcent(weapon)<100)
+			{
+				return weapon;
+			}
+		}
+	}
+	return null;
+}
+
+// Попытка найти сникера и бросить в него фонариком или ракетой.
+void TryCatchSneakers(Critter & term)
+{
+	//DL("TryCatchSneakers");
+	Map @map=term.GetMap();
+	if (!valid(map)) return;
+
+	Critter @[] players;
+
+	if(map.GetCrittersHex(term.HexX, term.HexY, SNEAKERS_SRCH_RADIUS, FIND_LIFE|FIND_ONLY_PLAYERS, players)>0)
+	{
+		// Ближайший игрок
+		for(uint i=0, iMax=players.length(); i<iMax; i++)
+		{
+			Critter @ player=players[i];
+			if(player.Mode[MODE_HIDE]!=1) continue;
+
+
+			if (!valid(player)) continue;
+			// Анимация
+			term.SetDir(GetDirection(term.HexX, term.HexY, player.HexX, player.HexY));
+			_CritAnimateThrow(term);
+			map.RunFlyEffect(4024 , term, player, term.HexX, term.HexY, player.HexX, player.HexY);
+			CreateTimeEvent(__FullSecond, "e_UnsneakPlayer", player.Id, false);
+
+			return;
+		}
+	}
+}
+
+uint e_UnsneakPlayer(uint[]@ values)
+{
+	Critter @ player=GetCritter(values[0]);
+	if(valid(player))
+	{
+		if(player.ModeBase[MODE_HIDE]==0) return 0;
+		player.ModeBase[MODE_HIDE]=0;
+		Map @map=player.GetMap();
+
+		if(valid(map))
+		{
+			if (!valid(map.GetItem(player.HexX, player.HexY, PID_ACTIVE_FLARE)))
+			{
+				Item @ flare=map.AddItem(player.HexX, player.HexY, PID_ACTIVE_FLARE, 1);
+				if (!valid(flare)) return 0;
+				flare.LightColor=5;
+				flare.LightDistance=5;
+				flare.LightIntensity=100;
+				SETFLAG(flare.Flags,ITEM_ALWAYS_VIEW);
+				player.TimeoutBase[TO_SNEAK]=SNEAK_TIMEOUT(player);
+				CreateTimeEvent(__FullSecond+10*__TimeMultiplier, "e_DeleteFlare", flare.Id, false);
+			}
+		}
+	}
+	return 0;
+}
+
+uint e_DeleteFlare(uint[]@ values)
+{
+	Item @ flare=GetItem(values[0]);
+	if(valid(flare)) { DeleteItem(flare);}
+
+	return 0;
+}
+
+/* ************************************************* DEBUG ************************************************* */
+// ~run debug ToMapEntire 94 112 0
+void testTerm(Critter & cr,int lvl, int team, int bag)
+{
+	int[] params={ST_BAG_ID, bag, ST_TEAM_ID, team, MODE_NO_HOME, 1};
+	int[] items={PID_IMPROVED_FLAMETHROWER, 1, SLOT_INV, PID_VINDICATOR_MINIGUN, 1, SLOT_INV, PID_ROCKET_LAUNCHER, 1, SLOT_INV};
+	Critter @ npc=cr.GetMap().AddNpc(222, cr.HexX-5, cr.HexY-5, 0, params, items, "pattern_term@_CritterInit");
+
+	SetTermStats(npc, lvl);
+	pattern.SetEvents(npc);
+}
+// ~run pattern_term test 0 0 0
+// ~run test SetStat 1 7 1000
+// ~run test SetStat 1 72 1000

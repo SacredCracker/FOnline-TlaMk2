@@ -1,0 +1,65 @@
+// Autor: Cracker
+// Talking head special encounter scripts
+
+#include "_macros.fos"
+#include "_colors.fos"
+
+#define STR_FIRST                               (70002)
+#define STR_LAST                                (70027)
+#define STR_STEALING_WTF                        (70029)
+
+void _HeadInit(Item& head, bool firstTime)
+{
+ head.SetEvent(ITEM_EVENT_SKILL,"_Head");
+}
+
+bool _Head(Item& head, Critter& cr, int skill)
+{
+ if(skill==-1)
+ {
+  cr.StatBase[ST_VAR2]=STR_FIRST;
+  CreateTimeEvent(__FullSecond, "e_Dialog", cr.Id, false);
+ }
+ if(skill==SK_STEAL)
+ {
+  if(cr.SkillBase[SK_STEAL]+cr.StatBase[ST_LUCK]*5>=Random(200,351)) cr.AddItem(PID_MONUMENT_CHUNCK,3);
+  else {
+  cr.ToDead(ANIM2_DEAD_FRONT,null);
+  Map@ map=cr.GetMap();
+  map.SetTextMsg(85,94,COLOR_RED,TEXTMSG_TEXT,STR_STEALING_WTF);
+  }
+ }
+ return true;
+}
+
+uint e_Dialog(uint[]@ values)
+{
+    Critter@ cr=GetCritter(values[0]);
+        Map@ map=cr.GetMap();
+        if(cr.StatBase[ST_VAR2]<=STR_LAST)
+        {
+                if(cr.StatBase[ST_VAR2]==70006 || cr.StatBase[ST_VAR2]==70011 || cr.StatBase[ST_VAR2]==70013 || cr.StatBase[ST_VAR2]==70015 || cr.StatBase[ST_VAR2]==70017 || cr.StatBase[ST_VAR2]==70019 || cr.StatBase[ST_VAR2]==70025)
+                {
+                        cr.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_TEXT, cr.StatBase[ST_VAR2]);
+                }else{
+                        if(cr.StatBase[ST_VAR2]==70023) cr.AddItem(424,1);
+                        map.SetTextMsg (85,94,(COLOR_RGB(0xF8,0xF9,0x93)),TEXTMSG_TEXT,cr.StatBase[ST_VAR2]);
+                         }
+                cr.StatBase[ST_VAR2]++;
+                CreateTimeEvent(__FullSecond+2*60, "e_Dialog", cr.Id, false);
+                cr.Wait(__FullSecond+3*60);
+        }else{
+                cr.Wait(1);
+        }
+        return 0;
+}
+
+void Test(Critter& cr, int p0, int p1, int p2)
+{
+  uint locId=CreateLocation (LOCATION_SpecialHeadEncounter, cr.WorldX , cr.WorldY, null);
+  Location @ loc=GetLocation(locId);
+  Map @ map=loc.GetMapByIndex(0);
+  cr.TransitToMap(map.Id,0);
+}
+
+//~run se_talking_head Test 1 1 1

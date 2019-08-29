@@ -1,0 +1,91 @@
+// Author: Ra
+#include "_macros.fos"
+#include "_vars.fos"
+#include "_msgstr.fos"
+#include "_defines.fos"
+#include "npc_menege_lib.fos"
+
+import void _MediumRadiation(Map& map, bool firstTime) from "map_radiation";
+import void _HighRadiation(Map& map, bool firstTime) from "map_radiation";
+import void respItem(Map& map, Item@[] containers, int entire, bool deleteOldItems) from "farm_location";
+import void InjureCritter(Critter& cr, uint dmg, uint dmgType, uint8 dir, uint attackerId) from "combat";
+
+// Пиды прототипов атакующих НПЦ
+#define NPCPID_Dog			     (82)						 // Собака
+
+#define WASTE_RESP_TIME            (1000*19*60)
+#define WASTE_LEVEL1_RESP_TIME     (1000*40*60)
+
+void _WasteEnterInit(Map& map, bool firstTime)
+{
+	_MediumRadiation(map, firstTime);
+	map.SetLoopTime(1,Random(WASTE_RESP_TIME-WASTE_RESP_TIME/3, WASTE_RESP_TIME+WASTE_RESP_TIME/3));
+	map.SetEvent(MAP_EVENT_LOOP_1,"_WasteEnterLoop1");
+}
+
+void _WasteLevel1Init(Map& map, bool firstTime)
+{
+	_HighRadiation(map, firstTime);
+	map.SetLoopTime(1,Random(WASTE_LEVEL1_RESP_TIME-WASTE_LEVEL1_RESP_TIME/3, WASTE_LEVEL1_RESP_TIME+WASTE_LEVEL1_RESP_TIME/3));
+	map.SetEvent(MAP_EVENT_LOOP_1,"_WasteLevel1Loop1");
+}
+
+void _WasteEnterLoop1(Map& map)
+{
+	if(Random(0,3)<3) map.SetRain(Random(10,65));
+	Item@[] containers;
+	respItem(map, containers, 130, true);
+	
+	if(Random(0,3) > 2)
+	{
+		int[] params;
+		Critter@[] attackingGroup=addGroupNpc(map, NPCPID_Dog, params, 50, 50, 102, 5, 1, "mob@_TempMobInit");
+		GroupInit(attackingGroup);
+		addEnemyGroupsNpc(map, attackingGroup);
+	}
+}
+
+void _WasteLevel1Loop1(Map& map)
+{
+	Item@[] containers;
+	respItem(map, containers, 131, false);
+}
+
+// Разряд электричеством
+void elektro_atack(Critter& cr, Scenery& trigger, bool entered, uint8 dir)
+{
+	GameVar@ waste_elekro_timeout=GetGlobalVar(GVAR_waste_elekro_timeout);
+	if(uint(waste_elekro_timeout.GetValue())<__FullSecond) return;
+	cr.GetMap().RunEffect(4008,cr.HexX,cr.HexY,0);
+	InjureCritter(cr, Random(700, 900), DAMAGE_ELECTR, 0, 0);
+	cr.GetMap().PlaySound("HFXXXXBH.ACM");
+}
+
+bool s_elektroAtackOn(Critter& cr, Scenery& scen, int skill, Item@ item)
+{
+	if(skill==SK_REPAIR)
+	{
+		GameVar@ waste_elekro_timeout=GetGlobalVar(GVAR_waste_elekro_timeout);
+		if(uint(waste_elekro_timeout.GetValue())>__FullSecond) return false;
+		if(uint(cr.TimeoutBase[TO_SK_REPAIR])>__FullSecond) return false;
+		if(Random(0,200)>cr.SkillBase[SK_REPAIR])
+		{
+			cr.TimeoutBase[TO_SK_REPAIR]=REPAIR_TIMEOUT(cr);
+			return false;
+		}
+		if(not valid(waste_elekro_timeout)) return false;
+		waste_elekro_timeout=__FullSecond+REAL_MINUTE(Random(8,10));
+		cr.SayMsg(SAY_NETMSG,TEXTMSG_GAME,STR_WASTE_START_GENERATOR);
+		cr.TimeoutBase[TO_SK_REPAIR]=REPAIR_TIMEOUT(cr);
+		cr.GetMap().PlaySound("COOLANT.ACM");
+		return true;
+	}
+	
+	if(skill==SK_SCIENCE && cr.SkillBase[SK_SCIENCE]>112)
+	{
+		cr.SayMsg(SAY_NETMSG,TEXTMSG_GAME,STR_WASTE_INFO_GENERATOR);
+		return true;
+	}
+		
+	return false;
+}

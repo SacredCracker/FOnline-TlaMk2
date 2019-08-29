@@ -1,0 +1,352 @@
+// Author: rifleman17
+
+// Существует 5 глобальных переменных, принимающих случайное значение от 0 до 9
+// при гибели одного из пяти лидеров мятежных рейнджеров, глобальной переменной присваивается случайное значение
+// все 5 значений собираются в уникальный код для одного специального сейфа.
+// в инвентарь рейнджеру кладется бадж, на котором написано имя рейнджера + цифра
+
+// раз в полгода происходит автозакрытие и наполнение сейфа
+// при открытии сейфа игрок получает 5000 экспы
+// в сейфе есть
+/*
+импульсная винтовка
+50 сс
+юбилейный выпуск кошачьей лапки
+гаусс пистолет
+100 патронов к гаусс пистолету
+черная боевая броня
+10 психо
+
+переменные
+5112 tbu_10
+5113 tbu_100
+5114 tbu_1000
+5115 tbu_10000
+5116 tbu_100000
+5117 tbu_kill_harmon
+5118 tbu_kill_buffalo
+5119 tbu_kill_mendes
+5120 tbu_kill_burnham
+5121 tbu_kill_ramires
+
+формула для определения кодового числа:
+
+tbu_100000*10000 + tbu_10000* 1000+tbu_1000*100+tbu_100*10+tbu_10
+
+для жетонов используется PID_REBEL_TAG с инфо=2
+PID_REBEL_TAG
+*/
+
+#include "_msgstr.fos"
+#define BADGE_INFO                                          (2)
+#define VAL2_SAFE                                           (6667)
+#define REBELS_SAFE_RESTOCK                                 (60*60*24*Random(80,120)) // раз в сто дней
+const uint[] mainRebels={DIALOG_tbu_ramires, DIALOG_tbu_harmon, DIALOG_tbu_buffalo, DIALOG_tbu_mendes, DIALOG_tbu_burnham};
+
+void CountRebelKill(Critter & player)
+{
+	GameVar @ status=GetLocalVar(LVAR_q_ncr_elize_kill_tbu_rebels, player.Id);
+	GameVar @ counter=GetLocalVar(LVAR_tbu_dead_rebels_counter, player.Id);
+	if(!valid(counter)||!valid(status)) return;
+	if(status.GetValue()<1||status.GetValue()>19||counter.GetValue()>19)
+		return;
+	counter=counter.GetValue()+1;
+	uint kills=counter.GetValue();
+	switch(kills)
+	{
+		case 5:
+		case 10:
+		case 15:
+		case 20:
+			status=kills;
+		default:
+			break;
+	}
+}
+
+// Обработка смерти криттера на картах локации Бункера
+void OnRebelDead(Critter & rebel, Critter @ killer)
+{
+	if(!valid(killer))
+		return;
+	uint dialog=rebel.Stat[ST_DIALOG_ID];
+	// Расчет счетчика убийств для игроков в составе группы убийцы
+	if(dialog==DIALOG_tbu_rebel_ranger||CheckIsMainRebel(dialog))
+	{
+		if(valid(killer))
+		{
+			if(killer.IsPlayer())
+			{
+				Critter @ leader=killer.GetFollowLeader();
+				if(!valid(leader))
+				{
+					@leader=killer;
+				}
+				CountRebelKill(killer);
+				Critter @[] group;
+				if(leader.GetFollowGroup(FIND_LIFE_AND_KO|FIND_ONLY_PLAYERS,group)>0)
+				{
+					for(uint i=0,l=group.length();i<l;i++)
+					{
+						CountRebelKill(group[i]);
+					}
+				}
+			}
+		}
+	}
+	// Добавление баджа и установка глобального кода к сейфу
+	if(!CheckIsMainRebel(dialog)) return;
+	Item @ item;
+	if(rebel.CountItem(PID_REBEL_TAG)>0)
+	{
+		@item=rebel.GetItem(PID_REBEL_TAG, -1);
+	}
+	if(!valid(item))@item=rebel.AddItem(PID_REBEL_TAG, 1);
+
+	if(valid(item))
+	{
+		item.Info=BADGE_INFO;
+		// Для сохранения принадлежности баджа используется Val1
+		uint id=0;
+		uint key=0;
+		switch(dialog)
+		{
+			case DIALOG_tbu_ramires:
+				id=LVAR_tbu_kill_ramires;
+				key=GVAR_tbu_10;
+				break;
+			case DIALOG_tbu_harmon:
+				id=LVAR_tbu_kill_harmon;
+				key=GVAR_tbu_100;
+				break;
+			case DIALOG_tbu_buffalo:
+				id=LVAR_tbu_kill_buffalo;
+				key=GVAR_tbu_1000;
+				break;
+			case DIALOG_tbu_mendes:
+				id=LVAR_tbu_kill_mendes;
+				key=GVAR_tbu_10000;
+				break;
+			case DIALOG_tbu_burnham:
+				id=LVAR_tbu_kill_burnham;
+				key=GVAR_tbu_100000;
+				break;
+			default:
+				break;
+		}
+		uint curCode=Random(0,9);
+		item.SetLexems("$name@msg DLG  "+STR_NPC_NAME (dialog, rebel.GetProtoId())+"@$num"+curCode);
+		GameVar @ code=GetGlobalVar(key);
+		if(valid(code))
+		{
+			code=curCode;
+		}
+		item.Val1=id;
+		item.Update();
+		GameVar @ status=GetLocalVar(id, killer.Id);
+		if(status.GetValue()==0)
+		{
+			status=1;
+		}
+	}
+}
+
+bool d_HasRightBadge(Critter & player, Critter @ npc, int varNum)
+{
+	Item @[] items;
+	if(player.GetItems(-1, items)==0) return false;
+
+	for(uint i=0, l=items.length();i<l;i++)
+	{
+		Item @ item=items[i];
+		if(!valid(item)) continue;
+		if(item.GetProtoId()==PID_REBEL_TAG&&item.Val1==varNum)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+void r_RemoveRightBadge(Critter & player, Critter @ npc, int varNum)
+{
+	Item @[] items;
+	if(player.GetItems(-1, items)==0) return;
+
+	for(uint i=0, l=items.length();i<l;i++)
+	{
+		Item @ item=items[i];
+		if(!valid(item)) continue;
+		if(item.GetProtoId()==PID_REBEL_TAG&&item.Val1==varNum)
+		{
+			DeleteItem(item);
+			return;
+		}
+	}
+}
+
+bool CheckIsMainRebel(uint dialog)
+{
+	for(uint i=0, l=mainRebels.length();i<l;i++)
+	{
+		if(dialog==mainRebels[i]) return true;
+	}
+	return false;
+}
+
+// Выдача квеста игрокам в составе группы с тем, кто берет квест
+//    условия получения квеста :
+// LVAR_q_ncr_elize_slvrs_hunting=7
+// LVAR_q_ncr_elize_kill_tbu_rebels=0
+void r_BeginKillRebelsQuest(Critter & player, Critter @ npc)
+{
+	Critter @ leader;
+	if(not valid(player.GetFollowLeader())) // если у игрока нет лидера
+		@leader=player; // тогда считаем что он и есть лидер
+		else
+		@leader=player.GetFollowLeader(); // иначе берем лидера
+
+	Critter@[] groups;
+	ArrayPushBack(groups,leader);
+	leader.GetFollowGroup(FIND_LIFE,groups);
+
+	Location @ loc=GetLocationByPid(LOCATION_TechBunker, 0);
+	if(!valid(loc)) return;
+	uint locId=loc.Id;
+
+	for(uint i=0,l=groups.length();i<l;i++)
+	{
+		Critter @ cr=groups[i];
+		if(!valid(cr)) continue;
+		if(!cr.IsPlayer()) continue;
+		if(cr.IsDead()) continue;
+
+		GameVar @ qHunt=GetLocalVar(LVAR_q_ncr_elize_slvrs_hunting, cr.Id);
+		if(!valid(qHunt)) continue;
+		if(qHunt.GetValue()!=7) continue;
+
+		GameVar @ status=GetLocalVar(LVAR_q_ncr_elize_kill_tbu_rebels, cr.Id);
+		if(!valid(status)) continue;
+		if(status.GetValue()>0) continue;
+
+		status=1;
+
+		if(!cr.IsKnownLoc(true, locId))
+		{
+			cr.SetKnownLoc(true, locId);
+			cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_GET_COORDS_HUB);
+		}
+	}
+}
+
+
+void r_ShowLocation(Critter & cr, Critter @ npc)
+{
+
+	Location @ loc=GetLocationByPid(LOCATION_TechBunker, 0);
+	if(!valid(loc)) return;
+	uint locId=loc.Id;
+
+	if(!cr.IsKnownLoc(true, locId))
+	{
+		cr.SetKnownLoc(true, locId);
+		cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_GET_COORDS_HUB);
+	}
+
+}
+
+// Сейф рейнджеров с кодовым замком
+// Расчет текущего кода сейфа
+string GetRebelsSafeCode()
+{
+	string code="";
+	for(int i=GVAR_tbu_10;i<=GVAR_tbu_100000;i++)
+	{
+		GameVar @ digit=GetGlobalVar(i);
+		if(!valid(digit)) continue;
+
+		code=digit.GetValue()+code;
+	}
+	return code;
+}
+
+// необходимо использовать электронные отмычки
+void _RebelsSafeInit(Item& safe, bool firstTime)
+{
+	safe.SetEvent(ITEM_EVENT_SKILL,"_SafeSkill");
+	safe.SetEvent(ITEM_EVENT_USE_ON_ME,"_SafeUseOnMe");
+	safe.Val2=VAL2_SAFE;
+	safe.Update();
+}
+
+bool _SafeUseOnMe(Item& item, Critter& cr, Item@ usedItem)
+{
+	if(FLAG(item.LockerCondition,LOCKER_ISOPEN))
+	{
+		return false;
+	}
+	if(!valid(usedItem)) return false;
+	uint pid=usedItem.GetProtoId();
+	if(pid!=PID_ELECTRONIC_LOCKPICKS&&pid!=PID_ELEC_LOCKPICK_MKII) return false;
+
+	cr.ShowScreen(SCREEN_SAY, 0 ,"answer_Safe");
+
+	cr.Say(SAY_SAY_TITLE,"Введите код");
+	cr.Say(SAY_SAY_TEXT,"#####");
+	return true;
+}
+
+void answer_Safe(Critter& player, uint answerI, string& answerS)
+{
+	string codeReal=GetRebelsSafeCode();
+	if(answerS!=codeReal||codeReal=="")
+	{
+		player.Say(SAY_NETMSG,"Вы ошиблись при наборе кода доступа. Сейф закрыт.");
+	}else{
+		player.Say(SAY_NETMSG,"Код верный. Сейф открыт.");
+
+		Map @ map=player.GetMap();
+		if(!valid(map)) return;
+
+		Item @[] items;
+		if(map.GetItems(PID_FLOOR_SAFE, items)>0)
+		{
+			for(uint i=0,l=items.length();i<l;i++)
+			{
+				Item @ safe=items[i];
+				if(!valid(safe)) continue;
+				if(safe.Val2==VAL2_SAFE)
+				{
+					FillRebelsSafe(safe);
+					safe.LockerOpen();
+					player.ShowContainer(null,safe,TRANSFER_HEX_CONT_UP);
+					return;
+				}
+			}
+		}
+	}
+}
+
+void FillRebelsSafe(Item & safe)
+{
+	if(uint(safe.Val3)>__FullSecond) return;
+	safe.Val3=__FullSecond +REBELS_SAFE_RESTOCK;
+	safe.Update();
+	if(!valid(safe.GetItem(PID_YK42B_PULSE_RIFLE,0)))safe.AddItem(PID_YK42B_PULSE_RIFLE,1,0);
+	if(!valid(safe.GetItem(PID_PK12_GAUSS_PISTOL,0)))safe.AddItem(PID_PK12_GAUSS_PISTOL,1,0);
+	if(!valid(safe.GetItem(PID_2MM_EC_AMMO,0)))safe.AddItem(PID_2MM_EC_AMMO,100,0);
+	if(!valid(safe.GetItem(PID_CATS_PAW_ISSUE_5,0)))safe.AddItem(PID_CATS_PAW_ISSUE_5,1,0);
+	if(!valid(safe.GetItem(PID_SUPER_STIMPAK,0)))safe.AddItem(PID_SUPER_STIMPAK,50,0);
+	if(!valid(safe.GetItem(PID_PSYCHO,0)))safe.AddItem(PID_PSYCHO,25,0);
+	if(!valid(safe.GetItem(PID_BLACK_COMBAT_ARMOR,0)))safe.AddItem(PID_BLACK_COMBAT_ARMOR,1,0);
+}
+
+bool _SafeSkill(Item& safe, Critter& cr, int skill)
+{
+	if(FLAG(safe.LockerCondition,LOCKER_ISOPEN))
+	{
+		return false;
+	}
+	cr.Say(SAY_NETMSG, "Замок сейфа слишком сложен. Здесь не обойтись без электронных отмычек");
+	return true;
+}

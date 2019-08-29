@@ -1,0 +1,286 @@
+[comment]
+после этого должны быть разговоры с горожанками
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 0 #
+5 1010 D _param p ST_INTELLECT < 4 #
+2 1020 D _param p ST_INTELLECT } 4 @
+2 2000 None 0 #
+3 2010 #
+0 2020 #
+6 2030 D _param p REPUTATION_VAULT_CITY > 9 D _param p SK_SPEECH > 79 D _param p ST_GENDER = 0 D _param p ST_CHARISMA > 3 D _var p q_vc_troy_fresh_blood = 0 D _script dialog@d_TimeoutOk 0  D _param p ST_INTELLECT > 4 #
+6 2040 D _param p REPUTATION_VAULT_CITY > 9 D _param p SK_SPEECH > 79 D _param p ST_GENDER = 0 D _param p ST_ENDURANCE > 3 D _var p q_vc_troy_fresh_blood = 0 D _script dialog@d_TimeoutOk 0  D _param p ST_CHARISMA < 4 D _param p ST_INTELLECT > 4 #
+13 2050 D _var p q_vc_troy_fresh_blood = 3 D _script ncr_ratch@d_RatchTimeOutCheck 1 6160 #
+12 2060 D _var p q_vc_troy_fresh_blood = 2 #
+18 2070 D _var p gcity_citizen > 0 D _var p vc_black_hired = 0 D _var p q_vc_black_escort = 0 D _script map_geck_city@d_CanHireNpc 3 267 1 18 D _param p ST_CHARISMA > 1 #
+22 2080 D _var p q_vc_black_escort = 1 D _script dialog@d_TimeoutOk 0  D _var p gcity_citizen > 0 D _var p vc_black_hired = 0 D _script map_geck_city@d_CanHireNpc 3 267 1 18 #
+24 2090 D _script dialog@d_NotTimeoutOk 0  D _var p q_vc_black_escort = 1 #
+25 2100 D _script dialog@d_TimeoutOk 0  D _var p q_vc_black_escort = 1 D _var p gcity_citizen > 0 D _var p vc_black_hired = 1 D _script map_geck_city@d_CanHireNpc 3 267 1 18 #
+26 2110 D _var p vc_black_hired = 2 #
+15 2120 D _var p vc_guard_rank > 0 #
+30 2130 D _var p q_redd_doc_radio > 0 D _var p q_redd_doc_radio < 5 D _var p q_redd_doc_radio_troy = 1 @
+3 3000 None 0 #
+4 3010 @
+4 4000 None 0 #
+0 4010 @
+5 5000 None 0 @
+6 6000 None 0 #
+7 6010 #
+0 6020 @
+7 7000 None 0 #
+8 7010 @
+8 8000 None 0 #
+9 8010 #
+0 8020 @
+9 9000 None 0 #
+10 9010 #
+0 9020 @
+10 10000 None 0 #
+11 10010 D _var p q_vc_troy_fresh_blood = 0 R _var p q_vc_troy_fresh_blood = 1 #
+0 10020 R _script dialog@r_SetUniqTO 1 86400 @
+11 11000 None 0 #
+0 11010 @
+12 12000 None 0 #
+0 12010 D _var p q_vc_troy_fresh_blood = 2 R _param p REPUTATION_VAULT_CITY + 6 R _param p ST_EXPERIENCE + 3500 R _item p PID_BOTTLE_CAPS + 1500 R _item p PID_SUPER_STIMPAK + 3 R _item p PID_PARAMEDICS_BAG + 1 R _script ncr_ratch@r_RatchTimeOutSet 2 6160 388800 R _var p q_vc_troy_fresh_blood = 3 @
+13 13000 None 0 #
+14 13010 D _var p q_vc_troy_fresh_blood = 3 R _var p q_vc_troy_fresh_blood = 4 R _param p ST_EXPERIENCE + 14000 R _param p REPUTATION_VAULT_CITY + 3 #
+14 13020 D _var p q_vc_troy_fresh_blood = 3 R _var p q_vc_troy_fresh_blood = 5 R _param p ST_EXPERIENCE + 14000 R _param p REPUTATION_VAULT_CITY + 3 #
+14 13030 D _var p q_vc_troy_fresh_blood = 3 R _var p q_vc_troy_fresh_blood = 6 R _param p ST_EXPERIENCE + 14000 R _param p REPUTATION_VAULT_CITY + 3 #
+14 13040 D _var p q_vc_troy_fresh_blood = 3 R _var p q_vc_troy_fresh_blood = 7 R _param p ST_EXPERIENCE + 14000 R _param p REPUTATION_VAULT_CITY + 3 #
+14 13050 D _var p q_vc_troy_fresh_blood = 3 R _var p q_vc_troy_fresh_blood = 8 R _param p ST_EXPERIENCE + 14000 R _param p REPUTATION_VAULT_CITY + 3 @
+14 14000 None 0 #
+0 14010 R _item p PID_RED_CONDOM + 2 @
+15 15000 None 0 #
+16 15010 D _script dialog@d_TimeoutOk 0  #
+17 15020 D _script dialog@d_NotTimeoutOk 0  #
+0 15030 #
+27 15040 D _var p vc_guard_rank = 4 @
+16 16000 None 0 #
+0 16010 D _var p vc_guard_rank = 1 R _script dialog@r_SetUniqTO 1 10080 R _item p PID_STIMPAK + 5 #
+15 16020 D _var p vc_guard_rank = 2 R _script dialog@r_SetUniqTO 1 10080 R _item p PID_SUPER_STIMPAK + 1 #
+15 16030 D _var p vc_guard_rank = 3 R _script dialog@r_SetUniqTO 1 10080 R _item p PID_SUPER_STIMPAK + 2 #
+15 16040 D _var p vc_guard_rank = 4 R _script dialog@r_SetUniqTO 1 10080 R _item p PID_SUPER_STIMPAK + 3 @
+17 17000 None 0 #
+0 17010 @
+18 18000 None 0 #
+19 18010 #
+0 18020 @
+19 19000 None 0 #
+20 19010 @
+20 20000 None 0 #
+21 20010 @
+21 21000 None 0 #
+0 21010 D _var p q_vc_black_escort = 0 R _var p q_vc_black_escort = 1 R _script dialog@r_SetUniqTO 1 1440 #
+0 21020 @
+22 22000 None 0 #
+0 22010 #
+23 22020 D _item p PID_BOTTLE_CAPS } 12000 D _var p vc_black_hired = 0 R _item p PID_BOTTLE_CAPS - 12000 R _var p q_vc_black_escort = 2 @
+23 23000 None 0 #
+0 23010 @
+24 24000 None 0 #
+0 24010 @
+25 25000 None 0 #
+0 25010 @
+26 26000 None 0 #
+0 26010 @
+27 27000 None 0 #
+0 27010 R _script dialog@r_ToHeal 0  R _param p DAMAGE_EYE = 0 R _param p DAMAGE_RIGHT_ARM = 0 R _param p DAMAGE_LEFT_ARM = 0 R _param p DAMAGE_RIGHT_LEG = 0 R _param p DAMAGE_LEFT_LEG = 0 R _script dialog@r_FadeOut 1 0 R _script dialog@r_SayMessageDelayed 3 1 40 1 @
+30 28000 None 0 #
+31 28010 D _script redding_common@d_CheckRadio 0  D _item p PID_RADIO } 1 R _item p PID_RADIO - 1 R _param p ST_EXPERIENCE + 1500 R _var p q_redd_doc_radio_troy = 0 R _var p q_redd_doc_radio + 1 @
+31 29000 None 0 #
+0 29010 D _var p q_redd_doc_radio = 5 R _script redding_common@r_Broadcast 0  #
+0 29020 D _var p q_redd_doc_radio ! 5 &
+
+[russ]
+{100}{}{Доктор Трой}
+{200}{}{Вы видите человека изрядного возраста в белом лабораторном халате. Похоже, он очень занят.}
+{210}{}{Вы видите доктора Троя. Именно так должен выглядеть настоящий врач.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{дурак}
+{1020}{}{-}
+{2000}{}{Здравствуйте, я доктор Трой. Чем я могу вам помочь?}
+{2010}{}{Чем вы тут занимаетесь?}
+{2020}{}{Просто иду мимо, спасибо.}
+{2030}{}{Доктор, вы так на меня смотрите... В чем дело?}
+{2040}{}{Доктор, вы так на меня смотрите... В чем дело?}
+{2050}{}{Трой, помнится, 9 месяцев назад мы решали одну "демографическую проблему"...}
+{2060}{}{Доктор, это оказалось не так уж и страшно. Что там говорилось о награде?}
+{2070}{}{Доктор, у меня к вам одно дело. Только вы можете помочь.}
+{2080}{}{Я бы хотел@sex@|||а| вернуться к нашему разговоре о пожертвовании...}
+{2090}{}{Я бы хотел@sex@|||а| вернуться к нашему разговоре о пожертвовании...}
+{2100}{}{Я бы хотел@sex@|||а| вернуться к нашему разговоре о пожертвовании...}
+{2110}{}{Трой, я не могу найти доктора Блэка, вы не знаете, где он сейчас?}
+{2120}{}{Доктор Трой, я по вопросам снабжения.}
+{2130}{}{Доктор, у меня для вас сообщение от Безболезненного Джонсона.}
+{3000}{}{Я главный врач Города Убежища. Я забочусь обо всех гражданах Города Убежища и делаю все, что от меня зависит, чтобы все были здоровы.}
+{3010}{}{Понятно. Тогда, возможно, мы поговорим позже.}
+{4000}{}{Если вам понадобятся мои услуги, вы всегда можете найти меня здесь.}
+{4010}{}{Спасибо. До свидания.}
+{5000}{}{Ути-пути.@@Мило, и кто тебя сюда пустил?@@Ладно, давай проваливай.@@Мне позвать охрану?@@Хмм. А ты бы сгодился для опытов.}
+{6000}{}{Не могли бы вы уделить мне немного времени? Есть важный разговор.}
+{6010}{}{Да, конечно. Слушаю Вас.}
+{6020}{}{Некогда мне, своих дел хватает.[выход]}
+{7000}{}{Вы неплохо зарекомендовали себя в нашем городе, и выглядите достаточно разумным человеком, поэтому надеюсь на ваше понимание.}
+{7010}{}{Продолжайте, пожалуйста.}
+{8000}{}{Как вам, может быть, известно, долгое время население города увеличивалось путем искусственного оплодотворения. Однако, результаты последних тестов генного материала выглядят неутешительно. Мы не знаем пока, в чём дело, но этот способ стал давать сбои. Компьютерное моделирование показало, что дальнейшее применение этой технологии приведет к неминуемому вырождению. Руководство города приняло решение…}
+{8010}{}{Я слежу за вашей мыслью…}
+{8020}{}{Ничего не понял. Я и слов-то таких не знаю. Пойду я лучше....}
+{9000}{}{Необходимо провести эксперимент по прямому оплодотворению. Но, видите ли, общество у нас закрытое, и многие люди генетически являются родственниками. Нам нужен приток свежей крови… эээ… человек абсолютно посторонний, который бы принял участие в эксперименте и оплодотворил традиционным способом….}
+{9010}{}{Стоп-стоп-стоп. Я вас правильно понял? ВЫ - ПРЕДЛАГАЕТЕ- МНЕ - ОТДРЮЧИТЬ - ГОРОЖАНКУ?}
+{9020}{}{Эксперименты какие-то.Что эта фигня значит? До свидания.}
+{10000}{}{[Подпрыгивает на месте] Святый боже! Я бы не стал так грубо выражаться, но суть вы ухватили. И не горожанку. Трёх горожанок.}
+{10010}{}{[Приплясывая в нетерпении] Сколько я должен заплатить, доктор?}
+{10020}{}{И не думайте! Я вам не племенной брамин! Ни единого моего сперматозоида вам не видать для ваших дурацких экспериментов!}
+{11000}{}{Что вы, это жестокий эксперимент, на который мы идём только ради нашего будущего. Это мы вам заплатим за моральный ущерб и обеспечим вас медикаментами.
+Разъяснительную работу с населением мы провели, препятствий быть не должно. Можете приступать.}
+{11010}{}{Немедленно приступаю [выход]}
+{12000}{}{Угу, отлично. Я уже в курсе. Мы будем тщательно наблюдать за здоровьем этих женщин и развитием эмбрионов. Можете зайти через девять месяцев, узнать о малышах. Ну а это ваша награда. Берите, заслужили.}
+{12010}{}{Был рад помочь.}
+{13000}{}{А, вот и вы. Что ж, поздравляю. Родились отличные крепкие малыши. Гм. Все мальчики. Мдя… и все почему-то рыжие… Ну ладно, не важно. Как отец, вы могли бы выбрать для них имена.}
+{13010}{}{Назовите их Непоседа, Мякиш и Нетак.}
+{13020}{}{Назовите их Леголас, Гимли и Арагорн.}
+{13030}{}{Назовите их Незнайка, Пончик и Сиропчик.}
+{13040}{}{Назовите их Тир, Вир и Мотсогнир.}
+{13050}{}{Назовите их Битард, Анон и Семен.}
+{14000}{}{И дёрнул меня черт… Ладно, как скажете. Вот, возьмите от меня личный презент, может пригодится.}
+{14010}{}{[Выход]}
+{15000}{}{В чем дело?@@Всегда рад помочь нашим славным гвардейцам.@@Что случилось?}
+{15010}{}{Меня зовут @pname@. @sex@|Прибыл||Прибыла| за получением медицинского довольствия по службе!}
+{15020}{}{Меня зовут @pname@. @sex@|Прибыл||Прибыла| за получением медицинского довольствия по службе!}
+{15030}{}{Ничего сегодня. }
+{15040}{}{Доктор, мне нужна медицинская помощь...}
+{16000}{}{Да, ты есть в списке. Получи, распишись…}
+{16010}{}{Благодарю, доктор. [Выход]}
+{16020}{}{Благодарю, доктор. [Выход]}
+{16030}{}{Благодарю, доктор. [Выход]}
+{16040}{}{Благодарю, доктор. [Выход]}
+{17000}{}{Рано прибыли. Зайдите позже, ваша очередь не подошла.}
+{17010}{}{Зайду позже.[Выход]}
+{18000}{}{Какое именно? Давайте, поконкретнее...}
+{18010}{}{Видите ли, мне нужен врач.}
+{18020}{}{Мы еще вернемся к этому разговору.}
+{19000}{}{Врач? Ну я врач. А то ты не знаешь.}
+{19010}{}{Нет. Я недостаточно ясно излагаю свои мысли, и вы меня не поняли. Нужен врач на постоянную работу. Не здесь, а совсем в другом месте.}
+{20000}{}{Ах, вон как. Ну, это довольно трудно. Хороших врачей немого. И они все уже при деле, работают где-нибудь.}
+{20010}{}{Доктор, помогите нам пожалуйста. Мы готовы сделать пожертвования в фонд медицинских исследований...По такому случаю.}
+{21000}{}{Ну хорошо. Я постараюсь вам помочь. Был у меня ученик... Весьма достойный человек. Я попробую с ним поговорить. Зайдите через день. Кстати, если пожертвуете в фонд научных исследований 12000, будет очень неплохо. }
+{21010}{}{Очень хорошо. Завтра зайду.}
+{21020}{}{Это слишком большая сумма для нас.}
+{22000}{}{А, это вы. Деньги принесли?}
+{22010}{}{Ой, нет. [Выход]}
+{22020}{}{Конечно, как договаривались.}
+{23000}{}{Хорошо. Вот, разрешите представить - доктор Блэк! Отличный специалист. Поговорите с ним. Если устроят условия, он готов подумать о переезде.}
+{23010}{}{Спасибо доктор, очень выручили.}
+{24000}{}{Не спешите так, @pname@. Мне нужно какое-то время, я не успел обсудить эту проблему с нужным человеком. Приходите завтра.}
+{24010}{}{Хорошо. До встречи.}
+{25000}{}{Увы. Человек, которого я собирался вам рекомендовать, уже занят. Он нашел другую работу. Вы опоздали, мой друг.}
+{25010}{}{Очень жаль.}
+{26000}{}{Должен быть где-то здесь... Если вы не можете его найти, попробуйте заглянуть завтра. Я передам, что вы его искали.}
+{26010}{}{Благодарю, док.}
+{27000}{}{Лейтенант? Разумеется, я поставлю вас на ноги. Прилягте здесь...}
+{27010}{}{Хорошо.}
+{28000}{}{Неожиданно. Что Джонсон хотел передать?}
+{28010}{}{Он попросил вручить вам это. [Отдать рацию] Собирается проводить какие-то консультации на канале 1717...}
+{29000}{}{Консультации по радио? Интересная мысль. Спасибо.}
+{29010}{}{Мне пора, прощайте, док!}
+{29020}{}{Мне пора, прощайте, док!}
+{100000001}{}{Вот и все. Передавайте привет Хартманну.}
+
+[engl]
+{100}{}{the Doctor of Troys}
+{200}{}{you see the person of fair age in a white laboratory dressing gown. It seems that it is very occupied.}
+{210}{}{you see the doctor Troy. So the present doctor should look.}
+{1000}{}{Predialogue installations}
+{1010}{}{the fool}
+{1020}{}{-}
+{2000}{}{Hello, I the doctor of Troys. Than I can help you?}
+{2010}{}{Than you here are engaged?}
+{2020}{}{Simply I go by, thanks.}
+{2030}{}{the Doctor, you so look at me... What is the matter?}
+{2040}{}{the Doctor, you so look at me... What is the matter?}
+{2050}{}{Troys, it is remembered, 9 months ago we solved one "a demographic problem"...}
+{2060}{}{the Doctor, it has appeared not too terribly. What there it was told about an award?}
+{2070}{}{the Doctor, at me to you one business. Only you can help.}
+{2080}{}{I хотел@sex ||| and | to return to ours conversation on a donation...}
+{2090}{}{I хотел@sex ||| and | to return to ours conversation on a donation...}
+{2100}{}{I хотел@sex ||| and | to return to ours conversation on a donation...}
+{2110}{}{Troys, I cannot find doctor Bleka, you do not know, where it now?}
+{2120}{}{the Doctor of Troys, I concerning supply.}
+{2130}{}{the Doctor, at me for you the message from Painless Johnson.}
+{3000}{}{I the head physician of the City of the Refuge. I care of all citizens of the Refuge and I do everything that on me depends, that all were healthy.}
+{3010}{}{it is clear. Then, probably, we will talk later.}
+{4000}{}{If my services will be necessary for you, you can always find me here.}
+{4010}{}{Thanks. Good-bye.}
+{5000}{}{Uti-ways. @@ it is lovely, and who here has started up you? @@ it is fine, give ruin. @@ to me to call protection? @@ Hmm. And you would fit for experiences.}
+{6000}{}{you could not give me a few time? There is an important conversation.}
+{6010}{}{Yes, certainly. I listen to you.}
+{6020}{}{Have I, the affairs suffice. [An exit]}
+{7000}{}{you have not bad proved in our city, and look reasonable enough person, therefore I hope for your understanding.}
+{7010}{}{Continue, please.}
+{8000}{}{As you, maybe, know, long time the city population increased by artificial insemination. However, results of last tests of a gene material look unfavourably. We do not know while in what business, but this way began to glitch. Computer modelling has shown that the further application of this technology will lead to inevitable degeneration. The management of a city has made the decision …}
+{8010}{}{I watch your thought …}
+{8020}{}{has understood Nothing. I and words such do not know. I will go better....}
+{9000}{}{It is necessary to make experiment on direct fertilisation. But, you see a society at us closed, and many people genetically are relatives. Inflow of fresh blood … eee … the person absolutely extraneous which would take part in experiment is necessary to us and has impregnated in the traditional way ….}
+{9010}{}{Stop-stop stop. I have correctly understood you? YOU - OFFER - me - OTDRJUCHIT - the TOWNSWOMAN?}
+{9020}{}{Experiments any. What does this hogwash mean? Good-bye.}
+{10000}{}{[Svjatyj my God Jumps up on a place]! I would not began so roughly to be expressed, but you have seized an essence. And not the townswoman. Three townswomen.}
+{10010}{}{[Dancing in impatience] How many I should pay, the doctor?}
+{10020}{}{Also do not think! I to you not breeding bramin! Uniform mine spermatozoida to you not to see for your foolish experiments!}
+{11000}{}{That you, is cruel experiment on which we go only for the sake of our future. We to you will pay it for mental cruelty and we will provide you with medicines.
+With the population we have spent explanatory work, obstacles should not be. Can start.}
+{11010}{}{Immediately I start [an exit]}
+{12000}{}{Ugu, perfectly. I already in a course. We will carefully observe of health of these women and development of embryos. Can come in nine months, learn about kids. Well and it is your award. Take, have deserved.}
+{12010}{}{Was glad to help.}
+{13000}{}{And, here and you. Well, I congratulate. Excellent strong kids were born. H'm. All boys. Mdja … and all for some reason red … Well is fine, it is not important. As the father, you could choose for them names.}
+{13010}{}{Name their Fidget, the Crumb and Netak.}
+{13020}{}{Name their Legolas, Gimli and Aragorn.}
+{13030}{}{Name their Neznajka, the Doughnut and Siropchik.}
+{13040}{}{Name their Shooting gallery, Vir and Motsognir.}
+{13050}{}{Name their Bitard, Anon and Simeon.}
+{14000}{}{Also has pulled me of lines … All right as will tell. Here, take from me a personal gift, can it is useful.}
+{14010}{}{[the Exit]}
+{15000}{}{What is the matter? @@ is Always glad to help our nice guardsmen. @@ that happens?}
+{15010}{}{My name is @pname. @sex | Has arrived || Has arrived | behind reception of a medical contentment on service!}
+{15020}{}{My name is @pname. @sex | Has arrived || Has arrived | behind reception of a medical contentment on service!}
+{15030}{}{Anything today.}
+{15040}{}{the Doctor, medical aid is necessary to me...}
+{16000}{}{Yes, you are in the list. Receive, undersign …}
+{16010}{}{I Thank, the doctor. [An exit]}
+{16020}{}{I Thank, the doctor. [An exit]}
+{16030}{}{I Thank, the doctor. [An exit]}
+{16040}{}{I Thank, the doctor. [An exit]}
+{17000}{}{profits early. Come later, your turn has not approached.}
+{17010}{}{I Will come later. [The Exit]}
+{18000}{}{Which? Give, more particularly...}
+{18010}{}{You see the doctor is necessary to me.}
+{18020}{}{We still will return to this conversation.}
+{19000}{}{the Doctor? Well I the doctor. And you do not know that.}
+{19010}{}{No. I insufficiently clearly state the thoughts, and you have not understood me. The doctor for a permanent job is necessary. Not here, and absolutely in other place.}
+{20000}{}{Ah, as. Well, it is difficult enough. Good doctors of the mute. And all of them already at business, work somewhere.}
+{20010}{}{the Doctor, help us please. We are ready to make donations in fund of medical researches... In view of that.}
+{21000}{}{Well. I will try to help you. There was at me a pupil... Rather worthy person. I will try to talk to it. Come every other day. By the way, if will offer in fund of scientific researches 12000, it will be very quite good.}
+{21010}{}{it is very good. Tomorrow I will come.}
+{21020}{}{It too a great sum for us.}
+{22000}{}{And, it you. Money has brought?}
+{22010}{}{Oh, no. [The Exit]}
+{22020}{}{Certainly as agreed.}
+{23000}{}{it is good. Here, allow to present - doctor Blek! The excellent expert. Talk to it. If will arrange conditions, he is ready to think of moving.}
+{23010}{}{Thanks the doctor, have very much gained.}
+{24000}{}{do not hasten so, @pname. I need any time, I have not had time to discuss this problem with the necessary person. Come tomorrow.}
+{24010}{}{it is good. To a meeting.}
+{25000}{}{Alas. The person whom I was going to recommend you, is already occupied. It has found other work. You were late, my friend.}
+{25010}{}{It is a pity.}
+{26000}{}{Should be somewhere here... If you cannot find it, try to glance tomorrow. I will tell that you searched for it.}
+{26010}{}{I Thank, dock.}
+{27000}{}{the Lieutenant? Certainly, I will put you on feet. Lie down here...}
+{27010}{}{it is good.}
+{28000}{}{it is unexpected. What did Johnson want to transfer?}
+{28010}{}{He has asked to hand over you it. [To give a portable radio set] Is going to carry out any consultations on the channel 1717...}
+{29000}{}{Consultations by radio? Interesting thought. Thanks.}
+{29010}{}{it is time To me, farewell, dock!}
+{29020}{}{it is time To me, farewell, dock!}
+{100000001}{}{That's all. Give best regards to Hartmannu.}

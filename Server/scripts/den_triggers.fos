@@ -1,0 +1,10 @@
+// Author: cvet
+#include "_macros.fos"
+
+#define MODULE_NAME                 "den_triggers"
+#define STR_MSG				(1400)
+
+void t_BarBekkyBoys(Critter& cr, Scenery& trigger, bool entered, uint dir)
+{
+	if(entered && Random(0,50)==0) cr.SayMsg(SAY_NETMSG,TEXTMSG_TEXT,STR_MSG);
+}

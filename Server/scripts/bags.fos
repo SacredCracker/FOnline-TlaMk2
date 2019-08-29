@@ -1,0 +1,100 @@
+#include "_macros.fos"
+#include "_msgstr.fos"
+
+#define PID_BAG1 (46)
+#define PID_BAG2 (90)
+
+
+void _BagInit(Item& item, bool firstTime)
+{
+	item.SetEvent(ITEM_EVENT_USE ,"_BagUse"); 
+	
+
+}
+
+
+bool _BagUse(Item& item, Critter& crit, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+	if (!valid(item) || !valid(crit)) return false;
+	if(item.GetProtoId()!=PID_BAG1 && item.GetProtoId()!=PID_BAG2) return false;
+	
+	 Map @ map=crit.GetMap();  // get current map 
+	if (!valid(map)) return false; // check if our map is ok
+	
+	if(item.Accessory==ACCESSORY_CRITTER)	
+	{
+		MoveItem  (item,  1,  map, crit.HexX,  crit.HexY) ;
+		crit.ShowContainer (null,item, TRANSFER_FAR_CONT);
+	}		
+	
+	item.Update();
+	
+	return true;
+}
+
+
+
+bool BagPick(Critter& crit,Item@ item)
+{
+	
+	if (!valid(item) || !valid(crit)) return false;
+	if(item.GetProtoId()!=PID_BAG1 && item.GetProtoId()!=PID_BAG2) return false;
+	
+	if(item.Accessory!=ACCESSORY_HEX) return false;
+	
+	int freeWeight=crit.Stat[ST_CARRY_WEIGHT]-crit.ItemsWeight();	
+	int freeWeightCont=0;
+	
+	if(item.GetProtoId()==PID_BAG1) freeWeightCont=15000;
+	if(item.GetProtoId()==PID_BAG2) freeWeightCont=30000;
+	
+	if(crit.CountItem(PID_BAG1)>0 || crit.CountItem(PID_BAG2)>0) 
+	{
+		crit.SayMsg(SAY_NETMSG,TEXTMSG_GAME,STR_OVERWEIGHT);
+		return true;
+	}
+	
+	
+	Item@[] items;
+	item.GetItems(0,items); 
+	 
+	 for(int i=0,iMax=items.length();i<iMax;i++)
+		if(valid(items[i]))
+			freeWeightCont-=int(items[i].Proto.Weight)* int(items[i].GetCount());
+
+   	 
+	
+	
+	if(freeWeightCont<0)
+	{
+					crit.ShowContainer (null,item, TRANSFER_FAR_CONT);
+					crit.SayMsg(SAY_NETMSG,TEXTMSG_GAME,STR_OVERWEIGHT);
+					return true;
+	}
+	
+	
+	if(freeWeight>=int(item.Proto.Weight))
+	{
+				MoveItem(item,0,crit);
+				return true;
+	}
+		else 
+			crit.SayMsg(SAY_NETMSG,TEXTMSG_GAME,STR_OVERWEIGHT);
+				
+	
+		
+	
+	
+	return false;
+
+}
+
+
+
+
+
+
+
+
+
+

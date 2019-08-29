@@ -1,0 +1,118 @@
+// Скрипт санитара
+// TLA mk2 team
+
+#include "_macros.fos"
+
+// Базовая пауза между приростом ХП.
+#define HEALING_DURATION_SUB        (20)
+
+#define STR_HEALING_GAIN            (12810)
+#define STR_HEALING_PROCESS         (12811)
+#define STR_HEALING_REDUCE          (12812)
+#define STR_HEALING_FREE            (12813)
+
+// Базовое количество приростов ХП.
+#define COUNT_LEVEL                 (10)
+
+
+void Healing(Critter& cr, Critter& tr) // Export
+{
+	//Log("Stat[ST_MAX_LIFE]="+tr.Stat[ST_MAX_LIFE]);
+	//Log("Stat[ST_CURRENT_HP]="+tr.Stat[ST_CURRENT_HP]);
+	bool isMedic=(cr.Perk[PE_MEDIC]!=0);
+	bool isPlayer=cr.IsPlayer();
+	bool is_self=(tr.Id==cr.Id);
+
+	int sk=cr.Skill[SK_FIRST_AID]+cr.Skill[SK_FIRST_AID]*25/100;
+	int percentFirstHeal=20;
+	int firstHeal=1;
+	uint8 mode=0;
+	uint16 activePid=cr.GetSlotProto(SLOT_HAND1,mode).ProtoId;
+	if(activePid==PID_FIRST_AID_KIT)
+	{
+		if(isMedic) sk+=45;
+			else sk+=25;
+		percentFirstHeal+=10;
+		if(Random(0,30)==0) cr.DeleteItem(PID_FIRST_AID_KIT,1);
+	}
+	else if(isMedic)
+	{
+		if(cr.Perk[PE_MEDIC]!=0) sk+=70; 
+			else sk+=50;
+		percentFirstHeal+=20;
+		if(Random(0,30)==0) cr.DeleteItem(PID_FIELD_MEDIC_KIT,1);
+	}
+		
+	int mod=11-cr.Stat[ST_LUCK];
+	mod=CLAMP(mod,1,10);
+	int heal=Random(sk/mod,sk);
+	if(cr.Perk[PE_VAMPIRE_REGENERATION] > 0) heal+=12;
+	//Если у игрока есть перк HEALER, то добавить 30-40 регенерирующихся ХП, за разряд
+	if(cr.Perk[PE_HEALER]>0)heal+=Random(30,40)*cr.Perk[PE_HEALER];
+	else if(heal<1)	heal=1;
+
+	firstHeal+=heal*percentFirstHeal/100;
+	
+	int maxHealing=tr.Stat[ST_MAX_LIFE]-tr.StatBase[ST_CURRENT_HP];
+	
+	if(isPlayer)
+	{
+		GameVar@ firstAidCount=::GetUnicumVar(UVAR_first_aid_count,cr.Id,tr.Id);
+		if(firstAidCount<16) cr.StatBase[ST_EXPERIENCE]+=MIN(3*cr.Skill[SK_FIRST_AID],maxHealing*3);
+		firstAidCount+=1;
+		cr.TimeoutBase[TO_SK_FIRST_AID]=cr.Timeout[TO_SK_FIRST_AID]+FIRST_AID_TIMEOUT(cr);
+		cr.AddScore(SCORE_DOCTOR,1);
+	}
+	
+	uint[] indexes;
+	uint[] durations;
+	uint[] rate;
+	tr.StatBase[ST_HEALING_LEVEL]+=heal;
+	//Log("tr.StatBase[ST_HEALING_LEVEL]="+tr.StatBase[ST_HEALING_LEVEL]);	
+	uint newRate=tr.StatBase[ST_HEALING_LEVEL]/COUNT_LEVEL;
+	if(tr.StatBase[ST_HEALING_LEVEL]>maxHealing) 
+		tr.StatBase[ST_HEALING_LEVEL]=maxHealing+maxHealing/4;
+	//tr.StatBase[ST_HEALING_LEVEL]=CLAMP(tr.StatBase[ST_HEALING_LEVEL],0,2000);
+	tr.StatBase[ST_HEALING_LEVEL]-=firstHeal;	
+	
+	tr.StatBase[ST_CURRENT_HP]+=firstHeal;
+	tr.Say(SAY_NETMSG,"Вам стало немного легче +"+firstHeal);
+		
+	//Log("ST_HEALING_LEVEL: " + tr.StatBase[ST_HEALING_LEVEL]);
+	if(newRate<1) newRate=1;
+	//Log("newRate: " + newRate);
+	if(tr.GetTimeEvents(CTE_HEALING,indexes,durations,rate)!=0) tr.EraseTimeEvents(CTE_HEALING);
+	tr.AddTimeEvent("cte_Healing",GetHealingDuration(tr),CTE_HEALING, newRate);
+}
+
+void DropHealing(Critter& tr) // Export
+{
+	tr.EraseTimeEvents(CTE_HEALING);
+	tr.StatBase[ST_HEALING_LEVEL]=0;
+}
+
+uint cte_Healing(Critter& tr, int identifier, uint& rate)
+{
+//Log("rate: " +rate);
+	if(tr.IsDead()) return 0;
+    rate+=Random(-rate/4,rate/4);
+	tr.StatBase[ST_HEALING_LEVEL]=CLAMP(tr.StatBase[ST_HEALING_LEVEL]-rate,0,2000);
+	tr.StatBase[ST_CURRENT_HP]+=rate;
+	tr.Say(SAY_NETMSG,"Вам стало немного легче +"+rate);
+	//Log("Уровень отлечиваемых ХП: " + tr.StatBase[ST_HEALING_LEVEL]);
+	//Log("Передалось ХП: " + rate);
+	//Log("----------------------");
+	return GetHealingDuration(tr);
+}
+
+uint GetHealingDuration(Critter& tr)
+{
+	int duration=REAL_SECOND(CLAMP(HEALING_DURATION_SUB-tr.Stat[ST_HEALING_RATE],3,HEALING_DURATION_SUB));
+	//Log("tr.StatBase[ST_HEALING_RATE]="+tr.StatBase[ST_HEALING_RATE]);
+	if(tr.Stat[ST_HEALING_LEVEL]<=0	|| tr.Stat[ST_CURRENT_HP]>=tr.Stat[ST_MAX_LIFE])
+	{
+	//	Log("Стоп.");
+		return 0;
+	}
+	return duration;
+}

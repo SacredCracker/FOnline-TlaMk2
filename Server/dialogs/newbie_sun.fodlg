@@ -1,0 +1,129 @@
+[comment]
+
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 D _var p name_mem_npc_player = 0 #
+12 1020 D _script q_newbie_scripts@d_PlantCheck 0  D _var p q_newbie_plants ! 1 #
+5 1030 D _var p name_mem_npc_player = 1 @
+2 2000 None 0 #
+4 2010 R _var p name_mem_npc_player = 1 #
+0 2020 #
+3 2030 @
+3 3000 Attack 0 @
+4 4000 None 0 #
+5 4010 @
+5 5000 None 0 #
+6 5010 D _var p q_newbie_brahmin = 1 D _script newb_brahmin@d_CheckBrahmin 0  #
+0 5020 #
+8 5030 D _var p q_newbie_gen_repair = 1 D _var p q_newbie_sun_lubricant = 0 D or D _var p q_newbie_lubricant_deliver = 1 D _var p q_newbie_sun_lubricant1 = 0 #
+11 5040 D _var p q_newbie_plants = 0 @
+6 6000 None 0 #
+7 6010 R _script newb_brahmin@r_DelBrahmin 0  R _var p q_newbie_brahmin = 2 R _param p ST_EXPERIENCE + 400 R _item p PID_MEAT + 6 @
+7 7000 None 0 #
+0 7010 #
+0 7020 @
+8 8000 None 0 #
+9 8010 #
+3 8020 @
+9 9000 None 0 #
+3 9010 #
+10 9020 D _var p q_newbie_sun_lubricant = 0 D _var p q_newbie_gen_repair = 1 R _var p q_newbie_sun_lubricant = 1 R _item p PID_LUBRICANT + 1 #
+10 9030 D _var p q_newbie_sun_lubricant1 = 0 D _var p q_newbie_lubricant_deliver = 1 R _var p q_newbie_sun_lubricant1 = 1 R _item p PID_LUBRICANT + 1 @
+10 10000 None 0 @
+11 11000 None 0 #
+0 11010 R _script q_newbie_scripts@r_PlantStart 0  #
+0 11020 @
+12 12000 None 0 #
+13 12010 R _var p q_newbie_plants = 1 @
+13 13000 None 0 #
+14 13010 R _param p ST_EXPERIENCE + 500 R _item p PID_BOTTLE_CAPS + 100 @
+14 14000 None 0 &
+
+[russ]
+{100}{}{Сунь Хуй В Чай}
+{200}{}{Китаец с бегающими глазками.}
+{210}{}{Местный китаец, которого прозвали Суй Хуй В чай. Его глаза мечутся из стороны в сторону, он явно обдолбан.}
+{1000}{}{Predialogue installations}
+{1010}{}{Не знаком}
+{1020}{}{покромсал растения}
+{1030}{}{Знаком}
+{2000}{}{[Пытается сфокусироваться на вас взглядом] Будь счастлив в доме моём. Грибочки не узнают тебя.}
+{2010}{}{[Делаете легкий поклон плантации грибов] Меня зовут @pname@, будем знакомы, грибочки. А как вас величать?}
+{2020}{}{Ох, пожалуй, я еще не готов к такому знакомству.}
+{2030}{}{ГРИБЫЫЫ! Сейчас я вам шляпки пообрываю!}
+{3000}{}{Тебе не победить грибной народ, бледнолицый!@@Ты станешь сладким удобрением для грибов, большеглазый.}
+{4000}{}{Все зовут нас Суй Хуй В Чай , а имя древнейшее не ведомо им.}
+{4010}{}{Какое необычное имя. Должно быть неспроста...}
+{5000}{}{Какое стремление привело тебя обитель сию, чужеземец?}
+{5010}{}{Привел я вам скотину святую, надо бы дух её испустить, да плоть покромсать.}
+{5020}{}{Пожалуй, мне и моей психике опасно тут оставаться.}
+{5030}{}{Имею потребность я в субстанции особой, что облегчит трение деталей не новых.}
+{5040}{}{Видок у тебя мрачноватый что-то, Сунь-Невысунь... или как тебя там.}
+{6000}{}{Глаза сего создания божьего светятся мудростью веков... Возьми, коровка, скушай грибочек и пойдем со мной, тебя ждет райское пастбище. [Скармливает брамину один из грибов и уводит за собой, прихватив огромный тесак]}
+{6010}{}{Да, мочи этот мешок с дерьмом!}
+{7000}{}{[Возвращается с блаженным и умиротворенным выражением лица] О, эта плоть благоухает, подобно ангельской. Мы сделаем её волшебной! [Начинает натирать куски мяса шляпками грибов]}
+{7010}{}{Эй, отдавай мясо, этим же все будут питаться! [Забираете мясо]}
+{7020}{}{Не жмотись, натирай погуще! [Помогаете смачно натереть мясо грибами и забираете его]}
+{8000}{}{[Косится на ваш зад] О, мы понимаем... Свидания с властелином нашим желаете. Помочь мы в этом вам можем...}
+{8010}{}{О чем ты толкуешь? Верно от грибов скукожился мозг твой. Мне насос смазать нужно, смазку гони.}
+{8020}{}{На что это ты намекаешь, пидор косоглазый? Я тебе сейчас грибницу твою в зад затолкаю!}
+{9000}{}{О, стесняться не стоит! Я знаю секрет приготовления волшебного жира браминьего, наслаждение испытаешь ты невдолбенное!}
+{9010}{}{Да, сейчас я испытаю настоящее наслаждение... когда буду топтать твои кишки ногами!!!}
+{9020}{}{[Молча смотрите на Суня]}
+{9030}{}{[Молча смотрите на Суня]}
+{10000}{}{[Достает из под стола бутылку] Вот она! Намазывай гуще и наслаждение поглотит тебя!}
+{11000}{}{Зловещие духи омрачают растущие саженцы, ты должен осуществить грибное правосудие! Карающей десницей порази нечисть, что овладела дивным садом, и обретешь хвалу и почести.}
+{11010}{}{Глупый китаец, твое косноязычие делать мои уши свернуться в трубочка. Но я спасу твои саженцы, готовь тысячу быков в мою честь!}
+{11020}{}{Ох, нет. Зловещие духи делать мою обоссаться.}
+{12000}{}{Просветление я вижу в нитях судьбы, грибы вновь благоухают как прежде! Духи мертвы?}
+{12010}{}{Я изрубил духов в капусту. Желаю награды достойной!}
+{13000}{}{О, твое бесстрашие достойно песен! Я знаю, чего ты желаешь... Все хотят чудесных грибочков... [Начинает обрывать грибы с грядки]}
+{13010}{}{Сунь, грибы из ушей высунь, я сказал, достойной награды, а не грибов поганых.}
+{14000}{}{Расстраивают грибы слова твои, раз лишь деньги тебе нужны. Но сотню золотых мы преподносим тебе.}
+
+[engl]
+{100}{}{Sung Fung}
+{200}{}{A chinese man with restless eyes.}
+{210}{}{Local chinese resident, who goes by the name of Suck Fuck. At least that's what everyone around calls him. He's clearly stoned.}
+{1000}{}{Predialogue installations}
+{1010}{}{Не знаком}
+{1020}{}{покромсал растения}
+{1030}{}{Знаком}
+{2000}{}{[Tries to focus his eyes on you] May this home bring you peace. Mushrooms don't recognize you.}
+{2010}{}{[You bow to the fungal colony] My name's @pname@, nice to meet you, mushrooms. And how should I call you?}
+{2020}{}{Oh, I don't think I'm ready for such an acquaintance.}
+{2030}{}{SHROOMS! I'll knock your fucking caps off!}
+{3000}{}{You can not defeat the mushroom people, white man!@@You will make a sweet fertilizer for the mushrooms, white man!}
+{4000}{}{Everyone calls us Suck Fuck, and the given name Sung Fung remains in oblivion.}
+{4010}{}{What an unusual name. Must be for a reason...}
+{5000}{}{What urge leads you to this domain, outlander?}
+{5010}{}{I brought you a holy creature, you must release its spirit and shred its earthly flesh.}
+{5020}{}{I think it's not safe for me or my mind to stay here.}
+{5030}{}{I am in need of a specific substance that will ease the tension off weary gears.}
+{5040}{}{You look kind of gloomy, Thug Fag... or whatever it is you're called.}
+{6000}{}{The eyes of this holy animal are lit with wisdom of centuries... Here, cow, have a mushroom, and follow me. Heavenly pastures await you. [Feeds a mushroom to the brahmin and leads it out, taking a hatchet along the way]}
+{6010}{}{Yeah, slaughter this dirtbag!}
+{7000}{}{[Returns with a blissful face] Oh this flesh is fragrant like the flesh of an angel. We'll make it magical! [Starts to rub mushroom caps on the meat]}
+{7010}{}{Hey, give me the meat. People are gonna eat that! [Take the meat]}
+{7020}{}{Hey, don't grudge, rub more thoroughly! [Help him richfully stuff the meat with mushrooms and take it]}
+{8000}{}{[Looks sideways at your butt] Oh, we understand... A meeting with our Overlord is what you seek. We can aid you in it...}
+{8010}{}{What the shit are you talking about? Your brain must have shrunk because of mushrooms. I need to oil the pump, give me some grease.}
+{8020}{}{What the fuck are you hinting at, you chink faggot? I'll shove your fucking mushrooms up your ass!}
+{9000}{}{Oh, don't be shy! I know the ancient secret of making brahmin grease, you'll experience unbelievable pleasure!}
+{9010}{}{Yeah, I'll experience pleasure... when I stomp on your guts!!!}
+{9020}{}{[You look at Sung silently]}
+{9030}{}{[You look at Sung silently]}
+{10000}{}{[Takes a bottle from under the table] Here it is! Smear it plentifully and the pleasure will absorb you!}
+{11000}{}{Evil spirits cast their shadows on growing seedlings, you must do mushroom justice! Bring punishment upon the unholy abomination that possesses the garden, and praises and honors you will gain.}
+{11010}{}{Dumb chinese, your incoherence makes my ears bleed. But I'll save the garden, prepare to sacrifice a thousand oxen in my honor!}
+{11020}{}{Oh no. The evil spirits make me shit my pants.}
+{12000}{}{I see a speck of light within the threads of destiny, once again the mushrooms flourish! The spirits are banished?}
+{12010}{}{Yeah, I chopped the spirits into pieces. Now I crave for a worthy reward!}
+{13000}{}{Oh, your bravery will be sung throughout the centuries! I know what you wish for... Everyone wants the miraculous mushrooms... [Starts to pluck the mushrooms]}
+{13010}{}{Sung, take mushrooms out of your ears, I said a worthy reward, not your shitty shrooms.}
+{14000}{}{The mushrooms are deeply disappointed by your words. But we can offer you $100 for your perilous endeavor.}

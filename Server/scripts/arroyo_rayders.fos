@@ -1,0 +1,105 @@
+// Name:   arroyo_rayders
+// Author: Sufir
+
+// Uses
+#include "_macros.fos"
+#include "_teams.fos"
+import bool AddAttackPlane(Critter& npc, uint priority, Critter& target) from "npc_planes";
+import bool AddWalkPlane(Critter& npc, uint priority, uint16 hexX, uint16 hexY, uint8 dir, bool run, uint cut) from "npc_planes";
+import uint EraseAttackPlane(Critter& npc, Critter& target) from "npc_planes";
+
+// Defines
+#define ARROYO_RAIDERS_MSG	                	(301)
+
+uint[] RaidersCount={0};
+
+
+void _RaiderInit(Critter& raider, bool firstTime)
+{
+
+	raider.StatBase[ST_REPLICATION_TIME]=-1;
+	raider.SetEvent(CRITTER_EVENT_SHOW_CRITTER,"_RaiderSaw");
+	raider.SetEvent(CRITTER_EVENT_HIDE_CRITTER,"_RaiderHide");
+	raider.SetEvent(CRITTER_EVENT_IDLE,"_RaiderIdle");
+	raider.SetEvent(CRITTER_EVENT_DEAD,"_RaiderDead");
+	raider.SetEvent(CRITTER_EVENT_MESSAGE,"_RaiderAlarm");
+	raider.StatBase[ST_VAR0]=0; // Id атакуемого игрока.
+	// «аписываем группу рейдеров. Ёти данные используютс€ при выходе с карты, дл€ определени€ все-ли рейдеры убиты...
+	if(firstTime) {
+		RaidersCount[0]=RaidersCount[0] + 1;
+		SetAnyData("ArrouoRaidersCount", RaidersCount);
+	}
+
+}
+
+
+void _RaiderSaw(Critter& raider, Critter& player){
+
+	// ѕровер€ем свободен ли криттер
+	if(raider.StatBase[ST_VAR0] !=0) return;
+	if(not raider.IsNoPlanes()){
+		EraseAttackPlane(raider, player);
+	}
+
+	if(player.IsPlayer() && not raider.IsNotValid){
+
+		raider.StatBase[ST_VAR0]=int(player.Id);
+		raider.SendMessage(ARROYO_RAIDERS_MSG, raider.StatBase[ST_VAR0], MESSAGE_TO_WHO_SEES_ME);
+		if(AddAttackPlane(raider, 0, player)){
+			if(Random(0, 8)==0){
+				raider.SayMsg(SAY_SHOUT_ON_HEAD, TEXTMSG_DLG, DLGSTR(raider.Stat[ST_DIALOG_ID], 0));
+			} else if(Random(0, 6)==1){
+				raider.SayMsg(SAY_SHOUT_ON_HEAD, TEXTMSG_DLG, DLGSTR(raider.Stat[ST_DIALOG_ID], 0));
+			}
+
+		}
+	}
+
+}
+
+
+void _RaiderHide(Critter& raider, Critter& player)
+{
+
+	// ≈сли игрок пропал из пол€ зрени€, убираем план атаки
+	if(player.IsPlayer() && raider.StatBase[ST_VAR0] !=0){
+		if(Random(0, 10)==0){
+			raider.SayMsg(SAY_SHOUT_ON_HEAD, TEXTMSG_DLG, DLGSTR(raider.Stat[ST_DIALOG_ID], 1));
+		}
+		EraseAttackPlane(raider, player);
+		if(raider.IsNoPlanes()) raider.StatBase[ST_VAR0]=0;
+	}
+
+}
+
+
+void _RaiderIdle(Critter& raider)
+{
+
+	// »щем игроков и атакуем
+	Critter@[] players;
+	raider.GetCritters(false, FIND_ONLY_PLAYERS|FIND_LIFE_AND_KO, players);
+	if(players.length()>0){
+		AddAttackPlane(raider, 0, players[0]);
+	}
+}
+
+
+void _RaiderDead(Critter& raider, Critter@ player)
+{
+
+	RaidersCount[0]=RaidersCount[0] - 1;
+	SetAnyData("ArrouoRaidersCount", RaidersCount);
+
+}
+
+
+void _RaiderAlarm(Critter& raider, Critter& fromCrit, int message, int value)
+{
+
+	if(raider.Id !=fromCrit.Id && raider.IsNoPlanes()){
+		raider.AddEnemyInStack(value);
+		AddAttackPlane(raider, 0, GetCritter(value));
+	}
+
+}

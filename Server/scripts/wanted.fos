@@ -1,0 +1,23 @@
+// Author: cvet
+#include "_macros.fos"
+
+
+bool WantedSignSet(Item& wantedSign, string& name, uint cost) // Export
+{
+	if(wantedSign.Info!=2)
+	{
+		wantedSign.Info=2;
+		wantedSign.Update();
+	}
+	wantedSign.SetLexems("$name"+name+"$cost"+cost);
+	return true;
+}
+
+
+
+
+
+
+
+
+

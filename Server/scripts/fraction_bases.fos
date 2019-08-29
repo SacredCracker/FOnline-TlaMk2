@@ -1,0 +1,378 @@
+#include "_macros.fos"
+#include "_colors.fos"
+#define _BaseOwner          #(player, map) (map.GetData(0)==player.Param[ST_FRACTION])
+#define _SecurityActive     #(map)         (map.GetData(1)==1)
+#define _EventGeneratorDead #(map)         (map.GetData(2)==1)
+#define _ActivationTimeout  #(map)         (map.GetData(3)==1)
+#define I_AM_INVADER (1)
+
+import bool AddAttackPlane(Critter& npc, uint priority, uint critId, bool run) from "npc_planes";
+import void SayToAllPlayers(uint16 textMsg, uint strNum, bool isLexems, string@ lexems) from "main";
+import bool IsKeyAviable(Critter& cr, uint lockerId) from "lockers";
+import uint[] GetOrgStats(uint orgId) from "main";
+import string GetOrgName(uint num) from "main";
+import bool SetOrgStats(uint orgId, uint[] stats) from "main";
+import uint[] GetPlayersByFraction(uint orgId) from "main";
+
+// Терминал входной двери.
+
+bool s_DoorTerminal(Critter& player, Scenery& terminal, int skill, Item@ item)
+{
+	if(player.IsPlayer() && skill==-1 && not valid(item))
+	{
+		Map@ map=player.GetMap();
+		if(_SecurityActive(map))
+		{
+			if(_BaseOwner(player, map))
+			{
+				uint16[] coords={0,0};
+				map.GetEntireCoords(150, 0, coords[0], coords[1]);
+				Item@ door=map.GetDoor(coords[0], coords[1]);
+				if(valid(door))
+				{
+					if(FLAG(door.LockerCondition,LOCKER_ISOPEN))
+					{
+						SwitchMultiHexDoor(door, false);
+						door.LockerClose();
+					}
+					else
+					{
+						SwitchMultiHexDoor(door, true);
+						door.LockerOpen();
+					}
+				}
+			}
+			else
+			{
+				player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 100103);
+			}
+		}
+		else
+		{
+			player.SayMsg(SAY_NETMSG, TEXTMSG_GAME, 10202);
+		}
+	}
+	return true;
+}
+
+//Туррели и роботы
+
+void t_enter(Critter& cr, Scenery& trigger, bool entered, uint8 dir)
+{
+	if(entered)
+	{
+		Map@ map=cr.GetMap().GetLocation().GetMapByIndex(0);
+		if(!_BaseOwner(cr, map) && _SecurityActive(map)) cr.SendMessage(0,I_AM_INVADER,MESSAGE_TO_ALL_ON_MAP);
+	}
+}
+
+void _GuardInit(Critter& npc, bool firstTime)
+{
+	npc.SetEvent(CRITTER_EVENT_MESSAGE, "_LetsKill");
+	npc.SetEvent(CRITTER_EVENT_ATTACKED, "_KickBack");
+	npc.ModeBase[MODE_UNLIMITED_AMMO]=1;
+}
+
+bool _KickBack(Critter& cr, Critter& attacker)
+{
+	Map@ map=cr.GetMap().GetLocation().GetMapByIndex(0);
+	if (!_SecurityActive(map) || cr.Param[ST_TEAM_ID]==attacker.Param[ST_TEAM_ID]) return true;
+	return false;
+}
+
+
+void _LetsKill(Critter& cr, Critter& fromCr, int message, int value)
+{
+	if(value==I_AM_INVADER) AddAttackPlane(cr, 1, fromCr.Id, false);
+}
+
+//Терминал захвата базы
+bool s_FactionTerminal(Critter& player, Scenery& terminal, int skill, Item@ item)
+{
+	if(player.IsPlayer() && skill==-1 && not valid(item)) RunDialog(player,800,terminal.HexX,terminal.HexY,false);
+	return true;
+}
+
+bool d_NotBaseOwner(Critter& player, Critter@ npc)
+{
+	return (!_BaseOwner(player, player.GetMap().GetLocation().GetMapByIndex(0)));
+}
+
+void dlg_GetOrgName(Critter& player, Critter@ npc, string@ lexems)
+{
+	if(not IS_DIALOG_GENERATED(lexems)) return;
+	lexems="$name"+GetOrgName(player.Param[ST_FRACTION]);
+}
+
+bool d_SecurityActivated(Critter& player, Critter@ npc)
+{
+	return  (_SecurityActive(player.GetMap().GetLocation().GetMapByIndex(0)));
+}
+
+bool d_SecurityNotActivated(Critter& player, Critter@ npc)
+{
+	Map@ map=player.GetMap().GetLocation().GetMapByIndex(0);
+	return  (!_SecurityActive(map) && map.GetData(0)>0);
+}
+
+uint r_ActivateSecurity(Critter& player, Critter@ npc)
+{
+	Map@ map=player.GetMap().GetLocation().GetMapByIndex(0);
+	if(_EventGeneratorDead(map) || map.GetData(3)==1) return 5;
+	else
+	{
+		map.SetData(1, 1);
+		string@ lexems="$pid"+"*basename"+player.GetMap().GetLocation().GetProtoId()+"*";
+		SayToAllPlayers(TEXTMSG_TEXT, 100101, true, lexems);
+		map.GetLocation().Color=0;
+		uint16[] coords={0,0};
+		map.GetEntireCoords(150, 0, coords[0], coords[1]);
+		Item@ door=map.GetDoor(coords[0], coords[1]);
+		if(valid(door))
+		{
+			SETFLAG(door.LockerCondition,LOCKER_NOOPEN);
+			SwitchMultiHexDoor(door, false);
+			door.LockerClose();
+		}
+		return 6;
+	}
+}
+
+void r_DeactivateSecurity(Critter& player, Critter@ npc)
+{
+	Map@ map=player.GetMap().GetLocation().GetMapByIndex(0);
+	map.SetData(1, 0);
+	map.SetData(3,1);
+	CreateTimeEvent(__FullSecond+REAL_MINUTE(10), "e_DropActivationTimeout", map.Id, false);
+	map.GetLocation().Color=COLOR_RED;
+	uint16[] coords={0,0};
+	map.GetEntireCoords(150, 0, coords[0], coords[1]);
+	Item@ door=map.GetDoor(coords[0], coords[1]);
+	if(valid(door))
+	{
+		UNSETFLAG(door.LockerCondition,LOCKER_NOOPEN);
+		SwitchMultiHexDoor(door, false);
+		door.LockerClose();
+	}
+	string@ lexems="$pid"+"*basename"+player.GetMap().GetLocation().GetProtoId()+"*";
+	SayToAllPlayers(TEXTMSG_TEXT, 100100, true, lexems);
+}
+
+uint e_DropActivationTimeout(uint[]@ values)
+{
+	Map@ map=GetMap(values[0]);
+	map.SetData(3,0);
+	return 0;
+}
+
+void r_BaseCapture(Critter& player, Critter@ npc)
+{
+	Map@ map=player.GetMap().GetLocation().GetMapByIndex(0);
+	map.SetData(0, player.Param[ST_FRACTION]);
+	string@ lexems="$name"+GetOrgName(player.Param[ST_FRACTION])+"$pid"+"*basename"+map.GetLocation().GetProtoId()+"*";
+	SayToAllPlayers(TEXTMSG_TEXT, 100102, true, lexems);
+	if (!_EventGeneratorDead(map))
+	{
+		map.SetData(1,1);
+		map.GetLocation().Color=0;
+		uint16[] coords={0,0};
+		map.GetEntireCoords(150, 0, coords[0], coords[1]);
+		Item@ door=map.GetDoor(coords[0], coords[1]);
+		if(valid(door))
+		{
+			SETFLAG(door.LockerCondition,LOCKER_NOOPEN);
+			SwitchMultiHexDoor(door, false);
+			door.LockerClose();
+		}
+	}
+}
+
+// Скрипт карты.
+
+void _BaseInit(Map& map, bool firstTime)
+{
+	map.SetLoopTime(0, 3600000);
+	map.SetEvent(MAP_EVENT_LOOP_0, "_BaseLoop");
+}
+
+void _BaseLoop(Map& map)
+{
+	uint16[] time={0,0,0,0,0,0,0,0};
+	GetTime(time[0],time[1],time[2],time[3],time[4],time[5],time[6],time[7]);
+	if(map.GetData(0)==0) return;
+	if(time[4]==19)
+	{
+		map.SetData(2,1);
+		map.SetData(1,0);
+		map.GetLocation().Color=COLOR_RED;
+		uint16[] coords={0,0};
+		map.GetEntireCoords(150, 0, coords[0], coords[1]);
+		Item@ door=map.GetDoor(coords[0], coords[1]);
+		if(valid(door))
+		{
+			UNSETFLAG(door.LockerCondition,LOCKER_NOOPEN);
+			SwitchMultiHexDoor(door, false);
+			door.LockerClose();
+		}
+		string@ lexems="$pid"+"*basename"+map.GetLocation().GetProtoId()+"*";
+		SayToAllPlayers(TEXTMSG_TEXT, 100100, true, lexems);
+	}
+	else if(time[4]==20)
+	{
+		map.SetData(1,1);
+		map.SetData(2,0);
+		map.GetLocation().Color=0;
+		string@ lexems="$pid"+"*basename"+map.GetLocation().GetProtoId()+"*";
+		SayToAllPlayers(TEXTMSG_TEXT, 100101, true, lexems);
+		uint16[] coords={0,0};
+		map.GetEntireCoords(150, 0, coords[0], coords[1]);
+		Item@ door=map.GetDoor(coords[0], coords[1]);
+		if(valid(door))
+		{
+			SETFLAG(door.LockerCondition,LOCKER_NOOPEN);
+			SwitchMultiHexDoor(door, false);
+			door.LockerClose();
+		}
+		for(uint8 n=0, nMax=map.CountEntire(125); n<nMax;n++)
+		{
+			map.GetEntireCoords(125, n, coords[0], coords[1]);
+			Item@ door=map.GetDoor(coords[0], coords[1]);
+			if(valid(door))
+			{
+				SwitchMultiHexDoor(door, false);
+				door.LockerClose();
+			}
+		}
+	}
+}
+
+//Терминал управления парковкой.
+
+bool s_ParkingTerminal(Critter& player, Scenery& terminal, int skill, Item@ item)
+{
+	Map@ map=player.GetMap();
+	if(player.IsPlayer() && skill==-1 && not valid(item))
+	{
+		if(_BaseOwner(player, map))
+		{
+			bool found=false;
+			for(uint8 n=0, nMax=map.CountEntire(243); n<=nMax; n++)
+			{
+				uint16[] coords={0,0,0,0};
+				map.GetEntireCoords(243,n,coords[0], coords[1]);
+				Item@ car=map.GetCar(coords[0], coords[1]);
+				if(valid(car))
+				{
+					if(IsKeyAviable(player, car.LockerId))
+					{
+						found=true;
+						for(uint8 m=0, mMax=map.CountEntire(100); m<=mMax;m++)
+						{
+							map.GetEntireCoords(100,n,coords[2], coords[3]);
+							if(map.IsHexPassed(coords[2], coords[3]))
+							{
+								player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 100104);
+								for(uint child=0; child<3; child++)
+								{
+									Item@ bag=car.GetChild(child);
+									if(valid(bag)) MoveItem(bag,1,map,coords[2]-int(car.HexX-bag.HexX), coords[3]-int(car.HexY-bag.HexY));
+								}
+								MoveItem(car, 1, map, coords[2], coords[3]);
+							}
+						}
+					}
+				}
+			}
+			if (!found) player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 100105);
+		}
+		else player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 100103);
+	}
+	return true;
+}
+
+//Терминал управления дверью парковки
+bool s_ParkDoorTerm(Critter& player, Scenery& terminal, int skill, Item@ item)
+{
+	if(player.IsPlayer() && skill==-1 && not valid(item))
+	{
+		Map@ map=player.GetMap();
+		uint16[] coords={0,0};
+		for(uint8 n=0, nMax=map.CountEntire(125); n<nMax; n++)
+		{
+			map.GetEntireCoords(125,n,coords[0], coords[1]);
+			Item@ door=map.GetDoor(coords[0], coords[1]);
+			if(valid(door))
+			{
+				if(FLAG(door.LockerCondition, LOCKER_ISOPEN))
+				{
+					SwitchMultiHexDoor(door, false);
+					door.LockerClose();
+				}
+				else
+				{
+					SwitchMultiHexDoor(door, true);
+					door.LockerOpen();
+				}
+				
+			}
+		}
+	}
+	return true;
+}
+
+
+// Мультигексовая дверь
+void _MultiHexDoorInit(Item& door, bool firstTime)
+{
+	if(firstTime && door.LockerCondition!=LOCKER_ISOPEN)
+	{
+		Map@ map=GetMap(door.MapId);
+		for(uint8 n=0, nMax=map.CountEntire(175); n<=nMax; n++)
+		{
+			uint16[] coords={0,0};
+			map.GetEntireCoords(175,n,coords[0], coords[1]);
+			if(GetDistantion(coords[0], coords[1], door.HexX, door.HexY)<6) map.AddItem(coords[0], coords[1], PID_ITEM_BLOCKER, 1);
+		}
+	}
+	door.SetEvent(ITEM_EVENT_SKILL, "_OpenMutihexDoor");
+}
+
+bool _OpenMutihexDoor(Item& item, Critter& crit, int skill)
+{
+	if(item.LockerCondition>1) return false;
+	if(skill==SKILL_PICK_ON_GROUND)
+	{
+		if(item.LockerCondition==0) SwitchMultiHexDoor(item, true);
+		else SwitchMultiHexDoor(item, false);
+	}
+	return false;
+}
+
+void SwitchMultiHexDoor(Item& door, bool open)
+{
+	Map@ map=GetMap(door.MapId);
+	if (!open)
+	{
+		for(uint8 n=0, nMax=map.CountEntire(175); n<nMax; n++)
+		{
+			uint16[] coords={0,0};
+			map.GetEntireCoords(175,n,coords[0], coords[1]);
+			if(GetDistantion(coords[0], coords[1], door.HexX, door.HexY)<6)
+			{
+				map.AddItem(coords[0], coords[1], PID_ITEM_BLOCKER, 1);
+			}
+		}
+	}
+	else
+	{
+		Item@[] items;
+		map.GetItems(PID_ITEM_BLOCKER, items);
+		for(uint n=0, nMax=items.length(); n<nMax; n++)
+		{
+			if(GetDistantion(items[n].HexX, items[n].HexY, door.HexX, door.HexY)<6)
+			{
+				DeleteItem(items[n]);
+			}
+		}
+	}
+}

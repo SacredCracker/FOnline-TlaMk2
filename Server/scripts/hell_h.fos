@@ -1,0 +1,42 @@
+// Индексы карт внутри локации Ада
+#define MAP_INDEX_hell_out             (0)
+#define MAP_INDEX_hell_main            (1)
+#define MAP_INDEX_hell_level1          (2)
+#define MAP_INDEX_hell_level2          (3)
+#define MAP_INDEX_hell_level3          (4)
+#define MAP_INDEX_hell_corridor        (5)
+#define MAP_INDEX_hell_bunker          (6)
+#define MAP_INDEX_hell_mines           (7)
+#define MAP_INDEX_hell_forest          (8)
+#define MAP_INDEX_hell_pipboys         (9)
+#define MAP_INDEX_hell_pyjamas         (9)
+#define MAP_INDEX_hell_escape1        (10)
+#define MAP_INDEX_hell_level4         (11)
+#define MAP_INDEX_hell_bottom         (12)
+#define MAP_INDEX_hell_escape2        (13)
+#define MAP_INDEX_hell_burrow         (14)
+
+// Точки входа при переходе из одной локации в другую
+#define ENTRANCE_mines_to_out          (10)
+#define ENTRANCE_out_to_mines          (13)
+#define ENTRANCE_level1_to_level3      (15)
+#define ENTRANCE_mines_to_corridor     (12)
+#define ENTRANCE_corridor_to_mines     (12)
+
+
+// r17 
+#define ENTRANCE_out_to_pipboys        (16)
+#define ENTRANCE_pipboys_to_out        (17)
+#define ENTRANCE_out_to_lumber         (18)
+#define ENTRANCE_lumber_to_out         (19)
+
+#define COST_PIPBOY_ASSEMBLED          (50)// цена за один собранный пипбой
+#define COST_WOOD_CUTTED  	       (50)// цена за одну вязанку дров
+#define MAX_WORK_MONEY		       (500)// максимальная сумма награды за выполненную работу в наличных деньгах
+#define COST_ORE_URANIUM	       (250)// цена за штуку урана
+
+#define MONTH_CASH_LIMIT_MAX	       (1500)//максимальная сумма наличных, которые игрок может заработать на работах в аду
+
+#define REACTOR_REPAIR_TIMEOUT        (__TimeMultiplier*2) // таймаут на попытку ремонта реактора = 60 минут.
+
+#define _CheckSkill#(cr, skill, bonus) (Random(1,100)<(CLAMP(cr.SkillBase[skill], 6, 95)+bonus)) //проверка скила

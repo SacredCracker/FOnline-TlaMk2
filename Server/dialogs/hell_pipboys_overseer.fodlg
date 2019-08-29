@@ -1,0 +1,78 @@
+[comment]
+
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 @
+2 2000 None 0 #
+3 2010 D _var p hell_cur_work_counter < 10 #
+4 2020 D _var p hell_cur_work_counter > 9 @
+3 3000 None 0 #
+0 3010 @
+4 4000 None 0 #
+0 4010 D _var p hell_cash_limit > 0 R _script hell_pipboys@r_SendFromPipboys 1 1 #
+0 4020 D _var p hell_cash_limit = 0 D _script ncr_ratch@d_RatchTimeOutCheck 1 7052 R _script hell_pipboys@r_SendFromPipboys 1 1 #
+6 4030 D _var p hell_cash_limit = 0 D _script ncr_ratch@d_NotRatchTimeOutCheck 1 7052 #
+0 4040 R _script hell_pipboys@r_SendFromPipboys 1 0 #
+0 4050 @
+6 5000 None 1 #
+0 5010 R _script hell_pipboys@r_SendFromPipboys 1 0 #
+7 5020 @
+7 6000 None 1 #
+0 6010 R _script hell_pipboys@r_SendFromPipboys 1 0 #
+0 6020 R _script hell_pipboys@r_SendFromPipboys 1 1 &
+
+[russ]
+{100}{}{Надзиратель}
+{200}{}{Вы видите хаболога.}
+{210}{}{Вы видите хаболога, который наблюдает за ходом работ по сборке пипбоев. }
+{210}{}{Надзиратель выпустит вас из цеха, если вы выполните дневную норму по сборке.}
+{1000}{}{Predialogue installations}
+{1010}{}{Answer text}
+{2000}{}{В чем дело?}
+{2010}{}{Я хочу выйти отсюда.}
+{2020}{}{Я хочу выйти отсюда.}
+{3000}{}{Тебе нужно сначала выполнить дневную норму. Пока не соберешь 10 пипбоев, отсюда не выйдешь.}
+{3010}{}{Ясно. [Уйти]}
+{4000}{}{Хорошо. Ты можешь выйти. Желаешь получить плату наличными или перечислить на репликационный счет? Наличными ты получаешь только одну десятую от реального заработка.}
+{4010}{}{Наличными.}
+{4020}{}{Наличными.}
+{4030}{}{Наличными.}
+{4040}{}{На репликационный счет}
+{4050}{}{Я передумал@sex@|||а|. [Уйти]}
+{5000}{}{Извини, но ты выбрал@sex@|||а| лимит на наличку в этом месяце. Хочешь, чтобы я перевёл тебе зарплату на счёт?}
+{5010}{}{Ух... Хорошо, давай на счёт.}
+{5020}{}{Какой к чёрту лимит?}
+{6000}{}{Мы не выдаём больше, чем полторы тысячи баксов в месяц заключённым. Иначе вас становится невыгодно тут содержать.}
+{6010}{}{Ладно, переведи мне их на счёт и выпусти меня отсюда.}
+{6020}{}{Нахрена мне этот счёт, пропусти меня так.}
+
+[engl]
+{100} {} { guard}
+{200} {} {You see habologa.}
+{210} {} {You see habologa, which oversees the work on the assembly pipboev. }
+{210} {} {The guard will release you from the shop, if you follow the daily rate for the assembly.}
+{1000} {} {Predialogue installations}
+{1010} {} {Answer text}
+{2000} {} {What's the matter?}
+{2010} {} {I want to get out of here.}
+{2020} {} {I want to get out of here.}
+{3000} {} {You have to first run the daily norm. Until 10 pipboev gather, it does not go out.}
+{3010} {} {clear. [Go]}
+{4000} {} {Well. You can get out. Do You want to get paid in cash or transferred to the replicative account? Cash you receive only one-tenth of the actual earnings.}
+{4010} {} {Cash.}
+{4020} {} {Cash.}
+{4030} {} {Cash.}
+{4040} {} {} at the expense of replicative
+{4050} {} {I changed my mind @ sex @ | | | a |. [Go]}
+{5000} {} {I'm sorry, but you chose the @ sex @ | | | a | Cash limit for this month. You want me to translate your salary to the account?}
+{5010} {} {Uh ... Well, come on to the account.}
+{5020} {} {What the hell limit?}
+{6000} {} {We do not issue more than fifteen hundred bucks a month for prisoners. Otherwise, you then have become unprofitable.}
+{6010} {} {Well, I translate them into account and let me out of here.}
+{6020} {} {fuck me this account, I miss it.}
+

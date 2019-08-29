@@ -1,0 +1,195 @@
+[comment]
+
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 D _var n vc_mut_charley_hired = 0 D _script merc@d_NpcIsNotMerc 0  D _var p vc_guard_rank > 1 D _var p vc_caves_counter } 3 R _param n MODE_NO_BARTER = 1 #
+11 1020 D _var n vc_mut_charley_hired = 0 D _script merc@d_NpcIsNotMerc 0  D _var p vc_guard_rank { 1 R _param n MODE_NO_BARTER = 1 #
+12 1030 D _var n vc_mut_charley_hired = 1 D _script merc@d_NpcIsMerc 0  D _script merc@d_NpcIsPlayerMerc 0  R _param n MODE_NO_BARTER = 0 #
+19 1040 D _var n vc_mut_charley_hired = 1 D _script merc@d_NpcIsMerc 0  D _script merc@d_NpcIsNotPlayerMerc 0  R _param n MODE_NO_BARTER = 1 #
+20 1050 D _var n vc_mut_charley_hired = 1 D _script merc@d_NpcIsNotMerc 0  #
+2 1060 D _var p vc_caves_counter < 3 D _var n vc_mut_charley_hired = 0 D _script merc@d_NpcIsNotMerc 0  @
+2 2000 None 0 #
+65507 2010 #
+3 2020 #
+3 2030 @
+3 3000 None 0 #
+4 3010 @
+4 4000 None 0 #
+5 4010 #
+65507 4020 @
+5 5000 None 0 #
+65507 5010 #
+6 5020 @
+6 6000 None 0 #
+7 6010 #
+65507 6020 @
+7 7000 None 0 #
+65507 7010 #
+8 7020 @
+8 8000 None 0 #
+9 8010 @
+9 9000 None 0 #
+0 9010 #
+65507 9020 #
+0 9030 D _param p SK_SPEECH } 100 D _var p vc_mut_charley_hired = 0 R _var n vc_mut_charley_hired = 1 R _var p vc_mut_charley_hired = 1 R _script merc@r_AddMerc2Player 1 4 @
+11 10000 None 0 @
+12 11000 None 0 #
+13 11010 #
+14 11020 D _script merc@d_CheckMercParamIsValue 2 810 0 R _script merc@r_WaitMaster 0  #
+15 11030 D _script merc@d_CheckMercParamIsNotValue 2 810 0 R _script merc@r_FollowMaster 0  #
+0 11040 #
+65506 11050 #
+16 11060 #
+18 11070 @
+13 12000 None 0 #
+12 12010 @
+14 13000 None 0 @
+15 14000 None 0 #
+0 14010 @
+16 15000 None 0 #
+0 15010 #
+17 15020 R _script merc@r_SetMercParameter 2 804 3 #
+17 15030 R _script merc@r_SetMercParameter 2 804 20 @
+17 16000 None 0 #
+0 16010 #
+12 16020 @
+18 17000 None 0 #
+17 17010 R _script merc@r_SetMercParameter 2 806 0 #
+17 17020 R _script merc@r_SetMercParameter 2 806 1 @
+19 18000 None 0 @
+20 19000 merc@dlg_Master 0 &
+
+[russ]
+{100}{}{Чарли}
+{200}{}{Обычный здоровенный мутант}
+{210}{}{Мутант с удивительно ясным взглядом. Забавно, он чем-то похож на Халка.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{ни на кого не служит, говорит со страшим сержантом гвардии и выше}
+{1020}{}{ни на кого не служит, ранк игрока ниже старшего сержанта}
+{1030}{}{служит на кого-то, разговаривает с хозяином}
+{1040}{}{служит на кого-то, разговаривает с чужаком}
+{1050}{}{после службы}
+{1060}{}{менее трех зачищенных пещер}
+{2000}{}{Привет, человек! Не стреляй, давай побеседуем, как нормальные люди, без понтов этих лошадиных?}
+{2010}{}{С такими  выродками у меня разговор короткий!}
+{2020}{}{Каких понтов? Сам-то понял, что сказал? Таких и слов-то  нет.}
+{2030}{}{Ну давай побеседуем, как нормальные, хе…}
+{3000}{}{Как скажешь, человек. Моих, как я понял, подельничков  вы всех положили? }
+{3010}{}{Да, они уже считают ступени у трона Повелителя…}
+{4000}{}{Угу. Ведь говорил я им, не лезьте вы на север! Ну как же, послушают они. Ну, собственно, за что боролись…}
+{4010}{}{А  сам-то что сюда попёрся, если такой умный?}
+{4020}{}{Да, да. На то и напоролись. Пора и тебе следом за ними!}
+{5000}{}{Да на юге тоже не чай с сахаром, ты знаешь… Я  просто оттуда  уйти  хотел, а не к вам лезть. На самом деле, не найди ты нас, я бы ночью ушел пожалуй… Хотя, с другой стороны, куда?.. Нас не особо любят, и есть за что.}
+{5010}{}{Вот именно. И я тоже таких как ты не люблю. Сейчас увидишь, насколько сильно!}
+{5020}{}{Надо же. Мутант, не любящий мутантов. Как так  вышло-то?}
+{6000}{}{Ну, если ты в курсе, мы, эээ…то есть вы, да, так вот, мы мутируем под воздействием вируса ФЕВ. Он очень сильно меняет гормональный фон и много еще чего, не стану вдаваться в подробности. Важен результат - от личности человека остаются руины, социальные навыки стираются, работают только базовые функции. Растет агрессия, падает способность к обучению. Плюс следует учесть, что большинство моих, эээ... товарищей и в людской своей форме не были светочами разума…}
+{6010}{}{Так. А ты?}
+{6020}{}{Много говоришь, я не люблю болтать с мертвецами!}
+{7000}{}{А я… Я - исключение. Я мутировал, но сохранил и ум, и социальные навыки, и даже память. Частично. Такое бывает, я знаю. Но редко, и сам я таких не встречал. Мне очень тяжело было среди моих мутировавших друзей.}
+{7010}{}{Да, и поэтому ты опасен. Я уничтожу тебя!}
+{7020}{}{Мдя, тяжелый случай. И что ты вот теперь думаешь делать?}
+{8000}{}{Хм, ну найти пещеру в горах и отсиживаться там - не вариант. Даже не знаю. Может ты что подскажешь?}
+{8010}{}{Хм. Ну вот смотри, есть такой город - Брокенхилл. Там ухитряются  жить вместе люди , гули и мутанты.  Шерифом там Маркус-мутант. Можешь пойти туда, наверняка найдешь там и работу и кров.
+}
+{9000}{}{Да, спасибо за совет… А не сочти за назойливость, может ты возьмешь меня на работу? В помощники, или как? Я конечно мутант, но во всем остальном - вполне приличный человек.  Могу тяжести таскать, стрелять из базуки, драться на кулаках. С тебя боеприпасы и оружие. А я уж не подведу.}
+{9010}{}{Не, ну я не могу, ты что. Гвардеец с мутантом, все смеяться будут.  Я тебя не трону, конечно, сиди здесь, сколько хочешь, но и с собой взять не могу.
+}
+{9020}{}{Ага,  да ты шпион! Как же я сразу-то… Мочи его!!!}
+{9030}{}{Эээ… ааа… Это как-то неожиданно. Но забавно. Хорошо, идем со мной.}
+{10000}{}{Согласно кодексу братства, принятому Морганом и Бартоломью… ой, не оттуда… Короче, я хочу видеть капитана.
+Ну, или сержанта, на худой конец…}
+{11000}{}{Да, @pname@, слушаю тебя.@@Босс?@@Что-то случилось? Говори.@@Я твой партнер, не забыл@sex@|||а|?@@[Ухмыляется] Увидишь, мы прекрасно сработаемся, "партнер"!}
+{11010}{}{Напомни, что ты умеешь.}
+{11020}{}{Подожди меня здесь, я скоро вернусь.}
+{11030}{}{Ну всё, мы можем идти. Ты готов?}
+{11040}{}{Все в порядке, разговор закончен.@@Поговорим потом.@@Пока хватит.}
+{11050}{}{Давай посмотрим, что у тебя есть. [Бартер]}
+{11060}{}{Сменим дистанцию.}
+{11070}{}{Если на меня наехали...@@Если начнется драка...}
+{12000}{}{Стреляю из тяжелого оружия, или могу пользоваться кулаками.}
+{12010}{}{Хорошо. У меня еще к тебе вопросы.}
+{13000}{}{Хорошо, договорились. Не задерживайся.}
+{14000}{}{Идём, конечно. Мне уже осточертело тут торчать, партнер.}
+{14010}{}{Выходим.}
+{15000}{}{Ну? Мне к тебе поближе прижаться, или тебя душок мутанта напрягает? }
+{15010}{}{Ладно, оставим все как есть.}
+{15020}{}{Не отходи далеко.}
+{15030}{}{Держись на максимальном расстоянии.}
+{16000}{}{Без проблем.@@Так и сделаю, партнер.@@Ладно.}
+{16010}{}{Это все.}
+{16020}{}{Так, еще один момент.@@И еще..}
+{17000}{}{Да, это важно. Мне вмешиваться, или как?@@Я тебя прикрываю? Или стою в стороне?@@Огневая поддержка нужна? Или сам@sex@|||а| разберешься?}
+{17010}{}{Не вмешивайся.}
+{17020}{}{Защищай меня.}
+{18000}{}{Все вопросы к @lex mastername@.@@Я тебя не знаю. Лучше уходи.@@Если хочешь что-то узнать, разговаривай с @lex mastername@.}
+{19000}{}{Чего уставил@sex@|cя||ась|? Живого мутанта никогда не видел@sex@|||а|? Бу!@@Не мешай мне медитировать, человече.@@Отстань.}
+
+[engl]
+{100}{}{Charlie}
+{200}{}{the Usual huge mutant}
+{210}{}{the Mutant with surprising a serene look. Funny, it something is similar to Halka.}
+{1000}{}{Predialogue installations}
+{1010}{}{on anybody does not serve, speaks with we frighten the sergeant of guards and above}
+{1020}{}{on anybody does not serve, rank the player below the senior sergeant}
+{1030}{}{serves on someone, talks to the owner}
+{1040}{}{serves on someone, talks to a stranger}
+{1050}{}{after service}
+{1060}{}{less than three smoothed out caves}
+{2000}{}{Greetings, the person! Do not shoot, give we will have a talk, how normal people, without pontov these horse?}
+{2010}{}{With such degenerates at me conversation short!}
+{2020}{}{What pontov? Itself has understood, what has told? Such and words are not present.}
+{2030}{}{Well give we will have a talk, as normal, he …}
+{3000}{}{As you will tell, the person. Mine how I have understood, podelnichkov you have put all?}
+{3010}{}{Yes, they already consider steps at a throne of the Master …}
+{4000}{}{Ugu. After all I spoke to them, do not climb you on the north! Well as, they will listen. Well, actually, for what struggled …}
+{4010}{}{And itself that here popyorsja, if such clever?}
+{4020}{}{Yes, yes. Into that also have run. It is time also to you after them!}
+{5000}{}{Yes in the south too not tea with sugar, you know … I simply therefrom wanted to leave, instead of to you to climb. Actually, do not find you us, I would leave perhaps … Though, on the other hand, where at night?. Us not especially love, and is for what.}
+{5010}{}{That's it. And I too such as you do not love. Now you will see, how much strongly!}
+{5020}{}{It is necessary. A mutant which is not loving mutants. How so left?}
+{6000}{}{Well, if you in a course, we, eee … that is you, yes, and so, we mutiruem under the influence of virus FEV. It very strongly changes a hormonal background and much still that, I will not begin to go into details. The result is important - from the person of the person there are ruins, social skills are erased, base functions work only. Aggression grows, ability to training falls. Plus should be considered that the majority of mine, eee... Companions and in the human form were not svetochami reason …}
+{6010}{}{So. And you?}
+{6020}{}{you speak much, I do not like to stir with dead persons!}
+{7000}{}{And I … I - an exception. I mutiroval, but have kept both mind, and social skills, and even memory. Partially. Such happens, I know. But it is rare, and I such did not meet. To me it was very heavy among mine mutirovavshih friends.}
+{7010}{}{Yes and consequently you are dangerous. I will destroy you!}
+{7020}{}{Mdja, a hard case. Also what you here think now to do?}
+{8000}{}{Hm, well to find a cave in mountains and to sit out there - not a variant. At all I do not know. You can that will prompt?}
+{8010}{}{Hm. Well here look, there is such city - Brokenhill. Together people There manage to live, babble also mutants. The sheriff there the Markus-mutant. You can go there, for certain you will find there both work and a shelter.
+}
+{9000}{}{Yes, thanks for council … Instead of consider for importunity, you can will take me for work? In assistants, or how? I certainly a mutant, but in all the rest - quite decent person. I can drag, shoot weights from bazuki, fight on fists. From you ammunition and the weapon. And I will not bring.}
+{9010}{}{Not, well I cannot, you that. The guardsman with a mutant, all will laugh. I will not touch you, of course, sit here, how many you want, but also with myself I can not take.
+}
+{9020}{}{Aha, yes you the spy! As I at once … Wet it!!!}
+{9030}{}{Eee … aaa … It is somehow unexpected. But it is amusing. Well, we go with me.}
+{10000}{}{According to the code of a brotherhood accepted by Morgan and Bartolomju … oh, not therefrom … is shorter, I want to see the captain.
+Well, or the sergeant, at the worst …}
+{11000}{}{Yes, @pname, I listen to you. @@ the boss? @@ Something happens? Speak. @@ I your partner, not забыл@sex ||| and |? @@ [Grins] you Will see, we will perfectly work well together, "partner"!}
+{11010}{}{Remind that you are able.}
+{11020}{}{Wait for me here, I will soon return.}
+{11030}{}{Well everything, we can go. You are ready?}
+{11040}{}{Everything is all right, conversation is finished. @@ we will talk then. @@ While will suffice.}
+{11050}{}{Give we will look that at you is. [Barter]}
+{11060}{}{we Will replace a distance.}
+{11070}{}{If into me have driven... @@ If fight will begin...}
+{12000}{}{I Shoot from the heavy weapon, or I can use fists.}
+{12010}{}{it is good. At me to you questions.}
+{13000}{}{it is good, have agreed. Be not late.}
+{14000}{}{We go, certainly. To me already has bored here to stick out, the partner.}
+{14010}{}{we Leave.}
+{15000}{}{Well? To me on you to nestle more close, or the mutant musty smell strains you?}
+{15010}{}{it is fine, we will leave all as is.}
+{15020}{}{do not depart far.}
+{15030}{}{keep at the maximum distance.}
+{16000}{}{Without problems. @@ and I will make, the partner. @@ it is fine.}
+{16010}{}{It is all.}
+{16020}{}{So, one more moment. @@ and still.}
+{17000}{}{Yes, it is important. To me to interfere, or how? @@ I cover you? Or I stand apart? @@ fire support is necessary? Or сам@sex ||| and | you will understand?}
+{17010}{}{do not interfere.}
+{17020}{}{Protect me.}
+{18000}{}{All questions to @lex mastername. @@ I do not know you. Leave is better. @@ if you want to learn something, talk with @lex mastername.}
+{19000}{}{That уставил@sex | cя || as |? A live mutant never видел@sex ||| and |? Bu! @@ do not prevent to meditate to me, cheloveche. @@ Lag behind.}

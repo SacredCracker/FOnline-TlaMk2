@@ -1,0 +1,72 @@
+//rifleman17 30/10/09
+
+#include "_macros.fos"
+
+#define CRTYPE_RANGER							   	(10) //20010}{}{hmcmbt from FOGAME.MSG
+#define CRTYPE_POLICE   							(87) //20087}{}{nmcopp   from FOGAME.MSG
+#define STR_NUM_IM_RANGER							(1)// номер строки "я рейнджер" в диалоге кесса
+
+void r_SetKessArmourChange(Critter& player, Critter@ npc, int val)
+{
+	// в течение ближайших игровых суток Кесс не дает квест на прохождение медкомиссии
+	// по истечению игровых суток Кесс меняет модельку брони
+
+	GameVar@ kess_status=GetGlobalVar(GVAR_ncr_kess_stage_global);
+	if(kess_status>0)
+	{
+		// Кесс уже готовится к приему в рейнджеры
+		return;
+	}
+	// создаем событие "кесса в рейнджеры!"
+	if(CreateTimeEvent(__FullSecond+60*60*3,"e_KessRanger", npc.Id, false)==0)
+	{
+		Log("Time event e_EveryEvening create fail, "+GetLastError());
+		return;
+	}
+	kess_status=1;
+}
+
+uint e_KessRanger(uint[]@ values)
+{
+	Critter@ kess=GetCritter(values[0]);
+
+	GameVar@ kess_status=GetGlobalVar(GVAR_ncr_kess_stage_global);
+	if(kess_status==2)
+	{
+		// Кесс уже рейнджер
+		return 0 ;
+	}
+	// создаем событие "кесса обратно в полицейского"
+	// произойдет оно через 5 игровых часов
+	if(CreateTimeEvent(__FullSecond+60*60*5,"e_KessPoliceman", kess.Id, false)==0)
+	{
+		Log("Time event e_EveryEvening create fail, "+GetLastError());
+		return 0 ;
+	}
+
+	kess.ChangeCrType(CRTYPE_RANGER);
+	kess.StatBase[ST_BASE_CRTYPE]=CRTYPE_RANGER;
+	//kess.SetStat(ST_BASE_CRTYPE,CRTYPE_RANGER); ovsolete
+	kess.SayMsg(SAY_SHOUT_ON_HEAD,TEXTMSG_TEXT,STR_NUM_IM_RANGER);
+	//kess.Say(SAY_SHOUT_ON_HEAD,"Ха! Я рейнджер!");
+	kess_status=2;
+	return 0;
+}
+
+uint e_KessPoliceman(uint[]@ values)
+{
+	Critter@ kess=GetCritter(values[0]);
+
+	GameVar@ kess_status=GetGlobalVar(GVAR_ncr_kess_stage_global);
+	if(kess_status==0)
+	{
+		// Кесс уже полицейский
+		return 0 ;
+	}
+
+	kess.ChangeCrType(CRTYPE_POLICE);
+	//kess.SetStat(ST_BASE_CRTYPE,CRTYPE_POLICE); obsolete
+	kess.StatBase[ST_BASE_CRTYPE]=CRTYPE_POLICE;
+	kess_status=0;
+	return 0;
+}

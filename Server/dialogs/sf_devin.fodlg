@@ -1,0 +1,171 @@
+[comment]
+Странствующий торговец
+Начинает в СФ, в баре танкера
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 D _param p ST_INTELLECT > 3 D _var p name_mem_npc_player = 0 R _param n MODE_NO_BARTER = 1 #
+16 1020 D _param p ST_INTELLECT < 4 R _param n MODE_NO_BARTER = 1 #
+3 1030 D _param p ST_INTELLECT > 3 D _var p name_mem_npc_player = 1 R _param n MODE_NO_BARTER = 1 @
+2 2000 None 0 #
+4 2010 R _var p name_mem_npc_player = 1 #
+0 2020 @
+3 3000 None 0 #
+5 3010 #
+4 3020 #
+0 3030 #
+7 3040 #
+18 3050 D _script map_geck_city@d_IsCitizen 0  D _var p sf_devin_hired = 0 D _var p click_counter = 0 R _script sf_common@r_SetCanHire 0  #
+18 3060 D _script map_geck_city@d_IsCitizen 0  D _var p sf_devin_hired = 0 D _var p click_counter ! 0 @
+4 4000 None 0 #
+7 4010 #
+8 4020 @
+5 5000 None 0 #
+6 5010 @
+6 6000 Attack 0 @
+7 7000 None 0 #
+10 7010 #
+17 7020 D _param p ST_CHARISMA < 5 #
+65506 7030 D _param p ST_CHARISMA > 4 R _param n MODE_NO_BARTER = 0 @
+8 8000 None 0 #
+9 8010 @
+9 9000 None 0 #
+3 9010 #
+0 9020 @
+10 10000 None 0 #
+0 10010 @
+11 11000 None 0 @
+12 12000 None 0 #
+13 12010 @
+13 13000 None 0 #
+14 13010 @
+14 14000 None 0 #
+0 14010 D _item p PID_BOTTLE_CAPS } 50000 D _var p sf_devin_hired = 0 R _item p PID_BOTTLE_CAPS - 50000 R _script dialog@r_InfoMessage 1 1 R _param p ST_EXPERIENCE + 14000 R _var p sf_devin_hired = 1 R _script sf_common@r_HireDevin 0  #
+15 14020 @
+15 15000 None 0 @
+16 16000 None 0 #
+0 16010 @
+17 17000 None 0 #
+5 17010 #
+0 17020 @
+18 18000 None 0 #
+11 18010 D _var p click_counter ! 1 #
+12 18020 D _var p click_counter = 1 &
+
+[russ]
+{100}{}{Дэвин}
+{200}{}{Эксперт по взрывчатым веществам.}
+{200}{}{Дэвин О'Коннэл, странствующий торговец.}
+{210}{}{Дэвин - странствующий торговец взрывчаткой и гранатами. Никто не знает, где он достает все эти штуки, но его товар всегда отменного качества.}
+{210}{}{О'Коннэл дорожит своей репутацией честного торговца. А его ассортимент порадует любого сапера или маньяка.}
+{1000}{}{Predialogue installations}
+{1010}{}{норм инт не знаком}
+{1020}{}{низкий инт}
+{1030}{}{норм инт знаком}
+{2000}{}{Добрый день. Рад познакомиться.}
+{2010}{}{Кто вы? }
+{2020}{}{В другой раз.}
+{3000}{}{Приятно со мной говорить, да?@@Я иногда думаю, а не бросить ли это все к чертям? Вернусь домой...@@За всю мою жизнь ни одной нечестной сделки не заключил. Можете мне доверять.}
+{3010}{}{Тьфу, опять ты. Когда ты уже уберешься отсюда?}
+{3020}{}{Напомни, чем ты занимаешься?}
+{3030}{}{Еще увидимся. Удачи!}
+{3040}{}{Взрывчаткой, значит, торгуешь?@@Покажи, что там у тебя сегодня есть?}
+{3050}{}{Привет, Дэвин. Как тебе у нас?}
+{3060}{}{Привет, Дэвин. Как тебе у нас?}
+{4000}{}{Зовут меня Девин О'Коннел. Вам повезло, что вы меня повстречали. Я предлагаю исключительный ассортимент товаров, которые делают "бум!".}
+{4010}{}{Взрывчатка? И чего же в ней исключительного?}
+{4020}{}{И как, выгодная эта торговля, или не очень?}
+{5000}{}{Да ты знаешь, с кем говоришь? С Девином О'Коннелом! Может, немного поуважительнее будешь?}
+{5010}{}{Ты слишком много о себе возомнил, Коннел. Ты обычный торгаш, так что успокойся.}
+{6000}{}{Ах ты, падла!}
+{7000}{}{Покупать будем, нет? Принимаю только наличные. Никакого бартера.@@Заметьте, что мои товары взрываются, только когда вы этого захотите. Вот, посмотрите-ка. Может и понравится что-нибудь? Только не пытайтесь мне загнать всякий мусор. Мне нужны только наличные.@@Мои товары - все только самое лучшее от экспертов в этой области. И только за наличные. Без бартера}
+{7010}{}{В другой раз.@@Нет, спасибо, меня это не интересует.}
+{7020}{}{Давайте посмотрим. [Бартер]}
+{7030}{}{Давайте посмотрим. [Бартер]}
+{8000}{}{Ага, взрывчаткой торговать очень прибыльно. Вещь дефицитная, знаете ли.}
+{8010}{}{А где вы все это берете?}
+{9000}{}{Я просто знаю нужных людей в нужных местах. Спросите у любого, надежный ли парень, этот О'Коннел? Каждый ответит, что на меня можно положиться. Доверие, это самая дорогая валюта, @sex@|приятель||подруга|.}
+{9010}{}{У меня еще есть вопросы...}
+{9020}{}{Рад был пообщаться, но мне пора.}
+{10000}{}{Да где вы еще такой товар достанете?@@Хватит, довольно мне вас развлекать.}
+{10010}{}{Увидимся...}
+{11000}{}{Э, нет. Меня просто так не заманишь.@@Мне чего-то не очень болтать охота. Среди ваших фанатики, уроды толстые, всякий сброд. Как меня сюда занесло?}
+{12000}{}{Хорошо! Я мог бы применить свои взрывчатые знания на практике. Но учтите, мне ведь придется оставить весьма доходный бизнес. Сможете компенсировать?}
+{12010}{}{Не вопрос! Мы компенсируем все расходы. Во сколько ты оцениваешь свои услуги?}
+{13000}{}{50 тысяч, наличными, сейчас. И я пока отложу свои планы.}
+{13010}{}{А что будет потом?}
+{14000}{}{Посмотрим, как будет выглядеть наше сотрудничество. Будет видно.}
+{14010}{}{Отлично, нас это устраивает. [Отдать 50 000]}
+{14020}{}{Прости Дэвин, но это слишком дорого даже для нас.}
+{15000}{}{Ну и ладно! Я не в обиде. Понадобится взрывчатка, обращайтесь.@@Можешь на меня не расчитывать, приятель, пока бабки не заплатишь.}
+{16000}{}{Эй, пугало, вали-ка ты отсюда, пока я не рассердился.@@Брысь!@@Я с уродами не общаюсь.@@Проваливай.@@Дверь видишь? Тебе туда.}
+{16010}{}{Аррргх!}
+{17000}{}{Знаешь, а ведь ты мне не нравишься. А если Девину О'Коннэлу кто-то не нравится, дел никаких быть не может. Так что, давай, по-тихому развернись, и топай, откуда приш@sex@|ел||ла|.}
+{17010}{}{Ох ты, мля, вы послушайте как этот заговорил? !}
+{17020}{}{Нет, так нет. Не зачем нервничать.}
+{18000}{}{В гостях, конечно, хорошо... Но, я вас скоро оставлю. У меня дела в другом месте.}
+{18010}{}{Как ты смотришь на то, чтобы поработать на нас? Мы заинтересованы в товарах, которыми ты торгуешь, будем забирать весь ассортимент.}
+{18020}{}{Как ты смотришь на то, чтобы поработать на нас? Мы заинтересованы в товарах, которыми ты торгуешь, будем забирать весь ассортимент.}
+{100000001}{}{Вы только что заполучили прекрасного специалиста по взрывчатым веществам. Дэвин О'Коннэл}
+{100000002}{}{Дрянь дело. Надо срочно рвать когти отсюда.}
+
+[engl]
+{100}{}{Devin}
+{200}{}{the Expert on explosives.}
+{200}{}{Devin O'Konnel, the wandering dealer.}
+{210}{}{Devin - the wandering dealer an explosive and pomegranates. Nobody knows, where it gets all these pieces, but its goods always excellent quality.}
+{210}{}{O'Konnel values the reputation of the fair dealer. And its assortment will please any sapper or the maniac.}
+{1000}{}{Predialogue installations}
+{1010}{}{norms int it is not familiar}
+{1020}{}{low int}
+{1030}{}{norms int a sign}
+{2000}{}{Good afternoon. Is glad to get acquainted.}
+{2010}{}{Who you?}
+{2020}{}{Another time.}
+{3000}{}{it is pleasant to speak with me, yes? @@ I sometimes think, instead of whether to throw this all to devils? I Will come back home... @@ For all my life of any dishonest transaction has not concluded. Can trust me.}
+{3010}{}{Fie, again you. When you already will be cleaned from here?}
+{3020}{}{Remind, than you are engaged?}
+{3030}{}{Still we will meet. Good luck!}
+{3040}{}{the Explosive, means, you trade? @@ show, what there at you today is?}
+{3050}{}{Greetings, Devin. How to you at us?}
+{3060}{}{Greetings, Devin. How to you at us?}
+{4000}{}{Call me Devin O'Konnel. To you has carried that you have met me. I offer exclusive assortment of the goods which do "boom!".}
+{4010}{}{the Explosive? And that in it exclusive?}
+{4020}{}{And how, favourable this trade, or not so?}
+{5000}{}{Yes you know, with whom speak? With Devinom O'Konnelom! Perhaps you will be a bit more validly?}
+{5010}{}{You have got a false idea of yourself too much, Konnel. You the usual shopkeeper so calm down.}
+{6000}{}{Ah you, padla!}
+{7000}{}{we will Buy, is not present? I accept only cash. Any barter. @@ notice that my goods blow up, only when you want it. Here, look. Something can and will be pleasant? Only do not try to tyre out to me any garbage. Cash is necessary to me only. @@ my goods - all only the best from experts in this area. And only for cash. Without barter}
+{7010}{}{Another time. @@ is not present, thanks, me it do not interest.}
+{7020}{}{Let's look. [Barter]}
+{7030}{}{Let's look. [Barter]}
+{8000}{}{Aha, an explosive to trade very profitable. A thing scarce, whether know.}
+{8010}{}{And where it is all of you a beret?}
+{9000}{}{I simply know the necessary people in proper places. Ask any, whether the reliable guy, this O'Konnel? Everyone will answer that it is possible to rely on me. The trust, is the most expensive currency, @sex | the friend || the girlfriend |.}
+{9010}{}{I still have questions...}
+{9020}{}{was glad to communicate, but it is time to me.}
+{10000}{}{Yes where you still will get such goods? @@ will suffice, enough to me you to entertain.}
+{10010}{}{we Will meet...}
+{11000}{}{E, no. Me it is simple so you will not entice. @@ to me something not so to stir hunting. Among yours fanatics, freaks thick, any crowd. How me here has brought?}
+{12000}{}{it is good! I could put the explosive knowledge into practice. But consider, I after all should leave rather profitable business. Can compensate?}
+{12010}{}{Not a question! We compensate all expenses. In how many you estimate the services?}
+{13000}{}{50 thousand, cash, now. And I while will postpone the plans.}
+{13010}{}{And what will be then?}
+{14000}{}{we Will look, as our cooperation will look. It will be visible.}
+{14010}{}{it is excellent, it suits us. [To give 50 000]}
+{14020}{}{Forgive Devin, but this the expensive even for us.}
+{15000}{}{Well and it is fine! I not in insult. The explosive Is required, address. @@ you can on me not raschityvat, the friend while the grandma you will not pay.}
+{16000}{}{Hey, a scarecrow, bring down ive you from here while I have not become angry. @@ Brys! @@ I do not communicate with freaks. @@ ruin. @@ a door you see? To you there.}
+{16010}{}{Arrrgh!}
+{17000}{}{you Know, and after all you are not pleasant to me. And if Devinu O'Konnelu someone is not pleasant, affairs any cannot be. So, give, in a silent way develop, and stamp, whence приш@sex | ate || la |.}
+{17010}{}{Oh you, mlja, you listen as this has started talking?!}
+{17020}{}{No so is not present. Not what for to be nervous.}
+{18000}{}{On a visit it is, of course, good... But, I will soon leave you. At me business in other place.}
+{18010}{}{As you look at working on us? We are interested in the goods in which you trade, we will take away all assortment.}
+{18020}{}{As you look at working on us? We are interested in the goods in which you trade, we will take away all assortment.}
+{100000001}{}{you have just caught the fine expert in explosives. Devin O'Konnel}
+{100000002}{}{Rubbish business. It is necessary to tear urgently claws from here.}

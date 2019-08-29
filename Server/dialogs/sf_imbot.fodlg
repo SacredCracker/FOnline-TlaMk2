@@ -1,0 +1,144 @@
+[comment]
+
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 D _var p q_sf_lo_pan_blackmail ! 2 D _script merc@d_NpcIsNotMerc 0  D or D _script merc@d_NpcIsMerc 0  D _script merc@d_NpcIsNotPlayerMerc 0  #
+7 1020 D _script merc@d_NpcIsNotMerc 0  D _var p q_sf_lo_pan_blackmail = 2 #
+8 1030 D _script merc@d_NpcIsMerc 0  D _script merc@d_NpcIsPlayerMerc 0  @
+2 2000 None 0 #
+0 2010 D _param p ST_INTELLECT > 3 #
+0 2020 D _param p ST_INTELLECT < 4 #
+4 2030 D _script merc@d_NpcIsNotPlayerMerc 0  D _param p ST_INTELLECT > 3 D _script merc@d_NpcIsMerc 0  @
+4 3000 merc@dlg_Master 0 #
+0 3010 #
+5 3020 D _var p loyality > 1 R _var p loyality - 1 #
+6 3030 D _var p loyality { 1 @
+5 4000 None 0 @
+6 5000 Attack 0 @
+7 6000 None 0 #
+9 6010 #
+10 6020 #
+12 6030 @
+8 7000 None 0 #
+0 7010 #
+14 7020 R _script merc@r_SetMercParameter 2 806 0 #
+15 7030 R _script merc@r_SetMercParameter 2 806 1 #
+16 7040 @
+9 8000 None 0 #
+0 8010 @
+10 9000 None 0 #
+11 9010 @
+11 10000 None 0 #
+0 10010 @
+12 11000 None 0 #
+0 11010 #
+13 11020 D _item p PID_BOTTLE_CAPS } 5000 D _param p ST_CHARISMA > 1 R _item p PID_BOTTLE_CAPS - 5000 R _script sf_common@r_SFMerc2Player 0  @
+13 12000 None 0 #
+0 12010 @
+14 13000 None 0 #
+0 13010 @
+15 14000 None 0 #
+0 14010 @
+16 15000 None 0 #
+0 15010 &
+
+[russ]
+{100}{}{Имбот}
+{200}{}{Вы видите одного из гангстеров Ло Пэна.}
+{200}{}{Вы видите мастера кунфу.}
+{200}{}{Имбот, мастер восточных единоборств.}
+{210}{}{Вы видите Имбота. Он работает наемником.}
+{210}{}{Это Имбот. Если ему хорошо заплатить, он будет на вас работать. }
+{1000}{}{Predialogue installations}
+{1010}{}{Ничей наемник. Игрок не сдал квест Ло Пэна. Или у Имбота есть босс, а обращается чужой человек}
+{1020}{}{Ничей наемник. Игрок сдал квест ло Пэна.}
+{1030}{}{Это наемник данного игрока}
+{2000}{}{Тебя не приглашали. Убирайся с глаз моих.@@Я не готов тратить свое время на еще одн@sex@|ого||у| неудачни@sex@|ка||цу|.@@[@nname@ свысока смотрит на вас и не произносит ни слова.]@@Ты потревожил@sex@|||а| меня зря. Я не беру учеников.}
+{2010}{}{Ба! Какие мы важные!@@Да и не нужен ты мне.@@Ты слишком высокого мнения о себе, так?}
+{2020}{}{Оххх!}
+{2030}{}{Ты кто такой?}
+{3000}{}{Я - Имбот. Сейчас я охраняю @lex mastername@.}
+{3010}{}{Ясно.@@Круто.@@Ого! Ну, пока. Привет боссу.}
+{3020}{}{Хм, и что, хорошо платит? Может, лучше на меня поработаешь?}
+{3030}{}{Хм, и что, хорошо платит? Может, лучше на меня поработаешь?}
+{4000}{}{Отвали.@@Не серди меня.@@Это плохая шутка.}
+{5000}{}{Я предупреждал.@@Ты мне надоел@sex@|||а|.}
+{6000}{}{Я знаю, ты помог@sex@|||ла| завершить тяжелую работу моему Мастеру. Не рассчитывай на многое, но поговорить мы можем.@@[Кивает вам] Я о тебе слышал.@@Пусть ты и помог@sex@|||ла| Ло Пэну, это еще не означает, что мы теперь друзья.}
+{6010}{}{Кто ты? }
+{6020}{}{Почему ты служишь телохранителем?}
+{6030}{}{Сколько стоят твои услуги?}
+{7000}{}{В чем дело?@@Что-то не так?@@Да, "шеф", о чем поговорим?}
+{7010}{}{Нет, ничего.@@Поговорим в другой раз.@@Не сейчас.}
+{7020}{}{Держись на расстоянии и не вступай в бой, если на меня нападут.}
+{7030}{}{Прикрывай меня, если кто-то посмеет ко мне прикоснуться, он должен быть убит.}
+{7040}{}{Напомни, когда истекает наш контракт?}
+{8000}{}{Я Имбот. Я служу Ло Пэну. Но также, я иногда могу потратить немного своего драгоценного времени и на другого, если этот другой заслуживает этого. И если у него есть деньги.}
+{8010}{}{Я, пожалуй, пойду.}
+{9000}{}{Так велел мне мой бог. Он дает мне еду, кров. Если он приказывает — я не могу ему отказать. Я не говорю ему: нет.}
+{9010}{}{Наверное это очень могущественный бог. Как имя твоего бога?}
+{10000}{}{Ты не можешь даже представить его могущество. Моего бога зовут — деньги.}
+{10010}{}{Да, это очень сильный бог.}
+{11000}{}{Мое время стоит дорого. 5000 монет. Деньги - вперед. И не вздумай торговаться, ты меня смертельно оскорбишь. А я не терплю оскорблений.}
+{11010}{}{Возможно, мы когда-нибудь поработаем вместе..}
+{11020}{}{Я хочу нанять тебя. Вот деньги.}
+{12000}{}{Хорошо. Не жди, что я стану называть тебя мастером или боссом. Но я не подведу.}
+{12010}{}{Я на это надеюсь.}
+{13000}{}{Меня это устраивает.}
+{13010}{}{Отлично.}
+{14000}{}{[Вздыхает] Ты совершенно не ценишь человеческую жизнь...}
+{14010}{}{Это твоя работа.}
+{15000}{}{Я покину тебя через @lex days@. Не удивляйся, если однажды проснешься, и меня не будет рядом.}
+{15010}{}{Мда, невеселая перспектива.@@Ясно.}
+
+[engl]
+{100}{}{Imbot}
+{200}{}{you see one of Lo Pan's gangsters.}
+{200}{}{you see the master kunfu.}
+{200}{}{Imbot, the master of oriental combat sports.}
+{210}{}{you see Imbota. It works as the mercenary.}
+{210}{}{It is Imbot. If it is good to it to pay, it on you will work.}
+{1000}{}{Predialogue installations}
+{1010}{}{the Nobody's mercenary. The player has not handed over Lo Pan's quest. Or Imbota have a boss, and another's person} addresses
+{1020}{}{the Nobody's mercenary. The player has handed over a quest lo Pan.}
+{1030}{}{It is the mercenary of the given player}
+{2000}{}{You did not invite. Be cleaned from my eyes. @@ I am not ready to spend the time on even одн@sex | ogo || at | неудачни@sex | ka || tsu |. @@ [@nname haughtily looks at you and does not say words.] @@ you потревожил@sex ||| and | me in vain. I do not take pupils.}
+{2010}{}{Ba! What we important! @@ and you are not necessary to me. @@ you of too high opinion on, so?}
+{2020}{}{Ohhh!}
+{2030}{}{You who such?}
+{3000}{}{I am Imbot. Now I protect @lex mastername.}
+{3010}{}{it is clear. @@ abruptly. @@ Ogo! Well, while. Greetings to the boss.}
+{3020}{}{Hm, also what, well pays? Perhaps it is better on me you will work?}
+{3030}{}{Hm, also what, well pays? Perhaps it is better on me you will work?}
+{4000}{}{Otvali. @@ do not annoy me. @@ it is a bad joke.}
+{5000}{}{I warned. @@ you to me надоел@sex ||| and |.}
+{6000}{}{I know, you помог@sex ||| la | to finish a hard work to my Master. Do not count on much, but talk we can. @@ [I nod to you] about you heard. @@ let you and помог@sex ||| la | to Lo Pan, it yet does not mean that we now friends.}
+{6010}{}{Who you?}
+{6020}{}{Why you serve as the bodyguard?}
+{6030}{}{How many there are your services?}
+{7000}{}{What is the matter? @@ Something not so? @@ Yes, "chief" about what we will talk?}
+{7010}{}{No, anything. @@ we will talk another time. @@ not now.}
+{7020}{}{Keep aloof and do not engage, if me will attack.}
+{7030}{}{Cover me if someone dares to me to touch, he should be killed.}
+{7040}{}{Remind, when expires our contract?}
+{8000}{}{I Imbot. I serve Lo Pan. But also, I sometimes can spend a little the precious time and for another if this another deserves it. And if it has money.}
+{8010}{}{I, perhaps, will go.}
+{9000}{}{So my god ordered to me. It gives me meal, a shelter. If he orders - I cannot refuse to it. I do not speak to it: no.}
+{9010}{}{Probably it is very powerful god. How a name of your god?}
+{10000}{}{You cannot even present its power. My god call - money.}
+{10010}{}{Yes, it is very strong god.}
+{11000}{}{My time costs much. 5000 coins. Money - forward. Also do not take in head to bargain, you will mortally offend me. And I do not suffer insults.}
+{11010}{}{it is possible, we sometime will work together.}
+{11020}{}{I want to employ you. Here money.}
+{12000}{}{it is good. Do not wait that I will begin to name you the master or the boss. But I will not bring.}
+{12010}{}{I hope for it.}
+{13000}{}{it suits Me.}
+{13010}{}{it is excellent.}
+{14000}{}{[You Sigh] at all do not appreciate human life...}
+{14010}{}{It is your work.}
+{15000}{}{I will leave you through @lex days. Be not surprised, if once you will wake up, and I will not be a number.}
+{15010}{}{Mda, gloomy prospect. @@ it is clear.}

@@ -1,0 +1,224 @@
+[comment]
+
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+14 1010 D _param p ST_INTELLECT < 4 #
+2 1020 D _param p ST_INTELLECT > 3 D _var p vc_black_hired = 0 D _var p q_vc_black_escort < 2 #
+3 1030 D _var p q_vc_black_escort = 2 D _param p ST_INTELLECT > 3 D _var p vc_black_hired = 0 #
+7 1040 D _var p vc_black_hired = 1 D _param p ST_INTELLECT > 3 #
+15 1050 D _var p vc_black_hired = 0 D _param p ST_INTELLECT > 3 D _var p q_vc_black_escort = 3 #
+18 1060 D _script merc@d_NpcIsMerc 0  #
+25 1070 D _script merc@d_NpcIsNotMerc 0  D _var p q_vc_black_escort = 4 @
+2 2000 None 0 @
+3 3000 None 0 #
+4 3010 @
+4 4000 None 0 #
+5 4010 @
+5 5000 None 0 #
+6 5010 D _var p q_vc_black_escort = 2 R _var p q_vc_black_escort = 3 #
+0 5020 @
+6 6000 None 0 #
+0 6010 @
+7 7000 None 0 #
+0 7010 #
+9 7020 D _script dialog@d_IsToHeal 0  #
+65506 7030 #
+10 7040 D _param p DAMAGE_RIGHT_ARM = 1 D or D _param p DAMAGE_LEFT_ARM = 1 D or D _param p DAMAGE_RIGHT_LEG = 1 D or D _param p DAMAGE_LEFT_LEG = 1 #
+12 7050 D _param p DAMAGE_EYE = 1 #
+13 7060 @
+9 8000 None 0 #
+0 8010 #
+11 8020 D _item p PID_BOTTLE_CAPS > 399 R _item p PID_BOTTLE_CAPS - 400 @
+10 9000 None 0 #
+0 9010 #
+11 9020 D _item p PID_BOTTLE_CAPS > 449 R _item p PID_BOTTLE_CAPS - 450 R _param p DAMAGE_LEFT_LEG = 0 R _param p DAMAGE_RIGHT_LEG = 0 R _param p DAMAGE_LEFT_ARM = 0 R _param p DAMAGE_RIGHT_ARM = 0 R _param p DAMAGE_RADIATED = 0 R _param p DAMAGE_POISONED = 0 @
+11 10000 None 0 #
+0 10010 R _script dialog@r_ToHeal 0  @
+12 11000 None 0 #
+11 11010 D _item p PID_BOTTLE_CAPS > 499 R _item p PID_BOTTLE_CAPS - 500 R _param p DAMAGE_EYE = 0 #
+0 11020 @
+13 12000 None 0 @
+14 13000 None 0 @
+15 14000 None 0 #
+16 14010 D _item p PID_BOTTLE_CAPS } 15000 #
+0 14020 @
+16 15000 None 0 #
+0 15010 D _item p PID_BOTTLE_CAPS } 15000 D _script map_geck_city@d_CanHireNpc 2 1 18 R _item p PID_BOTTLE_CAPS - 15000 R _var p q_vc_black_escort = 4 R _script merc@r_AddMerc2Player 0  #
+0 15020 #
+17 15030 D _script map_geck_city@d_CanNotHireNpc 2 1 18 D _item p PID_BOTTLE_CAPS } 15000 @
+17 16000 None 0 #
+0 16010 @
+18 17000 None 0 #
+0 17010 D _script merc@d_NpcIsPlayerMerc 0  #
+19 17020 D _script map_geck_city@d_NotHomeFound 1 18 D _script merc@d_NpcIsPlayerMerc 0  #
+20 17030 D _script map_geck_city@d_HomeFound 1 18 D _script merc@d_NpcIsPlayerMerc 0  R _script map_geck_city@r_SetNewHome 1 18 R _var p vc_black_hired = 1 R _var p q_vc_black_escort = 5 R _param p ST_EXPERIENCE + 25000 R _script vcity_common@r_CancelDoctorMerc 0  #
+0 17040 D _script merc@d_NpcIsNotPlayerMerc 0  #
+21 17050 D _script merc@d_NpcIsPlayerMerc 0  D _script merc@d_CheckMercParamIsValue 2 801 0 #
+23 17060 D _script merc@d_NpcIsPlayerMerc 0  D _script merc@d_CheckMercParamIsValue 2 801 1 @
+19 18000 None 0 @
+20 19000 None 0 #
+0 19010 @
+21 20000 None 0 #
+22 20010 @
+22 21000 None 0 #
+0 21010 #
+0 21020 D _item p PID_BOTTLE_CAPS } 330 R _script merc@r_SetMercParameter 2 801 1 R _item p PID_BOTTLE_CAPS - 330 @
+23 22000 None 0 #
+24 22010 D _script merc@d_CheckMercParamIsValue 2 801 1 R _script merc@r_SetMercParameter 2 801 0 R _item p PID_BOTTLE_CAPS + 329 @
+24 23000 None 0 #
+0 23010 @
+25 24000 None 0 #
+0 24010 &
+
+[russ]
+{100}{}{Блек Джек}
+{200}{}{Блек Джек.}
+{200}{}{Джек Блек.}
+{210}{}{Весьма интелигентно выглядящий человек в костюме жителя убежища.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{дурачина }
+{1020}{}{Блэк в ГУ, квест не взят}
+{1030}{}{Блэк в ГУ, игрок поговорил с Троем и услышал рекомендацию Блэка}
+{1040}{}{Блэк в ГЕКК-сити}
+{1050}{}{Блэк в ГУ, игрок вернулся чтобы заплатить "подъемные" и отвести Блэка в ГЕКК}
+{1060}{}{Джек уже следует за кем то.}
+{1070}{}{Блэк ничей мерк. У игрока статус "проводите джека". Значит, где-то доктор был потерян.}
+{2000}{}{Отстань, я занят@@Ятебя не знаю.@@Займись чем-нибудь.@@Да чё надо-то.@@Не доставай.}
+{3000}{}{Здравствуйте, мне говорил о вас доктор Трой. Что вы хотели?}
+{3010}{}{Предлагаю вам переехать и открыть собственную клинику в новом месте. Небольшой, но цивилизованый городок в пустоши. Построен недавно с помощью ГЕКК.}
+{4000}{}{Вон как. Переехать. Хм. Да почему бы и нет? Но у меня есть условия.}
+{4010}{}{Слушаю вас.}
+{5000}{}{Клиника полностью моя. Я - главный. Это первое. Нет возражений? Я сам устанавливаю цены на услуги. Это второе. Ну и сейчас мне нужны подъёмные. На переезд.  Пятнадцать тысяч. Это третье. Собстванно, всё.}
+{5010}{}{Не вижу препятствий. Меня всё устраивает. Подъемные выплачу.}
+{5020}{}{Нихрена себе заявки. Нет у меня таких денег. [Выход]}
+{6000}{}{Ну вот и договорились. Жду вас здесь, с деньгами.}
+{6010}{}{Хорошо, как скажете}
+{7000}{}{Здравствуйте, я доктор Блек Джек. Слушаю вас.}
+{7010}{}{Извините, это я так. [Выход]}
+{7020}{}{Мне нужна помощь доктора.}
+{7030}{}{Что у тебя есть в продаже? [Бартер]}
+{7040}{}{У меня тут кости поломались...}
+{7050}{}{Где я ? Я нихрена не вижу! Можете глаза починить?}
+{7060}{}{Вау! Блек Джек? А где же шлюхи?}
+{8000}{}{Так. Я готов вам помочь. Это будет стоить 400 монет.}
+{8010}{}{Ой нет,  дорого. Я уж как нибудь так.}
+{8020}{}{Хорошо, доктор}
+{9000}{}{Посмотрим. О, тут все элементарно. И стоит всего 450 монет. Вкрутим в кость титановый шуруп... и готово.}
+{9010}{}{Ой нет,  дорого. Я уж как нибудь так.}
+{9020}{}{Хорошо, доктор. [Заплатить 450 монет]}
+{10000}{}{Сейчас починим... Готово.}
+{10010}{}{Спасибо. Не буду больше вам надоедать.}
+{11000}{}{Всё просто. Я заменю вам хрусталик осколком бутылочного стекла. Всего за пять сотен.}
+{11010}{}{Хорошо, доктор. [Заплатить 500 монет]}
+{11020}{}{Ой нет,  дорого. Я уж как нибудь так.}
+{12000}{}{Господи, и каждый из этих идиотов считает себя очень остроумным. @@ Да-да, очень смешно.@@ Приз на звание лучшего петросяна твой!}
+{13000}{}{Зачем сюда пускают животных?@@Тебе к ветеринару, а я доктор@@Мне не нужны подопытные.}
+{14000}{}{Снова вы? Что там насчет моей новой клиники?}
+{14010}{}{Я принес деньги, как договаривались. И готов отвести вас на новое место работы.}
+{14020}{}{Я работаю над этим вопросом...}
+{15000}{}{Что ж, отлично. Я готов идти с вами.}
+{15010}{}{Самое время отправляться!}
+{15020}{}{Так. Я скоро вернусь, подождите меня здесь, доктор Блэк.}
+{15030}{}{Самое время отправляться!}
+{16000}{}{Так дело не пойдет. Я слышал, у вас уже есть врач в клинике. Пусть этот костоправ вас и травит, а я не хочу.}
+{16010}{}{Мы можем легко все исправить!}
+{17000}{}{Долго еще? Я уже начинаю думать, что рано согласился переехать из комфортного Города-Убежища.}
+{17010}{}{Скоро мы уже будем на месте.}
+{17020}{}{Мы на месте, Блэк!}
+{17030}{}{Мы на месте, Блэк!}
+{17040}{}{Не понимаю, о чем вы говорите.}
+{17050}{}{Джек, а вы не могли бы ходить немного быстрее? Я не могу вас вечно ждать! Шевелитесь!}
+{17060}{}{Джек! Что за дела? Мы же договорились, вы даже получили деньги!!!}
+{18000}{}{Что? Это шутка? Идиотская шутка.}
+{19000}{}{Хмм... А что, по-моему неплохо. Правда, придется здесь кое-что переделать, навести порядок... Отлично, я приступаю к своим обязанностям!}
+{19010}{}{Рад@sex@|||а|, что вам здесь нравится, доктор Блэк.}
+{20000}{}{Слушайте, я не хочу откинуть копыта раньше, чем мы доберемся до клиники. Хотя... За дополнительную плату...}
+{20010}{}{О, боже мой... Сколько?}
+{21000}{}{ТРИСТА ТРИДЦАТЬ!}
+{21010}{}{Ладно, идем пешком. Только на месте мы будем через полгода.}
+{21020}{}{Договорились. Только бегом, хорошо? [Отдать деньги]}
+{22000}{}{Сожалею, я делаю все возможное. Быстрее никак. [Подавляет смешок]}
+{22010}{}{Мы так не договаривались. Верните деньги, Блэк!}
+{23000}{}{Да без проблем. Только я таких вещей не забываю.}
+{23010}{}{Ой-ой-ой, можно подумать... Двигаемся дальше.}
+{24000}{}{После того случая я больше не желаю с тобой разговаривать.@@Сволочь! Ты бросил@sex@|||а| меня подыхать в Пустоши!@@Да пош@sex@|ел||ла| ты...}
+{24010}{}{Эй! Я могу все объяснить!}
+
+[engl]
+{100}{}{Blek Jack}
+{200}{}{Blek Jack.}
+{200}{}{Jack Blek.}
+{210}{}{Rather inteligentno the looking person in a suit of the inhabitant of a refuge.}
+{1000}{}{Predialogue installations}
+{1010}{}{durachina}
+{1020}{}{Blek in GU, the quest is not taken}
+{1030}{}{Blek in GU, the player has talked to Troem and has heard the recommendation of Bleka}
+{1040}{}{Blek in GEKK-CITY}
+{1050}{}{Blek in GU, the player has returned to pay "elevating" and to take away Bleka in GEKK}
+{1060}{}{Jack already follows whom that.}
+{1070}{}{Blek nobody's grew dim. At the player the status "spend dzheka". Means, somewhere the doctor has been lost.}
+{2000}{}{Lag behind, I am occupied @@ by Jatebja I do not know. @@ Be engaged in something. @@ yes chyo it is necessary. @@ do not get.}
+{3000}{}{Hello, me the doctor of Troys spoke about you. What did you want?}
+{3010}{}{I Suggest you to move and open own clinic in a new place. Small, but tsivilizovanyj small town in a heathland. It is constructed recently by means of GEKK.}
+{4000}{}{as. To move. Hm. Yes why also is not present? But I have conditions.}
+{4010}{}{I Listen to you.}
+{5000}{}{Clinic completely mine. I - main. This the first. There are no objections? I establish the prices for services. This the second. Well and now the elevating are necessary to me. On moving. Fifteen thousand. This the third. Sobstvanno, all.}
+{5010}{}{I do not see obstacles. All suits me. Elevating I will sob out.}
+{5020}{}{Nihrena to itself of the demand. There is no at me such money. [An exit]}
+{6000}{}{Well here also have agreed. I wait for you here, with money.}
+{6010}{}{it is good, as will tell}
+{7000}{}{Hello, I doctor Blek Jack. I listen to you.}
+{7010}{}{Excuse, it I so. [The Exit]}
+{7020}{}{the help of the doctor is necessary To me.}
+{7030}{}{That at you is on sale? [Barter]}
+{7040}{}{At me here bones have broken...}
+{7050}{}{Where I? I nihrena do not see! Can repair eyes?}
+{7060}{}{Vau! Blek Jack? And where whores?}
+{8000}{}{So. I am ready to help you. It will cost 400 coins.}
+{8010}{}{Oh is not present, expensively. I as nibud so.}
+{8020}{}{it is good, the doctor}
+{9000}{}{we Will look. About, here all is elementary. Also there are only 450 coins. We will twist in a bone a titanic screw... Also it is ready.}
+{9010}{}{Oh is not present, expensively. I as nibud so.}
+{9020}{}{it is good, the doctor. [To pay 450 coins]}
+{10000}{}{Now we will repair... It is ready.}
+{10010}{}{Thanks. More to you I will not bother.}
+{11000}{}{All is simple. I will replace to you a crystalline lens with a splinter of bottle glass. In total for five hundreds.}
+{11010}{}{it is good, the doctor. [To pay 500 coins]}
+{11020}{}{Oh is not present, expensively. I as nibud so.}
+{12000}{}{My God, and each of these idiots considers itself very witty. @@ Yes-yes, very ridiculously. @@ a prize on a rank of the best petrosjana yours!}
+{13000}{}{What for here start up animals? @@ to the veterinary surgeon, and I the doctor @@ To me the experimental are not necessary to you.}
+{14000}{}{Again you? What there about my new clinic?}
+{14010}{}{I have brought money as agreed. Also it is ready to take away you on a new place of work.}
+{14020}{}{I work over this question...}
+{15000}{}{it is Well, excellent. I am ready to go with you.}
+{15010}{}{It is a high time to go!}
+{15020}{}{So. I will soon return, wait for me here, doctor Blek.}
+{15030}{}{It is a high time to go!}
+{16000}{}{So business will not go. I heard, you already have a doctor in clinic. Let this kostoprav also poisons you, and I do not want.}
+{16010}{}{We can easily correct all!}
+{17000}{}{Long still? I already start to think that have early agreed to move from a comfortable City-refuge.}
+{17010}{}{Soon we already will on a place.}
+{17020}{}{We on a place, Blek!}
+{17030}{}{We on a place, Blek!}
+{17040}{}{I do not understand, about what you speak.}
+{17050}{}{Jack, and you could not go a bit faster? I cannot eternally wait for you! Move!}
+{17060}{}{Jack! What for affairs? We have agreed, you even have received money!!!}
+{18000}{}{That? It is a joke? An idiotic joke.}
+{19000}{}{Hmm... And that, in my opinion it is quite good. However, it is necessary to alter, put things in order here something... Perfectly, I start the duties!}
+{19010}{}{Rad@sex ||| and | that here is pleasant to you, doctor Blek.}
+{20000}{}{Listen, I do not want to cast away a hoof earlier, than we will reach clinic. Though... For an additional payment...}
+{20010}{}{About, my God... How many?}
+{21000}{}{THREE HUNDRED THIRTY!}
+{21010}{}{it is fine, we go on foot. Only on a place we will be in half a year.}
+{21020}{}{Have agreed. Only run, well? [To give money]}
+{22000}{}{I Regret, I use the best efforts. Faster in any way. [Suppresses a snicker]}
+{22010}{}{We so did not agree. Return money, Blek!}
+{23000}{}{Yes without problems. Only I do not forget such things.}
+{23010}{}{Oh-oh Th, it is possible to think... We Move further.}
+{24000}{}{After that case I any more do not wish to talk to you. @@ the swine! You бросил@sex ||| and | me to die in the Heathland! @@ yes пош@sex | you ate || la |...}
+{24010}{}{Hey! I can explain all!}

@@ -1,0 +1,17 @@
+// Author: DejaVu
+
+#include "_macros.fos"
+
+#define ROLE_Jura                      (229)
+
+uint e_ResetVar(uint[]@ values)
+{
+	GameVar@ quest=GetLocalVar(LVAR_q_klam_kuklachev, values[0]);
+	if(valid(quest)) quest=0;
+	return 0;
+}
+
+void r_Replay(Critter& master, Critter@ slave)
+{
+	::CreateTimeEvent(__FullSecond+Random(10,30)*60, "e_ResetVar", master.Id, false);
+}

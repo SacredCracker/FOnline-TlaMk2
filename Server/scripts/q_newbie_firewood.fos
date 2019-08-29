@@ -1,0 +1,60 @@
+//  вест на рубку дров.
+
+#include "_macros.fos"
+#include "_animation.fos"
+#include "_itempid.fos"
+#include "_vars.fos"
+
+#define Q_TIMEOUT 		 (REAL_SECOND(12*60))
+#define Q_EXPERIENCE	 (125)
+#define Q_COUNT_MONEY	 (100)
+
+import bool AddAttackPlane(Critter& npc, uint priority, Critter& target, int minHp) from "npc_planes";
+
+void SetQuestState(Critter& player, int Status)
+{
+	GameVar@ quest=GetLocalVar(LVAR_newbie_harvest, player.Id);
+	if(not valid(quest)) return;
+	quest=Status;
+}
+
+int GetQuestState(Critter& player)
+{
+	GameVar@ quest=GetLocalVar(LVAR_newbie_harvest, player.Id);
+	if(not valid(quest)) return 0;
+	return quest.GetValue();
+}
+
+void r_InitQuest(Critter& player, Critter@ npc, int val)
+{
+	SetQuestState(player, 1);
+}
+
+bool r_CheckQuestPossibility(Critter& player, Critter@ npc, int val)
+{
+	GameVar@ timeout=GetLocalVar(LVAR_newbie_harvest_timeout, player.Id);
+	if (!valid(timeout)) return false;
+	if(uint(timeout.GetValue()) > __FullSecond)  return false;
+	
+	if(GetQuestState(player)!=0)  return false;
+	
+	return true;
+}
+
+void r_Result(Critter& player, Critter@ npc, int val)
+{
+	SetQuestState(player, 0);
+
+	GameVar@ timeout=GetLocalVar(LVAR_newbie_harvest_timeout, player.Id);
+	if (!valid(timeout)) return;
+	timeout=__FullSecond+Q_TIMEOUT;
+
+	if(val==0)
+	{
+		AddAttackPlane(npc,0,player,-1);
+		return;
+	}
+
+	player.StatBase[ST_EXPERIENCE]+=Q_EXPERIENCE;
+	player.AddItem(PID_BOTTLE_CAPS, Q_COUNT_MONEY);
+}

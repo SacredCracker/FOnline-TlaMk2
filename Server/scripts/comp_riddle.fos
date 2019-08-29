@@ -1,0 +1,287 @@
+// Скрипт взлома компьютеров
+// Генерится последовательность из 4 неповторяющихся цифр, игроку дается от 4 до 6 попыток угадать последовательность
+#include "_macros.fos"
+#include "serializator.fos"
+
+#define VAR_SCEN_MAPID     (LVAR_comp_riddle_map_id) // Номер переменной с ид карты, на которой стоит сценери
+#define VAR_SCEN_PROTO     (LVAR_comp_riddle_proto)  // Номер переменной кодом протоипа сценери
+#define VAR_SCEN_HEX_X     (LVAR_comp_riddle_hex_x)  // Номер переменной с координатой по оси икс объекта сценери
+#define VAR_SCEN_HEX_Y     (LVAR_comp_riddle_hex_y)  // Номер переменной с координатой по оси игрек объекта сценери
+#define STR_INFO           (400)                     // Для взлома компьютера нужно правильно подобрать последовательность из 4 неповторяющихся цифр.\nСимвол "*" означает, что цифра присутствует в коде, но неверно указано ее положение.\nСимвол "-" означает, что цифра не используется в коде.\nДо блокировки осталось@lex num@ попыток.
+#define STR_BLOCKED        (401)                     // Активирована защита от взлома. Система заблокирована
+#define STR_SOLVED         (402)                     // Вам удалось обойти систему защиты!
+#define STR_HEADER         (403)                     // Система авторизации. Введите код доступа.
+#define STR_ANSWER         (404)                     // Ответ системы: @lex code@.
+#define STR_CAMERA         (405)                     // Вы подключились к спутнику связи Poseidon NET.
+#define _GetNumbers        { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 }
+#define _GetXP             # (player) (player.Skill[ SK_SCIENCE ] * player.Stat[ ST_LEVEL ] / 5)
+#define MAX_CODE_LENGTH    (4)
+#define MAX_SOLVE_TRIES    (Random(4, 6))
+#define TIME_RESET         (60 * 60 * 24) // 24 часа. После этого компьютер можно снова попробовать взломать - генерится новый код или удаляется запись из AnyData, если карта не существует.
+#define _AnyDataKey        # (mapId, sceneryPid, sceneryX, sceneryY)("CompRiddle_" + mapId + sceneryPid + sceneryX + sceneryY)
+
+ComputerRiddleInfo@ GetRiddleInfo(Critter& player)
+{
+    GameVar @mapId=GetLocalVar(VAR_SCEN_MAPID, player.Id);
+    GameVar @hexX =GetLocalVar(VAR_SCEN_HEX_X, player.Id);
+    GameVar @hexY =GetLocalVar(VAR_SCEN_HEX_Y, player.Id);
+    GameVar @proto=GetLocalVar(VAR_SCEN_PROTO, player.Id);
+    if(!valid(mapId) ||
+        !valid(proto) ||
+        !valid(hexY) ||
+        !valid(hexY) ||
+        mapId==0 ||
+        !valid(player.GetMap()) ||
+        mapId !=player.GetMap().Id ||
+        proto==0 ||
+        hexY==0 ||
+        hexY==0 ||
+        GetDistantion(player.HexX, player.HexY, hexX.GetValue(), hexY.GetValue()) > 3)
+        return null;
+    return GetRiddleInfo(mapId.GetValue(), proto.GetValue(), hexX.GetValue(), hexY.GetValue());
+}
+ComputerRiddleInfo@ GetRiddleInfo(int mapId, int16 sceneryPid, int16 sceneryX, int16 sceneryY)
+{
+    string key=_AnyDataKey(mapId, sceneryPid, sceneryX, sceneryY);
+    if(IsAnyData(key))
+    {
+        return ComputerRiddleInfo(key);
+    }
+    return null;
+
+}
+class ComputerRiddleInfo
+{
+    ComputerRiddleInfo(string key)
+    {
+        this.Load(key);
+    }
+
+    ComputerRiddleInfo(Map & map, Scenery & computor)
+    {
+        string key=_AnyDataKey(map.Id, computor.ProtoId, computor.HexX, computor.HexY);
+        if(IsAnyData(key))
+        {
+            this.Load(key);
+        }
+        else
+        {
+            this.MapId=map.Id;
+            this.ComputorPid=computor.ProtoId;
+            this.HexX=computor.HexX;
+            this.HexY=computor.HexY;
+            GenerateCode();
+            this.Save(key);
+            uint[] values={ this.MapId, this.ComputorPid, this.HexX, this.HexY };
+            CreateTimeEvent(__FullSecond + TIME_RESET, "e_ResetRiddle", values, true);
+        }
+    }
+
+    uint   MapId;
+    uint16 ComputorPid;
+    uint16 HexX;
+    uint16 HexY;
+    uint[] Code;
+    uint8  TriesLeft;
+
+    string SCode()
+    {
+        string code="";
+        for(uint i=0, l=this.Code.length(); i<l; i++)
+            code +=this.Code[ i ];
+        return code;
+    }
+
+    // Сериализация
+    void Save(string key)
+    {
+        Serializator save;
+        save.Set(this.MapId);
+        save.Set(this.ComputorPid);
+        save.Set(this.HexX);
+        save.Set(this.HexY);
+        save.Set(this.Code);
+        save.Set(this.TriesLeft);
+        save.Save(key);
+    }
+
+    bool Load(string key)
+    {
+        Serializator load;
+        if(!IsAnyData(key) || !load.Load(key))
+            return false;
+        load.Get(this.MapId);
+        load.Get(this.ComputorPid);
+        load.Get(this.HexX);
+        load.Get(this.HexY);
+        load.Get(this.Code);
+        load.Get(this.TriesLeft);
+        return true;
+    }
+
+    void Erase()
+    {
+        string key=_AnyDataKey(this.MapId, this.ComputorPid, this.HexX, this.HexY);
+        if(IsAnyData(key))
+            EraseAnyData(key);
+    }
+
+    void GenerateCode()     // Генерирует новый код и сбрасывает число оставшихся попыток
+    {
+        uint[] numbers=_GetNumbers;
+        uint index=0;
+        this.Code.resize(0);
+        while(this.Code.length()<MAX_CODE_LENGTH)
+        {
+            index=Random(0, numbers.length() - 1);
+            this.Code.insertLast(numbers[ index ]);
+            numbers.removeAt(index);
+        }
+        this.TriesLeft=MAX_SOLVE_TRIES;
+    }
+
+    // Попытка угадать пароль
+    // Возвращает true - если пароль угадан, false - если нет
+    // Правильно угаданный символ отображается как есть
+    // Неправильно угаданный - отображается минус
+    // Позиция не угадана, угадана цифра - отображается звезда
+    bool TrySolveRiddle(Critter& player, string codePlayer, string& codeAnswer)
+    {
+        if(TriesLeft<1)
+        {
+            player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_BLOCKED);
+            return false;
+        }
+        string charPlayer="";
+        string charReal="";
+        string codeReal=this.SCode();
+        bool   charFound=false;
+        codeAnswer="";
+
+        for(uint i=0, l=codePlayer.length(); i<MAX_CODE_LENGTH && i<l; i++)
+        {
+            charFound=false;
+            charPlayer=codePlayer[ i ];
+            for(uint j=0, len=codeReal.length(); j<MAX_CODE_LENGTH && j<len && !charFound; j++)
+            {
+                charReal=codeReal[ j ];
+                if(charReal==charPlayer)
+                {
+                    charFound=true;
+                    if(i==j)
+                        codeAnswer +=this.Code[ j ];
+                    else
+                        codeAnswer +="*";
+                }
+            }
+            if(!charFound)
+                codeAnswer +="-";
+        }
+        this.TriesLeft--;
+        this.Save(_AnyDataKey(this.MapId, this.ComputorPid, this.HexX, this.HexY));
+        if(codeReal==codeAnswer)
+        {
+            this.TriesLeft=0;
+            this.Save(_AnyDataKey(this.MapId, this.ComputorPid, this.HexX, this.HexY));
+            return true;
+        }
+        return false;
+    }
+}
+
+uint e_ResetRiddle(uint[] @ values)
+{
+    ComputerRiddleInfo@ riddle=GetRiddleInfo(values[ 0 ], values[ 1 ], values[ 2 ], values[ 3 ]);
+    if(valid(riddle))
+    {
+        if(valid(GetMap(values[ 0 ])))
+        {
+            riddle.GenerateCode();
+            riddle.Save(_AnyDataKey(values[ 0 ], values[ 1 ], values[ 2 ], values[ 3 ]));
+            return TIME_RESET;
+        }
+        else
+        {
+            riddle.Erase();
+        }
+    }
+    return 0;
+}
+
+bool s_Use(Critter& player, Scenery& scenery, int skill, Item@ item)
+{
+    if(skill==SK_SCIENCE && !valid(item))
+    {
+        player.Wait(1000);
+        ComputerRiddleInfo@ info=ComputerRiddleInfo(player.GetMap(), scenery);
+        GameVar             @mapId=GetLocalVar(VAR_SCEN_MAPID, player.Id);
+        GameVar             @hexX =GetLocalVar(VAR_SCEN_HEX_X, player.Id);
+        GameVar             @hexY =GetLocalVar(VAR_SCEN_HEX_Y, player.Id);
+        GameVar             @proto=GetLocalVar(VAR_SCEN_PROTO, player.Id);
+        if(!valid(info) || !valid(mapId) || !valid(hexX) || !valid(hexY))
+            return false;
+        if(info.TriesLeft<1)
+        {
+            player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_BLOCKED);
+            return true;
+        }
+        else
+        {
+            player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_INFO, "$num" + info.TriesLeft);
+        }
+        mapId=player.GetMap().Id;
+        hexX=scenery.HexX;
+        hexY=scenery.HexY;
+        proto=scenery.ProtoId;
+        player.ShowScreen(SCREEN_SAY, 0, "answer_TrySolve");
+        player.SayMsg(SAY_SAY_TITLE, TEXTMSG_TEXT, STR_HEADER);
+        player.Say(SAY_SAY_TEXT, "????");
+        return true;
+    }
+    return false;
+}
+
+void answer_TrySolve(Critter& player, uint answerI, string& answerS)
+{
+    ComputerRiddleInfo@ info=GetRiddleInfo(player);
+    if(valid(info))
+    {
+        string code="";
+        bool   solved=info.TrySolveRiddle(player, answerS, code);
+        player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_ANSWER, "$pcode" + answerS + "$code" + code);
+        if(solved)
+        {
+            player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_SOLVED);
+            player.StatBase[ ST_EXPERIENCE ] +=_GetXP(player);
+            player.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_CAMERA);
+            CreateTimeEvent(__FullSecond + REAL_SECOND(1) / 2, "e_ShowCamera", player.Id, false);
+        }
+    }
+}
+
+uint e_ShowCamera(uint[] @ values)
+{
+    Critter@ cr=GetCritter(values[ 0 ]);
+    if(valid(cr))
+    {
+        Location@[] locations;
+        if(GetLocations(cr.WorldX, cr.WorldY, 300, locations) > 0)
+        {
+            Location@ loc=locations[ Random(0, locations.length() - 1) ];
+            if(valid(loc))
+            {
+                Map@ map=loc.GetMapByIndex(0);
+                if(valid(map))
+                {
+                    uint16 hx=0, hy=0;
+                    if(map.GetEntireCoords(0, 0, hx, hy))
+                    {
+                        cr.ViewMap(map, 50, hx, hy, 5);
+                    }
+                }
+            }
+        }
+
+    }
+    return 0;
+}

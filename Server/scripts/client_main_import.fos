@@ -1,0 +1,75 @@
+#include "_client_defines.fos"
+#include "_macros.fos"
+#include "_msgstr.fos"
+#include "sprite.fos"
+#include "_colors.fos"
+#include "_animation.fos"
+#include "client_gui_h.fos"
+
+#pragma bindfunc "void ChangeClientParam(CritterCl& cr, int param, int value) -> fonline_tla_client.dll ChangeClientParam"
+
+#define MODE_SHOW_AIMED(0)
+#define MODE_SHOW_ALL(1)
+#define MODE_SHOW_HEALTH(3)
+#define MODE_MOVE (2)
+#define MODE_ATTACK (1)
+#define MODE_DEFAULT (0)
+
+
+//Cracker
+import int to_hit_hex_perk(ProtoItem& weapon, uint8 weaponMode) from "combat";
+import void click_attack_hex(int click, bool ctrl) from "combat";
+import void render_hit_hex() from "combat";
+import void mouse_move_attack_hex(int x, int y, bool ctrl) from "combat";
+//Cracker end
+
+//kamex
+import void InitCMDScreen() from "client_merc_cmd";
+// kamex end
+
+import int GUI_GetActiveMainScreen() from "client_gui";
+import int  GUI_GetActiveScreen() from "client_gui";
+import void InitializeGame() from "config";
+import void InitTestScreen() from "client_screen_test";
+import void InitRadioScreen() from "radio";
+import void InitFixBoyMainScreen() from "fix_boy";
+import void GUI_Init() from "client_gui";
+import void GUI_GetActiveScreens(int[]& result) from "client_gui";
+import void GUI_ShowScreen(int screenIndex, int p0, int p1, int p2) from "client_gui";
+import void GUI_HideScreen(int screenIndex, int p0, int p1, int p2) from "client_gui";
+import void GUI_Render() from "client_gui";
+import bool GUI_MouseDown(int click, int x, int y) from "client_gui";
+import bool GUI_MouseUp(int click, int x, int y) from "client_gui";
+import void GUI_MouseMove(int x, int y) from "client_gui";
+import bool GUI_KeyDown(uint8 key) from "client_gui";
+import bool GUI_KeyUp(uint8 key) from "client_gui";
+import void GUI_InputLost() from "client_gui";
+import bool PerkCheck(CritterCl& cr, uint perk) from "perks";
+import void CritterGenerate(int[]& data) from "parameters";
+import bool CritterGenerateCheck(int[]& data) from "parameters";
+import void InitNameColorizing() from "name_colorizing";
+import bool TryColorizeCritter(CritterCl& cr) from "name_colorizing";
+import void InitPlayersColorizing() from "playerscolorizing";
+import void TryColorizePlayer(CritterCl& cr) from "playerscolorizing";
+import bool PlayerIgnored(CritterCl& cr) from "ignore_list";
+import bool IgnorePlayer(string& message) from "ignore_list";
+import void InitIgnoreList() from "ignore_list";
+import void InitChosenTabs() from "chosen_tabs";
+import void DrawChosenTabs() from "chosen_tabs";
+
+// Фракционная система
+import void InitFrButton() from "client_fraction_gui"; //TabaK
+import void InitFrScreen(uint frId, uint leadership) from "client_fraction_gui"; //TabaK
+import void HideFrButton() from "client_fraction_gui";
+// Замки
+import  void InitLockerScreen() from "e_locker";
+
+//Фиксбой
+import void ShowFixBoyScreen(int, int, int, string@, int[]@) from "fix_boy";
+
+#ifdef PLAYERS_3D
+import void Init3DChaRegScreen() from "client_3d_cha_reg";
+import void Set3DRegistrationGender(int gender) from "client_3d_cha_reg";
+import void Fill3DRegistrationParameters(int[]& params) from "client_3d_cha_reg";
+#endif
+import void PlayAnimSound(uint crType, int gender, uint anim1, uint anim2) from "animation";

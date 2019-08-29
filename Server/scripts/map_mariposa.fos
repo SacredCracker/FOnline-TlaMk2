@@ -1,0 +1,15 @@
+// Author: rifleman17
+// Скрипт для карт марипозы. Генерация книжек и радиация
+// map_mariposa@_MapInit
+
+import void _MediumRadiation(Map& map, bool firstTime) from "map_radiation";
+import void SpawnHubBooks(Map & map) from "ncr_common";
+
+void _MapInit(Map& map, bool firstTime)
+{
+	_MediumRadiation(map, firstTime);
+	if(firstTime)
+	{
+		SpawnHubBooks(map);
+	}
+}

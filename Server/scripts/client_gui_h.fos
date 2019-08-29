@@ -1,0 +1,116 @@
+// Author: cvet
+// Client GUI header
+
+#ifndef __CLIENT_GUI__
+#define __CLIENT_GUI__
+
+//
+// API
+//
+#ifndef CLIENT_GUI
+// Create new screen
+import IGUIScreenOpt@ GUI_CreateScreen(int screenIndex, string@ sprName) from "client_gui";
+// Delete old screen, hardcoded screens included
+import void GUI_DeleteScreen(int screenIndex) from "client_gui";
+// Add element on screen
+import IGUIElementOpt@ GUI_AddScreenElement(int screenIndex, string@ sprName, int x, int y) from "client_gui";
+// Get screen options
+import IGUIScreenOpt@ GUI_GetScreenOptions(int screenIndex) from "client_gui";
+// Get options for last created screen, valid only on IGUIScreenCallbackShow::OnShow callback
+import IGUIScreenOpt@ GUI_GetScreenOptions() from "client_gui";
+// Get options for last created element, valid only on IGUIElementCallbackInit::OnInit callback
+import IGUIElementOpt@ GUI_GetElementOptions() from "client_gui";
+#endif
+
+//
+// Screen
+//
+
+interface IGUIScreenCallbackShow { void OnShow(int p0, int p1, int p2); }
+interface IGUIScreenCallbackHide { void OnHide(int p0, int p1, int p2); }
+interface IGUIScreenCallbackMove { void OnMove(int posX, int posY); }
+
+interface IGUIScreenOpt
+{
+	IGUIScreenOpt@ CallbackShow(IGUIScreenCallbackShow@ callback);       // delault null
+	IGUIScreenOpt@ CallbackHide(IGUIScreenCallbackHide@ callback);       // delault null
+	IGUIScreenOpt@ CallbackMove(IGUIScreenCallbackMove@ callback);       // delault null
+	IGUIScreenOpt@ Position(int x, int y);                               // delault center of screen
+	IGUIScreenOpt@ CanMove(bool enabled);                                // delault true
+	IGUIScreenOpt@ Modal(bool enabled);                                  // delault true
+	IGUIScreenOpt@ Multiinstance(bool enabled);                          // delault false
+	IGUIScreenOpt@ IgnoreBorders(bool enabled);                          // default false
+	IGUIScreenOpt@ CloseOnMiss(bool enabled);                            // default false
+	IGUIScreenOpt@ AutoCursor(bool enabled, int cursorType);             // default false
+
+	// Info
+	int GetPosX();
+	int GetPosY();
+	// IGUIElementOpt@[]@ GetElements();
+}
+
+//
+// Element
+//
+
+interface IGUIElementCallbackInit       { void OnInit(); }
+interface IGUIElementCallbackDraw       { void OnDraw(); }
+interface IGUIElementCallbackMouseClick { void OnMouseClick(int click); }
+interface IGUIElementCallbackMouseDown { void OnMouseDown(int click); }
+interface IGUIElementCallbackMouseMove { void OnMouseMove(bool clicked); }
+interface IGUIElementCallbackKeyPress   { void OnKeyPress(uint8 key, uint8 letter); }
+
+interface IGUIElementOpt
+{
+	IGUIElementOpt@ CallbackInit(IGUIElementCallbackInit@ callback);                         // default null
+	IGUIElementOpt@ CallbackDraw(IGUIElementCallbackDraw@ callback);                         // default null
+	IGUIElementOpt@ CallbackMouseClick(IGUIElementCallbackMouseClick@ callback);             // default null
+	IGUIElementOpt@ CallbackMouseDown(IGUIElementCallbackMouseDown@ callback);             // default null
+	IGUIElementOpt@ CallbackMouseMove(IGUIElementCallbackMouseMove@ callback);             // default null
+	IGUIElementOpt@ CallbackKeyPress(IGUIElementCallbackKeyPress@ callback);                 // default null
+	IGUIElementOpt@ Position(int x, int y);                                                  // default zeros
+	IGUIElementOpt@ Position(int x, int y, int w, int h);                                    // default zeros
+	IGUIElementOpt@ Position(string& iniKey);                                                // get borders from ini
+	IGUIElementOpt@ DownPic(string@ sprName);                                                // default picture off
+	IGUIElementOpt@ Text(string@ t, int f, uint color, uint downColor, int flags);     // default text disabled
+	IGUIElementOpt@ TextInput(bool enabled, uint maxLen, uint colorFocused);                 // deafult false
+	IGUIElementOpt@ Switch(bool enabled);                                                    // default false
+	IGUIElementOpt@ ToHide(bool hide);														 // default false
+	IGUIElementOpt@ ScrollableText(bool scrollable);                                         // default false
+	IGUIElementOpt@ SetScroll(bool add, int val);                                          // default zero
+	
+	IGUIElementOpt@ SBSetValue(uint val);
+	IGUIElementOpt@ SBScrollPic(string@ sprName);
+	IGUIElementOpt@ SBSetRange(uint range);
+	IGUIElementOpt@ IsScrollBar(bool scroll);
+	IGUIElementOpt@ IsListBox(bool listbox, uint highlight, uint down);
+	IGUIElementOpt@ List(string@[]@ list);
+	IGUIElementOpt@ TextFrame(int8 x, int8 y);
+	IGUIElementOpt@ Font(int font, uint color);
+	IGUIElementOpt@ MultiPicture(uint[] hashs, uint8 dir, uint16 height, uint16 width, uint16 dX, uint16 dY, uint8 countOfLine, uint color);
+	IGUIElementOpt@ MultiText(string[] texts, int16 startDx, int16 startDy, uint16 dX, uint16 dY, uint8 countOfLine, int font, uint color, int flags);
+	IGUIElementOpt@ Picture(string sprName);
+	IGUIElementOpt@ Picture(string sprName, int path);
+	IGUIElementOpt@ Picture(uint hash, uint8 dir);
+	IGUIElementOpt@ ForceCallbackMouseClick(int click);
+	IGUIElementOpt@ AutoCursor(int cursor);
+	IGUIElementOpt@ SetFocus(bool set);
+	IGUIElementOpt@ Flags(int flags);
+	IGUIElementOpt@ Push(bool push);
+	IGUIElementOpt@ SBReversed(bool set);
+	IGUIElementOpt@ ClickSound(string@ sound);
+
+	// Info
+	int GetPosX();
+	int GetPosY();
+	int GetTextScroll();
+	int GetTextOffset();
+	bool IsHidden();
+	uint GetSBScrollValue();
+	string@ GetText();
+	int GetListElement();
+	string GetListElementStr();
+	uint GetElementsNumber();
+}
+
+#endif // __CLIENT_GUI__

@@ -1,0 +1,147 @@
+[comment]
+Водитель патруля
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 D _param p ST_INTELLECT > 3 D _script caravan@d_CaravanEndedOrNotStarted 0  D or D _script caravan@d_IsCaravanStatus 1 1 D _param p ST_INTELLECT > 3 #
+13 1020 D _param p ST_INTELLECT < 4 #
+11 1030 D _script caravan@d_IsCaravanStatus 1 4 @
+2 2000 None 0 #
+7 2010 D _var p q_vc_shrim_patrol = 1 D _script caravan@d_IsCaravanStatus 1 1 #
+14 2020 D _var p q_vc_shrim_patrol = 1 D _script caravan@d_NotIsCaravanStatus 1 1 #
+5 2030 #
+3 2040 #
+0 2050 #
+15 2060 D _var p vc_guard_rank = 4 @
+3 3000 None 0 #
+5 3010 #
+4 3020 D _var p q_vc_shrim_patrol = 1 @
+4 4000 None 0 #
+7 4010 D _script caravan@d_IsCaravanStatus 1 1 #
+14 4020 D _script caravan@d_NotIsCaravanStatus 1 1 @
+5 5000 None 0 #
+65507 5010 #
+0 5020 @
+6 6000 Attack 0 @
+7 7000 None 0 #
+8 7010 #
+9 7020 @
+8 8000 None 0 #
+9 8010 @
+9 9000 None 0 #
+10 9010 #
+0 9020 R _script caravan@r_StartCaravan 0  @
+10 10000 None 0 #
+0 10010 @
+11 11000 None 0 #
+12 11010 D _script caravan@d_HasPlayerRequest 0  #
+0 11020 @
+12 12000 None 0 #
+0 12010 R _script caravan@r_ContinueCaravan 0  @
+13 13000 None 0 @
+14 14000 None 0 #
+0 14010 @
+15 15000 None 0 #
+0 15010 &
+
+[russ]
+{100}{}{Капрал Шрим}
+{200}{}{Капрал гвардейцев Шрим.}
+{200}{}{Это капрал Шрим по прозвищу "Креветка".}
+{210}{}{Говорят, в Гвардию берут самых лучших: опытных бойцов, искусных тактиков, хладнокровных и трезвомыслящих профессионалов.
+Тем удивительнее, что Шрим служит в Гвардии в звании капрала. Он больше похож на маньяка, чем на кадрового военного.}
+{210}{}{Перед вами подвижный низкорослый гвардеец. Он ведет себя нервно, часто сжимает и разжимает кулаки, что-то постоянно бормочет.}
+{1000}{}{Predialogue installations}
+{1010}{}{IN >3 не в патруле}
+{1020}{}{IN < 4}
+{1030}{}{патруль на энке}
+{2000}{}{Ну, ты еще кто так@sex@|ой||ая|? Не раздражай меня. Отвечать быстро, пока я не занялся тобой, @sex@|щегол||крыса|.}
+{2010}{}{Капрал Шрим? По приказу капитана Хартманна я прибыл для несения патрульной службы.}
+{2020}{}{Капрал Шрим? По приказу капитана Хартманна я прибыл для несения патрульной службы.}
+{2030}{}{Почему тебя называют "креветкой"?}
+{2040}{}{Эй, эй, ты чего такой нервный!}
+{2050}{}{Мне нужно идти.}
+{2060}{}{Да ты как со старшим по званию разговариваешь, капрал!}
+{3000}{}{Что?! Да как ты смеешь!!! Ты дерзишь мне, ах ты, падла, я прикончу тебя прямо на месте, вспорю твое брюхо кинжалом! Ты будешь корчиться на моем наже как червяк! О тебе и думать забудут, дрянь!!!}
+{3010}{}{Спокойнее, Креветка, я свой, гвардеец.}
+{3020}{}{Я здесь по приказу капитана.}
+{4000}{}{Какого, к дьволу, капитана? Капитана Кука? Капитана-Америка? Капитана Очевидность? Ты, туп@sex@|ой брамин||ая корова|, выражайся понятно, или убирайся отсюда ко всем чертям!}
+{4010}{}{Приказ капитана Хартманна. Прибыл@sex@|||а| для несения патрульной службы.}
+{4020}{}{Приказ капитана Хартманна. Прибыл@sex@|||а| для несения патрульной службы.}
+{5000}{}{Ты... Что ты сейчас сказал@sex@|||а|, повтори... Если я еще раз от тебя это слово услышу. Я не знаю, что сделаю с тобой!!! Никто этого не знает. Но это будет что-то очень страшное. Поверь мне. Я не бросаю слова на ветер. [Достает здоровенный тесак из-за пояса]}
+{5010}{}{Да что ты можешь сделать, псих? Я легко тебя успокою.}
+{5020}{}{Хорошо, я запомню.}
+{6000}{}{Ну все, я за себя не отвечаю! Прощайся с жизнью, мразь.}
+{7000}{}{Патрульный. Хреново. Только мне желторотиков в патруле не хватало. Так, мля, слушай сюда, новобранец. В патруле - молчать, выполнять приказы быстрее, чем услышишь, не тупить, не тормозить. За любую ошибку буду бить морду. @sex@|Усек?||Усекла?|}
+{7010}{}{Да чего тут усекать. А когда выходим?}
+{7020}{}{[Кивнуть]}
+{8000}{}{[Лицо капрала багровеет и он срывается на крик] Чем слушаем, тля?!!! Я что сказал сейчас? Молчать! Тебе еще раз объяснить?}
+{8010}{}{[Молчать]}
+{9000}{}{Ты очень вовремя здесь появилась, подружка. Выходим немедленно.}
+{9010}{}{Прошу прощения, сэр. Мне нужно только заскочить в уборную.}
+{9020}{}{Отлично! Я готов@sex@|||а|.}
+{10000}{}{Тьфу. Бегом! У тебя ровно 32 секунды. И не часом больше.}
+{10010}{}{Есть!}
+{11000}{}{Кто? Ты? Ты меня бесишь, запомни это. Быстрее, что за хрень случилась?}
+{11010}{}{Сэр, мне кажется мы можем продолжить маршрут патрулирования.}
+{11020}{}{Ничего особенного. Все в норме.}
+{12000}{}{Тебе КАЖЕТСЯ? Да кого волнует то, что тебе кажется?! Я и без твоих советов разбирусь, когда нам нужно идти дальше.}
+{12010}{}{Ничуть в этом не сомневаюсь, сэр.}
+{13000}{}{А ну, вали отсюда! Бегом!}
+{14000}{}{На сегодня нами выполнены все задачи по патрулированию. Завтра приходи. И не заставляй себя ждать. А сейчас, кру-гом. И пош@sex@|ел||ла| нахрен.}
+{14010}{}{Слушаюсь.}
+{15000}{}{Лейтенант, сэр... Простите, не признал...}
+{15010}{}{Под трибунал пойдешь. Я еще тобой займусь, Креветка!}
+
+[engl]
+{100}{}{Corporal Shrim}
+{200}{}{the Corporal of guardsmen of Shrim.}
+{200}{}{It is corporal Shrim by a nickname "Shrimp".}
+{210}{}{Speak, in Guards take the best: skilled fighters, skilful taktikov, cool and soberminded professionals.
+The more surprisingly that Shrim serves in Guards in a rank of the corporal. It is more similar to the maniac, than on the professional soldier.}
+{210}{}{Before you the mobile undersized guardsman. He behaves nervously, often compresses and unclenches fists, something constantly mutters.}
+{1000}{}{Predialogue installations}
+{1010}{}{IN> 3 not in patrol}
+{1020}{}{IN <4}
+{1030}{}{patrol on enke}
+{2000}{}{Well, you still who так@sex | oh || aja |? Do not irritate me. To answer quickly while I was not engaged in you, @sex | a goldfinch || a rat |.}
+{2010}{}{Corporal Shrim? By order of captain Hartmanna I have arrived for execution of patrol service.}
+{2020}{}{Corporal Shrim? By order of captain Hartmanna I have arrived for execution of patrol service.}
+{2030}{}{Why you name "shrimp"?}
+{2040}{}{Hey, hey, you of that such nervous!}
+{2050}{}{I need to go.}
+{2060}{}{Yes you as on a rank talk to the senior, the corporal!}
+{3000}{}{That?! Yes as you dare!!! You are insolent to me, ah you, padla, I will finish off you directly on a place, I will rip up your belly a dagger! You will writhe on mine nazhe as a worm! Of you and will forget to think, rubbish!!!}
+{3010}{}{is quieter, the Shrimp, I the, the guardsman.}
+{3020}{}{I here by order of the captain.}
+{4000}{}{What, to dvolu, the captain? Captain Cook? The Captain-amerika? The captain Evidence? You, туп@sex | oh bramin || aja a cow |, be expressed clearly, or be cleaned from here to all devils!}
+{4010}{}{the Order of captain Hartmanna. Прибыл@sex ||| and | for execution of patrol service.}
+{4020}{}{the Order of captain Hartmanna. Прибыл@sex ||| and | for execution of patrol service.}
+{5000}{}{You... That you now сказал@sex ||| and |, repeat... If I once again from you hear this word. I do not know that I will make with you!!! Anybody does not know it. But it will be something very terrible. Believe to me. I do not waste the words. [Gets a huge hatchet because of a belt]}
+{5010}{}{Yes that you can make, the loony? I easily will calm you.}
+{5020}{}{it is good, I will remember.}
+{6000}{}{Well everything, I for myself do not answer! Say goodbye to life, rubbish.}
+{7000}{}{the Patrolman. Hrenovo. Only me zheltorotikov in patrol did not suffice. So, mlja, listen here, the recruit. In patrol - to be silent, execute orders faster, than you will hear, not tupit, not to brake. For any error I will beat a muzzle. @sex | has truncated? || has truncated? |}
+{7010}{}{Yes that here to truncate. And when we leave?}
+{7020}{}{[to Nod]}
+{8000}{}{[the Person of the corporal flushes also it breaks on shout] Than is listened, a plant louse?!!! I that have told now? To be silent! To you once again to explain?}
+{8010}{}{[To be silent]}
+{9000}{}{You very much here have appeared in time, the girl-friend. We leave immediately.}
+{9010}{}{I Am sorry, the sir. I need to drop in only in a lavatory.}
+{9020}{}{it is excellent! I готов@sex ||| and |.}
+{10000}{}{Fie. Run! At you 32 seconds are equal. And not it is more hour.}
+{10010}{}{Is!}
+{11000}{}{Who? You? You enrage me, remember it. Faster, what for hren has happened?}
+{11010}{}{the Sir, seems to me we can continue a patrol route.}
+{11020}{}{Anything especial. All in norm.}
+{12000}{}{it SEEMS to You? Yes who is excited with what seems to you?! I and without your councils razbirus when we need to go further.}
+{12010}{}{At all it I do not doubt, the sir.}
+{13000}{}{And well, bring down from here! Run!}
+{14000}{}{For today we carry out all problems on patrol. Tomorrow come. Also do not keep itself waiting. And now, kru-gom. And пош@sex | ate || la | nahren.}
+{14010}{}{I Obey.}
+{15000}{}{the Lieutenant, the sir... Forgive, did not recognise...}
+{15010}{}{Under tribunal you will go. I still will be engaged in you, the Shrimp!}

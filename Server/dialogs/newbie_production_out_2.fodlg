@@ -1,0 +1,45 @@
+[comment]
+
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 D _item p PID_10MM_JHP = 0 D _item p PID_9MM_AMMO = 0 D _item p PID_GUNPOWDER = 0 D _item p PID_PLASTIC_EXPLOSIVES_DULL = 0 D _item p PID_EXP_COLLAR_CRAFT = 0 #
+3 1020 D _item p PID_PLASTIC_EXPLOSIVES_DULL > 0 D or D _item p PID_GUNPOWDER > 0 D or D _item p PID_10MM_JHP > 0 D or D _item p PID_9MM_AMMO > 0 D or D _item p PID_EXP_COLLAR_CRAFT > 0 #
+4 1030 D _item p PID_10MM_PISTOL > 0 D or D _item p PID_10MM_SMG > 0 D or D _item p PID_SPRINGER_RIFLE > 0 D or D _item p PID_ZIP_GUN > 0 R _item p PID_10MM_PISTOL - 1 R _item p PID_14MM_SMG - 1 R _item p PID_SPRINGER_RIFLE - 1 R _item p PID_ZIP_GUN - 1 @
+2 2000 None 0 #
+0 2010 R _script q_newbie_scripts@r_Transit 1 17 #
+0 2020 @
+3 3000 None 0 @
+4 4000 None 0 &
+
+[russ]
+{100}{}{Охранница}
+{200}{}{Серьезная охранница.}
+{210}{}{Охранница с каменным лицом. Она явно считает свой пост самым важным на свете.}
+{1000}{}{Predialogue installations}
+{1010}{}{У игрока нет запретных вещей}
+{1020}{}{У игрока есть запретные вещи}
+{1030}{}{Есть скрафченное оружие}
+{2000}{}{[Обыскивает вас] Все в порядке, можешь проходить.}
+{2010}{}{[Выходите наружу]}
+{2020}{}{Я, пожалуй, еще задержусь.}
+{3000}{}{[Обыскивает вас] Я не могу выпустить тебя наружу с этими вещами.}
+{4000}{}{[Обыскивает вас] Черт подери, откуда ты это взял? А ну, отдай!}
+
+[engl]
+{100}{}{Female Guard}
+{200}{}{Serious guard.}
+{210}{}{A female guard with stone cold face. She really believes her duties to be important.}
+{1000}{}{Predialogue installations}
+{1010}{}{У игрока нет запретных вещей}
+{1020}{}{У игрока есть запретные вещи}
+{1030}{}{Есть скрафченное оружие}
+{2000}{}{[Searches you] All right, you may pass.}
+{2010}{}{[Exit]}
+{2020}{}{I'd rather stay in.}
+{3000}{}{[Searches you] I can't let you out with these things.}
+{4000}{}{[Searches you] Damn, where did you get this? Give me that!}
