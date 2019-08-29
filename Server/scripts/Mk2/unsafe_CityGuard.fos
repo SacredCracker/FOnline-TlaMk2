@@ -1,8 +1,0 @@
-// FOS Server
-
-void GetPenalty(::Critter& player, int , int , int , ::string@ , ::array<int>@ )
-{
-	::Map@ map = player.GetMap();
-	if(validEngineObject(map))
-		player.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, City::Penalty::MSGNumberTotalPenalty, "$count" + CityGuard::GetPenaltyCity( player, map.GetLocation().GetProtoId() )+"$loc@msg GM " + STR_GM_NAME( map.GetLocation().Id ) + "@");
-}
