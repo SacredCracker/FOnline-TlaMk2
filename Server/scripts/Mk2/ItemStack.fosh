@@ -3,6 +3,10 @@
 bool item_check_stackable( ItemMutual& item, ItemMutual@ other, uint pid )
 {
 	if( @other is null  ) return item.GetProtoId() == pid;
+#ifdef __MAPPER
+	return true;
+#endif
+#ifndef __MAPPER
 #define CHECK_ITEM_STACK_DATA #( data ) ( item.data==other.data )
 	return CHECK_ITEM_STACK_DATA( AmmoCount ) && CHECK_ITEM_STACK_DATA( HolodiskNumber ) && CHECK_ITEM_STACK_DATA( RadioFlags )
 	  && CHECK_ITEM_STACK_DATA( RadioBroadcastSend ) && CHECK_ITEM_STACK_DATA( RadioBroadcastRecv ) && CHECK_ITEM_STACK_DATA( RadioChannel )
@@ -32,4 +36,5 @@ bool item_check_stackable( ItemMutual& item, ItemMutual@ other, uint pid )
 	  
 	  ;	
 #undef CHECK_ITEM_STACK_DATA
+#endif
 }
