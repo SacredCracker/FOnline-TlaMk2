@@ -160,11 +160,20 @@ bool SetPlayerToNewbieLocation( Critter& cr ) // Export
     // Запуск начального диалога
     if( questStat < 2 )
     {
-        Mk2RunDialog( cr, DIALOG_newb_replication_sam, map, cr.HexX, cr.HexY, false );
+		::CreateTimeEvent( __FullSecond + REAL_SECOND( 1 ), "e_RunDialog", cr.Id, false );
     }
 
     return true;
 }
+
+
+uint e_RunDialog( ::array<uint>@ values )
+{
+	Critter@ critter = GetCritter( values[0] );
+	Mk2RunDialog( critter, critter.GetMap().GetNpc(0, FIND_LIFE, 0), true );
+	return 0;
+}
+
 // ~run q_newbie_scripts Email 0 0 0
 void Email( Critter& cr, int, int, int )
 {

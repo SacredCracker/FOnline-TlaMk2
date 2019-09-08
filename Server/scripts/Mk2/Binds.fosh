@@ -1321,13 +1321,13 @@ class EventCritterInit
 	
 	bool Raise( Critter@ critter, bool firstTime )
 	{
-		for( uint i = 0, iEnd = Funcdef.length(); i < iEnd; i++ )
-			if( !Funcdef[i]( critter, firstTime ) )
-				return false;
-		
 		Critter::CritterDescriptor@ descriptor = cast<Critter::CritterDescriptor>(@critter.ScriptDescriptor);
 		if( @descriptor !is null )
 			if( !descriptor.CritterInit( critter, firstTime ) )
+				return false;
+				
+		for( uint i = 0, iEnd = Funcdef.length(); i < iEnd; i++ )
+			if( !Funcdef[i]( critter, firstTime ) )
 				return false;
 		
 		for( uint i = 0, iEnd = FuncdefResult.length(); i < iEnd; i++ )
@@ -2059,8 +2059,14 @@ void critter_respawn( Critter& critter )
 
 void critter_init( Critter& critter, bool firstTime )
 {
-	if(critter.IsNpc())	Critter::NewDescriptor( critter, Npc::NpcDescriptor( ) );
-	else Critter::NewDescriptor( critter, Critter::CritterDescriptor( ) );
+	if( !Critter::NewDescriptor( critter, critter.IsPlayer() ? Critter::CritterDescriptor( ) : Npc::NpcDescriptor( ) ) )
+	{
+		Log( "Error critter Init " + critter.Id );
+		if( critter.IsPlayer() )
+			critter.Disconnect();
+		return;
+	}
+	
 	__EventCritterInit.Raise( critter, firstTime );
 }
 
