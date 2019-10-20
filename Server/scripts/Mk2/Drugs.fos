@@ -335,7 +335,6 @@ void UseOn(::Critter& cr, ::Critter& onCr, ::Item& drug) // Export
 
 void DropEffects(::Critter& cr) // Export
 {
-	if( cr.StatBase[ST_COUNT_DRUGS] > 0 )
 	{
 		// Броня убирается в инвентарь, чтобы избежать эффекта снятия бонусов от armor perk
 		::array<::Item@> items = {};
@@ -346,9 +345,11 @@ void DropEffects(::Critter& cr) // Export
 			_CritMoveItem(cr,items[i],SLOT_INV);
 		
 		uint[] identifiers;
-		int[] params1;
-		for( uint i=0, iEnd = cr.GetTimeEvents(CTE_DRUG,identifiers,null,null,params1); i < iEnd; i++ ) 
-			Drop(cr,identifiers[i],RateToStage[params1[i]]);
+		int[] rates, pids;
+		for( uint i=0, iEnd = cr.GetTimeEvents(CTE_DRUG,identifiers,null,pids,rates); i < iEnd; i++ )
+		{
+			Drop(cr,pids[i],RateToStage[rates[i]]);
+		}
 		
 		for(uint i=STAT_EXT_BEGIN;i<=STAT_EXT_END;i++) 
 			cr.StatBase[i]=0;
@@ -653,7 +654,7 @@ int GetTableIndex(Drugs::pid drugPid)
 }
 
 uint ProcessDrug(::Critter& cr, Drugs::pid drugPid, int& rate )
-{	
+{
 	uint stage=RateToStage[rate];
 	uint flags=RATE_TO_FLAGS(rate);
 	if(cr.IsPlayer())
@@ -772,6 +773,7 @@ void Drop(::Critter& cr, Drugs::pid drugPid, uint stage)
 		{
 			int stat=Stat(index,i);
 			int amount=Amount(index,i,stage+(stage==1?-1:0)); // Turn
+			
 			if(stage==1) amount=-amount;
 			if(stat<STAT_EXT_BEGIN ) cr.StatBase[STAT_EXT_BEGIN+stat]+=amount;
 			else cr.StatBase[ stat ] += amount;

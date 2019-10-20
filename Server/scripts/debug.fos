@@ -1594,10 +1594,10 @@ void kill( Critter& player, int param0, int param1, int param2 )
 {
     Critter@ target = GetCritter( param0 );
     if( not valid( target ) )
-        return;
+		@target = player;
     target.Say( SAY_NETMSG, "Кара небесная поразила вас!" );
     target.ToDead( def( param1, ANIM2_DEAD_PULSE_DUST ), player );
-    // target.SetTimeout(TO_REPLICATION, 3);
+    target.TimeoutBase[TO_REPLICATION] = param2;
 }
 
 void body( Critter& player, int param0, int param1, int param2 )
