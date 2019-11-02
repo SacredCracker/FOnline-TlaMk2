@@ -4220,3 +4220,35 @@ void TrashMap( Critter& critter, int param0, int param1, int param2 )
 		}
 	}
 }
+
+# pragma interface "TestIface"
+# pragma interface "TestIface uint get_Id ( )"
+
+# pragma funcdef "void TestCreateFuncdef ( ) "
+
+class TestEngineIface : TestIface
+{
+	uint get_Id ( ) override
+	{
+		return 10;
+	}
+}
+
+class Test1
+{
+	bool IsOk;
+
+	Test1( )
+	{
+		TestIface@ iface = TestIface::Create( "debug", "TestEngineIface" );
+		IsOk = iface.Id == 10;
+		
+		TestCreateFuncdef@ function = TestCreateFuncdef::Create( "debug", "TestCreateFunction", "return;", "generation_section" );
+		if( function !is null ) function();
+		
+		@ function = TestCreateFuncdef::Get( "debug", "TestCreateFunction" );
+		if( function !is null ) function();
+	}
+}
+
+Test1 test;

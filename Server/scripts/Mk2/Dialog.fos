@@ -3,7 +3,7 @@
 #ifdef __SERVER
 Dialog@[] Listing;
 ::dictionary Lybrary;
-funcdef void ParseSpace( Dialog&, ::string&, Context@ );
+
 ScriptInfo::Enum@ GameVarEnum 	= @ScriptInfo::Enum( "Content", "GameVar", "Mk2" );
 ScriptInfo::Enum@ GVarEnum 		= @ScriptInfo::Enum( "Content", "GVAR", "Mk2" );
 ScriptInfo::Enum@ LVarEnum 		= @ScriptInfo::Enum( "Content", "LVAR", "Mk2" );
@@ -11,6 +11,11 @@ ScriptInfo::Enum@ UVarEnum 		= @ScriptInfo::Enum( "Content", "UVAR", "Mk2" );
 ScriptInfo::Enum@ LLVarEnum 		= @ScriptInfo::Enum( "Content", "LLVAR", "Mk2" );
 ScriptInfo::Enum@ LIVarEnum 		= @ScriptInfo::Enum( "Content", "LIVAR", "Mk2" );
 ScriptInfo::Enum@ LMVarEnum 		= @ScriptInfo::Enum( "Content", "LMVAR", "Mk2" );
+
+# pragma interface "DialogPacket"
+# pragma interface "DialogContext"
+# pragma interface "DialogContext void ParseLine( ::string&in line )"
+# pragma funcdef "void ParseSpace ( DialogPacket@, ::string&, DialogContext@ )"
 
 Dialog@ GetDialog( ::Critter& cr )
 {
@@ -153,27 +158,28 @@ void DialogInit( ::string& nameDialog, Content::Dialog number )
 	}
 }
 
-void DataSpace( Dialog& dialog, ::string& line, Dialog::Context@ context )
+void DataSpace( DialogPacket@ dialog_packet, ::string& line, DialogContext@ context )
 {
 	::string@[] split = ::splitEx( line, "=" );
 	if( split.length() == 2 && split[0] == "lang" )
 	{ }
 }
 
-void DialogSpace( Dialog& dialog, ::string& line, Context@ context  )
+void DialogSpace( DialogPacket@ dialog_packet, ::string& line, DialogContext@ context  )
 {
 	if( @context is null )
 	{
-		dialog.Debug( "Не валиден контекст.");
+		cast<Dialog>(@dialog_packet).Debug( "Не валиден контекст.");
 		return;
 	}	
 	context.ParseLine( line );
 }
 
-void CommentSpace( Dialog& dialog, ::string& line, Context@ context  ){}
+void CommentSpace( DialogPacket@ dialog, ::string& line, DialogContext@ context  ){}
 
-void LanguageSpace( Dialog& dialog, ::string& line, Context@ context )
+void LanguageSpace( DialogPacket@ dialog_packet, ::string& line, DialogContext@ context )
 {
+	Dialog@ dialog = cast<Dialog>(@dialog_packet);
 	line = ::substring( line, 1, line.length() - 2 );
 	int index = ::findFirst ( line, "}");
 	if( index != -1 )
@@ -204,10 +210,6 @@ void LanguageSpace( Dialog& dialog, ::string& line, Context@ context )
 	}
 }
 
-interface Context
-{
-	void ParseLine( ::string&in line );
-}
 /* 
 константы:
 
@@ -299,7 +301,7 @@ bool StrToValue( ::string@ name, int& out value )
 // WriteDlgMsg( )
 // DlgMsgAddText( uint number, ::string& text, ::string& lang )
 
-class BuilderWriter : Context
+class BuilderWriter : DialogContext
 {
 	BuilderWriter( ::string& name )
 	{
@@ -319,7 +321,7 @@ class BuilderWriter : Context
 	::string@ FileName;
 }
 
-class DialogSpaceContext : Context
+class DialogSpaceContext : DialogContext
 {
 	DialogSpaceContext( Dialog::Dialog& pattern )
 	{
@@ -756,7 +758,7 @@ class DialogSpaceContext : Context
 	Result@[] Results;
 }
 
-class Dialog
+class Dialog : DialogPacket
 {
 	Dialog( ::string& name, Content::Dialog& id )
 	{
@@ -764,7 +766,7 @@ class Dialog
 		Id = id;
 	}
 	
-	ParseSpace@ GetSpace( ::string& line, Dialog::Context@& context )
+	ParseSpace@ GetSpace( ::string& line, DialogContext@& context )
 	{
 		@context = null;
 		if( line == "[data]" )
@@ -790,7 +792,7 @@ class Dialog
 		{
 			::string@[] txts = ::splitEx( txt, "\n" );
 			ParseSpace@ parse = null;
-			Dialog::Context@ context = null;
+			DialogContext@ context = null;
 			for( uint i = 0, iEnd = txts.length(); i < iEnd; i++ )
 				if( txts[i].length() > 0 )
 				{
