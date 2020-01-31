@@ -168,7 +168,7 @@ void unsafe_ci( Critter& player, int Pos, int craftCount, int, string@, int[] @ 
     }
 
     // Проверка на реальное наличие станка в радиусе
-	/*
+	
     if( CraftList[ Pos ].Workbench != 0 )
         if( !CheckWorkbenchNearPlayer( player, CraftList[ Pos ].Workbench, DEFAULT_RADIUS ) )
         {
@@ -273,7 +273,7 @@ void unsafe_ci( Critter& player, int Pos, int craftCount, int, string@, int[] @ 
             if( !delItemCount( GetProtoItem( pid ), CraftList[ Pos ].Components[ 1 ][ i ][ j ] * craftCount * 100 / ( player.Industrial[ IN_MATERIAL_SAVINGS ] * 4 + 100 ), player ) )
                 return;
         }
-	*/
+	
     // Игрок получает предметы
     for( uint16 i = 0; i < craftCount * CraftList[ Pos ].Count; i++ )
     {
@@ -724,9 +724,9 @@ void FillCraftListbox()
         if( !valid( proto ) )
             continue;
         CraftList[ i ].Pos = i;
-        /*if( !checkWorkbench( CraftList[ i ] ) || !checkSkills( CraftList[ i ] ) || !checkMaterials( CraftList[ i ] ) || !checkTools( CraftList[ i ] ) )
+        if( !checkWorkbench( CraftList[ i ] ) || !checkSkills( CraftList[ i ] ) || !checkMaterials( CraftList[ i ] ) || !checkTools( CraftList[ i ] ) )
             CraftList[ i ].Color = FixTextFixNotValid;
-        else*/
+        else
             CraftList[ i ].Color = FixTextColor;
 
         /*if(CraftList[i].Pos==104)
@@ -741,7 +741,7 @@ void FillCraftListbox()
                         Message("checkTools");
            }*/
 
-        //if( !isFixClassicVisible || checkClassicVisibleSkills( CraftList[ i ] ) )
+        if( !isFixClassicVisible || checkClassicVisibleSkills( CraftList[ i ] ) )
         {
             if( !fWeapon && proto.Type == ITEM_TYPE_WEAPON )
                 continue;

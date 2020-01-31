@@ -83,7 +83,7 @@ class MobDef : Npc::NpcDescriptor
 			return false;
 		}
 		
-		CritterDescriptor::CritterInit( crInit, firstTime );
+		NpcDescriptor::CritterInit( crInit, firstTime );
 		
 		crInit.ModeBase[MODE_NO_HOME]=1;
 		crInit.StatBase[ST_ROLE_CITY]=TEMPLATE_MOB;
@@ -100,8 +100,9 @@ class MobDef : Npc::NpcDescriptor
 	
 	bool CritterDead(::Critter@ cr, ::Critter@ killer) override
 	{
+		Log( "MobDead" );
 		cr.ClearEnemyStack(); // моб забывает своих обидчиков
-		return CritterDescriptor::CritterDead( @cr, @killer );
+		return NpcDescriptor::CritterDead( @cr, @killer );
 	}
 	
 	bool CritterShowMe( ::Critter& npc, ::Critter& player ) override // Будем ходить когда
@@ -109,7 +110,7 @@ class MobDef : Npc::NpcDescriptor
 		if( player.IsPlayer() )
 			++SeeCountPlayers;
 
-		return CritterDescriptor::CritterShowMe( npc, player );
+		return NpcDescriptor::CritterShowMe( npc, player );
 	}
 	
 	bool CritterShow( ::Critter& npc, ::Critter& player ) override
@@ -117,7 +118,7 @@ class MobDef : Npc::NpcDescriptor
 		if ( player.IsPlayer() )
 			NpcPlanes::AddAttackPlane(npc, 0, player);
 
-		return CritterDescriptor::CritterShow( npc, player );
+		return NpcDescriptor::CritterShow( npc, player );
 	}
 	
 	bool CritterHideMe( ::Critter& npc, ::Critter& player) override
@@ -125,7 +126,7 @@ class MobDef : Npc::NpcDescriptor
 		if( player.IsPlayer() && SeeCountPlayers > 0 )
 			--SeeCountPlayers;
 	
-		return CritterDescriptor::CritterHideMe( npc, player );
+		return NpcDescriptor::CritterHideMe( npc, player );
 	}
 	
 	bool CritterHide( ::Critter& npc, ::Critter& player) override
@@ -136,7 +137,7 @@ class MobDef : Npc::NpcDescriptor
 			NpcPlanes::EraseAttackPlane(npc, player);
 		}
 			
-		return CritterDescriptor::CritterHide( npc, player );
+		return NpcDescriptor::CritterHide( npc, player );
 	}
 	
 	bool CritterIdle( ::Critter& npc ) override
@@ -207,24 +208,24 @@ class MobDef : Npc::NpcDescriptor
 	{
 		Messager::Messager@ message = cast<Messager::Messager>(@interMessage);
 		if(!valid(message))
-			return CritterDescriptor::Message( npc, interMessage );
-		if( npc.IsPlayer() || !npc.IsLife()) return CritterDescriptor::Message( npc, interMessage );
+			return NpcDescriptor::Message( npc, interMessage );
+		if( npc.IsPlayer() || !npc.IsLife()) return NpcDescriptor::Message( npc, interMessage );
 		
-		if( npc.Stat[ST_TEAM_ID]==0 || npc.Stat[ST_TEAM_ID]==33) return CritterDescriptor::Message( npc, interMessage ); // группа не групируеться
+		if( npc.Stat[ST_TEAM_ID]==0 || npc.Stat[ST_TEAM_ID]==33) return NpcDescriptor::Message( npc, interMessage ); // группа не групируеться
 		::Critter@ fromCrit = message.Sender;
 		if( ! valid( fromCrit ) )
-			return CritterDescriptor::Message( npc, interMessage );
-		if( npc.Stat[ST_TEAM_ID] != fromCrit.Stat[ST_TEAM_ID] ) return CritterDescriptor::Message( npc, interMessage ); // ктото не из нашей группы
+			return NpcDescriptor::Message( npc, interMessage );
+		if( npc.Stat[ST_TEAM_ID] != fromCrit.Stat[ST_TEAM_ID] ) return NpcDescriptor::Message( npc, interMessage ); // ктото не из нашей группы
 
 		if( message.Message == Mob::Options::MsgGroupAttack )
 		{	
 			::Critter@ target=::GetCritter(message.Value);
 			if (!validEngineObject(target)) return false;
-			if (::GetCrittersDistantion(npc, fromCrit) > uint( Mob::Options::DistanceGroupRadius ) ) return CritterDescriptor::Message( npc, interMessage );
+			if (::GetCrittersDistantion(npc, fromCrit) > uint( Mob::Options::DistanceGroupRadius ) ) return NpcDescriptor::Message( npc, interMessage );
 			NpcPlanes::AddAttackPlane(npc, 0, target);
 		}
 		else if(message.Message==Mob::Options::MsgGroupFury) Fury++;
-		else return CritterDescriptor::Message( npc, interMessage );
+		else return NpcDescriptor::Message( npc, interMessage );
 		return true;
 	}
 	
@@ -267,7 +268,7 @@ class MobDef : Npc::NpcDescriptor
 	bool CritterRespawn( ::Critter& npc) override
 	{
 		this.ResetVars(npc);
-		return CritterDescriptor::CritterRespawn( npc );
+		return NpcDescriptor::CritterRespawn( npc );
 	}
 	
 	bool CritterAttacked( ::Critter& npc, ::Critter& attacker) override
@@ -280,7 +281,7 @@ class MobDef : Npc::NpcDescriptor
 		Messager::CritterSend( npc,Mob::Options::MsgGroupAttack, attacker.Id, MESSAGE_TO_WHO_SEES_ME);
 
 		NpcPlanes::AddAttackPlane(npc, 0, attacker);
-		return CritterDescriptor::CritterAttacked( npc, attacker ); // Handle attacked processing
+		return NpcDescriptor::CritterAttacked( npc, attacker ); // Handle attacked processing
 	}
 	
 	int MaxFear;

@@ -1688,7 +1688,7 @@ inline void MoveHexByDir( uint16& hx, uint16& hy, uint8 dir )
 uint Online = ONLINE_CHECKER_OFFLAIN;
 uint Uptame = 0;
 bool ActiveChecker = false;
-HANDLE LockThread;
+HANDLE LockThread = nullptr;
 
 bool CheckActive( )
 {
@@ -1748,10 +1748,15 @@ void CheckOnlineThread( void* )
 		}
 		WSACleanup( );
 	}
+	CloseHandle( LockThread );
+	LockThread = nullptr;
 }
 
 int PrepareWSA( )
 {
+	if( LockThread )
+		return -1;
+		
 	LockThread = CreateMutex( NULL, FALSE, NULL );
 	WaitForSingleObject( LockThread, INFINITE );
 	ActiveChecker = true;
