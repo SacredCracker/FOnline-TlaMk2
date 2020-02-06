@@ -53,7 +53,7 @@ bool IsOffer( ::Critter& player, ::Critter& cr, int[]& data )
 	{
 		uint index = 0,
 			  count = uint( data[index++] ),
-			  cost0 = 0, cost1 = 0;
+			  cost0 = 0, cost1 = 0 countItem = 0;
 		
 		uint[]@ ParseIds = ::array<uint>();
 		
@@ -62,10 +62,11 @@ bool IsOffer( ::Critter& player, ::Critter& cr, int[]& data )
 			::Item@ item = cr.GetItemById( data[index++] );
 			if( @item !is null )
 			{
-				if( ParseIds.find( item.Id ) != -1 )
+				countItem = data[index++];
+				if( ParseIds.find( item.Id ) != -1 || countItem > item.GetCount() )
 					return false;
 				ParseIds.insertLast( item.Id );
-				cost0 += Barter::GetCost( player.Skill[SK_BARTER], cr.Skill[SK_BARTER], item.GetCost1st(), false ) * data[index++];
+				cost0 += Barter::GetCost( player.Skill[SK_BARTER], cr.Skill[SK_BARTER], item.GetCost1st(), false ) * countItem;
 			}
 		}
 
@@ -76,10 +77,11 @@ bool IsOffer( ::Critter& player, ::Critter& cr, int[]& data )
 			::Item@ item = player.GetItemById( data[index++] );
 			if( @item !is null )
 			{
-				if( ParseIds.find( item.Id ) != -1 )
+				countItem = data[index++];
+				if( ParseIds.find( item.Id ) != -1 || countItem > item.GetCount() )
 					return false;
 				ParseIds.insertLast( item.Id );
-				cost1 += Barter::GetCost( player.Skill[SK_BARTER], cr.Skill[SK_BARTER], item.GetCost1st(), true ) * data[index++];
+				cost1 += Barter::GetCost( player.Skill[SK_BARTER], cr.Skill[SK_BARTER], item.GetCost1st(), true ) * countItem;
 			}
 		}
 		
