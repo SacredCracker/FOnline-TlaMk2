@@ -34,3 +34,24 @@ void UnsafeFunc( Offer )
 		Barter::Call( player, cr );
 	}
 }
+
+Critter @ GetRandomPlayer()
+{
+    int tries = 20;
+    Map@[] maps;
+    Critter@[] players;
+    Critter@ player;
+    uint countPlayers = 0;
+
+    Location@[] locs;
+    uint endLocsIndex = GetAllLocations( 0, locs ) - 1;
+    while( tries-- > 0 )
+    {
+        for( uint i = 0, iMax = locs[ Random( 0, endLocsIndex ) ].GetMaps( maps ); i < iMax; i++ )
+            countPlayers += maps[ i ].GetCritters( 0, FIND_LIFE|FIND_ONLY_PLAYERS, players );
+        if( countPlayers > 0 )
+            return players[ Random( 0, countPlayers - 1 ) ];
+        maps.resize( 0 );
+    }
+    return null;
+}
