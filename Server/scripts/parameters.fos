@@ -358,4 +358,13 @@ void NpcProcessLevel( Critter& npc ) // Export
         // npc.StatBase[ST_MAX_LIFE]+=10;
     }
 }
+
+
+void changedParam_debug( Critter& cr, uint index, int oldValue )
+{
+	int curValue = cr.ParamBase[ index ];
+	cr.Say( SAY_NETMSG,  "Change param " + index + " " + curValue + " " + oldValue );
+	ScriptInfo::CallStackToLog();
+}
+
 #endif

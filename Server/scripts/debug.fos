@@ -4251,4 +4251,11 @@ class Test1
 	}
 }
 
-Test1 test;
+void CheckArmor( Critter& critter, int, int, int )
+{
+	Item@ armor = critter.GetItem( 0, SLOT_ARMOR );
+	Log( "AntiCrit " + armor.ArmorBonus_CriticalResist );
+	Log( "Critter bonus " + critter.MyBonusBase[ARMOR_BONUS_CRITICAL_RESISTANCE] + " " + critter.MyBonus[ARMOR_BONUS_CRITICAL_RESISTANCE] );
+	Log( "Critter anticrit " + critter.StatBase[ST_CRITICAL_RESISTANCE] + " " + critter.Stat[ST_CRITICAL_RESISTANCE] );
+	// Log( "AntiCrit proto " + armor.ArmorBonus_CriticalResist );
+}

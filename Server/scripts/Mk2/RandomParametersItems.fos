@@ -678,7 +678,7 @@ void AddBonus(::Critter& cr, ::Item@ armor)
 {
 	if(!valid(armor))
 		return;
-	cr.MyBonusBase[ARMOR_BONUS_CRITICAL_RESISTANCE] += armor.ArmorBonus_CriticalResist;
+	cr.MyBonusBase[ARMOR_BONUS_CRITICAL_RESISTANCE] = cr.MyBonusBase[ARMOR_BONUS_CRITICAL_RESISTANCE] + armor.ArmorBonus_CriticalResist;
 	cr.MyBonusBase[ARMOR_BONUS_ACTION_POINTS] += armor.ArmorBonus_AP;
 	cr.MyBonusBase[ARMOR_BONUS_LUCK] += armor.ArmorBonus_Luck;
 	cr.MyBonusBase[ARMOR_BONUS_STRENGTH]+=armor.ArmorBonus_Strength;
