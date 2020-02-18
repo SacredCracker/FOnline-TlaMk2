@@ -51,8 +51,8 @@ bool IsOffer( ::Critter& player, ::Critter& cr, int[]& data )
 {
 	if( IsBarter( player, cr ) )
 	{
-		uint index = 0,
-			  count = uint( data[index++] ),
+		uint index = 1,
+			  count = uint( data[0] ),
 			  cost0 = 0, cost1 = 0, countItem = 0;
 		
 		uint[]@ ParseIds = ::array<uint>();
@@ -63,29 +63,59 @@ bool IsOffer( ::Critter& player, ::Critter& cr, int[]& data )
 			if( @item !is null )
 			{
 				countItem = data[index++];
-				if( ParseIds.find( item.Id ) != -1 || countItem > item.GetCount() )
+				if( ParseIds.find( item.Id ) != -1 )
+				{
+					Log( "Barter bad npc data " + GetPlayerName( player.Id ) + "< double ItemId >" );
+					Log( "Barter index: " + ( index - 1 ) );
 					return false;
+				}
+				if( countItem > item.GetCount() )
+				{
+					Log( "Barter bad npc data " + GetPlayerName( player.Id ) + "< error CountItem ><countItem: " + countItem + " item.GetCount(): " + item.GetCount() + ">" );
+					Log( "Barter index: " + ( index - 1 ) );
+					return false;
+				}
 				ParseIds.insertLast( item.Id );
 				cost0 += Barter::GetCost( player.Skill[SK_BARTER], cr.Skill[SK_BARTER], item.GetCost1st(), false ) * countItem;
 			}
+			else
+			{
+				Log( "Barter error <Not valid npc item> <" + GetPlayerName( player.Id ) + ">" );
+				return false;
+			}
 		}
 
-		count = uint( data[index++] );
+		count += uint( data[index++] ) + 1;
 		while( index < count )
 		{
 			::Item@ item = player.GetItemById( data[index++] );
 			if( @item !is null )
 			{
 				countItem = data[index++];
-				if( ParseIds.find( item.Id ) != -1 || countItem > item.GetCount() )
+				if( ParseIds.find( item.Id ) != -1 )
+				{
+					Log( "Barter bad player data " + GetPlayerName( player.Id ) + "< double ItemId >" );
+					Log( "Barter index: " + ( index - 1 ) );
 					return false;
+				}
+				if( countItem > item.GetCount() )
+				{
+					Log( "Barter bad player data " + GetPlayerName( player.Id ) + "< error CountItem ><countItem: " + countItem + " item.GetCount(): " + item.GetCount() + ">" );
+					Log( "Barter index: " + ( index - 1 ) );
+					return false;
+				}
 				ParseIds.insertLast( item.Id );
 				cost1 += Barter::GetCost( player.Skill[SK_BARTER], cr.Skill[SK_BARTER], item.GetCost1st(), true ) * countItem;
 			}
+			else
+			{
+				Log( "Barter error <Not valid player item> <" + GetPlayerName( player.Id ) + ">" );
+				return false;
+			}
 		}
-		
 		return cost1 >= cost0;
 	}
+	else Log( "IsBarter false <" + GetPlayerName( player.Id ) + ">" );
 	return false;
 }
 
