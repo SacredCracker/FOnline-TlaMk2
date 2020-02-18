@@ -4301,7 +4301,7 @@ void render_hit_hex( uint layer )
 					}
 				}
             }
-			else if( _WeaponRound( weapon, use ) > 1 )// burst
+			else if( _WeaponRound( weapon, use ) > 1 && _WeaponNoBrust( weapon, use ) != 1 )// burst
 			{
 				if( layer != 1 )
 					return;
@@ -4399,7 +4399,7 @@ bool hex_attack( CritterCl@ target, uint16 hexX, uint16 hexY )
         if( realWeapon !is null && _WeaponRound( weapon, use ) > 0 && realWeapon.AmmoCount == 0 )
             return false;
 
-        if( _WeaponeIsPerk( weapon, ammo, WEAPON_PERK_HEX_ATTACKING ) ||  _WeaponRound( weapon, use ) > 1 )
+        if( _WeaponeIsPerk( weapon, ammo, WEAPON_PERK_HEX_ATTACKING ) ||  ( _WeaponRound( weapon, use ) > 1 && _WeaponNoBrust( weapon, use ) == 0 ) )
         {
             uint16 hx = 0, hy = 0;
             if( CtrlPressed )

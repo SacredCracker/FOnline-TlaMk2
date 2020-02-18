@@ -1237,11 +1237,13 @@ asIScriptObject* Item_GetScriptDescriptor( Item& item )
         if( funcId_defDescript && FOnline->ScriptPrepare( funcId_defDescript ) )
         {
             FOnline->ScriptSetArgObject( &item );
-            FOnline->ScriptRunPrepared();
-				
-			item.ScriptDescriptor = (asIScriptObject*)FOnline->ScriptGetReturnedAddress();
-			if(item.ScriptDescriptor)
-				item.ScriptDescriptor->AddRef();
+            if( FOnline->ScriptRunPrepared() )
+			{
+				item.ScriptDescriptor = (asIScriptObject*)FOnline->ScriptGetReturnedAddress();
+				if(item.ScriptDescriptor)
+					item.ScriptDescriptor->AddRef();
+			}
+			else Log( "Error Item_GetScriptDescriptor\n" );
         }
 	}
 	
@@ -1565,9 +1567,8 @@ bool check_trap_look( Map& map, Critter& cr, Item& trap )
             {
                 FOnline->ScriptSetArgObject( &cr );
                 FOnline->ScriptSetArgObject( &trap );
-                FOnline->ScriptRunPrepared();
-				
-				isShow = !FOnline->ScriptGetReturnedBool();
+                if( FOnline->ScriptRunPrepared() )		
+					isShow = !FOnline->ScriptGetReturnedBool();
             }
         }
         else
@@ -1577,9 +1578,8 @@ bool check_trap_look( Map& map, Critter& cr, Item& trap )
             {
                 FOnline->ScriptSetArgObject( &cr );
                 FOnline->ScriptSetArgObject( &trap );
-                FOnline->ScriptRunPrepared();
-				
-				isShow = !FOnline->ScriptGetReturnedBool();
+                if( FOnline->ScriptRunPrepared() )				
+					isShow = !FOnline->ScriptGetReturnedBool();
             }
         }
         return !isShow;
@@ -1785,48 +1785,56 @@ bool out_message( ScriptString& message, int& sayType )
 {
 	if( message.length() == 0 )
 		return false;
-	const char* mess = message.c_str();
-	if( mess && mess[0] == '#' || mess[0] == '~' && message.length() > 1 )
+	if( message.length() > 1 )
 	{
-		asIScriptModule* mk2 = GetModule( "Mk2" );
-		if( mk2 )
+		const char* mess = message.c_str();
+		if( mess && ( mess[0] == '#' || mess[0] == '~' ) )
 		{
-			char functionName[50];
-			unsigned int pos = 1;
-			if( CharNextWord( mess, pos, functionName, 50 ) )
+			asIScriptModule* mk2 = GetModule( "Mk2" );
+			if( mk2 )
 			{
-				ostringstream out;      		
-				out << "::string " << functionName << "_MsgCommand( ::string )"; 
-				if( mk2->GetFunctionByDecl( out.str().c_str() ) )
+				char functionName[50];
+				unsigned int pos = 1;
+				if( CharNextWord( mess, pos, functionName, 50 ) )
 				{
-					uint funcId = FOnline->ScriptBind( "Mk2", out.str().c_str(), true );
-					if( funcId && FOnline->ScriptPrepare( funcId ) )
+					ostringstream out;      		
+					out << "::string " << functionName << "_MsgCommand( ::string )"; 
+					if( mk2->GetFunctionByDecl( out.str().c_str() ) )
 					{
-						FOnline->ScriptSetArgObject( &message );
-						FOnline->ScriptRunPrepared();
-						ScriptString* result = (ScriptString*)FOnline->ScriptGetReturnedObject( );
-						if( result )
+						uint funcId = FOnline->ScriptBind( "Mk2", out.str().c_str(), true );
+						if( funcId && FOnline->ScriptPrepare( funcId ) )
 						{
-							if( result->length() != 0 )
+							FOnline->ScriptSetArgObject( &message );
+							if( !FOnline->ScriptRunPrepared() )
+								Log( "Error run out_message\n" );
+							else
 							{
-								// Message( result->c_str() );
+								ScriptString* result = (ScriptString*)FOnline->ScriptGetReturnedObject( );
+								if( result )
+								{
+									if( result->length() != 0 )
+									{
+										// Message( result->c_str() );
+									}
+									result->Release();
+								}
+								return false;
 							}
 						}
-						return false;
 					}
+					out.clear();
 				}
-				out.clear();
 			}
 		}
 	}
-	
 	uint funcIdOutMess = FOnline->ScriptBind( "Mk2", "bool out_message( ::string& message, int& sayType )", true );
 	if( funcIdOutMess && FOnline->ScriptPrepare( funcIdOutMess ) )
 	{
 		FOnline->ScriptSetArgAddress( &message );
 		FOnline->ScriptSetArgAddress( &sayType );
-		FOnline->ScriptRunPrepared();
-		return FOnline->ScriptGetReturnedBool();
+		if( !FOnline->ScriptRunPrepared() )
+			Log( "Error run out_message\n" );
+		else return FOnline->ScriptGetReturnedBool();
 	}
 	return false;
 }
