@@ -6,7 +6,7 @@
 // NoPvp режим для некоторых карт на сервере
 // Если включен при первом запуске, нежелательно отключать без вайпа, иначе смешаются пвп и нопвп персонажи
 
-const       uint[] noPvpMaps = { MAP_replication1, MAP_replication2, MAP_replication3, MAP_replication4, MAP_replication_hell, MAP_newbie_replication, MAP_newbie_workzone, MAP_newbie_entrance, MAP_newbie_farm };
+uint[] noPvpMaps = { MAP_replication1, MAP_replication2, MAP_replication3, MAP_replication4, MAP_replication_hell };
 
 const int[] excludeDialogs =
 {
@@ -19,6 +19,17 @@ const int[] btInvul = { BT_MEN, BT_WOMEN, BT_CHILDREN, BT_SUPER_MUTANT, BT_GHOUL
 #define CTE_NOPVP_OFF    ( 42 )                 // Идентификатор события "очистить нопвп режим"
 #define TIME_CHECK       ( REAL_MINUTE( 1 ) )   // Время проверки, не вышел ли игрок с нопвп зоны
 
+
+void InitNoPvpMaps()
+{
+	if( !__NewbieLocationIsPvp )
+	{
+		noPvpMaps.insertLast( MAP_newbie_replication );
+		noPvpMaps.insertLast( MAP_newbie_workzone );
+		noPvpMaps.insertLast( MAP_newbie_entrance );
+		noPvpMaps.insertLast( MAP_newbie_farm );
+	}
+}
 
 void OnCitterMapIn( Critter& cr, Map& map )
 {
@@ -59,8 +70,7 @@ void OnCritterMapOut( Critter& cr, Map& map )
 
 bool IsNoPvpMap( Map& map )
 {
-    GameVar@ nopvpOn = GetLocalVar( NOPVP_VAR, map.Id );
-    return  ( valid( nopvpOn ) && nopvpOn == 1 );
+    return noPvpMaps.find( map.GetProtoId() ) != -1;
 }
 
 void SetNoPvp()
@@ -82,11 +92,6 @@ void SetNoPvp( Map& map, bool firstTime )
     {
         if( -1 != noPvpMaps.find( map.GetProtoId() ) )
         {
-            GameVar@ nopvpOn = GetLocalVar( NOPVP_VAR, map.Id );
-            if( @nopvpOn is null || nopvpOn != 0 )
-				return;
-				
-			nopvpOn = 1;
             Critter@[] critters;
             Critter@ cr;
 			

@@ -106,11 +106,15 @@ void critter_attack( ::Critter& cr, ::Critter& target ) // «аглушка дл€ погексов
 
     if( cr.IsPlayer() )
     {
-        if( target.IsPlayer() )
+        if( target.IsPlayer() && !__NewbieLocationIsPvp )
         {
             ::Map@ map = cr.GetMap();
             if( validEngineObject( map ) && map.GetLocation().GetProtoId() == LOCATION_NewbieLocation )
+			{
+                cr.Say( SAY_NETMSG, "No PvP." );
+                target.Say( SAY_NETMSG, "No PvP." );
                 return;                                                                                               // ноѕвѕ на начальной локации
+			}
         }
         CityGuard_SneakCritter( cr, cr.Mode[ MODE_HIDE ] == 1 );
     }
@@ -134,11 +138,15 @@ void critter_attack( ::Critter& cr, ::Critter& target, ::ProtoItem& weapon, uint
 
     if( cr.IsPlayer() )
     {
-        if( target.IsPlayer() )
+        if( target.IsPlayer() && !__NewbieLocationIsPvp )
         {
             ::Map@ map = cr.GetMap();
             if( validEngineObject( map ) && map.GetLocation().GetProtoId() == LOCATION_NewbieLocation )
+			{
+                cr.Say( SAY_NETMSG, "No PvP." );
+                target.Say( SAY_NETMSG, "No PvP." );
                 return;                                                                                               // ноѕвѕ на начальной локации
+			}
         }
         CityGuard_SneakCritter( cr, cr.Mode[ MODE_HIDE ] == 1 );
         cr.RunClientScript( "client_main@__SetAttacked", int(target.Id), 0, 0, null, null );

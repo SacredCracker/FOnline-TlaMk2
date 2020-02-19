@@ -890,7 +890,7 @@ void ApplyDamage( CombatProccess& proccess, Critter& target, uint rounds, bool i
     if( target.IsDead() || !( validEngineObject( map ) ) )
         return;
 
-    if( validEngineObject( proccess.Attacker ) && proccess.Attacker.IsPlayer() && target.IsPlayer() && map.GetLocation().GetProtoId() == LOCATION_NewbieLocation )
+    if( !__NewbieLocationIsPvp && validEngineObject( proccess.Attacker ) && proccess.Attacker.IsPlayer() && target.IsPlayer() && map.GetLocation().GetProtoId() == LOCATION_NewbieLocation )
     {
         proccess.Attacker.Say( SAY_NETMSG, "Oh-oh! Not this time, my friend!" );
         return;         // НоПвп в Нубке.
@@ -951,15 +951,6 @@ void ApplyDamage( CombatProccess& proccess, Critter& target, uint rounds, bool i
                 target.Say( SAY_NETMSG, "No PvP." );
                 return;
             }
-        }
-        else if( target.Mode[ MODE_NO_PVP ] != 0 &&
-                 map.GetProtoId() != MAP_newbie_replication &&
-                 map.GetProtoId() != MAP_newbie_workzone &&
-                 map.GetProtoId() != MAP_newbie_entrance &&
-                 map.GetProtoId() != MAP_newbie_farm )           // Мины от игроков, ушедших на глобал
-        {
-            target.Say( SAY_NETMSG, "No PvP." );
-            return;
         }
     }
 
