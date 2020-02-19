@@ -889,85 +889,13 @@ bool MainStart()
 		::SetSendParameter(n, true);
 	
 	::SetSendParameter(ST_NPC_ATTACK_PLAYER_ID,true);
-
-	// Send item data masks
-    // Look fields in fonline.h 'struct ::Item::ItemData'
-    //               SortValue  Info Indicator    PicMapHash       PicInvHash   AnimWaitBase AStay[2] AShow[2] AHide[2]      Flags      Rate LightDist Inten Flags  LightColor    ScriptId TrapValue       Count             Cost                ScriptValues[10]                                                                                                   Other 36 bytes
-    // ITEM_DATA_MASK_CHOSEN                                                                                           ITEM_DATA_MASK_CHOSEN                                                                                                ITEM_DATA_MASK_CHOSEN
-    
-	::array<int8> mask0 = {
-		-1, -1, 	// 2 const uint16 SortValue; 0
-		-1,		// 1 const uint8  Info; 2
-		-1,		// 1 const uint8  Indicator; 3
-		-1, -1, -1, -1,	// 4 const uint   PicMapHash; 4
-		-1, -1, -1, -1,	// 4 const uint   PicInvHash; 8
-		0,  0,		// 2 const uint16 AnimWaitBase; 12
-		0,  0,		// 1 * 2 const uint8  AnimStay[ 2 ]; 14
-		0,  0,		// 1 * 2 const uint8  AnimShow[ 2 ]; 16
-		0,  0,		// 1 * 2 const uint8  AnimHide[ 2 ]; 18
-		-1, -1, -1, -1, // 4 const uint   Flags; 20
-		-1,		// 1 const uint8  Rate; 24
-		-1,		// 1 const int8   LightIntensity; 25
-		-1,		// 1 const uint8  LightDistance; 26
-		-1,		// 1 const uint8  LightFlags; 27
-		-1, -1, -1, -1,	// 4 const uint   LightColor; 28
-		0, 0,		// 2 const uint16 ScriptId; 32
-		0, 0,		// 2 const int16  TrapValue; 34
-		-1, -1, -1, -1,	// 4 const uint   Count; 36
-		-1, -1, -1, -1,	// 4 const uint   Cost; 40
-		
-		0, 0, 0, 0,	// 4 const int    ScriptValues[ 0 ]; 44
-		0, 0, 0, 0,	// 4 const int    ScriptValues[ 1 ];
-		0, 0, 0, 0,	// 4 const int    ScriptValues[ 2 ];
-		0, 0, 0, 0,	// 4 const int    ScriptValues[ 3 ];
-		0, 0, 0, 0,	// 4 const int    ScriptValues[ 4 ];
-		0, 0, 0, 0,	// 4 const int    ScriptValues[ 5 ];
-		0, 0, 0, 0,	// 4 const int    ScriptValues[ 6 ];
-		0, 0, 0, 0,	// 4 const int    ScriptValues[ 7 ];
-		0, 0, 0, 0,	// 4 const int    ScriptValues[ 8 ];
-		-1, -1, -1, -1,	// 4 const int    ScriptValues[ 9 ];
-		
-		-1,		// 1 const uint8  BrokenFlags;
-		-1,		// 1 const uint8  BrokenCount;
-		-1, -1,		// 2 const uint16 Deterioration;
-		-1, -1,		// 2 const uint16 AmmoPid;
-		-1, -1,		// 2 const uint16 AmmoCount;
-		-1, -1, -1, -1, // 4 const uint   LockerId;
-		-1, -1,		// 2 const uint16 LockerCondition;
-		-1, -1,		// 2 const uint16 LockerComplexity;
-		-1, -1, -1, -1,	// 4 const uint   HolodiskNumber;
-		-1, -1,		// 2 const uint16 RadioChannel;
-		-1, -1,		// 2 const uint16 RadioFlags;
-		-1,		// 1 const uint8  RadioBroadcastSend;
-		-1,		// 1 const uint8  RadioBroadcastRecv;
-		-1, -1,		// 2 const uint16 Charge;
-		-1, -1,		// 2 const int16  OffsetX;
-		-1, -1,		// 2 const int16  OffsetY;
-		-1, -1,		// 2 const int16  Dir;
-		-1, -1		// 2 const char   Reserved[ 2 ];
-		
-		//     -1, -1, 0, 0
-	};
-    // ITEM_DATA_MASK_CRITTER                                                                                          ITEM_DATA_MASK_CRITTER                                                                                               ITEM_DATA_MASK_CRITTER
-    ::array<int8> mask1 = {   0,  0,     -1,    0,      0,  0,  0,  0,   0,  0,  0,  0,    0,  0,   0,  0,   0,  0,   0,  0,   -1, -1, -1, -1,  -1,    -1,    -1,    -1,  -1, -1, -1, -1,   0, 0,     0, 0,     0,  0,  0,  0,   0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 0, 0 };
-    // ITEM_DATA_MASK_CRITTER_EXT                                                                                      ITEM_DATA_MASK_CRITTER_EXT                                                                                           ITEM_DATA_MASK_CRITTER_EXT
-    ::array<int8> mask2 = {   0,  0,     -1,   -1,      0,  0,  0,  0,   0,  0,  0,  0,    0,  0,   0,  0,   0,  0,   0,  0,   -1, -1, -1, -1,  -1,    -1,    -1,    -1,  -1, -1, -1, -1,   0, 0,     0, 0,    -1, -1, -1, -1,   0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0 };
-    // ITEM_DATA_MASK_CONTAINER                                                                                        ITEM_DATA_MASK_CONTAINER                                                                                             ITEM_DATA_MASK_CONTAINER
-    ::array<int8> mask3 = {  -1, -1,     -1,   -1,      0,  0,  0,  0,  -1, -1, -1, -1,    0,  0,   0,  0,   0,  0,   0,  0,   -1, -1, -1, -1,  -1,    -1,    -1,    -1,  -1, -1, -1, -1,   0, 0,     0, 0,    -1, -1, -1, -1,  -1, -1, -1, -1,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0 };
-    // ITEM_DATA_MASK_MAP                                                                                              ITEM_DATA_MASK_MAP                                                                                                   ITEM_DATA_MASK_MAP
-    ::array<int8> mask4 = {  -1, -1,     -1,   -1,     -1, -1, -1, -1,   0,  0,  0,  0,   -1, -1,  -1, -1,  -1, -1,  -1, -1,   -1, -1, -1, -1,  -1,    -1,    -1,    -1,  -1, -1, -1, -1,   0, 0,     0, 0,    -1,  -1,  -1,  -1,   0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0 };
-	/*
-	::SetItemDataMask(ITEM_DATA_MASK_CHOSEN,mask0);
-	::SetItemDataMask(ITEM_DATA_MASK_CRITTER,mask1);
-	::SetItemDataMask(ITEM_DATA_MASK_CRITTER_EXT,mask2);
-	::SetItemDataMask(ITEM_DATA_MASK_CONTAINER,mask3);
-	::SetItemDataMask(ITEM_DATA_MASK_MAP,mask4);*/
 	
 	// TabaK. Загрузка списка фракций
 	Fractions::LoadFractions();
 	
 	WorldmapInit();
 	CaravansInit();	
+	InitNoPvpMaps();
 	SetNoPvp();
 	// Game Events initialization
 	DeclareEvents();
