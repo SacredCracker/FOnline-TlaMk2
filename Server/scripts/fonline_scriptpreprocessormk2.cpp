@@ -1,10 +1,12 @@
 
 #ifdef __MAPPER
 #define __SERVER_PATH(s)	".\\..\\..\\Server\\"#s
+#define __SERVER_P		    ".\\..\\..\\Server\\"
 #endif
 
 #ifdef __SERVER
 #define __SERVER_PATH(s)	".\\"#s
+#define __SERVER_P		    ".\\"
 #endif
 
 #include <fstream>
@@ -17,7 +19,7 @@
 #include "AngelScript/scriptbuilder/scriptbuilder.cpp"
 
 #define AngelScriptAPI_Check( reg )    if( reg < 0 ) \
-        Log( "Ошибка регистрации <%d>.\n", __LINE__ )
+        Log( "Error registration <%d>.\n", __LINE__ )
 
 enum TypeFile;
 enum ReasonRunPreproccessor;
@@ -30,6 +32,22 @@ vector<ScriptFileMk2*> LibraryScript;
 vector<PreprocessorModule*> LibraryPreproccess;
 
 #define COUNT_TYPE_FILE ( 4 )
+#define BUFFER_MAX_SIZE ( 256 )
+
+ifstream* ReadIfStream( string path )
+{
+	string override_path = __SERVER_PATH( Override\\ ) + path;
+	path = __SERVER_P + path;
+	ifstream* result = new ifstream( override_path.c_str() );
+	if(!result->is_open())
+	{
+		delete result;
+		result = new ifstream( path.c_str());
+	}
+	if(!result->is_open() )
+		Log( "Error open file <%s> <%s>\n", override_path.c_str(), path.c_str() );
+	return result;
+}
 
 enum TypeFile
 {
@@ -282,10 +300,10 @@ public:
 		::FindClose(hFind);
 		hFind = INVALID_HANDLE_VALUE;
 	}
-
+	
 private:
 	ofstream		write;
-	string			buff;
+	char			buff[BUFFER_MAX_SIZE];
 	WIN32_FIND_DATA ffd;
 	HANDLE          hFind;
 };
@@ -494,11 +512,11 @@ void Collector::ProccesHashFiles()
 	if (CharFindPosition(ffd.cFileName, ".hash", posExt))
 	{
 		char path[256];
-		path[CharEndJoin(__SERVER_PATH(scripts\\Mk2\\), ffd.cFileName, path)] = '\0';
-		ifstream read(path);
+		path[CharEndJoin("scripts\\Mk2\\", ffd.cFileName, path)] = '\0';
+		ifstream* read = ReadIfStream(path);
 		char     name[256];
 		name[posExt] = '\0';
-		if (CharSubstring(ffd.cFileName, 0, posExt, name) && read.is_open())
+		if (CharSubstring(ffd.cFileName, 0, posExt, name) && read->is_open())
 		{
 			ostringstream out;
 			out << __SERVER_PATH(scripts\\hash\\) << name << ".fos";
@@ -506,10 +524,14 @@ void Collector::ProccesHashFiles()
 			if (hash.is_open())
 			{
 
-				while (getline(read, buff))
-					hash << buff.c_str() << "\n";
+				while (read->getline( buff, BUFFER_MAX_SIZE))
+				{
+					hash << buff << "\n";
+				}
 				hash.close();
 			}
+			read->close();
+			
 			out.str("");
 			out << "\\hash\\" << name;
 			if (FOnline->ScriptLoadModule(out.str().c_str()))
@@ -536,9 +558,10 @@ void Collector::ProccesHashFiles()
 				else
 					Log("Error bind HashFunction <%s>\n", out.str().c_str());
 			}
-			else Log("Ошибка %s\n", out.str().c_str());
-			read.close();
+			else Log("Error %s\n", out.str().c_str());
 		}
+		if( read )
+			delete read;
 	}
 }
 
@@ -568,9 +591,9 @@ inline void Collector::ParseDLG()
 			if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY && !CharIsWord(".", ffd.cFileName) && !CharIsWord("..", ffd.cFileName))
 			{
 				ostringstream out;
-				out << __SERVER_PATH(text\\) << ffd.cFileName << "\\FODLG.Mk2";
-				ifstream read(out.str().c_str());
-				if (read.is_open())
+				out << "text\\" << ffd.cFileName << "\\FODLG.Mk2";
+				ifstream* read = ReadIfStream(out.str().c_str());
+				if (read->is_open())
 				{
 					out.str("");
 					out << __SERVER_PATH(text\\) << ffd.cFileName << "\\FODLG.MSG";
@@ -578,11 +601,11 @@ inline void Collector::ParseDLG()
 
 					if (textFile.is_open())
 					{
-						while (getline(read, buff))
-							textFile << buff.c_str() << "\n";
+						while (read->getline( buff, BUFFER_MAX_SIZE))
+							textFile << buff << "\n";
 						textFile.close();
 					}
-					read.close();
+					read->close();
 				}
 			}
 		} while (FindNextFile(hFind, &ffd) != 0);
@@ -621,7 +644,7 @@ void Collector::ParseGameVar()
 		{
 			if (stream.is_open())
 				return true;
-			Log("Ошибка парсера GameVar's <%s>.\n", path.c_str());
+			Log("Parser error GameVar's <%s>.\n", path.c_str());
 			return false;
 		}
 
@@ -630,8 +653,8 @@ void Collector::ParseGameVar()
 		ofstream stream;
 	};
 
-	ifstream read(__SERVER_PATH(scripts\\_vars.fos));
-	if (read.is_open())
+	ifstream* read = ReadIfStream("scripts\\_vars.fos");
+	if (read->is_open())
 	{
 		GameVar_stream	vars(__SERVER_PATH(scripts\\Mk2\\GameVar.content)), // Все переменные
 						lvar(__SERVER_PATH(scripts\\Mk2\\LVAR.content)),	// Локальная
@@ -647,20 +670,20 @@ void Collector::ParseGameVar()
 			char word[256], word2[256];
 			uint pos = 1, pos2 = 0;
 			string name;
-			while (getline(read, buff))
+			while (read->getline( buff, BUFFER_MAX_SIZE))
 			{
 				if (buff[0] == '#')
 				{
 					pos = 1;
 					pos2 = 0;
-					if (CharNextWordEx(buff.c_str(), pos, word, 256, chars) && CharIsWord("define", word) && CharNextWordEx(buff.c_str(), pos, word, 256, chars))
+					if (CharNextWordEx(buff, pos, word, BUFFER_MAX_SIZE, chars) && CharIsWord("define", word) && CharNextWordEx(buff, pos, word, BUFFER_MAX_SIZE, chars))
 					{
 						CharFindPosition(word, "_", pos2);
 						CharSubstring(word, pos2 + 1, CharLength(word), word2);
 						name = word2;
 						CharSubstring(word, 0, pos2, word2);
 
-						if (CharNextWordEx(buff.c_str(), pos, word, 50, chars))
+						if (CharNextWordEx(buff, pos, word, BUFFER_MAX_SIZE, chars))
 						{
 							vars.write_var(name.c_str(), word);
 							if (CharIsWord("LVAR", word2)) lvar.write_var(name.c_str(), word);
@@ -674,8 +697,9 @@ void Collector::ParseGameVar()
 				}
 			}
 		}
-		read.close();
+		read->close();
 	}
+	if( read ) delete read;
 }
 
 void Collector::ParseContent()
@@ -695,24 +719,25 @@ void Collector::ParseContent()
 			posExt = 0;
 			if (CharFindPosition(name_ext, ".content", posExt))
 			{
-				path[CharEndJoin(__SERVER_PATH(scripts\\Mk2\\), name_ext, path)] = '\0';
-				ifstream read( path );
+				path[CharEndJoin("scripts\\Mk2\\", name_ext, path)] = '\0';
+				ifstream* read = ReadIfStream( path );
 				name[posExt] = '\0';
 				if (CharSubstring(name_ext, 0, posExt, name))
 				{
-					if (read.is_open())
+					if (read->is_open())
 					{
 						write << "\nenum " << name << "\n{\n";
-						while (getline(read, buff))
+						while (read->getline( buff, BUFFER_MAX_SIZE))
 						{
-							write << buff.c_str() << "\n";
+							write << buff << "\n";
 						}
-						read.close();
+						read->close();
 
 						write << "\n}\n";
 					}
 					else Log("Error open content file <%s>\n", path);
 				}
+				if( read ) delete read;
 			}
 		} while (FindNextFile(hFind, &ffd) != 0);
 		write << "}\n";
@@ -744,50 +769,51 @@ void Collector::ParseScripts(const _TypeFileData& data)
 				name[posExt] = '\0';
 				if (CharSubstring(name_ext, 0, posExt, name))
 				{
-					path[CharEndJoin(__SERVER_PATH(scripts\\Mk2\\), name_ext, path)] = '\0';
-					ifstream read(path);
-					if (read.is_open())
+					path[CharEndJoin("scripts\\Mk2\\", name_ext, path)] = '\0';
+					ifstream* read = ReadIfStream(path);
+					if (read->is_open())
 					{
-						getline(read, buff); //  определяем для чего предназначен скрипт ( клиент, маппер, сервер )
+						read->getline( buff, BUFFER_MAX_SIZE); //  определяем для чего предназначен скрипт ( клиент, маппер, сервер )
 						posExt = 0;
-						if (CharFindPosition(buff.c_str(), "FOS", posExt))
+						if (CharFindPosition(buff, "FOS", posExt))
 						{
 							posExt = 0;
-							if (CharFindPosition(buff.c_str(), "Common", posExt))
+							if (CharFindPosition(buff, "Common", posExt))
 							{
 								owner.SetCommon();
 							}
 							else
 							{
 								posExt = 0;
-								owner.Client = CharFindPosition(buff.c_str(), "Client", posExt);
+								owner.Client = CharFindPosition(buff, "Client", posExt);
 								posExt = 0;
-								owner.Server = CharFindPosition(buff.c_str(), "Server", posExt);
+								owner.Server = CharFindPosition(buff, "Server", posExt);
 								posExt = 0;
-								owner.Mapper = CharFindPosition(buff.c_str(), "Mapper", posExt);
+								owner.Mapper = CharFindPosition(buff, "Mapper", posExt);
 							}
 
 							if (owner.Client || owner.Server || owner.Mapper)
 							{
 								posExt = 0;
-								isDebbug = CharFindPosition(buff.c_str(), "Debbug", posExt);
+								isDebbug = CharFindPosition(buff, "Debbug", posExt);
 
 								sort = 0;
 								posExt = 0;
-								if (CharFindPosition(buff.c_str(), "Sort", posExt))
+								if (CharFindPosition(buff, "Sort", posExt))
 								{
 									char memm[10];
-									if (CharSubstring(buff.c_str(), posExt + 4, buff.size() - posExt + 4, memm) )
+									if (CharSubstring(buff, posExt + 4, CharLength(buff) - posExt + 4, memm) )
 										sort = strtol(memm, NULL, 10);
 								}
 
 								ostringstream out;
-								out << read.rdbuf();
-								read.close();
+								out << read->rdbuf();
 								WriteScriptFile(name, data.type, sort, isDebbug, out.str(), owner);
 							}
 						}
+						read->close();
 					}
+					if( read ) delete read;
 				}
 			}
 		} while (FindNextFile(hFind, &ffd) != 0);
