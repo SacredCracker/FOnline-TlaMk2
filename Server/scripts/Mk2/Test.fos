@@ -1,13 +1,52 @@
 // FOS Server Client
 
 bool IsActiveTestMode = false;
+// FOS Server Client
+
+class TestMutual : MutualObject
+{
+	TestMutual( )
+	{
+		TestVar = 0;
+		TestVar1 = 60;
+	}
+
+	TestMutual( int var )
+	{
+		TestVar = var;
+	}
+	
+	void Update( )
+	{
+	#ifdef __CLIENT
+		Message( "TestMutual: " + TestVar );
+		if( TestVar != 0)
+		{
+			TestMutual@ ref = cast<TestMutual@>(GetMutualObject( TestVar ));
+			if( ref is null )
+				Message("invalid");
+			else
+				Message( "" + ref.TestVar );
+		}
+	#endif
+	}
+
+	int TestVar;
+	int TestVar1;
+}
 
 #ifdef __SERVER
 
-void ModuleInit( )
-{
+void ModuleInit( ){}
 
+// ~run Mk2 Test::SendMeMutual
+void SendMeMutual( Critter& cr, int, int, int )
+{
+	cr.Send( TestMutual() );
+	cr.Send( @TestMutual(15), 15 );
+	cr.Send( @TestMutual(15), 30 );
 }
+
 #endif
 #ifdef __CLIENT
 int[] TopicCoords;
