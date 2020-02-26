@@ -1,7 +1,6 @@
 // FOS Server Client
 
 bool IsActiveTestMode = false;
-// FOS Server Client
 
 class TestMutual : MutualObject
 {
@@ -24,7 +23,7 @@ class TestMutual : MutualObject
 		TestArray[4] = "пять";
 	}
 	
-	void Update( )
+	void Update( uint critterId )
 	{
 	#ifdef __CLIENT
 		Message( "TestMutual: " + TestVar + " " + TestString);
@@ -38,6 +37,20 @@ class TestMutual : MutualObject
 			Message( "" + ref.TestArray[0] + " " + ref.TestArray[1] + " " + ref.TestArray[2] + " " + ref.TestArray[3] + " " + ref.TestArray[4] );
 		}
 	#endif
+	#ifdef __SERVER
+		Log( "Client change mutual <" + TestString + ">" );
+	#endif
+	}
+	
+	void Erase( uint critterId )
+	{
+	#ifdef __CLIENT
+	
+	#endif
+	#ifdef __SERVER
+	
+	#endif
+	
 	}
 
 	int TestVar;
@@ -55,6 +68,18 @@ void SendMeMutual( Critter& cr, int, int, int )
 	cr.Send( TestMutual() );
 	cr.Send( @TestMutual(15), 15 );
 	cr.Send( @TestMutual(15), 30 );
+}
+
+// ~run Mk2 Test::AllowMeMutual
+void AllowMeMutual( Critter& cr, int, int, int )
+{
+	cr.MutualAllow( @TestMutual(1000), 1 );
+}
+
+// ~run Mk2 Test::DisallowMeMutual
+void DisallowMeMutual( Critter& cr, int, int, int )
+{
+	cr.MutualDisallow( 1 );
 }
 
 #endif
@@ -100,6 +125,15 @@ string hash_MsgCommand( string str )
 {
 	if( IsActiveTestMode )
 		Message( "<" + str + ">" + int( GetStrHash( str ) ) );
+	return "";
+}
+
+// #Test::mutual testmutual
+string mutual_MsgCommand( string txt )
+{
+	TestMutual@ ref = cast<TestMutual@>(GetMutualObject( 1 ));
+	ref.TestString = txt;
+	SendMutualObject( 1, ref );
 	return "";
 }
 #endif
