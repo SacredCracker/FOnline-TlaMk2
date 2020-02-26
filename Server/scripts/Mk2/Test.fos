@@ -8,18 +8,26 @@ class TestMutual : MutualObject
 	TestMutual( )
 	{
 		TestVar = 0;
-		TestVar1 = 60;
+		TestString = "construct";
+		TestArray.resize(5);
 	}
 
 	TestMutual( int var )
 	{
 		TestVar = var;
+		TestString = "Смотрим тестовую вар";
+		TestArray.resize(5);
+		TestArray[0] = "раз";
+		TestArray[1] = "два";
+		TestArray[2] = "три";
+		TestArray[3] = "четыре";
+		TestArray[4] = "пять";
 	}
 	
 	void Update( )
 	{
 	#ifdef __CLIENT
-		Message( "TestMutual: " + TestVar );
+		Message( "TestMutual: " + TestVar + " " + TestString);
 		if( TestVar != 0)
 		{
 			TestMutual@ ref = cast<TestMutual@>(GetMutualObject( TestVar ));
@@ -27,12 +35,14 @@ class TestMutual : MutualObject
 				Message("invalid");
 			else
 				Message( "" + ref.TestVar );
+			Message( "" + ref.TestArray[0] + " " + ref.TestArray[1] + " " + ref.TestArray[2] + " " + ref.TestArray[3] + " " + ref.TestArray[4] );
 		}
 	#endif
 	}
 
 	int TestVar;
-	int TestVar1;
+	string TestString;
+	string[] TestArray;
 }
 
 #ifdef __SERVER
