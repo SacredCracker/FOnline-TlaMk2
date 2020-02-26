@@ -3516,7 +3516,7 @@ uint e_FullReplayAtack( uint[] @ values )
 		return 0;
 
 	Critter@ critter = GetCritter( values[0] );
-	if( @critter is null ) return 0;
+	if( @critter is null || !critter.IsLife() ) return 0;
 	
 	Item@ item = GetItem( values[1] );
 	if( @item is null ) return 0;
