@@ -148,8 +148,12 @@ shared class CombatProccess : Mk2::CombatProccessPacket
     CombatProccess()
 	{
 		AllDamage.resize( DAMAGE_TYPE_COUNT );
-		for( uint i = 0, iend = DAMAGE_TYPE_COUNT; i < iend; i++ )
-			AllDamage[i] = 0;
+		Clear();		
+	}
+	
+	void Clear()
+	{
+		DropDamage();
 			
 		TypeDamage = -1;
 		TargetDT = 0;
@@ -159,6 +163,7 @@ shared class CombatProccess : Mk2::CombatProccessPacket
 		@ArmorTarget = null;
 		@RealWeapon = null;
 		@Attacker = null;
+		@Target = null;
 		Result = 0;
 
 		Hx = 0;
@@ -181,7 +186,7 @@ shared class CombatProccess : Mk2::CombatProccessPacket
 		DMMod = 1;
 		DDMod = 1;
 		AmmoPid = 0;
-		ProtoItemId = 0;
+		WeaponPid = 0;
 
 		TypeAttack = 0;
 		TargetId = 0;
@@ -301,8 +306,13 @@ shared class CombatProccess : Mk2::CombatProccessPacket
 	{
 		return false;
 	}
+	
+	void SetWeapon( ProtoItem& weapon, uint8 mode, ProtoItem@ ammo )
+	{
+		
+	}
 
-    uint16   ProtoItemId;
+    uint16   WeaponPid;
     uint16   Hx;
     uint16   Hy;
 
@@ -350,6 +360,7 @@ shared class CombatProccess : Mk2::CombatProccessPacket
     Item@ RealWeapon;
 
     Critter@ Attacker;
+    Critter@ Target;
 }
 
 shared void NotifyOops( Critter& cr, Critter& t1, Critter@ t2, CombatRes[]& results )

@@ -116,44 +116,116 @@ class ItemDescriptor : Mk2::Descriptor, Mk2::ItemPacket, UpgradeItem::UpgradeDes
 		return false;
 	}
 	
-	bool GetData( UpgradeItem::Data& data, int trigger ) override
+	bool UpgradeTrigger_CritterDamage( UpgradeItem::Data& data )
 	{
-		if( trigger == UpgradeItem::Triggered::CritterDamage )
+		UpgradeItem::CritterDamageData@ damageData = cast< UpgradeItem::CritterDamageData@ >( @data );
+		if( @damageData !is null )
 		{
-			UpgradeItem::CritterDamageData@ damageData = cast< UpgradeItem::CritterDamageData@ >( @data );
-			if( @damageData !is null )
+			int typeDamage = RealIt.Proto.Upgrade_TriggerValue0,
+				damageBorder = RealIt.Proto.Upgrade_TriggerValue1;
+			if(damageData.CombatData.Damage[ typeDamage ] > damageBorder )
 			{
-				int typeDamage = RealIt.Proto.Upgrade_TriggerValue0,
-					damageBorder = RealIt.Proto.Upgrade_TriggerValue1;
-				if(damageData.CombatData.Damage[ typeDamage ] > damageBorder )
+				int val = damageData.CombatData.ArmorTarget.Deterioration * 100 / MAX_DETERIORATION;
+				val = CLAMP( val, 0, 100 );
+				
+				if(val%101<100)
 				{
-					int val = damageData.CombatData.ArmorTarget.Deterioration * 100 / MAX_DETERIORATION;
-					val = CLAMP( val, 0, 100 );
-					
-					if(val%101<100)
-					{
-						damageData.CombatData.Damage[ typeDamage ] = damageBorder;
-						Repair::DeteriorateItem(damageData.Critter,damageData.CombatData.ArmorTarget,CLAMP(damageData.TotalDamage,0,damageData.TotalDamage));
-						return true;
-					}
+					damageData.CombatData.Damage[ typeDamage ] = damageBorder;
+					Repair::DeteriorateItem(damageData.Critter,damageData.CombatData.ArmorTarget,CLAMP(damageData.TotalDamage,0,damageData.TotalDamage));
+					return true;
 				}
 			}
-			else Log( "Error upgrade data" );
 		}
-		else if( trigger == UpgradeItem::Triggered::LineDamage )
-		{
-			UpgradeItem::LineDamageData@ lineData = cast< UpgradeItem::LineDamageData@ >( @data );
-			if( @lineData !is null )
-			{
-				lineData.Effect = Content::Item::FIRE_LASER_EXPLOSION;
-				lineData.IsFire = true;
-				lineData.DamageMod *= RealIt.Proto.Upgrade_EffectValue1;
-				return true;
-			}
-			else Log( "Error upgrade data" );
-		}	
+		else Log( "Error upgrade data" );
 		return false;
 	}
+	
+	bool UpgradeTrigger_LineDamage( UpgradeItem::Data& data )
+	{
+		UpgradeItem::LineDamageData@ lineData = cast< UpgradeItem::LineDamageData@ >( @data );
+		if( @lineData !is null )
+		{
+			lineData.Effect = Content::Item::FIRE_LASER_EXPLOSION;
+			lineData.IsFire = true;
+			lineData.DamageMod *= RealIt.Proto.Upgrade_EffectValue1;
+			return true;
+		}
+		else Log( "Error upgrade data" );
+		return false;
+	}
+	
+	bool GetData( UpgradeItem::Data& data, int trigger ) override
+	{
+		switch( trigger )
+		{
+			case UpgradeItem::Triggered::CritterDamage:
+				if( UpgradeTrigger_CritterDamage( data ) )
+					return true;
+				else break;
+				
+			case UpgradeItem::Triggered::LineDamage:
+				if( UpgradeTrigger_LineDamage( data ) )
+					return true;
+				else break;
+				
+			default: return false;
+		}
+		return false;
+	}
+	
+	bool CritterUse( ::Critter& cr, ::Item& item, ::Critter@ targetCr, ::Item@ targetItem, ::Scenery@ targetScen, uint param )
+	{
+		int result = 0;
+	
+		/* // Debug 
+		if( cr.IsPlayer() )
+		{
+			Log( "Critter use item: " + Name );
+			
+			if( targetCr !is null ) Log( "targetCr " + ( result++ ) );
+			if( targetScen !is null ) Log( "targetScen " + ( result++ ) );
+			if( targetItem !is null ) Log( "targetItem " + ( result++ ) );
+			
+		}		
+		// */
+		
+		if( targetCr !is null )
+		{
+			if( targetCr.Id == cr.Id && CritterUseOnSelf( cr, item, targetCr, targetItem, targetScen, param ) ) return true;
+			if( CritterUseOnCritter( cr, item, targetCr, targetItem, targetScen, param ) ) return true;
+		}
+		if( targetScen !is null )
+			if( CritterUseOnScenery( cr, item, targetCr, targetItem, targetScen, param ) ) return true;
+		if( targetItem !is null )
+			if( CritterUseOnItem( cr, item, targetCr, targetItem, targetScen, param ) ) return true;
+		return CritterUseGeneral( cr, item, targetCr, targetItem, targetScen, param );
+	}
+	
+	bool CritterUseOnSelf( ::Critter& cr, ::Item& item, ::Critter@ targetCr, ::Item@ targetItem, ::Scenery@ targetScen, uint param )
+	{
+		return false;
+	}
+	
+	bool CritterUseGeneral( ::Critter& cr, ::Item& item, ::Critter@ targetCr, ::Item@ targetItem, ::Scenery@ targetScen, uint param )
+	{
+		return false;
+	}
+	
+	bool CritterUseOnCritter( ::Critter& cr, ::Item& item, ::Critter@ targetCr, ::Item@ targetItem, ::Scenery@ targetScen, uint param )
+	{
+		return false;
+	}
+	
+	bool CritterUseOnItem( ::Critter& cr, ::Item& item, ::Critter@ targetCr, ::Item@ targetItem, ::Scenery@ targetScen, uint param )
+	{
+		return false;
+	}
+	
+	bool CritterUseOnScenery( ::Critter& cr, ::Item& item, ::Critter@ targetCr, ::Item@ targetItem, ::Scenery@ targetScen, uint param )
+	{
+		return false;
+	}
+	
 #endif
 	uint PriorityDescriptor = 0;
 	::ItemMutual@ RealIt = null;
@@ -195,6 +267,222 @@ class ArmorDescriptor : Item::ItemDescriptor, Mk2::CombatArmorPacket
 	}
 }
 
+class DrugDescriptor : Item::ItemDescriptor
+{
+	DrugDescriptor( ::ItemMutual@ item )
+	{
+		super( @item );
+	}
+	
+	Mk2::Descriptor@ Copy( ::ItemMutual@ item ) override
+	{
+		return @Item::DrugDescriptor( @item );
+	}
+
+	::string@ get_Name( ) override
+	{
+		return "Drug_" + ( @RealIt !is null ?"" + RealIt.Id : "Null");
+	}
+}
+
+class AmmoDescriptor : Item::ItemDescriptor
+{
+	AmmoDescriptor( ::ItemMutual@ item )
+	{
+		super( @item );
+	}
+	
+	Mk2::Descriptor@ Copy( ::ItemMutual@ item ) override
+	{
+		return @Item::AmmoDescriptor( @item );
+	}
+
+	::string@ get_Name( ) override
+	{
+		return "Ammo_" + ( @RealIt !is null ?"" + RealIt.Id : "Null");
+	}
+}
+
+class MiscDescriptor : Item::ItemDescriptor
+{
+	MiscDescriptor( ::ItemMutual@ item )
+	{
+		super( @item );
+	}
+	
+	Mk2::Descriptor@ Copy( ::ItemMutual@ item ) override
+	{
+		return @Item::MiscDescriptor( @item );
+	}
+
+	::string@ get_Name( ) override
+	{
+		return "Misc_" + ( @RealIt !is null ?"" + RealIt.Id : "Null");
+	}
+}
+
+class Misc2Descriptor : Item::ItemDescriptor
+{
+	Misc2Descriptor( ::ItemMutual@ item )
+	{
+		super( @item );
+	}
+	
+	Mk2::Descriptor@ Copy( ::ItemMutual@ item ) override
+	{
+		return @Item::Misc2Descriptor( @item );
+	}
+
+	::string@ get_Name( ) override
+	{
+		return "Misc2_" + ( @RealIt !is null ?"" + RealIt.Id : "Null");
+	}
+}
+
+class KeyDescriptor : Item::ItemDescriptor
+{
+	KeyDescriptor( ::ItemMutual@ item )
+	{
+		super( @item );
+	}
+	
+	Mk2::Descriptor@ Copy( ::ItemMutual@ item ) override
+	{
+		return @Item::KeyDescriptor( @item );
+	}
+
+	::string@ get_Name( ) override
+	{
+		return "Key_" + ( @RealIt !is null ?"" + RealIt.Id : "Null");
+	}
+}
+
+class ContainerDescriptor : Item::ItemDescriptor
+{
+	ContainerDescriptor( ::ItemMutual@ item )
+	{
+		super( @item );
+	}
+	
+	Mk2::Descriptor@ Copy( ::ItemMutual@ item ) override
+	{
+		return @Item::ContainerDescriptor( @item );
+	}
+
+	::string@ get_Name( ) override
+	{
+		return "Container_" + ( @RealIt !is null ?"" + RealIt.Id : "Null");
+	}
+}
+
+class DoorDescriptor : Item::ItemDescriptor
+{
+	DoorDescriptor( ::ItemMutual@ item )
+	{
+		super( @item );
+	}
+	
+	Mk2::Descriptor@ Copy( ::ItemMutual@ item ) override
+	{
+		return @Item::DoorDescriptor( @item );
+	}
+
+	::string@ get_Name( ) override
+	{
+		return "Door_" + ( @RealIt !is null ?"" + RealIt.Id : "Null");
+	}
+}
+
+class GridDescriptor : Item::ItemDescriptor
+{
+	GridDescriptor( ::ItemMutual@ item )
+	{
+		super( @item );
+	}
+	
+	Mk2::Descriptor@ Copy( ::ItemMutual@ item ) override
+	{
+		return @Item::GridDescriptor( @item );
+	}
+
+	::string@ get_Name( ) override
+	{
+		return "Grid_" + ( @RealIt !is null ?"" + RealIt.Id : "Null");
+	}
+}
+
+class GenericDescriptor : Item::ItemDescriptor
+{
+	GenericDescriptor( ::ItemMutual@ item )
+	{
+		super( @item );
+	}
+	
+	Mk2::Descriptor@ Copy( ::ItemMutual@ item ) override
+	{
+		return @Item::GenericDescriptor( @item );
+	}
+
+	::string@ get_Name( ) override
+	{
+		return "Generic_" + ( @RealIt !is null ?"" + RealIt.Id : "Null");
+	}
+}
+
+class WallDescriptor : Item::ItemDescriptor
+{
+	WallDescriptor( ::ItemMutual@ item )
+	{
+		super( @item );
+	}
+	
+	Mk2::Descriptor@ Copy( ::ItemMutual@ item ) override
+	{
+		return @Item::WallDescriptor( @item );
+	}
+
+	::string@ get_Name( ) override
+	{
+		return "Wall_" + ( @RealIt !is null ?"" + RealIt.Id : "Null");
+	}
+}
+
+class CarDescriptor : Item::ItemDescriptor
+{
+	CarDescriptor( ::ItemMutual@ item )
+	{
+		super( @item );
+	}
+	
+	Mk2::Descriptor@ Copy( ::ItemMutual@ item ) override
+	{
+		return @Item::CarDescriptor( @item );
+	}
+
+	::string@ get_Name( ) override
+	{
+		return "Car_" + ( @RealIt !is null ?"" + RealIt.Id : "Null");
+	}
+}
+
+class AnimalDescriptor : Item::ItemDescriptor
+{
+	AnimalDescriptor( ::ItemMutual@ item )
+	{
+		super( @item );
+	}
+	
+	Mk2::Descriptor@ Copy( ::ItemMutual@ item ) override
+	{
+		return @Item::AnimalDescriptor( @item );
+	}
+
+	::string@ get_Name( ) override
+	{
+		return "Animal_" + ( @RealIt !is null ?"" + RealIt.Id : "Null");
+	}
+}
+
 Mk2::Descriptor@ GetDeafultItemDescriptor( ::ItemMutual@ item )
 {
 #ifdef __MAPPER
@@ -207,15 +495,44 @@ Mk2::Descriptor@ GetDeafultItemDescriptor( ::ItemMutual@ item )
 	Item::ItemDescriptor@ def = null;
 	::string key = "" + item.GetProtoId();
 
-	if( Defaults.exists( key ) && Defaults.get( key, @def ) )	return @def.Copy( @item );
+	if( Defaults.exists( key ) && Defaults.get( key, @def ) ) return @def.Copy( @item );
 	switch( proto.GetType() )
 	{
+		case ITEM_TYPE_NONE:
+			return @Item::ItemDescriptor( @item );			
 		case ITEM_TYPE_ARMOR:
 			return @Item::ArmorDescriptor( @item );
+		case ITEM_TYPE_DRUG:
+			return @Item::DrugDescriptor( @item );
 		case ITEM_TYPE_WEAPON:
 			return @Item::WeaponDescriptor( @item );
+		case ITEM_TYPE_AMMO:
+			return @Item::AmmoDescriptor( @item );
+		case ITEM_TYPE_MISC:
+			return @Item::MiscDescriptor( @item );
+		case ITEM_TYPE_MISC2:
+			return @Item::Misc2Descriptor( @item );
+		case ITEM_TYPE_KEY:
+			return @Item::KeyDescriptor( @item );
+		case ITEM_TYPE_CONTAINER:
+			return @Item::ContainerDescriptor( @item );
+		case ITEM_TYPE_DOOR:
+			return @Item::DoorDescriptor( @item );
+		case ITEM_TYPE_GRID:
+			return @Item::GridDescriptor( @item );
+		case ITEM_TYPE_GENERIC:
+			return @Item::GenericDescriptor( @item );
+		case ITEM_TYPE_WALL:
+			return @Item::WallDescriptor( @item );
+		case ITEM_TYPE_CAR:
+			return @Item::CarDescriptor( @item );
+		case ITEM_TYPE_ANIMAL:
+			return @Item::AnimalDescriptor( @item );
 		default:
+		{
+			Log( "Warning, uknow protoitem type " + proto.GetType() );
 			return @Item::ItemDescriptor( @item );
+		}
 	}
 	return null;
 }

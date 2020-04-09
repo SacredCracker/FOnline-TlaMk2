@@ -178,7 +178,9 @@ class TestTT
 // Call on something critter use item.
 bool critter_use_item( ::Critter& cr, ::Item& item, ::Critter@ targetCr, ::Item@ targetItem, ::Scenery@ targetScen, uint param )
 {
-    if( _ToolUse( item, cr, targetCr, targetItem, targetScen ) )
+	if( cast<Mk2::ItemPacket@>(@item.ScriptDescriptor).CritterUse( cr, item, targetCr, targetItem, targetScen, param ) ) return true;	
+	
+	if( _ToolUse( item, cr, targetCr, targetItem, targetScen ) )
         return true;
 
     bool   isPlayer = cr.IsPlayer(), useOnSelf = ( not validEngineObject( targetCr ) && not validEngineObject( targetItem ) && not valid( targetScen ) );

@@ -173,7 +173,7 @@ class CritterDescriptor : Mk2::Descriptor, Mk2::CritterPacket, Mk2::CombatTarget
 						penaltyAc+= combatData.RealWeapon.Proto.Weapon_IgnoreAC;
 					else 
 					{
-						const ::ProtoItem@ weapon = ::GetProtoItem(combatData.ProtoItemId);
+						const ::ProtoItem@ weapon = ::GetProtoItem(combatData.WeaponPid);
 						if( @weapon!is null ) penaltyAc+= weapon.Weapon_IgnoreAC;
 					}
 					int ac = ( RealCr.Stat[ST_ARMOR_CLASS] - penaltyAc ) * 5;

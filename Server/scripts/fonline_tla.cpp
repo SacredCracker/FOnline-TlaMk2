@@ -773,6 +773,10 @@ FONLINE_DLL_ENTRY( isCompiler )
     ASEngine->RegisterInterfaceMethod( "UpgradedItemPacket", "bool SetUpgrade( ::Item@ item )" );
     ASEngine->RegisterInterfaceMethod( "UpgradedItemPacket", "bool UpgradedTriggered( const uint8 trigger )" );
 	
+#ifdef __SERVER
+    ASEngine->RegisterInterfaceMethod( "ItemPacket", "bool CritterUse( ::Critter& cr, ::Item& item, ::Critter@ targetCr, ::Item@ targetItem, ::Scenery@ targetScen, uint param )" );
+#endif
+	
     ASEngine->SetDefaultNamespace( defName );
 	
 #endif

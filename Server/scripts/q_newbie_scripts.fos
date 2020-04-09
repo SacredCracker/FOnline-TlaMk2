@@ -160,7 +160,7 @@ bool SetPlayerToNewbieLocation( Critter& cr ) // Export
     // Запуск начального диалога
     if( questStat < 2 )
     {
-		::CreateTimeEvent( __FullSecond + REAL_SECOND( 1 ), "e_RunDialog", cr.Id, false );
+		::CreateTimeEvent( __FullSecond + REAL_SECOND( 5 ), "e_RunDialog", cr.Id, false );
     }
 
     return true;
@@ -170,7 +170,8 @@ bool SetPlayerToNewbieLocation( Critter& cr ) // Export
 uint e_RunDialog( ::array<uint>@ values )
 {
 	Critter@ critter = GetCritter( values[0] );
-	Mk2RunDialog( critter, critter.GetMap().GetNpc(0, FIND_LIFE, 0), true );
+	if( critter !is null )
+		Mk2RunDialog( critter, critter.GetMap().GetNpc(0, FIND_LIFE, 0), true );
 	return 0;
 }
 
