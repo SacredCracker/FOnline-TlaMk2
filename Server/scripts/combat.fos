@@ -68,6 +68,11 @@ enum ETypeAttack
     TypeAttack_End
 }
 
+CombatProccess@ GetCombatProccess( )
+{
+	return null;
+}
+
 void startCombatTimeout( Critter& target )
 {
     int   targetTimeout = BATTLE_TIMEOUT( target );
@@ -139,7 +144,7 @@ void CombatAttack( Critter& cr, Critter& target, ProtoItem& weapon, uint8 weapon
 
     // main proccess structure
     @proccess.RealWeapon = _CritGetItemHand( cr );
-    proccess.ProtoItemId = weapon.ProtoId;
+    proccess.WeaponPid = weapon.ProtoId;
     proccess.BloodyMess = cr.Trait[ TRAIT_BLOODY_MESS ] != 0;
     proccess.CombatMessage = true;
     proccess.FirstWeaponPerk = ( proccess.ScoreUnarmed && weapon.Weapon_UnarmedArmorPiercing ) ? WEAPON_PERK_PENETRATE : weapon.Weapon_Perk;
@@ -155,7 +160,7 @@ void CombatAttack( Critter& cr, Critter& target, ProtoItem& weapon, uint8 weapon
         return;
     }
 
-    if( ( proccess.ProtoItemId == PID_FLAMER ) || ( proccess.ProtoItemId == PID_IMPROVED_FLAMETHROWER ) || ( proccess.ProtoItemId == PID_FIRE_GECKO_FLAME_WEAPON ) || ( proccess.ProtoItemId == PID_FLAMER_MK3 ) || ( proccess.ProtoItemId == PID_FIRE_GECKO_FLAME_WEAPON_LIGHT ) )
+    if( ( proccess.WeaponPid == PID_FLAMER ) || ( proccess.WeaponPid == PID_IMPROVED_FLAMETHROWER ) || ( proccess.WeaponPid == PID_FIRE_GECKO_FLAME_WEAPON ) || ( proccess.WeaponPid == PID_FLAMER_MK3 ) || ( proccess.WeaponPid == PID_FIRE_GECKO_FLAME_WEAPON_LIGHT ) )
         proccess.TypeAttack = ETypeAttack::TypeAttack_Flame;
 
     CombatRes[] results;
@@ -802,7 +807,7 @@ void CombatAttack( Critter& cr, Critter& target, ProtoItem& weapon, uint8 weapon
         }
     }
     else
-        cr.Say( SAY_NETMSG, "Combat error: weapon PID=" + proccess.ProtoItemId + " not handled, please send bug report." );  // combat messages
+        cr.Say( SAY_NETMSG, "Combat error: weapon PID=" + proccess.WeaponPid + " not handled, please send bug report." );  // combat messages
     FlushResults( results );
     // Shoot
     if( _WeaponEffect( weapon, use ) != 0 )
@@ -1405,7 +1410,7 @@ void ApplyDamage( CombatProccess& proccess, Critter& target, uint rounds, bool i
                         if( ( isBelow || knockOut || ( ( MortirFD != 0 || knockDown || proccess.IsWeaponPerk( WEAPON_PERK_SHOTGUN ) )  && !isPowerArmor ) ) && !target.IsKnockout() && target.Mode[ MODE_NO_KNOCK ] == 0 )
                         {
                             int knockDist = totalDmg;
-                            if( ( ( proccess.ProtoItemId >= PID_CLUB && proccess.ProtoItemId <= PID_SUPER_SLEDGE ) || ( proccess.IsWeaponPerk( WEAPON_PERK_SHOTGUN ) && validEngineObject( proccess.Attacker ) && GetDistantion( proccess.Attacker.HexX, proccess.Attacker.HexY, target.HexX, target.HexY ) < 8 ) || MortirFD != 0 || proccess.TypeDamage == DAMAGE_EXPLODE ) && target.IsCanWalk() )
+                            if( ( ( proccess.WeaponPid >= PID_CLUB && proccess.WeaponPid <= PID_SUPER_SLEDGE ) || ( proccess.IsWeaponPerk( WEAPON_PERK_SHOTGUN ) && validEngineObject( proccess.Attacker ) && GetDistantion( proccess.Attacker.HexX, proccess.Attacker.HexY, target.HexX, target.HexY ) < 8 ) || MortirFD != 0 || proccess.TypeDamage == DAMAGE_EXPLODE ) && target.IsCanWalk() )
                             {
                                 if( proccess.IsWeaponPerk( WEAPON_PERK_KNOCKBACK ) )
                                     knockDist *= 0.2;
@@ -1514,7 +1519,7 @@ void ApplyDamage( CombatProccess& proccess, Critter& target, uint rounds, bool i
         if( ( isBelow || knockOut || ( ( MortirFD != 0 || knockDown || proccess.IsWeaponPerk( WEAPON_PERK_SHOTGUN ) || proccess.TypeDamage == DAMAGE_EXPLODE )  && !isPowerArmor ) ) && !target.IsKnockout() && target.Mode[ MODE_NO_KNOCK ] == 0 )
         {
             int knockDist = totalDmg;
-            if( ( ( proccess.ProtoItemId >= PID_CLUB && proccess.ProtoItemId <= PID_SUPER_SLEDGE ) || ( proccess.IsWeaponPerk( WEAPON_PERK_SHOTGUN ) && validEngineObject( proccess.Attacker ) && GetDistantion( proccess.Attacker.HexX, proccess.Attacker.HexY, target.HexX, target.HexY ) < 8 ) || MortirFD != 0 || proccess.TypeDamage == DAMAGE_EXPLODE ) && target.IsCanWalk() )
+            if( ( ( proccess.WeaponPid >= PID_CLUB && proccess.WeaponPid <= PID_SUPER_SLEDGE ) || ( proccess.IsWeaponPerk( WEAPON_PERK_SHOTGUN ) && validEngineObject( proccess.Attacker ) && GetDistantion( proccess.Attacker.HexX, proccess.Attacker.HexY, target.HexX, target.HexY ) < 8 ) || MortirFD != 0 || proccess.TypeDamage == DAMAGE_EXPLODE ) && target.IsCanWalk() )
             {
                 if( proccess.IsWeaponPerk( WEAPON_PERK_KNOCKBACK ) )
                     knockDist *= 0.2;
@@ -2194,7 +2199,7 @@ int RawToHit( Critter& cr, Critter& target, const ProtoItem@ weapon, uint8 weapo
 
     if( weapon !is null )
     {
-        proccess.ProtoItemId = weapon.ProtoId;
+        proccess.WeaponPid = weapon.ProtoId;
         proccess.FirstWeaponPerk = ( isUnarmed && weapon.Weapon_UnarmedArmorPiercing ) ? WEAPON_PERK_PENETRATE : weapon.Weapon_Perk;
         proccess.SecondWeaponPerk = ( isUnarmed && weapon.Weapon_UnarmedArmorPiercing ) ? WEAPON_PERK_PENETRATE : weapon.Weapon_SecondPerk;
         proccess.AmmoPerk = ammo !is null ? int(ammo.Ammo_Perk) : -1;
@@ -2469,7 +2474,7 @@ bool Attack( Critter& critter, Item& item, uint8 weaponMode, uint16 defHexX, uin
     CombatProccess@ proccess = CombatProccess();
     @proccess.Attacker = critter;
     @proccess.RealWeapon = item;
-    proccess.ProtoItemId = proccess.RealWeapon.GetProtoId();
+    proccess.WeaponPid = proccess.RealWeapon.GetProtoId();
     proccess.Hx = defHexX;
     proccess.Hy = defHexY;
 
@@ -2662,11 +2667,11 @@ bool Attack( Critter& critter, Item& item, uint8 weaponMode, uint16 defHexX, uin
     uint ExplodeId = 0;
 
     bool isRocket = ( proccess.AmmoPid == PID_CANNON_BALLS_FRAG ) || ( proccess.AmmoPid == PID_EXPLOSIVE_ROCKET ) || ( proccess.AmmoPid == PID_ROCKET_AP ) || ( proccess.AmmoPid == PID_ROBO_ROCKET_AMMO ) || ( proccess.AmmoPid == PID_EMP_ROCKET ) || ( proccess.AmmoPid == PID_NUKE_ROCKET ) || ( proccess.AmmoPid == PID_ROCKET_FIRE ),
-         Explode = ( ( isRocket ) || ( proccess.ProtoItemId == PID_MOLOTOV_COCKTAIL ) || ( proccess.ProtoItemId == PID_FRAG_GRENADE ) ||
-                     ( proccess.ProtoItemId == PID_PULSE_GRENADE ) || ( proccess.ProtoItemId == PID_PLASMA_GRENADE ) || ( proccess.ProtoItemId == PID_PLASMA_CANNON ) || ( proccess.ProtoItemId == PID_GRANADE_REVOLV_I ) || ( proccess.ProtoItemId == PID_GRANADE_REVOLV_II ) || ( proccess.ProtoItemId == PID_GRANADE_PISTOL ) || ( proccess.ProtoItemId == PID_REVOLV_GRENADE ) ||
-                     ( proccess.ProtoItemId == PID_HOLY_HAND_GRENADE ) ||
-                     proccess.ProtoItemId == PID_FIRE_GRENADE ),
-         _quakeScreen = ( Explode && proccess.ProtoItemId != PID_PLASMA_CANNON && proccess.ProtoItemId != PID_MOLOTOV_COCKTAIL && proccess.ProtoItemId != PID_FIRE_GRENADE && proccess.AmmoPid != PID_ROCKET_FIRE );
+         Explode = ( ( isRocket ) || ( proccess.WeaponPid == PID_MOLOTOV_COCKTAIL ) || ( proccess.WeaponPid == PID_FRAG_GRENADE ) ||
+                     ( proccess.WeaponPid == PID_PULSE_GRENADE ) || ( proccess.WeaponPid == PID_PLASMA_GRENADE ) || ( proccess.WeaponPid == PID_PLASMA_CANNON ) || ( proccess.WeaponPid == PID_GRANADE_REVOLV_I ) || ( proccess.WeaponPid == PID_GRANADE_REVOLV_II ) || ( proccess.WeaponPid == PID_GRANADE_PISTOL ) || ( proccess.WeaponPid == PID_REVOLV_GRENADE ) ||
+                     ( proccess.WeaponPid == PID_HOLY_HAND_GRENADE ) ||
+                     proccess.WeaponPid == PID_FIRE_GRENADE ),
+         _quakeScreen = ( Explode && proccess.WeaponPid != PID_PLASMA_CANNON && proccess.WeaponPid != PID_MOLOTOV_COCKTAIL && proccess.WeaponPid != PID_FIRE_GRENADE && proccess.AmmoPid != PID_ROCKET_FIRE );
 
     uint16 radius = weapon.HexWeapon_Radius;
 
@@ -2674,11 +2679,11 @@ bool Attack( Critter& critter, Item& item, uint8 weaponMode, uint16 defHexX, uin
     {
         if( radius == 0 )
         {
-            radius = ( proccess.ProtoItemId == PID_GRANADE_REVOLV_I || proccess.ProtoItemId == PID_GRANADE_REVOLV_II || proccess.ProtoItemId == PID_GRANADE_PISTOL || proccess.ProtoItemId == PID_REVOLV_GRENADE ) ? 1 : 2;
+            radius = ( proccess.WeaponPid == PID_GRANADE_REVOLV_I || proccess.WeaponPid == PID_GRANADE_REVOLV_II || proccess.WeaponPid == PID_GRANADE_PISTOL || proccess.WeaponPid == PID_REVOLV_GRENADE ) ? 1 : 2;
             if( proccess.AmmoPid == PID_NUKE_ROCKET )
                 radius = 35;
         }
-        switch( proccess.ProtoItemId )
+        switch( proccess.WeaponPid )
         {
         case PID_MOLOTOV_COCKTAIL:
             ExplodeId = PID_EXPLODE_FIRE_BIG;
@@ -2738,7 +2743,7 @@ bool Attack( Critter& critter, Item& item, uint8 weaponMode, uint16 defHexX, uin
 		}
 	}
 
-    switch( proccess.ProtoItemId )   // Особый эффект оружия(не визуальный)
+    switch( proccess.WeaponPid )   // Особый эффект оружия(не визуальный)
     {
 		case PID_SMOKE_GRENADE:
 			SmokeBlast( map, proccess.Hx, proccess.Hy, PID_SMOKE, proccess.Attacker.Id );
@@ -3066,8 +3071,7 @@ void DamageHex( CombatProccess& proccess, Map& map, uint16 radius, bool _quakeSc
             }
         }
         bool   isCritical = false;
-        uint16 pid = proccess.ProtoItemId;
-        if( proccess.RealWeapon !is null && pid == PID_JACKAL && proccess.RealWeapon.AmmoPid == PID_JACKAL_WALKING_MINE )
+        if( proccess.RealWeapon !is null && proccess.WeaponPid == PID_JACKAL && proccess.RealWeapon.AmmoPid == PID_JACKAL_WALKING_MINE )
         {
             map.GetHexCoord( proccess.Attacker.HexX, proccess.Attacker.HexY, proccess.Hx, proccess.Hy, 0, 0 );
             int[] params = { SK_TRAPS, proccess.Attacker.Skill[ SK_TRAPS ], MODE_HIDE, 1, SK_SNEAK, proccess.Attacker.Skill[ SK_TRAPS ], MERC_MASTER_ID, proccess.Attacker.Id, ST_FACTION, proccess.Attacker.Stat[ ST_FACTION ] };
@@ -3094,7 +3098,7 @@ void DamageHex( CombatProccess& proccess, Map& map, uint16 radius, bool _quakeSc
                 map.GetHexCoord( proccess.Hx, proccess.Hy, traceHexX, traceHexY, 0, 0 );
                 if( traceHexX != c.HexX || traceHexY != c.HexY )
                     continue;
-                if( pid == PID_JACKAL )
+                if( proccess.WeaponPid == PID_JACKAL )
                 {
                     Item@ mine = c.AddItem( PID_JACKAL_MINE_ACTIVE, 1 );
                     if( mine !is null )
@@ -3107,7 +3111,7 @@ void DamageHex( CombatProccess& proccess, Map& map, uint16 radius, bool _quakeSc
                         return;
                     }
                 }
-                else if( pid == PID_JACKAL_MINE_ACTIVE )
+                else if( proccess.WeaponPid == PID_JACKAL_MINE_ACTIVE )
                 {
                     MoveItem( proccess.RealWeapon, 1, c );
                     c.PlaySound( "FLRTRAP.ACM", c.IsPlayer() );
@@ -3147,7 +3151,7 @@ void DamageHex( CombatProccess& proccess, Map& map, uint16 radius, bool _quakeSc
         }
         if( iMax == 0 )
         {
-            if( pid == PID_JACKAL || pid == PID_JACKAL_MINE_ACTIVE )
+            if( proccess.WeaponPid == PID_JACKAL || proccess.WeaponPid == PID_JACKAL_MINE_ACTIVE )
             {
                 if( !map.IsHexPassed( proccess.Hx, proccess.Hy ) )
                     map.GetHexCoord( proccess.Attacker.HexX, proccess.Attacker.HexY, proccess.Hx, proccess.Hy, 0, GetDistantion( proccess.Attacker.HexX, proccess.Attacker.HexY, proccess.Hx, proccess.Hy ) );
@@ -3162,14 +3166,14 @@ void DamageHex( CombatProccess& proccess, Map& map, uint16 radius, bool _quakeSc
                     }
                     else
                         CreateTimeEvent( __FullSecond, "e_Explode", mine.Id, false );
-                    if( pid == PID_JACKAL_MINE_ACTIVE )
+                    if( proccess.WeaponPid == PID_JACKAL_MINE_ACTIVE )
 					{
                         DeleteItem( proccess.RealWeapon );
 						@proccess.RealWeapon = null;
                     }
 					return;
                 }
-                else if( pid == PID_JACKAL_MINE_ACTIVE )
+                else if( proccess.WeaponPid == PID_JACKAL_MINE_ACTIVE )
                 {
                     MoveItem( proccess.RealWeapon, 1, map, proccess.Hx, proccess.Hy );
                     proccess.RealWeapon.EventDrop( proccess.Attacker );
@@ -3445,7 +3449,7 @@ uint e_ReAtack( uint[] @ values )
          isGrenade = weaponSubtype == WS_THROWING && dmgType != DAMAGE_NORMAL;
 
     CombatProccess@ proccess = CombatProccess();
-    proccess.ProtoItemId = weapon.ProtoId;
+    proccess.WeaponPid = weapon.ProtoId;
     @proccess.Attacker = cr;
     @proccess.RealWeapon = item;
     proccess.Hx = values[ 4 ];
