@@ -168,6 +168,8 @@ shared class CombatProccess : Mk2::CombatProccessPacket
 
 		Hx = 0;
 		Hy = 0;
+		TargetHx = 0;
+		TargetHy = 0;
 		Aim = HIT_LOCATION_UNCALLED;
 		IsBurst = false;
 		BloodyMess = false;
@@ -311,10 +313,17 @@ shared class CombatProccess : Mk2::CombatProccessPacket
 	{
 		
 	}
+	
+	uint get_Distantion(  )
+	{
+		return GetDistantion( Hx, Hy, TargetHx, TargetHy );
+	}
 
     uint16   WeaponPid;
     uint16   Hx;
     uint16   Hy;
+    uint16   TargetHx;
+    uint16   TargetHy;
 
     uint8    Aim;
     uint8    WeaponSubtype;
