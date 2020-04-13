@@ -422,11 +422,12 @@ class CritterDescriptor : Mk2::Descriptor, Mk2::CritterPacket, Mk2::CombatTarget
 	
 	uint PriorityDescriptor = 0;
 	
-	::Critter@ RealCr = null;	
+	::Critter@ RealCr = null;
 	
 	// Dialog::Master
 	void SetAnswers( ::Critter@ interlocutor, Dialog::Dialog@ dialog, Dialog::Branch@ branch, Dialog::Answer@[]@ answers, ::Map& map, uint16 hexX, uint16 hexY ) override
 	{
+		DialogTick = GetTick();
 		RealCr.ModeBase[ MODE_HIDE ] = 0;
 		if( @interlocutor !is null )
 			CurrentInterlocutorId = interlocutor.Id;
@@ -491,6 +492,8 @@ class CritterDescriptor : Mk2::Descriptor, Mk2::CritterPacket, Mk2::CombatTarget
 	
 	uint16 ThisSpeakX;
 	uint16 ThisSpeakY;
+	
+	uint DialogTick = 0;
 	
 	uint CurrentInterlocutorId;
 	Dialog::Branch@ CurrentBranch;

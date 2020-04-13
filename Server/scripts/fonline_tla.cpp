@@ -1808,11 +1808,7 @@ bool out_message( ScriptString& message, int& sayType )
 						uint funcId = FOnline->ScriptBind( "Mk2", out.str().c_str(), true );
 						if( funcId && FOnline->ScriptPrepare( funcId ) )
 						{
-							uint buffer_size = message.length() - CharLength( functionName ) - 2;
-							char *buffer = new char[ buffer_size ];
-							CharSubstring( mess, CharLength( functionName ) + 2, buffer_size, buffer );
-							
-							ScriptString* str = &ScriptString::Create( buffer );
+							ScriptString* str = &ScriptString::Create( mess );
 							FOnline->ScriptSetArgObject( str );
 							if( !FOnline->ScriptRunPrepared() )
 								Log( "Error run out_message\n" );
@@ -1826,11 +1822,9 @@ bool out_message( ScriptString& message, int& sayType )
 										// Message( result->c_str() );
 									}
 								}
-								delete [buffer_size]buffer;
 								str->Release();
 								return false;
 							}
-							delete [buffer_size]buffer;
 							str->Release();
 						}
 					}

@@ -366,6 +366,8 @@ class CombatAlgoritm_Burst : CombatAlgoritm
     uint[] critsHitBullets;
 	int rounds;
 
+	int StartRounds;
+
 	float penaltySecondTargets = 0.6;
 	float penaltyEffectSecondTargets = 1.0;
     int modeToHitForNextBulets = 8;
@@ -409,7 +411,8 @@ class CombatAlgoritm_Burst : CombatAlgoritm
 		// proceed with the burst proccess
 		if( proccess.RealWeapon.AmmoCount < rounds )
 			rounds = proccess.RealWeapon.AmmoCount;
-				
+		StartRounds = rounds;
+		
 		Map@ map = proccess.Attacker.GetMap();
 		
         if( realTarget !is null )
@@ -495,6 +498,11 @@ class CombatAlgoritm_Burst : CombatAlgoritm
             if( proccess.TypeDamage == DAMAGE_EXPLODE )
                 map.RunEffect( PID_EXPLODE_ROCKET, crForI.HexX, crForI.HexY, 0, 0 );
 
+			if( proccess.Attacker.IsPlayer() )
+			{
+				proccess.Attacker.Say( SAY_NETMSG, "Попало " + critsHitBullets[ i ] + " пуль из " + StartRounds  );
+			}
+
 			if( critsHitBullets[ i ] != 0 )
 			{
 				if( target !is null && target.Id == crForI.Id ) proccess.TargetHit = true;
@@ -567,28 +575,31 @@ class CombatAlgoritm_Burst : CombatAlgoritm
 	}
 }
 
-void startCombatTimeout( Critter& target )
+void startCombatTimeout( Critter& target, bool sneak = true )
 {
-    int   targetTimeout = BATTLE_TIMEOUT( target );
+	if( target.IsNpc() || target.GetAccess() != ACCESS_ADMIN )
+	{
+		int targetTimeout = BATTLE_TIMEOUT( target );
+		Item@ targetArmor = _CritGetItemArmor( target );
 
-    Item@ targetArmor = _CritGetItemArmor( target );
+		if( validEngineObject( targetArmor ) )
+			targetTimeout -= REAL_SECOND( targetArmor.Proto.BonusForOutOfCombat );
 
-    if( validEngineObject( targetArmor ) )
-        targetTimeout -= REAL_SECOND( targetArmor.Proto.BonusForOutOfCombat );
-
-    if( __FullSecond + REAL_SECOND( 5 ) > uint( targetTimeout ) )
-        targetTimeout = __FullSecond + REAL_SECOND( 5 );
-    if( target.Timeout[ TO_BATTLE ] < targetTimeout - __FullSecond )
-    {
-        target.TimeoutBase[ TO_BATTLE ] = targetTimeout;
-        uint[] indexes;
-        if( target.GetTimeEvents( CTE_END_BATTLE, indexes ) > 0 )
-            target.ChangeTimeEvent( indexes[ 0 ], targetTimeout - __FullSecond, 0, 0 );
-        else
-            target.AddTimeEvent( "cte_EndBattle", targetTimeout - __FullSecond, CTE_END_BATTLE );
-    }
-    target.RefreshSpeed();
-    target.TimeoutBase[ TO_SNEAK ] = SNEAK_TIMEOUT( target );
+		if( __FullSecond + REAL_SECOND( 5 ) > uint( targetTimeout ) )
+			targetTimeout = __FullSecond + REAL_SECOND( 5 );
+		if( target.Timeout[ TO_BATTLE ] < targetTimeout - __FullSecond )
+		{
+			target.TimeoutBase[ TO_BATTLE ] = targetTimeout;
+			uint[] indexes;
+			if( target.GetTimeEvents( CTE_END_BATTLE, indexes ) > 0 )
+				target.ChangeTimeEvent( indexes[ 0 ], targetTimeout - __FullSecond, 0, 0 );
+			else
+				target.AddTimeEvent( "cte_EndBattle", targetTimeout - __FullSecond, CTE_END_BATTLE );
+		}
+		target.RefreshSpeed();
+		if( sneak )
+			target.TimeoutBase[ TO_SNEAK ] = SNEAK_TIMEOUT( target );
+	}
 }
 
 void CombatAttack( Critter& attacker, Critter& target, ProtoItem& weapon, uint8 weaponMode, ProtoItem@ ammo ) // Export
@@ -624,7 +635,7 @@ void CombatAttack( Critter& attacker, Critter& target, ProtoItem& weapon, uint8 
 
     proccess.Hx = proccess.Attacker.HexX;
     proccess.Hy = proccess.Attacker.HexY;
-    proccess.TargetHx = target.HexY;
+    proccess.TargetHx = target.HexX;
     proccess.TargetHy = target.HexY;
 
     proccess.Attacker.SetDir( GetDirection( proccess.Hx, proccess.Hy, proccess.TargetHx, proccess.TargetHy ) );
@@ -667,26 +678,7 @@ void CombatAttack( Critter& attacker, Critter& target, ProtoItem& weapon, uint8 
     if( target.IsNpc() || ( target.IsPlayer() && target.GetAccess() != ACCESS_ADMIN ) )
         target.ModeBase[ MODE_HIDE ] = 0;
 
-    Item@ crArmor = _CritGetItemArmor( proccess.Attacker );
-    //	targetArmor=_CritGetItemArmor(target);
-
-    {
-        int crTimeout = BATTLE_TIMEOUT( proccess.Attacker );
-        if( validEngineObject( crArmor ) )
-            crTimeout -= REAL_SECOND( crArmor.Proto.BonusForOutOfCombat );
-        if( __FullSecond + REAL_SECOND( 5 ) > uint( crTimeout ) )
-            crTimeout = __FullSecond + REAL_SECOND( 5 );
-        if( proccess.Attacker.Timeout[ TO_BATTLE ] < crTimeout - __FullSecond )
-        {
-            proccess.Attacker.TimeoutBase[ TO_BATTLE ] = crTimeout;
-            uint[] indexes;
-            if( proccess.Attacker.GetTimeEvents( CTE_END_BATTLE, indexes ) > 0 )
-                proccess.Attacker.ChangeTimeEvent( indexes[ 0 ], crTimeout - __FullSecond, 0, 0 );
-            else
-                proccess.Attacker.AddTimeEvent( "cte_EndBattle", crTimeout - __FullSecond, CTE_END_BATTLE );
-        }
-        proccess.Attacker.RefreshSpeed();
-    }
+    startCombatTimeout( proccess.Attacker, false );
 
     proccess.Attacker.TimeoutBase[ TO_SNEAK ] = SNEAK_TIMEOUT( proccess.Attacker );
 
@@ -2722,25 +2714,7 @@ bool Attack( Critter& critter, Item& item, uint8 weaponMode, uint16 defHexX, uin
     }
     proccess.DmgMul = proccess.DMMod;
 
-    Item@ armor = _CritGetItemArmor( proccess.Attacker );
-
-    {
-        int crTimeout = BATTLE_TIMEOUT( proccess.Attacker );
-        if( armor !is null )
-            crTimeout -= REAL_SECOND( armor.Proto.BonusForOutOfCombat );
-        if( __FullSecond + REAL_SECOND( 5 ) > uint( crTimeout ) )
-            crTimeout = __FullSecond + REAL_SECOND( 5 );
-        if( proccess.Attacker.Timeout[ TO_BATTLE ] < crTimeout - __FullSecond )
-        {
-            proccess.Attacker.TimeoutBase[ TO_BATTLE ] = crTimeout;
-            uint[] indexes;
-            if( proccess.Attacker.GetTimeEvents( CTE_END_BATTLE, indexes ) > 0 )
-                proccess.Attacker.ChangeTimeEvent( indexes[ 0 ], crTimeout - __FullSecond, 0, 0 );
-            else
-                proccess.Attacker.AddTimeEvent( "cte_EndBattle", crTimeout - __FullSecond, CTE_END_BATTLE );
-        }
-        proccess.Attacker.RefreshSpeed();
-    }
+    startCombatTimeout( proccess.Attacker, false );
 
     // Вычитаем патроны.
     if( proccess.Attacker.Mode[ MODE_UNLIMITED_AMMO ] == 0 )

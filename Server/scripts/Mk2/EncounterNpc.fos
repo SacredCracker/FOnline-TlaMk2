@@ -36,16 +36,21 @@ void _NpcInit( ::Critter& npc, bool firstTime )
         ::array<::Item@> items;
         bool favrtAmmoSet = false,
              favrtWpnSet = false;
+		Item@ item = null;
         for( uint i = 0, iMax =  npc.GetItems( -1, items ); i < iMax; i++ )
         {
-            Repair::SetDeterioration( items[ i ], ::Random( 50, 75 ) );
-            int maxRepairCount = ( items[ i ].Proto.MaxRepairCount > 0 ) ? ( ( items[ i ].Proto.MaxRepairCount + 10 ) * 10 ) : DEFAULT_MAX_REPAIR_COUNT;
-            if( maxRepairCount > 100 )
-                items[ i ].RadioChannel = maxRepairCount - 95 + ::Random( 0, 10 );
+			@item = items[i];
+			if( item.IsDeteriorable() )
+			{
+				Repair::SetDeterioration( item, ::Random( 50, 75 ) );
+				int maxRepairCount = ( item.Proto.MaxRepairCount > 0 ) ? ( ( item.Proto.MaxRepairCount + 10 ) * 10 ) : DEFAULT_MAX_REPAIR_COUNT;
+				if( maxRepairCount > 100 )
+					item.RadioChannel = maxRepairCount - 95 + ::Random( 0, 10 );
+			}
 #ifndef __NO_FAVORIT_ITEMS
-            if( items[ i ].GetType() == ITEM_TYPE_WEAPON && npc.IsAnim1( items[ i ].Proto.Weapon_Anim1 ) && !favrtWpnSet )
+            if( item.GetType() == ITEM_TYPE_WEAPON && npc.IsAnim1( item.Proto.Weapon_Anim1 ) && !favrtWpnSet )
             {
-                npc.SetFavoriteItem( SLOT_HAND1, items[ i ].GetProtoId() );
+                npc.SetFavoriteItem( SLOT_HAND1, item.GetProtoId() );
                 favrtWpnSet = true;
             }
 #endif
