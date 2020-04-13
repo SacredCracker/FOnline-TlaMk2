@@ -304,16 +304,6 @@ shared class CombatProccess : Mk2::CombatProccessPacket
 		return ( target.Skill[ SK_LIONHEART ] > 105 && Random( 1, 100 ) < lionSkill );
 	}
 	
-	bool UnarmedProccess()
-	{
-		return false;
-	}
-	
-	void SetWeapon( ProtoItem& weapon, uint8 mode, ProtoItem@ ammo )
-	{
-		
-	}
-	
 	uint get_Distantion(  )
 	{
 		return GetDistantion( Hx, Hy, TargetHx, TargetHy );
@@ -328,11 +318,8 @@ shared class CombatProccess : Mk2::CombatProccessPacket
     uint8    Aim;
     uint8    WeaponSubtype;
     uint8    Result;
-	
     uint8    WeaponMode;
     uint8    WeaponUse;
-	
-	int	  Skill;
 
     bool     IsBurst;
     bool     BloodyMess;
@@ -342,6 +329,7 @@ shared class CombatProccess : Mk2::CombatProccessPacket
     bool     ShowHitAnimForce;
     bool     IsCritical;
 
+	int	  Skill;
     int      FirstWeaponPerk;
     int      SecondWeaponPerk;
     int      AmmoPerk;
@@ -355,11 +343,12 @@ shared class CombatProccess : Mk2::CombatProccessPacket
     int      DDMod;
     int      TDMod;
     int      TypeAttack;
-    int[]      AllDamage;
     int      TypeDamage;
     int      TargetDT;
     int      TargetDR;
 
+    int[]      AllDamage;
+	
     uint     TargetId;
     uint     ForceFlags;
     uint     AmmoPid;
