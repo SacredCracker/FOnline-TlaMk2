@@ -360,11 +360,17 @@ class CombatAlgoritm_Unarmed : CombatAlgoritm
 	}
 }
 
+class BurstHitData
+{
+	uint rounds = 0;
+	uint leon = 0;
+}
+
 class CombatAlgoritm_Burst : CombatAlgoritm
 {
 	uint countHitTargets;
 	Critter@[] critsHit;
-    uint[] critsHitBullets;;
+    BurstHitData@[] critsHitBullets;;
 
 	uint StartRounds;
 
@@ -385,12 +391,12 @@ class CombatAlgoritm_Burst : CombatAlgoritm
 		critsHitBullets.resize(0);
 	}
 		
-	void AddTarget( Critter& critter, uint targetRounds )
+	void AddTarget( Critter& critter, BurstHitData& data )
 	{
 		critsHit.insertFirst( critter );
-        critsHitBullets.insertFirst( targetRounds );
+        critsHitBullets.insertFirst( data );
         countHitTargets++;
-		rounds -= targetRounds;
+		rounds -= data.rounds;
 	}
 	
 	bool CritterIsTarget( Critter& critter )
@@ -447,23 +453,28 @@ class CombatAlgoritm_Burst : CombatAlgoritm
 			toHit += bonusToHit;
 
 				
-			int curRounds = 0,
-				penalty = GetSmokePenalty( map, proccess.Attacker, realTarget, proccess.TargetHx, proccess.TargetHy );
+			int penalty = GetSmokePenalty( map, proccess.Attacker, realTarget, proccess.TargetHx, proccess.TargetHy );
 
 			// Штраф за расстояние для очередей
 			penalty += int( log( float(distantion) ) / log( 2.0f ) ) * 15;
-				
-			for( int i = 0; i < rounds; i++ )
+			
+			LeonHash leon( realTarget, distantion );
+			BurstHitData data;
+			for( uint i = 0; i < rounds; i++ )
 			{
-				int chance = CLAMP( toHit - i * modeToHitForNextBulets, 5, 95 - penalty );
+				uint chance = CLAMP( toHit - i * modeToHitForNextBulets, 5, 95 - penalty );
 				if( isCritical )
 					chance += 20;                          // critical hit bonus, toHit can be increased over 100
-				if( chance >= Random( 1, 100 ) )
-					curRounds++;
+				if( int( chance ) >= Random( 1, 100 ) )
+				{
+					if( leon.Is() )
+						data.leon++;
+					else data.rounds++;
+				}
 			}
 
-			if( curRounds != 0 )
-				AddTarget( realTarget, curRounds );
+			if( data.rounds != 0 || data.leon != 0 )
+				AddTarget( realTarget, data );
 			else
 				criticalHit = false;
 		}
@@ -500,21 +511,29 @@ class CombatAlgoritm_Burst : CombatAlgoritm
 		Critter@ target = GetCritter( proccess.TargetId );
 		Critter@ crForI = null;
 		const uint realTargId = realTarget is null ? 0 : realTarget.Id;
+		DebugTraccer traccer;
+		traccer.AttackerId = proccess.Attacker.Id;
+		traccer.CountRounds = StartRounds;
         for( uint i = 0; i < countHitTargets; i++ )
         {
             @crForI = critsHit[ i ];
             if( proccess.TypeDamage == DAMAGE_EXPLODE )
                 map.RunEffect( PID_EXPLODE_ROCKET, crForI.HexX, crForI.HexY, 0, 0 );
 
+			BurstHitData@ data = critsHitBullets[ i ];
+			traccer.TargetId = crForI.Id;
+			traccer.HitRounds = data.rounds;
+			traccer.LeonRounds = data.leon;
+			
 			if( proccess.Attacker.IsPlayer() )
-			{
-				proccess.Attacker.Say( SAY_NETMSG, "Попало " + critsHitBullets[ i ] + " пуль из " + StartRounds  );
-			}
-
-			if( critsHitBullets[ i ] != 0 )
+				proccess.Attacker.Send( traccer );
+			if( crForI.IsPlayer() )
+				crForI.Send( traccer );
+			
+			if( data.rounds != 0 )
 			{
 				if( target !is null && target.Id == crForI.Id ) proccess.TargetHit = true;
-				ApplyDamage( proccess, crForI, critsHitBullets[ i ], ( realTargId == crForI.Id ) && criticalHit, ( proccess.Attacker.IsPlayer() && !changedTarget ) || ( !proccess.Attacker.IsPlayer() && target !is null && target.Id == crForI.Id ), results );
+				ApplyDamage( proccess, crForI, data.rounds, ( realTargId == crForI.Id ) && criticalHit, ( proccess.Attacker.IsPlayer() && !changedTarget ) || ( !proccess.Attacker.IsPlayer() && target !is null && target.Id == crForI.Id ), results );
 			}
         }
 	}
@@ -527,6 +546,7 @@ class CombatAlgoritm_Burst : CombatAlgoritm
 
 		uint countTargets = sTargets.length();
 		Critter@ crForI = null;
+		LeonHash leon;
         for( uint i = Random( 0, countTargets - 1 ); countTargets > 0 && rounds > 0; i = Random( 0, countTargets - 1 ) )
         {
             @crForI = sTargets[ i ];
@@ -564,21 +584,25 @@ class CombatAlgoritm_Burst : CombatAlgoritm
             int penalty = GetSmokePenalty( map, proccess.Attacker, crForI, 0, 0 );
 			penalty += int( log( float(distantion) ) / log( 2.0f ) ) * 15;
 			
-			uint curRounds = 0, hitRounds = 0;
+			uint curRounds = 0;
+			BurstHitData data;
+			leon.fill( crForI, distantion );
             for( ;curRounds < rounds;)
             {
 				curRounds++;
                 if( Random( 1, 100 ) <= CLAMP( toHit - modeToHitForNextBulets * curRounds, 5, 95 - penalty ) )
 				{
-                    hitRounds++;
+					if( !leon.Is( ) )
+						data.rounds++;
+					else data.leon++;
 				}
                 else if( stopBurst )
                     break;
             }
 			
-            if( hitRounds > 0 )
+            if( data.rounds != 0 || data.leon != 0 )
             {
-				AddTarget( crForI, hitRounds );
+				AddTarget( crForI, data );
 				sTargets.removeAt(i);
 				countTargets--;
             }
@@ -2829,6 +2853,7 @@ bool Attack( Critter& critter, Item& item, uint8 weaponMode, uint16 defHexX, uin
 	if( proccess.AmmoPerk == WEAPON_PERK_HEX_ATTACKING )
 		attack_type = WTA_RADIUS_HEX;
 
+	uint rounds = _WeaponRound( weapon, use );
     switch( attack_type )     // Эффект летящего снаряда
     {
 		case WTA_LINE_IGNORED_RAKED:
@@ -2891,7 +2916,6 @@ bool Attack( Critter& critter, Item& item, uint8 weaponMode, uint16 defHexX, uin
 		{
 			if( ( _WeaponRound( weapon, use ) > 1 && proccess.IsBurst ) || WTA_BURST_REGION == _WeaponAttackType( weapon, use ) )
 			{
-				uint burst_rounds = _WeaponRound( weapon, use );
 			
 				if( WTA_BURST_REGION == _WeaponAttackType( weapon, use ) )
 				{
@@ -2911,7 +2935,7 @@ bool Attack( Critter& critter, Item& item, uint8 weaponMode, uint16 defHexX, uin
 						EraseTimeEvent( proccess.Attacker.TimeAttackId );
 
 					if( skillNum != SK_ENERGY_WEAPONS )
-						burst_rounds = replay.stage;
+						rounds = replay.stage;
 					proccess.Attacker.TimeAttackId = CreateTimeEvent( __FullSecond + REAL_MS( _WeaponTimeAttack( proccess.RealWeapon.Proto, use ) ), e_FullReplayAtack, replay );
 				}
 				
@@ -2931,7 +2955,7 @@ bool Attack( Critter& critter, Item& item, uint8 weaponMode, uint16 defHexX, uin
 					algoritm.useHex = false;
 					algoritm.useNormal = false;
 					algoritm.weaponMode = weaponMode;
-					algoritm.rounds = burst_rounds;
+					algoritm.rounds = rounds;
 					
 					algoritm.Proccess( );
 					FlushResults( algoritm.results );
@@ -2987,8 +3011,8 @@ bool Attack( Critter& critter, Item& item, uint8 weaponMode, uint16 defHexX, uin
 		uint protoid = proccess.RealWeapon.GetProtoId();
         if( !_WeaponRemove( weapon, use ) )
         {
-            if( _WeaponRound( weapon, use ) < proccess.RealWeapon.AmmoCount )
-                proccess.RealWeapon.AmmoCount -= _WeaponRound( proccess.RealWeapon.Proto, use );
+            if( rounds < proccess.RealWeapon.AmmoCount )
+                proccess.RealWeapon.AmmoCount -= rounds;
             else
             {
                 if( proccess.RealWeapon.AmmoCount > 0 )
@@ -4095,6 +4119,35 @@ class CTraceBurst : ITraceContext
 }
 
 #endif // !__CLIENT
+class DebugTraccer : MutualObject
+{
+	uint AttackerId;
+	uint TargetId;
+	uint HitRounds;
+	uint CountRounds;
+	uint LeonRounds;
+	
+	void Update( uint critterId )
+	{
+	#ifdef __CLIENT
+		if( AttackHex::Option::Combat::BurstDebug )
+		{
+			CritterCl@ chosen = GetChosen();
+			if( chosen.Id == AttackerId )
+			{
+				Message( "Попало " + ( HitRounds + LeonRounds ) + " из " + CountRounds + " пуль." + 
+				( ( LeonRounds != 0 ) ? ( "Увернулись от " + LeonRounds ) : "" ) );
+			}
+			else
+			{
+				Message( "В вас попало " + ( HitRounds + LeonRounds ) + " из " + CountRounds + " пуль." + 
+				( ( LeonRounds != 0 ) ? ( "Увернулись от " + LeonRounds ) : "" ) );
+			}
+		}
+	#endif
+	}
+	
+}
 
 #ifdef __CLIENT
 # define MapIsHexPassed       IsHexPassed
@@ -4276,6 +4329,7 @@ namespace AttackHex
 			::Sprite SpriteBurstTarget;
 			
 			bool OnlySprite = false;
+			bool BurstDebug = true;
 		}
 	}
 }
@@ -4395,10 +4449,8 @@ void render_hit_hex( uint layer )
 				
 				CritterCl@[] crs;
 				uint crscount = 0;
-				
-				
-				uint8 angle_effect = _WeaponAngleEffective( weapon, use );
-				uint8 angle_second = _WeaponAngleSecond( weapon, use );
+				int angle_effect = _WeaponAngleEffective( weapon, use );
+				int angle_second = _WeaponAngleSecond( weapon, use );
 				if( angle_effect > angle_second )
 					angle_second = angle_effect;
 				for( int angle = 0 - angle_second, angleend = angle_second + 1; angle < angleend; angle++ )

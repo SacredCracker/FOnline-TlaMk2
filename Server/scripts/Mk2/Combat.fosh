@@ -148,6 +148,88 @@ shared interface iCombatProccessContext
 
 }
 
+shared class LeonHash
+{
+	LeonHash( Critter& critter, uint distance )
+	{
+		fill( critter, distance );
+	}
+	
+	void fill_dodge( int chance )
+	{
+		if( chance == 0 )
+			return;
+		++dodgecount;
+		dodge.insertLast( chance );
+	}
+	
+	void fill( Critter& critter, uint distance )
+	{
+		if( critter.IsKnockout() )
+		{
+			ischeck = false;
+			return;
+		}
+		
+		fill_dodge( critter.Perk[ PE_DODGER ] * 8 );
+		fill_dodge( critter.Perk[ PE_CHIP_EVADE ] * 4 );
+	
+		lionSkill = critter.Skill[ SK_LIONHEART ] - 100;
+		if( lionSkill < 5 )
+		{
+			lionSkill = 0;
+			return;
+		}
+		
+		int bonus = 0;
+		if( critter.Perk[ PE_HTH_EVADE ] > 0 )
+		{
+			bool armed = false;
+			Item@[] hands;
+			critter.GetItems( SLOT_HAND1, hands );
+			critter.GetItems( SLOT_HAND2, hands );
+			for( uint n = 0; n < hands.length(); n++ )
+			{
+				Item@ hand = hands[ n ];
+				if( validEngineObject( hand ) && _WeaponSkill( hand.Proto, _WeaponModeUse( hand.Mode ) ) != SK_UNARMED )
+				{
+					armed = true;
+					break;
+				}
+			}
+			if( !armed )
+				bonus += critter.Perk[ PE_HTH_EVADE ] * critter.Param[ ST_CURRENT_AP ];
+		}
+		
+		lionSkill = bonus + lionSkill * 0.16;
+		if( distance < 3 ) lionSkill /= 3;
+	}
+	
+	bool IsDodge()
+	{
+		for( uint i = 0; i < dodgecount; i++ )
+			if( dodge[i] > Random( 1, 100 ) )
+				return true;
+		return false;
+	}
+	
+	bool Is( )
+	{
+		if( !ischeck )
+			return false;
+	
+		if( IsDodge( ) )
+			return true;
+			
+		return lionSkill > 0 && Random( 0, 99 ) < lionSkill;
+	}
+	
+	uint dodgecount = 0;
+	int[]@ dodge = int[](0);
+	int lionSkill = 0;
+	bool ischeck = false;
+}
+
 shared class CombatProccess : Mk2::CombatProccessPacket
 {
     CombatProccess()
@@ -277,36 +359,8 @@ shared class CombatProccess : Mk2::CombatProccessPacket
 
 	bool IsLeon( Critter& target, const uint& in dist )
 	{
-		if( target.IsKnockout() )
-			return false;
-		if( target.Perk[ PE_DODGER ] * 8 > Random( 1, 100 ) )
-			return true;
-		if( target.Perk[ PE_CHIP_EVADE ] * 4 > Random( 1, 100 ) )
-			return true;
-		int bonus = 0;
-		if( target.Perk[ PE_HTH_EVADE ] > 0 )
-		{
-			bool armed = false;
-			Item@[] hands;
-			target.GetItems( SLOT_HAND1, hands );
-			target.GetItems( SLOT_HAND2, hands );
-			for( uint n = 0; n < hands.length(); n++ )
-			{
-				Item@ hand = hands[ n ];
-				if( validEngineObject( hand ) && _WeaponSkill( hand.Proto, _WeaponModeUse( hand.Mode ) ) != SK_UNARMED )
-				{
-					armed = true;
-					break;
-				}
-			}
-			if( !armed )
-				bonus += target.Perk[ PE_HTH_EVADE ] * target.Param[ ST_CURRENT_AP ];
-		}
-		int lionSkill = bonus + ( target.Skill[ SK_LIONHEART ] - 100 ) * 0.16;
-		if( dist < 3 )
-			lionSkill /= 3;
-
-		return ( target.Skill[ SK_LIONHEART ] > 105 && Random( 1, 100 ) < lionSkill );
+		LeonHash hash( target, dist );
+		return hash.Is();
 	}
 	
 	uint get_Distantion(  )
