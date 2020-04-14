@@ -143,6 +143,11 @@ shared void runTree( CombatRes[]& combatResults, int ptr )
         runTree( combatResults, combatResults[ ptr ].Right );
 }
 
+shared interface iCombatProccessContext
+{
+
+}
+
 shared class CombatProccess : Mk2::CombatProccessPacket
 {
     CombatProccess()
@@ -164,6 +169,7 @@ shared class CombatProccess : Mk2::CombatProccessPacket
 		@RealWeapon = null;
 		@Attacker = null;
 		@Target = null;
+		@ Context = null;
 		Result = 0;
 
 		Hx = 0;
@@ -255,7 +261,6 @@ shared class CombatProccess : Mk2::CombatProccessPacket
 		}
 		AllDamage[ idx ] = value;
 	}
-	
 	
 	void startLeon( Critter& target, CombatRes[]& results )
 	{
@@ -359,6 +364,8 @@ shared class CombatProccess : Mk2::CombatProccessPacket
 
     Critter@ Attacker;
     Critter@ Target;
+	
+	iCombatProccessContext@ Context;
 }
 
 shared void NotifyOops( Critter& cr, Critter& t1, Critter@ t2, CombatRes[]& results )

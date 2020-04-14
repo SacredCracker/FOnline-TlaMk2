@@ -7,6 +7,7 @@
 #include "_animation.fos"
 #include "teams_table.fos"
 #include "_colors.fos"
+#include "Mk2/Combat.fosh"
 
 #include "fractions.h"
 #include "GrupPatrol_h.fos"
@@ -42,7 +43,7 @@ import void Healing( ::Critter& cr, ::Critter& tr ) from "healing";
 import void Healing( ::Critter& cr, ::Critter& tr, uint16 activePid ) from "healing";
 import void UseDoctor( ::Critter& cr, ::Critter@ targetCr, uint16 activePid ) from "healing";
 import void CombatAttack( ::Critter& cr, ::Critter& target, ::ProtoItem& weapon, uint8 weaponMode, ::ProtoItem@ ammo ) from "combat";
-import bool Attack( ::Critter& cr, ::Item& item, uint8 weaponMode, uint16 hexX, uint16 hexY ) from "combat";
+import bool Attack( ::Critter& cr, ::Item& item, uint8 weaponMode, uint16 hexX, uint16 hexY, CombatProccess@ proccess ) from "combat";
 
 import bool _UsedOnSlave( ::Item& item, ::Critter& crit, ::Critter@ onCritter, ::Item@ onItem, ::Scenery@ onScenery ) from "merc";
 // /////////////////////////////////////////////////////////////////
@@ -163,7 +164,7 @@ void critter_attack( ::Critter& cr, ::Critter& target, ::ProtoItem& weapon, uint
     if( _WeaponeIsPerk( weapon, ammo, WEAPON_PERK_HEX_ATTACKING ) || _WeaponAttackType( weapon, _WeaponModeUse( weaponMode ) ) == WTA_BURST_REGION )
     {
         if( cr.IsNpc() )
-            Attack( cr, _CritGetItemHand( cr ), weaponMode, target.HexX, target.HexY );
+            Attack( cr, _CritGetItemHand( cr ), weaponMode, target.HexX, target.HexY, null );
         return;
     }
     else
