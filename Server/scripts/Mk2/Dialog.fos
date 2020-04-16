@@ -148,7 +148,7 @@ void DialogInit( ::string& nameDialog, Content::Dialog number )
 		if( Listing.length() < uint( number ) )
 			Listing.resize( Content::Dialog::Count );
 		Dialog dialog( nameDialog, number );
-		dialog.ParseFile( "./dialogs/" + nameDialog + ".fodlg" );
+		dialog.ParseFile( "dialogs/" + nameDialog + ".fodlg" );
 		@Listing[number] = @dialog;
 		Lybrary.set( nameDialog, @dialog );
 	}
@@ -805,17 +805,26 @@ class Dialog : DialogPacket
 		else Debug( "Не найден файл диалога");
 	}
 	
-	private ::string@ ReadFile( const ::string& fileName )
+	private string@ GetFileTxt( const string& fileName )
 	{
-		::file f;
+		file f;
 		if( f.open( fileName, "r" ) != -1 )
 		{
-			::string txt = "";
+			string txt = "";
 			f.readString( f.getSize(), txt); 
 			f.close();
 			return @txt;
 		}
 		return null;
+	}
+	
+	private string@ ReadFile( const string& fileName )
+	{
+		string@ result = GetFileTxt( "Override/" + fileName );
+		if( result !is null )
+			return result;
+		return GetFileTxt( fileName );
+		
 	}
 	
 	void Debug( string& txt )
