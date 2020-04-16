@@ -114,20 +114,17 @@ import bool SaveWorldNextVersion() from "main";
 
 bool Mk2RunDialog ( Critter& player, Critter& npc, uint branch, bool ignoreDistance )
 {
-	Dialog::RunCritter( player, npc, branch );
-	return true;
+	return Dialog::RunCritter( player, npc, branch, ignoreDistance );
 }
   
 bool Mk2RunDialog ( Critter& player, Critter& npc, bool ignoreDistance )
 {
-	Dialog::RunCritter( player, npc, 1 );
-	return true;
+	return Dialog::RunCritter( player, npc, 1, ignoreDistance );
 }
 
 bool Mk2RunDialog ( Critter& player, uint16 dialogId, ::Map& map, uint16 hexX, uint16 hexY, bool ignoreDistance ) 
 {
-	Dialog::RunHex( player, map, hexX, hexY, dialogId );
-	return true;
+	return Dialog::RunHex( player, map, hexX, hexY, dialogId, ignoreDistance );
 }
 
 string@ GetFractionName( uint num )

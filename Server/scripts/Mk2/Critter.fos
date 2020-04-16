@@ -425,7 +425,7 @@ class CritterDescriptor : Mk2::Descriptor, Mk2::CritterPacket, Mk2::CombatTarget
 	::Critter@ RealCr = null;
 	
 	// Dialog::Master
-	void SetAnswers( ::Critter@ interlocutor, Dialog::Dialog@ dialog, Dialog::Branch@ branch, Dialog::Answer@[]@ answers, ::Map& map, uint16 hexX, uint16 hexY ) override
+	void SetAnswers( ::Critter@ interlocutor, Dialog::Dialog@ dialog, Dialog::Branch@ branch, Dialog::Answer@[]@ answers, ::Map@ map, uint16 hexX, uint16 hexY, bool isIgnoreDistance ) override
 	{
 		DialogTick = GetTick();
 		RealCr.ModeBase[ MODE_HIDE ] = 0;
@@ -438,15 +438,17 @@ class CritterDescriptor : Mk2::Descriptor, Mk2::CritterPacket, Mk2::CombatTarget
 		else @ActiveDialog = @dialog; 
 		@CurrentBranch = @branch;
 		
-		SpeakMapId = map.Id;
+		SpeakMapId = map is null ? 0 : map.Id;
 		SpeakHexX = hexX;
 		SpeakHexY = hexY;
 		
 		ThisSpeakX = RealCr.HexX;
 		ThisSpeakY = RealCr.HexY;
+		
+		IsIgnoreSpeakDistance = isIgnoreDistance;
 	}
 	
-	void GetAnswers( ::Critter@& interlocutor, Dialog::Dialog@& dialog, Dialog::Branch@& branch, Dialog::Answer@[]@& answers, ::Map@& map, uint16& hexX, uint16& hexY, Dialog::Branch@& lastBranch ) override
+	void GetAnswers( ::Critter@& interlocutor, Dialog::Dialog@& dialog, Dialog::Branch@& branch, Dialog::Answer@[]@& answers, ::Map@& map, uint16& hexX, uint16& hexY, Dialog::Branch@& lastBranch, bool& isIgnoreDistance ) override
 	{
 		@interlocutor = @::GetCritter( CurrentInterlocutorId );
 		@branch = @CurrentBranch;
@@ -459,28 +461,30 @@ class CritterDescriptor : Mk2::Descriptor, Mk2::CritterPacket, Mk2::CombatTarget
 		
 		hexX = SpeakHexX;
 		hexY = SpeakHexY;
+		
+		isIgnoreDistance = IsIgnoreSpeakDistance;
 	}
 	
-	bool IsSpeakCritter( ::Critter& npc ) override
+	bool IsSpeakCritter( ::Critter& npc, bool ignoreDistance ) override
 	{
 		if( npc.IsNpc() && npc.IsLife( ) && npc.IsNoPlanes() /* && npc.IsFree( ) */ && npc.Stat[ST_DIALOG_ID] != 0 )
 		{
 			::Map@ map = @RealCr.GetMap();
 			if( @map !is null && @map is @npc.GetMap() )
-			{
-				return IsSpeakHex( map, npc.HexX, npc.HexY, ( npc.Stat[ST_TALK_DISTANCE] == 0 ? ::__TalkDistance : npc.Stat[ST_TALK_DISTANCE] ) );
-			}
+				return IsSpeakHex( map, npc.HexX, npc.HexY, ( npc.Stat[ST_TALK_DISTANCE] == 0 ? ::__TalkDistance : npc.Stat[ST_TALK_DISTANCE] ), ignoreDistance );
 		}
 		return false;
 		
 	}
 	
-	bool IsSpeakHex( ::Map& map, uint16 hexX, uint16 hexY, uint dist ) override
+	bool IsSpeakHex( ::Map& map, uint16 hexX, uint16 hexY, uint dist, bool ignoreDistance ) override
 	{
 		if( @map is @RealCr.GetMap() )
 		{
 			uint16 tx = hexX, ty = hexY;
-			//map.GetHexCoord( cr.HexX, cr.HexY, tx, ty, 0, 0 ); 
+			//map.GetHexCoord( cr.HexX, cr.HexY, tx, ty, 0, 0 );
+			if( ignoreDistance )
+				return true;
 			return ( ::GetDistantion( RealCr.HexX, RealCr.HexY, tx, ty ) <= dist );
 		}
 		return false;
@@ -496,6 +500,7 @@ class CritterDescriptor : Mk2::Descriptor, Mk2::CritterPacket, Mk2::CombatTarget
 	uint DialogTick = 0;
 	
 	uint CurrentInterlocutorId;
+	bool IsIgnoreSpeakDistance = false;
 	Dialog::Branch@ CurrentBranch;
 	Dialog::Branch@ LastBranch;
 	Dialog::Dialog@ ActiveDialog;

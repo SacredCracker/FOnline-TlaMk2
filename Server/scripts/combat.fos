@@ -425,57 +425,7 @@ class CombatAlgoritm_Burst : CombatAlgoritm
 		
         if( realTarget !is null )
 		{
-			const int perception = proccess.Attacker.Stat[ST_PERCEPTION];
-			const int sharpshooter = 4 * proccess.Attacker.Perk[ PE_SHARPSHOOTER ];
-			const bool eyeDamage = proccess.Attacker.Damage[ DAMAGE_EYE ] != 0;
-			int distantion = proccess.Distantion;
-			int acc = distantion;
-			int toHit = baseToHit;
-			if( distantion < distmod2 )
-				acc += distmod2;
-			else
-				acc -= accloss;
-			if( -2 * perception > acc )
-				acc = -2 * perception;
-			acc -= sharpshooter;
-			if( acc > 0 && eyeDamage )
-				acc *= 3;
-			acc *= -4;
-			toHit += acc;
-		
-			if( realTarget.IsKnockout() )
-				toHit += 40;
-			if( realTarget.GetMultihex() > 0 )
-				toHit += 15;
-					
-			int blockers = map.GetCrittersPath( proccess.Hx, proccess.Hy, proccess.TargetHx, proccess.TargetHy, 0.0f, distantion, FIND_LIFE, null );
-			toHit -= 10 * blockers;
-			toHit += bonusToHit;
-
-				
-			int penalty = GetSmokePenalty( map, proccess.Attacker, realTarget, proccess.TargetHx, proccess.TargetHy );
-
-			// Штраф за расстояние для очередей
-			penalty += int( log( float(distantion) ) / log( 2.0f ) ) * 15;
-			
-			LeonHash leon( realTarget, distantion );
-			BurstHitData data;
-			for( uint i = 0; i < rounds; i++ )
-			{
-				uint chance = CLAMP( toHit - i * modeToHitForNextBulets, 5, 95 - penalty );
-				if( isCritical )
-					chance += 20;                          // critical hit bonus, toHit can be increased over 100
-				if( int( chance ) >= Random( 1, 100 ) )
-				{
-					if( leon.Is() )
-						data.leon++;
-					else data.rounds++;
-				}
-			}
-
-			if( data.rounds != 0 || data.leon != 0 )
-				AddTarget( realTarget, data );
-			else
+			if( !ParseTarget( realTarget, map, bonusToHit, penaltyEffectSecondTargets, false ) )
 				criticalHit = false;
 		}
 		
@@ -538,74 +488,76 @@ class CombatAlgoritm_Burst : CombatAlgoritm
         }
 	}
 	
-	void Parse( Map@ map, Critter@[]& sTargets, int bonusToHit, float hitModule, bool stopBurst )
+	bool ParseTarget( Critter& target, Map@ map, int bonusToHit, float hitModule, bool stopBurst )
 	{
-		const int perception = proccess.Attacker.Stat[ST_PERCEPTION];
+		if( CritterIsTarget( target) )
+			return false;
+	
+		const int perception = proccess.Attacker.Stat[ST_PERCEPTION] * -2;
 		const int sharpshooter = 4 * proccess.Attacker.Perk[ PE_SHARPSHOOTER ];
 		const bool eyeDamage = proccess.Attacker.Damage[ DAMAGE_EYE ] != 0;
-
+		// adjust tohit
+        int toHit = baseToHit * hitModule;
+		int distantion = GetDistantion( proccess.Hx, proccess.Hy, target.HexX, target.HexY );
+		int acc = distantion;
+		if( distantion < distmod2 )
+			acc += distmod2;
+		else
+			acc -= accloss;
+		if( perception > acc )
+			acc = perception;
+		acc -= sharpshooter;
+		if( acc > 0 && eyeDamage )
+			acc *= 3;
+		acc *= -4;
+		toHit += acc;
+		toHit += bonusToHit;
+		if( target.IsKnockout() )
+			toHit += 40;
+				
+		if( target.GetMultihex() > 0 )
+			toHit += 15;
+					
+		toHit -= 10 * map.GetCrittersPath( proccess.Hx, proccess.Hy, target.HexX, target.HexY, 0.0f, distantion, FIND_LIFE, null );
+					
+		int penalty = GetSmokePenalty( map, proccess.Attacker, target, 0, 0 );
+		penalty += int( log( float(distantion) ) / log( 2.0f ) ) * 15;
+			
+		uint curRounds = 0;
+		BurstHitData data;
+		LeonHash leon( target, distantion );
+		
+		for( ;curRounds < rounds;)
+		{
+			curRounds++;
+			if( Random( 0, 99 ) <= CLAMP( toHit - modeToHitForNextBulets * curRounds, 5, 95 - penalty ) )
+			{
+				if( !leon.Is( ) )
+					data.rounds++;
+				else data.leon++;
+			}
+			else if( stopBurst || baseToHit * 0.1 + 50 < Random( 0, 99 ) )
+				break;
+		}
+			
+		if( data.rounds != 0 || data.leon != 0 )
+		{
+			AddTarget( target, data );
+			return true;
+		}
+		return false;
+	}
+	
+	void Parse( Map@ map, Critter@[]& sTargets, int bonusToHit, float hitModule, bool stopBurst )
+	{
 		uint countTargets = sTargets.length();
 		Critter@ crForI = null;
-		LeonHash leon;
         for( uint i = Random( 0, countTargets - 1 ); countTargets > 0 && rounds > 0; i = Random( 0, countTargets - 1 ) )
         {
             @crForI = sTargets[ i ];
-			if( CritterIsTarget( crForI) )
-            {
-				sTargets.removeAt(i);
-				countTargets--;
-                continue;
-            }
-			
-            // adjust tohit
-            int toHit = baseToHit * hitModule;
-            int distantion = GetDistantion( proccess.Hx, proccess.Hy, crForI.HexX, crForI.HexY );
-            int acc = distantion;
-            if( distantion < distmod2 )
-                acc += distmod2;
-            else
-                acc -= accloss;
-            if( -2 * perception > acc )
-                acc = -2 * perception;
-            acc -= sharpshooter;
-            if( acc > 0 && eyeDamage )
-            acc *= 3;
-            acc *= -4;
-            toHit += acc;
-            toHit += bonusToHit;
-            if( crForI.IsKnockout() )
-                toHit += 40;
-				
-            if( crForI.GetMultihex() > 0 )
-                toHit += 15;
-					
-			toHit -= 10 * map.GetCrittersPath( proccess.Hx, proccess.Hy, crForI.HexX, crForI.HexY, 0.0f, distantion, FIND_LIFE, null );
-					
-            int penalty = GetSmokePenalty( map, proccess.Attacker, crForI, 0, 0 );
-			penalty += int( log( float(distantion) ) / log( 2.0f ) ) * 15;
-			
-			uint curRounds = 0;
-			BurstHitData data;
-			leon.fill( crForI, distantion );
-            for( ;curRounds < rounds;)
-            {
-				curRounds++;
-                if( Random( 1, 100 ) <= CLAMP( toHit - modeToHitForNextBulets * curRounds, 5, 95 - penalty ) )
-				{
-					if( !leon.Is( ) )
-						data.rounds++;
-					else data.leon++;
-				}
-                else if( stopBurst )
-                    break;
-            }
-			
-            if( data.rounds != 0 || data.leon != 0 )
-            {
-				AddTarget( crForI, data );
-				sTargets.removeAt(i);
-				countTargets--;
-            }
+			sTargets.removeAt(i);
+			countTargets--;
+			ParseTarget( crForI, map, bonusToHit, hitModule, stopBurst);
         }
 	}
 }
@@ -2934,8 +2886,8 @@ bool Attack( Critter& critter, Item& item, uint8 weaponMode, uint16 defHexX, uin
 					if( proccess.Attacker.TimeAttackId > 0 )
 						EraseTimeEvent( proccess.Attacker.TimeAttackId );
 
-					if( skillNum != SK_ENERGY_WEAPONS )
-						rounds = replay.stage;
+					if( weapon.Weapon_BulletProgression != 0 )
+						rounds = 1 + replay.stage != 0 ? replay.stage/weapon.Weapon_BulletProgression : 0;
 					proccess.Attacker.TimeAttackId = CreateTimeEvent( __FullSecond + REAL_MS( _WeaponTimeAttack( proccess.RealWeapon.Proto, use ) ), e_FullReplayAtack, replay );
 				}
 				

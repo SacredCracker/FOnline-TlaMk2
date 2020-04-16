@@ -35,18 +35,17 @@ Dialog@ GetDialog( const int&in number )
 	return null;
 }
 
-void RunCritter( ::Critter& cr, ::Critter& targetCr, uint branch )
+bool RunCritter( ::Critter& cr, ::Critter& targetCr, uint branch, bool ignoreDistance )
 {
 	Dialog::Master@ master = cast<Dialog::Master>(@cr.ScriptDescriptor);
-	if( @master !is null && master.IsSpeakCritter( targetCr ) )
+	if( @master !is null && master.IsSpeakCritter( targetCr, ignoreDistance ) )
 	{
 		Dialog@ dialog = @GetDialog( targetCr );
 		if( @dialog !is null )
-		{
-			dialog.Run( cr, targetCr, branch, cr.GetMap(), targetCr.HexX, targetCr.HexY );
-		}
+			return dialog.Run( cr, targetCr, branch, cr.GetMap(), targetCr.HexX, targetCr.HexY, ignoreDistance );
 		else Log( "Не найден диалог с номером: " + cr.Stat[ST_DIALOG_ID] );
 	}
+	return false;
 }
 
 funcdef void DebugLogFuncdef( const ::string& str, Dialog@ dialog );
@@ -65,16 +64,17 @@ void CallAnswer( ::Critter& cr, uint index, ::string@ say )
 		Answer@[]@ answers;
 		::Map@ map = null;
 		uint16 hexX = 0, hexY = 0;
-		master.GetAnswers( @targetCr, @dialog, @branch, @answers, @map, hexX, hexY, @lastBranch );
+		bool isIgnoreDistance = false;
+		master.GetAnswers( @targetCr, @dialog, @branch, @answers, @map, hexX, hexY, @lastBranch, isIgnoreDistance );
 		bool isSpeak = false;
 		if( @targetCr !is null )
-			isSpeak = master.IsSpeakCritter( targetCr );
+			isSpeak = master.IsSpeakCritter( targetCr, isIgnoreDistance );
 		else if( @map !is null ) 
-			isSpeak = master.IsSpeakHex( map, hexX, hexY, ::__TalkDistance );
+			isSpeak = master.IsSpeakHex( map, hexX, hexY, ::__TalkDistance, isIgnoreDistance );
 		if( isSpeak )
 		{
 			if( @dialog !is null && @branch !is null && @answers !is null && answers.length() > index )
-				dialog.CallAnswer( cr, @targetCr, branch, answers[index], map, hexX, hexY, @lastBranch );
+				dialog.CallAnswer( cr, @targetCr, branch, answers[index], map, hexX, hexY, @lastBranch, isIgnoreDistance );
 			else 
 			{
 				switch( index )
@@ -95,8 +95,7 @@ void CallAnswer( ::Critter& cr, uint index, ::string@ say )
 								if( branch.IsReturnValue )
 								{
 									uint resultIndex = ScriptInfo::RunDialogBranchFunctionId( cr, @targetCr, branch.FuncId, @say, branch.IsReturnValue );
-									dialog.CallAnswer( cr, @targetCr, branch, null, map, hexX, hexY, @lastBranch, resultIndex );
-									//CallAnswer( cr, resultIndex, null );
+									dialog.CallAnswer( cr, @targetCr, branch, null, map, hexX, hexY, @lastBranch, isIgnoreDistance, resultIndex );
 								}
 								else
 									ScriptInfo::RunDialogBranchFunctionId( cr, @targetCr, branch.FuncId, @say, branch.IsReturnValue );
@@ -129,16 +128,17 @@ void CallAnswer( ::Critter& cr, uint index, ::string@ say )
 	} 
 }
 
-void RunHex( ::Critter& cr, ::Map& map, uint16 x, uint16 y, int number )
+bool RunHex( ::Critter& cr, ::Map& map, uint16 x, uint16 y, int number, bool ignoreDistance )
 {
 	Dialog::Master@ master = cast<Dialog::Master>(@cr.ScriptDescriptor); 
-	if( @master !is null && @cr.GetMap() is @map && master.IsSpeakHex( map, x, y, ::__TalkDistance ) )
+	if( @master !is null && @cr.GetMap() is @map && master.IsSpeakHex( map, x, y, ::__TalkDistance, ignoreDistance ) )
 	{
 		Dialog@ dialog = @GetDialog( number );
 		if( @dialog !is null )
-			dialog.Run( cr, null, 1, map, x, y );
+			return dialog.Run( cr, null, 1, map, x, y, ignoreDistance );
 		else Log( "Не найден диалог с номером: " + number );
 	}
+	return false;
 }
 
 void DialogInit( ::string& nameDialog, Content::Dialog number )
@@ -257,10 +257,10 @@ interface Interlocutor
 
 interface Master
 {
-	void SetAnswers( ::Critter@ interlocutor, Dialog::Dialog@ dialog, Dialog::Branch@ branch, Dialog::Answer@[]@ answers, ::Map& map, uint16 hexX, uint16 hexY );
-	void GetAnswers( ::Critter@& interlocutor, Dialog::Dialog@& dialog, Dialog::Branch@& branch, Dialog::Answer@[]@& answers, ::Map@& map, uint16& hexX, uint16& hexY, Dialog::Branch@& lastBranch );
-	bool IsSpeakCritter( ::Critter& npc );
-	bool IsSpeakHex( ::Map& map, uint16 hexX, uint16 hexY, uint dist );
+	void SetAnswers( ::Critter@ interlocutor, Dialog::Dialog@ dialog, Dialog::Branch@ branch, Dialog::Answer@[]@ answers, ::Map@ map, uint16 hexX, uint16 hexY, bool isIgnoreDistance );
+	void GetAnswers( ::Critter@& interlocutor, Dialog::Dialog@& dialog, Dialog::Branch@& branch, Dialog::Answer@[]@& answers, ::Map@& map, uint16& hexX, uint16& hexY, Dialog::Branch@& lastBranch, bool& isIgnoreDistance );
+	bool IsSpeakCritter( ::Critter& npc, bool ignoreDistance );
+	bool IsSpeakHex( ::Map& map, uint16 hexX, uint16 hexY, uint dist, bool ignoreDistance );
 }
 
 bool GetConstantValue( const int& in constCollection, ::string@ name, int& out value )
@@ -830,11 +830,12 @@ class Dialog : DialogPacket
 		return @Branchs[index];
 	}
 	
-	void CallAnswer( ::Critter& cr, ::Critter@ npc, Dialog::Branch@ argument_branch, const Dialog::Answer@ answer, ::Map& map, uint16 hexX, uint16 hexY, Dialog::Branch@ lastBranch, uint answerResult = 0 )
+	void CallAnswer( ::Critter& cr, ::Critter@ npc, Dialog::Branch@ argument_branch, const Dialog::Answer@ answer, ::Map& map, uint16 hexX, uint16 hexY, Dialog::Branch@ lastBranch, bool isIgnoreDistance, uint answerResult = 0 )
 	{
 		Dialog::Master@ master = cast<Dialog::Master>(@cr.ScriptDescriptor);
 		if( @master !is null )
 		{
+			master.SetAnswers( null, null, null, null, null, 0, 0, false );
 			uint result = answerResult == 0 ? ( @answer !is null ? answer.Result( cr, @npc ) : 0 ) : answerResult;
 			Dialog::Branch@ branch = @GetBranch( result ), oldBranch = ( ( @answer !is null ) ? @GetBranch( answer.Index ) : @argument_branch );
 			//Result
@@ -871,9 +872,9 @@ class Dialog : DialogPacket
 				{
 					cr.SayMsg( SAY_DIALOG_BRANCH, TEXTMSG_DLG, branch.Number, lexems );
 					for( uint i = 0, iEnd = answers.length(); i < iEnd; i++ )
-						cr.SayMsg( SAY_DIALOG_ANSWER, TEXTMSG_DLG, answers[i].Number, lexems ); 
+						cr.SayMsg( SAY_DIALOG_ANSWER, TEXTMSG_DLG, answers[i].Number, lexems );
 					cr.Say( SAY_DIALOG_SHOW, " " );
-					master.SetAnswers( @npc, @this, @branch, @answers, map, hexX, hexY );
+					master.SetAnswers( @npc, @this, @branch, @answers, map, hexX, hexY, isIgnoreDistance );
 				}
 				else 
 				{
@@ -885,8 +886,7 @@ class Dialog : DialogPacket
 				}
 			}
 			else
-			{
-			
+			{			
 				switch( result )
 				{
 					case DIALOG_END: //Exit
@@ -911,11 +911,12 @@ class Dialog : DialogPacket
 		}
 	}
 	
-	void Run( ::Critter& cr, ::Critter@ npc, uint number, ::Map@ map, uint16 hexX, uint16 hexY )
+	bool Run( ::Critter& cr, ::Critter@ npc, uint number, ::Map@ map, uint16 hexX, uint16 hexY, bool isIgnoreDistance )
 	{
 		Dialog::Master@ master = cast<Dialog::Master>(@cr.ScriptDescriptor);
 		if( @master !is null )
 		{
+			master.SetAnswers( null, null, null, null, null, 0, 0, false );
 			Dialog::Branch@ branch = @GetBranch( number );
 			if( number == 1 && @branch !is null )
 			{
@@ -936,7 +937,7 @@ class Dialog : DialogPacket
 						NpcPlanes::AddAttackPlane( npc, 0, cr );
 					}
 					cr.Say( SAY_DIALOG_HIDE, " " );
-					return;
+					return true;
 				}
 			
 				::string@ lexems = "";
@@ -950,24 +951,28 @@ class Dialog : DialogPacket
 					cr.SayMsg( SAY_DIALOG_BRANCH, TEXTMSG_DLG, branch.Number, lexems );
 					for( uint i = 0, iEnd = answers.length(); i < iEnd; i++ )
 						cr.SayMsg( SAY_DIALOG_ANSWER, TEXTMSG_DLG, answers[i].Number, lexems );
-					string option = " ";
-					if( @npc !is null )
-						option += "|Interlocutor:" + npc.Id;
 					
 					cr.Say( SAY_DIALOG_SHOW, " " );
-					master.SetAnswers( @npc, @this, @branch, @answers, map, hexX, hexY );
-					
+					master.SetAnswers( @npc, @this, @branch, @answers, map, hexX, hexY, isIgnoreDistance );
+					return true;
 				}
 				else
 				{
 					if( @npc !is null && branch.Index != 1 )
+					{
 						npc.SayMsg( SAY_NORM_ON_HEAD, TEXTMSG_DLG, branch.Number, lexems );
+						return true;
+					}
 					if( branch.FuncId != 0 )
+					{
 						ScriptInfo::RunDialogBranchFunctionId( cr, @npc, branch.FuncId, null, branch.IsReturnValue );
+						return true;
+					}
 				}
 			}
 			else Debug( "No found branch");
 		}
+		return false;
 	}
 	
 	Dialog::Branch@ AddBranch( const uint& index, const uint& number )
