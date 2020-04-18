@@ -2515,7 +2515,7 @@ bool Zone_Attack( Critter& critter, uint16 hexX, uint16 hexY, int slot = SLOT_HA
     if( proto is null )
         return false;
     
-	bool isDoor = map.GetDoor( hexX, hexY ) is null;
+	bool isDoor = map.GetDoor( hexX, hexY ) !is null;
     uint len = GetDistantion( critter.HexX, critter.HexY, hexX, hexY );
     if( map.IsHexRaked( hexX, hexY ) != true && !isDoor )
         return false; // Гекс непростреливаемый, в него нельзя выстрелить. Выходим из функции.

@@ -53,9 +53,9 @@ funcdef void DebugLogFuncdef( const ::string& str, Dialog@ dialog );
 void DebugLogNoValid( const ::string& str, Dialog@ dialog ){ Log( str ); }
 void DebugLogValid( const ::string& str, Dialog@ dialog ){ dialog.Debug( str ); }
 
-void CallAnswer( ::Critter& cr, uint index, ::string@ say )
+void CallAnswer( ::Critter& critter, uint index, ::string@ say )
 {
-	Master@ master = cast<Master>(cr.ScriptDescriptor);
+	Master@ master = cast<Master>(critter.ScriptDescriptor);
 	if( @master !is null )
 	{
 		::Critter@ targetCr = null;
@@ -74,7 +74,7 @@ void CallAnswer( ::Critter& cr, uint index, ::string@ say )
 		if( isSpeak )
 		{
 			if( @dialog !is null && @branch !is null && @answers !is null && answers.length() > index )
-				dialog.CallAnswer( cr, @targetCr, branch, answers[index], map, hexX, hexY, @lastBranch, isIgnoreDistance );
+				dialog.CallAnswer( critter, @targetCr, branch, answers[index], map, hexX, hexY, @lastBranch, isIgnoreDistance );
 			else 
 			{
 				switch( index )
@@ -82,7 +82,7 @@ void CallAnswer( ::Critter& cr, uint index, ::string@ say )
 					case DIALOG_BARTER:
 					{
 						if( @targetCr !is null )
-							Barter::Call( cr, targetCr );
+							Barter::Call( critter, targetCr );
 					}
 					break;
 					
@@ -94,11 +94,11 @@ void CallAnswer( ::Critter& cr, uint index, ::string@ say )
 							{
 								if( branch.IsReturnValue )
 								{
-									uint resultIndex = ScriptInfo::RunDialogBranchFunctionId( cr, @targetCr, branch.FuncId, @say, branch.IsReturnValue );
-									dialog.CallAnswer( cr, @targetCr, branch, null, map, hexX, hexY, @lastBranch, isIgnoreDistance, resultIndex );
+									uint resultIndex = ScriptInfo::RunDialogBranchFunctionId( critter, @targetCr, branch.FuncId, @say, branch.IsReturnValue );
+									dialog.CallAnswer( critter, @targetCr, branch, null, map, hexX, hexY, @lastBranch, isIgnoreDistance, resultIndex );
 								}
 								else
-									ScriptInfo::RunDialogBranchFunctionId( cr, @targetCr, branch.FuncId, @say, branch.IsReturnValue );
+									ScriptInfo::RunDialogBranchFunctionId( critter, @targetCr, branch.FuncId, @say, branch.IsReturnValue );
 							}
 						}
 					}
@@ -109,7 +109,7 @@ void CallAnswer( ::Critter& cr, uint index, ::string@ say )
 						DebugLogFuncdef@ log = @DebugLogNoValid;
 						if( @dialog !is null )
 							@log = @DebugLogValid;
-						log( "Порченный ответ от игрока : <" + ::GetPlayerName( cr.Id ) + ">", @dialog );
+						log( "Порченный ответ от игрока : <" + ::GetPlayerName( critter.Id ) + ">", @dialog );
 	
 						if( @branch !is null )
 							log( "Branch : <" + branch.Index + ">", @dialog );
@@ -124,6 +124,15 @@ void CallAnswer( ::Critter& cr, uint index, ::string@ say )
 					break;
 				}
 			}
+		}
+		else
+		{
+			if( critter.IsPlayer() )
+			{
+				critter.Say( SAY_NETMSG, "Error, long distance for continue dialog" );
+				critter.Say( SAY_DIALOG_HIDE, " " );
+			}
+			master.SetAnswers( null, null, null, null, null, 0, 0, false );
 		}
 	} 
 }
