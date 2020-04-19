@@ -4490,9 +4490,6 @@ bool hex_attack( CritterCl@ target, uint16 hexX, uint16 hexY )
                 @target = null;
             if( target !is null && target.Id != chosen.Id )
             {
-				if( _WeaponRound( weapon, use ) > 1 && !_WeaponeIsPerk( weapon, ammo, WEAPON_PERK_HEX_ATTACKING ) )
-					return false;
-					
                 hx = target.HexX;
                 hy = target.HexY;
 					
@@ -4504,9 +4501,7 @@ bool hex_attack( CritterCl@ target, uint16 hexX, uint16 hexY )
 				hy = hexY;
 			}
 			else if( !GetMonitorHex( __MouseX, __MouseY, hx, hy ) )
-			{
 				return false;
-			}
 			
 			if( target !is null || ( ( hx > 0 && hy > 0 ) && ( IsHexRaked( hx, hy ) || weapon.Weapon_ZoneAttackIgnoreNotRaked ) ) )
 			{
