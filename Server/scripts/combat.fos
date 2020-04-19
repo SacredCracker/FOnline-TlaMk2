@@ -4310,7 +4310,7 @@ void render_hit_hex( uint layer )
 	uint8 use = _WeaponModeUse( mode );
     const ProtoItem@ ammo = ( realWeapon !is null ) ? GetProtoItem( realWeapon.AmmoPid ) : null;
 
-    if( _WeaponeIsPerk( weapon, ammo, WEAPON_PERK_HEX_ATTACKING ) || _WeaponRound( weapon, use ) <= realWeapon.AmmoCount )
+    if( _WeaponeIsPerk( weapon, ammo, WEAPON_PERK_HEX_ATTACKING ) || _WeaponAttackType( weapon, use ) == WTA_BURST_REGION )
     {
 		//DrawText( "Тест", __MouseX - 6, __MouseY - 6, 100, 100, COLOR_RED,  FONT_FALLOUT, FT_ALIGN | FT_UPPER | FT_BORDERED );
         uint16  hx = 0,
@@ -4483,7 +4483,7 @@ bool hex_attack( CritterCl@ target, uint16 hexX, uint16 hexY )
         if( realWeapon !is null && _WeaponRound( weapon, use ) > 0 && realWeapon.AmmoCount == 0 )
             return false;
 
-        if( _WeaponeIsPerk( weapon, ammo, WEAPON_PERK_HEX_ATTACKING ) ||  ( _WeaponRound( weapon, use ) > 1 && _WeaponNoBrust( weapon, use ) == 0 ) )
+        if( _WeaponeIsPerk( weapon, ammo, WEAPON_PERK_HEX_ATTACKING ) || _WeaponAttackType( weapon, use ) == WTA_BURST_REGION )
         {
             uint16 hx = 0, hy = 0;
             if( CtrlPressed )
