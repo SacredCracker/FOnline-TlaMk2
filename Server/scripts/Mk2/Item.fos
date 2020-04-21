@@ -1,7 +1,7 @@
 // FOS Common Sort 100 
 // Author: rifleman17
 
-::dictionary Defaults;
+dictionary Defaults;
 
 class ItemDescriptor : Mk2::Descriptor, Mk2::ItemPacket, UpgradeItem::UpgradeDescriptor
 #ifdef __SERVER
@@ -23,9 +23,9 @@ class ItemDescriptor : Mk2::Descriptor, Mk2::ItemPacket, UpgradeItem::UpgradeDes
 #endif
 	}
 
-	ItemDescriptor( ::ItemMutual@ item )
+	ItemDescriptor( ItemMutual@ item )
 	{
-		@ RealIt = @item;
+		@RealIt = item;
 	}
 	
 	uint get_Priority( )
@@ -35,23 +35,23 @@ class ItemDescriptor : Mk2::Descriptor, Mk2::ItemPacket, UpgradeItem::UpgradeDes
 	
 	bool IsSet( Mk2::Descriptor@ new )
 	{
-		return ( @new !is null && this.Priority < new.Priority );
+		return ( new !is null && this.Priority < new.Priority );
 	}
 	
-	Mk2::Descriptor@ Copy( ::ItemMutual@ item )
+	Mk2::Descriptor@ Copy( ItemMutual@ item )
 	{
-		return @Item::ItemDescriptor( @item );
+		return Item::ItemDescriptor( item );
 	}
 	
-	::string@ get_Name( )
+	string@ get_Name( )
 	{
-		return "Item_" + ( @RealIt !is null ?"" + RealIt.Id : "Null");
+		return "Item_" + ( RealIt !is null ?"" + RealIt.Id : "Null");
 	}
 	
-	bool IsUpgrade( ::ItemMutual& base, ::ItemMutual& upgrade ) override
+	bool IsUpgrade( ItemMutual& base, ItemMutual& upgrade ) override
 	{
-		const ::ProtoItem@  base_proto = ::GetProtoItem( base.GetProtoId( ) ),
-								upgrade_proto = ::GetProtoItem( upgrade.GetProtoId( ) );
+		const ProtoItem@  base_proto = GetProtoItem( base.GetProtoId( ) ),
+								upgrade_proto = GetProtoItem( upgrade.GetProtoId( ) );
 		bool isForTypeUpgr = false;
 		switch( upgrade_proto.Upgrade_Type )
 		{
@@ -71,16 +71,16 @@ class ItemDescriptor : Mk2::Descriptor, Mk2::ItemPacket, UpgradeItem::UpgradeDes
 #ifdef __SERVER
 	bool CheckData( UpgradeItem::Data& data, int trigger ) override
 	{
-		::ItemMutual@ upgradeItem = null;
+		ItemMutual@ upgradeItem = null;
 		if( FLAG(RealIt.CraftFlags,CF_UPGRADE_SLOT_2) && FLAG(RealIt.CraftFlags,CF_UPGRADE_SLOT_2_BUSSY) )
 		{
-			if(  RealIt.UpgradeSlot2 != RealIt.Id )
+			if( RealIt.UpgradeSlot2 != RealIt.Id )
 			{
-				@ upgradeItem = ::GetItem(RealIt.UpgradeSlot2);
+				@upgradeItem = GetItem(RealIt.UpgradeSlot2);
 				if(validEngineObject(upgradeItem))
 				{
 					UpgradeItem::UpgradeDescriptor@ upgrade = cast< UpgradeItem::UpgradeDescriptor@ >( @upgradeItem.ScriptDescriptor );
-					if( @upgrade !is null && upgrade.GetData( data, trigger ) )
+					if( upgrade !is null && upgrade.GetData( data, trigger ) )
 						return true;
 				}
 			}
@@ -90,11 +90,11 @@ class ItemDescriptor : Mk2::Descriptor, Mk2::ItemPacket, UpgradeItem::UpgradeDes
 		{
 			if( RealIt.UpgradeSlot1 != RealIt.Id )
 			{
-				@ upgradeItem = ::GetItem(RealIt.UpgradeSlot1);
+				@upgradeItem = GetItem(RealIt.UpgradeSlot1);
 				if(validEngineObject(upgradeItem))
 				{
 					UpgradeItem::UpgradeDescriptor@ upgrade = cast< UpgradeItem::UpgradeDescriptor@ >( @upgradeItem.ScriptDescriptor );
-					if( @upgrade !is null && upgrade.GetData( data, trigger ) )
+					if( upgrade !is null && upgrade.GetData( data, trigger ) )
 						return true;
 				}
 			}
@@ -104,11 +104,11 @@ class ItemDescriptor : Mk2::Descriptor, Mk2::ItemPacket, UpgradeItem::UpgradeDes
 		{
 			if( RealIt.UpgradeSlot0 != RealIt.Id )
 			{
-				@ upgradeItem = ::GetItem(RealIt.UpgradeSlot0);
+				@upgradeItem = GetItem(RealIt.UpgradeSlot0);
 				if(validEngineObject(upgradeItem))
 				{
 					UpgradeItem::UpgradeDescriptor@ upgrade = cast< UpgradeItem::UpgradeDescriptor@ >( @upgradeItem.ScriptDescriptor );
-					if( @upgrade !is null && upgrade.GetData( data, trigger ) )
+					if( upgrade !is null && upgrade.GetData( data, trigger ) )
 						return true;
 				}
 			}
@@ -119,7 +119,7 @@ class ItemDescriptor : Mk2::Descriptor, Mk2::ItemPacket, UpgradeItem::UpgradeDes
 	bool UpgradeTrigger_CritterDamage( UpgradeItem::Data& data )
 	{
 		UpgradeItem::CritterDamageData@ damageData = cast< UpgradeItem::CritterDamageData@ >( @data );
-		if( @damageData !is null )
+		if( damageData !is null )
 		{
 			int typeDamage = RealIt.Proto.Upgrade_TriggerValue0,
 				damageBorder = RealIt.Proto.Upgrade_TriggerValue1;
@@ -143,7 +143,7 @@ class ItemDescriptor : Mk2::Descriptor, Mk2::ItemPacket, UpgradeItem::UpgradeDes
 	bool UpgradeTrigger_LineDamage( UpgradeItem::Data& data )
 	{
 		UpgradeItem::LineDamageData@ lineData = cast< UpgradeItem::LineDamageData@ >( @data );
-		if( @lineData !is null )
+		if( lineData !is null )
 		{
 			lineData.Effect = Content::Item::FIRE_LASER_EXPLOSION;
 			lineData.IsFire = true;
@@ -173,7 +173,7 @@ class ItemDescriptor : Mk2::Descriptor, Mk2::ItemPacket, UpgradeItem::UpgradeDes
 		return false;
 	}
 	
-	bool CritterUse( ::Critter& cr, ::Item& item, ::Critter@ targetCr, ::Item@ targetItem, ::Scenery@ targetScen, uint param )
+	bool CritterUse( Critter& cr, Item& item, Critter@ targetCr, Item@ targetItem, Scenery@ targetScen, uint param )
 	{
 		int result = 0;
 	
@@ -201,373 +201,375 @@ class ItemDescriptor : Mk2::Descriptor, Mk2::ItemPacket, UpgradeItem::UpgradeDes
 		return CritterUseGeneral( cr, item, targetCr, targetItem, targetScen, param );
 	}
 	
-	bool CritterUseOnSelf( ::Critter& cr, ::Item& item, ::Critter@ targetCr, ::Item@ targetItem, ::Scenery@ targetScen, uint param )
+	bool CritterUseOnSelf( Critter& cr, Item& item, Critter@ targetCr, Item@ targetItem, Scenery@ targetScen, uint param )
 	{
 		return false;
 	}
 	
-	bool CritterUseGeneral( ::Critter& cr, ::Item& item, ::Critter@ targetCr, ::Item@ targetItem, ::Scenery@ targetScen, uint param )
+	bool CritterUseGeneral( Critter& cr, Item& item, Critter@ targetCr, Item@ targetItem, Scenery@ targetScen, uint param )
 	{
 		return false;
 	}
 	
-	bool CritterUseOnCritter( ::Critter& cr, ::Item& item, ::Critter@ targetCr, ::Item@ targetItem, ::Scenery@ targetScen, uint param )
+	bool CritterUseOnCritter( Critter& cr, Item& item, Critter@ targetCr, Item@ targetItem, Scenery@ targetScen, uint param )
 	{
 		return false;
 	}
 	
-	bool CritterUseOnItem( ::Critter& cr, ::Item& item, ::Critter@ targetCr, ::Item@ targetItem, ::Scenery@ targetScen, uint param )
+	bool CritterUseOnItem( Critter& cr, Item& item, Critter@ targetCr, Item@ targetItem, Scenery@ targetScen, uint param )
 	{
 		return false;
 	}
 	
-	bool CritterUseOnScenery( ::Critter& cr, ::Item& item, ::Critter@ targetCr, ::Item@ targetItem, ::Scenery@ targetScen, uint param )
+	bool CritterUseOnScenery( Critter& cr, Item& item, Critter@ targetCr, Item@ targetItem, Scenery@ targetScen, uint param )
 	{
 		return false;
 	}
 	
 #endif
 	uint PriorityDescriptor = 0;
-	::ItemMutual@ RealIt = null;
+	ItemMutual@ RealIt = null;
 }
 
 class WeaponDescriptor : Item::ItemDescriptor, Mk2::CombatWeaponPacket
 {
-	WeaponDescriptor( ::ItemMutual@ item )
+	WeaponDescriptor( ItemMutual@ item )
 	{
-		super( @item );
+		super( item );
 	}
 	
-	Mk2::Descriptor@ Copy( ::ItemMutual@ item ) override
+	Mk2::Descriptor@ Copy( ItemMutual@ item ) override
 	{
-		return @Item::WeaponDescriptor( @item );
+		return Item::WeaponDescriptor( item );
 	}
 
-	::string@ get_Name( ) override
+	string@ get_Name( ) override
 	{
-		return "Weapon_" + ( @RealIt !is null ? "" + RealIt.Id : "Null");
+		return "Weapon_" + ( RealIt !is null ? "" + RealIt.Id : "Null");
 	}
 }
 
 class ArmorDescriptor : Item::ItemDescriptor, Mk2::CombatArmorPacket
 {
-	ArmorDescriptor( ::ItemMutual@ item )
+	ArmorDescriptor( ItemMutual@ item )
 	{
-		super( @item );
+		super( item );
 	}
 	
-	Mk2::Descriptor@ Copy( ::ItemMutual@ item ) override
+	Mk2::Descriptor@ Copy( ItemMutual@ item ) override
 	{
-		return @Item::ArmorDescriptor( @item );
+		return Item::ArmorDescriptor( item );
 	}
 
-	::string@ get_Name( ) override
+	string@ get_Name( ) override
 	{
-		return "Armor_" + ( @RealIt !is null ?"" + RealIt.Id : "Null");
+		return "Armor_" + ( RealIt !is null ?"" + RealIt.Id : "Null");
 	}
 }
 
 class DrugDescriptor : Item::ItemDescriptor
 {
-	DrugDescriptor( ::ItemMutual@ item )
+	DrugDescriptor( ItemMutual@ item )
 	{
-		super( @item );
+		super( item );
 	}
 	
-	Mk2::Descriptor@ Copy( ::ItemMutual@ item ) override
+	Mk2::Descriptor@ Copy( ItemMutual@ item ) override
 	{
-		return @Item::DrugDescriptor( @item );
+		return Item::DrugDescriptor( item );
 	}
 
-	::string@ get_Name( ) override
+	string@ get_Name( ) override
 	{
-		return "Drug_" + ( @RealIt !is null ?"" + RealIt.Id : "Null");
+		return "Drug_" + ( RealIt !is null ?"" + RealIt.Id : "Null");
 	}
 }
 
 class AmmoDescriptor : Item::ItemDescriptor
 {
-	AmmoDescriptor( ::ItemMutual@ item )
+	AmmoDescriptor( ItemMutual@ item )
 	{
-		super( @item );
+		super( item );
 	}
 	
-	Mk2::Descriptor@ Copy( ::ItemMutual@ item ) override
+	Mk2::Descriptor@ Copy( ItemMutual@ item ) override
 	{
-		return @Item::AmmoDescriptor( @item );
+		return Item::AmmoDescriptor( item );
 	}
 
-	::string@ get_Name( ) override
+	string@ get_Name( ) override
 	{
-		return "Ammo_" + ( @RealIt !is null ?"" + RealIt.Id : "Null");
+		return "Ammo_" + ( RealIt !is null ?"" + RealIt.Id : "Null");
 	}
 }
 
 class MiscDescriptor : Item::ItemDescriptor
 {
-	MiscDescriptor( ::ItemMutual@ item )
+	MiscDescriptor( ItemMutual@ item )
 	{
-		super( @item );
+		super( item );
 	}
 	
-	Mk2::Descriptor@ Copy( ::ItemMutual@ item ) override
+	Mk2::Descriptor@ Copy( ItemMutual@ item ) override
 	{
-		return @Item::MiscDescriptor( @item );
+		return Item::MiscDescriptor( item );
 	}
 
-	::string@ get_Name( ) override
+	string@ get_Name( ) override
 	{
-		return "Misc_" + ( @RealIt !is null ?"" + RealIt.Id : "Null");
+		return "Misc_" + ( RealIt !is null ?"" + RealIt.Id : "Null");
 	}
 }
 
 class Misc2Descriptor : Item::ItemDescriptor
 {
-	Misc2Descriptor( ::ItemMutual@ item )
+	Misc2Descriptor( ItemMutual@ item )
 	{
-		super( @item );
+		super( item );
 	}
 	
-	Mk2::Descriptor@ Copy( ::ItemMutual@ item ) override
+	Mk2::Descriptor@ Copy( ItemMutual@ item ) override
 	{
-		return @Item::Misc2Descriptor( @item );
+		return Item::Misc2Descriptor( item );
 	}
 
-	::string@ get_Name( ) override
+	string@ get_Name( ) override
 	{
-		return "Misc2_" + ( @RealIt !is null ?"" + RealIt.Id : "Null");
+		return "Misc2_" + ( RealIt !is null ?"" + RealIt.Id : "Null");
 	}
 }
 
 class KeyDescriptor : Item::ItemDescriptor
 {
-	KeyDescriptor( ::ItemMutual@ item )
+	KeyDescriptor( ItemMutual@ item )
 	{
-		super( @item );
+		super( item );
 	}
 	
-	Mk2::Descriptor@ Copy( ::ItemMutual@ item ) override
+	Mk2::Descriptor@ Copy( ItemMutual@ item ) override
 	{
-		return @Item::KeyDescriptor( @item );
+		return Item::KeyDescriptor( item );
 	}
 
-	::string@ get_Name( ) override
+	string@ get_Name( ) override
 	{
-		return "Key_" + ( @RealIt !is null ?"" + RealIt.Id : "Null");
+		return "Key_" + ( RealIt !is null ?"" + RealIt.Id : "Null");
 	}
 }
 
 class ContainerDescriptor : Item::ItemDescriptor
 {
-	ContainerDescriptor( ::ItemMutual@ item )
+	ContainerDescriptor( ItemMutual@ item )
 	{
-		super( @item );
+		super( item );
 	}
 	
-	Mk2::Descriptor@ Copy( ::ItemMutual@ item ) override
+	Mk2::Descriptor@ Copy( ItemMutual@ item ) override
 	{
-		return @Item::ContainerDescriptor( @item );
+		return Item::ContainerDescriptor( item );
 	}
 
-	::string@ get_Name( ) override
+	string@ get_Name( ) override
 	{
-		return "Container_" + ( @RealIt !is null ?"" + RealIt.Id : "Null");
+		return "Container_" + ( RealIt !is null ?"" + RealIt.Id : "Null");
 	}
 }
 
 class DoorDescriptor : Item::ItemDescriptor
 {
-	DoorDescriptor( ::ItemMutual@ item )
+	DoorDescriptor( ItemMutual@ item )
 	{
-		super( @item );
+		super( item );
 	}
 	
-	Mk2::Descriptor@ Copy( ::ItemMutual@ item ) override
+	Mk2::Descriptor@ Copy( ItemMutual@ item ) override
 	{
-		return @Item::DoorDescriptor( @item );
+		return Item::DoorDescriptor( item );
 	}
 
-	::string@ get_Name( ) override
+	string@ get_Name( ) override
 	{
-		return "Door_" + ( @RealIt !is null ?"" + RealIt.Id : "Null");
+		return "Door_" + ( RealIt !is null ?"" + RealIt.Id : "Null");
 	}
 }
 
 class GridDescriptor : Item::ItemDescriptor
 {
-	GridDescriptor( ::ItemMutual@ item )
+	GridDescriptor( ItemMutual@ item )
 	{
-		super( @item );
+		super( item );
 	}
 	
-	Mk2::Descriptor@ Copy( ::ItemMutual@ item ) override
+	Mk2::Descriptor@ Copy( ItemMutual@ item ) override
 	{
-		return @Item::GridDescriptor( @item );
+		return Item::GridDescriptor( item );
 	}
 
-	::string@ get_Name( ) override
+	string@ get_Name( ) override
 	{
-		return "Grid_" + ( @RealIt !is null ?"" + RealIt.Id : "Null");
+		return "Grid_" + ( RealIt !is null ?"" + RealIt.Id : "Null");
 	}
 }
 
 class GenericDescriptor : Item::ItemDescriptor
 {
-	GenericDescriptor( ::ItemMutual@ item )
+	GenericDescriptor( ItemMutual@ item )
 	{
-		super( @item );
+		super( item );
 	}
 	
-	Mk2::Descriptor@ Copy( ::ItemMutual@ item ) override
+	Mk2::Descriptor@ Copy( ItemMutual@ item ) override
 	{
-		return @Item::GenericDescriptor( @item );
+		return Item::GenericDescriptor( item );
 	}
 
-	::string@ get_Name( ) override
+	string@ get_Name( ) override
 	{
-		return "Generic_" + ( @RealIt !is null ?"" + RealIt.Id : "Null");
+		return "Generic_" + ( RealIt !is null ?"" + RealIt.Id : "Null");
 	}
 }
 
 class WallDescriptor : Item::ItemDescriptor
 {
-	WallDescriptor( ::ItemMutual@ item )
+	WallDescriptor( ItemMutual@ item )
 	{
-		super( @item );
+		super( item );
 	}
 	
-	Mk2::Descriptor@ Copy( ::ItemMutual@ item ) override
+	Mk2::Descriptor@ Copy( ItemMutual@ item ) override
 	{
-		return @Item::WallDescriptor( @item );
+		return Item::WallDescriptor( item );
 	}
 
-	::string@ get_Name( ) override
+	string@ get_Name( ) override
 	{
-		return "Wall_" + ( @RealIt !is null ?"" + RealIt.Id : "Null");
+		return "Wall_" + ( RealIt !is null ?"" + RealIt.Id : "Null");
 	}
 }
 
 class CarDescriptor : Item::ItemDescriptor
 {
-	CarDescriptor( ::ItemMutual@ item )
+	CarDescriptor( ItemMutual@ item )
 	{
-		super( @item );
+		super( item );
 	}
 	
-	Mk2::Descriptor@ Copy( ::ItemMutual@ item ) override
+	Mk2::Descriptor@ Copy( ItemMutual@ item ) override
 	{
-		return @Item::CarDescriptor( @item );
+		return Item::CarDescriptor( item );
 	}
 
-	::string@ get_Name( ) override
+	string@ get_Name( ) override
 	{
-		return "Car_" + ( @RealIt !is null ?"" + RealIt.Id : "Null");
+		return "Car_" + ( RealIt !is null ?"" + RealIt.Id : "Null");
 	}
 }
 
 class AnimalDescriptor : Item::ItemDescriptor
 {
-	AnimalDescriptor( ::ItemMutual@ item )
+	AnimalDescriptor( ItemMutual@ item )
 	{
-		super( @item );
+		super( item );
 	}
 	
-	Mk2::Descriptor@ Copy( ::ItemMutual@ item ) override
+	Mk2::Descriptor@ Copy( ItemMutual@ item ) override
 	{
-		return @Item::AnimalDescriptor( @item );
+		return Item::AnimalDescriptor( item );
 	}
 
-	::string@ get_Name( ) override
+	string@ get_Name( ) override
 	{
-		return "Animal_" + ( @RealIt !is null ?"" + RealIt.Id : "Null");
+		return "Animal_" + ( RealIt !is null ?"" + RealIt.Id : "Null");
 	}
 }
 
-Mk2::Descriptor@ GetDeafultItemDescriptor( ::ItemMutual@ item )
+Mk2::Descriptor@ GetDeafultItemDescriptor( ItemMutual@ item )
 {
 #ifdef __MAPPER
 	if( item.MapObjType == 0 )
 		return null;
 #endif
 
-	::ProtoItem@ proto = ::GetProtoItem( item.GetProtoId() );
+	ProtoItem@ proto = GetProtoItem( item.GetProtoId() );
 
 	Item::ItemDescriptor@ def = null;
-	::string key = "" + item.GetProtoId();
+	string key = "" + item.GetProtoId();
 
-	if( Defaults.exists( key ) && Defaults.get( key, @def ) ) return @def.Copy( @item );
+	if( Defaults.exists( key ) && Defaults.get( key, def ) ) return def.Copy( item );
 	switch( proto.GetType() )
 	{
 		case ITEM_TYPE_NONE:
-			return @Item::ItemDescriptor( @item );			
+			return Item::ItemDescriptor( item );			
 		case ITEM_TYPE_ARMOR:
-			return @Item::ArmorDescriptor( @item );
+			return Item::ArmorDescriptor( item );
 		case ITEM_TYPE_DRUG:
-			return @Item::DrugDescriptor( @item );
+			return Item::DrugDescriptor( item );
 		case ITEM_TYPE_WEAPON:
-			return @Item::WeaponDescriptor( @item );
+			return Item::WeaponDescriptor( item );
 		case ITEM_TYPE_AMMO:
-			return @Item::AmmoDescriptor( @item );
+			return Item::AmmoDescriptor( item );
 		case ITEM_TYPE_MISC:
-			return @Item::MiscDescriptor( @item );
+			return Item::MiscDescriptor( item );
 		case ITEM_TYPE_MISC2:
-			return @Item::Misc2Descriptor( @item );
+			return Item::Misc2Descriptor( item );
 		case ITEM_TYPE_KEY:
-			return @Item::KeyDescriptor( @item );
+			return Item::KeyDescriptor( item );
 		case ITEM_TYPE_CONTAINER:
-			return @Item::ContainerDescriptor( @item );
+			return Item::ContainerDescriptor( item );
 		case ITEM_TYPE_DOOR:
-			return @Item::DoorDescriptor( @item );
+			return Item::DoorDescriptor( item );
 		case ITEM_TYPE_GRID:
-			return @Item::GridDescriptor( @item );
+			return Item::GridDescriptor( item );
 		case ITEM_TYPE_GENERIC:
-			return @Item::GenericDescriptor( @item );
+			return Item::GenericDescriptor( item );
 		case ITEM_TYPE_WALL:
-			return @Item::WallDescriptor( @item );
+			return Item::WallDescriptor( item );
 		case ITEM_TYPE_CAR:
-			return @Item::CarDescriptor( @item );
+			return Item::CarDescriptor( item );
 		case ITEM_TYPE_ANIMAL:
-			return @Item::AnimalDescriptor( @item );
+			return Item::AnimalDescriptor( item );
 		default:
 		{
 			Log( "Warning, uknow protoitem type " + proto.GetType() );
-			return @Item::ItemDescriptor( @item );
+			return Item::ItemDescriptor( item );
 		}
 	}
 	return null;
 }
 
-bool IsUpgrade( ::ItemMutual& item, ::ItemMutual& upgrade )
+
+
+bool IsUpgrade( ItemMutual& item, ItemMutual& upgrade )
 {
 	return false;
 }
 
 #ifdef __SERVER
 // Дверь, которая закроется через 2 игровые минуты илии через некоторое число реальных секунд , указанное в val3
-void DoorAutoClose( ::Item& door, bool firstTime)
+void DoorAutoClose( Item& door, bool firstTime)
 {
 	door.SetEvent(ITEM_EVENT_SKILL,"Item::e_UseAutoCloseDoor");
 }
 
-bool e_UseAutoCloseDoor( ::Item& door, ::Critter& cr, int skill)
+bool e_UseAutoCloseDoor( Item& door, Critter& cr, int skill)
 {
-	::CreateTimeEvent( ::__FullSecond + REAL_MINUTE(door.Val3==0? 2 : door.Val3), "Item::e_AutoCloseDoor", door.Id, true);
+	CreateTimeEvent( __FullSecond + REAL_MINUTE(door.Val3==0? 2 : door.Val3), "Item::e_AutoCloseDoor", door.Id, true);
 	return false;
 }
 
-uint e_AutoCloseDoor( ::array<uint>@ val)
+uint e_AutoCloseDoor( uint[]@ val)
 {
-	::Item@ door = ::GetItem(val[0]);
-	if( @door is null ) return 0;
+	Item@ door = GetItem(val[0]);
+	if( door is null ) return 0;
 
 	if (!FLAG(door.LockerCondition,LOCKER_ISOPEN)) return 0;
 	uint16 x=0, y = 0;
 	
-	::Map@ map = door.GetMapPosition(x, y);
-	if( @map is null ) return 0;
+	Map@ map = door.GetMapPosition(x, y);
+	if( map is null ) return 0;
 
-	::Critter@ cr = map.GetCritter(x,y);
-	if( @cr !is null )
+	Critter@ cr = map.GetCritter(x,y);
+	if( cr !is null )
 	{
 		if(cr.IsLife())
 			return REAL_MINUTE(3);
@@ -581,32 +583,32 @@ uint e_AutoCloseDoor( ::array<uint>@ val)
 }
 
 // Дверь, которая не открывается стандартными способами
-void ClosedDoor( ::Item& door, bool firstTime)
+void ClosedDoor( Item& door, bool firstTime)
 {
 	door.SetEvent(ITEM_EVENT_SKILL,"Item::_UseDoor");
 }
 
-bool _UseDoor( ::Item& door, ::Critter& cr, int skill)
+bool _UseDoor( Item& door, Critter& cr, int skill)
 {
 	return true;
 }
 
 // Дверь, при использовании которой открывается диалог
-void DialogDoor( ::Item& door, bool firstTime)
+void DialogDoor( Item& door, bool firstTime)
 {
 	door.SetEvent(ITEM_EVENT_SKILL,"Item::_UseDialogDoor");
 }
 
-bool _UseDialogDoor( ::Item& door, ::Critter& cr, int skill)
+bool _UseDialogDoor( Item& door, Critter& cr, int skill)
 {
 	uint16 x = 0, y = 0;
-	::Map@ map = door.GetMapPosition( x, y );
-	::Mk2RunDialog(cr, door.Val3, map, x, y, false);
+	Map@ map = door.GetMapPosition( x, y );
+	Mk2RunDialog(cr, door.Val3, map, x, y, false);
 	return true;
 }
 
 // Голодиск с номером, присвоенном в Val0
-void Holo( ::Item & item, bool firstTime)
+void Holo( Item & item, bool firstTime)
 {
 	if(item.GetProtoId()!=Content::Item::HOLODISK) return;
 	item.HolodiskNumber=item.Val0;
@@ -616,42 +618,42 @@ void Holo( ::Item & item, bool firstTime)
 }
 
 // Настройка автоматического удаления предмета через икс часов
-void SetDeleteItem( ::Item& item, uint delHours)
+void SetDeleteItem( Item& item, uint delHours)
 {
-	if(! ::IsAnyData("DeleteItem_"+item.Id))
+	if(! IsAnyData("DeleteItem_"+item.Id))
 	{
 		uint[] data = {item.Id};
-		if( !::SetAnyData("DeleteItem_"+item.Id,data))
+		if( !SetAnyData("DeleteItem_"+item.Id,data))
 			Log("AnyData not created");
 		else
-			::CreateTimeEvent( ::__FullSecond + delHours*60*60, "Item::e_DeleteItem", data, true);
+			CreateTimeEvent( __FullSecond + delHours*60*60, "Item::e_DeleteItem", data, true);
 	}
 	item.SetScript("Item::AutoDelete");
 }
 
-uint e_DeleteItem( ::array<uint>@ val)
+uint e_DeleteItem( uint[]@ val)
 {
-	if( @val !is null )
+	if( val !is null )
 	{
-		::Item@ item = ::GetItem(val[0]);
+		Item@ item = GetItem(val[0]);
 		if(validEngineObject(item))
 		{
 			if(item.GetCount()>1) item.SetCount(item.GetCount()-1);
-			else ::DeleteItem(item);
+			else DeleteItem(item);
 		}
-		if( ::IsAnyData("DeleteItem_"+val[0]))
-			::EraseAnyData( "DeleteItem_"+val[0] );
+		if( IsAnyData("DeleteItem_"+val[0]))
+			EraseAnyData( "DeleteItem_"+val[0] );
 	}
 	return 0;
 }
 
-void AutoDelete( ::Item& item, bool firstTime)
+void AutoDelete( Item& item, bool firstTime)
 {
 	if(!firstTime) 
 	{
-		::DeleteItem(item);
-		if( ::IsAnyData("DeleteItem_"+item.Id))
-			::EraseAnyData( "DeleteItem_"+item.Id );
+		DeleteItem(item);
+		if( IsAnyData("DeleteItem_"+item.Id))
+			EraseAnyData( "DeleteItem_"+item.Id );
 	}
 }
 
@@ -663,15 +665,15 @@ void AutoDelete( ::Item& item, bool firstTime)
 #define STR_DONTOUCH     (540)
 
 
-void GuardedItem( ::Item& item, bool firstTime)
+void GuardedItem( Item& item, bool firstTime)
 {
 	item.SetEvent(ITEM_EVENT_SKILL,"Item::_GuardedItemSkill");
 }
 
-bool _GuardedItemSkill( ::Item& item, ::Critter& cr, int skill)
+bool _GuardedItemSkill( Item& item, Critter& cr, int skill)
 {
-	::Map@ map=cr.GetMap();
-	if ( @map is null ) return false;
+	Map@ map=cr.GetMap();
+	if ( map is null ) return false;
 	
 	int  role=item.Val1;
 	bool reset=(item.Val2 > 0 ? true : false);
@@ -688,19 +690,19 @@ bool _GuardedItemSkill( ::Item& item, ::Critter& cr, int skill)
 			if(item.GetType()==ITEM_TYPE_DOOR || item.GetType()==ITEM_TYPE_CONTAINER)
 			{
 				if(item.Val0 > 0)
-					::CreateTimeEvent( ::__FullSecond + REAL_MINUTE(item.Val0==0? 2 : item.Val0), "Item::e_AutoCloseDoor", item.Id, true);
+					CreateTimeEvent( __FullSecond + REAL_MINUTE(item.Val0==0? 2 : item.Val0), "Item::e_AutoCloseDoor", item.Id, true);
 			}
 			return false;
 		}
-		::Critter@ guard=map.GetNpc(role, FIND_LIFE|FIND_ONLY_NPC, ::Random(0, guards-1));
-		if( @guard !is null )
+		Critter@ guard=map.GetNpc(role, FIND_LIFE|FIND_ONLY_NPC, Random(0, guards-1));
+		if( guard !is null )
 		{
-			::GameVar@ counter = ::GetUnicumVar(UVAR_guarded_item_skill, guard.Id, cr.Id);
-			if( @counter !is null )
+			GameVar@ counter = GetUnicumVar(UVAR_guarded_item_skill, guard.Id, cr.Id);
+			if( counter !is null )
 			{
 				if(counter<2)
 				{
-					::array<::NpcPlane@> planes = {};
+					NpcPlane@[] planes = {};
 					if(guard.GetPlanes(AI_PLANE_ATTACK, planes) > 0)
 					{
 						for(uint i=0, iMax=planes.length(); i<iMax; i++)
@@ -717,7 +719,7 @@ bool _GuardedItemSkill( ::Item& item, ::Critter& cr, int skill)
 						}
 					}
 					counter=counter.GetValue() + 1;
-					guard.SayMsg(SAY_SHOUT, TEXTMSG_TEXT, STR_DONTOUCH, "$pname" + ::GetPlayerName(cr.Id));
+					guard.SayMsg(SAY_SHOUT, TEXTMSG_TEXT, STR_DONTOUCH, "$pname" + GetPlayerName(cr.Id));
 				}
 				else
 				{
@@ -733,14 +735,14 @@ bool _GuardedItemSkill( ::Item& item, ::Critter& cr, int skill)
 		return true;
 }
 
-void Activation( ::Item& item, bool firstTime)
+void Activation( Item& item, bool firstTime)
 {
 	//item.SetEvent(ITEM_EVENT_USE, "Item::_useActivativeItem");
 }
 
-bool ChangeProto( ::Item& item, uint pid )
+bool ChangeProto( Item& item, uint pid )
 {
-	if( @::GetProtoItem( pid ) is null )
+	if( GetProtoItem( pid ) is null )
 	{
 		Log( "Невалиден прототип предмета под пидом: " + pid );
 		return false;
@@ -749,37 +751,37 @@ bool ChangeProto( ::Item& item, uint pid )
 	return item.ChangeProto( pid );
 }
 
-bool _useActivativeItem( ::Item& item, ::Critter& crit, ::Critter@ onCritter, ::Item@ onItem, ::Scenery@ onScenery) //Не переносить, не переименовывать, не смотреть. Биндится из натива.
+bool _useActivativeItem( Item& item, Critter& crit, Critter@ onCritter, Item@ onItem, Scenery@ onScenery) //Не переносить, не переименовывать, не смотреть. Биндится из натива.
 {
-	if( @onCritter !is null || @onItem !is null || @onScenery !is null ||item.Deterioration>=MAX_DETERIORATION) return false;
+	if( onCritter !is null || onItem !is null || onScenery !is null ||item.Deterioration>=MAX_DETERIORATION) return false;
 	ChangeProto( item, item.GetProtoId()+1 );
 	//item.SetEvent(ITEM_EVENT_USE, "_useDeactivativeItem");
-	if(item.IsDeteriorable()) item.Val1=::__FullSecond;
+	if(item.IsDeteriorable()) item.Val1=__FullSecond;
 	item.Update();
 	return true;
 }
 
-void Deactivation( ::Item& item, bool firstTime)
+void Deactivation( Item& item, bool firstTime)
 {
 	item.SetEvent(ITEM_EVENT_USE, "Item::_useDeactivativeItem");
 }
 
-bool _useDeactivativeItem( ::Item& item, ::Critter& crit, ::Critter@ onCritter, ::Item@ onItem, ::Scenery@ onScenery)
+bool _useDeactivativeItem( Item& item, Critter& crit, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
 {
-	if( @onCritter !is null || @onItem !is null || @onScenery !is null ) return false;
+	if( onCritter !is null || onItem !is null || onScenery !is null ) return false;
 	ChangeProto( item, item.GetProtoId()-1 );
 	//item.SetEvent(ITEM_EVENT_USE, "_useActivativeItem");
 	item.Update();
 	return true;
 }
 
-void ChargedItem( ::Item& item, bool firstTime)
+void ChargedItem( Item& item, bool firstTime)
 {
 	if(firstTime) 
 		item.Charge=100;
 }
 
-void GetParams( ::Critter& cr, ::Item& item )
+void GetParams( Critter& cr, Item& item )
 {
 	int[] data = { 
 		item.Deterioration, 
@@ -819,12 +821,12 @@ namespace Option
 		
 		void ModuleInit( )
 		{
-			@ThisModule::CombinationTemplate = Sprite::Sprite( CombinationTemplate, PT_ART_INTRFACE );
+			ThisModule::CombinationTemplate = Sprite::Sprite( CombinationTemplate, PT_ART_INTRFACE );
 		}
 	}
 }
 
-class Interface : IGUIListingElement, ::IGUIDragAndDropElement, Splitter::SplitResult, ::IGUIDescriptor
+class Interface : IGUIListingElement, IGUIDragAndDropElement, Splitter::SplitResult, IGUIDescriptor
 {
 	void Show( ) override
 	{
@@ -836,7 +838,7 @@ class Interface : IGUIListingElement, ::IGUIDragAndDropElement, Splitter::SplitR
 		
 	}
 	
-	bool Refresh( int lookType, ::IGUIDescriptor@ new ) override
+	bool Refresh( int lookType, IGUIDescriptor@ new ) override
 	{
 		return true;
 	}
@@ -855,7 +857,7 @@ class Interface : IGUIListingElement, ::IGUIDragAndDropElement, Splitter::SplitR
 	{
 		@Transfer = ThisModule::TransferData();
 		Transfer.IsSplit = true;
-		Here.Transfer( @this, count, null );
+		Here.Transfer( this, count, null );
 		@Transfer = null;
 	}
 	
@@ -864,7 +866,7 @@ class Interface : IGUIListingElement, ::IGUIDragAndDropElement, Splitter::SplitR
 		return Count;
 	}
 	
-	Interface( ::ItemCl& item, Item::ItemLocation@ here )
+	Interface( ItemCl& item, Item::ItemLocation@ here )
 	{
 		CritSlot = item.CritSlot;
 		Id = item.Id;
@@ -878,7 +880,7 @@ class Interface : IGUIListingElement, ::IGUIDragAndDropElement, Splitter::SplitR
 		@Image = Sprite::Sprite();
 		Image.LoadItem( Proto );
 		
-		@Here = @here;
+		@Here = here;
 	}
 	
 	Interface( ThisModule::Interface& item, uint count ) override
@@ -895,13 +897,13 @@ class Interface : IGUIListingElement, ::IGUIDragAndDropElement, Splitter::SplitR
 		@Image = Sprite::Sprite();
 		Image.LoadItem( Proto );
 		
-		@Here = @item.Here;
+		@Here = item.Here;
 		Type = Type;
 	}
 	
-	::ProtoItem@ get_ProtoItem( )
+	ProtoItem@ get_ProtoItem( )
 	{
-		return @::GetProtoItem( Proto );
+		return GetProtoItem( Proto );
 	}
 	
 	void after_Draw( Item::Interface@ swapItem, int x, int y )
@@ -912,7 +914,7 @@ class Interface : IGUIListingElement, ::IGUIDragAndDropElement, Splitter::SplitR
 	void Draw( int x, int y ) override
 	{
 		Image.Draw( x - Image.Width * 0.5 , y - Image.Height * 0.5 );
-		ThisModule::Interface@ swapItem = cast<ThisModule::Interface>(@GUI_GetFocusListingElement( ));
+		ThisModule::Interface@ swapItem = cast<ThisModule::Interface@>(@GUI_GetFocusListingElement( ));
 		if( this is swapItem )
 			@swapItem = null;
 		
@@ -932,15 +934,15 @@ class Interface : IGUIListingElement, ::IGUIDragAndDropElement, Splitter::SplitR
 		if( Count == 0 )
 			return;
 			
-		if( @GUI_GetDragAndDrop( ) is @this )
+		if( GUI_GetDragAndDrop( ) is this )
 			c = ThisModule::Option::GUI::ColorFocus;
 		
 		Image.Draw( x, y, w, h, VISUAL_FLAG_ZOOM, c );
 		
 		if( Count > 1 )
-			::DrawText( "x" + Count, x, y, w, h, COLOR_WHITE, FONT_FALLOUT, FT_ALIGN | FT_BORDERED );
+			DrawText( "x" + Count, x, y, w, h, COLOR_WHITE, FONT_FALLOUT, FT_ALIGN | FT_BORDERED );
 			
-		::string slotText = "";
+		string slotText = "";
 		if( CritSlot != SLOT_INV )
 		{
 			if( DrawSlotName ) 
@@ -965,54 +967,54 @@ class Interface : IGUIListingElement, ::IGUIDragAndDropElement, Splitter::SplitR
 					default: break;
 				}
 		}
-		::CritterCl@ chosen = @::GetChosen( );
-		if( @chosen !is null && chosen.Param[ ST_ADMINGUI ] == 1 )
+		CritterCl@ chosen = GetChosen( );
+		if( chosen !is null && chosen.Param[ ST_ADMINGUI ] == 1 )
 			slotText += " " + Id;
 			
 		if( slotText != "" )
-			::DrawText( slotText, x, y + ( h - 10 ), w, h, COLOR_WHITE, FONT_FALLOUT, FT_ALIGN | FT_BORDERED );
+			DrawText( slotText, x, y + ( h - 10 ), w, h, COLOR_WHITE, FONT_FALLOUT, FT_ALIGN | FT_BORDERED );
 	}
 	
 	void Focus( ) override
 	{
 		if( InformerDescriptor !is this && Item !is null )
-			SetItemInformer( LookType, GetDescription( Count, LookType ), Item, Item.Lexems, Item.Info, Proto, @this );
+			SetItemInformer( LookType, GetDescription( Count, LookType ), Item, Item.Lexems, Item.Info, Proto, this );
 	}
 	
-	::string@ GetDescription( uint count, int lookType )
+	string@ GetDescription( uint count, int lookType )
 	{	
-		::ProtoItem@ proto = this.ProtoItem;
+		ProtoItem@ proto = this.ProtoItem;
 
 		ItemCl@ item = Item;
 		if( item is null ) return "";
 		// Default error text
-		if( !::IsMsgStr( TEXTMSG_ITEM, Proto * 100 + item.Info + 1 ) )
-			return ::GetMsgStr( TEXTMSG_GAME, STR_ITEM_LOOK_NOTHING );
+		if( !IsMsgStr( TEXTMSG_ITEM, Proto * 100 + item.Info + 1 ) )
+			return GetMsgStr( TEXTMSG_GAME, STR_ITEM_LOOK_NOTHING );
 		
-		::string result = "";
+		string result = "";
 
 		if( lookType == ITEM_LOOK_ONLY_NAME )
-			result += ::ReplaceText( ::GetMsgStr( TEXTMSG_GAME, STR_ITEM_LOOK ), "NAME", ::GetMsgStr( TEXTMSG_ITEM, Proto * 100 + item.Info ) );
+			result += ReplaceText( GetMsgStr( TEXTMSG_GAME, STR_ITEM_LOOK ), "NAME", GetMsgStr( TEXTMSG_ITEM, Proto * 100 + item.Info ) );
 		else
 		{
-		   result += ::GetMsgStr( TEXTMSG_ITEM, Proto * 100 + item.Info ) + "\n";
+		   result += GetMsgStr( TEXTMSG_ITEM, Proto * 100 + item.Info ) + "\n";
 
 			if( Proto == uint( Content::Item::HOLODISK ) && item.HolodiskNumber != 0 )
-				result += ::GetMsgStr( TEXTMSG_HOLO, STR_HOLO_INFO_NAME( item.HolodiskNumber ) );
+				result += GetMsgStr( TEXTMSG_HOLO, STR_HOLO_INFO_NAME( item.HolodiskNumber ) );
 			else
-				result += ::GetMsgStr( TEXTMSG_ITEM, Proto * 100 + item.Info + 1 );
+				result += GetMsgStr( TEXTMSG_ITEM, Proto * 100 + item.Info + 1 );
 
 			// Weight
-			result += "\n" + ::ReplaceText( ::GetMsgStr( TEXTMSG_GAME, STR_ITEM_WEIGHT_GRAMM ), "VALUE", proto.Weight * count );
+			result += "\n" + ReplaceText( GetMsgStr( TEXTMSG_GAME, STR_ITEM_WEIGHT_GRAMM ), "VALUE", proto.Weight * count );
 
 			// Ammo load
 			if( proto.Type == ITEM_TYPE_WEAPON && proto.Weapon_MaxAmmoCount > 0 )
 			{
 				result += "\n";
-				::string str = ::GetMsgStr( TEXTMSG_GAME, STR_INV_HAS_SHOTS );
-				str = ::ReplaceText( str, "VALUE",     item.AmmoCount );
-				str = ::ReplaceText( str, "MAX_VALUE", proto.Weapon_MaxAmmoCount );
-				str = ::ReplaceText( str, "AMMO",      ::GetMsgStr( TEXTMSG_GAME, STR_CALIBER( proto.Weapon_Caliber ) ) );
+				string str = GetMsgStr( TEXTMSG_GAME, STR_INV_HAS_SHOTS );
+				str = ReplaceText( str, "VALUE",     item.AmmoCount );
+				str = ReplaceText( str, "MAX_VALUE", proto.Weapon_MaxAmmoCount );
+				str = ReplaceText( str, "AMMO",      GetMsgStr( TEXTMSG_GAME, STR_CALIBER( proto.Weapon_Caliber ) ) );
 				result += str;
 			}
 
@@ -1022,51 +1024,51 @@ class Interface : IGUIListingElement, ::IGUIDragAndDropElement, Splitter::SplitR
 				uint8 brokenFlags = item.BrokenFlags;
 				result += "\n";
 				if( FLAG( brokenFlags, BI_NOTRESC ) )
-					result += ::GetMsgStr( TEXTMSG_GAME, STR_DETERIORATION_NO_RESC );
+					result += GetMsgStr( TEXTMSG_GAME, STR_DETERIORATION_NO_RESC );
 				else if( FLAG( brokenFlags, BI_LOWBROKEN ) )
-					result += ::GetMsgStr( TEXTMSG_GAME, STR_DETERIORATION_BROKEN_LOW );
+					result += GetMsgStr( TEXTMSG_GAME, STR_DETERIORATION_BROKEN_LOW );
 				else if( FLAG( brokenFlags, BI_NORMBROKEN ) )
-					result += ::GetMsgStr( TEXTMSG_GAME, STR_DETERIORATION_BROKEN_NORM );
+					result += GetMsgStr( TEXTMSG_GAME, STR_DETERIORATION_BROKEN_NORM );
 				else if( FLAG( brokenFlags, BI_HIGHBROKEN ) )
-					result += ::GetMsgStr( TEXTMSG_GAME, STR_DETERIORATION_BROKEN_HIGH );
+					result += GetMsgStr( TEXTMSG_GAME, STR_DETERIORATION_BROKEN_HIGH );
 				else
-					result += ::ReplaceText( ::GetMsgStr( TEXTMSG_GAME, STR_DETERIORATION_PROCENT ), "VALUE", item.Deterioration * 100 / MAX_DETERIORATION );
+					result += ReplaceText( GetMsgStr( TEXTMSG_GAME, STR_DETERIORATION_PROCENT ), "VALUE", item.Deterioration * 100 / MAX_DETERIORATION );
 				result += ( " / " + ( ( ( ( proto.MaxRepairCount > 0 ) ? ( proto.MaxRepairCount ) : 30 ) + 10 ) * 10 - item.RadioChannel ) + "%" );
 				
 				// Service
 				if( FLAG( brokenFlags, BI_SERVICE ) )
-					result += "\n" + ::GetMsgStr( TEXTMSG_GAME, STR_DETERIORATION_SERVICE );
+					result += "\n" + GetMsgStr( TEXTMSG_GAME, STR_DETERIORATION_SERVICE );
 
 				// Service ext
 				if( FLAG( brokenFlags, BI_SERVICE_EXT ) )
-					result += "\n" + ::GetMsgStr( TEXTMSG_GAME, STR_DETERIORATION_SERVICE_EXT );
+					result += "\n" + GetMsgStr( TEXTMSG_GAME, STR_DETERIORATION_SERVICE_EXT );
 
 				// Broken count
-				::CritterCl@ chosen = ::GetChosen();
+				CritterCl@ chosen = GetChosen();
 				if( chosen !is null && chosen.Perk[ PE_MR_FIXIT ] != 0 )
-					result += "\n" + ::ReplaceText( ::GetMsgStr( TEXTMSG_GAME, STR_DETERIORATION_BROKEN_COUNT ), "VALUE", item.BrokenCount );
+					result += "\n" + ReplaceText( GetMsgStr( TEXTMSG_GAME, STR_DETERIORATION_BROKEN_COUNT ), "VALUE", item.BrokenCount );
 			}
 
 			// Key id
 			if( proto.Type == ITEM_TYPE_KEY )
-				result += "\n" + ::ReplaceText( ::GetMsgStr( TEXTMSG_GAME, STR_INV_KEY_NUMBER ), "KEY_ID", item.LockerId );
+				result += "\n" + ReplaceText( GetMsgStr( TEXTMSG_GAME, STR_INV_KEY_NUMBER ), "KEY_ID", item.LockerId );
 			result += "\n          ";
 		}
 
 		// Format tags
 		if( item.Lexems != "" )
-			result = ::FormatTags( result, item.Lexems );
+			result = FormatTags( result, item.Lexems );
 
-		while( result.length() != 0 && ( ::substring( result, result.length() - 1, 1 ) == "\n" || ::substring( result, result.length() - 1, 1 ) == " " ) )
-			result = ::substring( result, 0, result.length() - 1 );
+		while( result.length() != 0 && ( substring( result, result.length() - 1, 1 ) == "\n" || substring( result, result.length() - 1, 1 ) == " " ) )
+			result = substring( result, 0, result.length() - 1 );
 
-		return @result;
+		return result;
 	}
 	
 	void LoseFocus( ) override
 	{
 		//LookType = ITEM_LOOK_ONLY_NAME;
-		if( @InformerDescriptor is @this )
+		if( InformerDescriptor is this )
 			SetItemInformer( -1, "", null, "", 0, 0, null );
 	}
 	
@@ -1081,17 +1083,17 @@ class Interface : IGUIListingElement, ::IGUIDragAndDropElement, Splitter::SplitR
 		{
 			SetItemInformer( -1, "", null, "", 0, 0, null );
 			if( !CtrlPressed )
-				GUI_SetDragAndDrop( cast<::IGUIDragAndDropElement@>(@this) );
-			else Here.Transfer( @this, Count, null );
+				GUI_SetDragAndDrop( cast<IGUIDragAndDropElement@>(@this) );
+			else Here.Transfer( this, Count, null );
 		}
 		else if( MOUSE_CLICK_RIGHT == click )
 		{
-			LMenu::Instance@ lmenu = LMenu::Prepare( @LMenuResult );
-			::ItemCl@ item = Item;
+			LMenu::Instance@ lmenu = LMenu::Prepare( LMenuResult );
+			ItemCl@ item = Item;
 			
 			if( Type == ITEM_TYPE_WEAPON )
 			{
-				::ItemCl@ item = Item;
+				ItemCl@ item = Item;
 				if( item !is null && item.AmmoCount > 0 )
 					lmenu.ShowNode( "Unload" );
 			}
@@ -1111,12 +1113,12 @@ class Interface : IGUIListingElement, ::IGUIDragAndDropElement, Splitter::SplitR
 	void MouseMove( int x, int y ) override
 	{
 		if( Item !is null )
-			SetItemInformer( LookType, GetDescription( Count, LookType ), Item, Item.Lexems, Item.Info, Proto, @this );
+			SetItemInformer( LookType, GetDescription( Count, LookType ), Item, Item.Lexems, Item.Info, Proto, this );
 	}
 	
 	Sprite::Sprite@ Image;
 	
-	::ItemCl@ get_Item ()
+	ItemCl@ get_Item ()
 	{
 		if( CritId != 0 )
 		{
@@ -1159,7 +1161,7 @@ class TransferData
 
 void LMenuResult( LMenu::Instance@ lmenu, string& result )
 {
-	Item::Interface@ item = cast<Item::Interface@>(lmenu.Owner);
+	Item::Interface@ item = cast<Item::Interface@>(@lmenu.Owner);
 	if( item is null )
 		return;
 		

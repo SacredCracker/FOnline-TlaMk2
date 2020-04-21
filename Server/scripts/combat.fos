@@ -117,118 +117,82 @@ CombatAlgoritm@ GetCombatAlgoritm( CombatProccess@ proccess )
 
 class CombatAlgoritm
 {
-	void Proccess()
+	void Proccess( )
 	{
-		@normalTarget = null;
+	
 	}
-
-	uint rounds;
-	Critter@ realTarget;
-	Critter@ normalTarget;
-	uint8 weaponUse;
-	uint8 weaponMode;
-	int baseToHit;
-	int distmod1;
-	int distmod2;
-	int accloss;
-	bool isCritical;
-	bool isHit;
-	CombatRes[]@ results;
-	bool changedTarget;
-	bool useHex;
-	bool useNormal;
+	
 	CombatProccess@ proccess;
 }
 
 class CombatAlgoritm_GunNormal : CombatAlgoritm
 {
+	bool CheckLightning()
+	{
+		if( proccess.IsWeaponPerk( WEAPON_PERK_LIGHTNING_WEAPON ) )
+		{
+			lightning_attack( proccess.Attacker, proccess.RealTarget, proccess.Weapon, proccess.WeaponMode );
+			return true;
+		}
+		return false;
+	}
+
 	void Proccess()
 	{
-		uint countShot = proccess.IsWeaponPerk( WEAPON_PERK_DOUBLE_SHOT ) ? 2 : 1;
-		ProtoItem@ weapon = GetProtoItem( proccess.WeaponPid );
-		uint16 ammoRound = _WeaponRound( weapon, weaponUse ) * countShot;
-		int dist = proccess.Distantion;
-		Map@ map = realTarget.GetMap();
-        if( isHit || changedTarget )
+        if( proccess.IsHit || proccess.IsChangeTarget() )
         {
-            if( proccess.IsWeaponPerk( WEAPON_PERK_LIGHTNING_WEAPON ) )
-                lightning_attack( proccess.Attacker, realTarget, weapon, weaponMode );
-            if( proccess.IsWeaponPerk( WEAPON_PERK_LIGHTNING_WEAPON ) || !proccess.IsLeon( realTarget, dist ) )
+            if( CheckLightning() || !proccess.IsLeon( proccess.RealTarget, proccess.Distantion ) )
             {
                 if( proccess.TypeDamage == DAMAGE_EXPLODE )
-                    map.RunEffect( PID_EXPLODE_ROCKET, realTarget.HexX, realTarget.HexY, 0, 0 );
-                ApplyDamage( proccess, realTarget, countShot, isCritical && isHit, !changedTarget, results );
+                    proccess.Map.RunEffect( PID_EXPLODE_ROCKET, proccess.RealTarget.HexX, proccess.RealTarget.HexY, 0, 0 );
+                ApplyDamage( proccess, proccess.RealTarget, proccess.WeaponAmmoRound, proccess.IsCritical && proccess.IsHit, !proccess.IsChangeTarget(), proccess.Results );
             }
             else
-                proccess.startLeon( realTarget, results );
+                proccess.startLeon( proccess.RealTarget, proccess.Results );
         }
-        else             // standard miss here
+        else // standard miss here
         {
             Critter@[] critsLine;
             proccess.Aim = HIT_LOCATION_UNCALLED;
-            int  bl = 0;
-            bool anyHit = false;
-			Critter@ crForI = null;
-			int acc = 0;
+            int blockers = 0;
 			int toHit = 0;
-			int perception = proccess.Attacker.Stat[ST_PERCEPTION];
-			int sharpshooter = 4 * proccess.Attacker.Perk[ PE_SHARPSHOOTER ];
-			bool eyeDamage = proccess.Attacker.Damage[ DAMAGE_EYE ] != 0;
-			
-			Critter@ target = GetCritter( proccess.TargetId );
-			int bonusToHit = weapon.Weapon_BonusToHit;
-			if( validEngineObject( proccess.RealWeapon ) )
-				bonusToHit += proccess.RealWeapon.WeaponBonus_ToHit;
-			int wpnMaxDist = ( _WeaponSkill( weapon, weaponUse ) == SK_THROWING ) ? ( MIN( int( _WeaponMaxDist( weapon, weaponUse ) ), 3 * MIN( int(10), ( proccess.Attacker.Stat[ ST_STRENGTH ] + 2 * proccess.Attacker.Perk[ PE_HEAVE_HO ] ) ) ) ) : ( _WeaponMaxDist( weapon, weaponUse ) );
-			for( int i = 0, iMax = map.GetCrittersPath( proccess.Hx, proccess.Hy, proccess.TargetHx, proccess.TargetHy, 0.0f, wpnMaxDist, FIND_LIFE_AND_KO, critsLine ); ( i < iMax ) && !anyHit; i++ )
+			Critter@ crForI = null;
+			Critter@ target = null; 
+			for( int i = 0, iMax = proccess.Map.GetCrittersPath( proccess.Hx, proccess.Hy, proccess.TargetHx, proccess.TargetHy, 0.0f, proccess.GetWeaponMaxDistance(), FIND_LIFE_AND_KO, critsLine ); i < iMax; i++ )
             {
 				@crForI = critsLine[ i ];
-				if( proccess.IsLeon( crForI, dist ) )
+				if( crForI is proccess.RealTarget )
 				{
-					proccess.startLeon( crForI, results );
+					blockers++;
 					continue;
 				}
-				if( crForI.Id == realTarget.Id )
+				
+				toHit = GetDistantion( proccess.Hx, proccess.Hy, crForI.HexX, crForI.HexY );
+				if( proccess.IsLeon( crForI, toHit ) )
 				{
-					bl++;
+					proccess.startLeon( crForI, proccess.Results );
 					continue;
-				}                                             // skip the primary target
-				// adjust tohit
-				dist = GetDistantion( proccess.Hx, proccess.Hy, crForI.HexX, crForI.HexY );
-				acc = dist;
-				toHit = baseToHit;
-				if( dist < distmod2 )
-					acc += distmod2;
-				else
-					acc -= accloss;
-				if( -2 * perception > acc )
-					acc = -2 * perception;
-				acc -= sharpshooter;
-				if( acc > 0 && eyeDamage )
-					acc *= 3;
-				acc *= -4;
-				toHit += acc;
-				toHit -= 10 * bl;
-				if( crForI.IsKnockout() )
-					toHit += 40;
-				else
-					bl++;
-				if( crForI.GetMultihex() > 0 )
-					toHit += 15;
-				toHit += bonusToHit;
-				toHit = CLAMP( toHit, 5, 95 );
-				toHit /= 3;                   // after clamp
+				}
+				
+				proccess.ToHitCalculated( crForI, crForI.HexX, crForI.HexY, HIT_LOCATION_UNCALLED, false, blockers );
+				toHit = proccess.ToHit * 0.33;
 				if( Random( 1, 100 ) <= toHit )
 				{
-					NotifyOops( proccess.Attacker, target, crForI, results );
-					@normalTarget = crForI;
-					useNormal = true;
-					ApplyDamage( proccess, normalTarget, countShot, false, false, results );
-					anyHit = true;
+					@target = crForI;
+					break;
 				}
 			}
-			if( !anyHit )
-				NotifyMiss( proccess.Attacker, results );
+			if( target !is null )
+			{
+				@proccess.RealTarget = target;
+				proccess.TargetHx = target.HexX;
+				proccess.TargetHy = target.HexY;
+				
+				proccess.UseNormal = true;
+				NotifyOops( proccess.Attacker, proccess.Target, target, proccess.Results );
+				ApplyDamage( proccess, target, proccess.WeaponAmmoRound, false, false, proccess.Results );
+				NotifyMiss( proccess.Attacker, proccess.Results );
+			}
 		}
 	}
 }
@@ -237,95 +201,58 @@ class CombatAlgoritm_Throwing : CombatAlgoritm
 {
 	void Proccess()
 	{
-		ProtoItem@ weapon = GetProtoItem( proccess.WeaponPid );
-		int dist = proccess.Distantion;
-		int sharpshooter = 4 * proccess.Attacker.Perk[ PE_SHARPSHOOTER ];
-		Map@ map = realTarget.GetMap();
-		int wpnMaxDist = ( _WeaponSkill( weapon, weaponUse ) == SK_THROWING ) ? ( MIN( int( _WeaponMaxDist( weapon, weaponUse ) ), 3 * MIN( int(10), ( proccess.Attacker.Stat[ ST_STRENGTH ] + 2 * proccess.Attacker.Perk[ PE_HEAVE_HO ] ) ) ) ) : ( _WeaponMaxDist( weapon, weaponUse ) );
-		if( proccess.IsLeon( realTarget, dist ) )
-            proccess.startLeon( realTarget, results );
-        else if( isHit || changedTarget )
-            ApplyDamage( proccess, realTarget, 1, isCritical && isHit, !changedTarget, results );
+		if( proccess.IsLeon( proccess.RealTarget, proccess.Distantion ) )
+            proccess.startLeon( proccess.RealTarget, proccess.Results );
+        else if( proccess.IsHit || proccess.IsChangeTarget() )
+            ApplyDamage( proccess, proccess.RealTarget, proccess.WeaponAmmoRound, proccess.IsCritical && proccess.IsHit, !proccess.IsChangeTarget(), proccess.Results );
         else
         {
             proccess.Aim = HIT_LOCATION_UNCALLED;
-            sharpshooter = 0;
             uint16 bx = 0,
                    by = 0,
                    pbx = 0,
                    pby = 0;
             Critter@[] critsLine;
 
-            int  bl = 0;
-            bool anyHit = false;
-			Critter@ crForI = null;
-			int acc = 0;
+            int blockers = 0;
 			int toHit = 0;
-			int perception = proccess.Attacker.Stat[ST_PERCEPTION];
-			bool eyeDamage = proccess.Attacker.Damage[ DAMAGE_EYE ] != 0;
-			int bonusToHit = weapon.Weapon_BonusToHit;
-			Critter@ target = GetCritter( proccess.TargetId );
-			if( validEngineObject( proccess.RealWeapon ) )
-				bonusToHit += proccess.RealWeapon.WeaponBonus_ToHit;
-            for( int i = 0, iMax = map.GetCrittersPath( proccess.Hx, proccess.Hy, proccess.TargetHx, proccess.TargetHy, 0.0f, wpnMaxDist, FIND_LIFE_AND_KO, critsLine, pbx, pby, bx, by ); ( i < iMax ) && !anyHit; i++ )
+			Critter@ crForI = null;
+			Critter@ target = null;
+            for( int i = 0, iMax = proccess.Map.GetCrittersPath( proccess.Hx, proccess.Hy, proccess.TargetHx, proccess.TargetHy, 0.0f, proccess.GetWeaponMaxDistance(), FIND_LIFE_AND_KO, critsLine, pbx, pby, bx, by ); i < iMax; i++ )
             {
                 @crForI = critsLine[ i ];
 
-                if( crForI.Id == realTarget.Id )
+                if( crForI is proccess.RealTarget )
                 {
-                    bl++;
-                    continue;
-                }                                                              // skip the primary target
-
-                if( proccess.IsLeon( crForI, dist ) )
-                {
-                    proccess.startLeon( crForI, results );
+                    blockers++;
                     continue;
                 }
-
-                // adjust tohit
-                dist = GetDistantion( proccess.Hx, proccess.Hy, crForI.HexX, crForI.HexY );
-                acc = dist;
-                toHit = baseToHit;
-                if( dist < distmod2 )
-                    acc += distmod2;
-                else
-                    acc -= accloss;
-                if( -2 * perception > acc )
-                    acc = -2 * perception;
-                acc -= sharpshooter;
-                if( acc > 0 && eyeDamage )
-                    acc *= 3;
-                acc *= -4;
-                toHit += acc;
-                toHit -= 10 * bl;
-                if( crForI.IsKnockout() )
-                    toHit += 40;
-                else
-                    bl++;
-                if( crForI.GetMultihex() > 0 )
-                    toHit += 15;
-                toHit += bonusToHit;
-                toHit = CLAMP( toHit, 5, 95 );
-                toHit /= 3;               // after clamp
+				
+                toHit = GetDistantion( proccess.Hx, proccess.Hy, crForI.HexX, crForI.HexY );
+                if( proccess.IsLeon( crForI, toHit ) )
+                {
+                    proccess.startLeon( crForI, proccess.Results );
+                    continue;
+                }
+				
+				proccess.ToHitCalculated( crForI, crForI.HexX, crForI.HexY, HIT_LOCATION_UNCALLED, false, blockers );
+				toHit = proccess.ToHit * 0.33;
                 if( Random( 1, 100 ) <= toHit )
-                {
-                    proccess.TargetHx = crForI.HexX;
-                    proccess.TargetHy = crForI.HexY;
-                    @normalTarget = crForI;
-                    anyHit = true;
-                }
+                    @target = crForI;
             }
-            if( anyHit )
+            if( target !is null )
             {
-                NotifyOops( proccess.Attacker, target, normalTarget, results );
-                useNormal = true;
-                ApplyDamage( proccess, normalTarget, 1, false, false, results );
+				@proccess.RealTarget = target;
+				proccess.TargetHx = target.HexX;
+				proccess.TargetHy = target.HexY;
+                NotifyOops( proccess.Attacker, proccess.Target, target, proccess.Results );
+                proccess.UseNormal = true;
+                ApplyDamage( proccess, target, proccess.WeaponAmmoRound, false, false, proccess.Results );
             }
             else
             {
-                useHex = true;
-                NotifyMiss( proccess.Attacker, results );
+                proccess.UseHex = true;
+                NotifyMiss( proccess.Attacker, proccess.Results );
                 proccess.TargetHx = pbx;
                 proccess.TargetHy = pby;
             }
@@ -337,25 +264,23 @@ class CombatAlgoritm_Unarmed : CombatAlgoritm
 {
 	void Proccess()
 	{
-		int dist = proccess.Distantion;
-		if( proccess.IsLeon( realTarget, dist ) )
-            proccess.startLeon( realTarget, results );  // TabaK. Уворот от рукопашной атаки. хз, надо ли.
-        else if( isHit )
+		if( proccess.IsLeon( proccess.RealTarget, proccess.Distantion ) )
+            proccess.startLeon( proccess.RealTarget, proccess.Results );  // TabaK. Уворот от рукопашной атаки. хз, надо ли.
+        else if( proccess.IsHit )
         {
-			Critter@ target = GetCritter( proccess.TargetId );
-            if( proccess.Attacker.Mode[ MODE_HIDE ] != 0 && proccess.Attacker.Perk[ PE_SILENT_DEATH ] != 0 && ( proccess.Attacker.Dir == target.Dir || ( ( proccess.Attacker.Dir + 1 ) % 6 ) == target.Dir || ( ( proccess.Attacker.Dir + 5 ) % 6 ) == target.Dir ) )
+            if( proccess.Attacker.Mode[ MODE_HIDE ] != 0 && proccess.IsSilentAtack( proccess.RealTarget ) )
             {
-                proccess.Attacker.ModeBase[ MODE_HIDE ] = 0;
+                proccess.UnSneak( proccess.Attacker );
                 proccess.DmgMul *= 2;
             }
-            ApplyDamage( proccess, realTarget, 1, isCritical && isHit, true, results );
+            ApplyDamage( proccess, proccess.RealTarget, 1, proccess.IsCritical && proccess.IsHit, true, proccess.Results );
         }
         else
         {
-            if( changedTarget )
-                ApplyDamage( proccess, realTarget, 1, false, false, results );
+            if( proccess.IsChangeTarget() )
+                ApplyDamage( proccess, proccess.RealTarget, 1, false, false, proccess.Results );
             else
-                NotifyMiss( proccess.Attacker, results );
+                NotifyMiss( proccess.Attacker, proccess.Results );
         }
 	}
 }
@@ -381,7 +306,6 @@ class CombatAlgoritm_Burst : CombatAlgoritm
 	CombatAlgoritm_Burst()
 	{
 		Clear();
-		rounds = 0;
 	}
 		
 	void Clear( )
@@ -396,7 +320,7 @@ class CombatAlgoritm_Burst : CombatAlgoritm
 		critsHit.insertFirst( critter );
         critsHitBullets.insertFirst( data );
         countHitTargets++;
-		rounds -= data.rounds;
+		proccess.WeaponAmmoRound -= data.rounds;
 	}
 	
 	bool CritterIsTarget( Critter& critter )
@@ -407,60 +331,48 @@ class CombatAlgoritm_Burst : CombatAlgoritm
 	void Proccess( )
 	{
 		Clear();
-        bool criticalHit = isCritical && isHit;
-		// adjust toHit if random hit
-
-		ProtoItem@ weapon = GetProtoItem( proccess.WeaponPid );
-		int bonusToHit = weapon.Weapon_BonusToHit + proccess.RealWeapon.WeaponBonus_ToHit;
+        bool criticalHit = proccess.IsCritical && proccess.IsHit;
+			
+		StartRounds = proccess.WeaponAmmoRound;
 		
-		if( rounds > _WeaponRound( weapon, weaponUse ) )
-			rounds = _WeaponRound( weapon, weaponUse );
-		
-		// proceed with the burst proccess
-		if( proccess.RealWeapon.AmmoCount < rounds )
-			rounds = proccess.RealWeapon.AmmoCount;
-		StartRounds = rounds;
-		
-		Map@ map = proccess.Attacker.GetMap();
-		
-        if( realTarget !is null )
+        if( proccess.RealTarget !is null )
 		{
-			if( !ParseTarget( realTarget, map, bonusToHit, penaltyEffectSecondTargets, false ) )
+			if( !ParseTarget( proccess.RealTarget, penaltyEffectSecondTargets, false ) )
 				criticalHit = false;
 		}
 		
-		uint8 angle_effect = _WeaponAngleEffective( weapon, weaponUse );
-		uint8 angle_second = _WeaponAngleSecond( weapon, weaponUse );
+		uint8 angle_effect = _WeaponAngleEffective( proccess.Weapon, proccess.WeaponUse );
+		uint8 angle_second = _WeaponAngleSecond( proccess.Weapon, proccess.WeaponUse );
 		
-		int wpnMaxDist = ( _WeaponSkill( weapon, weaponUse ) == SK_THROWING ) ? ( MIN( int( _WeaponMaxDist( weapon, weaponUse ) ), 3 * MIN( int(10), ( proccess.Attacker.Stat[ ST_STRENGTH ] + 2 * proccess.Attacker.Perk[ PE_HEAVE_HO ] ) ) ) ) : ( _WeaponMaxDist( weapon, weaponUse ) );
-        ParseAngle( map, bonusToHit, penaltyEffectSecondTargets, 0 - angle_effect, angle_effect, wpnMaxDist, false );
+		int wpnMaxDist = proccess.GetWeaponMaxDistance();
+		ParseAngle( penaltyEffectSecondTargets, 0 - angle_effect, angle_effect, wpnMaxDist, false );
 		if( angle_second > angle_effect )
 		{
-			ParseAngle( map, bonusToHit, penaltySecondTargets, Random( 0 - angle_second, -1 - angle_effect ), 0 - angle_effect, wpnMaxDist, false );
-			ParseAngle( map, bonusToHit, penaltySecondTargets, angle_effect, Random( angle_effect + 1, angle_second ), wpnMaxDist, false );
+			ParseAngle( penaltySecondTargets, Random( 0 - angle_second, -1 - angle_effect ), 0 - angle_effect, wpnMaxDist, false );
+			ParseAngle( penaltySecondTargets, angle_effect, Random( angle_effect + 1, angle_second ), wpnMaxDist, false );
 		}
-        Damage( map, criticalHit );
+        Damage( criticalHit );
 		
         if( !proccess.TargetHit && proccess.TargetId != 0 )
-            NotifyMiss( proccess.Attacker, results );
+            NotifyMiss( proccess.Attacker, proccess.Results );
+			
+		proccess.WeaponAmmoRound = StartRounds;
 	}
 
-	void ParseAngle( Map@ map, int bonusToHit, float hitModule, int angleBegin, int angleEnd, int distance, bool stopBurst )
+	void ParseAngle( float hitModule, int angleBegin, int angleEnd, int distance, bool stopBurst )
 	{
 		Critter@[] sTargets;
 		
 		angleEnd++;
 		for( int angle = angleBegin; angle < angleEnd; angle++ )
-			map.GetCrittersPath( proccess.Hx, proccess.Hy, proccess.TargetHx, proccess.TargetHy, float( angle ), distance, FIND_LIFE_AND_KO, sTargets );
+			proccess.Map.GetCrittersPath( proccess.Hx, proccess.Hy, proccess.TargetHx, proccess.TargetHy, float( angle ), distance, FIND_LIFE_AND_KO, sTargets );
 		
-        Parse( map, sTargets, bonusToHit, penaltySecondTargets, stopBurst );
+        Parse( sTargets, penaltySecondTargets, stopBurst );
 	}
 	
-	void Damage( Map@ map, bool criticalHit )
+	void Damage( bool criticalHit )
 	{
-		Critter@ target = GetCritter( proccess.TargetId );
 		Critter@ crForI = null;
-		const uint realTargId = realTarget is null ? 0 : realTarget.Id;
 		DebugTraccer traccer;
 		traccer.AttackerId = proccess.Attacker.Id;
 		traccer.CountRounds = StartRounds;
@@ -468,7 +380,7 @@ class CombatAlgoritm_Burst : CombatAlgoritm
         {
             @crForI = critsHit[ i ];
             if( proccess.TypeDamage == DAMAGE_EXPLODE )
-                map.RunEffect( PID_EXPLODE_ROCKET, crForI.HexX, crForI.HexY, 0, 0 );
+                proccess.Map.RunEffect( PID_EXPLODE_ROCKET, crForI.HexX, crForI.HexY, 0, 0 );
 
 			BurstHitData@ data = critsHitBullets[ i ];
 			traccer.TargetId = crForI.Id;
@@ -482,52 +394,48 @@ class CombatAlgoritm_Burst : CombatAlgoritm
 			
 			if( data.rounds != 0 )
 			{
-				if( target !is null && target.Id == crForI.Id ) proccess.TargetHit = true;
-				ApplyDamage( proccess, crForI, data.rounds, ( realTargId == crForI.Id ) && criticalHit, ( proccess.Attacker.IsPlayer() && !changedTarget ) || ( !proccess.Attacker.IsPlayer() && target !is null && target.Id == crForI.Id ), results );
+				if( proccess.Target is crForI ) proccess.TargetHit = true;
+				ApplyDamage( proccess, crForI, data.rounds, ( proccess.Target is crForI ) && criticalHit, ( proccess.Attacker.IsPlayer() && !proccess.IsChangeTarget() ) || ( !proccess.Attacker.IsPlayer() && proccess.Target is crForI ), proccess.Results );
 			}
         }
 	}
 	
-	bool ParseTarget( Critter& target, Map@ map, int bonusToHit, float hitModule, bool stopBurst )
+	bool ParseTarget( Critter& target, float hitModule, bool stopBurst )
 	{
 		if( CritterIsTarget( target) )
 			return false;
 	
 		const int perception = proccess.Attacker.Stat[ST_PERCEPTION] * -2;
 		const int sharpshooter = 4 * proccess.Attacker.Perk[ PE_SHARPSHOOTER ];
-		const bool eyeDamage = proccess.Attacker.Damage[ DAMAGE_EYE ] != 0;
+		const int accloss = ( proccess.Attacker.IsPlayer() ? ( perception - 2 ) * proccess.DistanceMod1 : ( perception * proccess.DistanceMod1 ) );
 		// adjust tohit
-        int toHit = baseToHit * hitModule;
 		int distantion = GetDistantion( proccess.Hx, proccess.Hy, target.HexX, target.HexY );
-		int acc = distantion;
-		if( distantion < distmod2 )
-			acc += distmod2;
+        int toHit = distantion;
+		if( distantion < proccess.DistanceMod2 )
+			toHit += proccess.DistanceMod2;
 		else
-			acc -= accloss;
-		if( perception > acc )
-			acc = perception;
-		acc -= sharpshooter;
-		if( acc > 0 && eyeDamage )
-			acc *= 3;
-		acc *= -4;
-		toHit += acc;
-		toHit += bonusToHit;
+			toHit -= accloss;
+		if( perception > toHit )
+			toHit = perception;
+		toHit -= sharpshooter;
+		if( toHit > 0 && proccess.WeaponIsGrenade() )
+			toHit *= 3;
+		toHit *= -4;
+		toHit += proccess.BaseToHit * hitModule;
 		if( target.IsKnockout() )
 			toHit += 40;
-				
-		if( target.GetMultihex() > 0 )
-			toHit += 15;
+		toHit += 15 * target.GetMultihex();
 					
-		toHit -= 10 * map.GetCrittersPath( proccess.Hx, proccess.Hy, target.HexX, target.HexY, 0.0f, distantion, FIND_LIFE, null );
+		toHit -= 10 * proccess.Map.GetCrittersPath( proccess.Hx, proccess.Hy, target.HexX, target.HexY, 0.0f, distantion, FIND_LIFE, null );
 					
-		int penalty = GetSmokePenalty( map, proccess.Attacker, target, 0, 0 );
+		int penalty = GetSmokePenalty( proccess.Map, proccess.Attacker, target, 0, 0 );
 		penalty += int( log( float(distantion) ) / log( 2.0f ) ) * 15;
 			
-		uint curRounds = 0;
+		int curRounds = 0;
 		BurstHitData data;
 		LeonHash leon( target, distantion );
 		
-		for( ;curRounds < rounds;)
+		for( ;curRounds < proccess.WeaponAmmoRound;)
 		{
 			curRounds++;
 			if( Random( 0, 99 ) <= CLAMP( toHit - modeToHitForNextBulets * curRounds, 5, 95 - penalty ) )
@@ -536,7 +444,7 @@ class CombatAlgoritm_Burst : CombatAlgoritm
 					data.rounds++;
 				else data.leon++;
 			}
-			else if( stopBurst || baseToHit * 0.1 + 50 < Random( 0, 99 ) )
+			else if( stopBurst || proccess.BaseToHit * 0.1 + 50 < Random( 0, 99 ) )
 				break;
 		}
 			
@@ -548,16 +456,16 @@ class CombatAlgoritm_Burst : CombatAlgoritm
 		return false;
 	}
 	
-	void Parse( Map@ map, Critter@[]& sTargets, int bonusToHit, float hitModule, bool stopBurst )
+	void Parse( Critter@[]& sTargets, float hitModule, bool stopBurst )
 	{
 		uint countTargets = sTargets.length();
 		Critter@ crForI = null;
-        for( uint i = Random( 0, countTargets - 1 ); countTargets > 0 && rounds > 0; i = Random( 0, countTargets - 1 ) )
+        for( uint i = Random( 0, countTargets - 1 ); countTargets > 0 && proccess.WeaponAmmoRound > 0; i = Random( 0, countTargets - 1 ) )
         {
             @crForI = sTargets[ i ];
 			sTargets.removeAt(i);
 			countTargets--;
-			ParseTarget( crForI, map, bonusToHit, hitModule, stopBurst);
+			ParseTarget( crForI, hitModule, stopBurst);
         }
 	}
 }
@@ -589,8 +497,6 @@ void startCombatTimeout( Critter& target, bool sneak = true )
 	}
 }
 
-funcdef uint GetHitAimFuncdef( int hitLocation );
-
 uint GetHitAimDefault( int hitLocation )
 {
 	return GetHitAim( hitLocation );
@@ -603,81 +509,46 @@ uint GetHitAimUnarmed( int hitLocation )
 
 class Combat : CombatProccess
 {
-	Map@ Map;
+	bool IsHexAttack;
+	bool IsQuakeScreen;
+	uint ExplodeId;
+	uint Radius;
 
-	ProtoItem@ Weapon;
-	int WeaponAmmoRound;
-	int WeaponSkill;
-	
-	int CriticalChance;
-	int BaseToHit;
-	int ToHit;
-
-	bool IsHit;
-	bool IsRandomHit;
-	bool IsJinked;
-	bool IsAim;
-
-    CombatRes[]@ Results;
-	
-	uint AttackDistantion;
-	uint CriticalFailFlags;
-	
-	int DistanceMod1;
-	int DistanceMod2;
-	
-	GetHitAimFuncdef@ GetHitAim;
-	
-	CombatAlgoritm@ Algoritm;
-	
-	#define WeaponAndUse Weapon, WeaponUse
-
-	Combat( Critter& attacker, Critter& target, ProtoItem& weapon, uint8 weaponMode, ProtoItem@ ammo )
+	Combat( Critter& attacker, Critter@ target, ProtoItem& weapon, uint8 weaponMode, ProtoItem@ ammo )
 	{
 		super();
-		Prepare( attacker, target, weapon, weaponMode, ammo );
+		Prepare( attacker, target, target.HexX, target.HexY, weapon, weaponMode, ammo );
+	}
+
+	Combat( Critter& attacker, uint16 targetX, uint16 targetY, ProtoItem& weapon, uint8 weaponMode, ProtoItem@ ammo )
+	{
+		super();
+		Prepare( attacker, null, targetX, targetY, weapon, weaponMode, ammo );
 	}
 	
-	void Clear() override
+	void Clear()
 	{
 		CombatProccess::Clear();
-		@Results = null;
-		@GetHitAim = null;
-		@Algoritm = null;
-		
-		@Weapon = null;
-		WeaponSkill = 0;
-		WeaponAmmoRound = 0;
-		
-		@RealTarget = null;
-		CriticalChance = 0;
-		BaseToHit = 0;
-		ToHit = 0;
-		
-		IsHit = false;
-		IsRandomHit = false;
-		IsJinked = false;
-		
-		CombatMessage = true;
-		
-		@Map = null;
-		AttackDistantion = 0;
-		
-		DistanceMod1 = 2;
-		DistanceMod2 = 0;
-		
-		CriticalFailFlags = 0;
-		
-		IsAim = false;
+		IsHexAttack = false;
+		IsQuakeScreen = false;
+		ExplodeId = 0;
+		Radius = 0;
 	}
 	
-	void Prepare( Critter& attacker, Critter& target, ProtoItem& weapon, uint8 weaponMode, ProtoItem@ ammo )
+	void Prepare( Critter& attacker, Critter@ target, uint16 targetX, uint16 targetY, ProtoItem& weapon, uint8 weaponMode, ProtoItem@ ammo )
 	{
 		Clear();
 		@Results = CombatRes[]();
 		@GetHitAim = GetHitAimDefault;
 		
-		SetTarget( target );
+		IsHexAttack = target is null;
+		
+		if( IsHexAttack )
+		{
+			UseHex = true;
+			SetTargetHex( targetX, targetY );
+		}
+		else SetTarget( target );
 		SetAttacker( attacker );
 		SetProtoWeapon( weapon, weaponMode );
 		FillAim();
@@ -690,7 +561,64 @@ class Combat : CombatProccess
 		FillUnarmed();
 		FillWeaponPerks();
 		FillBookBonus();
+		FillEffects();
 		BaseToHitCalculated();
+	}
+	
+	void FillEffects()
+	{
+		 bool 	isRocket = ( AmmoPid == PID_CANNON_BALLS_FRAG ) || ( AmmoPid == PID_EXPLOSIVE_ROCKET ) || ( AmmoPid == PID_ROCKET_AP ) || ( AmmoPid == PID_ROBO_ROCKET_AMMO ) || ( AmmoPid == PID_EMP_ROCKET ) || ( AmmoPid == PID_NUKE_ROCKET ) || ( AmmoPid == PID_ROCKET_FIRE ),
+				explode = ( ( isRocket ) || ( WeaponPid == PID_MOLOTOV_COCKTAIL ) || ( WeaponPid == PID_FRAG_GRENADE ) ||
+                     ( WeaponPid == PID_PULSE_GRENADE ) || ( WeaponPid == PID_PLASMA_GRENADE ) || ( WeaponPid == PID_PLASMA_CANNON ) || ( WeaponPid == PID_GRANADE_REVOLV_I ) || ( WeaponPid == PID_GRANADE_REVOLV_II ) || ( WeaponPid == PID_GRANADE_PISTOL ) || ( WeaponPid == PID_REVOLV_GRENADE ) ||
+                     ( WeaponPid == PID_HOLY_HAND_GRENADE ) || WeaponPid == PID_FIRE_GRENADE );
+        IsQuakeScreen = ( explode && WeaponPid != PID_PLASMA_CANNON && WeaponPid != PID_MOLOTOV_COCKTAIL && WeaponPid != PID_FIRE_GRENADE && AmmoPid != PID_ROCKET_FIRE );
+
+		Radius += Weapon.HexWeapon_Radius;
+
+		if( explode || WeaponSkill == SK_TRAPS )
+		{
+			if( Radius == 0 )
+			{
+				Radius = ( WeaponPid == PID_GRANADE_REVOLV_I || WeaponPid == PID_GRANADE_REVOLV_II || WeaponPid == PID_GRANADE_PISTOL || WeaponPid == PID_REVOLV_GRENADE ) ? 1 : 2;
+				if( AmmoPid == PID_NUKE_ROCKET )
+					Radius = 35;
+			}
+			switch( WeaponPid )
+			{
+				case PID_MOLOTOV_COCKTAIL:
+					ExplodeId = PID_EXPLODE_FIRE_BIG;
+					break;
+				case PID_FIRE_GRENADE:
+					ExplodeId = PID_EXPLODE_FIRE_BIG;
+					break;
+				case PID_FRAG_GRENADE:
+				case PID_HOLY_HAND_GRENADE:
+					ExplodeId = PID_EXPLODE_FIRE_SMALL;
+					break;
+				case PID_PULSE_GRENADE:
+					ExplodeId = PID_EXPLODE_EMP;
+					break;
+				case PID_PLASMA_GRENADE:
+				case PID_PLASMA_CANNON:
+					ExplodeId = PID_EXPLODE_PLASMA;
+					break;
+
+				default:
+				{
+					if( isRocket )
+					{
+						if( AmmoPid == PID_EMP_ROCKET )
+							ExplodeId = PID_EXPLODE_EMP;
+						else if( AmmoPid == PID_NUKE_ROCKET )
+							ExplodeId = PID_EXPLODE_NUKLEAR;
+						else
+							ExplodeId = PID_EXPLODE_ROCKET;
+					}
+					else
+						ExplodeId = PID_EXPLODE_FIRE_BIG;
+				} break;
+			}
+		}
 	}
 	
 	void FillBookBonus()
@@ -725,6 +653,9 @@ class Combat : CombatProccess
 		
         if( IsWeaponPerk( WEAPON_PERK_SCOPE_RANGE ) )
             CriticalChance += 15;
+			
+		if( IsWeaponPerk( WEAPON_PERK_DOUBLE_SHOT ) )
+			WeaponAmmoRound *= 2;
 	}
 	
 	void FillMap()
@@ -768,26 +699,34 @@ class Combat : CombatProccess
 			IsJinked = true;
 	}
 	
-	void SetTarget( Critter& target )
+	void SetTarget( Critter@ target )
 	{
 		@Target = target;
-		SetRealTarget( target );
-		
-		if( Target.Trait[ TRAIT_JINXED ] != 0 || Target.Perk[ PE_JINXED_II ] != 0 )
-			IsJinked = true;
+		if( Target !is null )
+		{
+			SetRealTarget( Target );
+			
+			if( Target.Trait[ TRAIT_JINXED ] != 0 || Target.Perk[ PE_JINXED_II ] != 0 )
+				IsJinked = true;
+		}
+	}
+	
+	void SetTargetHex( uint16 hexX, uint16 hexY )
+	{
+		TargetHx = hexX;
+		TargetHy = hexY;
 	}
 	
 	void SetRealTarget( Critter& target )
 	{
-		@RealTarget = Target;
-		TargetHx = RealTarget.HexX;
-		TargetHy = RealTarget.HexY;
+		@RealTarget = target;
+		if( RealTarget !is null )
+			SetTargetHex( RealTarget.HexX,	RealTarget.HexY );
 	}
 	
 	void FillWeapon()
 	{
 		@RealWeapon = _CritGetItemHand( Attacker );
-		
 		if( RealWeapon !is null )
 		{
 			DmgMin += RealWeapon.WeaponBonus_MinDamage;
@@ -796,6 +735,12 @@ class Combat : CombatProccess
 			BaseToHit += RealWeapon.WeaponBonus_ToHit;
 			
 			CriticalChance += RealWeapon.WeaponBonus_CritChance;
+			
+			if( IsBurst )
+			{
+				if( RealWeapon.AmmoCount < WeaponAmmoRound )
+					WeaponAmmoRound = RealWeapon.AmmoCount;
+			}
 		}
 	}
 	
@@ -828,7 +773,9 @@ class Combat : CombatProccess
 		
 		CriticalChance += Weapon.Weapon_CriticalBonus;
 		
-		UpdateProtoId();
+		TypeAttack = _WeaponAttackType( Weapon, WeaponUse );
+		
+		UpdateWeaponProtoId();
 		UpdateTypeDamage();
 	}
 	
@@ -845,7 +792,7 @@ class Combat : CombatProccess
 		IsAim = Aim != HIT_LOCATION_UNCALLED && Aim != HIT_LOCATION_NONE && Aim != HIT_LOCATION_TORSO;
 	}
 	
-	void UpdateProtoId()
+	void UpdateWeaponProtoId()
 	{
 		switch( Weapon.ProtoId )
 		{
@@ -916,83 +863,21 @@ class Combat : CombatProccess
 			DDMod += ammo.Ammo_DmgDiv;
 			TDMod += ammo.Ammo_DTDiv;
 			DmgMul += DMMod;
+			if( AmmoPerk == WEAPON_PERK_HEX_ATTACKING )
+				TypeAttack = WTA_RADIUS_HEX;
 			UpdateTypeDamage( );
 		}
 	}
 	
-	void UpdateTypeDamage( )
-	{
-		if( Ammo is null || Ammo.Ammo_DmgType == 0 )
-			TypeDamage = _WeaponDmgType( Weapon, WeaponUse );
-		else
-			TypeDamage =  Ammo.Ammo_DmgType;
-	}
-	
-	int GetWeaponMaxDistance()
-	{
-		if( WeaponSkill == SK_THROWING )
-			return MIN( _WeaponMaxDist( Weapon, WeaponUse ), 3 * MIN( 10, ( Attacker.Stat[ ST_STRENGTH ] + 2 * Attacker.Perk[ PE_HEAVE_HO ] ) ) );
-		return _WeaponMaxDist( Weapon, WeaponUse );
-	}
-	
-	int GetWeaponSubType()
-	{
-		switch( WeaponSkill )
-		{
-			case SK_DOCTOR:
-			case SK_SMALL_GUNS:
-			case SK_BIG_GUNS:
-			case SK_ENERGY_WEAPONS:
-				return WS_GUN;
-				
-			case SK_THROWING:
-				return WS_THROWING;
-				
-			default: 
-				return WS_UNARMED;
-		}
-		return 0;
-	}
-	
-	bool WeaponIsGrenade()
-	{
-		return WeaponSubtype == WS_THROWING && TypeDamage != DAMAGE_NORMAL;
-	}
-	
-	int GetAim( )
-	{
-		if( IsBurst )
-			return HIT_LOCATION_UNCALLED;
-		if( Target is null )
-			return HIT_LOCATION_UNCALLED;
-		if( _WeaponModeAim( WeaponMode ) == HIT_LOCATION_EYES && ( Attacker.Dir + 3 ) % 6 != Target.Dir )
-			return HIT_LOCATION_HEAD;
-		return _WeaponModeAim( WeaponMode );
-	}
-	
-	bool IsAttackerEyeDamage()
-	{
-		return Attacker.Damage[ DAMAGE_EYE ] != 0;
-	}
-	
-	bool GetBloodyMess()
-	{
-		return Attacker.Trait[ TRAIT_BLOODY_MESS ] != 0;
-	}
-	
 	bool CheckAmmo( )
 	{
+		if( Weapon.Ammo_Caliber == 0 || Weapon.Weapon_MaxAmmoCount == 0 || Attacker.Mode[MODE_UNLIMITED_AMMO] != 0 )
+			return true;
 		if( !validEngineObject( RealWeapon ) )
 			return true;
 		if( IsBurst )
 			return RealWeapon.AmmoCount != 0;
-		return WeaponAmmoRound < RealWeapon.AmmoCount;
-	}
-	
-	void UnSneak( Critter& critter )
-	{
-		if( critter.IsNpc() || critter.GetAccess() != ACCESS_ADMIN )
-			critter.ModeBase[ MODE_HIDE ] = 0;
+		return WeaponAmmoRound <= RealWeapon.AmmoCount;
 	}
 	
 	void SetAttackerDirection( )
@@ -1056,6 +941,8 @@ class Combat : CombatProccess
 	
 	void Miss( )
 	{
+		if(Target is null)
+			return;
 		if( Target.IsNpc() )
 			AI_TrySayCombatText( Target, COMBAT_TEXT_MISS );
 		Target.Action( ACTION_DODGE, 0, null );     // Todo: type front/back
@@ -1093,30 +980,28 @@ class Combat : CombatProccess
         }
 	}
 	
-	void ToHitCalculated( Critter@ target, uint16 targethx, uint16 targethy, int aim )
+	void ToHitCalculated( Critter@ target, uint16 targethx, uint16 targethy, int aim, bool checkBlockers, int& blockers )
 	{
-		ToHit = BaseToHit - GetHitAim( aim );
-		
-		int perception = Attacker.Stat[ ST_PERCEPTION ],
-			distantion = GetDistantion( Hx, Hy, targethx, targethy ),
-			acc = distantion,
-			accloss = ( Attacker.IsPlayer() ? ( perception - 2 ) * DistanceMod1 : ( perception * DistanceMod1 ) ),
-			sharpshooter = 4 * Attacker.Perk[ PE_SHARPSHOOTER ];
-
+		ToHit = 0;
 		if( !ScoreUnarmed )
 		{
-			if( distantion < DistanceMod2 )
-				acc += DistanceMod2;
+			ToHit = GetDistantion( Hx, Hy, targethx, targethy );
+			int perception = Attacker.Stat[ ST_PERCEPTION ],
+				sharpshooter = 4 * Attacker.Perk[ PE_SHARPSHOOTER ],
+				accloss = ( Attacker.IsPlayer() ? ( perception - 2 ) * DistanceMod1 : ( perception * DistanceMod1 ) );
+			if(checkBlockers)
+				blockers = Map.GetCrittersPath( Hx, Hy, targethx, targethy, 0.0f, ToHit, FIND_LIFE, null );
+			
+			if( ToHit < DistanceMod2 )
+				ToHit += DistanceMod2;
 			else
-				acc -= accloss;
-			if( -2 * perception > acc )
-				acc = -2 * perception;
-			acc -= sharpshooter;
-			if( acc > 0 && IsAttackerEyeDamage() )
-				acc *= 3;
-			acc *= -4;
-			ToHit += acc;
-			int blockers = Map.GetCrittersPath( Hx, Hy, targethx, targethy, 0.0f, distantion, FIND_LIFE, null );
+				ToHit -= accloss;
+			if( -2 * perception > ToHit )
+				ToHit = -2 * perception;
+			ToHit -= sharpshooter;
+			if( ToHit > 0 && IsAttackerEyeDamage() )
+				ToHit *= 3;
+			ToHit *= -4;
 			if( target !is null && !target.IsKnockout() )
 				blockers--;
 			ToHit -= 10 * blockers;
@@ -1128,7 +1013,8 @@ class Combat : CombatProccess
 				ToHit += 40;
 			ToHit += 15 * target.GetMultihex();
 		}
-		
+
+		ToHit += BaseToHit - GetHitAim( aim );
 		ToHit = CLAMP( ToHit, 5, 95 );
 
 		// smoke penalty
@@ -1136,7 +1022,7 @@ class Combat : CombatProccess
 			ToHit -= GetSmokePenalty( Map, Attacker, target, targethx, targethy );
 	}
 	
-	int MarginCheck( )
+	int HitCheck( )
 	{
 		int margin = ToHit - Random( 1, 100 );
 
@@ -1149,9 +1035,9 @@ class Combat : CombatProccess
 		return margin;
 	}
 	
-	void MarginProccess( int roll )
+	void MissProccess( int roll )
 	{
-        // not setting isHit, we try a critical failure
+        // not setting isHit, we try a critical failure		
         if( Attacker.Mode[ MODE_INVULNERABLE ] == 0 )
         {
             if( !IsCritical )
@@ -1175,40 +1061,58 @@ class Combat : CombatProccess
                 IsRandomHit = FLAG( CriticalFailFlags, MF_HIT_RANDOMLY );
             }
         }
+		
+		if( IsHexAttack )
+		{
+			IsRandomHit = true;
+		}
 	}
 	
 	void HitProccess( int roll )
 	{
 		IsHit = true;
-		
         IsCritical = Random( 1, 100 ) <= CriticalChance;
-        if( IsCritical && Random( 1, 100 ) <= RealTarget.Stat[ ST_CRITICAL_RESISTANCE ] - ( CriticalChance > 100 ? ( CriticalChance - 100 ) : 0 ) )
+		
+		int criticalResistance = 0;
+		if( RealTarget !is null )
+			criticalResistance = RealTarget.Stat[ ST_CRITICAL_RESISTANCE ];
+        if( IsCritical && Random( 1, 100 ) <=  criticalResistance - ( CriticalChance > 100 ? ( CriticalChance - 100 ) : 0 ) )
             IsCritical = false;		
 	}
 	
-	void RandomHitProccess()
+	void RandomHitProccess( int roll )
 	{
 		if( IsRandomHit )
 		{
-			Critter@ randomTarget = ChooseRandomTarget( Map, Attacker, RealTarget, _WeaponMaxDist( Weapon, WeaponUse ) );
-			if( validEngineObject( randomTarget ) )
+			if( IsHexAttack )
 			{
-				SetRealTarget( randomTarget );
-				Aim = HIT_LOCATION_UNCALLED;
-				
-				NotifyOops( Attacker, Target, randomTarget, Results );
+				if( Attacker.IsPlayer() )
+					Attacker.SayMsg( SAY_NETMSG, TEXTMSG_COMBAT, 109 );
+				if( Random( Attacker.Stat[ ST_LUCK ], 100 ) >= 10 )        // Проверяем на удачу, вдруг попал в себя.
+					Map.GetHexCoord( Hx, Hy, TargetHx, TargetHy, Random( roll, ABS( roll ) ), Random( 1, _WeaponMaxDist( Weapon, WeaponUse ) ) );
+				else
+				{
+					TargetHx = Hx;
+					TargetHy = Hy;
+				}
 			}
+			else
+			{
+				Critter@ randomTarget = ChooseRandomTarget( Map, Attacker, RealTarget, _WeaponMaxDist( Weapon, WeaponUse ) );
+				if( validEngineObject( randomTarget ) )
+				{
+					SetRealTarget( randomTarget );
+					Aim = HIT_LOCATION_UNCALLED;
+					if( Target !is null )
+						NotifyOops( Attacker, Target, randomTarget, Results );
+				}
+			}			
 		}
 	}
 	
-	void RunAnimation()
+	void RunAction()
 	{
 		Attacker.Action( ACTION_USE_WEAPON, ( ( ( !IsHit && IsCritical && !IsRandomHit ) ? 1 : 0 ) << 8 ) | ( Aim << 4 ) | WeaponUse, RealWeapon );
-	}
-	
-	bool IsChangeTarget( )
-	{
-		return RealTarget !is Target;
 	}
 	
 	bool CriticalFailure()
@@ -1223,69 +1127,63 @@ class Combat : CombatProccess
 		return false;
 	}
 	
-	bool IsSilentAtack()
-	{
-		if( RealTarget is null )
-			return false;
-		if( !IsWeaponPerk( WEAPON_PERK_SOUNDLESS ) )
-			return false;
-		if( Distantion > 5 )
-			return false;
-		if( Attacker.Perk[ PE_SILENT_DEATH ] == 0 )
-			return false;
-		return ( Attacker.Dir == RealTarget.Dir || ( ( Attacker.Dir + 1 ) % 6 ) == RealTarget.Dir || ( ( Attacker.Dir + 5 ) % 6 ) == RealTarget.Dir );
-	}
-	
 	void AlgoritmProccess()
 	{
-		@Algoritm = GetCombatAlgoritm( this );
-		@Algoritm.realTarget = RealTarget;
-		@Algoritm.results = Results;
-		Algoritm.weaponUse = WeaponUse;
-		Algoritm.baseToHit = BaseToHit;
-		Algoritm.distmod1 = DistanceMod1;
-		Algoritm.distmod2 = DistanceMod2;
-		Algoritm.isCritical = IsCritical;
-		Algoritm.isHit = IsHit;
-		Algoritm.changedTarget = IsChangeTarget();
-		Algoritm.useHex = false;
-		Algoritm.useNormal = false;
-		Algoritm.weaponMode = WeaponMode;
-		Algoritm.rounds = WeaponAmmoRound;
-		Algoritm.Proccess( );
+		GetCombatAlgoritm( this ).Proccess( );
+	}
+	
+	void PlayNotAmmo( )
+	{
+		string sound = "WA01XXX1.ACM";
+		sound[ 2 ] = _WeaponSoundId( Weapon, WeaponUse );
+		sound[ 3 ] = IsBurst ? '2' : '1';
+		Map.PlaySound( sound );
+	}
+	
+	void PlayShot( )
+	{
+		string sound = "WAXXXXX1.ACM";
+		sound[ 2 ] = _WeaponSoundId( Weapon, WeaponUse );
+		sound[ 3 ] = IsBurst ? '2' : '1';
+		Map.PlaySound( sound );
 	}
 	
 	void ShootEffect()
 	{
-		if( _WeaponEffect( Weapon, WeaponUse ) != 0 )
+		if( IsHexAttack )
 		{
-			if( Algoritm.useHex )
-				Map.RunFlyEffect( _WeaponEffect( Weapon, WeaponUse ), Attacker, null, Hx, Hy, TargetHx, TargetHy, 0 );  // yeah, the target can be null (see: grenades, rocket launcher)
+			PlayShot();			
+			Attacker.Animate( 0, _WeaponAnim2( Weapon, WeaponUse ), null, true, false );
+        }
+		else if( _WeaponEffect( Weapon, WeaponUse ) != 0 )
+		{
+			if( UseHex )
+				Map.RunFlyEffect( _WeaponEffect( Weapon, WeaponUse ), Attacker, null, Hx, Hy, TargetHx, TargetHy, ExplodeId | Radius << 16 );  // yeah, the target can be null (see: grenades, rocket launcher)
 			else
-				Map.RunFlyEffect( _WeaponEffect( Weapon, WeaponUse ), Attacker, ( Algoritm.useNormal ? Algoritm.normalTarget : RealTarget ), Hx, Hy, TargetHx, TargetHy, 0 );
+				Map.RunFlyEffect( _WeaponEffect( Weapon, WeaponUse ), Attacker, RealTarget, Hx, Hy, TargetHx, TargetHy, ExplodeId | Radius << 16 );
 		}
 	}
 	
-	void Shoot()
+	void ProccessShoot()
 	{
 		ShootEffect();
 		
-		if( validEngineObject( RealWeapon ) )
+		if( validEngineObject( RealWeapon ) && Attacker.Mode[ MODE_UNLIMITED_AMMO ] == 0 )
 		{
-			if( Algoritm.rounds > 0 && Attacker.Mode[ MODE_UNLIMITED_AMMO ] == 0 )
+			if( WeaponAmmoRound > 0 )
 			{
-				if( RealWeapon.AmmoCount <= Algoritm.rounds )
+				if( RealWeapon.AmmoCount <= WeaponAmmoRound )
 					RealWeapon.AmmoCount = 0;
 				else
-					RealWeapon.AmmoCount -= Algoritm.rounds;
+					RealWeapon.AmmoCount -= WeaponAmmoRound;
 				RealWeapon.Update();
 			}
 
-			if( RealWeapon.IsDeteriorable() && Attacker.IsPlayer() && Attacker.Mode[ MODE_UNLIMITED_AMMO ] == 0 )
+			if( RealWeapon.IsDeteriorable() && Attacker.IsPlayer() )
 				DeteriorateItem( Attacker, RealWeapon, ( ( ( MAX_SKILL_VAL - ( ( Attacker.Skill[ WeaponSkill ] * 90 ) * 0.01 ) ) / 3 ) * ( 90 + Weapon.BrokenCoefficient * 10 ) ) * ( IsBurst ? 0.03 : 0.01 ) );
 
 			// One time weapon, erase current and push next (if exist)
-			if( _WeaponRemove( Weapon, WeaponUse ) && Attacker.Mode[ MODE_UNLIMITED_AMMO ] == 0 )
+			if( _WeaponRemove( Weapon, WeaponUse ) )
 			{
 				{
 					int slot = RealWeapon.CritSlot;
@@ -1334,11 +1232,156 @@ class Combat : CombatProccess
 		}
 	}
 	
+	void ProccessSpecialEffects()
+	{
+		switch( WeaponPid )   // Особый эффект оружия(не визуальный)
+		{
+			case PID_SMOKE_GRENADE:
+				SmokeBlast( Map, TargetHx, TargetHy, PID_SMOKE, Attacker.Id );
+				break;
+				
+			case PID_MUSTARD_GAS_GRENADE:
+				SmokeBlast( Map, TargetHx, TargetHy, PID_MUSTARD_GAS, Attacker.Id );
+				break;
+				
+			default:
+				break;
+		}
+	}
+	
+	void ProccessAttack()
+	{
+		if( !IsHexAttack )
+		{
+			AlgoritmProccess();
+			return;
+		}
+	
+		switch( TypeAttack )
+		{
+			case WTA_LINE_IGNORED_RAKED:
+			{
+				CTraceLineIgnoredRaked Trace( this, Map, Attacker, RealWeapon, TargetHx, TargetHy );
+				LineTracerHex( Hx, Hy, TargetHx, TargetHy, Map, _WeaponMaxDist( Weapon, WeaponUse ), Trace );
+				Trace.EndTrace( RealWeapon );
+				Map.RunFlyEffect( _WeaponEffect( Weapon, WeaponUse ), null, null, Hx, Hy, TargetHx, TargetHy, EFFECT_INSTRUCTION_NONE );
+			} break;
+			
+			case WTA_LINE_FLAME:
+			{
+				FlameLine( this, RealWeapon, TargetHx, TargetHy );
+				uint16 effect = _WeaponEffect( Weapon, WeaponUse );
+				if( effect != 0 )
+					Map.RunFlyEffect( effect, null, null, Hx, Hy, TargetHx, TargetHy, EFFECT_INSTRUCTION_NONE );                  // Запускаем летящий снаряд.
+			} break;
+
+			case WTA_RADIUS_HEX:
+			{
+				uint16 effect = _WeaponEffect( Weapon, WeaponUse );
+				if( effect != 0 )
+				{
+					const ProtoItem@ protoEffect = GetProtoItem( effect );		
+					if( protoEffect !is null )
+					{
+						Map.RunFlyEffect( effect, null, null, Hx, Hy, TargetHx, TargetHy, EFFECT_INSTRUCTION_NONE ); // Запускаем летящий снаряд.
+						if( ExplodeId != 0 )
+							Map.RunEffect( ExplodeId, TargetHx, TargetHy, Radius, EFFECT_INSTRUCTION_NONE );
+						DamageHex( this, Map, Radius, IsQuakeScreen );
+					}
+				}
+				else
+					DamageHex( this, Map, Radius, IsQuakeScreen );
+
+
+				if( TypeDamage == DAMAGE_FIRE )
+					SetFire( Map, TargetHx, TargetHy, Radius, Random( DmgMin, DmgMax ), Attacker );
+
+				if( WeaponAmmoRound > 0 && WeaponAmmoRound < 50 && IsBurst )
+				{
+					uint[] values = { WeaponAmmoRound, Map.Id, Attacker.Id, RealWeapon.Id, TargetHx, TargetHy, Radius, TypeDamage, ExplodeId, IsQuakeScreen ? 1 : 0 };
+					CreateTimeEvent( __FullSecond + ATACK_WAIT_TIME, "e_ReAtack", values, false );
+				}
+			} break;
+			
+			default:
+			{
+				if( IsHexAttack )
+				{
+					if( ( WeaponAmmoRound > 1 && IsBurst ) || WTA_BURST_REGION == TypeAttack )
+					{
+						if( WTA_BURST_REGION == TypeAttack )
+						{
+							FullReplayAttack@ replay = cast<FullReplayAttack@>(@Context);
+							if( replay is null )
+							{
+								@replay = FullReplayAttack();
+								@replay.map = Map;
+								@replay.proccess = this;
+								replay.stage = 0;
+								replay.weaponMode = WeaponMode;
+								replay.targetX = TargetHx;
+								replay.targetY = TargetHy;
+								@Context = replay;
+							}
+							if( Attacker.TimeAttackId > 0 )
+								EraseTimeEvent( Attacker.TimeAttackId );
+
+							if( Weapon.Weapon_BulletProgression != 0 )
+							{
+								WeaponAmmoRound = 1 + replay.stage != 0 ? replay.stage/Weapon.Weapon_BulletProgression : 0;
+								if( WeaponAmmoRound > _WeaponRound( Weapon, WeaponUse ) )
+									WeaponAmmoRound = _WeaponRound( Weapon, WeaponUse );
+							}
+							
+							Attacker.TimeAttackId = CreateTimeEvent( __FullSecond + REAL_MS( _WeaponTimeAttack( RealWeapon.Proto, WeaponUse ) ), e_FullReplayAtack, replay );
+						}
+						
+						AlgoritmProccess();
+						break;
+					}
+					
+					uint16 effect = _WeaponEffect( Weapon, WeaponUse );
+					if( effect != 0 )
+					{
+						const ProtoItem@ protoEffect = GetProtoItem( effect );		
+						if( protoEffect !is null )
+						{							
+							Map.RunFlyEffect( effect, null, null, Hx, Hy, TargetHx, TargetHy, EFFECT_INSTRUCTION_NONE ); // Запускаем летящий снаряд.
+							if( ExplodeId != 0 )
+								Map.RunEffect( ExplodeId, TargetHx, TargetHy, Radius, EFFECT_INSTRUCTION_NONE );
+							DamageHex( this, Map, Radius, IsQuakeScreen );
+							break;
+						}
+					}
+					else
+						DamageHex( this, Map, Radius, IsQuakeScreen );
+
+					if( TypeDamage == DAMAGE_FIRE )
+						SetFire( Map, TargetHx, TargetHy, Radius, Random( DmgMin, DmgMax ), Attacker );
+
+					if( WeaponAmmoRound > 0 && WeaponAmmoRound < 50 && IsBurst )
+					{
+						uint[] values = { WeaponAmmoRound, Map.Id, Attacker.Id, RealWeapon.Id, TargetHx, TargetHy, Radius, TypeDamage, ExplodeId, IsQuakeScreen ? 1 : 0 };
+						CreateTimeEvent( __FullSecond + ATACK_WAIT_TIME, "e_ReAtack", values, false );
+					}
+				}
+			} break;
+		}
+	}
+	
+	void Debug( string& log )
+	{
+		//if( Attacker.IsPlayer() && Attacker.GetAccess() == ACCESS_ADMIN)
+		//	Attacker.Say( SAY_NETMSG, log );
+	}
+	
 	void Attack(  )
 	{
 		if( !CheckAmmo( ) )
 		{
 			AttackerSay( STR_COMBAT_NEED_OUT_OF_AMMO );
+			PlayNotAmmo();
+			Attacker.Animate( 0, _WeaponAnim2( Weapon, WeaponUse ), null, true, false );
 			return;
 		}
 			
@@ -1347,13 +1390,18 @@ class Combat : CombatProccess
 		
 		CombatScoreAttacker();
 		NpcAttacker_Say();
-		
-		ToHitCalculated( Attacker, TargetHx, TargetHy, Aim );
-		int margin = MarginCheck();
-		if( margin < 0 )
-			MarginProccess( margin );
-		else HitProccess( margin );
-		RandomHitProccess();
+		//tohit
+		{
+			int blockers = 0;
+			ToHitCalculated( RealTarget, TargetHx, TargetHy, Aim, true, blockers );
+		}
+		int hitRoll = HitCheck();
+		if( hitRoll < 0 )
+		{
+			MissProccess( hitRoll );
+			RandomHitProccess( hitRoll );
+		}
+		else HitProccess( hitRoll );
 		
 		if( RealTarget !is null )
 		{
@@ -1361,22 +1409,28 @@ class Combat : CombatProccess
 			RealTarget.EventAttacked( Attacker );
 		}
 		SetAttackerDirection( );
-		RunAnimation();
+		ProccessSpecialEffects();
 		
+		ProccessShoot( );
 		if( CriticalFailure() )
 			return;
 			
-		if( !IsSilentAtack( ) )
+		if( RealTarget !is null && !IsSilentAtack( RealTarget ) )
 			UnSneak( Attacker );
 			
-		AlgoritmProccess();
+		ProccessAttack();
 		FlushResults( Results );
 		
 		if( !TargetHit )
 			Miss();
+		
+		// WIP
+		if( ExplodeId == PID_EXPLODE_NUKLEAR )
+		{
+			uint[] values = { 22, Map.Id, Attacker.Id, RealWeapon.Id, TargetHx, TargetHy, 1, TypeDamage, PID_EXPLODE_FIRE_BIG, IsQuakeScreen ? 1 : 0 };
+			CreateTimeEvent( __FullSecond + ATACK_WAIT_TIME * 10, "e_ReAtack", values, false );
+		}
 	}
-	
-	#undef WeaponAndUse
 }
 
 void CombatAttack( Combat@ proccess )
@@ -2434,8 +2488,6 @@ void CriticalFailure( Critter& attacker, ProtoItem& weapon, uint8 weaponUse, Pro
         AddEff( crits[ i ], allEff, results );
 
     FlushResults( results );
-
-    return;
 }
 
 void InjureCritter( Critter& critter, uint damage, uint damageType, uint8 dir, uint attackerId, CombatProccess& combat ) // Export
@@ -2836,7 +2888,7 @@ Critter@ ChooseRandomTarget( Map& map, Critter& critter, Critter& target, uint w
 }
 
 // //////////////////////////////////////////////////////////////////////////////////
-// Погексовая атака v.1///////////////////////////////////////////////////////////
+// Погексовая атака v.1.1///////////////////////////////////////////////////////////
 // ////////////////////////////////////////////////////////////////////////////////
 /*ВНИМАНИЕ, НПЦ НЕ МОГУТ АТАКОВАТЬ ПОГЕКСОВО.*/
 // ///////////////////////////////////////////////////////////////////////////////////
@@ -2901,9 +2953,38 @@ bool u_Attack( Critter@ critter, int hexX, int hexY, int slot ) // Export
     }
     const uint8 mode = item.Mode,
 			use = _WeaponModeUse( mode );
-    const ProtoItem@ weapon = item.Proto,
-						 ammo = GetProtoItem( item.AmmoPid );
-    if( _WeaponRound( weapon, use ) > 0 && item.AmmoCount == 0 )
+    const ProtoItem@ weapon = item.Proto;
+
+    if( FLAG( item.Flags, ITEM_TWO_HANDS ) )
+    {
+        if( critter.Damage[ DAMAGE_RIGHT_ARM ] != 0 || critter.Damage[ DAMAGE_LEFT_ARM ] != 0 )
+        {
+            if( critter.IsPlayer() )
+                critter.SayMsg( SAY_NETMSG, TEXTMSG_COMBAT, STR_COMBAT_NEED_DMG_ARM );
+            return false;
+        }
+    }
+    else
+    {
+        if( critter.Damage[ DAMAGE_RIGHT_ARM ] != 0 && critter.Damage[ DAMAGE_LEFT_ARM ] != 0 )
+        {
+            if( critter.IsPlayer() )
+                critter.SayMsg( SAY_NETMSG, TEXTMSG_COMBAT, STR_COMBAT_NEED_DMG_TWO_ARMS );
+            return false;
+        }
+    }
+	
+    if( weapon.Ammo_Caliber != 0 && weapon.Weapon_MaxAmmoCount != 0 && critter.Mode[MODE_UNLIMITED_AMMO] == 0 && item.AmmoCount == 0 )
+    {
+        if( critter.IsPlayer() )
+            critter.SayMsg( SAY_NETMSG, TEXTMSG_COMBAT, STR_COMBAT_NEED_OUT_OF_AMMO );
+        return false;
+    }
+	
+	uint16 ammoRound = _WeaponRound( weapon, use );
+    bool isBurst = ( ammoRound > 1 && _WeaponNoBrust( weapon, use ) == 0 );
+	
+    if( !_WeaponeIsPerk( weapon, GetProtoItem( item.AmmoPid ), WEAPON_PERK_HEX_ATTACKING ) && !isBurst )
         return false;
 
     if( !Zone_Attack( critter, hexX, hexY, slot ) )
@@ -2932,443 +3013,12 @@ void unsafe_Attack( Critter& critter, int hexX, int hexY, int slot, string@, int
     u_Attack( critter, hexX, hexY, slot );
 }
 
-bool Attack( Critter& critter, Item& item, uint8 weaponMode, uint16 defHexX, uint16 defHexY, CombatProccess@ proccess = null ) // ToDo переделать под нпц
+bool Attack( Critter& critter, Item& item, uint8 weaponMode, uint16 defHexX, uint16 defHexY, CombatProccess@ combatProccess = null ) // ToDo переделать под нпц
 {
-    const ProtoItem@ weapon = item.Proto;
-	
-	if( proccess is null ) @proccess = CombatProccess();
-    @proccess.Attacker = critter;
-    @proccess.RealWeapon = item;
-    proccess.WeaponPid = proccess.RealWeapon.GetProtoId();
-    proccess.Hx = critter.HexX;
-    proccess.Hy = critter.HexY;
-    proccess.TargetHx = defHexX;
-    proccess.TargetHy = defHexY;
-
-    if( FLAG( proccess.RealWeapon.Flags, ITEM_TWO_HANDS ) )
-    {
-        if( proccess.Attacker.Damage[ DAMAGE_RIGHT_ARM ] != 0 || proccess.Attacker.Damage[ DAMAGE_LEFT_ARM ] != 0 )
-        {
-            if( proccess.Attacker.IsPlayer() )
-                proccess.Attacker.SayMsg( SAY_NETMSG, TEXTMSG_COMBAT, STR_COMBAT_NEED_DMG_ARM );
-            return false;
-        }
-    }
-    else
-    {
-        if( proccess.Attacker.Damage[ DAMAGE_RIGHT_ARM ] != 0 && proccess.Attacker.Damage[ DAMAGE_LEFT_ARM ] != 0 )
-        {
-            if( proccess.Attacker.IsPlayer() )
-                proccess.Attacker.SayMsg( SAY_NETMSG, TEXTMSG_COMBAT, STR_COMBAT_NEED_DMG_TWO_ARMS );
-            return false;
-        }
-    }
-
-	uint8 use = _WeaponModeUse( weaponMode );
-    int16 ammoRound = _WeaponRound( weapon, use ) - 1;
-    const ProtoItem@ ammo = GetProtoItem( proccess.RealWeapon.AmmoPid );
-
-    proccess.IsBurst = ( ammoRound > 1 && _WeaponNoBrust( weapon, use ) == 0 );
-	
-    if( !_WeaponeIsPerk( weapon, ammo, WEAPON_PERK_HEX_ATTACKING ) && !proccess.IsBurst )
-        return false;
-	
-    int skillNum = _WeaponSkill( weapon, use ),
-        weaponPerkFirst = weapon.Weapon_Perk,
-        weaponPerkSecond = weapon.Weapon_SecondPerk,
-        ammoPerk = ammo !is null ? ammo.Ammo_Perk : 0,
-        dmgType = ( ammo !is null && ammo.Ammo_DmgType != 0 ) ? ammo.Ammo_DmgType : _WeaponDmgType( weapon, use );
-
-    proccess.Aim = _WeaponModeAim( weaponMode );
-    proccess.WeaponSubtype = ( skillNum == SK_SMALL_GUNS || skillNum == SK_BIG_GUNS || skillNum == SK_ENERGY_WEAPONS || skillNum == SK_TRAPS ) ? WS_GUN : ( ( skillNum == SK_THROWING ) ? WS_THROWING : WS_UNARMED );
-
-    bool isUnarmed = weapon.Weapon_IsUnarmed,
-         isHthAttack = ( proccess.WeaponSubtype == WS_UNARMED ),
-         isGrenade = proccess.WeaponSubtype == WS_THROWING && dmgType != DAMAGE_NORMAL;
-		 
-    if( proccess.IsBurst ) proccess.Aim = HIT_LOCATION_UNCALLED;
-    if( isGrenade )
-        ammoRound = 0;
-
-    string@ soundName = "WAXXXXX1.ACM";
-    soundName[ 2 ] = _WeaponSoundId( weapon, use );
-    soundName[ 3 ] = proccess.IsBurst ? '2' : '1';
-
-    Map@ map = proccess.Attacker.GetMap();
-    if( ( !proccess.IsBurst && ammoRound > proccess.RealWeapon.AmmoCount ) || ( proccess.WeaponSubtype != WS_THROWING && proccess.RealWeapon.AmmoCount == 0 ) )
-    {
-        if( proccess.Attacker.IsPlayer() )
-            proccess.Attacker.SayMsg( SAY_NETMSG, TEXTMSG_COMBAT, STR_COMBAT_NEED_OUT_OF_AMMO );
-        soundName[ 1 ] = 'O';
-        map.PlaySound( soundName );
-        return false;
-    }
-    map.PlaySound( soundName );
-    if( proccess.RealWeapon.IsDeteriorable()  && proccess.Attacker.IsPlayer() && proccess.Attacker.Mode[ MODE_UNLIMITED_AMMO ] == 0 )
-        DeteriorateItem( proccess.Attacker, proccess.RealWeapon, ( ( ( MAX_SKILL_VAL - ( ( proccess.Attacker.Skill[ skillNum ] * 90 ) / 100 ) ) / 3 ) * ( 90 + proccess.RealWeapon.Proto.BrokenCoefficient * 10 ) ) / ( proccess.IsBurst ? 33 : 100 ) );
-
-    proccess.BloodyMess = proccess.Attacker.Trait[ TRAIT_BLOODY_MESS ] != 0;
-    proccess.CombatMessage = true;
-    proccess.ScoreUnarmed = ( proccess.WeaponSubtype == WS_UNARMED );
-    proccess.FirstWeaponPerk = ( isUnarmed && weapon.Weapon_UnarmedArmorPiercing ) ? WEAPON_PERK_PENETRATE : weaponPerkFirst;
-    proccess.SecondWeaponPerk = weaponPerkSecond;
-    proccess.AmmoPerk = ammo !is null ? int(ammo.Ammo_Perk) : -1;
-	
-    proccess.DmgMin = _WeaponDmgMin( weapon, use );
-    proccess.DmgMax = _WeaponDmgMax( weapon, use );
-    proccess.AmmoPid = proccess.RealWeapon.AmmoPid;
-    if( @proccess.RealWeapon !is null )
-    {
-        proccess.DmgMin += proccess.RealWeapon.WeaponBonus_MinDamage;
-        proccess.DmgMax += proccess.RealWeapon.WeaponBonus_MaxDamage;
-    }
-    proccess.TypeDamage = dmgType;
-    proccess.BonusDmg = 0;
-
-    if( isHthAttack || ( proccess.WeaponSubtype == WS_THROWING && !isGrenade ) )
-    {
-        proccess.DmgMax += proccess.Attacker.Stat[ ST_MELEE_DAMAGE ];
-        proccess.DmgMin += proccess.Attacker.Stat[ ST_MELEE_DAMAGE ];
-    }
-    if( proccess.WeaponSubtype == WS_GUN )
-        proccess.BonusDmg += proccess.Attacker.Perk[ PE_BONUS_RANGED_DAMAGE ] * 2;
-    // Ammo
-    if( ammo !is null )
-    {
-        proccess.DRMod = ammo.Ammo_DrMod;
-        proccess.DMMod = ammo.Ammo_DmgMult;
-        proccess.DDMod = ammo.Ammo_DmgDiv;
-        proccess.TDMod = ammo.Ammo_DTDiv;
-    }
-    proccess.DmgMul = proccess.DMMod;
-
-    startCombatTimeout( proccess.Attacker, false );
-	
-    // Снимаем сник с стреляющего.
-    if( proccess.Attacker.IsNpc() || proccess.Attacker.GetAccess() != ACCESS_ADMIN )
-        proccess.Attacker.ModeBase[ MODE_HIDE ] = 0;
-    proccess.Attacker.SetDir( GetDirection( proccess.Hx, proccess.Hy, proccess.TargetHx, proccess.TargetHy ) ); // Поворачиваем криттер в сторону выстрела.
-
-    uint ExplodeId = 0;
-
-    bool isRocket = ( proccess.AmmoPid == PID_CANNON_BALLS_FRAG ) || ( proccess.AmmoPid == PID_EXPLOSIVE_ROCKET ) || ( proccess.AmmoPid == PID_ROCKET_AP ) || ( proccess.AmmoPid == PID_ROBO_ROCKET_AMMO ) || ( proccess.AmmoPid == PID_EMP_ROCKET ) || ( proccess.AmmoPid == PID_NUKE_ROCKET ) || ( proccess.AmmoPid == PID_ROCKET_FIRE ),
-         Explode = ( ( isRocket ) || ( proccess.WeaponPid == PID_MOLOTOV_COCKTAIL ) || ( proccess.WeaponPid == PID_FRAG_GRENADE ) ||
-                     ( proccess.WeaponPid == PID_PULSE_GRENADE ) || ( proccess.WeaponPid == PID_PLASMA_GRENADE ) || ( proccess.WeaponPid == PID_PLASMA_CANNON ) || ( proccess.WeaponPid == PID_GRANADE_REVOLV_I ) || ( proccess.WeaponPid == PID_GRANADE_REVOLV_II ) || ( proccess.WeaponPid == PID_GRANADE_PISTOL ) || ( proccess.WeaponPid == PID_REVOLV_GRENADE ) ||
-                     ( proccess.WeaponPid == PID_HOLY_HAND_GRENADE ) ||
-                     proccess.WeaponPid == PID_FIRE_GRENADE ),
-         _quakeScreen = ( Explode && proccess.WeaponPid != PID_PLASMA_CANNON && proccess.WeaponPid != PID_MOLOTOV_COCKTAIL && proccess.WeaponPid != PID_FIRE_GRENADE && proccess.AmmoPid != PID_ROCKET_FIRE );
-
-    uint16 radius = weapon.HexWeapon_Radius;
-
-    if( Explode || skillNum == SK_TRAPS )
-    {
-        if( radius == 0 )
-        {
-            radius = ( proccess.WeaponPid == PID_GRANADE_REVOLV_I || proccess.WeaponPid == PID_GRANADE_REVOLV_II || proccess.WeaponPid == PID_GRANADE_PISTOL || proccess.WeaponPid == PID_REVOLV_GRENADE ) ? 1 : 2;
-            if( proccess.AmmoPid == PID_NUKE_ROCKET )
-                radius = 35;
-        }
-        switch( proccess.WeaponPid )
-        {
-        case PID_MOLOTOV_COCKTAIL:
-            ExplodeId = PID_EXPLODE_FIRE_BIG;
-            break;
-        case PID_FIRE_GRENADE:
-            ExplodeId = PID_EXPLODE_FIRE_BIG;
-            break;
-        case PID_FRAG_GRENADE:
-        case PID_HOLY_HAND_GRENADE:
-            ExplodeId = PID_EXPLODE_FIRE_SMALL;
-            break;
-        case PID_PULSE_GRENADE:
-            ExplodeId = PID_EXPLODE_EMP;
-            break;
-        case PID_PLASMA_GRENADE:
-        case PID_PLASMA_CANNON:
-            ExplodeId = PID_EXPLODE_PLASMA;
-            break;
-
-        default:
-        {
-
-            if( isRocket )
-            {
-                if( proccess.AmmoPid == PID_EMP_ROCKET )
-                    ExplodeId = PID_EXPLODE_EMP;
-                else if( proccess.AmmoPid == PID_NUKE_ROCKET )
-                    ExplodeId = PID_EXPLODE_NUKLEAR;
-                else
-                    ExplodeId = PID_EXPLODE_ROCKET;
-            }
-            else
-                ExplodeId = PID_EXPLODE_FIRE_BIG;
-        } break;
-        }
-    }
-
-	if( !proccess.IsBurst )
-	{
-		int margin = ToHitMutual( map, proccess.Attacker, weapon, ammo, weaponMode, proccess.TargetHx, proccess.TargetHy, !proccess.IsBurst ) - Random( 1, 100 );
-		// Дополнительная обработка трейта Jinxed
-		
-		if( margin >= 0 && ( proccess.Attacker.Trait[ TRAIT_JINXED ] != 0 || proccess.Attacker.Perk[ PE_JINXED_II ] != 0 ) )
-			margin = Random( 1, 100 ) - 10 + proccess.Attacker.Stat[ ST_LUCK ] / 2;
-
-		if( margin < 0 )          // Криттер промазал. Расчитаем куда.
-		{
-			if( proccess.Attacker.IsPlayer() )
-				proccess.Attacker.SayMsg( SAY_NETMSG, TEXTMSG_COMBAT, 109 );
-			if( Random( proccess.Attacker.Stat[ ST_LUCK ], 100 ) >= 10 )        // Проверяем на удачу, вдруг попал в себя.
-				map.GetHexCoord( proccess.Hx, proccess.Hy, proccess.TargetHx, proccess.TargetHy, Random( margin, ABS( margin ) ), Random( 1, _WeaponMaxDist( weapon, use ) ) );
-			else
-			{
-				proccess.TargetHx = proccess.Hx;
-				proccess.TargetHy = proccess.Hy;
-			}
-		}
-	}
-
-    switch( proccess.WeaponPid )   // Особый эффект оружия(не визуальный)
-    {
-		case PID_SMOKE_GRENADE:
-			SmokeBlast( map, proccess.TargetHx, proccess.TargetHy, PID_SMOKE, proccess.Attacker.Id );
-			break;
-			
-		case PID_MUSTARD_GAS_GRENADE:
-			SmokeBlast( map, proccess.TargetHx, proccess.TargetHy, PID_MUSTARD_GAS, proccess.Attacker.Id );
-			break;
-			
-		default:
-			break;
-    }
-
-	int attack_type = _WeaponAttackType( weapon, use );
-	if( proccess.AmmoPerk == WEAPON_PERK_HEX_ATTACKING )
-		attack_type = WTA_RADIUS_HEX;
-
-	uint rounds = _WeaponRound( weapon, use );
-    switch( attack_type )     // Эффект летящего снаряда
-    {
-		case WTA_LINE_IGNORED_RAKED:
-		{
-			CTraceLineIgnoredRaked Trace( proccess, map, proccess.Attacker, proccess.RealWeapon, proccess.TargetHx, proccess.TargetHy );
-			LineTracerHex( proccess.Hx, proccess.Hy, proccess.TargetHx, proccess.TargetHy, map, _WeaponMaxDist( weapon, use ), Trace );
-			Trace.EndTrace( proccess.RealWeapon );
-			map.RunFlyEffect( _WeaponEffect( proccess.RealWeapon.Proto, use ), null, null, proccess.Hx, proccess.Hy, proccess.TargetHx, proccess.TargetHy, 0 );
-		} break;
-		
-		case WTA_LINE_FLAME:
-		{
-			FlameLine( proccess, proccess.RealWeapon, proccess.TargetHx, proccess.TargetHy );
-			uint16 effect = _WeaponEffect( proccess.RealWeapon.Proto, use );
-			if( effect != 0 )
-				map.RunFlyEffect( effect, null, null, proccess.Hx, proccess.Hy, proccess.TargetHx, proccess.TargetHy, 0 );                  // Запускаем летящий снаряд.
-		} break;
-
-		case WTA_RADIUS_HEX:
-		{
-			uint16 effect = _WeaponEffect( weapon, use );
-			if( effect != 0 )
-			{
-				const ::ProtoItem@ protoEffect = ::GetProtoItem( effect );		
-				if( @protoEffect !is null )
-				{
-					map.RunFlyEffect( effect, null, null, proccess.Hx, proccess.Hy, proccess.TargetHx, proccess.TargetHy, ExplodeId | radius << 16 ); // Запускаем летящий снаряд.
-					
-					CTraceTime trace;
-					trace.HexX = proccess.TargetHx;
-					trace.HexY = proccess.TargetHy;
-					trace.Time = protoEffect.EffectSpeed;
-					
-					int x1 = 0, y1 = 0, x2 = 0, y2 = 0;
-					GetHexInterval( proccess.Hx, proccess.Hy, trace.HexX, trace.HexY, x1, y1 );
-					GetHexInterval( trace.HexX, trace.HexY, proccess.Hx, proccess.Hy, x2, y2 );
-					TimeHexAttackData data;
-					@data.proccess = proccess;
-					@data.map = map;
-					data.radius = radius;
-					data.quakeScreen = _quakeScreen;
-					CreateTimeEvent( __FullSecond + ( DISTANCE( x1, y1, x2, y2 ) * 0.1/protoEffect.EffectSpeed ), e_TimeHexAttack, data );
-				}
-			}
-			else
-				DamageHex( proccess, map, radius, _quakeScreen );
-
-
-			if( proccess.TypeDamage == DAMAGE_FIRE )
-				SetFire( map, proccess.TargetHx, proccess.TargetHy, radius, Random( proccess.DmgMin, proccess.DmgMax ), proccess.Attacker );
-
-			if( ammoRound > 0 && ammoRound < 50 && proccess.IsBurst )
-			{
-				uint[] values = { ammoRound, map.Id, proccess.Attacker.Id, proccess.RealWeapon.Id, proccess.TargetHx, proccess.TargetHy, radius, dmgType, ( Explode ? ExplodeId : 0 ), _quakeScreen ? 1 : 0 };
-				CreateTimeEvent( __FullSecond + ATACK_WAIT_TIME, "e_ReAtack", values, false );
-			}
-		} break;
-		
-		default:
-		{
-			if( ( _WeaponRound( weapon, use ) > 1 && proccess.IsBurst ) || WTA_BURST_REGION == _WeaponAttackType( weapon, use ) )
-			{
-			
-				if( WTA_BURST_REGION == _WeaponAttackType( weapon, use ) )
-				{
-					FullReplayAttack@ replay = cast<FullReplayAttack@>(@proccess.Context);
-					if( replay is null )
-					{
-						@replay = FullReplayAttack();
-						@replay.map = map;
-						@replay.proccess = proccess;
-						replay.stage = 0;
-						replay.weaponMode = weaponMode;
-						replay.targetX = defHexX;
-						replay.targetY = defHexY;
-						@proccess.Context = replay;
-					}
-					if( proccess.Attacker.TimeAttackId > 0 )
-						EraseTimeEvent( proccess.Attacker.TimeAttackId );
-
-					if( weapon.Weapon_BulletProgression != 0 )
-						rounds = 1 + replay.stage != 0 ? replay.stage/weapon.Weapon_BulletProgression : 0;
-					proccess.Attacker.TimeAttackId = CreateTimeEvent( __FullSecond + REAL_MS( _WeaponTimeAttack( proccess.RealWeapon.Proto, use ) ), e_FullReplayAtack, replay );
-				}
-				
-				CombatAlgoritm@ algoritm = GetCombatAlgoritm( proccess );
-				if( algoritm !is null )
-				{
-					@algoritm.realTarget = null;
-					@algoritm.results = CombatRes[](0);
-					algoritm.weaponUse = use;
-					algoritm.baseToHit = proccess.Attacker.Skill[ skillNum ];
-					algoritm.distmod1 = 2;
-					algoritm.distmod2 = 0;
-					algoritm.accloss = ( proccess.Attacker.IsPlayer() ? ( proccess.Attacker.Stat[ST_PERCEPTION] - 2 ) * algoritm.distmod1 : ( proccess.Attacker.Stat[ST_PERCEPTION] * algoritm.distmod1 ) );
-					algoritm.isCritical = false;
-					algoritm.isHit = false;
-					algoritm.changedTarget = false;
-					algoritm.useHex = false;
-					algoritm.useNormal = false;
-					algoritm.weaponMode = weaponMode;
-					algoritm.rounds = rounds;
-					
-					algoritm.Proccess( );
-					FlushResults( algoritm.results );
-				}
-				else proccess.Attacker.Say( SAY_NETMSG, "Combat error: weapon PID=" + proccess.WeaponPid + " not handled, please send bug report." );  // combat messages
-				break;
-			}
-			
-			uint16 effect = _WeaponEffect( weapon, use );
-			if( effect != 0 )
-			{
-				const ::ProtoItem@ protoEffect = ::GetProtoItem( effect );		
-				if( @protoEffect !is null )
-				{
-					map.RunFlyEffect( effect, null, null, proccess.Hx, proccess.Hy, proccess.TargetHx, proccess.TargetHy, ExplodeId | radius << 16 ); // Запускаем летящий снаряд.
-					
-					CTraceTime trace;
-					trace.HexX = proccess.TargetHx;
-					trace.HexY = proccess.TargetHy;
-					trace.Time = protoEffect.EffectSpeed;
-					
-					int x1 = 0, y1 = 0, x2 = 0, y2 = 0;
-					GetHexInterval( proccess.Hx, proccess.Hy, trace.HexX, trace.HexY, x1, y1 );
-					GetHexInterval( trace.HexX, trace.HexY, proccess.Hx, proccess.Hy, x2, y2 );
-					TimeHexAttackData data;
-					@data.proccess = proccess;
-					@data.map = map;
-					data.radius = radius;
-					data.quakeScreen = _quakeScreen;
-					CreateTimeEvent( __FullSecond + ( DISTANCE( x1, y1, x2, y2 ) * 0.1/protoEffect.EffectSpeed ), e_TimeHexAttack, data );
-				}
-			}
-			else
-				DamageHex( proccess, map, radius, _quakeScreen );
-
-
-			if( proccess.TypeDamage == DAMAGE_FIRE )
-				SetFire( map, proccess.TargetHx, proccess.TargetHy, radius, Random( proccess.DmgMin, proccess.DmgMax ), proccess.Attacker );
-
-			if( ammoRound > 0 && ammoRound < 50 && proccess.IsBurst )
-			{
-				uint[] values = { ammoRound, map.Id, proccess.Attacker.Id, proccess.RealWeapon.Id, proccess.TargetHx, proccess.TargetHy, radius, dmgType, ( Explode ? ExplodeId : 0 ), _quakeScreen ? 1 : 0 };
-				CreateTimeEvent( __FullSecond + ATACK_WAIT_TIME, "e_ReAtack", values, false );
-			}
-			
-		} break;
-    }
-	
-	// Вычитаем патроны.
-    if( proccess.Attacker.Mode[ MODE_UNLIMITED_AMMO ] == 0 )
-    {
-		int slot = proccess.RealWeapon.CritSlot;
-		uint protoid = proccess.RealWeapon.GetProtoId();
-        if( !_WeaponRemove( weapon, use ) )
-        {
-            if( rounds < proccess.RealWeapon.AmmoCount )
-                proccess.RealWeapon.AmmoCount -= rounds;
-            else
-            {
-                if( proccess.RealWeapon.AmmoCount > 0 )
-                    ammoRound = proccess.RealWeapon.AmmoCount - 1;
-                proccess.RealWeapon.AmmoCount = 0;
-            }
-			
-			proccess.RealWeapon.Update( );
-        }
-        else
-        {
-			{
-				Item@ stack = proccess.Attacker.GetStackItem( proccess.RealWeapon, true );
-				if( stack is null )
-				{
-					if( skillNum == SK_THROWING && !isGrenade )
-					{
-						proccess.RealWeapon.EventDrop( proccess.Attacker );
-						MoveItem( proccess.RealWeapon, 1, map, proccess.TargetHx, proccess.TargetHy );
-					}
-					else DeleteItem( proccess.RealWeapon );
-					
-					Item@[] items;
-					for( uint i = 0, iEnd = proccess.Attacker.GetItems( SLOT_INV, items ); i < iEnd; i++ )
-						if( validEngineObject( items[ i ] ) && items[ i ].GetProtoId() == protoid )
-						{
-							proccess.Attacker.MoveItem( items[ i ].Id, 1, slot );
-							//items[ i ].Mode = weaponMode;
-							items[ i ].Update( );
-							// Mode
-							break;
-						}
-				}
-				else
-				{
-					if( skillNum == SK_THROWING && !isGrenade )
-					{
-						stack.EventDrop( proccess.Attacker );
-						MoveItem( stack, 1, map, proccess.TargetHx, proccess.TargetHy );
-					}
-					else
-					{
-						uint count = stack.GetCount();
-						if( count > 1 )
-						{
-							stack.SetCount( count - 1 );
-							stack.Update();
-						}
-						else DeleteItem( stack );
-					}
-				}
-			}
-        }
-    }
-
-    proccess.Attacker.Animate( 0, _WeaponAnim2( weapon, use ), null, true, false );
-
-    if( ExplodeId == PID_EXPLODE_NUKLEAR )
-    {
-        uint[] values = { 22, map.Id, proccess.Attacker.Id, proccess.RealWeapon.Id, proccess.TargetHx, proccess.TargetHy, 1, dmgType, PID_EXPLODE_FIRE_BIG, _quakeScreen ? 1 : 0 };
-        CreateTimeEvent( __FullSecond + ATACK_WAIT_TIME * 10, "e_ReAtack", values, false );
-    }
-
+	Combat@ proccess = cast<Combat@>(@combatProccess);
+	if( proccess is null ) @proccess = Combat( critter, defHexX, defHexY, item.Proto, weaponMode, GetProtoItem( item.AmmoPid ) );
+	else proccess.Prepare( critter, null, defHexX, defHexY, item.Proto, weaponMode, GetProtoItem( item.AmmoPid ) );
+	CombatAttack( proccess );
     return true;
 }
 
@@ -4846,6 +4496,7 @@ bool hex_attack( CritterCl@ target, uint16 hexX, uint16 hexY )
 			
 			if( target !is null || ( ( hx > 0 && hy > 0 ) && ( IsHexRaked( hx, hy ) || weapon.Weapon_ZoneAttackIgnoreNotRaked ) ) )
 			{
+				Message( "hx " + hx + " hy " + hy );
 				if( StartStalking( target, hx, hy ) )
 					return true;
 

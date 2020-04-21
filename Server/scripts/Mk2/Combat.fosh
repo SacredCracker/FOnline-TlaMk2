@@ -143,6 +143,8 @@ shared void runTree( CombatRes[]& combatResults, int ptr )
         runTree( combatResults, combatResults[ ptr ].Right );
 }
 
+# pragma funcdef "uint GetHitAimFuncdef ( int hitLocation ) "
+
 shared interface iCombatProccessContext
 {
 
@@ -235,6 +237,7 @@ shared class CombatProccess : Mk2::CombatProccessPacket
     CombatProccess()
 	{
 		AllDamage.resize( DAMAGE_TYPE_COUNT );
+		@Context = null;
 		Clear();		
 	}
 	
@@ -251,10 +254,8 @@ shared class CombatProccess : Mk2::CombatProccessPacket
 		@RealWeapon = null;
 		@Attacker = null;
 		@Target = null;
-		@Context = null;
 		@Ammo = null;
 		@RealTarget = null;
-		Result = 0;
 
 		Hx = 0;
 		Hy = 0;
@@ -287,6 +288,61 @@ shared class CombatProccess : Mk2::CombatProccessPacket
 		ShowHitAnimForce = false;
 		WeaponMode = 0;
 		WeaponUse = 0;
+		
+		UseHex = false;
+		UseNormal = false;
+		
+		@Results = null;
+		@GetHitAim = null;
+		
+		@Weapon = null;
+		WeaponSkill = 0;
+		WeaponAmmoRound = 0;
+		
+		@RealTarget = null;
+		CriticalChance = 0;
+		BaseToHit = 0;
+		ToHit = 0;
+		
+		IsHit = false;
+		IsRandomHit = false;
+		IsJinked = false;
+		
+		CombatMessage = true;
+		
+		@Map = null;
+		AttackDistantion = 0;
+		
+		DistanceMod1 = 2;
+		DistanceMod2 = 0;
+		
+		CriticalFailFlags = 0;
+		
+		IsAim = false;
+	}
+	
+	bool IsChangeTarget( )
+	{
+		return RealTarget !is Target;
+	}
+	
+	bool IsSilentAtack( Critter& target )
+	{
+		if( RealTarget is null )
+			return false;
+		if( !IsWeaponPerk( WEAPON_PERK_SOUNDLESS ) )
+			return false;
+		if( Distantion > 5 )
+			return false;
+		if( Attacker.Perk[ PE_SILENT_DEATH ] == 0 )
+			return false;
+		return ( Attacker.Dir == target.Dir || ( ( Attacker.Dir + 1 ) % 6 ) == target.Dir || ( ( Attacker.Dir + 5 ) % 6 ) == target.Dir );
+	}
+	
+	void UnSneak( Critter& critter )
+	{
+		if( critter.IsNpc() || critter.GetAccess() != ACCESS_ADMIN )
+			critter.ModeBase[ MODE_HIDE ] = 0;
 	}
     
 	bool IsWeaponPerk( int number )
@@ -367,8 +423,68 @@ shared class CombatProccess : Mk2::CombatProccessPacket
 		return GetDistantion( Hx, Hy, TargetHx, TargetHy );
 	}
 	
-	void ToHitCalculated( Critter@ target, uint16 targethx, uint16 targethy, int aim ) // override
+	void ToHitCalculated( Critter@ target, uint16 targethx, uint16 targethy, int aim, bool checkBlockers, int& blockers ) // override
 	{}
+	
+	int GetWeaponMaxDistance()
+	{
+		if( WeaponSkill == SK_THROWING )
+			return MIN( _WeaponMaxDist( Weapon, WeaponUse ), 3 * MIN( 10, ( Attacker.Stat[ ST_STRENGTH ] + 2 * Attacker.Perk[ PE_HEAVE_HO ] ) ) );
+		return _WeaponMaxDist( Weapon, WeaponUse );
+	}
+	
+	void UpdateTypeDamage( )
+	{
+		if( Ammo is null || Ammo.Ammo_DmgType == 0 )
+			TypeDamage = _WeaponDmgType( Weapon, WeaponUse );
+		else
+			TypeDamage =  Ammo.Ammo_DmgType;
+	}
+	
+	int GetWeaponSubType()
+	{
+		switch( WeaponSkill )
+		{
+			case SK_DOCTOR:
+			case SK_SMALL_GUNS:
+			case SK_BIG_GUNS:
+			case SK_ENERGY_WEAPONS:
+				return WS_GUN;
+				
+			case SK_THROWING:
+				return WS_THROWING;
+				
+			default: 
+				return WS_UNARMED;
+		}
+		return 0;
+	}
+	
+	bool WeaponIsGrenade()
+	{
+		return WeaponSubtype == WS_THROWING && TypeDamage != DAMAGE_NORMAL;
+	}
+	
+	int GetAim( )
+	{
+		if( IsBurst )
+			return HIT_LOCATION_UNCALLED;
+		if( Target is null )
+			return HIT_LOCATION_UNCALLED;
+		if( _WeaponModeAim( WeaponMode ) == HIT_LOCATION_EYES && ( Attacker.Dir + 3 ) % 6 != Target.Dir )
+			return HIT_LOCATION_HEAD;
+		return _WeaponModeAim( WeaponMode );
+	}
+	
+	bool IsAttackerEyeDamage()
+	{
+		return Attacker.Damage[ DAMAGE_EYE ] != 0;
+	}
+	
+	bool GetBloodyMess()
+	{
+		return Attacker.Trait[ TRAIT_BLOODY_MESS ] != 0;
+	}
 
     uint16   WeaponPid;
     uint16   Hx;
@@ -378,7 +494,6 @@ shared class CombatProccess : Mk2::CombatProccessPacket
 
     uint8    Aim;
     uint8    WeaponSubtype;
-    uint8    Result;
     uint8    WeaponMode;
     uint8    WeaponUse;
 
@@ -422,6 +537,34 @@ shared class CombatProccess : Mk2::CombatProccessPacket
     Critter@ RealTarget;
 	
 	iCombatProccessContext@ Context;
+	
+	Map@ Map;
+
+	ProtoItem@ Weapon;
+	int WeaponAmmoRound;
+	int WeaponSkill;
+	
+	int CriticalChance;
+	int BaseToHit;
+	int ToHit;
+
+	bool IsHit;
+	bool IsRandomHit;
+	bool IsJinked;
+	bool IsAim;
+	
+	bool UseHex;
+	bool UseNormal;
+
+    CombatRes[]@ Results;
+	
+	uint AttackDistantion;
+	uint CriticalFailFlags;
+	
+	int DistanceMod1;
+	int DistanceMod2;
+	
+	GetHitAimFuncdef@ GetHitAim;
 }
 
 shared void NotifyOops( Critter& cr, Critter& t1, Critter@ t2, CombatRes[]& results )
