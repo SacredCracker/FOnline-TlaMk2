@@ -251,7 +251,9 @@ shared class CombatProccess : Mk2::CombatProccessPacket
 		@RealWeapon = null;
 		@Attacker = null;
 		@Target = null;
-		@ Context = null;
+		@Context = null;
+		@Ammo = null;
+		@RealTarget = null;
 		Result = 0;
 
 		Hx = 0;
@@ -285,9 +287,6 @@ shared class CombatProccess : Mk2::CombatProccessPacket
 		ShowHitAnimForce = false;
 		WeaponMode = 0;
 		WeaponUse = 0;
-		
-		Skill = 0;
-		MaxAttackDistance = 0;
 	}
     
 	bool IsWeaponPerk( int number )
@@ -295,7 +294,7 @@ shared class CombatProccess : Mk2::CombatProccessPacket
 		return ( FirstWeaponPerk == number || SecondWeaponPerk == number || AmmoPerk == number );
 	}
 	
-    int  get_TotalDamage()
+    int get_TotalDamage()
 	{
 		int allDamage = 0;
 		for( uint i = 0; i < DAMAGE_TYPE_COUNT; i++ )
@@ -367,6 +366,9 @@ shared class CombatProccess : Mk2::CombatProccessPacket
 	{
 		return GetDistantion( Hx, Hy, TargetHx, TargetHy );
 	}
+	
+	void ToHitCalculated( Critter@ target, uint16 targethx, uint16 targethy, int aim ) // override
+	{}
 
     uint16   WeaponPid;
     uint16   Hx;
@@ -388,7 +390,6 @@ shared class CombatProccess : Mk2::CombatProccessPacket
     bool     ShowHitAnimForce;
     bool     IsCritical;
 
-	int	  Skill;
     int      FirstWeaponPerk;
     int      SecondWeaponPerk;
     int      AmmoPerk;
@@ -411,13 +412,14 @@ shared class CombatProccess : Mk2::CombatProccessPacket
     uint     TargetId;
     uint     ForceFlags;
     uint     AmmoPid;
-	uint	  MaxAttackDistance;
 	
     Item@ ArmorTarget;
     Item@ RealWeapon;
+    ProtoItem@ Ammo;
 
     Critter@ Attacker;
     Critter@ Target;
+    Critter@ RealTarget;
 	
 	iCombatProccessContext@ Context;
 }
