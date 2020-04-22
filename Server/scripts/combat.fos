@@ -1321,20 +1321,14 @@ class Combat : CombatProccess
 										@ replay = cast<FullReplayAttack@>(@descriptor);
 										if( replay is null || !replay.Check() )
 										{
-											Debug( "No cast" );
 											EraseTimeEvent( Attacker.TimeAttackId );
 											Attacker.TimeAttackId = 0;
-										}
-										else
-										{
-											Debug( "Testic" );
 										}
 									}
 									else 
 									{
 										EraseTimeEvent( Attacker.TimeAttackId );
 										Attacker.TimeAttackId = 0;
-										Debug( "No found " + ( descriptor !is null ) );
 									}
 								}
 								
