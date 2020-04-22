@@ -1,12 +1,6 @@
 //
-
-#include "sprite.fos"
-#include "_colors.fos"
-
 #include "client_main_import.fos"
-
 #include "client_main_variable.fos"
-
 #include "client_main_h.fos"
 
 // //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1354,17 +1348,21 @@ void DrawTimeouts()
         }
     }
 
+	string@ txt = null;
     for( uint i = 0, iEnd = _Timeouts.length(); i < iEnd; i++ )
     {
-        if( @_Timeouts[i] !is null && _Timeouts[ i ].Value > __FullSecond && ( cr.Id == _Timeouts[ i ].ChosId ) )
-        {
-            timeouts += _Timeouts[ i ].Str + " " + ( _Timeouts[ i ].Value - __FullSecond ) + "\n";
-        }
-        else
-        {
-            _Timeouts.removeAt( i-- );
-            iEnd--;
-        }
+		if( @_Timeouts[i] !is null )
+		{
+			@txt = _Timeouts[ i ].Get();
+			if( txt !is null )
+			{
+				timeouts += txt + "\n";
+				continue;
+			}
+		}
+		
+        EraseTimeout( i-- );
+        iEnd--;
     }
 
     if( timeouts.length() > 0 )

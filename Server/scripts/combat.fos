@@ -303,9 +303,9 @@ class CombatAlgoritm_Burst : CombatAlgoritm
 	float penaltyEffectSecondTargets = 1.0;
     int modeToHitForNextBulets = 8;
 		
-	CombatAlgoritm_Burst()
+	CombatAlgoritm_Burst( )
 	{
-		Clear();
+		Clear( );
 	}
 		
 	void Clear( )
@@ -1136,15 +1136,13 @@ class Combat : CombatProccess
 	{
 		string sound = "WA01XXX1.ACM";
 		sound[ 2 ] = _WeaponSoundId( Weapon, WeaponUse );
-		sound[ 3 ] = IsBurst ? '2' : '1';
 		Map.PlaySound( sound );
 	}
 	
 	void PlayShot( )
 	{
-		string sound = "WAXXXXX1.ACM";
+		string sound = "WAX1XXX1.ACM";
 		sound[ 2 ] = _WeaponSoundId( Weapon, WeaponUse );
-		sound[ 3 ] = IsBurst ? '2' : '1';
 		Map.PlaySound( sound );
 	}
 	
@@ -1314,26 +1312,42 @@ class Combat : CombatProccess
 							FullReplayAttack@ replay = cast<FullReplayAttack@>(@Context);
 							if( replay is null )
 							{
-								@replay = FullReplayAttack();
-								@replay.map = Map;
-								@replay.proccess = this;
-								replay.stage = 0;
-								replay.weaponMode = WeaponMode;
-								replay.targetX = TargetHx;
-								replay.targetY = TargetHy;
+								if( Attacker.TimeAttackId != 0 )
+								{
+									uint duration = 0;
+									TimeEventDescriptor@ descriptor = GetTimeEvent( Attacker.TimeAttackId, duration );
+									if( descriptor !is null )
+									{
+										@ replay = cast<FullReplayAttack@>(@descriptor);
+										if( replay is null || !replay.Check() )
+										{
+											Debug( "No cast" );
+											EraseTimeEvent( Attacker.TimeAttackId );
+											Attacker.TimeAttackId = 0;
+										}
+										else
+										{
+											Debug( "Testic" );
+										}
+									}
+									else 
+									{
+										EraseTimeEvent( Attacker.TimeAttackId );
+										Attacker.TimeAttackId = 0;
+										Debug( "No found " + ( descriptor !is null ) );
+									}
+								}
+								
+								if( replay is null )
+									@replay = FullReplayAttack();
+								
+								replay.Fill(this);
 								@Context = replay;
 							}
-							if( Attacker.TimeAttackId > 0 )
-								EraseTimeEvent( Attacker.TimeAttackId );
-
-							if( Weapon.Weapon_BulletProgression != 0 )
-							{
-								WeaponAmmoRound = 1 + replay.stage != 0 ? replay.stage/Weapon.Weapon_BulletProgression : 0;
-								if( WeaponAmmoRound > _WeaponRound( Weapon, WeaponUse ) )
-									WeaponAmmoRound = _WeaponRound( Weapon, WeaponUse );
-							}
 							
-							Attacker.TimeAttackId = CreateTimeEvent( __FullSecond + REAL_MS( _WeaponTimeAttack( RealWeapon.Proto, WeaponUse ) ), e_FullReplayAtack, replay );
+							WeaponAmmoRound = replay.GetAmmoRound( );
+							
+							replay.RunEvent();
 						}
 						
 						AlgoritmProccess();
@@ -1371,8 +1385,8 @@ class Combat : CombatProccess
 	
 	void Debug( string& log )
 	{
-		//if( Attacker.IsPlayer() && Attacker.GetAccess() == ACCESS_ADMIN)
-		//	Attacker.Say( SAY_NETMSG, log );
+		if( Attacker.IsPlayer() && Attacker.GetAccess() == ACCESS_ADMIN)
+			Attacker.Say( SAY_NETMSG, log );
 	}
 	
 	void Attack(  )
@@ -2931,7 +2945,7 @@ bool Zone_Attack( Critter& critter, uint16 hexX, uint16 hexY, int slot = SLOT_HA
 	return isDoor;
 }
 
-bool u_Attack( Critter@ critter, int hexX, int hexY, int slot ) // Export
+bool u_Attack( Critter@ critter, int hexX, int hexY, int slot, CombatProccess@ combatProccess = null )
 {
 	if( critter is null || critter.IsNotValid )
 	{
@@ -2974,13 +2988,6 @@ bool u_Attack( Critter@ critter, int hexX, int hexY, int slot ) // Export
         }
     }
 	
-    if( weapon.Ammo_Caliber != 0 && weapon.Weapon_MaxAmmoCount != 0 && critter.Mode[MODE_UNLIMITED_AMMO] == 0 && item.AmmoCount == 0 )
-    {
-        if( critter.IsPlayer() )
-            critter.SayMsg( SAY_NETMSG, TEXTMSG_COMBAT, STR_COMBAT_NEED_OUT_OF_AMMO );
-        return false;
-    }
-	
 	uint16 ammoRound = _WeaponRound( weapon, use );
     bool isBurst = ( ammoRound > 1 && _WeaponNoBrust( weapon, use ) == 0 );
 	
@@ -2996,7 +3003,7 @@ bool u_Attack( Critter@ critter, int hexX, int hexY, int slot ) // Export
     if( !critter.IsAnim1( weapon.Weapon_Anim1 ) || critter.Stat[ ST_CURRENT_AP ] < apCost )
         return false;
 
-    if( Attack( critter, item, mode, hexX, hexY ) )
+    if( Attack( critter, item, mode, hexX, hexY, combatProccess ) )
     {
 		// __Breaktime
 		uint breaktime = _WeaponBreakAttack( weapon, use );
@@ -3551,44 +3558,167 @@ uint e_ReAtack( uint[] @ values )
 class FullReplayAttack : iCombatProccessContext, TimeEventDescriptor
 {
 	CombatProccess@ proccess;
-	uint stage;
 	Map@ map;
-	uint8 weaponMode;
 	uint16 targetX;
 	uint16 targetY;
+	uint EventId;
+	uint Delay;
+	BurstStage stage;
+	
+	FullReplayAttack()
+	{
+		Clear();
+	}
+	
+	void Clear()
+	{
+		@proccess = null;
+		@map = null;
+		stage.current = 0;
+		stage.maxrounds = 0;
+		stage.progression = 0;
+		stage.max = 0;
+		targetX = 0;
+		targetY = 0;
+		Delay = 0;
+		EventId = 0;
+	}
+	
+	uint get_WeaponRound()
+	{
+		return _WeaponRound( proccess.Weapon, proccess.WeaponUse );
+	}
+	
+	uint GetAmmoRound( )
+	{
+		if( stage.max == stage.current )
+			return WeaponRound;
+		if( stage.current == 0 )
+			return 1;
+		
+		return stage.currentRound;
+	}
+	
+	void RunEvent()
+	{
+		UpdateDelay();
+		if( proccess.Attacker.TimeAttackId != EventId || EventId == 0 )
+		{
+			EventId = CreateTimeEvent( __FullSecond + Delay, e_FullReplayAtack, this );
+			proccess.Attacker.TimeAttackId = EventId;
+		}
+	}
+	
+	bool Check()
+	{
+		if( !validEngineObject( proccess.Attacker ) || !proccess.Attacker.IsLife() )
+			return false;
+		if( @proccess.RealWeapon is null ) 
+			return false;
+		if( map is null )
+			return false;
+		if( proccess.RealWeapon.Accessory != ACCESSORY_CRITTER )
+			return false;
+		if( proccess.RealWeapon.CritId != proccess.Attacker.Id )
+			return false;
+		if( proccess.RealWeapon.CritSlot != SLOT_HAND1  )
+			return false;	
+		return true;
+	}
+	
+	bool CheckPosition()
+	{
+		if( proccess.Map !is map )
+			return false;
+		if( proccess.Attacker.HexX != proccess.Hx || proccess.Attacker.HexY != proccess.Hy )
+			return false;
+		return true;
+	}
+	
+	void Fill( CombatProccess@ combatProccess )
+	{
+		@proccess = @combatProccess;
+		@map = proccess.Map;
+		targetX = proccess.TargetHx;
+		targetY = proccess.TargetHy;
+		@proccess.Context = this;
+		
+		if( stage.maxrounds == 0 )
+		{
+			stage.current = 0;
+			stage.maxrounds = WeaponRound;
+			stage.progression = proccess.Weapon.Weapon_BulletProgression;
+			stage.max = stage.maxrounds * stage.progression;
+		}
+	}
+	
+	void Send()
+	{
+		if( proccess.Attacker !is null && proccess.Attacker.IsPlayer() )
+			proccess.Attacker.Send( stage, BurstStageDestcriptorId );
+	}
+	
+	void UpdateDelay()
+	{
+		Delay = REAL_MS( _WeaponTimeAttack( proccess.Weapon, proccess.WeaponUse ) );
+	}
+	
+	void StageRaise()
+	{
+		if( stage.current < stage.max )
+		{
+			stage.current++;
+			Send();
+		}
+	}
+	
+	void StageLose()
+	{
+		if( stage.current > 0 )
+		{
+			stage.current--;
+			Send();
+		}
+	}
+	
+	float GetActionCost( )
+	{
+		float apCost = MAX( 1, ( ( _WeaponApCost( proccess.Weapon, proccess.WeaponUse ) - proccess.RealWeapon.WeaponBonus_AP - proccess.Attacker.Perk[ PE_BONUS_RATE_OF_FIRE ] ) - ( proccess.WeaponSubtype == WS_GUN ? proccess.Attacker.Trait[ TRAIT_FAST_SHOT ] : 0 ) ) );
+		return apCost * 25; 
+	}
 	
 	uint Replay()
 	{
 		if( proccess.Context !is this )
 			return 0;
 
-		Critter@ critter = proccess.Attacker;
-		if( @critter is null || !critter.IsLife() ) 
+		if( !Check() )
+		{
+			stage.current = 0;
+			Send();
 			return 0;
+		}
 		
-		Item@ realWeapon = proccess.RealWeapon;
-		if( @realWeapon is null ) return 0;
-		
-		if( critter.TimeAttackId == 0 )
-			return 0;
-		
-		if( map is null )
-			return 0;
-		if( critter.GetMap() !is map )
-			return 0;
-		
-		if( critter.HexX != proccess.Hx || critter.HexY != proccess.Hy )
-			return 0;
-
-		stage++;
-		const uint8 use = _WeaponModeUse( weaponMode );
-		const int skillNum = _WeaponSkill( realWeapon.Proto, use );
-		const uint8 weaponSubtype = ( skillNum == SK_SMALL_GUNS || skillNum == SK_BIG_GUNS || skillNum == SK_ENERGY_WEAPONS ) ? WS_GUN : ( ( skillNum == SK_THROWING ) ? WS_THROWING : WS_UNARMED );
-		float apCost = MAX( 1, ( ( _WeaponApCost( realWeapon.Proto, use ) - realWeapon.WeaponBonus_AP - critter.Perk[ PE_BONUS_RATE_OF_FIRE ] ) - ( weaponSubtype == WS_GUN ? critter.Trait[ TRAIT_FAST_SHOT ] : 0 ) ) );
-		apCost *= 25; 
-		if( critter.Stat[ ST_CURRENT_AP ] * 100 >= apCost && Attack( critter, realWeapon, weaponMode, targetX, targetY, proccess ) )
-			critter.StatBase[ ST_CURRENT_AP ] -= apCost; // Отнимает очки действия.
-		return 0;
+		if( CheckPosition() )
+		{
+			StageRaise();
+			
+			float apCost = GetActionCost( );
+			if( proccess.Attacker.Stat[ ST_CURRENT_AP ] * 100 >= apCost && Attack( proccess.Attacker, proccess.RealWeapon, proccess.WeaponMode, targetX, targetY, proccess ) )
+				proccess.Attacker.StatBase[ ST_CURRENT_AP ] -= apCost; // Отнимает очки действия.
+		}
+		else
+		{
+			StageLose();
+			if( stage.current == 0 )
+			{
+				if( proccess.Attacker.TimeAttackId == EventId )
+					proccess.Attacker.TimeAttackId = 0;
+				return 0;
+			}
+			UpdateDelay();
+		}
+		return Delay;
 	}
 }
 
@@ -3681,7 +3811,7 @@ void _SetBattleTimer( Critter& critter, uint index, int oldValue )
     critter.StatBase[ ST_DAMAGE_RECEIVED ] = 0;
     critter.StatBase[ ST_DAMAGE_DONE ] = 0;
     critter.StatBase[ ST_BATTLE_DATA ] =
-        int( CreateTimeEvent( critter.TimeoutBase[ index ], "e_BattleStat", values, false ) );
+    int( CreateTimeEvent( critter.TimeoutBase[ index ], "e_BattleStat", values, false ) );
 }
 
 uint e_BattleStat( uint[] @ values )
@@ -3711,26 +3841,6 @@ uint e_BattleStat( uint[] @ values )
     critter.StatBase[ ST_DAMAGE_DONE ] = 0;
     critter.StatBase[ ST_DAMAGE_RECEIVED ] = 0;
     return 0;
-}
-
-class CTraceTime : ITraceContext
-{
-	uint16 HexX;
-	uint16 HexY;
-	uint Time;
-    uint Result;
-	
-	CTraceTime( )
-	{
-		Time = 0;
-		Result = 0;
-	}
-	
-    bool ExecMutual( uint16 hx, uint16 hy )
-    {
-        Result += Time;
-        return ( HexX == hx && HexY == hy );
-    }
 }
 
 class CTraceLineIgnoredRaked : ITraceContext
@@ -4062,6 +4172,84 @@ class CTraceBurst : ITraceContext
 }
 
 #endif // !__CLIENT
+#ifdef __CLIENT
+class BurstTimer : _Timeout
+{
+	BurstStage@ stage;
+	
+	BurstTimer( string str )
+	{
+		CritterCl@ chosen = GetChosen();
+		if( chosen !is null )
+			ChosId = chosen.Id;
+		else ChosId = 0;
+		Str = str;
+	}
+	
+	string@ Get() override
+	{
+		if( stage is null || stage.maxrounds == 0 )
+			return null;
+			
+		CritterCl@ chosen = GetChosen();
+		if( chosen is null || ChosId != chosen.Id )
+			return null;
+		return Str + stage.currentRound + "/" + stage.maxrounds ;
+	}
+}
+#endif
+
+const uint BurstStageDestcriptorId = GetStrHash("BurstStageDestcriptor");
+
+class BurstStage : MutualObject
+{
+	
+	uint current;
+	uint max;
+	uint progression;
+	uint maxrounds;
+	
+	#ifdef __CLIENT
+	BurstTimer@ Timer;
+	#endif
+	
+	BurstStage( )
+	{
+		current = 0;
+		max = 0;
+		progression = 0;
+		maxrounds = 0;
+		
+		#ifdef __CLIENT
+		@ Timer = null;
+		#endif
+	}
+	
+	
+	uint get_currentRound()
+	{
+		return current/progression;
+	}
+	
+	void Update( uint critterId )
+	{
+	#ifdef __CLIENT
+		if( Timer is null && current != 0 )
+		{
+			@Timer = BurstTimer( "Прогрессия очереди: " );
+			@Timer.stage = this;
+			AddTimer( Timer );
+		}
+		if( current == 0 && Timer !is null )
+		{
+			@Timer.stage = null;
+			@Timer = null;
+		}
+	#endif
+	}
+	
+}
+
 class DebugTraccer : MutualObject
 {
 	uint AttackerId;
@@ -4236,6 +4424,7 @@ int ToHitMutual( Map& map, CritterMutual& critter, const ProtoItem@ weapon, cons
 # include "_client_defines.fos"
 # include "client_gui_h.fos"
 # include "_colors.fos"
+# include "client_timeout_h.fos"
 
 import bool StartStalking( CritterCl@ critter, uint16 hexY, uint16 hexX ) from "client_main";
 import void __SetAttacked( int Id, int param1, int param2, string@ param3, int[] @ param4 ) from "client_main";
@@ -4496,7 +4685,6 @@ bool hex_attack( CritterCl@ target, uint16 hexX, uint16 hexY )
 			
 			if( target !is null || ( ( hx > 0 && hy > 0 ) && ( IsHexRaked( hx, hy ) || weapon.Weapon_ZoneAttackIgnoreNotRaked ) ) )
 			{
-				Message( "hx " + hx + " hy " + hy );
 				if( StartStalking( target, hx, hy ) )
 					return true;
 

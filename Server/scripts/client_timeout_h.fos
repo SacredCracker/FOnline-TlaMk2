@@ -1,0 +1,37 @@
+#ifndef _TIMEOUT_H
+#define _TIMEOUT_H
+shared class _Timeout
+{
+    _Timeout( uint time, string & str, int index )
+    {
+        Value = time;
+        Str = str;
+        Index = index;
+        Pid = 0;
+        ChosId = 0;
+    }
+
+	string@ Get()
+	{
+		CritterCl@ chosen = GetChosen();
+		if( chosen is null || ChosId != chosen.Id )
+			return null;
+		if( __FullSecond > Value )
+			return null;
+		return Str + " " + ( Value - __FullSecond );
+	}
+
+    uint   Value;
+    string Str;
+    int    Pid;
+    int    Index;
+    uint   ChosId;
+}
+
+#ifndef _MAIN_
+import void AddTimer( _Timeout@ timeout ) from "client_main";
+import _Timeout@ CreateTimer( int time, int index, int pid, string@ str ) from "client_main";
+import array< _Timeout@ >@ get_Timeouts() from "client_main";
+import void EraseTimeout( uint index ) from "client_main";
+#endif // _MAIN_
+#endif // _TIMEOUT_H

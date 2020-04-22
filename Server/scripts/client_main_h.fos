@@ -1,5 +1,4 @@
 //
-#include "_npc_pids.fos"
 
 #define IS_ARENA_MAP    # (pid) ( pid == MAP_LS1 || pid == MAP_LS2 || pid == MAP_LS4 )
 void merc_setmode( uint mode )
@@ -1210,50 +1209,56 @@ void ClearLexemsItem( int itId )
         DescriptionItem::ItemDescrLexems.delete( "Item_" + itId );
 }
 
-class _Timeout
+array< _Timeout@ >@ get_Timeouts()
 {
-    _Timeout( uint time, string & str, int index )
-    {
-        Value = time;
-        Str = str;
-        Index = index;
-        Pid = 0;
-        ChosId = 0;
-    }
-
-    uint   Value;
-    string Str;
-    int    Pid;
-    int    Index;
-    uint   ChosId;
+	return _Timeouts;
 }
 
 void __DropTimers( int index, int pid, int, string@ str, int[] @ )
 {
-    for( uint i = 0, iEnd = _Timeouts.length(); i < iEnd; i++ )
-        if( @_Timeouts[ i ] is null || _Timeouts[ i ].Index == index )
+    for( uint i = 0, iEnd = Timeouts.length(); i < iEnd; i++ )
+        if( @Timeouts[ i ] is null || Timeouts[ i ].Index == index )
         {
-            if( @_Timeouts[ i ] !is null && pid != 0 && pid != _Timeouts[ i ].Pid )
+            if( @Timeouts[ i ] !is null && pid != 0 && pid != Timeouts[ i ].Pid )
                 continue;
-            _Timeouts.removeAt( i-- );
+            Timeouts.removeAt( i-- );
             iEnd--;
         }
 }
 
-void __AddTimer( int time, int index, int pid, string@ str, int[] @ )
+void AddTimer( _Timeout@ timeout )
 {
-    CritterCl@ cr = GetChosen();
-    if( !valid( cr ) )
+	CritterCl@ cr = GetChosen();
+    if( cr is null || timeout is null)
         return;
+    Timeouts.insertLast( @timeout );
+}
 
-    if( !valid( str ) && pid != 0 )
+void EraseTimeout( uint index )
+{
+	Timeouts.removeAt( index );
+}
+
+_Timeout@ CreateTimer( int time, int index, int pid, string@ str )
+{
+	CritterCl@ cr = GetChosen();
+    if( cr is null )
+        return null;
+
+    if( str is null && str != "" && pid != 0 )
         @str = "" + GetMsgStr( TEXTMSG_ITEM, pid * 100 );
 
-    if( valid( str ) )
+    if( str !is null )
     {
-        _Timeout timeH = _Timeout( time, str, index );
+        _Timeout timeH( time, str, index );
         timeH.Pid = pid;
         timeH.ChosId = cr.Id;
-        _Timeouts.insertLast( @timeH );
+		return timeH;
     }
+	return null;
+}
+
+void __AddTimer( int time, int index, int pid, string@ str, int[] @ )
+{
+    AddTimer( CreateTimer( time, index, pid, str ) );
 }
