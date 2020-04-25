@@ -5,7 +5,7 @@
 import void InjureCritter( Critter& cr, uint dmg, uint dmgType, uint8 dir, uint attackerId ) from "combat";
 import void critter_attack( Critter& cr, Critter& target ) from "main";
 
-void lightning_attack( Critter& attacker, Critter& target, const ProtoItem& weapon, uint8 weaponMode )
+void lightning_attack( Critter& attacker, Critter& target, ProtoItem& weapon, uint8 weaponMode )
 {
     Map@ map = attacker.GetMap();
     if( !valid( map ) )

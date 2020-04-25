@@ -19,8 +19,8 @@
 #define MODE_MOVE       ( 2 )
 #define MODE_ATTACK     ( 1 )
 #define MODE_DEFAULT    ( 0 )
-
-import int  to_hit_hex( const ProtoItem& weapon, uint8 weaponMode, CritterCl@ target, uint16 hexX, uint16 hexY ) from "combat";
+import int ToHitMutual( CritterCl& critter, CritterCl@ target, ItemCl@ realWeapon, ProtoItem@ weapon, ProtoItem@ ammo, uint8 weaponMode, uint16 hexX, uint16 hexY )  from "combat";
+import int  to_hit_hex( ProtoItem& weapon, uint8 weaponMode, CritterCl@ target, uint16 hexX, uint16 hexY ) from "combat";
 import bool hex_attack( CritterCl@ cr, uint16 hexX, uint16 hexY ) from "combat";
 import void render_hit_hex( uint layer ) from "combat";
 import void mouse_move_attack_hex( int x, int y, CritterCl@ target ) from "combat";

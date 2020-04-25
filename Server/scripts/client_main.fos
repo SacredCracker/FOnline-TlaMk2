@@ -2586,7 +2586,7 @@ bool main_out_message( string& message, int& sayType )
 #define IsWeaponPerk    # (i)       ( secondWeaponPerk == i || firstWeaponPerk == i || ammoPerk == i )
 int to_hit( CritterCl& chosen, CritterCl& target, ProtoItem& slot1weapon, uint8 weaponMode )
 {
-    const ProtoItem@ weapon = __GrenadeMode ? chosen.GetSlotProto( SLOT_BONUS, weaponMode ) : slot1weapon;
+    ProtoItem@ weapon = __GrenadeMode ? chosen.GetSlotProto( SLOT_BONUS, weaponMode ) : slot1weapon;
 
     if( !valid( weapon ) )
         return 0;
@@ -2601,17 +2601,15 @@ int to_hit( CritterCl& chosen, CritterCl& target, ProtoItem& slot1weapon, uint8 
         return 0;
 
     ItemCl@          realWeapon = __GrenadeMode ? _CritGetItemBonus( chosen ) : _CritGetItemHand( chosen );
-    const ProtoItem@ ammo = valid( realWeapon ) ? GetProtoItem( realWeapon.AmmoPid ) : null;
+    ProtoItem@ ammo = valid( realWeapon ) ? GetProtoItem( realWeapon.AmmoPid ) : null;
 
-    int              realAim;
     if( valid( realWeapon ) && _WeaponRound( weapon, use ) > 0 )
     {
         if( realWeapon.AmmoCount == 0 )
             return 0;
-        realAim = _WeaponModeAim( realWeapon.Mode );
     }
     else
-        realAim = _WeaponModeAim( chosen.Param[ ST_HANDS_ITEM_AND_MODE ] );
+        hitLocation = _WeaponModeAim( chosen.Param[ ST_HANDS_ITEM_AND_MODE ] );
 
     int firstWeaponPerk = weapon.Weapon_Perk,
         secondWeaponPerk = weapon.Weapon_SecondPerk,
@@ -2619,179 +2617,11 @@ int to_hit( CritterCl& chosen, CritterCl& target, ProtoItem& slot1weapon, uint8 
     if( IsWeaponPerk( WEAPON_PERK_HEX_ATTACKING ) )
         return to_hit_hex( weapon, weaponMode, target, target.HexX, target.HexY );
 
-    uint skillNum = _WeaponSkill( weapon, use );
-    int  wpnMaxDist = _WeaponMaxDist( weapon, use );
-    if( skillNum == SK_THROWING )
-        wpnMaxDist = MIN( wpnMaxDist, 3 * MIN( int(10), chosen.Stat[ ST_STRENGTH ] + 2 * chosen.Perk[ PE_HEAVE_HO ] ) );
+    
+    if( __AutoAim && hitLocation == HIT_LOCATION_NONE )
+        hitLocation = AutoAimLocation;
 
-    int dist = GetCrittersDistantion( chosen, target );
-
-    if( dist > wpnMaxDist )
-        return 0;
-
-    int toHit = chosen.Skill[ skillNum ];
-    int blockers = 0;
-
-    if( skillNum != SK_UNARMED )
-    {
-        // Ranged attack modifiers
-        int distmod1 = 2; // Used for initial weapon bonus
-        int distmod2 = 0; // Minimal distance
-        if( IsWeaponPerk( WEAPON_PERK_LONG_RANGE ) )
-            distmod1 = 4;
-        else if( IsWeaponPerk( WEAPON_PERK_SCOPE_RANGE ) )
-        {
-            distmod1 = 5;
-            distmod2 = 5;
-        }
-
-        int perception = chosen.Stat[ ST_PERCEPTION ];
-        int acc = dist;
-
-        if( dist < distmod2 )
-            acc += distmod2;
-        else
-        {
-            if( chosen.IsPlayer() )
-                acc -= ( perception - 2 ) * distmod1;              // we want to keep it, because fo2238 might use it to display NPCs chance (via possessing)
-            else
-                acc -= perception * distmod1;
-        }
-
-        if( -2 * perception > acc )
-            acc = -2 * perception;
-
-        acc -= 4 * chosen.Perk[ PE_SHARPSHOOTER ];
-
-        if( acc >= 0 )
-        {
-            if( chosen.Damage[ DAMAGE_EYE ] != 0 )
-                acc *= -12;
-            else
-                acc *= -4;
-        }
-        else
-            acc *= -4;
-
-        toHit += acc;
-
-        blockers = GetCrittersPath( chosen.HexX, chosen.HexY, target.HexX, target.HexY, 0.0f, dist, FIND_LIFE, null );
-        if( !target.IsKnockout() )
-            blockers--;
-        toHit -= 10 * blockers;
-
-        if( dist > 1 )
-        {
-            uint16 hx = target.HexX, hy =  target.HexY;
-            MoveHexByDir( hx, hy, ::GetDirection( target.HexX, target.HexY, chosen.HexX, chosen.HexY ), 1 );
-            if( ! IsHexPassed( hx, hy ) )
-                toHit -= 120;
-            else if( dist > 2 )
-            {
-                hx = target.HexX;
-                hy =  target.HexY;
-                MoveHexByDir( hx, hy, ::GetDirection( target.HexX, target.HexY, chosen.HexX, chosen.HexY ), 2 );
-                if( ! IsHexPassed( hx, hy ) )
-                    toHit -= 85;
-                else if( dist > 3 )
-                {
-                    hx = target.HexX;
-                    hy =  target.HexY;
-                    MoveHexByDir( hx, hy, ::GetDirection( target.HexX, target.HexY, chosen.HexX, chosen.HexY ), 3 );
-                    if( ! IsHexPassed( hx, hy ) )
-                        toHit -= 50;
-                }
-
-            }
-
-        }
-
-    } // End range modifiers
-
-	if( realWeapon !is null )
-	{
-		if( !( weapon.Weapon_IsUnarmed ) && chosen.Trait[ TRAIT_ONE_HANDER ] != 0 )
-			toHit += ( FLAG( weapon.Flags, ITEM_TWO_HANDS ) ? -40 : 20 );
-		toHit += realWeapon.WeaponBonus_ToHit;
-	}
-
-    int handlingStrength = chosen.Stat[ ST_STRENGTH ];
-    int reqStrength = weapon.Weapon_MinStrength;
-    if( chosen.Perk[ PE_WEAPON_HANDLING ] != 0 )
-        handlingStrength += 3;
-    if( chosen.Trait[ TRAIT_ONE_HANDER ] != 0 && FLAG( weapon.Flags, ITEM_TWO_HANDS ) == false )
-        handlingStrength += 1;
-    if( handlingStrength < reqStrength )
-        toHit -= ( reqStrength - handlingStrength ) * 20;
-    toHit += weapon.Weapon_BonusToHit;
-
-    if( chosen.Damage[ DAMAGE_EYE ] != 0 )
-        toHit -= 25;
-    if( chosen.Perk[ PE_VAMPIRE_ACCURACY ] != 0 && IS_NIGHT( __Hour ) )
-        toHit += 13;
-    if( target.IsKnockout() )
-        toHit += 40;
-    toHit += target.GetMultihex() * 15;
-
-    int hitMod = GetHitAim( hitLocation );
-    if( __AutoAim && realAim == HIT_LOCATION_NONE )
-        hitMod = GetHitAim( AutoAimLocation );
-    if( skillNum == SK_UNARMED )
-        hitMod /= 2;
-    toHit -= hitMod;
-
-    int penalty = 0;
-    if( skillNum != SK_UNARMED )
-        penalty += GetSmokePenalty( target, 0, 0 );
-
-    // Штраф за расстояние для очередей
-    if( _WeaponRound( weapon, use ) > 1 && _WeaponNoBrust( weapon, use ) == 0 )
-        penalty += int( log( float(dist) ) / log( 2.0f ) ) * 15;
-
-
-    toHit = CLAMP( toHit, 5, 95 - penalty );
-
-    /*{	// Уклонение
-            int lh=target.Param[SK_LIONHEART];
-            if(lh>105)
-            {
-                    toHit-=(toHit*(100-(((lh-100)/6)+(target.Param[PE_DODGER]==0?0:8))))/100;
-            }
-       }
-
-       { // Поглощение
-            toHit-=(toHit*(target.Stat[ST_ARMOR_CLASS]))/100;
-       }*/
-
-    return toHit;
-}
-
-uint GetHitAim( int hitLocation )
-{
-    switch( hitLocation )
-    {
-    case HIT_LOCATION_NONE:
-        break;
-    case HIT_LOCATION_UNCALLED:
-        break;
-    case HIT_LOCATION_TORSO:
-        return __HitAimTorso;
-    case HIT_LOCATION_EYES:
-        return __HitAimEyes;
-    case HIT_LOCATION_HEAD:
-        return __HitAimHead;
-    case HIT_LOCATION_LEFT_ARM:
-    case HIT_LOCATION_RIGHT_ARM:
-        return __HitAimArms;
-    case HIT_LOCATION_GROIN:
-        return __HitAimGroin;
-    case HIT_LOCATION_RIGHT_LEG:
-    case HIT_LOCATION_LEFT_LEG:
-        return __HitAimLegs;
-    default:
-        break;
-    }
-    return 0;
+	return ToHitMutual( chosen, target, realWeapon, weapon, ammo, _WeaponModeMake( use, hitLocation ), target.HexX, target.HexY );
 }
 
 // //////////////////////////////////////////////////////////////////////////////////////////////////

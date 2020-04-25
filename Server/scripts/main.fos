@@ -173,10 +173,42 @@ void critter_attack( ::Critter& cr, ::Critter& target, ::ProtoItem& weapon, uint
 
 // //////////////////////////////////////////////////////////////////////////////////////////////////
 // Call on something critter use item.
-bool critter_use_item( ::Critter& cr, ::Item& item, ::Critter@ targetCr, ::Item@ targetItem, ::Scenery@ targetScen, uint param )
+
+bool critter_use_item( ::Critter& critter, ::Item& item, ::Critter@ targetCr, ::Item@ targetItem, ::Scenery@ targetScen, uint param )
 {
-	if( cast<Mk2::ItemPacket@>(@item.ScriptDescriptor).CritterUse( cr, item, targetCr, targetItem, targetScen, param ) ) return true;	
+	bool result = cast<Mk2::ItemPacket@>(@item.ScriptDescriptor).CritterUse( critter, item, targetCr, targetItem, targetScen, param );
 	
+	uint8 slot = 0;
+	uint16 protoid = item.GetProtoId();
+	if( item.Accessory == ACCESSORY_CRITTER && item.CritId == critter.Id )
+	{
+		slot = item.CritSlot;
+	}
+	
+	if( !result )
+		result = critter_use_item_logic( critter, item, targetCr, targetItem, targetScen, param );
+	
+	if( ( item.IsNotValid || item.Accessory == ACCESSORY_ERASE ) && ( slot == SLOT_BONUS || slot == SLOT_HAND1 ) )
+	{
+		Item@[] items;
+		Item@ newitem = null;
+		for( uint i = 0, iEnd = critter.GetItems( SLOT_INV, items ); i < iEnd; i++ )
+		{
+			@newitem = items[ i ];
+			if( newitem.GetProtoId() == protoid )
+			{
+				critter.MoveItem( newitem.Id, 1, slot );
+				newitem.Update( );
+				break;
+			}
+		}
+	}
+	
+	return result;	
+}
+
+bool critter_use_item_logic( ::Critter& cr, ::Item& item, ::Critter@ targetCr, ::Item@ targetItem, ::Scenery@ targetScen, uint param )
+{
 	if( _ToolUse( item, cr, targetCr, targetItem, targetScen ) )
         return true;
 

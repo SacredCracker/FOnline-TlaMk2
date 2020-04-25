@@ -266,9 +266,6 @@ shared class CombatProccess : Mk2::CombatProccessPacket
 		BloodyMess = false;
 		CombatMessage = false;
 		ScoreUnarmed = false;
-		FirstWeaponPerk = -1;
-		SecondWeaponPerk = -1;
-		AmmoPerk = -1;
 		WeaponSubtype = 0;
 		DmgMin = 0;
 		DmgMax = 0;
@@ -301,8 +298,6 @@ shared class CombatProccess : Mk2::CombatProccessPacket
 		
 		@RealTarget = null;
 		CriticalChance = 0;
-		BaseToHit = 0;
-		ToHit = 0;
 		
 		IsHit = false;
 		IsRandomHit = false;
@@ -319,6 +314,8 @@ shared class CombatProccess : Mk2::CombatProccessPacket
 		CriticalFailFlags = 0;
 		
 		IsAim = false;
+		
+		@WeaponPerks = int[]();
 	}
 	
 	bool IsChangeTarget( )
@@ -347,7 +344,13 @@ shared class CombatProccess : Mk2::CombatProccessPacket
     
 	bool IsWeaponPerk( int number )
 	{
-		return ( FirstWeaponPerk == number || SecondWeaponPerk == number || AmmoPerk == number );
+		return WeaponPerks.find( number ) != -1;
+	}
+	
+	void AddWeaponPerk( int perk )
+	{
+		if( perk != 0 && perk != -1 )
+			WeaponPerks.insertLast( perk );
 	}
 	
     int get_TotalDamage()
@@ -423,7 +426,7 @@ shared class CombatProccess : Mk2::CombatProccessPacket
 		return GetDistantion( Hx, Hy, TargetHx, TargetHy );
 	}
 	
-	void ToHitCalculated( Critter@ target, uint16 targethx, uint16 targethy, int aim, bool checkBlockers, int& blockers ) // override
+	void ToHitCalculated( Critter@ target, uint16 targethx, uint16 targethy, int aim ) // override
 	{}
 	
 	int GetWeaponMaxDistance()
@@ -485,6 +488,31 @@ shared class CombatProccess : Mk2::CombatProccessPacket
 	{
 		return Attacker.Trait[ TRAIT_BLOODY_MESS ] != 0;
 	}
+	
+	void Debug( string& log )
+	{
+		if( Attacker.IsPlayer() )
+		{
+			Log( "<" + GetPlayerName( Attacker.Id ) + ">: " + log );
+			if( Attacker.GetAccess() == ACCESS_ADMIN )
+				Attacker.Say( SAY_NETMSG, log );
+		}
+	}
+	
+	int HitClamp( int hit )
+	{
+		return CLAMP( hit, GetHitMinBorder( ), GetHitMaxBorder( ) );
+	}
+	
+	int GetHitMaxBorder( )
+	{
+		return HitMaxBorder - HitPenalty;
+	}
+	
+	int GetHitMinBorder( )
+	{
+		return HitMinBorder;
+	}
 
     uint16   WeaponPid;
     uint16   Hx;
@@ -505,9 +533,7 @@ shared class CombatProccess : Mk2::CombatProccessPacket
     bool     ShowHitAnimForce;
     bool     IsCritical;
 
-    int      FirstWeaponPerk;
-    int      SecondWeaponPerk;
-    int      AmmoPerk;
+	int[]@	 WeaponPerks;
     int      DmgMin;
     int      DmgMax;
     int      DmgType;
@@ -532,6 +558,8 @@ shared class CombatProccess : Mk2::CombatProccessPacket
     Item@ RealWeapon;
     ProtoItem@ Ammo;
 
+	int AttackerSkill;
+
     Critter@ Attacker;
     Critter@ Target;
     Critter@ RealTarget;
@@ -545,8 +573,6 @@ shared class CombatProccess : Mk2::CombatProccessPacket
 	int WeaponSkill;
 	
 	int CriticalChance;
-	int BaseToHit;
-	int ToHit;
 
 	bool IsHit;
 	bool IsRandomHit;
@@ -565,6 +591,15 @@ shared class CombatProccess : Mk2::CombatProccessPacket
 	int DistanceMod2;
 	
 	GetHitAimFuncdef@ GetHitAim;
+	
+	int Hit;
+	int HitPenalty;
+	int HitResult;
+	
+	int HitMaxBorder;
+	int HitMinBorder;
+	
+	float HitModule;
 }
 
 shared void NotifyOops( Critter& cr, Critter& t1, Critter@ t2, CombatRes[]& results )

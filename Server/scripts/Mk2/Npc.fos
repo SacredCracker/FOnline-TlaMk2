@@ -412,7 +412,7 @@ class NpcDescriptor : Critter::CritterDescriptor, Mk2::NpcPacket, Dialog::Interl
 	}
 
 	bool NpcPlaneEnd(::Critter& npc, ::NpcPlane& plane, int reason, ::Critter@ someCr, ::Item@ someItem)
-	{	
+	{
 		for( uint i = 0, iEnd = EventsNpcPlaneEnd.length(); i < iEnd; i++ )
 		{
 			if( !EventsNpcPlaneEnd[i]( npc, plane, reason, someCr, someItem ) )
@@ -432,6 +432,21 @@ class NpcDescriptor : Critter::CritterDescriptor, Mk2::NpcPacket, Dialog::Interl
 		
 	bool NpcPlaneBegin(::Critter& npc, ::NpcPlane& plane, int reason, ::Critter@ someCr, ::Item@ someItem)
 	{
+		int teamId = npc.Stat[ST_TEAM_ID];
+		//npc.Say( SAY_NORM_ON_HEAD, "teamId " + teamId );
+		if( teamId != 0 )
+		{
+			if( someCr !is null )
+			{
+				if( teamId == someCr.Stat[ST_TEAM_ID] )
+				{
+					//npc.Say( SAY_NORM_ON_HEAD, "block attack" );
+					Log( "Error: " + npc.Id + " block teammate attack" );
+					return false;
+				}
+			}
+		}
+	
 		for( uint i = 0, iEnd = EventsNpcPlaneBegin.length(); i < iEnd; i++ )
 		{
 			if( !EventsNpcPlaneBegin[i]( npc, plane, reason, someCr, someItem ) )
@@ -491,7 +506,7 @@ class NpcDescriptor : Critter::CritterDescriptor, Mk2::NpcPacket, Dialog::Interl
 				targetWpnDist=_WeaponMaxDist(targetWeapon,targetUse);
 			}
 			if( reason == REASON_ATTACK_USE_AIM ) // Тут мы уже атакуем
-			{				
+			{
 				uint distantion=::GetCrittersDistantion( npc, target );
 					
 				// Трассировка проемов и дверей, не зачем туда идти если мы не одни.
@@ -830,7 +845,7 @@ class NpcDescriptor : Critter::CritterDescriptor, Mk2::NpcPacket, Dialog::Interl
 			{
 				return true;
 			}
-		}
+		} //*/
 		return MainPlane_NpcPlaneRun( npc, plane, reason, r0, r1, r2 );
 	}
 

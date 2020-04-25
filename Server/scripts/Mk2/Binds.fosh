@@ -2090,24 +2090,26 @@ void critter_attack( Critter& critter, Critter& target, ProtoItem& weapon, uint8
 	__EventCritterAttack.Raise( critter, target, weapon, weaponMode, ammo );
 }
 
+bool result = false;
+
 bool npc_plane_run( Critter& critter, NpcPlane& plane, int reason, uint& r0, uint& r1, uint& r2 )
 {
-	bool ret  = __EventNpcPlaneRun.Raise( critter, plane, reason, r0, r1, r2 );
+	result  = __EventNpcPlaneRun.Raise( critter, plane, reason, r0, r1, r2 );
 	if( reason == REASON_ATTACK_WEAPON && r0 == 0 && r1 == uint( -1 ) && r2 == uint( -1 ) )
-	{
 		Log(" REASON_ATTACK_WEAPON - false " + critter.Id);
-	}
-	return ret;
+	return result;
 }
 
 bool npc_plane_begin( Critter& critter, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem )
 {
-	return __EventNpcPlaneBegin.Raise( critter, plane, reason, someCr, someItem );
+	result  = __EventNpcPlaneBegin.Raise( critter, plane, reason, someCr, someItem );
+	return result;
 }
 
 bool npc_plane_end( Critter& critter, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem )
 {
-	return __EventNpcPlaneEnd.Raise( critter, plane, reason, someCr, someItem );
+	result = __EventNpcPlaneEnd.Raise( critter, plane, reason, someCr, someItem );
+	return result;
 }
 
 bool player_allowcommand( ::Critter@ player, ::string@ adminPanel, uint8 command )

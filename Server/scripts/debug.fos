@@ -3501,6 +3501,15 @@ void IsZoneAttack( Critter& cr, int set, int flag, int  )
     cr.Say( SAY_NORM, " zone " + Zone_Attack( cr, target.HexX, target.HexY, SLOT_HAND1 ) );
 }
 
+void SlotProto( Critter& critter, int slot, int, int )
+{
+    uint8 mode = 0;
+    const ProtoItem@ weapon = critter.GetSlotProto( SLOT_HAND1, mode );
+	
+	Log( "SlotProto: " + weapon.ProtoId + " mode " + _WeaponModeUse( mode ) + " aim " + _WeaponModeAim( mode ) );
+	critter.Say( SAY_NETMSG, "SlotProto: " + weapon.ProtoId + " mode " + _WeaponModeUse( mode ) + " aim " + _WeaponModeAim( mode ) );
+}
+
 
 //  ~run debug TestPrioritet 1 0 0
 void TestPrioritet( Critter& npc, int targetId, int, int  )
