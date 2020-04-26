@@ -737,8 +737,17 @@ void critter_reload_weapon( ::Critter& cr, ::Item& weapon, ::Item@ ammo )
                 cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_SOLAR_SCORCHER_NO_LIGHT );
             else
             {
-                weapon.AmmoCount = weapon.Proto.Weapon_MaxAmmoCount;
-                weapon.Update();
+				if( weapon.GetCount() == 1 )
+				{
+					weapon.AmmoCount = weapon.Proto.Weapon_MaxAmmoCount;
+					weapon.Update();
+				}
+				else
+				{
+					Item@ new_weapon = weapon.Split( 1 );
+					new_weapon.AmmoCount = new_weapon.Proto.Weapon_MaxAmmoCount;
+					new_weapon.StackUpdate();
+				}
             }
         }
 
@@ -752,20 +761,37 @@ void critter_reload_weapon( ::Critter& cr, ::Item& weapon, ::Item@ ammo )
         if( weapon.AmmoPid != 0 )
         {
             ::Item@ existAmmo = cr.GetItem( weapon.AmmoPid, -1 );
-            if( not validEngineObject( existAmmo ) )
+            if( not validEngineObject( existAmmo ) )			
                 cr.AddItem( weapon.AmmoPid, weapon.AmmoCount );
             else
                 _IncItem( existAmmo, weapon.AmmoCount );
         }
-        weapon.AmmoCount = 0;
+		if( weapon.GetCount() == 1 )
+			weapon.AmmoCount = 0;
+		else
+		{
+			Item@ new_weapon = weapon.Split( 1 );
+			new_weapon.AmmoCount = 0;
+			new_weapon.StackUpdate();
+		}
     }
 
     // Load
     if( validEngineObject( ammo ) )
     {
         uint count = MIN( ammo.GetCount(), weapon.Proto.Weapon_MaxAmmoCount - weapon.AmmoCount );
-        weapon.AmmoCount += count;
-        weapon.AmmoPid = ammo.GetProtoId();
+		if( weapon.GetCount() == 1 )
+		{
+			weapon.AmmoCount += count;
+			weapon.AmmoPid = ammo.GetProtoId();
+		}
+		else
+		{
+			Item@ new_weapon = weapon.Split( 1 );
+			new_weapon.AmmoCount += count;
+			new_weapon.AmmoPid = ammo.GetProtoId();
+			new_weapon.StackUpdate();
+		}
         _SubItem( ammo, count );
     }
     weapon.Update();
