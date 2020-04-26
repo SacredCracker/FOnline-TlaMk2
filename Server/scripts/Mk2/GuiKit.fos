@@ -20,9 +20,30 @@ void ModuleInit( )
 	return ( @Current is null ? @key : @Current.FormatKey( @key ) );
 }
 
+void FormatPosition( int[]@ position )
+{
+	if( Current is null )
+		return;
+	if( Current.Position is null )
+		return;
+	if( Current.Position.length() < 2 )
+		return;
+	position[0] -= Current.Position[0];
+	position[1] -= Current.Position[1];
+//	for( uint i = 0, iend = position.length(); i < iend; i++ )
+//		position[i] -= Current.Position[i%2];
+}
+
+int[]@ GetMainPosition( )
+{
+	if( Current is null )
+		return null;
+	return Current.Position;
+}
+
 void Add( int index, ThisModule::GUIScreenPattern@ pattern, ThisModule::IGuiKitElement@ element = null ){
 	if( @pattern !is null )	AllKits.insertLast( @ThisModule::RefKit( index, @pattern ) );
-	else 						SecondKits.insertLast( @ThisModule::RefKit( index, null, @element ) );
+	else 					SecondKits.insertLast( @ThisModule::RefKit( index, null, @element ) );
 }
 
 bool Build( )
@@ -34,6 +55,11 @@ bool Build( )
 interface GUIScreenPattern{
 	::string@ get_Name();
 	void Build( int screenIndex, ::IGUIScreenOpt@ opt );
+}
+
+interface GUIScreenPattern_DefPosition{
+	int get_DefaultX();
+	int get_DefaultY();
 }
 
 interface IGuiKitElement{
@@ -63,10 +89,11 @@ interface IGuiKitElement{
 
 class RefKit
 {
+	int[]@ Position;
 	int ScreenIndex;
 	ThisModule::GUIScreenPattern@ Kit;
 	ThisModule::IGuiKitElement@[] ListElement;
-	
+		
 	RefKit( int si, ThisModule::GUIScreenPattern@ ref, ThisModule::IGuiKitElement@ element = null )
 	{
 		@Kit = @ref;
@@ -79,12 +106,34 @@ class RefKit
 	void Build( )
 	{
 		@Current = @this;
+		@Position = IniParser::GetCoord( Name + "Main" );
 		if( ScreenIndex != CLIENT_SCREEN_NONE )
 		{
 			::IGUIScreenOpt@ opt = @CreateScreen( ScreenIndex, @Kit );
 			if( @opt !is null )
-			{
-				if( @Kit !is null )
+			{			
+				int x = 0;
+				int y = 0;
+				
+				GUIScreenPattern_DefPosition@ defposition = cast<GUIScreenPattern_DefPosition@>(@Kit);
+				if( defposition !is null )
+				{
+					x = defposition.DefaultX;
+					y = defposition.DefaultY;
+				}
+				
+				x = IniParser::GetIniValue( Name + "X", x );
+				y = IniParser::GetIniValue( Name + "Y", y );
+				
+				if( x < 0 )
+					x = __ScreenWidth - Position[ 2 ];
+				if( y < 0 )
+					y = ( __ScreenHeight - Position[ 3 ] ) / 2;
+    
+				if( x != 0 || y != 0)
+					opt.Position( x, y );
+					
+				if( Kit !is null )
 					Kit.Build( ScreenIndex, @opt );
 				
 				for( uint i = 0, iEnd = ListElement.length(); i < iEnd; i++ )
@@ -102,8 +151,13 @@ class RefKit
 		@Current = null;
 	}
 	
+	string get_Name()
+	{
+		return ( @Kit is null ? "" : Kit.Name );
+	}
+	
 	::string@ FormatKey( ::string@ key ){
-		return ( @Kit is null ? @key : Kit.Name + "" + key  );
+		return Name + "" + key;
 	}
 	
 	void Add( ThisModule::IGuiKitElement@ elem ){
@@ -158,7 +212,7 @@ class CustomSpace : ThisModule::IGuiKitElement
 	int[]@ Position;
 }
 
-class CritterAnimation : ThisModule::IGuiKitElement, IGUI::ElementCallbackDrawPos
+class CritterAnimation : ThisModule::IGuiKitElement, IGUI::ElementCallbackDrawPos, ElementGeneral
 {
 	CritterAnimation( const ::string name )
 	{
@@ -190,6 +244,7 @@ class CritterAnimation : ThisModule::IGuiKitElement, IGUI::ElementCallbackDrawPo
 		if( IniParser::IsKey( Name ) )
 		{
 			@Position = IniParser::GetCoord( Name );
+			FormatPosition( Position );
 			for( uint i = 0, iEnd = Position.length(); i < iEnd; i++ )
 				if( Position[i] != 0 )
 				{
@@ -233,7 +288,19 @@ class CritterAnimation : ThisModule::IGuiKitElement, IGUI::ElementCallbackDrawPo
 	IGUIElementOpt@ Option;
 }
 
-class DynamicText : ThisModule::IGuiKitElement, IGUI::ElementCallbackDrawPos
+void DrawRectangle( int x, int y, int w, int h, int color )
+{
+	int[] data = {
+		x, y, color,
+		x, h, color,
+		w, h, color,
+		w, y, color,
+	};
+	
+	DrawPrimitive( DRAW_PRIMITIVE_LINESTRIP, data );
+}
+
+class DynamicText : ThisModule::IGuiKitElement, IGUI::ElementCallbackDrawPos, ElementGeneral
 {
 	DynamicText( const ::string name )
 	{
@@ -243,9 +310,13 @@ class DynamicText : ThisModule::IGuiKitElement, IGUI::ElementCallbackDrawPos
 		SetColor( int COLOR_SAND );
 		@DefPos = null;
 		@Position = null;
+		@GUIOption = null;
+		
+		IsClickable = true;
 		
 		if( @Current !is null )
 			Current.Add( @this );
+		construct();
 	}
 	
 	ThisModule::DynamicText@ SetDefPosition( int[]@ defPos )
@@ -276,7 +347,10 @@ class DynamicText : ThisModule::IGuiKitElement, IGUI::ElementCallbackDrawPos
 	void OnDraw( int ScreenX, int ScreenY, int ElementX, int ElementY ) override
 	{
 		if( Position !is null )
+		{
 			DrawText( DynamicText_GetText(), ScreenX + ElementX, ScreenY + ElementY, Position[2], Position[3], Color,  Font, Flag );
+			// DrawRectangle( ScreenX + ElementX, ScreenY + ElementY, Position[2], Position[3], Color );
+		}
 	}
 	
 	ThisModule::IGuiKitElement@ Build( int screenIndex  ) override
@@ -284,12 +358,14 @@ class DynamicText : ThisModule::IGuiKitElement, IGUI::ElementCallbackDrawPos
 		if( IniParser::IsKey( Name ) )
 		{
 			@Position = IniParser::GetCoord( Name );
+			FormatPosition( Position );
 			for( uint i = 0, iEnd = Position.length(); i < iEnd; i++ )
 				if( Position[i] != 0 )
 				{
-					GUI_AddScreenElement( screenIndex, null, 0, 0 )
+					@GUIOption = GUI_AddScreenElement( screenIndex, null, 0, 0 )
 						.Position( Position )
-						.CallbackDrawPos( @this );
+						.CallbackDrawPos( @this )
+						.SetNoCollision( IsClickable == true );
 					break;
 				}
 		}
@@ -316,6 +392,12 @@ class DynamicText : ThisModule::IGuiKitElement, IGUI::ElementCallbackDrawPos
 		return @get_Name();
 	}
 	
+	ThisModule::DynamicText@ SetClickable( bool isclickable )
+	{
+		IsClickable = isclickable;
+		return this;
+	}
+	
 	int Font;
 	int Color;
 	int Flag;
@@ -324,9 +406,13 @@ class DynamicText : ThisModule::IGuiKitElement, IGUI::ElementCallbackDrawPos
 	bool IsUpText;
 	int[]@ Position;
 	::string MyName;
+	
+	bool IsClickable;
+	
+	IGUIElementOpt@ GUIOption;
 }
 
-class Text : ThisModule::IGuiKitElement
+class Text : ThisModule::IGuiKitElement, ElementGeneral
 {
 	Text( const ::string name, int text, int msgNum = TEXTMSG_GAME )
 	{
@@ -337,9 +423,13 @@ class Text : ThisModule::IGuiKitElement
 		SetOption( FONT_FAT, FT_CENTERXY );
 		SetColor( COLOR_SAND );
 		@DefPos = null;
+		@GUIOption = null;
 		
+		IsClickable = true;
 		if( @Current !is null )
 			Current.Add( @this );
+			
+		construct();
 	}
 	
 	ThisModule::Text@ SetDefPosition( int[]@ defPos )
@@ -376,14 +466,16 @@ class Text : ThisModule::IGuiKitElement
 	{
 		if( IniParser::IsKey( Name ) )
 		{
-			int[] coord = IniParser::GetCoord( Name, @DefPos );
+			int[]@ coord = IniParser::GetCoord( Name, DefPos );
+			FormatPosition( coord );
 			for( uint i = 0, iEnd = coord.length(); i < iEnd; i++ )
 				if( coord[i] != 0 )
 				{
-					GUI_AddScreenElement( screenIndex, null, 0, 0 )
+					@GUIOption = GUI_AddScreenElement( screenIndex, null, 0, 0 )
 						.Position( coord )
 						.Text( IsUpText ? ( ::strupr( ::GetMsgStr( MsgNumber, TextNumber ) ) ) : ( ::GetMsgStr( MsgNumber, TextNumber ) )
-								, Font, Color0, Color1, Flag );
+								, Font, Color0, Color1, Flag )
+						.SetNoCollision( IsClickable == true );
 					break;
 				}
 		}
@@ -404,6 +496,12 @@ class Text : ThisModule::IGuiKitElement
 		return @get_Name();
 	}
 	
+	ThisModule::Text@ SetClickable( bool isclickable )
+	{
+		IsClickable = isclickable;
+		return this;
+	}
+	
 	int Font;
 	uint Color0;
 	uint Color1;
@@ -416,9 +514,12 @@ class Text : ThisModule::IGuiKitElement
 	::string MyName;
 	int TextNumber;
 	int MsgNumber;
+	
+	bool IsClickable;
+	IGUIElementOpt@ GUIOption;
 }
 
-class Button : ThisModule::IGuiKitElement, IGUI::ElementCallbackMouseClick
+class Button : ThisModule::IGuiKitElement, IGUI::ElementCallbackMouseClick, ElementGeneral
 {
 	Button( ThisModule::ButtonClickFuncdef@ func, const ::string name, int[]@ defPos = null, bool scale = true )
 	{
@@ -444,11 +545,13 @@ class Button : ThisModule::IGuiKitElement, IGUI::ElementCallbackMouseClick
 		
 		if( @Current !is null )
 			Current.Add( @this );
+		construct();
 	}
 	
 	ThisModule::IGuiKitElement@ Build( int screenIndex )
 	{
-		@RealPos = IniParser::GetCoord( Name, @DefPos );
+		@RealPos = IniParser::GetCoord( Name, DefPos );
+		FormatPosition( RealPos );
 		@Option = @GUI_AddScreenElement( screenIndex, ::GetIfaceIniStr( Name + "Pic"), 0, 0 )
 			.Position( RealPos )
 			.CallbackMouseClick( @this )
@@ -483,4 +586,35 @@ class Button : ThisModule::IGuiKitElement, IGUI::ElementCallbackMouseClick
 	ThisModule::ButtonClickFuncdef@ Funcdef;
 	ThisModule::ButtonCallback@ Callback;
 	IGUIElementOpt@ Option;
+}
+
+mixin class ElementGeneral
+{
+	private void construct()
+	{
+		IsFormat = false;
+	}
+	
+	void FormatPosition( int[]@ position )
+	{
+		if( IsFormat )
+			ThisModule::FormatPosition( position );
+	}
+	
+	void SetFormatPosition( bool isFormat )
+	{
+		IsFormat = isFormat;
+	}
+	
+	bool isNullCoord( int[]@ position )
+	{
+		if( position is null )
+			return true;
+		for( uint i = 0, iend = position.length(); i < iend; i++ )
+			if( position[i] != 0 )
+				return false;
+		return true;
+	}
+	
+	bool IsFormat;
 }

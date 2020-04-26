@@ -484,12 +484,23 @@ uint GetHitAimUnarmed( int hitLocation )
 	return GetHitAim( hitLocation ) * 0.5;
 }
 
+enum CombatResult
+{
+	unproccess,
+	success,
+	ammo_ran_out,
+	broken_weapon,
+	critical_fail,
+	end
+}
+
 class Combat : CombatProccess, MixinToHitProccess, MixinFlamerProccess
 {
 	bool IsHexAttack;
 	bool IsQuakeScreen;
 	uint ExplodeId;
 	uint Radius;
+	CombatResult Result;
 
 	Combat( Critter& attacker, Critter@ target, ProtoItem& weapon, uint8 weaponMode, ProtoItem@ ammo )
 	{
@@ -510,6 +521,7 @@ class Combat : CombatProccess, MixinToHitProccess, MixinFlamerProccess
 		IsQuakeScreen = false;
 		ExplodeId = 0;
 		Radius = 0;
+		Result = CombatResult::unproccess;
 	}
 	
 	void Prepare( Critter& attacker, Critter@ target, uint16 targetX, uint16 targetY, ProtoItem& weapon, uint8 weaponMode, ProtoItem@ ammo )
@@ -1052,6 +1064,7 @@ class Combat : CombatProccess, MixinToHitProccess, MixinFlamerProccess
 		{
 			if( WeaponAmmoRound > 0 )
 			{
+				uint startammo = RealWeapon.AmmoCount;
 				if( RealWeapon.AmmoCount <= WeaponAmmoRound )
 					RealWeapon.AmmoCount = 0;
 				else
@@ -1060,7 +1073,7 @@ class Combat : CombatProccess, MixinToHitProccess, MixinFlamerProccess
 			}
 
 			if( RealWeapon.IsDeteriorable() && Attacker.IsPlayer() )
-				DeteriorateItem( Attacker, RealWeapon, ( ( ( MAX_SKILL_VAL - ( ( AttackerSkill * 90 ) * 0.01 ) ) / 3 ) * ( 90 + Weapon.BrokenCoefficient * 10 ) ) * ( IsBurst ? 0.03 : 0.01 ) );
+				DeteriorateItem( Attacker, RealWeapon, ( ( ( MAX_SKILL_VAL - ( ( AttackerSkill * 90 ) * 0.01 ) ) / 3 ) * ( 90 + Weapon.BrokenCoefficient ) ) * 0.005 );
 
 			// One time weapon, erase current and push next (if exist)
 			if( _WeaponRemove( Weapon, WeaponUse ) )
@@ -1267,22 +1280,24 @@ class Combat : CombatProccess, MixinToHitProccess, MixinFlamerProccess
 			AttackerSay( STR_COMBAT_NEED_OUT_OF_AMMO );
 			PlayNotAmmo();
 			Attacker.Animate( 0, _WeaponAnim2( Weapon, WeaponUse ), null, true, false );
+			Result = CombatResult::ammo_ran_out;
 			return false;
 		}
 		
 		if( !CheckBroken( ) )
 		{
 			AttackerSay( STR_DETERIORATION_WEAPON_BROKEN );
+			Result = CombatResult::broken_weapon;
 			return false;
 		}
 		
 		return true;
 	}
 	
-	void Attack(  )
+	bool Attack(  )
 	{
 		if( !CheckAttack( ) )
-			return;
+			return false;
 			
 		SetCombatTimeout( Attacker );
 		SetSneakTimeout( Attacker );
@@ -1308,14 +1323,17 @@ class Combat : CombatProccess, MixinToHitProccess, MixinFlamerProccess
 		SetAttackerDirection( );
 		ProccessSpecialEffects();
 		
-		ProccessShoot( );
 		if( CriticalFailure() )
-			return;
-			
+		{
+			Result = CombatResult::critical_fail;
+			return false;
+		}
+		
 		if( RealTarget !is null && !IsSilentAtack( RealTarget ) )
 			UnSneak( Attacker );
-			
+
 		ProccessAttack();
+		ProccessShoot( );
 		FlushResults( Results );
 		
 		if( !TargetHit )
@@ -1327,6 +1345,13 @@ class Combat : CombatProccess, MixinToHitProccess, MixinFlamerProccess
 			uint[] values = { 22, Map.Id, Attacker.Id, RealWeapon.Id, TargetHx, TargetHy, 1, TypeDamage, PID_EXPLODE_FIRE_BIG, IsQuakeScreen ? 1 : 0 };
 			CreateTimeEvent( __FullSecond + ATACK_WAIT_TIME * 10, "combat@e_ReAtack", values, false );
 		}
+		Result = CombatResult::success;
+		return true;
+	}
+	
+	int GetResult()
+	{
+		return Result;
 	}
 }
 
@@ -1334,8 +1359,10 @@ mixin class MixinFlamerProccess
 {
 	void ProccessFlameLine( )
 	{
-		uint16 wx = 0,
-			   wy = 0;
+		uint16 hx = Hx,
+				hy = Hy,
+				wx = 0,
+				wy = 0;
 
 		uint attackRange = GetWeaponMaxDistance();
 
@@ -1343,17 +1370,17 @@ mixin class MixinFlamerProccess
 		uint dir = 0;
 		uint16 dx = TargetHx;
 		uint16 dy = TargetHy;
-		Map.GetHexCoord( Hx, Hy, dx, dy, 0, attackRange );
+		Map.GetHexCoord( hx, hy, dx, dy, 0, attackRange );
 
 		uint[] AllHex, targetIds;
 		bool[] isFlameDirect = { true, true, true };
-
+		
 		for( uint n = 0; n < attackRange; n++ )
 		{
-			dir = GetDirection( Hx, Hy, dx, dy );
-			Map.MoveHexByDir( Hx, Hy, dir, 1 );
-			wx = Hx;
-			wy = Hy;
+			dir = GetDirection( hx, hy, dx, dy );
+			Map.MoveHexByDir( hx, hy, dir, 1 );
+			wx = hx;
+			wy = hy;
 			if( !Map.IsHexRaked( wx, wy ) )
 				break;
 
@@ -1376,8 +1403,8 @@ mixin class MixinFlamerProccess
 				}
 				else
 					isFlameDirect[ d ] = false;
-				wx = Hx;
-				wy = Hy;
+				wx = hx;
+				wy = hy;
 				d = ( r % 2 == 0 ) ? d = 1 : d = 2;
 				Map.MoveHexByDir( wx, wy, ( r % 2 == 0 ) ? ( dir + 1 ) % 6 : ( dir - 1 ) % 6, r / 2 + 1 );
 			}
@@ -1387,14 +1414,14 @@ mixin class MixinFlamerProccess
 	}
 }
 
-void CombatAttack( Combat@ proccess )
+bool CombatAttack( Combat@ proccess )
 {
-	proccess.Attack( );
+	return proccess.Attack( );
 }
 
-void CombatAttack( Critter& attacker, Critter& target, ProtoItem& weapon, uint8 weaponMode, ProtoItem@ ammo ) // Export
+bool CombatAttack( Critter& attacker, Critter& target, ProtoItem& weapon, uint8 weaponMode, ProtoItem@ ammo ) // Export
 {
-    CombatAttack( Combat( attacker, target, weapon, weaponMode, ammo ) );
+    return CombatAttack( Combat( attacker, target, weapon, weaponMode, ammo ) );
 }
 
 void ApplyDamage( CombatProccess& proccess, Critter& target, uint rounds, bool isCritical, bool intentionally, CombatRes[]& results )
@@ -1877,7 +1904,7 @@ void ApplyDamage( CombatProccess& proccess, Critter& target, uint rounds, bool i
     }
 
     if( validEngineObject( proccess.ArmorTarget ) && target.IsPlayer() )
-        DeteriorateItem( target, proccess.ArmorTarget, ( ( ( ( 100 - ( target.Stat[ ST_NORMAL_RESIST + proccess.TypeDamage - 1 ] ) ) * rounds + ( totalDmg < 10 ? 10 : totalDmg ) ) / 3 ) * ( 65 + proccess.ArmorTarget.Proto.BrokenCoefficient * 8 ) ) / 100  );
+        DeteriorateItem( target, proccess.ArmorTarget, ( ( ( ( 100 - ( target.Stat[ ST_NORMAL_RESIST + proccess.TypeDamage - 1 ] ) ) * rounds + ( totalDmg < 10 ? 10 : totalDmg ) ) / 3 ) * ( 65 + proccess.ArmorTarget.Proto.BrokenCoefficient ) ) * 0.01  );
 
     if( proccess.IsWeaponPerk( WEAPON_PERK_ELECTRIC_SHOCK ) )
         target.StatBase[ ST_CURRENT_AP ] -= Random( 1, 2 ) * 100;
@@ -2716,8 +2743,7 @@ bool Attack( Critter& critter, Item& item, uint8 weaponMode, uint16 defHexX, uin
 	Combat@ proccess = cast<Combat@>(@combatProccess);
 	if( proccess is null ) @proccess = Combat( critter, defHexX, defHexY, GetProtoItem( item.GetProtoId() ), weaponMode, GetProtoItem( item.AmmoPid ) );
 	else proccess.Prepare( critter, null, defHexX, defHexY, GetProtoItem( item.GetProtoId() ), weaponMode, GetProtoItem( item.AmmoPid ) );
-	CombatAttack( proccess );
-    return true;
+    return CombatAttack( proccess );
 }
 
 void DamageHex( CombatProccess& proccess, Map& map, uint16 radius, bool _quakeScreen, uint[]@ target_ids = null )
@@ -3271,6 +3297,15 @@ class FullReplayAttack : iCombatProccessContext, TimeEventDescriptor
 		return true;
 	}
 	
+	bool CheckContinue()
+	{
+		if( !CheckPosition() )
+			return false;
+		if( proccess.GetResult() != CombatResult::success )
+			return false;
+		return true;
+	}
+	
 	void Fill( CombatProccess@ combatProccess )
 	{
 		@proccess = @combatProccess;
@@ -3336,15 +3371,19 @@ class FullReplayAttack : iCombatProccessContext, TimeEventDescriptor
 			return 0;
 		}
 		
-		if( CheckPosition() )
+		bool success = false;
+		if( CheckContinue() )
 		{
-			StageRaise();
-			
 			float apCost = GetActionCost( );
 			if( proccess.Attacker.Stat[ ST_CURRENT_AP ] * 100 >= apCost && Attack( proccess.Attacker, proccess.RealWeapon, proccess.WeaponMode, targetX, targetY, proccess ) )
+			{
+				StageRaise();
 				proccess.Attacker.StatBase[ ST_CURRENT_AP ] -= apCost; // Отнимает очки действия.
+				success = true;
+			}
 		}
-		else
+		
+		if( !success )
 		{
 			StageLose();
 			if( stage.current == 0 )
@@ -3683,7 +3722,6 @@ uint BurstStageDestcriptorId = GetStrHash("BurstStageDestcriptor");
 
 class BurstStage : MutualObject
 {
-	
 	uint current;
 	uint max;
 	uint progression;
@@ -4066,7 +4104,7 @@ void InitHexCombat()
 
 void render_hit_hex( uint layer )
 {
-	if( layer > 2 )
+	if( layer != 2 )
 		return;
     CritterCl@ chosen = GetChosen();
     if( chosen is null ) return;
@@ -4103,9 +4141,6 @@ void render_hit_hex( uint layer )
             uint   dist = ( _WeaponSkill( weapon, use ) == SK_THROWING ) ? ( MIN( WMaxDist, 3 * MIN( int(10), ( chosen.Stat[ ST_STRENGTH ] + 2 * chosen.Perk[ PE_HEAVE_HO ] ) ) ) ) : WMaxDist; // Дистанция стрельбы оружия.
 			
             if( ( chosen.Stat[ ST_VISIBLE_DIST ] < len || dist < len ) || len == 0 || dist == 0 )
-				return;
-	
-			if( layer != 1 )
 				return;
 					
 			if( !weapon.Weapon_ZoneAttackIgnoreNotRaked )

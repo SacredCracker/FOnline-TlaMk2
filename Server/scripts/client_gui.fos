@@ -1779,17 +1779,16 @@ class GUIScreen : IGUIScreenOpt
 
 	bool IsCollisionElement( int x, int y, uint index )
 	{
-		GUIElement@ e = Elements[ index ];
-		uint        w = e.Width > 0 ? e.Width : e.Surface.Width,
-					 h = e.Height > 0 ? e.Height : e.Surface.Height;
-		return ( IS_COLLISION( x, y, PosX + e.PosX, PosY + e.PosY, w, h ) || e.NoCollision );
+		return IsCollisionElement( x, y, Elements[ index ] );
 	}
 
 	bool IsCollisionElement( int x, int y, GUIElement@ e )
 	{
+		if( e.NoCollision )
+			return false;
 		uint        w = e.Width > 0 ? e.Width : e.Surface.Width,
 					 h = e.Height > 0 ? e.Height : e.Surface.Height;
-		return ( IS_COLLISION( x, y, PosX + e.PosX, PosY + e.PosY, w, h ) || e.NoCollision );
+		return ( IS_COLLISION( x, y, PosX + e.PosX, PosY + e.PosY, w, h ) );
 	}
 	
     void Draw()

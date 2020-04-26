@@ -56,7 +56,7 @@ void CancelButton( int click )
 		::HideScreen( CLIENT_SCREEN_SKILLBOX_MK2, 0, 0, 0 );
 }
 
-class SBoxMainScreen : GuiKit::GUIScreenPattern, IGUI::ScreenCallbackShow
+class SBoxMainScreen : GuiKit::GUIScreenPattern, IGUI::ScreenCallbackShow, GuiKit::GUIScreenPattern_DefPosition
 {
 	::string@ get_Name( )
 	{
@@ -82,10 +82,13 @@ class SBoxMainScreen : GuiKit::GUIScreenPattern, IGUI::ScreenCallbackShow
 		ThisModule::SkillButton( SK_SCIENCE ).Init( "Science" );
 		ThisModule::SkillButton( SK_REPAIR ).Init( "Repair" );
 		
-		GuiKit::Button( @CancelButton, "Cancel" );
-		GuiKit::Text( "CancelText", STR_SKILLDEX_CANCEL );
+		GuiKit::Button( @CancelButton, "Cancel" ).SetFormatPosition( true );
+		GuiKit::Text( "CancelText", STR_SKILLDEX_CANCEL ).SetFormatPosition( true );
 		// STR_SKILLDEX_CANCEL
 	}
+	
+	int get_DefaultX() { return -1; }
+	int get_DefaultY() { return -1; }
 	
 	uint ItemId;
 	::IGUIScreenOpt@ Option;
@@ -126,20 +129,28 @@ class SkillButton : GuiKit::ButtonCallback
 
 	void ButtonClick( int click )
 	{
-		uint[] actions = { CHOSEN_USE_SKL_ON_ITEM, 1, Skill, SBoxMaster.ItemId, 0, 0, 0 };
-        SetChosenActions( actions );
-		::HideScreen( CLIENT_SCREEN_SKILLBOX_MK2, 0, 0, 0 );
+		if( click == MOUSE_CLICK_LEFT )
+		{
+			uint[] actions = { CHOSEN_USE_SKL_ON_ITEM, 1, Skill, SBoxMaster.ItemId, 0, 0, 0 };
+			SetChosenActions( actions );
+			::HideScreen( CLIENT_SCREEN_SKILLBOX_MK2, 0, 0, 0 );
+		}
 	}
 	
 	ThisModule::SkillButton@ Init( string name )
 	{
 		_Name = name;
-		GuiKit::Button button( this, 	_Name );
+		GuiKit::Button button( this, _Name );
+		button.SetFormatPosition( true );
 		GuiKit::Text( _Name, STR_PARAM_NAME_SHORT( Skill ) )
-			.SetDefPosition( button.RealPos );
+			.SetOption( FONT_FAT, FT_CENTERX | FT_CENTERY | FT_NOBREAK )
+			.SetClickable( false )
+			.SetFormatPosition( true );
 		ThisModule::DynamicText( Skill, name + "Text" )
-			.SetOption( FONT_BIG_NUM, FT_CENTERXY )
-			.SetColor( COLOR_IFACE );
+			.SetOption( FONT_BIG_NUM, 0 )
+			.SetColor( COLOR_IFACE )
+			.SetClickable( false )
+			.SetFormatPosition( true );
 		return this;
 	}
 	

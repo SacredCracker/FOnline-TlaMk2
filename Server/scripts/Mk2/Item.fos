@@ -821,9 +821,35 @@ namespace Option
 		
 		void ModuleInit( )
 		{
-			ThisModule::CombinationTemplate = Sprite::Sprite( CombinationTemplate, PT_ART_INTRFACE );
+			@ThisModule::CombinationTemplate = Sprite::Sprite( CombinationTemplate, PT_ART_INTRFACE );
 		}
 	}
+}
+
+Interface@ lmenu_show_item = null;
+
+bool LMenuShow( uint& loop )
+{
+	LMenu::Instance@ lmenu = LMenu::Prepare( LMenuResult );
+	ItemCl@ item = lmenu_show_item.Item;
+		
+	if( lmenu_show_item.Type == ITEM_TYPE_WEAPON )
+	{
+		if( item !is null && item.AmmoCount > 0 )
+			lmenu.ShowNode( "Unload" );
+	}
+			
+	if( item !is null && ( FLAG( item.Flags, ITEM_CAN_USE ) || FLAG( item.Flags, ITEM_CAN_USE_ON_SMTH ) ) )
+		lmenu.ShowNode( "Use" );
+			
+	lmenu.ShowNode( "Skill" )
+		//.ShowNode( "SortUp" )
+		//.ShowNode( "SortDown" )
+		.ShowNode( "Drop" )
+		.ShowNode( "Cancel" )
+		.Show( lmenu_show_item );
+	loop = 0;
+	return true;
 }
 
 class Interface : IGUIListingElement, IGUIDragAndDropElement, Splitter::SplitResult, IGUIDescriptor
@@ -1070,11 +1096,20 @@ class Interface : IGUIListingElement, IGUIDragAndDropElement, Splitter::SplitRes
 		//LookType = ITEM_LOOK_ONLY_NAME;
 		if( InformerDescriptor is this )
 			SetItemInformer( -1, "", null, "", 0, 0, null );
+		if( lmenu_show_item is this )
+		{
+			@lmenu_show_item = null;
+			__EventLoop.Unsubscribe( @LMenuShow );
+		}
 	}
 	
 	void ClickUp( int click ) override
 	{
-	
+		if( lmenu_show_item is this )
+		{
+			@lmenu_show_item = null;
+			__EventLoop.Unsubscribe( @LMenuShow );
+		}
 	}
 	 
 	void ClickDown( int click ) override
@@ -1088,25 +1123,8 @@ class Interface : IGUIListingElement, IGUIDragAndDropElement, Splitter::SplitRes
 		}
 		else if( MOUSE_CLICK_RIGHT == click )
 		{
-			LMenu::Instance@ lmenu = LMenu::Prepare( LMenuResult );
-			ItemCl@ item = Item;
-			
-			if( Type == ITEM_TYPE_WEAPON )
-			{
-				ItemCl@ item = Item;
-				if( item !is null && item.AmmoCount > 0 )
-					lmenu.ShowNode( "Unload" );
-			}
-			
-			if( item !is null && ( FLAG( item.Flags, ITEM_CAN_USE ) || FLAG( item.Flags, ITEM_CAN_USE_ON_SMTH ) ) )
-				lmenu.ShowNode( "Use" );
-			
-			lmenu.ShowNode( "Skill" )
-				//.ShowNode( "SortUp" )
-				//.ShowNode( "SortDown" )
-				.ShowNode( "Drop" )
-				.ShowNode( "Cancel" )
-				.Show( this );
+			__EventLoop.Subscribe( @LMenuShow, 400 );
+			@lmenu_show_item = this;
 		}
 	}
 	
