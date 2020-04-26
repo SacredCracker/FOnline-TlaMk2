@@ -37,13 +37,18 @@ Dialog@ GetDialog( const int&in number )
 
 bool RunCritter( ::Critter& cr, ::Critter& targetCr, uint branch, bool ignoreDistance )
 {
+	return RunCritterDialogId( cr, targetCr, targetCr.Stat[ST_DIALOG_ID], branch, ignoreDistance );
+}
+
+bool RunCritterDialogId( ::Critter& cr, ::Critter& targetCr, uint dialogId, uint branch, bool ignoreDistance )
+{
 	Dialog::Master@ master = cast<Dialog::Master>(@cr.ScriptDescriptor);
 	if( @master !is null && master.IsSpeakCritter( targetCr, ignoreDistance ) )
 	{
-		Dialog@ dialog = @GetDialog( targetCr );
+		Dialog@ dialog = @GetDialog( dialogId );
 		if( @dialog !is null )
 			return dialog.Run( cr, targetCr, branch, cr.GetMap(), targetCr.HexX, targetCr.HexY, ignoreDistance );
-		else Log( "Не найден диалог с номером: " + cr.Stat[ST_DIALOG_ID] );
+		else Log( "Не найден диалог с номером: " + dialogId );
 	}
 	return false;
 }

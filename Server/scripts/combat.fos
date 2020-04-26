@@ -1202,7 +1202,7 @@ class Combat : CombatProccess, MixinToHitProccess, MixinFlamerProccess
 				{
 					if( WTA_BURST_REGION == TypeAttack )
 					{
-						FullReplayAttack@ replay = cast<FullReplayAttack@>(@Context);
+						MaintainAttack@ replay = cast<MaintainAttack@>(@Context);
 						if( replay is null )
 						{
 							if( Attacker.TimeAttackId != 0 )
@@ -1211,7 +1211,7 @@ class Combat : CombatProccess, MixinToHitProccess, MixinFlamerProccess
 								TimeEventDescriptor@ descriptor = GetTimeEvent( Attacker.TimeAttackId, duration );
 								if( descriptor !is null )
 								{
-									@ replay = cast<FullReplayAttack@>(@descriptor);
+									@ replay = cast<MaintainAttack@>(@descriptor);
 									if( replay is null || !replay.Check() )
 									{
 										EraseTimeEvent( Attacker.TimeAttackId );
@@ -1226,7 +1226,7 @@ class Combat : CombatProccess, MixinToHitProccess, MixinFlamerProccess
 							}
 							
 							if( replay is null )
-								@replay = FullReplayAttack();
+								@replay = MaintainAttack();
 							
 							replay.Fill(this);
 							@Context = replay;
@@ -1234,7 +1234,7 @@ class Combat : CombatProccess, MixinToHitProccess, MixinFlamerProccess
 						
 						WeaponAmmoRound = replay.GetAmmoRound( );
 						
-						replay.RunEvent();
+						replay.Continue();
 					}
 					
 					AlgoritmProccess();
@@ -3215,7 +3215,27 @@ uint e_ReAtack( uint[] @ values )
     return 0;
 }
 
-class FullReplayAttack : iCombatProccessContext, TimeEventDescriptor
+MaintainAttack@ GetMaintainAttack( Critter& critter )
+{
+	if( critter.TimeAttackId != 0 )
+	{
+		uint duration = 0;
+		TimeEventDescriptor@ descriptor = GetTimeEvent( critter.TimeAttackId, duration );
+		if( descriptor !is null )
+			return cast<MaintainAttack@>(@descriptor);
+	}
+	return null;
+}
+
+void StopMaintainAttack( Critter& critter )
+{
+	MaintainAttack@ maintain = GetMaintainAttack( critter );
+	if( maintain is null )
+		return;
+	maintain.Stopped();
+}
+
+class MaintainAttack : iCombatProccessContext, TimeEventDescriptor
 {
 	CombatProccess@ proccess;
 	Map@ map;
@@ -3224,8 +3244,9 @@ class FullReplayAttack : iCombatProccessContext, TimeEventDescriptor
 	uint EventId;
 	uint Delay;
 	BurstStage stage;
+	bool IsStopped;
 	
-	FullReplayAttack()
+	MaintainAttack()
 	{
 		Clear();
 	}
@@ -3242,6 +3263,7 @@ class FullReplayAttack : iCombatProccessContext, TimeEventDescriptor
 		targetY = 0;
 		Delay = 0;
 		EventId = 0;
+		IsStopped = false;
 	}
 	
 	uint get_WeaponRound()
@@ -3259,8 +3281,14 @@ class FullReplayAttack : iCombatProccessContext, TimeEventDescriptor
 		return stage.currentRound;
 	}
 	
-	void RunEvent()
+	void Stopped()
 	{
+		IsStopped = true;
+	}
+	
+	void Continue()
+	{
+		IsStopped = false;
 		UpdateDelay();
 		if( proccess.Attacker.TimeAttackId != EventId || EventId == 0 )
 		{
@@ -3302,6 +3330,8 @@ class FullReplayAttack : iCombatProccessContext, TimeEventDescriptor
 		if( !CheckPosition() )
 			return false;
 		if( proccess.GetResult() != CombatResult::success )
+			return false;
+		if( !IsStopped )
 			return false;
 		return true;
 	}
@@ -3403,7 +3433,7 @@ uint e_FullReplayAtack( TimeEventDescriptor@ value )
 	if( value is null )
 		return 0;
 	
-	FullReplayAttack@ context = cast<FullReplayAttack@>(@value);
+	MaintainAttack@ context = cast<MaintainAttack@>(@value);
 	if( context is null )
 		return 0;	
 

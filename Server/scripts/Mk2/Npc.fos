@@ -413,6 +413,8 @@ class NpcDescriptor : Critter::CritterDescriptor, Mk2::NpcPacket, Dialog::Interl
 
 	bool NpcPlaneEnd(::Critter& npc, ::NpcPlane& plane, int reason, ::Critter@ someCr, ::Item@ someItem)
 	{
+		if( plane.Type == AI_PLANE_ATTACK )
+			StopMaintainAttack( npc );
 		for( uint i = 0, iEnd = EventsNpcPlaneEnd.length(); i < iEnd; i++ )
 		{
 			if( !EventsNpcPlaneEnd[i]( npc, plane, reason, someCr, someItem ) )

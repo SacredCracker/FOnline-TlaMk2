@@ -36,6 +36,8 @@ import bool DrawMap_DynamicScenery() from "dynamic_object";
 
 #endif
 #ifdef __SERVER
+
+import void StopMaintainAttack( Critter& critter ) from "combat";
 import void SetTracker(::Critter& cr, int trackId) from "globalmap_group";
 import void CheckTracker( ::Critter& cr ) from "globalmap_group";
 
@@ -112,9 +114,9 @@ import void critter_idle_dead(::Critter& cr) from "main";
 import bool isExplosive(::Item@ item) from "main";
 import bool SaveWorldNextVersion() from "main";
 
-bool Mk2RunDialog ( Critter& player, Critter& npc, uint branch, bool ignoreDistance )
+bool Mk2RunDialog ( Critter& player, Critter& npc, uint dialogId, bool ignoreDistance )
 {
-	return Dialog::RunCritter( player, npc, branch, ignoreDistance );
+	return Dialog::RunCritterDialogId( player, npc, dialogId, 1, ignoreDistance );
 }
   
 bool Mk2RunDialog ( Critter& player, Critter& npc, bool ignoreDistance )

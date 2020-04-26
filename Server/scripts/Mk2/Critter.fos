@@ -467,7 +467,7 @@ class CritterDescriptor : Mk2::Descriptor, Mk2::CritterPacket, Mk2::CombatTarget
 	
 	bool IsSpeakCritter( ::Critter& npc, bool ignoreDistance ) override
 	{
-		if( npc.IsNpc() && npc.IsLife( ) && npc.IsNoPlanes() /* && npc.IsFree( ) */ && npc.Stat[ST_DIALOG_ID] != 0 )
+		if( npc.IsNpc() && npc.IsLife( ) && npc.IsNoPlanes() /* && npc.IsFree( ) */ )
 		{
 			::Map@ map = @RealCr.GetMap();
 			if( @map !is null && @map is @npc.GetMap() )
