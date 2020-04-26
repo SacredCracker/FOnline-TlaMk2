@@ -71,80 +71,90 @@ bool TryRepairItem( ::Critter& cr, ::Item& item ) // Export
             cr.DeleteItem( Content::Item::MULTI_TOOL, 1 );
     }
 
+	Item@ repair_item = item;
+	bool isStack = false;
+	if( repair_item.GetCount() != 1 )
+	{
+		@repair_item = repair_item.Split( 1 );
+		isStack = true;
+	}
     // Repair
-    if( FLAG( item.BrokenFlags, BI_BROKEN ) )
+    if( FLAG( repair_item.BrokenFlags, BI_BROKEN ) )
     {
-        if( FLAG( item.BrokenFlags, BI_HIGHBROKEN ) )
+        if( FLAG( repair_item.BrokenFlags, BI_HIGHBROKEN ) )
             repair -= 100;                               // было 150
-        else if( FLAG( item.BrokenFlags, BI_NORMBROKEN ) )
+        else if( FLAG( repair_item.BrokenFlags, BI_NORMBROKEN ) )
             repair -= 75;                                // было 100
-        else if( FLAG( item.BrokenFlags, BI_LOWBROKEN ) )
+        else if( FLAG( repair_item.BrokenFlags, BI_LOWBROKEN ) )
             repair -= 25;                                // было 50
 
-        repair -= item.BrokenCount * 50 / MAX_BROKENS;   // было 100
+        repair -= repair_item.BrokenCount * 50 / MAX_BROKENS;   // было 100
         repair = CLAMP( repair, 6, 95 );
         // cr.Say(SAY_NETMSG, "repair="+repair+"\n MAX_BROKENS="+MAX_BROKENS+"\n BrokenCount="+item.BrokenCount+"\n RadioChannel="+item.RadioChannel);
 
         if( repair >= ::Random( 1, 100 ) )
         {
 
-            if( FLAG( item.BrokenFlags, BI_HIGHBROKEN ) )
+            if( FLAG( repair_item.BrokenFlags, BI_HIGHBROKEN ) )
                 cr.StatBase[ ST_EXPERIENCE ] += 420;
-            else if( FLAG( item.BrokenFlags, BI_NORMBROKEN ) )
+            else if( FLAG( repair_item.BrokenFlags, BI_NORMBROKEN ) )
                 cr.StatBase[ ST_EXPERIENCE ] += 360;
-            else if( FLAG( item.BrokenFlags, BI_LOWBROKEN ) )
+            else if( FLAG( repair_item.BrokenFlags, BI_LOWBROKEN ) )
                 cr.StatBase[ ST_EXPERIENCE ] += 280;
 
-            item.RadioChannel++;
-            item.Deterioration = MAX_DETERIORATION - 100;         // Устанавливаем 99% износа
-            UNSETFLAG( item.BrokenFlags, BI_BROKEN );
+            repair_item.RadioChannel++;
+            repair_item.Deterioration = MAX_DETERIORATION - 100;         // Устанавливаем 99% износа
+            UNSETFLAG( repair_item.BrokenFlags, BI_BROKEN );
             cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_DETERIORATION_REPAIR_SUCC );
         }
         else
         {
-            item.BrokenCount++;
-            if( item.BrokenCount >= MAX_BROKENS )
-                SETFLAG( item.BrokenFlags, BI_NOTRESC );
+            repair_item.BrokenCount++;
+            if( repair_item.BrokenCount >= MAX_BROKENS )
+                SETFLAG( repair_item.BrokenFlags, BI_NOTRESC );
             cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_DETERIORATION_REPAIR_FAIL );
         }
     }
     // Service
     else
     {
-        if( FLAG( item.BrokenFlags, BI_SERVICE ) )
+        if( FLAG( repair_item.BrokenFlags, BI_SERVICE ) )
             repair -= 25;
-        repair -= item.BrokenCount * 50 / MAX_BROKENS;
+        repair -= repair_item.BrokenCount * 50 / MAX_BROKENS;
         repair = CLAMP( repair, 6, 95 );
 
         if( repair >= ::Random( 1, 100 ) )
         {
-            SETFLAG( item.BrokenFlags, BI_SERVICE );
+            SETFLAG( repair_item.BrokenFlags, BI_SERVICE );
 
-            if( uint( item.Deterioration * 0.01 ) > uint( maxRepairCount - item.RadioChannel ) )
+            if( uint( repair_item.Deterioration * 0.01 ) > uint( maxRepairCount - repair_item.RadioChannel ) )
             {
-                item.Deterioration = item.Deterioration - 100 * ( maxRepairCount - item.RadioChannel );
-                item.RadioChannel = maxRepairCount;
+                repair_item.Deterioration = repair_item.Deterioration - 100 * ( maxRepairCount - repair_item.RadioChannel );
+                repair_item.RadioChannel = maxRepairCount;
             }
             else
             {
-                item.RadioChannel += item.Deterioration * 0.01;
-                item.Deterioration = 0;
+                repair_item.RadioChannel += repair_item.Deterioration * 0.01;
+                repair_item.Deterioration = 0;
             }
 
             cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_DETERIORATION_SERVICE_SUCC );
-            cr.StatBase[ ST_EXPERIENCE ] += ::Random( 50, 60 ) + item.BrokenCount * 25;
+            cr.StatBase[ ST_EXPERIENCE ] += ::Random( 50, 60 ) + repair_item.BrokenCount * 25;
         }
         else
         {
-            DeteriorateItem( cr, item, MAX_DETERIORATION / ::Random( 20, 25 ) );
+            DeteriorateItem( cr, repair_item, MAX_DETERIORATION / ::Random( 20, 25 ) );
             cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_DETERIORATION_SERVICE_FAIL );
         }
     }
 
     // Таймаут
-    item.Update();
-    if( int( ( tmpDet - item.Deterioration ) * 0.01 ) > 0 )
-        cr.TimeoutBase[ TO_SK_REPAIR ] = int( cr.Timeout[ TO_SK_REPAIR ] + ::__FullSecond + REAL_SECOND( Repair::Define::TimeoutMlt ) * ( tmpDet - item.Deterioration ) * 0.01 );
+    if( int( ( tmpDet - repair_item.Deterioration ) * 0.01 ) > 0 )
+        cr.TimeoutBase[ TO_SK_REPAIR ] = int( cr.Timeout[ TO_SK_REPAIR ] + ::__FullSecond + REAL_SECOND( Repair::Define::TimeoutMlt ) * ( tmpDet - repair_item.Deterioration ) * 0.01 );
+	if( isStack )
+		repair_item.StackUpdate();
+	else
+		repair_item.Update();
 
     return true;
 }
