@@ -505,13 +505,13 @@ class Combat : CombatProccess, MixinToHitProccess, MixinFlamerProccess
 	Combat( Critter& attacker, Critter@ target, ProtoItem& weapon, uint8 weaponMode, ProtoItem@ ammo )
 	{
 		super();
-		Prepare( attacker, target, target.HexX, target.HexY, weapon, weaponMode, ammo );
+		Prepare( attacker, target, target.HexX, target.HexY, weapon, weaponMode, ammo, SLOT_HAND1 );
 	}
 
-	Combat( Critter& attacker, uint16 targetX, uint16 targetY, ProtoItem& weapon, uint8 weaponMode, ProtoItem@ ammo )
+	Combat( Critter& attacker, uint16 targetX, uint16 targetY, ProtoItem& weapon, uint8 weaponMode, ProtoItem@ ammo, int weaponSlot )
 	{
 		super();
-		Prepare( attacker, null, targetX, targetY, weapon, weaponMode, ammo );
+		Prepare( attacker, null, targetX, targetY, weapon, weaponMode, ammo, weaponSlot );
 	}
 	
 	void Clear()
@@ -524,7 +524,7 @@ class Combat : CombatProccess, MixinToHitProccess, MixinFlamerProccess
 		Result = CombatResult::unproccess;
 	}
 	
-	void Prepare( Critter& attacker, Critter@ target, uint16 targetX, uint16 targetY, ProtoItem& weapon, uint8 weaponMode, ProtoItem@ ammo )
+	void Prepare( Critter& attacker, Critter@ target, uint16 targetX, uint16 targetY, ProtoItem& weapon, uint8 weaponMode, ProtoItem@ ammo, int weaponSlot )
 	{
 		Clear();
 		@Results = CombatRes[]();
@@ -544,7 +544,7 @@ class Combat : CombatProccess, MixinToHitProccess, MixinFlamerProccess
 		FillAim();
 		FillCriticalChance();
 		SetAmmo( ammo );
-		FillWeapon();
+		FillWeapon( weaponSlot );
 		FillMap();
 		FillThrowing();
 		FillGun();
@@ -696,9 +696,9 @@ class Combat : CombatProccess, MixinToHitProccess, MixinFlamerProccess
 			SetTargetHex( RealTarget.HexX,	RealTarget.HexY );
 	}
 	
-	void FillWeapon()
+	void FillWeapon( int slot )
 	{
-		@RealWeapon = _CritGetItemHand( Attacker );
+		@RealWeapon = Attacker.GetItem( 0, slot );
 		if( RealWeapon !is null )
 		{
 			DmgMin += RealWeapon.WeaponBonus_MinDamage;
@@ -1056,10 +1056,8 @@ class Combat : CombatProccess, MixinToHitProccess, MixinFlamerProccess
 		}
 	}
 	
-	void ProccessShoot()
+	void AmmoRemove()
 	{
-		ShootEffect();
-		
 		if( validEngineObject( RealWeapon ) && Attacker.Mode[ MODE_UNLIMITED_AMMO ] == 0 )
 		{
 			if( WeaponAmmoRound > 0 )
@@ -1123,6 +1121,12 @@ class Combat : CombatProccess, MixinToHitProccess, MixinFlamerProccess
 				}
 			}
 		}
+	}
+	
+	void ProccessShoot()
+	{
+		ShootEffect();
+		AmmoRemove();		
 	}
 	
 	void ProccessSpecialEffects()
@@ -2721,7 +2725,7 @@ bool u_Attack( Critter@ critter, int hexX, int hexY, int slot, CombatProccess@ c
     if( !critter.IsAnim1( weapon.Weapon_Anim1 ) || critter.Stat[ ST_CURRENT_AP ] < apCost )
         return false;
 
-    if( Attack( critter, item, mode, hexX, hexY, combatProccess ) )
+    if( Attack( critter, item, mode, hexX, hexY, slot, combatProccess ) )
     {
 		// __Breaktime
 		uint breaktime = _WeaponBreakAttack( weapon, use );
@@ -2738,11 +2742,11 @@ void unsafe_Attack( Critter& critter, int hexX, int hexY, int slot, string@, int
     u_Attack( critter, hexX, hexY, slot );
 }
 
-bool Attack( Critter& critter, Item& item, uint8 weaponMode, uint16 defHexX, uint16 defHexY, CombatProccess@ combatProccess = null ) // ToDo переделать под нпц
+bool Attack( Critter& critter, Item& item, uint8 weaponMode, uint16 defHexX, uint16 defHexY, int slot, CombatProccess@ combatProccess = null ) // ToDo переделать под нпц
 {
 	Combat@ proccess = cast<Combat@>(@combatProccess);
-	if( proccess is null ) @proccess = Combat( critter, defHexX, defHexY, GetProtoItem( item.GetProtoId() ), weaponMode, GetProtoItem( item.AmmoPid ) );
-	else proccess.Prepare( critter, null, defHexX, defHexY, GetProtoItem( item.GetProtoId() ), weaponMode, GetProtoItem( item.AmmoPid ) );
+	if( proccess is null ) @proccess = Combat( critter, defHexX, defHexY, GetProtoItem( item.GetProtoId() ), weaponMode, GetProtoItem( item.AmmoPid ), slot );
+	else proccess.Prepare( critter, null, defHexX, defHexY, GetProtoItem( item.GetProtoId() ), weaponMode, GetProtoItem( item.AmmoPid ), slot );
     return CombatAttack( proccess );
 }
 
@@ -3405,7 +3409,7 @@ class MaintainAttack : iCombatProccessContext, TimeEventDescriptor
 		if( CheckContinue() )
 		{
 			float apCost = GetActionCost( );
-			if( proccess.Attacker.Stat[ ST_CURRENT_AP ] * 100 >= apCost && Attack( proccess.Attacker, proccess.RealWeapon, proccess.WeaponMode, targetX, targetY, proccess ) )
+			if( proccess.Attacker.Stat[ ST_CURRENT_AP ] * 100 >= apCost && Attack( proccess.Attacker, proccess.RealWeapon, proccess.WeaponMode, targetX, targetY, proccess.RealWeapon.CritSlot, proccess ) )
 			{
 				StageRaise();
 				proccess.Attacker.StatBase[ ST_CURRENT_AP ] -= apCost; // Отнимает очки действия.
