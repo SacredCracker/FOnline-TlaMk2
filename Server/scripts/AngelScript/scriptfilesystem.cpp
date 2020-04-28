@@ -80,9 +80,9 @@ void ScriptFileSystem::Release() const
 		delete this;
 }
 
-ScriptArray *ScriptFileSystem::GetFiles() const
+CScriptArray *ScriptFileSystem::GetFiles() const
 {
-	ScriptArray *array = &ScriptArray::Create("string");
+	CScriptArray *array = &CScriptArray::Create("string");
 
 #if defined(_WIN32)
 	// Windows uses UTF16 so it is necessary to convert the string
@@ -139,9 +139,9 @@ ScriptArray *ScriptFileSystem::GetFiles() const
 	return array;
 }
 
-ScriptArray *ScriptFileSystem::GetDirs() const
+CScriptArray *ScriptFileSystem::GetDirs() const
 {
-	ScriptArray *array = &ScriptArray::Create("string");
+	CScriptArray *array = &CScriptArray::Create("string");
 
 #if defined(_WIN32)
 	// Windows uses UTF16 so it is necessary to convert the string

@@ -38,10 +38,10 @@ public:
 	asINT64 GetSize(const ScriptString &path) const;
 
 	// Returns a list of the files in the current path
-	ScriptArray *GetFiles() const;
+	CScriptArray *GetFiles() const;
 
 	// Returns a list of the directories in the current path
-	ScriptArray *GetDirs() const;
+	CScriptArray *GetDirs() const;
 
 	// Creates a new directory. Returns 0 on success
 	int MakeDir(const ScriptString &path);

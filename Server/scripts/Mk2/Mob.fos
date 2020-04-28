@@ -83,7 +83,7 @@ class MobDef : Npc::NpcDescriptor
 			return false;
 		}
 		
-		NpcDescriptor::CritterInit( crInit, firstTime );
+		Npc::NpcDescriptor::CritterInit( crInit, firstTime );
 		
 		crInit.ModeBase[MODE_NO_HOME]=1;
 		crInit.StatBase[ST_ROLE_CITY]=TEMPLATE_MOB;
@@ -101,7 +101,7 @@ class MobDef : Npc::NpcDescriptor
 	bool CritterDead(::Critter@ cr, ::Critter@ killer) override
 	{
 		cr.ClearEnemyStack(); // ìîá çàáûâàåò ñâîèõ îáèä÷èêîâ
-		return NpcDescriptor::CritterDead( @cr, @killer );
+		return Npc::NpcDescriptor::CritterDead( @cr, @killer );
 	}
 	
 	bool CritterShowMe( ::Critter& npc, ::Critter& player ) override // Áóäåì õîäèòü êîãäà
@@ -109,7 +109,7 @@ class MobDef : Npc::NpcDescriptor
 		if( player.IsPlayer() )
 			++SeeCountPlayers;
 
-		return NpcDescriptor::CritterShowMe( npc, player );
+		return Npc::NpcDescriptor::CritterShowMe( npc, player );
 	}
 	
 	bool CritterShow( ::Critter& npc, ::Critter& player ) override
@@ -117,7 +117,7 @@ class MobDef : Npc::NpcDescriptor
 		if ( player.IsPlayer() )
 			NpcPlanes::AddAttackPlane(npc, 0, player);
 
-		return NpcDescriptor::CritterShow( npc, player );
+		return Npc::NpcDescriptor::CritterShow( npc, player );
 	}
 	
 	bool CritterHideMe( ::Critter& npc, ::Critter& player) override
@@ -125,7 +125,7 @@ class MobDef : Npc::NpcDescriptor
 		if( player.IsPlayer() && SeeCountPlayers > 0 )
 			--SeeCountPlayers;
 	
-		return NpcDescriptor::CritterHideMe( npc, player );
+		return Npc::NpcDescriptor::CritterHideMe( npc, player );
 	}
 	
 	bool CritterHide( ::Critter& npc, ::Critter& player) override
@@ -136,7 +136,7 @@ class MobDef : Npc::NpcDescriptor
 			NpcPlanes::EraseAttackPlane(npc, player);
 		}
 			
-		return NpcDescriptor::CritterHide( npc, player );
+		return Npc::NpcDescriptor::CritterHide( npc, player );
 	}
 	
 	bool CritterIdle( ::Critter& npc ) override
@@ -159,7 +159,7 @@ class MobDef : Npc::NpcDescriptor
 				else if(rnd<=6) this.TryGoHome(npc); // 20%
 			}
 		}
-		return NpcDescriptor::CritterIdle( npc );
+		return Npc::NpcDescriptor::CritterIdle( npc );
 	}
 	
 	void ResetVars( ::Critter& npc)
@@ -207,24 +207,24 @@ class MobDef : Npc::NpcDescriptor
 	{
 		Messager::Messager@ message = cast<Messager::Messager>(@interMessage);
 		if(!valid(message))
-			return NpcDescriptor::Message( npc, interMessage );
-		if( npc.IsPlayer() || !npc.IsLife()) return NpcDescriptor::Message( npc, interMessage );
+			return Npc::NpcDescriptor::Message( npc, interMessage );
+		if( npc.IsPlayer() || !npc.IsLife()) return Npc::NpcDescriptor::Message( npc, interMessage );
 		
-		if( npc.Stat[ST_TEAM_ID]==0 || npc.Stat[ST_TEAM_ID]==33) return NpcDescriptor::Message( npc, interMessage ); // ãðóïïà íå ãðóïèðóåòüñÿ
+		if( npc.Stat[ST_TEAM_ID]==0 || npc.Stat[ST_TEAM_ID]==33) return Npc::NpcDescriptor::Message( npc, interMessage ); // ãðóïïà íå ãðóïèðóåòüñÿ
 		::Critter@ fromCrit = message.Sender;
 		if( ! valid( fromCrit ) )
-			return NpcDescriptor::Message( npc, interMessage );
-		if( npc.Stat[ST_TEAM_ID] != fromCrit.Stat[ST_TEAM_ID] ) return NpcDescriptor::Message( npc, interMessage ); // êòîòî íå èç íàøåé ãðóïïû
+			return Npc::NpcDescriptor::Message( npc, interMessage );
+		if( npc.Stat[ST_TEAM_ID] != fromCrit.Stat[ST_TEAM_ID] ) return Npc::NpcDescriptor::Message( npc, interMessage ); // êòîòî íå èç íàøåé ãðóïïû
 
 		if( message.Message == Mob::Options::MsgGroupAttack )
 		{	
 			::Critter@ target=::GetCritter(message.Value);
 			if (!validEngineObject(target)) return false;
-			if (::GetCrittersDistantion(npc, fromCrit) > uint( Mob::Options::DistanceGroupRadius ) ) return NpcDescriptor::Message( npc, interMessage );
+			if (::GetCrittersDistantion(npc, fromCrit) > uint( Mob::Options::DistanceGroupRadius ) ) return Npc::NpcDescriptor::Message( npc, interMessage );
 			NpcPlanes::AddAttackPlane(npc, 0, target);
 		}
 		else if(message.Message==Mob::Options::MsgGroupFury) Fury++;
-		else return NpcDescriptor::Message( npc, interMessage );
+		else return Npc::NpcDescriptor::Message( npc, interMessage );
 		return true;
 	}
 	
@@ -234,7 +234,7 @@ class MobDef : Npc::NpcDescriptor
 		{
 			::Critter@ target=::GetCritter( plane.Attack_TargId );
 			if ( not validEngineObject( target ) ) 
-				return NpcDescriptor::NpcPlaneBegin( npc,plane,reason,someCr,someItem );
+				return Npc::NpcDescriptor::NpcPlaneBegin( npc,plane,reason,someCr,someItem );
 
 			if( target.Stat[ST_TEAM_ID] == npc.Stat[ST_TEAM_ID] ) return false; // íå àòàêóåì âñåõ èç ñâîåé êîìàíäû
 
@@ -261,13 +261,13 @@ class MobDef : Npc::NpcDescriptor
 				}
 			}
 		}
-		return NpcDescriptor::NpcPlaneBegin( npc,plane,reason,someCr,someItem );
+		return Npc::NpcDescriptor::NpcPlaneBegin( npc,plane,reason,someCr,someItem );
 	}
 	
 	bool CritterRespawn( ::Critter& npc) override
 	{
 		this.ResetVars(npc);
-		return NpcDescriptor::CritterRespawn( npc );
+		return Npc::NpcDescriptor::CritterRespawn( npc );
 	}
 	
 	bool CritterAttacked( ::Critter& npc, ::Critter& attacker) override
@@ -280,7 +280,7 @@ class MobDef : Npc::NpcDescriptor
 		Messager::CritterSend( npc,Mob::Options::MsgGroupAttack, attacker.Id, MESSAGE_TO_WHO_SEES_ME);
 
 		NpcPlanes::AddAttackPlane(npc, 0, attacker);
-		return NpcDescriptor::CritterAttacked( npc, attacker ); // Handle attacked processing
+		return Npc::NpcDescriptor::CritterAttacked( npc, attacker ); // Handle attacked processing
 	}
 	
 	int MaxFear;

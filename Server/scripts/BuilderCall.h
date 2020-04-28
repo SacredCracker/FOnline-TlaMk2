@@ -133,12 +133,17 @@ BuilderCall::BuilderCall()
 			if( enumName )
 			{
 				out.str("");
-				out << "void " << enumName << "Init(string&inout, " << enumName << ")"; 
-				
+				if(!CharIsWord("",nameSpace))
+					out << "void " << enumName << "Init(string&inout, " << nameSpace << "::" << enumName << ")"; 
+				else out << "void " << enumName << "Init(string&inout, " << enumName << ")";
 				for( uint iFunc = 0, funcEnd = mk2Module->GetFunctionCount(); iFunc < funcEnd; iFunc++ )
 				{
 					asIScriptFunction* func = mk2Module->GetFunctionByIndex( iFunc );
-					if( func && CharIsWord( out.str().c_str(), func->GetDeclaration( false ) ) && func->GetParamCount() == 2 && func->GetParamTypeId( 1 ) == enumTypeId )
+					if( func->GetParamCount() != 2 )
+						continue;
+					int typeId = 0;
+					func->GetParam( 1, &typeId );
+					if( func && CharIsWord( out.str().c_str(), func->GetDeclaration( false ) ) && typeId == enumTypeId )
 					{
 						for( int value = 0, valueCount = mk2Module->GetEnumValueCount(enumTypeId); value < valueCount; value++ )
 						{

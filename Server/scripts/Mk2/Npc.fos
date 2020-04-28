@@ -40,7 +40,7 @@ class NpcDescriptor : Critter::CritterDescriptor, Mk2::NpcPacket, Dialog::Interl
 		LastDir = npc.Dir;
 		DamageHp = 0;
 		
-		return CritterDescriptor::CritterInit( npc, firstTime );
+		return Critter::CritterDescriptor::CritterInit( npc, firstTime );
 	}
 	
 	Ai::Attitude@ GetAttitude( Ai::aiobject@ otherObj, Ai::Situation@ situation ) override
@@ -61,7 +61,7 @@ class NpcDescriptor : Critter::CritterDescriptor, Mk2::NpcPacket, Dialog::Interl
 	
 	bool CritterFinish( ::Critter& npc, bool toDelete ) override
 	{		
-		if(!CritterDescriptor::CritterFinish( npc, toDelete ))
+		if(!Critter::CritterDescriptor::CritterFinish( npc, toDelete ))
 			return false;
 			
 		npc.DropPlanes();
@@ -75,7 +75,7 @@ class NpcDescriptor : Critter::CritterDescriptor, Mk2::NpcPacket, Dialog::Interl
 	
 	bool CritterDead( ::Critter@ npc, ::Critter@ killer ) override
 	{
-		if( !CritterDescriptor::CritterDead( @npc, @killer ) )
+		if( !Critter::CritterDescriptor::CritterDead( @npc, @killer ) )
 			return false;
 			
 		// ST_KILL_EXPERIENCE
@@ -106,7 +106,7 @@ class NpcDescriptor : Critter::CritterDescriptor, Mk2::NpcPacket, Dialog::Interl
 	
 	bool CritterIdle( ::Critter& npc ) override
 	{
-		if(  !CritterDescriptor::CritterIdle( npc ) )
+		if(  !Critter::CritterDescriptor::CritterIdle( npc ) )
 				return false;
 		
 		if( npc.Cond == COND_LIFE && _CritIsInjured(npc) && npc.Stat[ ST_CURRENT_HP ] < npc.Stat[ ST_MAX_LIFE ] && IsHumanoid(npc) )
@@ -144,7 +144,7 @@ class NpcDescriptor : Critter::CritterDescriptor, Mk2::NpcPacket, Dialog::Interl
 			return;
 		}
 		int lastHp = RealCr.Stat[ST_CURRENT_HP];
-		CritterDescriptor::TakeDamage( @combatData, reason, totalDmg );
+		Critter::CritterDescriptor::TakeDamage( @combatData, reason, totalDmg );
 		
 		if( reason == 1 ) 
 		{
@@ -259,7 +259,7 @@ class NpcDescriptor : Critter::CritterDescriptor, Mk2::NpcPacket, Dialog::Interl
 	
 	bool IsSet( Mk2::Descriptor@ new ) override
 	{
-		if ( CritterDescriptor::IsSet( @new ) )
+		if ( Critter::CritterDescriptor::IsSet( @new ) )
 		{
 			Npc::NpcDescriptor@ newNpc = cast<Npc::NpcDescriptor>(@new);
             if(@newNpc !is null)

@@ -1664,7 +1664,7 @@ final class FarmItem
             {
                 Item@ it = null;
                 if( IsBluePrint )
-                    @ it = AddBlueprint( cr, BluePrint_Pid, BluePrint_Count );
+                    @ it = Farm::AddBlueprint( cr, BluePrint_Pid, BluePrint_Count );
                 else
                     @ it = cr.AddItem( ItemPid, Random( Count.Min, Count.Max ) );
 
@@ -1723,7 +1723,7 @@ final class FarmItem
             {
 
                 if( IsBluePrint )
-                    @ it = AddBlueprint( cont, BluePrint_Pid, BluePrint_Count );
+                    @ it = Farm::AddBlueprint( cont, BluePrint_Pid, BluePrint_Count );
                 else
                     @ it = cont.AddItem( ItemPid, Random( Count.Min, maxCount ), 0 );
 
@@ -1775,7 +1775,7 @@ final class FarmItem
             if( isCretaed )
             {
                 if( IsBluePrint )
-                    @ it = AddBlueprint( map, hexX, hexY, BluePrint_Pid, BluePrint_Count );
+                    @ it = Farm::AddBlueprint( map, hexX, hexY, BluePrint_Pid, BluePrint_Count );
                 else
                     @ it = map.AddItem( hexX, hexY, ItemPid, Random( Count.Min, maxCount ) );
 

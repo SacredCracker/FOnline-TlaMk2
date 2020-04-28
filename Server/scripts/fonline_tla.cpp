@@ -57,7 +57,7 @@ EXPORT bool 	__cdecl	check_look								( Map& map, Critter& cr, Critter& opponen
 EXPORT bool 	__cdecl	check_trap_look							( Map& map, Critter& cr, Item& trap );
 EXPORT void         	Map_GetExitGlobalGrid					( Map& map, Critter& cr, uint16& x, uint16& y );
 EXPORT void         	Map_GetExitGrid							( Map& map, Critter& cr, uint16& x, uint16& y, uint16& MapPid, uint& EntireId );
-EXPORT uint  			GetFarmEntire							( Map& map, ScriptArray& outArr, uint pid, uint id );
+EXPORT uint  			GetFarmEntire							( Map& map, CScriptArray& outArr, uint pid, uint id );
 
 EXPORT void 			Critter_SetScriptDescriptor				( Critter& cr, asIScriptObject* value );
 EXPORT void  			Critter_GetGroupNative					( Critter& cr );
@@ -74,7 +74,7 @@ EXPORT int  			getParamDialog_Reputation				( Critter& cr, Critter& slave, uint 
 EXPORT int 				getParam_CountMerc						( Critter& cr, uint );
 EXPORT asIScriptObject* Critter_GetScriptDescriptor				( Critter& cr );
 
-EXPORT uint 			SearchDeleteItem						( ScriptArray& inItems, ScriptArray& outItems, uint count );
+EXPORT uint 			SearchDeleteItem						( CScriptArray& inItems, CScriptArray& outItems, uint count );
 
 EXPORT bool 			allowSlot_Hand1							( uint8, Item &, Critter &, Critter & toCr );
 
@@ -85,10 +85,10 @@ EXPORT bool         	RunIsCreateFarmItem						( uint funcId, ScriptDictionary& f
 
 EXPORT void 			init									( );
 	   
-	   uint 			GetDialogDemandFunctionId				( ScriptString& module, ScriptString& func, ScriptArray& args );
-	   bool 			RunDialogDemandFunctionId				( Critter& cr, Critter* npc, uint funcId, ScriptArray& args );
-	   uint 			RunDialogResultFunctionId				( Critter& cr, Critter* npc, uint funcId, ScriptArray& args, bool isRet );
-	   uint 			GetDialogResultFunctionId				( ScriptString& module, ScriptString& func, ScriptArray& args, bool& isReturn );
+	   uint 			GetDialogDemandFunctionId				( ScriptString& module, ScriptString& func, CScriptArray& args );
+	   bool 			RunDialogDemandFunctionId				( Critter& cr, Critter* npc, uint funcId, CScriptArray& args );
+	   uint 			RunDialogResultFunctionId				( Critter& cr, Critter* npc, uint funcId, CScriptArray& args, bool isRet );
+	   uint 			GetDialogResultFunctionId				( ScriptString& module, ScriptString& func, CScriptArray& args, bool& isReturn );
 	   uint 			GetDialogBranchFunctionId				( ScriptString& module, ScriptString& func, bool& isReturn );
 	   uint 			RunDialogBranchFunctionId				( Critter& cr, Critter* npc, uint funcId, ScriptString* arg, bool isRet );
 #endif
@@ -406,10 +406,9 @@ bool GetMyFloderFiles( T1& dirName, T2& outStr )
 
 FONLINE_DLL_ENTRY( isCompiler )
 {
-   // ASEngine->SetEngineProperty( asEP_REQUIRE_ENUM_SCOPE, 1 );
+    //ASEngine->SetEngineProperty( asEP_REQUIRE_ENUM_SCOPE, 1 );
     ASEngine->SetEngineProperty( asEP_BUILD_WITHOUT_LINE_CUES , 1 );
-	
-	//Log( "%i\n", ASEngine->GetEngineProperty( asEP_BUILD_WITHOUT_LINE_CUES ) );
+    //ASEngine->SetEngineProperty( asEP_COMPILER_WARNINGS , false );
 	
     const char* defName = ASEngine->GetDefaultNamespace();
     // bool compiler - true if script compiled using ASCompiler, false if script compiled in server
@@ -466,7 +465,11 @@ FONLINE_DLL_ENTRY( isCompiler )
     ASEngine->RegisterInterfaceMethod( "Descriptor", "uint get_Priority( )" );
     ASEngine->RegisterInterfaceMethod( "Descriptor", "bool IsSet( Mk2::Descriptor@ new )" );
     ASEngine->RegisterInterfaceMethod( "Descriptor", "::string@ get_Name( )" );
-	
+
+#ifdef __SERVER
+    ASEngine->RegisterInterfaceMethod( "ItemPacket", "bool CritterUse( ::Critter& cr, ::Item& item, ::Critter@ targetCr, ::Item@ targetItem, ::Scenery@ targetScen, uint param )" );
+#endif
+
 #ifndef __MAPPER
     if( ASEngine->RegisterObjectMethod( STR_SCRIPT_ITEM, "void set_ScriptDescriptor( Mk2::Descriptor@ value )", asFUNCTION( Item_SetScriptDescriptor ), asCALL_CDECL_OBJFIRST ) < 0 )
         Log( "Error registering Item::set_ScriptDescriptor()\n" );
@@ -665,6 +668,7 @@ FONLINE_DLL_ENTRY( isCompiler )
     if( ASEngine->RegisterObjectMethod( "Critter", "void FreeMercSlot( uint )", asMETHOD( Critter, FreeMercSlot ), asCALL_THISCALL ) < 0 )
         Log( "Error registering Critter::FreeMercSlot( uint )\n" );
 
+	
     ASEngine->SetDefaultNamespace( "Mk2" );
 	
     ASEngine->RegisterInterface( "CritterPacket" );
@@ -674,16 +678,8 @@ FONLINE_DLL_ENTRY( isCompiler )
     ASEngine->RegisterInterface( "CombatTargetPacket" );
     ASEngine->RegisterInterface( "CombatProccessPacket" );
 	
-    if( ASEngine->RegisterGlobalFunction( "bool IsEvent( ::Critter&inout cr, int event )", asFUNCTION( Critter_IsEvent ), asCALL_CDECL ) < 0 )
-        Log( "Error reg void Critter_IsEvent\n" );
-    if( ASEngine->RegisterGlobalFunction( "bool IsEvent( ::Item&inout item, int event )", asFUNCTION( Item_IsEvent ), asCALL_CDECL ) < 0 )
-        Log( "Error reg void Item_IsEvent\n" );
-	
-    if( ASEngine->RegisterObjectMethod( "::Critter", "void set_ScriptDescriptor( Mk2::Descriptor@ value )", asFUNCTION( Critter_SetScriptDescriptor ), asCALL_CDECL_OBJFIRST ) < 0 )
-        Log( "Error registering Critter::set_ScriptDescriptor()\n" );
-    if( ASEngine->RegisterObjectMethod( "::Critter", "Mk2::Descriptor@ get_ScriptDescriptor()", asFUNCTION( Critter_GetScriptDescriptor ), asCALL_CDECL_OBJFIRST ) < 0 )
-        Log( "Error registering Critter::get_ScriptDescriptor()\n" );
-	
+    ASEngine->SetDefaultNamespace( defName );
+
 	ASEngine->RegisterFuncdef( "bool FuncdefEventCritterInit( ::Critter@ critter, bool firstTime )" );
 	ASEngine->RegisterFuncdef( "bool FuncdefEventCritterInit( ::Critter@ critter, bool firstTime )" );
 	ASEngine->RegisterFuncdef( "bool FuncdefEventCritterInit( ::Critter@ critter, bool firstTime )" );
@@ -742,6 +738,19 @@ FONLINE_DLL_ENTRY( isCompiler )
 
     ASEngine->RegisterFuncdef( "void FuncdefEventResultCritterMessage( ::Critter@ critter, Mk2::MessagePacket@ message )" );
 	
+    ASEngine->SetDefaultNamespace( "Mk2" );
+	
+    if( ASEngine->RegisterGlobalFunction( "bool IsEvent( ::Critter&inout cr, int event )", asFUNCTION( Critter_IsEvent ), asCALL_CDECL ) < 0 )
+        Log( "Error reg void Critter_IsEvent\n" );
+    if( ASEngine->RegisterGlobalFunction( "bool IsEvent( ::Item&inout item, int event )", asFUNCTION( Item_IsEvent ), asCALL_CDECL ) < 0 )
+        Log( "Error reg void Item_IsEvent\n" );
+	
+    if( ASEngine->RegisterObjectMethod( "::Critter", "void set_ScriptDescriptor( Mk2::Descriptor@ value )", asFUNCTION( Critter_SetScriptDescriptor ), asCALL_CDECL_OBJFIRST ) < 0 )
+        Log( "Error registering Critter::set_ScriptDescriptor()\n" );
+    if( ASEngine->RegisterObjectMethod( "::Critter", "Mk2::Descriptor@ get_ScriptDescriptor()", asFUNCTION( Critter_GetScriptDescriptor ), asCALL_CDECL_OBJFIRST ) < 0 )
+        Log( "Error registering Critter::get_ScriptDescriptor()\n" );
+	
+	
     ASEngine->RegisterInterfaceMethod( "CritterPacket", "bool CritterInit(::Critter& crInit, bool firstTime)" );
     ASEngine->RegisterInterfaceMethod( "CritterPacket", "bool CritterFinish(::Critter& crFinish, bool toDelete)" );
     ASEngine->RegisterInterfaceMethod( "CritterPacket", "bool CritterDead(::Critter@ critter, ::Critter@ killer)" );
@@ -772,10 +781,6 @@ FONLINE_DLL_ENTRY( isCompiler )
 	
     ASEngine->RegisterInterfaceMethod( "UpgradedItemPacket", "bool SetUpgrade( ::Item@ item )" );
     ASEngine->RegisterInterfaceMethod( "UpgradedItemPacket", "bool UpgradedTriggered( const uint8 trigger )" );
-	
-#ifdef __SERVER
-    ASEngine->RegisterInterfaceMethod( "ItemPacket", "bool CritterUse( ::Critter& cr, ::Item& item, ::Critter@ targetCr, ::Item@ targetItem, ::Scenery@ targetScen, uint param )" );
-#endif
 	
     ASEngine->SetDefaultNamespace( defName );
 	
@@ -829,13 +834,11 @@ FONLINE_DLL_ENTRY( isCompiler )
     FOnline->GetUseApCost = &GetUseApCost;
     FOnline->GetAttackDistantion = &GetAttackDistantion;
 	
-	InfoASE();
-	
 #ifndef __CLIENT
 	float fTimeStart = clock()/(float)CLOCKS_PER_SEC;
     AutoScript();
 	float fTimeStop = clock()/(float)CLOCKS_PER_SEC; 
-	Log("Модуль Mk2 собран за %f секунд\n", fTimeStop-fTimeStart); 
+	Log("Module Mk2 build %f seconds\n", fTimeStop-fTimeStart); 
 #endif
 }
 
@@ -921,7 +924,7 @@ uint Critter_GetGlobalGroupTimeCanFollow( Critter& cr )
     return 0;
 }
 
-uint GetFarmEntire( Map& map, ScriptArray& outArr, uint pid, uint id )
+uint GetFarmEntire( Map& map, CScriptArray& outArr, uint pid, uint id )
 {
     uint count = 0;
     for( MapObjectVecIt it = map.Proto->SceneriesVec.begin(), end = map.Proto->SceneriesVec.end(); it != end; ++it )
@@ -1241,13 +1244,11 @@ asIScriptObject* Item_GetScriptDescriptor( Item& item )
         if( funcId_defDescript && FOnline->ScriptPrepare( funcId_defDescript ) )
         {
             FOnline->ScriptSetArgObject( &item );
-            if( FOnline->ScriptRunPrepared() )
-			{
-				item.ScriptDescriptor = (asIScriptObject*)FOnline->ScriptGetReturnedAddress();
-				if(item.ScriptDescriptor)
-					item.ScriptDescriptor->AddRef();
-			}
-			else Log( "Error Item_GetScriptDescriptor\n" );
+            FOnline->ScriptRunPrepared();
+				
+			item.ScriptDescriptor = (asIScriptObject*)FOnline->ScriptGetReturnedAddress();
+			if(item.ScriptDescriptor)
+				item.ScriptDescriptor->AddRef();
         }
 	}
 	
@@ -1341,7 +1342,7 @@ uint Critter_GetLanguage( Critter& cr )
     return ( (Client*) &cr )->LanguageMsg;
 }
 
-uint SearchDeleteItem( ScriptArray& inItems, ScriptArray& outItems, uint cost )
+uint SearchDeleteItem( CScriptArray& inItems, CScriptArray& outItems, uint cost )
 {
     for( uint i = 0, iEnd = inItems.GetSize(); i < iEnd; i++ )
     {
@@ -1571,8 +1572,9 @@ bool check_trap_look( Map& map, Critter& cr, Item& trap )
             {
                 FOnline->ScriptSetArgObject( &cr );
                 FOnline->ScriptSetArgObject( &trap );
-                if( FOnline->ScriptRunPrepared() )		
-					isShow = !FOnline->ScriptGetReturnedBool();
+                FOnline->ScriptRunPrepared();
+				
+				isShow = !FOnline->ScriptGetReturnedBool();
             }
         }
         else
@@ -1582,8 +1584,9 @@ bool check_trap_look( Map& map, Critter& cr, Item& trap )
             {
                 FOnline->ScriptSetArgObject( &cr );
                 FOnline->ScriptSetArgObject( &trap );
-                if( FOnline->ScriptRunPrepared() )				
-					isShow = !FOnline->ScriptGetReturnedBool();
+                FOnline->ScriptRunPrepared();
+				
+				isShow = !FOnline->ScriptGetReturnedBool();
             }
         }
         return !isShow;
@@ -1789,58 +1792,48 @@ bool out_message( ScriptString& message, int& sayType )
 {
 	if( message.length() == 0 )
 		return false;
-	if( message.length() > 1 )
+	const char* mess = message.c_str();
+	if( mess && mess[0] == '#' || mess[0] == '~' && message.length() > 1 )
 	{
-		const char* mess = message.c_str();
-		if( mess && ( mess[0] == '#' || mess[0] == '~' ) )
+		asIScriptModule* mk2 = GetModule( "Mk2" );
+		if( mk2 )
 		{
-			asIScriptModule* mk2 = GetModule( "Mk2" );
-			if( mk2 )
+			char functionName[50];
+			unsigned int pos = 1;
+			if( CharNextWord( mess, pos, functionName, 50 ) )
 			{
-				char functionName[50];
-				unsigned int pos = 1;
-				if( CharNextWord( mess, pos, functionName, 50 ) )
+				ostringstream out;      		
+				out << "::string " << functionName << "_MsgCommand( ::string )"; 
+				if( mk2->GetFunctionByDecl( out.str().c_str() ) )
 				{
-					ostringstream out;      		
-					out << "::string " << functionName << "_MsgCommand( ::string )"; 
-					if( mk2->GetFunctionByDecl( out.str().c_str() ) )
+					uint funcId = FOnline->ScriptBind( "Mk2", out.str().c_str(), true );
+					if( funcId && FOnline->ScriptPrepare( funcId ) )
 					{
-						uint funcId = FOnline->ScriptBind( "Mk2", out.str().c_str(), true );
-						if( funcId && FOnline->ScriptPrepare( funcId ) )
+						FOnline->ScriptSetArgObject( &message );
+						FOnline->ScriptRunPrepared();
+						ScriptString* result = (ScriptString*)FOnline->ScriptGetReturnedObject( );
+						if( result )
 						{
-							ScriptString* str = &ScriptString::Create( mess );
-							FOnline->ScriptSetArgObject( str );
-							if( !FOnline->ScriptRunPrepared() )
-								Log( "Error run out_message\n" );
-							else
+							if( result->length() != 0 )
 							{
-								ScriptString* result = (ScriptString*)FOnline->ScriptGetReturnedObject( );
-								if( result )
-								{
-									if( result->length() != 0 )
-									{
-										// Message( result->c_str() );
-									}
-								}
-								str->Release();
-								return false;
+								// Message( result->c_str() );
 							}
-							str->Release();
 						}
+						return false;
 					}
-					out.clear();
 				}
+				out.clear();
 			}
 		}
 	}
+	
 	uint funcIdOutMess = FOnline->ScriptBind( "Mk2", "bool out_message( ::string& message, int& sayType )", true );
 	if( funcIdOutMess && FOnline->ScriptPrepare( funcIdOutMess ) )
 	{
 		FOnline->ScriptSetArgAddress( &message );
 		FOnline->ScriptSetArgAddress( &sayType );
-		if( !FOnline->ScriptRunPrepared() )
-			Log( "Error run out_message\n" );
-		else return FOnline->ScriptGetReturnedBool();
+		FOnline->ScriptRunPrepared();
+		return FOnline->ScriptGetReturnedBool();
 	}
 	return false;
 }
@@ -2132,7 +2125,7 @@ void FlashClient()
 #endif
 
 #ifdef __SERVER
-uint RunDialogResultFunctionId( Critter& cr, Critter* npc, uint funcId, ScriptArray& args, bool isRet )
+uint RunDialogResultFunctionId( Critter& cr, Critter* npc, uint funcId, CScriptArray& args, bool isRet )
 {
 	if( funcId && FOnline->ScriptPrepare( funcId ) )
 	{
@@ -2154,7 +2147,7 @@ uint RunDialogResultFunctionId( Critter& cr, Critter* npc, uint funcId, ScriptAr
 	return -1;
 }
 
-uint GetDialogResultFunctionId( ScriptString& module, ScriptString& func, ScriptArray& args, bool& isReturn )
+uint GetDialogResultFunctionId( ScriptString& module, ScriptString& func, CScriptArray& args, bool& isReturn )
 {
 	isReturn = false;
 	asIScriptModule* realModule = GetModule( module.c_str() );
@@ -2230,7 +2223,7 @@ uint GetDialogBranchFunctionId( ScriptString& module, ScriptString& func, bool& 
 	return 0;
 }
 
-bool RunDialogDemandFunctionId( Critter& cr, Critter* npc, uint funcId, ScriptArray& args )
+bool RunDialogDemandFunctionId( Critter& cr, Critter* npc, uint funcId, CScriptArray& args )
 {
 	if( funcId && FOnline->ScriptPrepare( funcId ) )
 	{
@@ -2247,7 +2240,7 @@ bool RunDialogDemandFunctionId( Critter& cr, Critter* npc, uint funcId, ScriptAr
 	return false;
 }
 
-uint GetDialogDemandFunctionId( ScriptString& module, ScriptString& func, ScriptArray& args )
+uint GetDialogDemandFunctionId( ScriptString& module, ScriptString& func, CScriptArray& args )
 {
 	asIScriptModule* realModule = GetModule( module.c_str() );
 	if( realModule )
@@ -2462,7 +2455,6 @@ bool start()
     if( mk2Module )
     {
 		ostringstream out;
-		
         for( uint iFunc = 0, iEnd = mk2Module->GetFunctionCount(); iFunc < iEnd; iFunc++ )
         {
             asIScriptFunction* func = mk2Module->GetFunctionByIndex( iFunc );

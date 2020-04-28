@@ -67,8 +67,7 @@ EXPORT CritterCl* GetMonCrExt( int x, int y )
 				if( f->Crit )
 				{
 					CritterCl* cr = const_cast< CritterCl* >( f->Crit );
-					int typeId = ASEngine->GetTypeIdByDecl( "CritterCl" );
-					ASEngine->AddRefScriptObject( cr, typeId );
+					ASEngine->AddRefScriptObject( cr, ASEngine->GetObjectTypeByName( "CritterCl" ) );
 					return cr;
 				}
 			}
@@ -158,7 +157,7 @@ EXPORT bool CritterSetEgg( CritterMutual& cr, int EggType )
     return false;
 }
 
-EXPORT void GetCrittersMonitorPosition( ScriptArray& crArray, ScriptArray& outCrArray, ScriptArray& outArray ) // int& X, int& Y, int& W, int& H )
+EXPORT void GetCrittersMonitorPosition( CScriptArray& crArray, CScriptArray& outCrArray, CScriptArray& outArray ) // int& X, int& Y, int& W, int& H )
 {
     uint     lengthCrs = crArray.GetSize();
     uint     countSpr = 0;

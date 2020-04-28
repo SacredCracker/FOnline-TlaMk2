@@ -19,7 +19,7 @@ class TankerMob : Mob::MobDef
 		if(player.Id==uint(npc.Stat[ST_VAR5]) && IsCleanMan(player))
 			return false;
 			
-		return MobDef::CritterShow(npc,player);//_ShowPlayer(cr,player);
+		return Mob::MobDef::CritterShow(npc,player);//_ShowPlayer(cr,player);
 	}
 	
 	void ShowCritter2(::Critter& cr, ::Critter& player) // ToDo
@@ -57,12 +57,12 @@ class TankerMob : Mob::MobDef
 			}
 		}
 		cr.StatBase[ST_VAR5]=0;// Либо чистюля ушел, либо что-то еще, сбиваем запоминание
-		return MobDef::CritterIdle(cr);
+		return Mob::MobDef::CritterIdle(cr);
 	}
 	
 	bool CritterDead(::Critter@ cr, ::Critter@ killer) override
 	{
-		MobDef::CritterDead(@cr, @killer);
+		Mob::MobDef::CritterDead(@cr, @killer);
 		if(valid(killer) && killer.IsPlayer())
 		{
 			::GameVar @qVar=::GetLocalVar(LVAR_q_sf_ron_kill_beasts, killer.Id);
@@ -96,7 +96,7 @@ class TankerMob : Mob::MobDef
 	/*void SmthDead(::Critter& cr, ::Critter& fromCrit, ::Critter@ killer) // ToDo
 	{
 		cr.StatBase[ST_VAR5]=0;
-		MobDef::SmthDead(cr, fromCrit, killer);
+		Mob::MobDef::SmthDead(cr, fromCrit, killer);
 	}*/
 }
 

@@ -1602,7 +1602,7 @@ struct Critter
         }
     }
 
-    uint GetMercIds( ScriptArray* outArr )
+    uint GetMercIds( CScriptArray* outArr )
     {
         if( outArr )
             for( uint i = 0; i < CountMerc; i++ )

@@ -17,8 +17,7 @@ public:
     #ifdef FONLINE_DLL
     static ScriptDictionary& Create()
     {
-        static int        typeId = ASEngine->GetTypeIdByDecl( "dictionary" );
-        ScriptDictionary* scriptDictionary = (ScriptDictionary*) ASEngine->CreateScriptObject( typeId );
+        ScriptDictionary* scriptDictionary = (ScriptDictionary*) ASEngine->CreateScriptObject( ASEngine->GetObjectTypeByName( "dictionary" ) );
         return *scriptDictionary;
     }
 protected:
@@ -64,7 +63,7 @@ public:
     virtual void DeleteAll();
 
     // Get an array of all keys
-    virtual asUINT Keys( ScriptArray* keys );
+    virtual asUINT Keys( CScriptArray* keys );
 
     // Garbage collections behaviours
     virtual int  GetRefCount();

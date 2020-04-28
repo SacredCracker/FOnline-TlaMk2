@@ -245,7 +245,7 @@ CScriptHandle* CreateScriptHandle( ScriptString* typeName )
 			int typeId = module->GetTypeIdByDecl( typeName->c_str() );
 			if( typeId > 0 )
 			{
-				asIObjectType *type = ASEngine->GetObjectTypeById( typeId );
+				asIObjectType *type = ASEngine->GetObjectTypeByName( typeName->c_str() );
 				if( type )
 				{
 					string factoryName = typeName->c_str();
@@ -253,7 +253,7 @@ CScriptHandle* CreateScriptHandle( ScriptString* typeName )
 					factoryName += typeName->c_str();
 					factoryName += "()";
 					
-					asIScriptObject *obj = reinterpret_cast<asIScriptObject*>(ASEngine->CreateScriptObject(typeId));
+					asIScriptObject *obj = reinterpret_cast<asIScriptObject*>(ASEngine->CreateScriptObject(type));
 					if( obj )
 					{
 						CScriptHandle* ref = new CScriptHandle( );

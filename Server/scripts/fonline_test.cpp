@@ -99,66 +99,6 @@ EXPORT void StringExample()
     str3.Release();
 }
 
-EXPORT void ArrayExample()
-{
-    ScriptArray&  arr = ScriptArray::Create( "string" );
-    ScriptString& first = ScriptString::Create( "first" );
-    arr.InsertFirst( &first );
-    first.Release();
-    arr.InsertAt( 1, &ScriptString::Create( "mid" ) );    // Leak
-    arr.InsertLast( &ScriptString::Create( "last" ) );    // Leak
-    arr.InsertFirst( &ScriptString::Create( "first0" ) ); // Leak
-    arr.RemoveAt( 0 );
-    Log( "Array example:\n" );
-    for( asUINT i = 0; i < arr.GetSize(); i++ )
-    {
-        ScriptString& str = *(ScriptString*) arr.At( i );
-        Log( "%u) '%s'\n", i, str.c_str() );
-    }
-    arr.Release();
-}
-
-EXPORT void TestItemArray( ScriptArray& Items )
-{
-    for( uint i = 0, iEnd = Items.GetSize(); i < iEnd; i++ )
-    {
-        Log( "i=%u \n", i );
-        Item& it = *( *(Item**) Items.At( i ) );
-        if( it.GetId() )
-            Log( "items[i].Id %u \n", it.Id );
-        else
-            Log( "Îøèáêà \n" );
-    }
-    //
-    // Log("items[i].Id %u",((Item*)&Items.At( i )).Id);
-}
-
-EXPORT void TestUintArray( ScriptArray& u )
-{
-    for( uint i = 0, iEnd = u.GetSize(); i < iEnd; i++ )
-    {
-        Log( "u[%u].Id %u \n", i, *(asUINT*) u.At( i ) );
-    }
-}
-
-/*
-   [02:15:33] <@Atom> ScriptArray::At returns a pointer to the array's element at the given index
-   [02:16:05] <@Atom> in case of item handle array, it's a pointer to the pointer to the item, not the pointer itself
-   [02:16:52] <@Atom> it's so it can be bind as returning a reference in scripts, and in native you can do stuff like Item* it = ...; *(arr->At(15)) = (void*)it;
-   [02:17:28] <@Atom> so cast the At return to Item** and then do stuff
-   [02:17:48] <@Atom> *be bound
- */
-EXPORT void TestObjArrTestNative( ScriptArray& u )
-{
-    for( uint i = 0, iEnd = u.GetSize(); i < iEnd; i++ )
-    {
-        // ObjArrTest* it = ...; *(arr->At(15)) = (void*)it;
-        // ObjArrTest* it=(ObjArrTest*) u.At( i );
-        // *(u->At(15)) = (void*)it;
-        // Log("u[%u].Id %u \n",i,it.Id);
-    }
-}
-
 EXPORT void TestNativeRunScriptGlobalFunction( ScriptString& str )
 {
     Log( "BEgin\n" );

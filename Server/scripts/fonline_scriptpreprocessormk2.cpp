@@ -15,8 +15,8 @@
 #include <algorithm>
 
 
-#include "AngelScript/scripthandle/scripthandle.cpp"
-#include "AngelScript/scriptbuilder/scriptbuilder.cpp"
+//#include "AngelScript/scripthandle/scripthandle.cpp"
+//#include "AngelScript/scriptbuilder/scriptbuilder.cpp"
 
 #define AngelScriptAPI_Check( reg )    if( reg < 0 ) \
         Log( "Error registration <%d>.\n", __LINE__ )
@@ -285,8 +285,8 @@ public:
 	void LibraryBuildListType(vector<ScriptFileMk2*>& library, const OwnerType& owner, TypeFile type);
 
 	inline void ExitPreproccess();
-	void LoadPreproccessModule();
-	inline void ParsePreproccessModule();
+	//void LoadPreproccessModule();
+	//inline void ParsePreproccessModule();
 	void ProccesHashFiles();
 	inline void ParseHashFiles();
 	inline void ParseDLG();
@@ -430,6 +430,7 @@ inline void Collector::ExitPreproccess( )
 	LibraryPreproccess.clear();
 }
 
+/*
 void Collector::LoadPreproccessModule()
 {
 	if (ASEngine->GetModule(ffd.cFileName))
@@ -504,7 +505,7 @@ inline void Collector::ParsePreproccessModule()
 		LoadPreproccessModule();
 	} while (FindNextFile(hFind, &ffd) != 0);
 	FindClose();
-}
+}*/
 
 void Collector::ProccesHashFiles()
 {
@@ -829,7 +830,7 @@ void Collector::Run( const char* write_file )
 		write << "#define __MK2_MODULE__";
 
 		ParseHashFiles();
-		ParsePreproccessModule();
+		//ParsePreproccessModule();
 		ParseDLG();
 		ParseGameVar();
 		ParseContent();
@@ -853,8 +854,8 @@ void Collector::Run( const char* write_file )
 
 void AutoScript()
 {		
-	RegisterScriptHandle( );
-	ASEngine->SetEngineProperty( asEP_USE_CHARACTER_LITERALS, 1 );
+	// RegisterScriptHandle( );
+	/*ASEngine->SetEngineProperty( asEP_USE_CHARACTER_LITERALS, 1 );
 	
 	const char* defName = ASEngine->GetDefaultNamespace();
     ASEngine->SetDefaultNamespace( "Preprocessor" );
@@ -875,7 +876,7 @@ void AutoScript()
 	AngelScriptAPI_Check( ASEngine->RegisterObjectMethod( "ScriptFile", "int get_Sort()", asMETHOD( ScriptFileMk2, script_GetSort ), asCALL_THISCALL ) );
 	AngelScriptAPI_Check( ASEngine->RegisterObjectMethod( "ScriptFile", "bool get_IsDebbug()", asMETHOD( ScriptFileMk2, script_GetIsDebbug ), asCALL_THISCALL ) );
 	AngelScriptAPI_Check( ASEngine->RegisterObjectMethod( "ScriptFile", "::string@+ get_Name()", asMETHOD( ScriptFileMk2, script_GetName ), asCALL_THISCALL ) );
-    ASEngine->SetDefaultNamespace( defName );
+    ASEngine->SetDefaultNamespace( defName );*/
 	
 	Collector().Run(__SERVER_PATH(scripts\\Mk2.fos));
 	for (uint i = 0, size = LibraryScript.size(); i < size; ++i)
