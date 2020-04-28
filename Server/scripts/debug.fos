@@ -3267,6 +3267,11 @@ void dd( Critter& cr, int num, int, int )
     Mk2RunDialog( cr, num, cr.GetMap(), cr.HexX, cr.HexY + 1, true );
 }
 
+void TestSayDialog( Critter& cr, int num, int strNum, int )
+{
+	cr.SayMsg( SAY_SHOUT, TEXTMSG_DLG, DLGSTR( num, strNum ) );
+}
+
 #include "combat_h.fos"
 
 void DamageMe( Critter& cr, int idx, int dmg, int )
@@ -3277,6 +3282,16 @@ void DamageMe( Critter& cr, int idx, int dmg, int )
 	Mk2::CombatTargetPacket@ glob = cast<Mk2::CombatTargetPacket>(@cr.ScriptDescriptor);
     if( valid( glob ) )
         glob.TakeDamage( a, 1, dmg );
+}
+
+bool Recurse()
+{
+	return Recurse();
+}
+
+void Recurse( Critter& critter, int, int, int )
+{
+	Recurse();
 }
 
 import bool AddGoToHealPlane( Critter& npc, Critter& target, bool run ) from "npc_planes";
