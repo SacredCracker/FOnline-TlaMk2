@@ -95,7 +95,7 @@ void TryHitSomeOne( Critter& player, Scenery& nukeMashine )
     map.MoveHexByDir( x1, y1, dir, 3 );
     map.RunFlyEffect( PID_FLYING_KNIFE, null, null, x0, y0, x1, y1, 0 );
 
-    for( uint i = 0; i < HIT_RANGE; i++ )
+    for( uint hit_length = 0; hit_length < HIT_RANGE; hit_length++ )
     {
         map.MoveHexByDir( x0, y0, dir, 1 );
         Critter @target = map.GetCritter( x0, y0 );

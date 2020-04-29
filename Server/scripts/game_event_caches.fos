@@ -74,9 +74,9 @@ void PlaceLoot2Container( Map& map, Critter& cr )
             Item@ container;
             if( cr.GetItems( -1, items ) > 0 )
             {
-                for( uint i = 0, l = items.length(); i < l; i++ )
+                for( uint itemindex = 0, itemendindex = items.length(); itemindex < itemendindex; itemindex++ )
                 {
-                    Item@ item = items[ i ];
+                    Item@ item = items[ itemindex ];
                     if( valid( item ) && item.GetProtoId() == PID_MAP )
                     {
                         GameVar@ isQuestItem = GetLocalVar( LIVAR_is_quest_item, item.Id );
@@ -151,7 +151,7 @@ uint GlobalDistance( Location@ loc1, Location@ loc2 )
 {
     if( !valid( loc1 ) || !valid( loc2 ) )
         return 0;
-    return DISTANCE( loc1.WorldX, loc1.WorldY, loc2.WorldX, loc2.WorldY );
+    return uint( DISTANCE( loc1.WorldX, loc1.WorldY, loc2.WorldX, loc2.WorldY ) );
 }
 
 uint e_DeleteItem( uint[] @ values )

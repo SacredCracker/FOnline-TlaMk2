@@ -447,12 +447,12 @@ int _PatrollerPlaneBegin( Critter& cr, NpcPlane& plane, int reason, Critter@ som
         Critter @ target = GetCritter( plane.Attack_TargId );
         if( !valid( target ) )
             return PLANE_RUN_GLOBAL;
-        for( uint i = 0, iMax = pInfo.Patrollers.length(); i < iMax; i++ )
+        for( uint patroller_index = 0, countPatrollers = pInfo.Patrollers.length(); patroller_index < countPatrollers; patroller_index++ )
         {
-            if( pInfo.Patrollers[ i ].Id == cr.Id )
+            if( pInfo.Patrollers[ patroller_index ].Id == cr.Id )
                 continue;
             hasTarger = false;
-            Critter @ pat = GetCritter( pInfo.Patrollers[ i ].Id );
+            Critter @ pat = GetCritter( pInfo.Patrollers[ patroller_index ].Id );
             if( valid( pat ) )
             {
                 NpcPlane @[] planes;

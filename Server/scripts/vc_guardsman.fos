@@ -33,7 +33,7 @@ bool d_CheckWear( Critter& player, Critter@ npc, int pid, int count, int deterio
     for( uint i = 0, iMax = items.length(); i < iMax; i++ )
     {
         @item = items[ i ];
-        if( !valid( item ) || item.GetProtoId() != pid )
+        if( !valid( item ) || int( item.GetProtoId() ) != pid )
             continue;
         if( GetDeteriorationProcent( item ) <= deteriorationPercent )
             num++;
@@ -335,8 +335,6 @@ void r_ShowCave( Critter& player, Critter@ npc )
     if( !valid( locId ) || locId.GetValue() == 0 )
         return;
     Location@ loc = GetLocation( locId.GetValue() );
-    uint16    x = 1168;
-    uint16    y = 418;
     if( valid( loc ) && loc.GetProtoId() == LOCATION_Quest_VCity_Recon_Cave )
     {
         uint16 x = loc.WorldX;
@@ -346,6 +344,8 @@ void r_ShowCave( Critter& player, Critter@ npc )
     }
     else
     {
+		uint16    x = 1168;
+		uint16    y = 418;
         r_ShowLocation2( player, npc, LVAR_q_vc_hartmann_clear_cave, LVAR_vc_dead_ally_counter, LOCATION_Quest_VCity_Attack_Cave, x, y );
     }
 }

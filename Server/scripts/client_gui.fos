@@ -721,9 +721,9 @@ class GUIElement : IGUIElementOpt
             }
         }
 
-        bool isDown = ( ( MousePressed[ MOUSE_CLICK_LEFT ] || SwitchEnabled || ( IsJamming && Jamming ) ) && @DownSpr != null );
+        bool isDown = ( ( MousePressed[ MOUSE_CLICK_LEFT ] || SwitchEnabled || ( IsJamming && Jamming ) ) && DownSpr !is null );
         if( isDown ) DownSpr.Draw( screenX + PosX, screenY + PosY );
-		else if( @Surface != null )
+		else if( Surface !is null )
         {
             if( SpriteWidth == 0 || SpriteHeight == 0 )
 				Surface.Draw( screenX + PosX, screenY + PosY );
@@ -745,10 +745,10 @@ class GUIElement : IGUIElementOpt
         {
             int curPos = 0;
             if( sbReversed )
-                curPos = ( sbRange - sbCurrentValue ) * sbStep;
+                curPos = int( ( sbRange - sbCurrentValue ) * sbStep );
             else
-                curPos = sbCurrentValue * sbStep;
-			Scroll.Draw( screenX + PosX, ( screenY + PosY + curPos ) - Scroll.Height * 0.5, Scroll.Width, Scroll.Height, 0, 0, Scroll.Color );
+                curPos = int( sbCurrentValue * sbStep );
+			Scroll.Draw( screenX + PosX, int( ( screenY + PosY + curPos ) - Scroll.Height * 0.5 ), Scroll.Width, Scroll.Height, 0, 0, Scroll.Color );
         }
         if( !isListBox )
         {
@@ -766,7 +766,7 @@ class GUIElement : IGUIElementOpt
 							renderText[ renderText.length() - 1 ] = ':';
 					}
 					else
-						if( ( ( IsFocused || IgnoreFocus ) && ( IsTextInput || @KeyPressCallback !is null ) ) || NoFocusedKeyPress )
+						if( ( ( IsFocused || IgnoreFocus ) && ( IsTextInput || KeyPressCallback !is null ) ) || NoFocusedKeyPress )
 						{
 							if( font == FONT_FALLOUT )
 							{
@@ -994,11 +994,11 @@ class GUIElement : IGUIElementOpt
                 sbCurrentValue = 0;
             else
             {
-                float x = float(mouseY) / sbStep;
-                if( fraction( x ) * 10 > 5 )
-                    sbCurrentValue = sbReversed ? uint( floor( x ) ) : uint( ceil( x ) );
+                float scrollbar = float(mouseY) / sbStep;
+                if( fraction( scrollbar ) * 10 > 5 )
+                    sbCurrentValue = sbReversed ? uint( floor( scrollbar ) ) : uint( ceil( scrollbar ) );
                 else
-                    sbCurrentValue = sbReversed ? uint( ceil( x ) ) : uint( floor( x ) );
+                    sbCurrentValue = sbReversed ? uint( ceil( scrollbar ) ) : uint( floor( scrollbar ) );
                 if( sbReversed )
                     sbCurrentValue = sbRange - sbCurrentValue;
             }

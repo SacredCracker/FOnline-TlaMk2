@@ -269,9 +269,9 @@ void AttackStop( Critter& player, int npcRole )
     {
         Critter@ npc = map.GetNpc( npcRole, FIND_LIFE_AND_KO | FIND_ONLY_NPC, i );
         planes.resize( 0 );
-        uint     count = npc.GetPlanes( planes );
+        uint countplanes = npc.GetPlanes( planes );
         // проходимся по списку планов в поисках маркированного плана
-        for( uint j = 0; j < count; j++ )
+        for( uint j = 0; j < countplanes; j++ )
             if( ( planes[ j ].Attack_TargId == player.Id ) and
                 ( planes[ j ].Priority == AI_PLANE_ATTACK_PRIORITY + 1 ) )
                 if( npc.ErasePlane( j ) )

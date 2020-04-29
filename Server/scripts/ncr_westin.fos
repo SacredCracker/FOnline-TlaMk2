@@ -157,24 +157,17 @@ void plane_Transit( Critter& westin )
 {
     // Log(" try transit");
     if( westin.MapPidTo == 0 )
-    {
         return;
-    }
     Map @map = westin.GetMap();
     if( !valid( map ) )
-    {
         return;
-    }
-    if( map.GetProtoId() == westin.MapPidTo )
-    {
+    if( map.GetProtoId() == uint16( westin.MapPidTo ) )
         return;
-    }
 
     Map @ mapTo = GetMapByPid( westin.MapPidTo, 0 );
     if( !valid( mapTo ) )
-    {
         return;
-    }
+
     // проверяем, что на карте назначения нет уже такого нпц
     // если есть, удаляем этого.
     uint westins = mapTo.GetNpcCount( NPC_ROLE_WESTIN, FIND_ALL );

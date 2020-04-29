@@ -411,9 +411,9 @@ void CheckAssignVar( GameVar& val1, uint8 operator, int val2 )
 bool CheckChecks( CCheck[]& checks, Critter@[]& critters )
 {
     bool checkOk = false;
-    for( int i = 0, j = checks.length(); i < j; i++ )
+    for( int ichecks = 0, checks_max = checks.length(); ichecks < checks_max; ichecks++ )
     {
-        CCheck@ check = checks[ i ];
+        CCheck@ check = checks[ ichecks ];
         switch( check.Type )
         {
         case CHECK_IS_PLAYER:
@@ -481,9 +481,9 @@ bool CheckChecks( CCheck[]& checks, Critter@[]& critters )
 
 void AssignChecks( CCheck[]& checks, Critter@[]& critters )
 {
-    for( int i = 0, j = checks.length(); i < j; i++ )
+    for( int ichecks = 0, checks_max = checks.length(); ichecks < checks_max; ichecks++ )
     {
-        CCheck@ check = checks[ i ];
+        CCheck@ check = checks[ ichecks ];
         if( check.Type == ASSIGN_LVAR )
         {
             for( uint i = 0, j = critters.length(); i < j; i++ )
@@ -757,7 +757,7 @@ void ActionFighting( Critter@[]& npcL, Critter@[]& npcR )
 Map@ GenerateEncounter( CFoundedEncounter@ fe, Critter@[] @ critters )
 {
     CEncounter@ encounter = fe.Encounter;
-    uint16      locPid = ( valid( encounter ) ? encounter.LocPid : 0 );
+    uint16 locPid = ( valid( encounter ) ? encounter.LocPid : 0 );
     if( locPid == 0 )
         locPid = fe.LocationPids[ Random( 0, fe.LocationPids.length() - 1 ) ];
 
@@ -828,13 +828,13 @@ Map@ GenerateEncounter( CFoundedEncounter@ fe, Critter@[] @ critters )
     uint bufer = 0;
     uint bufer2 = 0;
 
-    for( uint i = 0, j = encounter.Groups.length(); i < j; i++ )
+    for( uint igroup = 0, groupmax = encounter.Groups.length(); igroup < groupmax; igroup++ )
     {
-        uint groupNum = encounter.Groups[ i ];
+        uint groupNum = encounter.Groups[ igroup ];
 
         if( groupNum == GROUP_Player )
         {
-            Critter@[] @ crGroup = crittersGrouops[ i ];
+            Critter@[] @ crGroup = crittersGrouops[ igroup ];
             crGroup.resize( critters.length() );
             for( uint k = 0, l = critters.length(); k < l; k++ )
                 @crGroup[ k ] = critters[ k ];
@@ -849,13 +849,13 @@ Map@ GenerateEncounter( CFoundedEncounter@ fe, Critter@[] @ critters )
 
         CEncounterGroup@ group = EncounterGroups[ groupNum ];
 
-        uint             ratio = Random( encounter.RatioMin[ i ], encounter.RatioMax[ i ] );
-        uint             distance = group.Distance;
+        uint ratio = Random( encounter.RatioMin[ igroup ], encounter.RatioMax[ igroup ] );
+        uint distance = group.Distance;
         if( distance == 0 )
             distance = 7 + leader.Stat[ ST_PERCEPTION ] + leader.Perk[ PE_CAUTIOUS_NATURE ] * 3;
         uint teamId = group.TeamNum;
         if( teamId == 0 )
-            teamId = TEAM_Mob0 + i;
+            teamId = TEAM_Mob0 + igroup;
 
         uint position = group.Position;
         uint spacing = group.Spacing;
@@ -923,15 +923,6 @@ Map@ GenerateEncounter( CFoundedEncounter@ fe, Critter@[] @ critters )
             uint16 oldPosX = startX, oldPosY = startY;
 
             uint   scatter = ratio > 5 ? ratio : 5;
-
-            uint16 posX, posY;
-            // Log("2 sX="+startX);
-            // Log("2 sY="+startY);
-            posX = startX + Random( -scatter, scatter );
-            posY = startY + Random( -scatter, scatter );
-            // Log("-1 pX="+posX);
-            // Log("-1 pY="+posY);
-
             for( uint n = 0; n < count; n++ )
             {
                 uint16 posX, posY;
@@ -962,7 +953,7 @@ Map@ GenerateEncounter( CFoundedEncounter@ fe, Critter@[] @ critters )
                 // Log("=====================");
                 oldPosX = posX;
                 oldPosY = posY;
-                ParseEncounterObject( obj, map, posX, posY, reversDir, crittersGrouops[ i ], teamId );
+                ParseEncounterObject( obj, map, posX, posY, reversDir, crittersGrouops[ igroup ], teamId );
             }
         }
     }
@@ -1191,13 +1182,13 @@ void FindEncounter( Critter@[]& group, Item@ car, uint x, uint y, uint& encounte
     }
 
     roll = roll * maxRoll / 100;
-    for( uint i = 0, j = encountersThru.length(); i < j; i++ )
+    for( uint ienc = 0, iencmax = encountersThru.length(); ienc < iencmax; ienc++ )
     {
-        CEncounter@ enc = encountersThru[ i ];
+        CEncounter@ enc = encountersThru[ ienc ];
 
         if( not valid( enc ) )
             continue;
-        if( uint( roll ) > enc.Chance && i < j - 1 )
+        if( uint( roll ) > enc.Chance && ienc < iencmax - 1 )
         {
             roll -= enc.Chance;
             continue;

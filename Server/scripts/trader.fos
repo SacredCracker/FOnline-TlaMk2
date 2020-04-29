@@ -138,7 +138,7 @@ bool itemIsWithVariety( uint16 pid, int traderIndex )
 {
     for( uint i = 0, j = TABLE_ITEMS_COUNT; i < j; i++ )
     {
-        int itemPid = TABLE_ITEM_PID( i );
+        uint16 itemPid = TABLE_ITEM_PID( i );
         int needCount = TABLE_ITEM_COUNT( traderIndex, i );
         if( needCount > 0 && itemPid == pid )
             return true;
@@ -150,7 +150,7 @@ int getRealIndex( uint16 pid )
 {
     for( uint i = 0; i < TABLE_ITEMS_COUNT; i++ )
     {
-        int itemPid = TABLE_ITEM_PID( i );
+        uint16 itemPid = TABLE_ITEM_PID( i );
         if( pid == itemPid )
             return i;
     }
@@ -199,9 +199,9 @@ uint UpdateItems( Critter& trader )
             @items[ i ] = null;
         }
 
-    for( int i = rate > 0 ? ( ( rate * count ) ) : 0, iMax = ( ( ( rate + 1 ) * count ) + rest < allCount ) ? ( ( ( rate + 1 ) * count ) + rest ) : allCount; i < iMax; i++ )
+    for( int i = rate > 0 ? ( ( rate * count ) ) : 0, iMax = ( ( ( rate + 1 ) * count ) + rest < int( allCount ) ) ? ( ( ( rate + 1 ) * count ) + rest ) : int( allCount ); i < iMax; i++ )
     {
-        int pid = traderPids[ i ];
+        uint16 pid = traderPids[ i ];
 
         if( pid > 0 )
         {

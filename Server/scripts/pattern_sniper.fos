@@ -410,11 +410,11 @@ bool _GetRunAwayPoint( Critter& sniper, uint16& x, uint16& y, uint8& dir )
     // Проверяем, что не вылезем за границы карты
     // копируем направления с минимальным числом врагов в новый массив
     uint[] safeDirs;
-    for( uint dir = 0, dirMax = enemies.length(); dir < dirMax && dir < 6; dir++ )
+    for( uint check_dir = 0, dirMax = enemies.length(); check_dir < dirMax && check_dir < 6; check_dir++ )
     {
-        if( enemies[ dir ] == min )
+        if( enemies[ check_dir ] == min )
         {
-            safeDirs.insertLast( dir );
+            safeDirs.insertLast( check_dir );
         }
     }
     uint[] distances( safeDirs.length() );

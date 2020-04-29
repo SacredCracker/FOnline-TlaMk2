@@ -93,7 +93,7 @@
                                                                   SetQuestState( cr, crv.CaravanId, CARAVAN_PLAYER_JOIN_NEXT ); }
 #define _SetSuccessNext                       # ( cr, crv ) { uint q = GetQuestState( cr, crv.CaravanId ); if( q == CARAVAN_PLAYER_JOIN_NEXT ) \
                                                                   SetQuestState( cr, crv.CaravanId, CARAVAN_SUCCESS_NEXT ); }                                      // после первого или последующего успеха
-#define _SetPlayerJoin                        # ( cr, crv ) { uint q = GetQuestState( cr, crv.CaravanId ); if( q == CARAVAN_QUEST_TAKEN ) { _SetPlayerJoinFirst( cr, crv ); } if( q == CARAVAN_QUEST_COMPLETE ) { _SetJoinNext( cr, crv ); } }
+#define _SetPlayerJoin                        # ( cr, crv ) { uint quest = GetQuestState( cr, crv.CaravanId ); if( quest == CARAVAN_QUEST_TAKEN ) { _SetPlayerJoinFirst( cr, crv ); } if( quest == CARAVAN_QUEST_COMPLETE ) { _SetJoinNext( cr, crv ); } }
 bool _CanPlayerJoinCaravan( Critter& cr, CaravanInfo& crv ) { uint q = GetQuestState( cr, crv.CaravanId );
                                                               return ( q == CARAVAN_QUEST_COMPLETE || q == CARAVAN_NOQUEST || q == CARAVAN_QUEST_TAKEN ); }        // после первого, последующего успеха или при взятом квесте
 bool _GetPlayerQuestFailed( Critter& cr, CaravanInfo& crv ) { uint q = GetQuestState( cr, crv.CaravanId );
@@ -315,7 +315,7 @@ class CaravanLootItem
     // признак, появилось или нет в этот раз
     bool IsAppear()
     {
-        return Random( 1, 100 ) < this.ItemAppearChance;
+        return uint8( Random( 1, 100 ) ) < this.ItemAppearChance;
     }
 }
 
@@ -421,15 +421,13 @@ class GlobalRouteCurve
             return;
         }
         // маршрут закончен
-        if( nextPoint == -1 )
-        {
+        if( RouteEnded() )
             return;
-        }
         // достигнут один из узлов маршрута
         if( x == Points[ nextPoint ].X && y == Points[ nextPoint ].Y )
         {
             // если это последняя точка маршрута, меня ничего не нужно
-            if( nextPoint == ( -1 + Points.length() ) )
+            if( nextPoint == -1 + int( Points.length() ) )
             {
                 nextPoint = -1;
                 return;
@@ -503,7 +501,7 @@ class CaravanGuardInfo
     // leader - проводник каравана
     Critter@ GetCritterGuard( Map& map, Critter& leader )
     {
-        if( Random( 1, 100 ) > this.ChanceToJoin )
+        if( uint8( Random( 1, 100 ) ) > this.ChanceToJoin )
             return null;
 
         uint16 hX = leader.HexX;

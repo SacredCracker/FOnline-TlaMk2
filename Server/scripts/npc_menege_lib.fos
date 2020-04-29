@@ -119,28 +119,6 @@ void moveGroupsNpc( Map& map, Critter@[] group, uint x, uint y, int entire, uint
     }
 }
 
-// Добавляет игроков в враги группе.
-//
-//
-void addEnemyGroupsNpc( Map& map, Critter@[] group )
-{
-    Critter@[] enemy;
-    if( map.GetCritters( 0, FIND_LIFE_AND_KO, enemy ) > 0 )
-    {
-        for( uint i = 0, iMax = group.length(); i < iMax; i++ )
-        {
-            Critter@ cr = group[ i ];
-            for( uint j = 0, iMax = enemy.length(); j < iMax; j++ )
-            {
-                if( enemy[ j ].IsNpc() && enemy[ j ].StatBase[ ST_TEAM_ID ] == cr.StatBase[ ST_TEAM_ID ] )
-                    continue;
-
-                AddAttackPlane( cr, 0, enemy[ j ] );
-            }
-        }
-    }
-}
-
 // Переносит группу нпц, по заданым координатам заданой карты.
 //
 //

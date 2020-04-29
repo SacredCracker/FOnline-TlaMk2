@@ -230,11 +230,11 @@ CCaveEncounterInfo@ SetupEncounterCave( Map@ map, Critter@[] group )
     {
         if( validEngineObject( group[ i ] ) )
         {
-            if( group[ i ].Stat[ ST_LEVEL ] > maxLevel )
+            if( uint8( group[ i ].Stat[ ST_LEVEL ] ) > maxLevel )
                 maxLevel = group[ i ].Stat[ ST_LEVEL ];
-            if( group[ i ].Stat[ ST_LUCK ] < minLuck )
+            if( uint8( group[ i ].Stat[ ST_LUCK ] ) < minLuck )
                 minLuck = group[ i ].Stat[ ST_LUCK ];
-            if( group[ i ].Stat[ ST_LEVEL ] < minLevel )
+            if( uint8( group[ i ].Stat[ ST_LEVEL ] ) < minLevel )
                 minLevel = group[ i ].Stat[ ST_LEVEL ];
         }
     }

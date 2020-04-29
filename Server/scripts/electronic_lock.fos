@@ -25,7 +25,7 @@ const string[] chars = { "Q", "S", "Y", "W", "F", "Z", "1", "2", "3", "4", "5", 
 void GenerateCode( Item& item )
 {
     string code = "";
-    for( uint i = 0; i < _CodeLength( item ); i++ )
+    for( uint i = 0; i < uint( _CodeLength( item ) ); i++ )
         code += RndChar;
     Serializator save;
     save.Set( code );
@@ -72,12 +72,11 @@ bool _LockedSkill( Item& item, Critter& player, int skill )
     {
         if( IsAnyData( _Key( item ) ) )
         {
-            if( ( item.GetType() == ITEM_TYPE_CONTAINER || item.GetType() == ITEM_TYPE_DOOR ) &&
-                FLAG( item.LockerCondition, LOCKER_ISOPEN ) )
+            if( ( item.GetType() == ITEM_TYPE_CONTAINER || item.GetType() == ITEM_TYPE_DOOR ) && FLAG( item.LockerCondition, LOCKER_ISOPEN ) )
                 return false;
             player.Wait( 1000 );
             string code = "";
-            for( uint i = 0; i < _CodeLength( item ); i++ )
+            for( uint i = 0; i < uint( _CodeLength( item ) ); i++ )
                 code += "?";
             GameVar@ itemId = GetLocalVar( LVAR_last_electronic_locked, player.Id );
             if( !valid( itemId ) )

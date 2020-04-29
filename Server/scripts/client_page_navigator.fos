@@ -47,7 +47,7 @@ class PageNavigator : IGUI::ElementCallbackInit
         @BtnGoPrev  = PageNavigateButton( rec.Copy(), this, CMD_MOVE_PREV,  btnFont, foreColor, activeColor, disColor, " < " );
         rec.X = Bounds.X + Bounds.Width - rec.Width;
         @BtnGoLast  = PageNavigateButton( rec.Copy(), this, CMD_MOVE_LAST,  btnFont, foreColor, activeColor, disColor, " >> " );
-        rec.Move( -1 * rec.Width, 0 );
+        rec.Move( -rec.Width, 0 );
         @BtnGoNext  = PageNavigateButton( rec.Copy(), this, CMD_MOVE_NEXT,  btnFont, foreColor, activeColor, disColor, " > " );
         rec.X = Bounds.X + 2 * rec.Width;
         rec.Width = Bounds.Width - 4 * rec.Width;

@@ -358,7 +358,7 @@ shared class Fraction
 			}
 			else leadership = cr.Stat[ST_FR_LEADERSHIP];
 			
-			if(access==0 || access==leadership+1) retVal.insertLast(GetPlayerName(Players[n]));
+			if(access==0 || int( access ) == leadership + 1 ) retVal.insertLast(GetPlayerName(Players[n]));
 		}
 		return retVal;
 	}
@@ -415,19 +415,19 @@ shared class Fraction
 		#ifdef __FO_MK2
 		else
 		{
-			OffClient@ critter=this.GetOffClient(critterId);
-			if(critter is null) return false;
-			critter.SetParam(ST_FACTION, Id);
+			OffClient@ offCritter=this.GetOffClient(critterId);
+			if(offCritter is null) return false;
+			offCritter.SetParam(ST_FACTION, Id);
 			switch(Stats[FR_NR_FAMILY])
 			{
-				case 1:critter.SetParam(KARMA_MAN_MORDINO,1);break;
-				case 2:critter.SetParam(KARMA_MAN_SALVATORE,1);break;
-				case 3:critter.SetParam(KARMA_MAN_BISHOP,1);break;
-				case 4:critter.SetParam(KARMA_MAN_WRIGHT,1);break;
-				case 5:critter.SetParam(KARMA_MAN_MORDINO,1);break;
-				case 6:critter.SetParam(KARMA_MAN_SALVATORE,1);break;
-				case 7:critter.SetParam(KARMA_MAN_BISHOP,1);break;
-				case 8:critter.SetParam(KARMA_MAN_WRIGHT,1);break;
+				case 1:offCritter.SetParam(KARMA_MAN_MORDINO,1);break;
+				case 2:offCritter.SetParam(KARMA_MAN_SALVATORE,1);break;
+				case 3:offCritter.SetParam(KARMA_MAN_BISHOP,1);break;
+				case 4:offCritter.SetParam(KARMA_MAN_WRIGHT,1);break;
+				case 5:offCritter.SetParam(KARMA_MAN_MORDINO,1);break;
+				case 6:offCritter.SetParam(KARMA_MAN_SALVATORE,1);break;
+				case 7:offCritter.SetParam(KARMA_MAN_BISHOP,1);break;
+				case 8:offCritter.SetParam(KARMA_MAN_WRIGHT,1);break;
 				default:break;
 			}
 		}

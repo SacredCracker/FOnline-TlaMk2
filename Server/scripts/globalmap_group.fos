@@ -327,7 +327,7 @@ void global_process( int processType, Critter& cr, Item@ car,
             if( deterioration > int(car.Proto.Car_MaxDeterioration) )
                 deterioration = int(car.Proto.Car_MaxDeterioration);
 
-            if( fuel != car.Charge  || deterioration != car.Deterioration )
+            if( fuel != int( car.Charge )  || deterioration != int( car.Deterioration ) )
             {
                 car.Charge = fuel;
                 car.Deterioration = deterioration;
@@ -779,7 +779,7 @@ void ScanZone( Critter@[]& group, int zx, int zy )
 void CheckForLocationWithoutParking( Critter& cr, Item& car, float& curX, float& curY )
 {
     Location@[] locations;
-    if( GetVisibleLocations( curX, curY, 0, cr, locations ) != 0 )
+    if( GetVisibleLocations( int( curX ), int( curY ), 0, cr, locations ) != 0 )
     {
         Location@ loc = locations[ 0 ];
         Map@      map = loc.GetMapByIndex( 0 );

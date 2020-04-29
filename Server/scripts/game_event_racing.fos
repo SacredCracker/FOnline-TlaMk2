@@ -297,7 +297,7 @@ void _GuardSmthSkill( Critter& cr, Critter& fromCr, int skill, Critter@ onCritte
 
 uint cte_RunStartEvent( Critter& cr, int identifier, int&, int& )
 {
-    if( cr.HexX == cr.Stat[ ST_VAR0 ] && cr.HexY == cr.Stat[ ST_VAR1 ] && cr.IsLife() )
+    if( cr.HexX == uint16( cr.Stat[ ST_VAR0 ] ) && cr.HexY == uint16( cr.Stat[ ST_VAR1 ] ) && cr.IsLife() )
     {
         RunGameEvent( EVENT_RACING_RUN );
         cr.AddTimeEvent( "cte_Comment", REAL_SECOND( 30 ), CTE_COMMENT );
@@ -497,8 +497,8 @@ uint CreateCheckPoint( Critter& player )
     player.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, 3856, "$num" + counter.GetValue() );
     uint locId = CreateLocation(
         LOCATION_Quest_RacingCheckpoint,
-        Coords[ number ][ 0 ] + Random( -1 * __GlobalMapZoneLength / 2, __GlobalMapZoneLength / 2 ),
-        Coords[ number ][ 1 ] + Random( -1 * __GlobalMapZoneLength / 2, __GlobalMapZoneLength / 2 ), null );
+        Coords[ number ][ 0 ] + Random( -__GlobalMapZoneLength / 2, __GlobalMapZoneLength / 2 ),
+        Coords[ number ][ 1 ] + Random( -__GlobalMapZoneLength / 2, __GlobalMapZoneLength / 2 ), null );
     if( locId > 0 )
     {
         Location@ loc = GetLocation( locId );

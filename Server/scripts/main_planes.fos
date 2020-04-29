@@ -372,7 +372,7 @@ bool npc_plane_end_attack( Critter& npc, NpcPlane& plane, int reason, Critter@ s
                     uint8      weaponSubtype = ( skillNum == SK_SMALL_GUNS || skillNum == SK_BIG_GUNS || skillNum == SK_ENERGY_WEAPONS ) ? WS_GUN : ( ( skillNum == SK_THROWING ) ? WS_THROWING : WS_UNARMED );
                     uint16     apCost = MAX( 1, ( ( _WeaponApCost( proto, item.Mode ) - item.WeaponBonus_AP - npc.Perk[ PE_BONUS_RATE_OF_FIRE ] ) - ( weaponSubtype == WS_GUN ? npc.Trait[ TRAIT_FAST_SHOT ] : 0 ) ) );
 
-                    if( npc.StatBase[ ST_CURRENT_AP ] < apCost )
+                    if( npc.StatBase[ ST_CURRENT_AP ] < int( apCost ) )
                     {
                         // npc.Say( SAY_NORM_ON_HEAD, " ST_CURRENT_AP " + npc.StatBase[ST_CURRENT_AP] + " apCost " + apCost + " wait " + (((apCost*__ApRegeneration)/npc.Stat[ST_ACTION_POINTS])-100) );
                         npc.Wait( Random( ( ( apCost * __ApRegeneration ) / npc.Stat[ ST_ACTION_POINTS ] ) - 100, ( ( apCost * __ApRegeneration ) / npc.Stat[ ST_ACTION_POINTS ] ) + 100 ) );
@@ -417,18 +417,14 @@ bool npc_plane_end_attack( Critter& npc, NpcPlane& plane, int reason, Critter@ s
             Map@ map = npc.GetMap();
 
             if( plane.ChamberBestY != 0 && plane.ChamberBestX != 0 )
-            {
                 bestLen = map.GetPathLength( npc, plane.ChamberBestX, plane.ChamberBestY, 0 );
-            }
 
             uint idist = 0;
 
             if( plane.Chamber == 0 )
-            {
                 plane.Chamber = Random( 0, wpnDist * 4 );
-            }
-
-            for( ; plane.Chamber < wpnDist * 4;)
+           
+            for( ; plane.Chamber < uint( wpnDist * 4 );)
             {
                 uint16 yMax = thy + plane.Chamber / 4,
                        yMin = thy - plane.Chamber / 4,
@@ -596,7 +592,7 @@ bool npc_plane_end_attack( Critter& npc, NpcPlane& plane, int reason, Critter@ s
     {
         if( valid( someCr ) )
         {
-            if( someCr.IsPlayer() && int(someCr.Id) != npc.Merc[ MERC_MASTER_ID ] )
+            if( someCr.IsPlayer() && someCr.Id != uint( npc.Merc[ MERC_MASTER_ID ] ) )
             {
                 NpcPlane@ child = CreatePlane();
                 child.Type = AI_PLANE_ATTACK;
@@ -1530,13 +1526,13 @@ bool CogitateFiring( Critter& critter, uint& mode, uint& aim ) // in: targetId, 
 
     if( !valid( weapon ) ) // true unarmed
     {
-		
         mode = 0;
         if( critter.IsCanAim() )
 		{
-			uint8 mode = 0;
-			ProtoItem@ proto = critter.GetSlotProto( SLOT_HAND1, mode );
-            aim = ChooseAim( critter, target, proto, mode, null );
+			uint8 mode_unarmed = 0;
+			ProtoItem@ proto_unarmed = critter.GetSlotProto( SLOT_HAND1, mode_unarmed );
+            aim = ChooseAim( critter, target, proto_unarmed, mode_unarmed, null );
+			mode = mode_unarmed;
 		}
         else
             aim = HIT_LOCATION_TORSO;

@@ -127,7 +127,7 @@ class HostileLocationInfo
         if( !valid( player ) )
             return false;             // Не найден игрок
 
-        this.LocId = CreateLocation( this.LocPid, this.LocX + Random( -1 * this.CoordDelta, this.CoordDelta ), this.LocY + Random( -1 * this.CoordDelta, this.CoordDelta ), null );
+        this.LocId = CreateLocation( this.LocPid, ( this.LocX + Random( -this.CoordDelta, this.CoordDelta ) ), ( this.LocY + Random( -this.CoordDelta, this.CoordDelta ) ), null );
         if( this.LocId == 0 )
             return false;             // Ошибка при создании локации
         DL( "Location created ok. LocId=" + this.LocId );
@@ -308,10 +308,10 @@ void _HostileMapCritterDead( Map& map, Critter& cr, Critter@ killer )
         {
             for( uint i = 0, iMax = allies.length(); i < iMax; i++ )
             {
-                Critter@ cr = allies[ i ];
-                if( valid( cr ) )
+                Critter@ allien = allies[ i ];
+                if( valid( allien ) )
                 {
-                    SendAllyHome( cr );
+                    SendAllyHome( allien );
                 }
             }
         }

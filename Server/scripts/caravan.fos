@@ -700,7 +700,7 @@ bool _CaravanLeaderOnGlobal( Critter& leader, int type, Item@ car, float& x, flo
     if( encounterDescriptor != 0 )
         return false;         // Энкаунтер
 
-    ci.CaravanRoute.SetRouteDir( x, y, toX, toY );
+    ci.CaravanRoute.SetRouteDir( uint( x ), uint( y ), toX, toY );
     // установка направления движения
 
     if( type != GLOBAL_PROCESS_MOVE )
@@ -724,7 +724,7 @@ bool _CaravanLeaderOnGlobal( Critter& leader, int type, Item@ car, float& x, flo
                     else if( valid( group ) )
                     {
                         // проблемы с завершением каравана
-                        FindEncounter( group, null, x, y, encounterDescriptor, waitForAnswer, true );
+                        FindEncounter( group, null, uint( x ), uint( y ), encounterDescriptor, waitForAnswer, true );
                         Log( "Can not end caravan" );
                         return true;
                     }
@@ -1253,7 +1253,7 @@ bool d_IsCaravanStatus( Critter& player, Critter@ npc, int status )
         return false;
     }
 
-    return ( ci.CaravanStatus == status );
+    return ( int( ci.CaravanStatus ) == status );
 }
 
 bool d_NotIsCaravanStatus( Critter& player, Critter@ npc, int status )
@@ -1364,7 +1364,7 @@ bool d_Status( Critter& player, Critter@ npc, int status )
     CaravanInfo@ ci = _GetCaravan( npc.CrvId );
     if( valid( ci ) )
     {
-        return ci.CaravanStatus == status;
+        return int( ci.CaravanStatus ) == status;
     }
     return false;
 }

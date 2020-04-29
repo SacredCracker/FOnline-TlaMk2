@@ -203,7 +203,7 @@ shared class LeonHash
 				bonus += critter.Perk[ PE_HTH_EVADE ] * critter.Param[ ST_CURRENT_AP ];
 		}
 		
-		lionSkill = bonus + lionSkill * 0.16;
+		lionSkill = bonus + int( lionSkill * 0.16 );
 		if( distance < 3 ) lionSkill /= 3;
 	}
 	
@@ -432,7 +432,7 @@ shared class CombatProccess : Mk2::CombatProccessPacket
 	int GetWeaponMaxDistance()
 	{
 		if( WeaponSkill == SK_THROWING )
-			return MIN( _WeaponMaxDist( Weapon, WeaponUse ), 3 * MIN( 10, ( Attacker.Stat[ ST_STRENGTH ] + 2 * Attacker.Perk[ PE_HEAVE_HO ] ) ) );
+			return MIN( int( _WeaponMaxDist( Weapon, WeaponUse ) ), 3 * MIN( 10, ( Attacker.Stat[ ST_STRENGTH ] + 2 * Attacker.Perk[ PE_HEAVE_HO ] ) ) );
 		return _WeaponMaxDist( Weapon, WeaponUse );
 	}
 	
@@ -574,7 +574,7 @@ shared class CombatProccess : Mk2::CombatProccessPacket
 	Map@ Map;
 
 	ProtoItem@ Weapon;
-	int WeaponAmmoRound;
+	uint WeaponAmmoRound;
 	int WeaponSkill;
 	
 	int CriticalChance;

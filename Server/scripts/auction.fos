@@ -305,11 +305,11 @@ class AuctionManager : IFonlineLotManager
             {
                 if( item.IsDeteriorable() )
                 {
-                    int maxRepairCount = ( item.Proto.MaxRepairCount > 0 ) ? ( ( item.Proto.MaxRepairCount + 10 ) * 10 ) : DEFAULT_MAX_REPAIR_COUNT;
+                    uint maxRepairCount = ( item.Proto.MaxRepairCount > 0 ) ? ( ( item.Proto.MaxRepairCount + 10 ) * 10 ) : DEFAULT_MAX_REPAIR_COUNT;
                     if( FLAG( item.BrokenFlags, BI_ETERNAL ) || FLAG( item.BrokenFlags, BI_NOTRESC ) ||
                         FLAG( item.BrokenFlags, BI_BROKEN ) || FLAG( item.BrokenFlags, BI_HIGHBROKEN ) ||
                         FLAG( item.BrokenFlags, BI_NORMBROKEN ) || FLAG( item.BrokenFlags, BI_LOWBROKEN ) ||
-                        item.RadioChannel > int(maxRepairCount * 0.1) )
+                        item.RadioChannel > uint(maxRepairCount * 0.1) )
                     {
                         cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_WRONG_LOT_SIZE );
                         return;
@@ -560,19 +560,19 @@ class AuctionManager : IFonlineLotManager
             cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_BUY_LOT_NOT_FOUND );
             return;
         }
-        Item@ cont = GetAuctionContainer( cr );
-        if( !valid( cont ) || cont.IsNotValid )
+        Item@ aucCont = GetAuctionContainer( cr );
+        if( !valid( aucCont ) || aucCont.IsNotValid )
         {
             cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_CANT_FIND_AUC_CONT );
             return;
         }
-        LotInfo@ lot = DBDataManager.GetLotInfo( itemId, cont.Id, lotId );
+        LotInfo@ lot = DBDataManager.GetLotInfo( itemId, aucCont.Id, lotId );
         if( !valid( lot ) )
         {
             cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_CANCEL_LOT_ERROR );
             return;
         }
-        if( valid( DBDataManager ) && DBDataManager.CancelLot( cont.Id, itemId, cr.Id, lotId ) )
+        if( valid( DBDataManager ) && DBDataManager.CancelLot( aucCont.Id, itemId, cr.Id, lotId ) )
         {
             Item@ cont = GetItem( lot.ContainerId );
             if( valid( cont ) && !cont.IsNotValid && cont.Accessory == ACCESSORY_HEX )
@@ -622,7 +622,7 @@ void _AuctionContainerInit( Item& item, bool firstTime )
             mapPids.insertLast( item.Val5 );
         if( mapPids.length() == 0 )
         {
-            Map@ map = GetMap( item.MapId );           // Не указано ни одной карты, запоминаем текущую
+            @map = GetMap( item.MapId );           // Не указано ни одной карты, запоминаем текущую
             if( valid( map ) && !map.IsNotValid )
             {
                 GameVar@ containerId = GetLocalVar( LMVAR_AUCTION_CONT_ID, map.Id );

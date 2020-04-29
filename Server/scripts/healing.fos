@@ -62,21 +62,21 @@ void UseDoctor( Critter& cr, Critter@ targetCr, uint16 activePid ) // Export
             break;
         }
 
-        if( cr.Perk[ PE_REANIMATOR ] == 0 || ( Random( 1, 100 ) > ( cr.Skill[ SK_DOCTOR ] * 0.25 + cr.Stat[ ST_LUCK ] * 2 ) ) )
+        if( cr.Perk[ PE_REANIMATOR ] == 0 || ( Random( 1, 100 ) > int( cr.Skill[ SK_DOCTOR ] * 0.25 + cr.Stat[ ST_LUCK ] * 2 ) ) )
         {
             cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_SKILL_NORESSURECT );
             cr.TimeoutBase[ TO_SK_DOCTOR ] = cr.Timeout[ TO_SK_DOCTOR ] + DOCTOR_TIMEOUT( cr );
             return;
         }
 
-        if( cr.IsPlayer() && cr.Timeout[ TO_SK_DOCTOR ] > int( REAL_SECOND( 9 * 60 ) ) )
+        if( cr.IsPlayer() && uint( cr.Timeout[ TO_SK_DOCTOR ] ) > REAL_SECOND( 9 * 60 ) )
         {
             cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_SKILL_WEARINESS );
             return;
         }
 
         targetCr.ToLife();
-        targetCr.StatBase[ ST_CURRENT_HP ] = Random( targetCr.Stat[ ST_MAX_LIFE ] * 0.33, targetCr.Stat[ ST_MAX_LIFE ] * 0.5 );
+        targetCr.StatBase[ ST_CURRENT_HP ] = Random( int( targetCr.Stat[ ST_MAX_LIFE ] * 0.33 ), int( targetCr.Stat[ ST_MAX_LIFE ] * 0.5 ) );
         targetCr.TimeoutBase[ TO_REPLICATION ] = 0;
         cr.StatBase[ ST_EXPERIENCE ] += 225;
         cr.TimeoutBase[ TO_SK_DOCTOR ] = cr.Timeout[ TO_SK_DOCTOR ] + DOCTOR_TIMEOUT( cr );
@@ -92,7 +92,7 @@ void UseDoctor( Critter& cr, Critter@ targetCr, uint16 activePid ) // Export
         return;
     }
 
-    if( cr.Timeout[ TO_SK_DOCTOR ] > int( REAL_SECOND( 9 * 60 ) ) )
+    if( uint( cr.Timeout[ TO_SK_DOCTOR ] ) > REAL_SECOND( 9 * 60 ) )
     {
         if( cr.IsPlayer() )
             cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_SKILL_WEARINESS );
@@ -145,7 +145,7 @@ void UseDoctor( Critter& cr, Critter@ targetCr, uint16 activePid ) // Export
             {
                 cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_SKILL_NOHEAL_DMG( i - DAMAGE_POISONED ) );
             }
-            sk = sk * 2 * 0.33;
+            sk = int( sk * 2 * 0.33 );
         }
     }
 
@@ -182,7 +182,7 @@ void Healing( Critter& cr, Critter& tr, uint16 activePid ) // Export
         return;
     }
 
-    int sk = cr.Skill[ SK_FIRST_AID ] + cr.Skill[ SK_FIRST_AID ] * 25 * 0.01;
+    int sk = int( cr.Skill[ SK_FIRST_AID ] + cr.Skill[ SK_FIRST_AID ] * 25 * 0.01 ); // WTF?
     int percentFirstHeal = 20;
     int firstHeal = 1;
 
@@ -233,7 +233,7 @@ void Healing( Critter& cr, Critter& tr, uint16 activePid ) // Export
         heal = 1;
 
     int maxHealing = CLAMP( tr.Stat[ ST_MAX_LIFE ] - tr.Stat[ ST_CURRENT_HP ], 0, tr.Stat[ ST_MAX_LIFE ] );
-    firstHeal += heal * percentFirstHeal * 0.01;
+    firstHeal += int( heal * percentFirstHeal * 0.01 );
     if( heal > maxHealing )
         heal = maxHealing;
     if( isPlayer )
@@ -255,7 +255,7 @@ void Healing( Critter& cr, Critter& tr, uint16 activePid ) // Export
     // Log("tr.StatBase[ST_HEALING_LEVEL]="+tr.StatBase[ST_HEALING_LEVEL]);
     uint newRate = tr.Stat[ ST_HEALING_LEVEL ] / COUNT_LEVEL;
     if( tr.Stat[ ST_HEALING_LEVEL ] > maxHealing )
-        tr.StatBase[ ST_HEALING_LEVEL ] = maxHealing + maxHealing * 0.25;
+        tr.StatBase[ ST_HEALING_LEVEL ] = int( maxHealing + maxHealing * 0.25 );
     // tr.StatBase[ST_HEALING_LEVEL]=CLAMP(tr.StatBase[ST_HEALING_LEVEL],0,2000);
     tr.StatBase[ ST_HEALING_LEVEL ] -= firstHeal;
     if( firstHeal >= heal )
@@ -288,7 +288,7 @@ uint cte_Healing( Critter& tr, int, int& rate, int& )
 // Log("rate: " +rate);
     if( tr.IsDead() )
         return 0;
-    rate += Random( 0, rate * 0.25 );
+    rate += Random( 0, int( rate * 0.25 ) );
     tr.StatBase[ ST_HEALING_LEVEL ] = CLAMP( tr.StatBase[ ST_HEALING_LEVEL ] - rate, 0, 2000 );
     tr.StatBase[ ST_CURRENT_HP ] += rate;
     tr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, 104064, "$heal" + rate );

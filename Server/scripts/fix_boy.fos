@@ -42,10 +42,10 @@
 // / Server
 #ifndef __CLIENT
 
-# include "blueprint.fos"
+#include "blueprint.fos"
 
-# define FIX_SUCCESS                 ( FIXBOY_DEFAULT ^ FIXBOY_CHECK_TIMEOUT ^ FIXBOY_SET_TIMEOUT )
-# define FIX_FAIL                    ( FIX_SUCCESS ^ FIXBOY_ALLOW_CRAFT )
+#define FIX_SUCCESS                 ( FIXBOY_DEFAULT ^ FIXBOY_CHECK_TIMEOUT ^ FIXBOY_SET_TIMEOUT )
+#define FIX_FAIL                    ( FIX_SUCCESS ^ FIXBOY_ALLOW_CRAFT )
 
 import void DeteriorateItem( Critter& cr, Item& item, int deteriorateCount ) from "Mk2";
 import void InitRandomisationItem( Item& item, bool isCrafted, Critter& cr, string sufix ) from "Mk2";
@@ -54,7 +54,7 @@ import void ChangePlayerScore( Critter& player, uint scoreIndex, int value ) fro
 
 const uint16[] HellAllMapsPid = { MAP_hell_main, MAP_hell_level1, MAP_hell_level2, MAP_hell_level3, MAP_hell_level4, MAP_hell_corridor, MAP_hell_mines, MAP_hell_forest, MAP_hell_pipboys, MAP_hell_burrow };
 
-bool IsHellMap( int mapPid )
+bool IsHellMap( uint16 mapPid )
 {
     for( uint i = 0; i < HellAllMapsPid.length(); i++ )
     {
@@ -140,9 +140,13 @@ bool delItemCount( const ProtoItem@ proto, uint16 delCount, Critter@ player )
 // Крафт на стороне сервера
 void unsafe_ci( Critter& player, int Pos, int craftCount, int, string@, int[] @ )
 {
-    const ProtoItem@ proto = GetProtoItem( CraftList[ Pos ].ResultItem );
+	craftInfo@ info = CraftList[ Pos ];
+	if( info is null )
+		return;
+		
+    const ProtoItem@ proto = GetProtoItem( info.ResultItem );
 
-    if( !valid( proto ) )
+    if( proto is null )
         return;
     // Мертвым крафтить нельзя
     if( player.IsDead() )
@@ -152,7 +156,7 @@ void unsafe_ci( Critter& player, int Pos, int craftCount, int, string@, int[] @ 
     }
 
     Map@ currentMap = player.GetMap();
-    if( validEngineObject( currentMap ) && IsHellMap( currentMap.GetProtoId() ) && CraftList[ Pos ].ResultItem == PID_RAGS )
+    if( validEngineObject( currentMap ) && IsHellMap( currentMap.GetProtoId() ) && info.ResultItem == PID_RAGS )
     {
         player.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_NO_CRAFT );
         return;
@@ -169,18 +173,18 @@ void unsafe_ci( Critter& player, int Pos, int craftCount, int, string@, int[] @ 
 
     // Проверка на реальное наличие станка в радиусе
 	
-    if( CraftList[ Pos ].Workbench != 0 )
-        if( !CheckWorkbenchNearPlayer( player, CraftList[ Pos ].Workbench, DEFAULT_RADIUS ) )
+    if( info.Workbench != 0 )
+        if( !CheckWorkbenchNearPlayer( player, info.Workbench, DEFAULT_RADIUS ) )
         {
             player.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_NO_WORKBENCH );
             return;
         }
 
     // Проверка по навыкам
-    for( uint16 i = 0; i < CraftList[ Pos ].Skills[ 0 ].length(); i++ )
+    for( uint16 i = 0; i < info.Skills[ 0 ].length(); i++ )
     {
-        for( int j = 0, jMax = CraftList[ Pos ].Skills[ 0 ][ i ].length(); j < jMax; j++ )
-            if( player.Param[ CraftList[ Pos ].Skills[ 0 ][ i ][ j ] ] < CraftList[ Pos ].Skills[ 1 ][ i ][ j ] )
+        for( uint j = 0, jMax = info.Skills[ 0 ][ i ].length(); j < jMax; j++ )
+            if( player.Param[ info.Skills[ 0 ][ i ][ j ] ] < int( info.Skills[ 1 ][ i ][ j ] ) )
             {
                 player.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_FIX_PARAMS );
                 return;
@@ -195,18 +199,18 @@ void unsafe_ci( Critter& player, int Pos, int craftCount, int, string@, int[] @ 
     }
 
     // Проверка на наличие компонентов
-    if( CraftList[ Pos ].Components.length() > 1 )
-        for( uint i = 0; i < CraftList[ Pos ].Components[ 0 ].length(); i++ )
-            for( int j = 0, jMax = CraftList[ Pos ].Components[ 0 ][ i ].length(); j < jMax; j++ )
+    if( info.Components.length() > 1 )
+        for( uint i = 0; i < info.Components[ 0 ].length(); i++ )
+            for( uint j = 0, jMax = info.Components[ 0 ][ i ].length(); j < jMax; j++ )
             {
-                uint16 pid = CraftList[ Pos ].Components[ 0 ][ i ][ j ];
+                uint16 pid = info.Components[ 0 ][ i ][ j ];
                 if( pid > CRAFT_OFFSET )
                 {
                     pid -= CRAFT_OFFSET;
                     pid = CraftList[ pid ].ResultItem;
                 }
 
-                if( getItemCount( pid, player ) < CraftList[ Pos ].Components[ 1 ][ i ][ j ] * craftCount * 100 / ( player.Industrial[ IN_MATERIAL_SAVINGS ] * 4 + 100 ) )
+                if( getItemCount( pid, player ) < uint( info.Components[ 1 ][ i ][ j ] * craftCount * 100 / ( player.Industrial[ IN_MATERIAL_SAVINGS ] * 4 + 100 ) ) )
                 {
                     player.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_NO_ITEM );
                     return;
@@ -215,14 +219,14 @@ void unsafe_ci( Critter& player, int Pos, int craftCount, int, string@, int[] @ 
 
     // Проверка на наличие инструментов
     bool toolsValid = false;
-    if( CraftList[ Pos ].Tools.length() > 0 && CraftList[ Pos ].Tools[ 0 ][ 0 ] != 0 )
-        for( uint16 i = 0; i < CraftList[ Pos ].Tools.length(); i++ )
+    if( info.Tools.length() > 0 && info.Tools[ 0 ][ 0 ] != 0 )
+        for( uint16 i = 0; i < info.Tools.length(); i++ )
         {
             toolsValid = false;
 
-            for( uint j = 0; j < CraftList[ Pos ].Tools[ i ].length(); j++ )
+            for( uint j = 0; j < info.Tools[ i ].length(); j++ )
             {
-                if( getItemCount( CraftList[ Pos ].Tools[ i ][ j ], player ) > 0 )
+                if( getItemCount( info.Tools[ i ][ j ], player ) > 0 )
                 {
                     toolsValid = true;
                     break;
@@ -237,9 +241,9 @@ void unsafe_ci( Critter& player, int Pos, int craftCount, int, string@, int[] @ 
         }
 
     // Проверка на наличие знания рецепта
-    if( CraftList[ Pos ].VarNum != 0 )
+    if( info.VarNum != 0 )
     {
-        GameVar@ var = GetLocalVar( CraftList[ Pos ].VarNum, player.Id );
+        GameVar@ var = GetLocalVar( info.VarNum, player.Id );
         if( valid( var ) )
         {
             if( var.GetValue() == 0 || var.GetValue() < craftCount )
@@ -261,23 +265,24 @@ void unsafe_ci( Critter& player, int Pos, int craftCount, int, string@, int[] @ 
     }
 
     // Удаление компонентов
-    for( uint16 i = 0, iMax = CraftList[ Pos ].Components[ 0 ].length(); i < iMax; i++ )
-        for( uint16 j = 0, jMax = CraftList[ Pos ].Components[ 0 ][ i ].length(); j < jMax; j++ )
+    for( uint i = 0, iMax = info.Components[ 0 ].length(); i < iMax; i++ )
+        for( uint j = 0, jMax = info.Components[ 0 ][ i ].length(); j < jMax; j++ )
         {
-            uint16 pid = CraftList[ Pos ].Components[ 0 ][ i ][ j ];
+            uint16 pid = info.Components[ 0 ][ i ][ j ];
             if( pid > CRAFT_OFFSET )
             {
                 pid -= CRAFT_OFFSET;
                 pid = CraftList[ pid ].ResultItem;
             }
-            if( !delItemCount( GetProtoItem( pid ), CraftList[ Pos ].Components[ 1 ][ i ][ j ] * craftCount * 100 / ( player.Industrial[ IN_MATERIAL_SAVINGS ] * 4 + 100 ), player ) )
+            if( !delItemCount( GetProtoItem( pid ), uint( info.Components[ 1 ][ i ][ j ] * craftCount * 100 / ( player.Industrial[ IN_MATERIAL_SAVINGS ] * 4 + 100 ) ), player ) )
                 return;
         }
 	
+	uint craft_count = craftCount * info.Count;
     // Игрок получает предметы
-    for( uint16 i = 0; i < craftCount * CraftList[ Pos ].Count; i++ )
+    for( uint i = 0; i < craft_count; i++ )
     {
-        Item@ resultItem = player.AddItem( CraftList[ Pos ].ResultItem, 1 );
+        Item@ resultItem = player.AddItem( info.ResultItem, 1 );
         if( resultItem.GetType() == ITEM_TYPE_WEAPON && resultItem.Proto.Weapon_MaxAmmoCount > 0 )
             resultItem.AmmoCount = 0;
 
@@ -321,22 +326,22 @@ void unsafe_ci( Critter& player, int Pos, int craftCount, int, string@, int[] @ 
     player.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_FIX_SUCCESS );
 
     // Опыт
-    player.StatBase[ ST_EXPERIENCE ] += ( ( CraftList[ Pos ].Exp * craftCount ) * ( 100 + player.Industrial[ IN_ADV_CRAFT_EXP ] * 5 ) ) / 100;
+    player.StatBase[ ST_EXPERIENCE ] += ( ( info.Exp * craftCount ) * ( 100 + player.Industrial[ IN_ADV_CRAFT_EXP ] * 5 ) ) / 100;
 
     // Начисление таймаутов
-    player.TimeoutBase[ TO_SK_REPAIR ] = player.Timeout[ TO_SK_REPAIR ] + __FullSecond + REAL_SECOND( CraftList[ Pos ].Timeout * craftCount * 100 / ( player.Industrial[ IN_FAST_PRODUCTION ] * 5 + 100 ) );
-    player.TimeoutBase[ TO_SK_SCIENCE ] = player.Timeout[ TO_SK_SCIENCE ] + __FullSecond + REAL_SECOND( CraftList[ Pos ].Timeout * craftCount * 100 / ( player.Industrial[ IN_FAST_PRODUCTION ] * 5 + 100 ) );
+    player.TimeoutBase[ TO_SK_REPAIR ] = player.Timeout[ TO_SK_REPAIR ] + __FullSecond + REAL_SECOND( info.Timeout * craftCount * 100 / ( player.Industrial[ IN_FAST_PRODUCTION ] * 5 + 100 ) );
+    player.TimeoutBase[ TO_SK_SCIENCE ] = player.Timeout[ TO_SK_SCIENCE ] + __FullSecond + REAL_SECOND( info.Timeout * craftCount * 100 / ( player.Industrial[ IN_FAST_PRODUCTION ] * 5 + 100 ) );
     player.StatBase[ ST_LAST_CRAFT_TIME ] = __Second;
     // Всякая хуета
-    if( CraftList[ Pos ].ResultItem == PID_JUICE )
+    if( info.ResultItem == PID_JUICE )
     {
         player.AddItem( PID_INTESTINES_DRY, craftCount );
     }
-    else if( CraftList[ Pos ].ResultItem == PID_STIMPAK )
+    else if( info.ResultItem == PID_STIMPAK )
     {
         player.AddItem( PID_RAGS, 3 * craftCount );
     }
-    else if( CraftList[ Pos ].ResultItem == PID_BOOZE )
+    else if( info.ResultItem == PID_BOOZE )
     {
         player.AddItem( PID_BOTTLE_EMPTY, 3 * craftCount );
     }
@@ -383,7 +388,7 @@ void addCi( Critter& cr, int num, int count, int )
 
     for( uint i = 0; i < CraftList[ num ].Skills[ 0 ].length(); i++ )
         for( int j = 0, jMax = CraftList[ num ].Skills[ 0 ][ i ].length(); j < jMax; j++ )
-            if( cr.ParamBase[ CraftList[ num ].Skills[ 0 ][ i ][ j ] ] < CraftList[ num ].Skills[ 1 ][ i ][ j ] ) 
+            if( cr.ParamBase[ CraftList[ num ].Skills[ 0 ][ i ][ j ] ] < int( CraftList[ num ].Skills[ 1 ][ i ][ j ] ) ) 
 				cr.ParamBase[ CraftList[ num ].Skills[ 0 ][ i ][ j ] ] = CraftList[ num ].Skills[ 1 ][ i ][ j ];
 }
 
@@ -456,7 +461,7 @@ void CraftInit()
 #ifdef __SERVER
 CCraftInit cci;
 
-class      CCraftInit
+class CCraftInit
 {
     CCraftInit()
     {
@@ -766,7 +771,7 @@ void FillCraftListbox()
         if( !fCustom )
         {
             for( uint16 j = 0, jMax = saveList.length(); j < jMax; j++ )
-                if( saveList[ j ] == visibleClientCraftList[ i ].Pos )
+                if( uint( saveList[ j ] ) == visibleClientCraftList[ i ].Pos )
                 {
                     isCustom = true;
                     break;
@@ -1123,7 +1128,7 @@ void FillItemFixScreen( craftInfo ci )
     bool isSave = false;
     // Message("pid_2="+ci.ResultItem);
     for( uint16 i = 0, iMax = saveList.length(); i < iMax; i++ )
-        if( ci.Pos == saveList[ i ] )
+        if( ci.Pos == uint( saveList[ i ] ) )
         {
             isSave = true;
             han_FixSaveRecipe.Text( "Remove from favourites.", fontNumber, FixTextFixNotValid, FixTextDownColor, FT_CENTERX | FT_ALIGN );
@@ -1417,7 +1422,7 @@ bool checkSkill( uint16 skill, uint16 needValue )
     if( !valid( cr ) )
         return false;
 
-    if( cr.Param[ skill ] < needValue )
+    if( uint16( cr.Skill[ skill ] ) < needValue )
         return false;
 
     return true;
@@ -1447,7 +1452,7 @@ bool checkClassicVisibleSkill( uint16 skill, uint16 needValue )
     if( !valid( cr ) )
         return false;
 
-    if( ( cr.Param[ skill ] * 100 / CLASSICAL_VISIBILITY ) < needValue )
+    if( uint16( cr.Param[ skill ] * 100 / CLASSICAL_VISIBILITY ) < needValue )
         return false;
 
     return true;
@@ -2897,7 +2902,7 @@ class FixSaveRecipe : IGUI::ElementCallbackInit, IGUI::ElementCallbackMouseClick
         bool isSave = true;
         for( uint16 i = 0, iMax = saveList.length(); i < iMax; i++ )
         {
-            if( saveList[ i ] == CraftList[ curCraftPos ].Pos )
+            if( uint( saveList[ i ] ) == CraftList[ curCraftPos ].Pos )
             {
                 saveList[ i ] = -1;
                 han_FixSaveRecipe.Text( GetMsgStr( TEXTMSG_GAME, 227 ), fontNumber, FixTextColor, FixTextDownColor, FT_CENTERX | FT_ALIGN );

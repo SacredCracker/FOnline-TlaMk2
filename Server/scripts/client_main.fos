@@ -502,7 +502,6 @@ void get_active_screens( int[]& result )
 // Show/hide screen behaviour.
 void main_change_screen( bool show, int screen, int p0, int p1, int p2 )
 {
-    CritterCl@ chosen = GetChosen();
 
     if( Informer::Txt != "" )
     {
@@ -514,6 +513,7 @@ void main_change_screen( bool show, int screen, int p0, int p1, int p2 )
 		@Informer::Descriptor = null;
     }
 
+    CritterCl@ chosen = GetChosen();
     if( valid( chosen ) && show && screen == CLIENT_SCREEN_DIALOG && chosen.Param[ DAMAGE_TONGUE ] != 0 )
     {
         Message( GetMsgStr( TEXTMSG_TEXT, 150302 ) );
@@ -530,9 +530,7 @@ void main_change_screen( bool show, int screen, int p0, int p1, int p2 )
     if( screen == CLIENT_SCREEN_INVENTORY_MK2 && show )
 	{
 		ChangeCursor( CURSOR_DEFAULT );
-		CritterCl@ chosen = @GetChosen();
-		if( @chosen !is null )
-			p0 = chosen.Id;
+		p0 = chosen.Id;
 			
 	//	screen = CLIENT_SCREEN_INVENTORY_MK2;
 	}
@@ -687,7 +685,7 @@ bool main_render_iface( uint layer )
 							uint dist = _WeaponMaxDist( weapon, mode );
 							if( _WeaponIsThrowingAttack( weapon, _WeaponModeUse( mode ) ) )
 							{
-								dist = MIN( dist, 3 * MIN( 10, chosen.Param[ ST_STRENGTH ] + 2 * chosen.Param[ PE_HEAVE_HO ] ) );
+								dist = MIN( dist, uint( 3 * MIN( 10, chosen.Param[ ST_STRENGTH ] + 2 * chosen.Param[ PE_HEAVE_HO ] ) ) );
 								if( _WeaponIsHtHAttack( weapon, mode ) && chosen.Param[ MODE_RANGE_HTH ] > 0 )
 									dist++;
 							}
@@ -703,7 +701,7 @@ bool main_render_iface( uint layer )
 
 							if( _WeaponIsThrowingAttack( handWeaponChosen, _WeaponModeUse( handWeaponMode ) ) )
 							{
-								dist = MIN( dist, 3 * MIN( 10, chosen.Param[ ST_STRENGTH ] + 2 * chosen.Param[ PE_HEAVE_HO ] ) );
+								dist = MIN( dist, uint( 3 * MIN( 10, chosen.Param[ ST_STRENGTH ] + 2 * chosen.Param[ PE_HEAVE_HO ] ) ) );
 								if( _WeaponIsHtHAttack( handWeaponChosen, handWeaponMode ) && chosen.Param[ MODE_RANGE_HTH ] > 0 )
 									dist++;
 							}
@@ -1168,8 +1166,8 @@ bool main_render_iface( uint layer )
 				|| ( Radar::Track == 3 && __GmapGroupCurX < 701 && __GmapGroupCurY > 750 ) 
 				|| ( Radar::Track == 4 && __GmapGroupCurX > 700 && __GmapGroupCurY > 750 ) )
             {
-				const int radius = ( ( TRACK_RADIUS + chosen.Param[ PE_TRACKER ] * 25 ) / __GmapZoom ) * 2;
-				DrawSprite( Radar::Option::ToDoConvert::Image.Id, -1, ( __GmapGroupCurX / __GmapZoom + __GmapOffsetX ) - radius / 2, ( __GmapGroupCurY / __GmapZoom + __GmapOffsetY ) - radius / 2, radius, radius, true, false, Radar::Option::ToDoConvert::Image.Color );
+				const int radius = int( ( TRACK_RADIUS + chosen.Param[ PE_TRACKER ] * 25 ) / __GmapZoom ) * 2;
+				DrawSprite( Radar::Option::ToDoConvert::Image.Id, -1, int( __GmapGroupCurX / __GmapZoom + __GmapOffsetX ) - radius / 2, int( __GmapGroupCurY / __GmapZoom + __GmapOffsetY ) - radius / 2, radius, radius, true, false, Radar::Option::ToDoConvert::Image.Color );
             }
             int[] border = { 
 				0, 0, int(Radar::Option::ToDoConvert::BorderColor),
@@ -1201,14 +1199,14 @@ bool main_render_iface( uint layer )
             }
             for( int n = 0; n < 9; n += 3 )
             {
-                border[ n ] = border[ n ] / __GmapZoom + __GmapOffsetX;
-                border[ n + 1 ] = border[ n + 1 ] / __GmapZoom + __GmapOffsetY;
+                border[ n ] = int( border[ n ] / __GmapZoom ) + __GmapOffsetX;
+                border[ n + 1 ] = int( border[ n + 1 ] / __GmapZoom ) + __GmapOffsetY;
             }
             DrawPrimitive( DRAW_PRIMITIVE_LINESTRIP, border );
 			if( @Radar::Coords != null )
 			{
 				for( uint8 n = 0, nMax = Radar::Names.length(); n < nMax; n++ )
-					DrawText( "* " + Radar::Names[ n ] + "\n",  ( ( Radar::Coords[ n ] ) & 0xFFFF ) / __GmapZoom + __GmapOffsetX, ( ( Radar::Coords[ n ] >> 16 ) & 0xFFFF ) / __GmapZoom + __GmapOffsetY, 400, 100, Radar::Option::ToDoConvert::NameColor, FONT_FALLOUT, FT_ALIGN | FT_UPPER );
+					DrawText( "* " + Radar::Names[ n ] + "\n", int( ( ( Radar::Coords[ n ] ) & 0xFFFF ) / __GmapZoom ) + __GmapOffsetX, int( ( ( Radar::Coords[ n ] >> 16 ) & 0xFFFF ) / __GmapZoom ) + __GmapOffsetY, 400, 100, Radar::Option::ToDoConvert::NameColor, FONT_FALLOUT, FT_ALIGN | FT_UPPER );
             }
         }
 
@@ -1427,11 +1425,11 @@ bool main_mouse_down( int click )
 
     if( isHideCursoreResourse && click == MOUSE_CLICK_LEFT )
     {
-        ItemCl@ resSource = GetMonitorItem( __MouseX, __MouseY );
-        if( valid( resSource ) )
+        ItemCl@ resSource_item = GetMonitorItem( __MouseX, __MouseY );
+        if( valid( resSource_item ) )
         {
             ItemCl@[] its;
-            int sourcePid = resSource.GetProtoId();
+            int sourcePid = resSource_item.GetProtoId();
             for( uint i = 0, iEnd = GetChosen().GetItems( -1, its ); i < iEnd; i++ )
             {
                 ItemCl@ item = its[ i ];
@@ -1441,7 +1439,7 @@ bool main_mouse_down( int click )
                     CTool@ tool = GetTool( pid, sourcePid, -1 );
                     if( valid( tool ) )
                     {
-                        uint[] actions = { CHOSEN_USE_ITEM, item.Id, item.GetProtoId(), TARGET_SCENERY, resSource.Id, USE_USE, 0 };
+                        uint[] actions = { CHOSEN_USE_ITEM, item.Id, item.GetProtoId(), TARGET_SCENERY, resSource_item.Id, USE_USE, 0 };
                         // Item id, Item pid, Target type (see below), Target id, Item mode (see below), Some param (timer)
                         SetChosenActions( actions );
                         break;
@@ -1451,21 +1449,21 @@ bool main_mouse_down( int click )
         }
         else
         {
-            CritterCl@ resSource = GetMonitorCritter( __MouseX, __MouseY );
-            if( valid( resSource ) && resSource.IsDead() )
+            CritterCl@ resSource_critter = GetMonitorCritter( __MouseX, __MouseY );
+            if( valid( resSource_critter ) && resSource_critter.IsDead() )
             {
                 ItemCl@[] its;
-                int sourcePid = resSource.Pid;
+                int sourcePid = resSource_critter.Pid;
                 for( uint i = 0, iEnd = GetChosen().GetItems( -1, its ); i < iEnd; i++ )
                 {
                     ItemCl@ item = its[ i ];
                     if( valid( item ) )
                     {
                         int    pid = item.GetProtoId();
-                        CTool@ tool = GetTool( pid, sourcePid, resSource.Stat[ ST_BODY_TYPE ] );
+                        CTool@ tool = GetTool( pid, sourcePid, resSource_critter.Stat[ ST_BODY_TYPE ] );
                         if( valid( tool ) )
                         {
-                            uint[] actions = { CHOSEN_USE_ITEM, item.Id, item.GetProtoId(), TARGET_CRITTER, resSource.Id, USE_USE, 0 };
+                            uint[] actions = { CHOSEN_USE_ITEM, item.Id, item.GetProtoId(), TARGET_CRITTER, resSource_critter.Id, USE_USE, 0 };
                             // Item id, Item pid, Target type (see below), Target id, Item mode (see below), Some param (timer)
                             SetChosenActions( actions );
                             break;
@@ -1817,7 +1815,7 @@ bool key_down( uint8 key )
                 Message( GetMsgStr( TEXTMSG_GAME, 536 ) + KeyNames[ key ] );
                 return true;
             }
-            uint8            mode = 0;
+            uint8 mode = 0;
             const ProtoItem@ slotItem = chosen.GetSlotProto( SLOT_HAND1, mode );
             if( valid( slotItem ) )
             {
@@ -1906,7 +1904,6 @@ bool key_down( uint8 key )
 
 
             }
-            uint8 mode = 0;
 
             if( !shiftDown && !altDown )
                 switch( key )

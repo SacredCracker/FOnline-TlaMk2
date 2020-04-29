@@ -110,10 +110,9 @@ void SetReplicationAbandoned()
 
         uint16 hx = 0;
         uint16 hy = 0;
-        int[] params;
+		
         if( GetEntireFreeHex( map, ENTIRE_SMOLETT, hx, hy ) )
         {
-            params.resize( 0 );
             int[] params = { ST_REPLICATION_TIME, 5, ST_DIALOG_ID, DIALOG_repl_smallet, ST_NPC_ROLE, NPC_ROLE_DEF, ST_TEAM_ID, TEAM_ReplictionHubb, ST_BAG_ID, BAG_VaultCity_Military, MODE_NO_STEAL, 1, MODE_NO_LOOT, 1, MODE_NO_DROP, 1 };
             map.AddNpc( 489, hx, hy, GetDirection( hx, hy, xC, yC ), params, null, null );
         }
@@ -122,7 +121,6 @@ void SetReplicationAbandoned()
         {
             for( uint i = 0, l = entires.length(); i < l; i++ )
             {
-                params.resize( 0 );
                 int[] params = { ST_REPLICATION_TIME, 5, ST_DIALOG_ID, DIALOG_repl_ewarrior, ST_NPC_ROLE, NPC_ROLE_DEF, ST_TEAM_ID, TEAM_ReplictionHubb, ST_BAG_ID, 42, MODE_NO_STEAL, 1, MODE_NO_LOOT, 1, MODE_NO_DROP, 1 };
                 map.AddNpc( 503, entires[ i ].HexX, entires[ i ].HexY, GetDirection( entires[ i ].HexX, entires[ i ].HexY, xC, yC ), params, null, null );
             }
@@ -132,14 +130,12 @@ void SetReplicationAbandoned()
         {
             for( uint i = 0, l = entires.length(); i < l; i++ )
             {
-                params.resize( 0 );
                 int[] params = { ST_REPLICATION_TIME, 5, ST_DIALOG_ID, DIALOG_repl_ehub, ST_NPC_ROLE, NPC_ROLE_DEF, ST_TEAM_ID, TEAM_ReplictionHubb, ST_BAG_ID, BAG_Navarro_EnclavePatrol_Male2, MODE_NO_STEAL, 1, MODE_NO_LOOT, 1, MODE_NO_DROP, 1 };
                 map.AddNpc( 485, entires[ i ].HexX, entires[ i ].HexY, GetDirection( entires[ i ].HexX, entires[ i ].HexY, xC, yC ), params, null, null );
             }
         }
         if( GetEntireFreeHex( map, ENTIRE_SCIENTIST, hx, hy ) )
         {
-            params.resize( 0 );
             int[] params = { ST_REPLICATION_TIME, 5, ST_DIALOG_ID, DIALOG_repl_escientist, ST_NPC_ROLE, NPC_ROLE_DEF, ST_TEAM_ID, TEAM_ReplictionHubb, ST_BAG_ID, BAG_Navarro_EnclavePatrol_Male2, MODE_NO_STEAL, 1, MODE_NO_LOOT, 1, MODE_NO_DROP, 1 };
             map.AddNpc( 301, hx, hy, GetDirection( hx, hy, xC, yC ), params, null, null );
         }

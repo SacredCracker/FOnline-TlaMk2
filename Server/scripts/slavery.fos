@@ -457,9 +457,9 @@ bool d_SlaverHasAnySlaves( Critter& player, Critter@, int p1, int p2, int p3, in
             return false;
         Critter@[] npcs;
         uint c = map.GetCritters( pid, FIND_ONLY_NPC | FIND_LIFE_AND_KO, npcs );
-        for( uint n = 0; n < c; n++ )
+        for( uint i = 0; i < c; i++ )
         {
-            if( npcs[ n ].Merc[ MERC_MASTER_ID ] == 0 )
+            if( npcs[ i ].Merc[ MERC_MASTER_ID ] == 0 )
                 return true;
         }
     }

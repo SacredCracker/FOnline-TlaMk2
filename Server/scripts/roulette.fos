@@ -186,7 +186,7 @@ bool d_MaxBet( Critter& master, Critter@ croupier ) // Проверка достаточно ли у 
 
 bool d_IsSpecBet( Critter& master, Critter@ croupier, int betType, int betNum )                                                                                                                                                                                                                                                                  // Показывать ли варианты координат для ставки
 {
-    if( CurBetType[ croupier.StatBase[ CROUPIER_NUM ] ] == betType )                                                                                                                                                                                                                                                                             // Если текущий тип ставки совпадает с типом реплики
+    if( int( CurBetType[ croupier.StatBase[ CROUPIER_NUM ] ] ) == betType )                                                                                                                                                                                                                                                                             // Если текущий тип ставки совпадает с типом реплики
     {
 /*		if(uint(betNum)>DialogAnswerNum[croupier.StatBase[CROUPIER_NUM]]) // ToDo воспользоваться новой функцией диалогэдитора.
                 {

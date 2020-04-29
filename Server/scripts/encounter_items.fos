@@ -107,10 +107,10 @@ void GenerateItems( Map& map, Critter@[]@  grp )
             if( idx < 0 )
                 continue;
 
-            if( Random( 1, 99 ) < _GetChance( idx ) )
+            if( Random( 1, 99 ) < int( _GetChance( idx ) ) )
             {
                 Item@[] items;
-                for( uint j = 0, iMax = map.GetItems( hex.HexX, hex.HexY, 2, 0, items ); j < iMax; j++ )
+                for( uint j = 0, jMax = map.GetItems( hex.HexX, hex.HexY, 2, 0, items ); j < jMax; j++ )
                 {
                     if( items[ j ].GetType() == ITEM_TYPE_CONTAINER )
                     {

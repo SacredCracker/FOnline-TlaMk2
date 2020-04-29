@@ -22,11 +22,11 @@ void lightning_attack( Critter& attacker, Critter& target, ProtoItem& weapon, ui
 
     bool isFull = false;
 
-    for( uint i = 0, iMax = map.GetCrittersHex( tHexX, tHexY, weapon.Weapon_LightningRadius, FIND_LIFE_AND_KO, critters );
-         i < iMax && i < weapon.Weapon_LightningCountTarget; i++ )
-        if( !critters[ i ].IsDead() )
+    for( uint icritter = 0, iMax = map.GetCrittersHex( tHexX, tHexY, weapon.Weapon_LightningRadius, FIND_LIFE_AND_KO, critters );
+         icritter < iMax && icritter < weapon.Weapon_LightningCountTarget; icritter++ )
+        if( !critters[ icritter ].IsDead() )
         {
-            @crit = critters[ i ];
+            @crit = critters[ icritter ];
             crHexX = crit.HexX;
             crHexY = crit.HexY;
             len = GetDistantion( tHexX, tHexY, crHexX, crHexY );
@@ -85,11 +85,10 @@ void lightning_attack_armor( Critter& attacker, Item& armor )
 
     bool isFull = false;
 
-    for( uint i = 0, iMax = map.GetCrittersHex( atHexX, atHexY, 10, FIND_LIFE_AND_KO, critters );
-         i < iMax && i < 5; i++ )
-        if( !critters[ i ].IsDead() )
+    for( uint icritter = 0, iMax = map.GetCrittersHex( atHexX, atHexY, 10, FIND_LIFE_AND_KO, critters ); icritter < iMax && icritter < 5; icritter++ )
+        if( !critters[ icritter ].IsDead() )
         {
-            @ crit = critters[ i ];
+            @ crit = critters[ icritter ];
             Item@[] arrTesla;
             if( crit.GetItems( SLOT_ARMOR, arrTesla ) > 0 && arrTesla[ 0 ].GetProtoId() == PID_TESLA_ARMOR )
                 continue;

@@ -683,7 +683,6 @@ void InitTriggers( CBarier& barier )
 void _WalkOnTrigg( Item& item, Critter& cr, bool entered, uint8 dir ) // TODO
 {
     Critter@[] npcs;
-    uint k = 0;
     Map@ map = null;
     uint netNum = 0;
     if( cr.IsNpc() )
@@ -1156,10 +1155,10 @@ uint r_Start( Critter& master, Critter@ slave )
                         }
                         else
                         {
-                            CBariersNet@ net = GetBariersNet( master.StatBase[ ST_VAR6 ], loc.Id );
-                            if( valid( net ) )
+                            CBariersNet@ net0 = GetBariersNet( master.StatBase[ ST_VAR6 ], loc.Id );
+                            if( valid( net0 ) )
                             {
-                                net.ChangeNetMode( BM_OFF, AE_DEFAULT );
+                                net0.ChangeNetMode( BM_OFF, AE_DEFAULT );
                             }
                             return FD_TURN_OFF_FIELD;
                         }

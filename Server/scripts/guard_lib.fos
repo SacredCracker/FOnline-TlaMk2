@@ -464,7 +464,7 @@ class CGuardsManager
     // Когда криттер в области видимости подвергается краже.
     void EventStealing( Critter& guard, Critter& fromCrit, Critter& thief, bool success, Item& item, uint count )
     {
-        AddAttackPlane( guard, 0, thief, thief.Stat[ ST_MAX_LIFE ] * 0.5 );
+        AddAttackPlane( guard, 0, thief, int( thief.Stat[ ST_MAX_LIFE ] * 0.5 ) );
     }
 
     // наблюдение за подозрительными личностями.

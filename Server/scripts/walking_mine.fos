@@ -97,7 +97,7 @@ void _Dead( Critter& mine, Critter@ killer )
 
 void Fold( Critter& mine, bool fold )
 {
-    if( ( fold ? 1 : 0 ) == uint( mine.CurrentState ) )
+    if( ( fold ? 1 : 0 ) == mine.CurrentState )
         return;
     mine.CurrentState = ( fold ? 1 : 0 );
     mine.ModeBase[ MODE_HIDE ] = mine.CurrentState;

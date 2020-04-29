@@ -101,8 +101,8 @@ namespace Marker
 	{
 		void Render( const ::ProtoItem@ handWeaponChosen, uint8 handWeaponMode ){ };
 		
-		::Sprite@ Image = null;
-		::string Name; // Для команд имя коммандира
+		Sprite@ Image = null;
+		string Name; // Для команд имя коммандира
 	}
 	
 	class Critter : Marker::Pattern
@@ -129,14 +129,14 @@ namespace Marker
 			int w = HexMarker::Option::Assist::Width == 0 ? this.Image.Width : HexMarker::Option::Assist::Width,
 				  h = HexMarker::Option::Assist::Height == 0 ? this.Image.Height : HexMarker::Option::Assist::Height;
 			int x = 0, y = 0 ;
-			::GetHexPos( X, Y, x, y );
-			::DrawSprite( this.Image.Id, 0, x - w / ::__SpritesZoom / 2, y - h / ::__SpritesZoom / 2, w / ::__SpritesZoom, h / ::__SpritesZoom, true, false, this.Image.Color );
+			GetHexPos( X, Y, x, y );
+			DrawSprite( this.Image.Id, 0,  x - int( w / __SpritesZoom / 2 ), y - int( h / __SpritesZoom / 2 ), int( w / __SpritesZoom ), int( h / __SpritesZoom ), true, false, this.Image.Color );
 									
 			if( valid( handWeaponChosen ) )
 			{
-				const int hit = ::to_hit_hex( handWeaponChosen, handWeaponMode, null, X, Y );
+				const int hit = to_hit_hex( handWeaponChosen, handWeaponMode, null, X, Y );
 				if( hit >= 5 )
-					::DrawText( "" + hit + "%", ( x + w / ::__SpritesZoom / 2 ) + HexMarker::Option::Assist::ToHitOffset.X, ( y + h / ::__SpritesZoom / 2 ) + HexMarker::Option::Assist::ToHitOffset.Y, 100, 100, HexMarker::Option::Assist::ToHitColor, FONT_FALLOUT, FT_BORDERED );
+					DrawText( "" + hit + "%", ( x + int( w / __SpritesZoom / 2 ) ) + HexMarker::Option::Assist::ToHitOffset.X, ( y + int( h / __SpritesZoom / 2 ) ) + HexMarker::Option::Assist::ToHitOffset.Y, 100, 100, HexMarker::Option::Assist::ToHitColor, FONT_FALLOUT, FT_BORDERED );
 			}
 		}
 		
@@ -1037,9 +1037,9 @@ class ClassRender
         {
             if( cr.Param[ ST_FIRE_DATA ] != 0 )
             {
-                int fw = Fire::Option::Customization::CritterImage.Width / __SpritesZoom,
-                    fh = Fire::Option::Customization::CritterImage.Height / __SpritesZoom;
-                DrawSprite( Fire::Option::Customization::CritterImage.Id, -1, x - fw * 0.25, y - fh * 0.5, fw, fh, true, true, Fire::Option::Customization::CritterImage.Color );
+                int fw = int( Fire::Option::Customization::CritterImage.Width / __SpritesZoom ),
+                    fh = int( Fire::Option::Customization::CritterImage.Height / __SpritesZoom );
+                DrawSprite( Fire::Option::Customization::CritterImage.Id, -1, x - int( fw * 0.25 ), y - int( fh * 0.5 ), fw, fh, true, true, Fire::Option::Customization::CritterImage.Color );
             }
 			
 			if( Assist::Id == cr.Id )
@@ -1048,7 +1048,8 @@ class ClassRender
                     Assist::Id = 0;
 				else
                 {
-					DrawSprite( Assist::Option::GUI::Image.Id, 0, x + w / 2 - Assist::Option::GUI::Width / 2 / __SpritesZoom, y - h / 2 + Assist::Option::GUI::Height / 2 / __SpritesZoom, Assist::Option::GUI::Width / __SpritesZoom, Assist::Option::GUI::Height / __SpritesZoom, true, false, Assist::Option::GUI::Image.Color );
+					DrawSprite( Assist::Option::GUI::Image.Id, 0, x + w / 2 - int( Assist::Option::GUI::Width / 2 / __SpritesZoom ), y - h / 2 + int( Assist::Option::GUI::Height / 2 / __SpritesZoom ),
+																  int( Assist::Option::GUI::Width / __SpritesZoom ), int( Assist::Option::GUI::Height / __SpritesZoom ), true, false, Assist::Option::GUI::Image.Color );
 					
 					uint8            handWeaponMode = 0;
 					const ProtoItem@ handWeaponChosen = GetChosen().GetSlotProto( SLOT_HAND1, handWeaponMode );
@@ -1057,7 +1058,7 @@ class ClassRender
 					{
 						int hit = to_hit( GetChosen(), cr, handWeaponChosen, handWeaponMode );
 						if( hit >= 5 )
-							DrawText( "" + hit + "%", (  x + w / 2 + Assist::Option::GUI::Width / 2 / __SpritesZoom ) + Assist::Option::GUI::ToHitOffset.X, ( y + h / 2 + Assist::Option::GUI::Height / 2 / __SpritesZoom ) + Assist::Option::GUI::ToHitOffset.Y, 100, 100, Assist::Option::GUI::ToHitColor, FONT_FALLOUT, 0 );
+							DrawText( "" + hit + "%", int(  x + w / 2 + Assist::Option::GUI::Width / 2 / __SpritesZoom ) + Assist::Option::GUI::ToHitOffset.X, int( y + h / 2 + Assist::Option::GUI::Height / 2 / __SpritesZoom ) + Assist::Option::GUI::ToHitOffset.Y, 100, 100, Assist::Option::GUI::ToHitColor, FONT_FALLOUT, 0 );
 					}
 				}
 			}
@@ -1079,25 +1080,23 @@ class ClassRender
             if( isDrawEmblems )
             {
 				uint emId = GetEmblemFractionSprId( cr );
-			
-                
 				
                 if( emId != 0 && cr.IsPlayer() && !IS_ARENA_MAP( GetCurrentMapPid( ) ) )
 				{
-                    DrawSprite( emId, 0, x + w * 0.5 - ( ( centerName == 0 ) ? 0 : wt * 0.5 - FrEmbOffX ), y + FrEmbOffY, 15, 15, false, false, 0 );
+                    DrawSprite( emId, 0, x + int( w * 0.5 ) - ( ( centerName == 0 ) ? 0 : int( wt * 0.5 ) - FrEmbOffX ), y + FrEmbOffY, 15, 15, false, false, 0 );
                 }
 				
 				if( cr.Param[ ST_HASH_EMBLEM ] != 0 && !IS_ARENA_MAP( GetCurrentMapPid( ) ) )
 				{
-                    DrawSprite( GetEmblemNumber( cr ), 0, x + w * 0.5 + ( ( centerName == 0 ) ? 0 : wt * 0.5 + EmbOffX ), y + EmbOffY, 15, 15, false, false, 0 );
+                    DrawSprite( GetEmblemNumber( cr ), 0, x + int( w * 0.5 ) + ( ( centerName == 0 ) ? 0 : int( wt * 0.5 ) + EmbOffX ), y + EmbOffY, 15, 15, false, false, 0 );
 				}
 				else if( cr.Param[ CITY_ROLE_FLAG ] == 3 )
                 {
-                    DrawSprite( GetEmblem( "city_enemy.png" ), 0, x + w * 0.5 + ( ( centerName == 0 ) ? 0 : wt * 0.5 + EmbOffX ), y + EmbOffY, 15, 15, false, false, 0 );
+                    DrawSprite( GetEmblem( "city_enemy.png" ), 0, x + int( w * 0.5 ) + ( ( centerName == 0 ) ? 0 : int( wt * 0.5 ) + EmbOffX ), y + EmbOffY, 15, 15, false, false, 0 );
                 }
                 else if( cr.Param[ CITY_ROLE_FLAG ] == 2 )
                 {
-                    DrawSprite( GetEmblem( "city_provoker.png" ), 0, x + w * 0.5 + ( ( centerName == 0 ) ? 0 : wt * 0.5 + EmbOffX ), y + EmbOffY, 15, 15, false, false, 0 );
+                    DrawSprite( GetEmblem( "city_provoker.png" ), 0, x + int( w * 0.5 ) + ( ( centerName == 0 ) ? 0 : int( wt * 0.5 ) + EmbOffX ), y + EmbOffY, 15, 15, false, false, 0 );
                 }
             }
 
@@ -1108,7 +1107,7 @@ class ClassRender
                 {
                     uint hpColor = 0;
 					int hpProc = cr.Param[ ST_CURRENT_HP ];
-                    DrawSprite( Health::Option::Bars::Image.Id, 0, x + w * 0.5 - Health::Option::Bars::Image.Width * 0.5, y, Health::Option::Bars::Image.Width, Health::Option::Bars::Image.Height, true, false, Health::Option::Bars::Image.Color );
+                    DrawSprite( Health::Option::Bars::Image.Id, 0, x + int( w * 0.5 ) - int( Health::Option::Bars::Image.Width * 0.5 ), y, Health::Option::Bars::Image.Width, Health::Option::Bars::Image.Height, true, false, Health::Option::Bars::Image.Color );
                     if( hpProc > 0 )
                     {
                         if( hpProc <= 20 )
@@ -1118,7 +1117,7 @@ class ClassRender
                         else
                             hpColor = Health::Option::Bars::ColorGood;
 						
-						Health::Option::Bars::Pixel.Pattern( x + w * 0.5 - Health::Option::Bars::Image.Width * 0.5 + 5, y + 3, hpProc * 0.25, 3, hpColor );
+						Health::Option::Bars::Pixel.Pattern( x + int( w * 0.5 ) - int( Health::Option::Bars::Image.Width * 0.5 ) + 5, y + 3, int( hpProc * 0.25 ), 3, hpColor );
                     }
                 }
             }

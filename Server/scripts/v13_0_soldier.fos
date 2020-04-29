@@ -49,7 +49,7 @@ void _SoldierGetMessage( Critter& soldier, Critter& fromCr, int message, int val
         return;
     if( message == MSG_V13_GUARD_ALARM )
     {
-        AddAttackPlane( soldier, 0, player.Id, ( player.StatBase[ ST_CHARISMA ] * 1.5 ) );
+        AddAttackPlane( soldier, 0, player.Id, int( player.StatBase[ ST_CHARISMA ] * 1.5 ) );
         // soldier.AddEnemyInStack(player.Id);
     }
     else if( message == MSG_V13_GUARD_KILL )

@@ -605,7 +605,7 @@ void _BattleDoorInit( Item& item, bool )
 
 bool _UseBattleDoor( Item& item, Critter& cr, int )
 {
-    if( bInfo.Stage < item.Val1 )
+    if( int( bInfo.Stage ) < item.Val1 )
     {
         if( cr.IsPlayer() )
             cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_STAGE_ERROR );

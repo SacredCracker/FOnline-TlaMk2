@@ -100,7 +100,7 @@ bool decraftProces( Critter& player, Item@ item, uint16 percentForDeterioration 
         if( item.GetProtoId() == CraftList[ i ].ResultItem )
             index = i;
 
-    if( index == -1 || index > int( CraftList.length() ) )
+    if( index == -1 || uint( index ) > CraftList.length() )
     {
         player.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_USE_NOTHING );
         Log( "Wrong index: " + index + ". Item pid=" + item.GetProtoId() );
@@ -218,7 +218,7 @@ bool decraftProces( Critter& player, Item@ item, uint16 percentForDeterioration 
                 // Log("isCraftPosyble");
                 if( cCount < 1 )
                     cCount = 1;
-                for( uint16 k = 0, kMax = cCount; k < kMax; k++ )
+                for( uint16 k = 0; k < cCount; k++ )
                 {
                     if( decraftProces( player, player.AddItem( cPid, 1 ), percentForDeterioration ) )
                         isNullItemCount = true;
@@ -228,7 +228,7 @@ bool decraftProces( Critter& player, Item@ item, uint16 percentForDeterioration 
 
             if( cCount == 0 )
             {
-                if( percentComponent < Random( 0, 99 ) )
+                if( percentComponent < uint16( Random( 0, 99 ) ) )
                     continue;
 
                 player.AddItem( cPid, 1 );

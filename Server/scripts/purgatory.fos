@@ -291,26 +291,27 @@ uint e_RunPreparationStage( uint[] @ values )
     uint16 x = 0;
     uint16 y = 0;
     // Расстановка нпц-нанимателей
+	
+    int[] params =
+	{
+		ST_DIALOG_ID, DIALOG_purg_executor, ST_TEAM_ID, TEAM_Slaver, ST_AI_ID, AIPACKET_BOUNTY_HUNTER, ST_BAG_ID,
+		BAG_Navarro_EnclavePatrol_Male2, ST_LEVEL, 50, MODE_NO_LOOT, 1, MODE_NO_KNOCK, 1, MODE_NO_LOOSE_LIMBS, 1, MODE_NO_ENEMY_STACK, 1, MODE_NO_STEAL, 1,
+		MODE_UNLIMITED_AMMO, 1, ST_CRITICAL_RESISTANCE, 80, PE_LIVING_ANATOMY, 1, PE_BETTER_CRITICALS, 1, PE_BONUS_RATE_OF_FIRE, 1, ST_ACTION_POINTS, 30, SK_ENERGY_WEAPONS, 300,
+		ST_STRENGTH, 10, ST_ENDURANCE, 10, PE_SNIPER, 1, ST_CRITICAL_CHANCE, 100, ST_NORMAL_RESIST, 200, ST_LASER_RESIST, 200, ST_FIRE_RESIST, 200, ST_PLASMA_RESIST, 200,
+		ST_EXPLODE_RESIST, 200, ST_MAX_LIFE, 1000, ST_CURRENT_HP, 1500
+	};
     for( uint i = LOCATION_Den; i <= LOCATION_ReplicationHell; i++ )
     {
         if( LOCATION_IS_CITY( i ) || i == LOCATION_ReplicationHell )
         {
-            Location@ loc = GetLocationByPid( i, 0 );
+            @ loc = GetLocationByPid( i, 0 );
             if( !valid( loc ) )
                 continue;
-            Map@ map = loc.GetMapByIndex( 0 );
+            @ map = loc.GetMapByIndex( 0 );
             if( !valid( map ) )
                 continue;
             if( GetNearEntire( map, SPAWN_ENTIRE( i ), x, y ) )
             {
-                int[] params =
-                {
-                    ST_DIALOG_ID, DIALOG_purg_executor, ST_TEAM_ID, TEAM_Slaver, ST_AI_ID, AIPACKET_BOUNTY_HUNTER, ST_BAG_ID,
-                    BAG_Navarro_EnclavePatrol_Male2, ST_LEVEL, 50, MODE_NO_LOOT, 1, MODE_NO_KNOCK, 1, MODE_NO_LOOSE_LIMBS, 1, MODE_NO_ENEMY_STACK, 1, MODE_NO_STEAL, 1,
-                    MODE_UNLIMITED_AMMO, 1, ST_CRITICAL_RESISTANCE, 80, PE_LIVING_ANATOMY, 1, PE_BETTER_CRITICALS, 1, PE_BONUS_RATE_OF_FIRE, 1, ST_ACTION_POINTS, 30, SK_ENERGY_WEAPONS, 300,
-                    ST_STRENGTH, 10, ST_ENDURANCE, 10, PE_SNIPER, 1, ST_CRITICAL_CHANCE, 100, ST_NORMAL_RESIST, 200, ST_LASER_RESIST, 200, ST_FIRE_RESIST, 200, ST_PLASMA_RESIST, 200,
-                    ST_EXPLODE_RESIST, 200, ST_MAX_LIFE, 1000, ST_CURRENT_HP, 1500
-                };
                 map.AddNpc( NPC_PID_ElronologistMale, x, y, Random( 0, 5 ), params, null, "purgatory@_RiperInit" );
                 DL( "Location pid" + i + " executor placed" );
             }

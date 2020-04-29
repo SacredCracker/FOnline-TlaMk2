@@ -1080,8 +1080,8 @@ uint r_Fraud1( Critter& master, Critter@ pokerMan, int val )
     int  luckModif;
     if( ( val <= 2 ) and ( val >= 0 ) )
     {
-        diffic = ( 3.3 * master.Skill[ SK_GAMBLING ] ) / PMLevel[ pokerMan.StatBase[ ST_VAR9 ] ];
-        luckModif = ( master.Stat[ ST_LUCK ] - 5.5 ) * 4;
+        diffic = uint( ( 3.3 * master.Skill[ SK_GAMBLING ] ) / PMLevel[ pokerMan.StatBase[ ST_VAR9 ] ] );
+        luckModif = int( ( master.Stat[ ST_LUCK ] - 5.5 ) * 4 );
         if( diffic + luckModif > 0 )
         {
             diffic += luckModif;
@@ -1094,7 +1094,7 @@ uint r_Fraud1( Critter& master, Critter@ pokerMan, int val )
         {
             diffic = 100;
         }
-        diffic *= 0.95;
+        diffic = uint( diffic * 0.95 );
         rand = Random( 1, 100 );
         #ifdef __DEBUG__
         Log( "\n<Poker> PMLevel: " + PMLevel[ pokerMan.StatBase[ ST_VAR9 ] ] + ", player.Skill[SK_GAMBLING]: " + master.Skill[ SK_GAMBLING ] + ", master.Luck: " + master.Luck + ", Chance: " + diffic );
@@ -1128,12 +1128,12 @@ uint r_Fraud2( Critter& master, Critter@ pokerMan, int val )
     uint diffic, rand;
     if( ( val <= 4 ) and ( val >= 0 ) )
     {
-        diffic = ( 3.3 * master.Skill[ SK_GAMBLING ] ) / PMLevel[ pokerMan.StatBase[ ST_VAR9 ] ];
+        diffic = uint( ( 3.3 * master.Skill[ SK_GAMBLING ] ) / PMLevel[ pokerMan.StatBase[ ST_VAR9 ] ] );
         if( diffic > 100 )
         {
             diffic = 100;
         }
-        diffic *= 0.95;
+        diffic = uint( diffic * 0.95 );
         rand = Random( 1, 100 );
         #ifdef __DEBUG__
         Log( "\n<Poker> PMLevel: " + PMLevel[ pokerMan.StatBase[ ST_VAR9 ] ] + ", player.Skill[SK_GAMBLING]: " + master.Skill[ SK_GAMBLING ] + ", Chance: " + diffic );

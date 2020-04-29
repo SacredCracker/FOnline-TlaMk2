@@ -434,7 +434,7 @@ void _BaseLoop( Map& map ) // TabaK. А вот это уже универсально для любой фракци
     GetTime( time[ 0 ], time[ 1 ], time[ 2 ], time[ 3 ], time[ 4 ], time[ 5 ], time[ 6 ], time[ 7 ] );
     if( BASE_OWNER( map ) == 0 )
         return;
-    if( time[ 3 ] == CAPTURE_DAY( map ) && time[ 4 ] == CAPTURE_HOUR( map ) )
+    if( time[ 3 ] == uint16( CAPTURE_DAY( map ) ) && time[ 4 ] == uint16( CAPTURE_HOUR( map ) ) )
     {
         Location@ loc = map.GetLocation();
         _EventGeneratorDead( map, true );
@@ -466,7 +466,7 @@ void _BaseLoop( Map& map ) // TabaK. А вот это уже универсально для любой фракци
         SayToAllPlayers( TEXTMSG_TEXT, 100100, @lexems );
     }
     else if( GENERATOR_DEAD( map ) &&
-             ( time[ 3 ] != CAPTURE_DAY( map ) || time[ 4 ] >= CAPTURE_STOP_HOUR( map ) || time[ 4 ] <= CAPTURE_HOUR( map ) ) )
+             ( time[ 3 ] != uint16( CAPTURE_DAY( map ) ) || time[ 4 ] >= uint16( CAPTURE_STOP_HOUR( map ) ) || time[ 4 ] <= uint16( CAPTURE_HOUR( map ) ) ) )
     {
         Location@ loc = map.GetLocation();
         uint      fractionId = BASE_OWNER( map );

@@ -360,10 +360,10 @@ void CopyLocation( Critter& cr, int, int, int )
         cr.Say( SAY_NETMSG, "Oops! Failed!" );
         return;
     }
-    for( uint n = 0; n < oldLoc.GetMapCount(); n++ )
+    for( uint i = 0; i < oldLoc.GetMapCount(); i++ )
     {
-        Map@ oldMap = oldLoc.GetMapByIndex( n );
-        Map@ newMap = loc.GetMapByIndex( n );
+        Map@ oldMap = oldLoc.GetMapByIndex( i );
+        Map@ newMap = loc.GetMapByIndex( i );
         if( valid( oldMap ) && valid( newMap ) )
         {
             for( uint n = 0; n < 100; n++ )
@@ -843,8 +843,8 @@ void DropFactionQuest( Critter& cr,  int quest, int id, int )
     uint[] players = GetPlayersByFraction( fr.Id );
     for( uint n = 0, nMax = players.length(); n < nMax; n++ )
     {
-        GameVar@ quest = GetLocalVar( questVar, players[ n ] );
-        quest = 0;
+        GameVar@ gamevar = GetLocalVar( questVar, players[ n ] );
+        gamevar = 0;
     }
     cr.Say( SAY_NETMSG, "Clearing faction quest successfull!" );
 }
@@ -909,8 +909,6 @@ void CheckAttackHex( Critter& npc, int iEnd, int angleStart, int add )
 {
     float            angle = -360.0f;
     Map@             map = npc.GetMap();
-    uint16           baseHx = npc.HexX;
-    uint16           baseHy = npc.HexY;
 
     uint16           bestX = 0, bestY = 0, bestLen = 0;
 
@@ -1544,8 +1542,8 @@ void plans( Critter& player, int param0, int param1, int param2 )
     for( uint i = 0; i < count; i++ )
     {
         str = "";
-        uint count = critters[ i ].GetPlanes( planes );
-        for( uint j = 0; j < count; j++ )
+        uint countplans = critters[ i ].GetPlanes( planes );
+        for( uint j = 0; j < countplans; j++ )
         {
             switch( planes[ j ].Type )
             {
@@ -2397,7 +2395,7 @@ void salThisEnc( Critter& cr, int locPid, int, int )
 
 #define IS_CLERABLE_ENC        ( 56 )                           //
 #define IS_HIDING_PLACE_ENC    ( 57 )                           //
-void delMercLoc( Critter& cr, int, int, int )
+void delMercLoc( Critter& , int, int, int )
 {
     Location@[] locs;
     for( uint i = LOCATION_Den; i < LOCATION_OceanTrader + 1; i++ )
@@ -2436,7 +2434,7 @@ void delMercLoc( Critter& cr, int, int, int )
 }
 
 #define IS_CLERABLE_ENC        ( 56 )                           //
-void delMercLoc2( Critter& cr, int locPid, int, int )
+void delMercLoc2( Critter& , int locPid, int, int )
 {
     Location@[] locs;
     GetAllLocations( locPid, locs );
@@ -4231,9 +4229,9 @@ void TrashMap( Critter& critter, int param0, int param1, int param2 )
 {
     Map@ map = critter.GetMap();
 	
-	for( uint16 x = critter.HexX - param0; x < critter.HexX + param0; x++ )
+	for( uint16 x = critter.HexX - param0; x < uint16( critter.HexX + param0 ); x++ )
 	{
-		for( uint16 y = critter.HexY - param0; y < critter.HexY + param0; y++ )
+		for( uint16 y = critter.HexY - param0; y < uint16( critter.HexY + param0 ); y++ )
 		{
 			for( uint c = 0, cend = Random( 5, 20 ); c < cend; c++ )
 			{

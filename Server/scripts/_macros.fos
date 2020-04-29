@@ -98,7 +98,7 @@
 #define _WeaponModeUse               # (weaponMode) ( ( weaponMode ) & 0xF )
 #define _WeaponModeAim               # (weaponMode) ( ( ( weaponMode ) >> 4 ) & 0xF )
 #define _WeaponModeMake              # ( use, aim )( ( ( ( aim ) << 4 ) | ( ( use ) & 0xF ) ) & 0xFF )
-#define _WeaponeIsPerk               # ( proto, ammo, perk )( proto.Weapon_Perk == perk || proto.Weapon_SecondPerk == perk || ( valid( ammo ) && ammo.Ammo_Perk == perk ) )
+#define _WeaponeIsPerk               # ( proto, ammo, perk )( proto.Weapon_Perk == int( perk ) || proto.Weapon_SecondPerk == uint8( perk ) || ( valid( ammo ) && ammo.Ammo_Perk == uint8( perk ) ) )
 #define _WeaponAttackType            # ( proto, use )( ( ( use ) == 0 ) ? proto.Weapon_TypeAttack_0 : ( ( use ) == 1 ? proto.Weapon_TypeAttack_1 : ( ( use ) == 2 ? proto.Weapon_TypeAttack_2 : 0 ) ) )
 #define _WeaponBreakAttack           # ( proto, use )( ( ( use ) == 0 ) ? proto.Weapon_BreakTime_0 : ( ( use ) == 1 ? proto.Weapon_BreakTime_1 : ( ( use ) == 2 ? proto.Weapon_BreakTime_2 : 0 ) ) )
 #define _WeaponTimeAttack            # ( proto, use )( ( ( use ) == 0 ) ? proto.Weapon_TimeAttack_0 : ( ( use ) == 1 ? proto.Weapon_TimeAttack_1 : ( ( use ) == 2 ? proto.Weapon_TimeAttack_2 : 0 ) ) )

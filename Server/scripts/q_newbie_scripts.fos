@@ -88,8 +88,8 @@ bool SetPlayerToNewbieLocation( Critter& cr ) // Export
 {
     if( cr.IsNpc() )
         return false;
-    int questStat = GetQuestStat( cr.Id ),
-        locPid = 0, entire = 0;
+    int questStat = GetQuestStat( cr.Id ), entire = 0;
+    uint16 locPid = 0;
     if( questStat > 19 )
         return false;
     if( questStat < 2 )
@@ -133,7 +133,7 @@ bool SetPlayerToNewbieLocation( Critter& cr ) // Export
         return true;
     }
     Map@ map = cr.GetMap();
-    if( @map == null || map.GetLocation().GetProtoId() != locPid )
+    if( map is null || map.GetLocation().GetProtoId() != locPid )
     {
         uint locId = CreateLocation( locPid, INTRO_WORLD_X, INTRO_WORLD_Y, null );
         if( locId == 0 )
@@ -148,7 +148,7 @@ bool SetPlayerToNewbieLocation( Critter& cr ) // Export
             return false;
         }
         @map = loc.GetMapByIndex( 0 );
-        if( @map == null )
+        if( map is null )
         {
             Log( "ERROR TRANSITTING PLAYER TO NEWBIE MAP! Player: " + GetPlayerName( cr.Id ) );
             return false;
@@ -756,7 +756,7 @@ void addRandomCountItemInContainer( uint16 pid, uint16 minCount, uint16 maxCount
         for( uint j = 0, jMax = conts.length(); j < jMax; j++ )
         {
             if( !FLAG( conts[ j ].Flags, ITEM_HIDDEN ) )
-                if( Random( 1, 100 ) < chance )
+                if( uint16( Random( 1, 100 ) ) < chance )
                     conts[ j ].AddItem( pid, Random( minCount, maxCount ), 0 );
         }
     }

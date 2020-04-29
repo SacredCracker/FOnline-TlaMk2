@@ -626,7 +626,7 @@ bool d_ItemNeedRepair( Critter& cr, Critter@ npc )
                     if( FLAG( item.BrokenFlags, BI_ETERNAL ) || FLAG( item.BrokenFlags, BI_NOTRESC ) )
                         return true;
                     int maxRepairCount = ( item.Proto.MaxRepairCount > 0 ) ? ( ( item.Proto.MaxRepairCount + 10 ) * 10 ) : DEFAULT_MAX_REPAIR_COUNT;
-                    if( item.RadioChannel >= int(maxRepairCount / 2) )
+                    if( item.RadioChannel >= uint(maxRepairCount / 2) )
                         return true;
                 }
             }

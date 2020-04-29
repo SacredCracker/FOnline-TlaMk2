@@ -369,7 +369,7 @@ uint8 GetCombo( uint8 plNum, uint8[] GC )
     int8[] cardRank = { -1, -1 };
     for( uint8 i = plNum * CARD_COUNT, iMax = plNum * CARD_COUNT + CARD_COUNT - 1; i < iMax; i++ )
     {
-        if( ( cardRank[ 0 ] == GetRank( GC[ i ] ) ) or ( cardRank[ 1 ] == GetRank( GC[ i ] ) ) )
+        if( ( cardRank[ 0 ] == int16( GetRank( GC[ i ] ) ) ) || ( cardRank[ 1 ] == int16( GetRank( GC[ i ] ) ) ) )
         {
             continue;
         }
@@ -381,7 +381,7 @@ uint8 GetCombo( uint8 plNum, uint8[] GC )
                 {
                     cardRank[ 0 ] = GetRank( GC[ i ] );
                 }
-                if( cardRank[ 0 ] == GetRank( GC[ i ] ) )
+                if( cardRank[ 0 ] == int16( GetRank( GC[ i ] ) ) )
                 {
                     if( cardCount[ 0 ] < 3 )
                     {
@@ -719,7 +719,7 @@ void HighCardReplace( uint8 hc, uint8 i, Critter& pokerMan )
     {
         for( uint8 c = 1; c <= CARD_COUNT; c++ )
         {
-            if( not ( GetSuit( GameCards[ pokerMan.StatBase[ ST_VAR9 ] ][ i * CARD_COUNT + c - 1 ] ) == strfl1Card ) )
+            if( not ( int16( GetSuit( GameCards[ pokerMan.StatBase[ ST_VAR9 ] ][ i * CARD_COUNT + c - 1 ] ) ) == strfl1Card ) )
             {
                 ReplCards[ pokerMan.StatBase[ ST_VAR9 ] ][ i ] = SetBit5( ReplCards[ pokerMan.StatBase[ ST_VAR9 ] ][ i ], c, true );
             }
@@ -731,7 +731,7 @@ void HighCardReplace( uint8 hc, uint8 i, Critter& pokerMan )
         {
             for( uint8 t = 0; t < CARD_COUNT; t++ )
             {
-                if( ( GetRank( GameCards[ pokerMan.StatBase[ ST_VAR9 ] ][ i * CARD_COUNT + t ] ) < min1Straight ) and ( GetRank( GameCards[ pokerMan.StatBase[ ST_VAR9 ] ][ i * CARD_COUNT + t ] ) > min2Straight ) )
+                if( ( GetRank( GameCards[ pokerMan.StatBase[ ST_VAR9 ] ][ i * CARD_COUNT + t ] ) < min1Straight ) and ( int16( GetRank( GameCards[ pokerMan.StatBase[ ST_VAR9 ] ][ i * CARD_COUNT + t ] ) ) > min2Straight ) )
                 {
                     min1Straight = GetRank( GameCards[ pokerMan.StatBase[ ST_VAR9 ] ][ i * CARD_COUNT + c ] );
                 }
@@ -879,7 +879,7 @@ void TwoPairReplace( uint8 i, Critter& pokerMan )
             }
             else
             {
-                if( GetRank( GameCards[ pokerMan.StatBase[ ST_VAR9 ] ][ i * CARD_COUNT + c ] ) < tpPair )
+                if( int16( GetRank( GameCards[ pokerMan.StatBase[ ST_VAR9 ] ][ i * CARD_COUNT + c ] ) ) < tpPair )
                 {
                     tpPair = GetRank( GameCards[ pokerMan.StatBase[ ST_VAR9 ] ][ i * CARD_COUNT + c ] );
                 }
@@ -888,7 +888,7 @@ void TwoPairReplace( uint8 i, Critter& pokerMan )
     }
     for( uint8 c = 0; c < CARD_COUNT; c++ )
     {
-        if( GetRank( GameCards[ pokerMan.StatBase[ ST_VAR9 ] ][ i * CARD_COUNT + c ] ) == tpPair )
+        if( int16( GetRank( GameCards[ pokerMan.StatBase[ ST_VAR9 ] ][ i * CARD_COUNT + c ] ) ) == tpPair )
         {
             if( tpCard[ 1 ] == -1 )
             {
@@ -945,7 +945,7 @@ void StraightReplace( uint8 i, Critter& pokerMan )
         {
             for( uint8 c = 1; c <= CARD_COUNT; c++ )
             {
-                if( not ( GetSuit( GameCards[ pokerMan.StatBase[ ST_VAR9 ] ][ i * CARD_COUNT + c - 1 ] ) == strfl1Card ) )
+                if( not ( int16( GetSuit( GameCards[ pokerMan.StatBase[ ST_VAR9 ] ][ i * CARD_COUNT + c - 1 ] ) ) == strfl1Card ) )
                 {
                     ReplCards[ pokerMan.StatBase[ ST_VAR9 ] ][ i ] = SetBit5( ReplCards[ pokerMan.StatBase[ ST_VAR9 ] ][ i ], c, true );
                 }
@@ -964,7 +964,7 @@ void FlushReplace( uint8 i, Critter& pokerMan )
     {
         for( uint8 t = 0; t < CARD_COUNT; t++ )
         {
-            if( ( GetRank( GameCards[ pokerMan.StatBase[ ST_VAR9 ] ][ i * CARD_COUNT + t ] ) < min1Straight ) and ( GetRank( GameCards[ pokerMan.StatBase[ ST_VAR9 ] ][ i * CARD_COUNT + t ] ) > min2Straight ) )
+            if( ( GetRank( GameCards[ pokerMan.StatBase[ ST_VAR9 ] ][ i * CARD_COUNT + t ] ) < min1Straight ) and ( int16( GetRank( GameCards[ pokerMan.StatBase[ ST_VAR9 ] ][ i * CARD_COUNT + t ] ) ) > min2Straight ) )
             {
                 min1Straight = GetRank( GameCards[ pokerMan.StatBase[ ST_VAR9 ] ][ i * CARD_COUNT + c ] );
             }

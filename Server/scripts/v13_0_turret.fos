@@ -35,7 +35,7 @@ void _TurretGetMessage( Critter& turret, Critter& fromCr, int message, int value
             return;
         if( player.IsNpc() )
             return;
-        AddAttackPlane( turret, 0, player.Id, ( player.StatBase[ ST_CHARISMA ] * 1.5 ) );
+        AddAttackPlane( turret, 0, player.Id, int( player.StatBase[ ST_CHARISMA ] * 1.5 ) );
         // turret.AddEnemyInStack(player.Id);
     }
     else if( message == MSG_V13_GUARD_KILL )

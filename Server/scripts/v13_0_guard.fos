@@ -284,7 +284,7 @@ void r_StartQuest( Critter& player, Critter@ npc )
     int[] ChangeStages = { 0, 3, 5 };
     SetGroupQuestStage( player, ChangeStages, 1 );
     // ”станавливаем таймаут дл€ квеста.  вест не может быть вз€т другими игроками ранее чем через QUEST_TIMEOUT суток.
-    QuestAllowTime = __FullSecond + ( 60 * 60 * 24 * QUEST_TIMEOUT );
+    QuestAllowTime = __FullSecond + uint( 60 * 60 * 24 * QUEST_TIMEOUT );
 
 }
 
