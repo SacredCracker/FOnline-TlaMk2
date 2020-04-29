@@ -6,19 +6,19 @@
 #define CAN_ZOMBIE #(cr)  (cr.Stat[ST_BODY_TYPE]==BT_MEN|| cr.Stat[ST_BODY_TYPE]==BT_WOMEN ||cr.Stat[ST_BODY_TYPE]==BT_CHILDREN ||cr.Stat[ST_BODY_TYPE]==BT_SUPER_MUTANT ||cr.Stat[ST_BODY_TYPE]==BT_GHOUL)
 
 // Превращение всех нпц в зомби!
-void KillEmAll( ::Critter& cr, int, int,int)
+void KillEmAll( Critter& cr, int, int,int)
 {
-	::array<::Critter@> critters;
+	array<Critter@> critters;
 	for(uint i = 1; i < 100; i++)
 	{
 		if(i == LOCATION_SanFrancisco)
 			continue;
-		::Location@ loc = ::GetLocationByPid(i, 0);
+		Location@ loc = GetLocationByPid(i, 0);
 		if(valid(loc) && !loc.AutoGarbage)
 		{
 			for(uint j = 0, l = loc.GetMapCount(); j < l; j++)
 			{
-				::Map@ map = loc.GetMapByIndex(j);
+				Map@ map = loc.GetMapByIndex(j);
 				if(valid(map))
 				{
 					map.GetCritters(0, FIND_ALL|FIND_ONLY_NPC, critters);
@@ -29,11 +29,9 @@ void KillEmAll( ::Critter& cr, int, int,int)
 	}
 	for(uint i = 0, l = critters.length(); i<l; i++)
 	{
-		::Critter@ cr = critters[i];
-		if(valid(cr) && cr.IsNpc() && CAN_ZOMBIE(cr))
-		{
-			cr.SetScript("Zombies::_ZombieInit");
-		}
+		Critter@ icritter = critters[i];
+		if( icritter !is null && icritter.IsNpc() && CAN_ZOMBIE(icritter))
+			icritter.SetScript("Zombies::_ZombieInit");
 	}
 }
 

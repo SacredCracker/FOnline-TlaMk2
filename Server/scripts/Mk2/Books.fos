@@ -7,7 +7,7 @@
 // Read time (Int/hours): 1/10, 2/9, 3/8, 4/7, 5/6, 6/5, 7/4, 8/3, 9/2, 10/1
 // For timeout used Science timeout.
 
-void TryReadBook( ::Critter& cr, ::Item& book) // Export
+void TryReadBook( Critter& cr, Item& book ) // Export
 {
  /* if(uint( cr.Timeout[TO_SK_SCIENCE] ) >REAL_MINUTE(30))
   {
@@ -23,7 +23,7 @@ void TryReadBook( ::Critter& cr, ::Item& book) // Export
     return;
   }
   
-  if(cr.CountReadBook[book.Proto.BookNumber]>=(book.Proto.BookCountRead+(book.Proto.IsSkillBook==1?(cr.Perk[PE_BOOKWORM]*5):0)))
+  if( cr.CountReadBook[book.Proto.BookNumber] >= uint( book.Proto.BookCountRead + ( book.Proto.IsSkillBook == 1 ? ( cr.Perk[PE_BOOKWORM] * 5 ): 0 ) ) )
   {
     cr.SayMsg(SAY_NETMSG,TEXTMSG_GAME,STR_BOOK_READ_FAIL);
     return;
@@ -86,18 +86,18 @@ void TryReadBook( ::Critter& cr, ::Item& book) // Export
         {
           skillVal=cr.Skill[paramNum];
           needPoints=1;
-          if(skillVal>::__SkillModAdd6) needPoints=6;
-          else if(skillVal>::__SkillModAdd5) needPoints=5;
-          else if(skillVal>::__SkillModAdd4) needPoints=4;
-          else if(skillVal>::__SkillModAdd3) needPoints=3;
-          else if(skillVal>::__SkillModAdd2) needPoints=2;
+          if(skillVal>__SkillModAdd6) needPoints=6;
+          else if(skillVal>__SkillModAdd5) needPoints=5;
+          else if(skillVal>__SkillModAdd4) needPoints=4;
+          else if(skillVal>__SkillModAdd3) needPoints=3;
+          else if(skillVal>__SkillModAdd2) needPoints=2;
           if(needPoints<=sp)
           {
             sp-=needPoints;
             cr.SkillBase[paramNum]+=_CritIsTagSkill(cr,paramNum)?2:1;
-            if(cr.SkillBase[paramNum]>=::GetMaxSkill(paramNum))
+            if(cr.SkillBase[paramNum]>=GetMaxSkill(paramNum))
             {
-              cr.SkillBase[paramNum]=::GetMaxSkill(paramNum);
+              cr.SkillBase[paramNum]=GetMaxSkill(paramNum);
               break;
             }
           }

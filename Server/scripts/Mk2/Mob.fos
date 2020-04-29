@@ -169,7 +169,7 @@ class MobDef : Npc::NpcDescriptor
 		Fear=0;
 		SeeCountPlayers = 0;
 		if(!(npc.Stat[ST_TEAM_ID]==0 || npc.Stat[ST_TEAM_ID]==33))
-			MaxFear=GetMyTeamCount(npc) * 80 * 0.01;
+			MaxFear=GetMyTeamCount(npc) * int( 80 * 0.01 );
 		else MaxFear=10;
 	}
 	

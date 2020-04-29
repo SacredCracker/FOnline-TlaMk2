@@ -18,30 +18,31 @@ const uint FireTime
 {
 	get
 	{
-		return ::Random(6,10);
+		return Random(6,10);
 	}
 }
 
-void SetFire(::Map& map, uint16 hx, uint16 hy, uint16 radius, uint16 damage, ::Critter@ cr)
+void SetFire( Map& map, uint16 hx, uint16 hy, uint16 radius, uint16 damage, Critter@ cr )
 {
-	::array<uint> fires = { map.Id, FireTime };	
-	::Item@ fire = null;
+	array<uint> fires = { map.Id, FireTime };	
+	Item@ fire = null;
 	
 	map.PlaySound("HMXXXXBN.ACM", hx, hy, 0);
 	
-	for(int x=-radius+1; x<radius; x++)
+	for( int x = -radius + 1; x < int( radius ); x++)
 	{
-		for(int y=-radius+1; y<radius; y++)
+		for( int y = -radius + 1; y < int( radius ); y++)
 		{
 			uint16 nx=hx+x,
 				   ny=hy+y;
-			if(::GetDistantion(hx, hy, nx, ny)>=radius) continue;
-			@fire=map.GetItem(nx, ny, Content::Item::FIRE);
-			if(validEngineObject(fire)) ::DeleteItem(fire);
-			@fire=map.AddItem(nx, ny, Content::Item::FIRE, 1);
-			if(validEngineObject(fire))
+			if( GetDistantion( hx, hy, nx, ny ) >= radius ) 
+				continue;
+			@fire = map.GetItem( nx, ny, Content::Item::FIRE );
+			if( validEngineObject( fire ) ) DeleteItem( fire );
+			@fire = map.AddItem( nx, ny, Content::Item::FIRE, 1 );
+			if( validEngineObject( fire ) )
 			{
-				fire.Val0 = int(::__FullSecond+REAL_SECOND(5));
+				fire.Val0 = int( __FullSecond + REAL_SECOND( 5 ) );
 				fire.LockerComplexity=damage/Fire::Defines::FloorDamageDivider;
 				if(validEngineObject(cr)) fire.LockerId=cr.Id;
 				fire.SetScript("Mk2@Fire::_FireInit");
@@ -50,7 +51,7 @@ void SetFire(::Map& map, uint16 hx, uint16 hy, uint16 radius, uint16 damage, ::C
 		}
 	}
 
-	::CreateTimeEvent(::__FullSecond+1, "Mk2@Fire::e_LoopFires", fires, true);
+	CreateTimeEvent( __FullSecond + 1, "Mk2@Fire::e_LoopFires", fires, true );
 }
 
 uint e_LoopFires( ::array<uint>@ values)
@@ -108,19 +109,19 @@ void _FireInit(::Item& fire, bool firstTime)
 	}
 }
 
-void _FireWalk(::Item& item, ::Critter& cr, bool entered, uint8 dir)
+void _FireWalk( Item& item, Critter& cr, bool entered, uint8 dir )
 {
 	if(!entered) return;
 	uint[] indexes, durations;
 	int[] rates;
-	::Critter@ attacker=::GetCritter(item.LockerId);
-	if(cr.GetTimeEvents(CTE_FIRE, indexes, durations, rates)==0) // Не поджигаем уже горящих
+	Critter@ attacker = GetCritter(item.LockerId);
+	if( cr.GetTimeEvents( CTE_FIRE, indexes, durations, rates ) == 0 ) // Не поджигаем уже горящих
 	{
-		if(validEngineObject(attacker)) cr.EventAttacked(attacker);
+		if( validEngineObject( attacker ) ) cr.EventAttacked(attacker);
 		cr.GetMap().PlaySound("HMXXXXBN.ACM", cr.HexX, cr.HexY, 0);
 		InjureCritter(cr, item.LockerComplexity, DAMAGE_FIRE, 0, item.LockerId);
 	}
-	else if(rates[0]<item.LockerComplexity) // Но обновляем урон при необходимости.
+	else if( uint( rates[0] ) < item.LockerComplexity ) // Но обновляем урон при необходимости.
 	{
 		if(validEngineObject(attacker))
 		{
@@ -147,74 +148,70 @@ void SetInFire(::Critter& cr, uint damage, ::Critter@ attacker)
 	}
 }
 
-uint cte_Fire(::Critter& cr, int identifier, int& rate, int&)
+uint cte_Fire( Critter& cr, int identifier, int& rate, int&)
 {
 	if(cr.IsDead())
 	{
 		cr.StatBase[ST_FIRE_DATA]=0;
 		return 0;
 	}
-	::Map@ map=cr.GetMap();
 	
-	rate/=Fire::Defines::FireDamageDivider;
+	Map@ map=cr.GetMap();
+	rate /= Fire::Defines::FireDamageDivider;
 	
 	if(validEngineObject(map))
 	{
-		::Item@ fire=map.GetItem(cr.HexX, cr.HexY, Content::Item::FIRE);
-		if(validEngineObject(fire) && fire.LockerComplexity>rate)
+		Item@ fire=map.GetItem(cr.HexX, cr.HexY, Content::Item::FIRE);
+		if(validEngineObject(fire) && int( fire.LockerComplexity ) > rate)
 		{
 			rate=fire.LockerComplexity;
 			cr.StatBase[ST_FIRE_DATA]=fire.LockerId;
 		}
 	}
 		
-	::Critter@ attacker=::GetCritter(cr.Stat[ST_FIRE_DATA]);
-	
+	Critter@ attacker = GetCritter(cr.Stat[ST_FIRE_DATA]);
 	int damage=rate-rate*cr.Stat[ST_FIRE_RESIST]/100-cr.Stat[ST_FIRE_ABSORB];
 
-	if(rate<=uint(Fire::Defines::FireStopDamage))
+	if( rate <= Fire::Defines::FireStopDamage )
 	{
 		cr.StatBase[ST_FIRE_DATA]=0;
 		return 0;
 	}
-	::CombatProccess@ attack = ::CombatProccess();
+	CombatProccess@ attack = CombatProccess();
 	attack.Damage[DAMAGE_FIRE]=damage;
-	@attack.Attacker=attacker;
+	@attack.Attacker = attacker;
 	//cr.StatBase[ST_CURRENT_HP]-=damage;
-	int bt=cr.Stat[ST_BODY_TYPE];
-	int DeadHitPoints=cr.Stat[ST_DEAD_HIT_POINTS];
-	if( DeadHitPoints == ::__DeadHitPoints && ( bt != BT_MEN && bt != BT_WOMEN 
+	int bt = cr.Stat[ST_BODY_TYPE];
+	int DeadHitPoints = cr.Stat[ST_DEAD_HIT_POINTS];
+	if( DeadHitPoints == __DeadHitPoints && ( bt != BT_MEN && bt != BT_WOMEN 
 		&& bt != BT_CHILDREN && bt != BT_SUPER_MUTANT && bt != BT_GHOUL ) ) 
 			DeadHitPoints=0;
 
 
-	::array<::CombatRes> res;
-	::array<uint> eff={CMSG_HIT, cr.Id, CLAMP(damage,0,damage)};
+	array<CombatRes> res;
+	array<uint> eff={CMSG_HIT, cr.Id, CLAMP(damage,0,damage)};
 	Mk2::CombatTargetPacket@ combatDescriptor = cast<Mk2::CombatTargetPacket>(@cr.ScriptDescriptor);
 	if( @combatDescriptor !is null )
 		combatDescriptor.TakeDamage( attack, 1, damage );
 		
-	if(cr.Stat[ST_CURRENT_HP]<=DeadHitPoints)
+	if( cr.Stat[ST_CURRENT_HP] <= DeadHitPoints )
 	{
 		eff[0]=CMSG_HIT_DEAD;
 		uint anim=ANIM2_DEAD_PRONE_BACK;
-		if(cr.IsLife()) anim=::Random(ANIM2_DEAD_BURN, ANIM2_DEAD_BURN_RUN);
+		if(cr.IsLife()) anim = Random(ANIM2_DEAD_BURN, ANIM2_DEAD_BURN_RUN);
 		cr.ToDead(anim, attacker);
 	}
-	else if(cr.Stat[ST_CURRENT_HP]<1)
-	{
+	else if( cr.Stat[ST_CURRENT_HP] < 1 )
 		cr.ToKnockout(KNOCKOUT_ANIM2_DEFAULT(false),0,cr.HexX,cr.HexY);
-	}
+
 	if(validEngineObject(map))
 	{
-		::array<::Critter@> him={ @cr }, crits;
-		for(int i=(cr.IsPlayer()?0:1), iMax=map.GetCrittersSeeing(him, true, FIND_ALL|FIND_ONLY_PLAYERS, crits); i<iMax; i++)
-		{
-			::AddEff(crits[i], eff, res);
-		}
+		array<Critter@> him={ @cr }, crits;
+		for( int i = ( cr.IsPlayer() ? 0 : 1 ), iMax = map.GetCrittersSeeing( him, true, FIND_ALL | FIND_ONLY_PLAYERS, crits ); i < iMax; i++ )
+			AddEff(crits[i], eff, res);
 	}
-	else if(cr.IsPlayer()) ::AddEff(cr, eff, res);
-	::FlushResults(res);
+	else if(cr.IsPlayer()) AddEff(cr, eff, res);
+	FlushResults(res);
 	return REAL_SECOND(Fire::Defines::FireTimer)/Fire::Defines::FireTimerDivider;
 }
 

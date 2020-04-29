@@ -116,9 +116,9 @@ bool MainKarmaVoting( ::Critter@ crFrom, ::Critter@ crTo, bool valUp )
 	return true;
 }
 
-void MainCritterStealing( ::Critter@ cr, ::Critter@ thief, bool& success, ::Item@ item, uint count )
+void MainCritterStealing( Critter@ cr, Critter@ thief, bool& success, Item@ item, uint count )
 {
-    thief.TimeoutBase[ TO_AGGRESSOR ] = ::__FullSecond + REAL_MINUTE( 1 );
+    thief.TimeoutBase[ TO_AGGRESSOR ] = __FullSecond + REAL_MINUTE( 1 );
 
     if( cr.IsKnockout() )
     {
@@ -149,7 +149,7 @@ void MainCritterStealing( ::Critter@ cr, ::Critter@ thief, bool& success, ::Item
     if( kDir > 3 )
         kDir = 6 - kDir;
     if( thief.Mode[ MODE_HIDE ] == 1 )
-        steal += thief.Skill[ SK_SNEAK ] * 0.17;
+        steal += int( thief.Skill[ SK_SNEAK ] * 0.17 );
     if( steal <= 0 )
         steal = 1;
     if( size <= 0 )
@@ -165,7 +165,7 @@ void MainCritterStealing( ::Critter@ cr, ::Critter@ thief, bool& success, ::Item
         if( size < 3 )
             size = 1;
         else
-            size *= 0.5;
+            size = int( size * 0.5 );
     }
 
     // Count modifier
@@ -176,7 +176,7 @@ void MainCritterStealing( ::Critter@ cr, ::Critter@ thief, bool& success, ::Item
     // Check time of stealing
     uint lastStealCrId = thief.Stat[ ST_LAST_STEAL_CR_ID ], stealCount = thief.Stat[ ST_STEAL_COUNT ];
     if( lastStealCrId == cr.Id && thief.Timeout[ TO_STEALING ] > 0 )
-        steal -= steal * stealCount * 9 * 0.01;
+        steal -= int( steal * stealCount * 9 * 0.01 );
 
     // Calc
     int  k = CLAMP( ( steal - kDir * 10 ) / ( size * kCount ), 5, 160 );
@@ -201,7 +201,7 @@ void MainCritterStealing( ::Critter@ cr, ::Critter@ thief, bool& success, ::Item
         thief.TimeoutBase[ TO_STEALING ] = STEAL_TIMEOUT( thief );
         if( cr.IsNpc() )
         {
-            ::GameVar@ stealExpCount = ::GetUnicumVar( UVAR_steal_exp_count, cr.Id, thief.Id );
+            GameVar@ stealExpCount = ::GetUnicumVar( UVAR_steal_exp_count, cr.Id, thief.Id );
             if( stealExpCount < 12 )
             {
                 thief.StatBase[ ST_EXPERIENCE ] += 10 * stealCount * bonusExpForSice;
@@ -219,7 +219,7 @@ void MainCritterStealing( ::Critter@ cr, ::Critter@ thief, bool& success, ::Item
         if( cr.IsNpc() )
         {
             int thiefHp = thief.Stat[ ST_CURRENT_HP ];
-            NpcPlanes::AddAttackPlane( cr, 0, thief, thiefHp< 10 || ::Random( 1, 10 ) > cr.Stat[ ST_LUCK ] + 4 || cr.Stat[ ST_CHARISMA ] < 3 ? (::__DeadHitPoints) : ( ::Random( thiefHp * 0.25, thiefHp * 0.5 ) ) );
+            NpcPlanes::AddAttackPlane( cr, 0, thief, thiefHp< 10 || ::Random( 1, 10 ) > cr.Stat[ ST_LUCK ] + 4 || cr.Stat[ ST_CHARISMA ] < 3 ? __DeadHitPoints : ( Random( int( thiefHp * 0.25 ), int( thiefHp * 0.5 ) ) ) );
         }
     }
 
@@ -483,7 +483,7 @@ bool MainCritterFinish(::Critter@ cr, bool toDelete)
 	return true;
 }
 
-bool MainCritterDead( ::Critter@ cr, ::Critter@ killer )
+bool MainCritterDead( Critter@ cr, Critter@ killer )
 {
 	Replication::SetReplicationTime(cr);
 	SetTracker( cr, -1 );
@@ -516,11 +516,11 @@ bool MainCritterDead( ::Critter@ cr, ::Critter@ killer )
 		if(validEngineObject(killer))
 		{
 			// rifleman17 27.08.2013 Если убийство на пвп-арене, на фракционной статистике не отражается
-			::Map@ m0 = cr.GetMap();
+			Map@ m0 = cr.GetMap();
 			bool arenaKill = false;
 			if(validEngineObject(m0))
 			{
-				::GameVar@ isArenaMap = ::GetLocalVar(LMVAR_map_is_pvp_arena, m0.Id);
+				::GameVar@ isArenaMap = GetLocalVar(LMVAR_map_is_pvp_arena, m0.Id);
 				if(valid(isArenaMap) && isArenaMap.GetValue() == 1)
 					arenaKill = true;
 			}
@@ -613,7 +613,7 @@ bool MainCritterDead( ::Critter@ cr, ::Critter@ killer )
 		}
 	}
 	//TabaK. Убиваем броню при жестокой смерти
-	::Item@ armor=null;
+	Item@ armor=null;
 	if(cr.Anim2Dead>ANIM2_DEAD_BACK && cr.Anim2Dead!=ANIM2_DEAD_LASER)
 	{
 		@ armor=_CritGetItemArmor(cr);
@@ -638,22 +638,22 @@ bool MainCritterDead( ::Critter@ cr, ::Critter@ killer )
 			}
 		}
 	}
-	::Map@ map=cr.GetMap();
+	Map@ map=cr.GetMap();
 	// Move inventory items to ground
 	{
-		::array<::Item@> items;
+		array<Item@> items;
 		cr.GetItems(-1, items);
 		if(validEngineObject(map))
 		{
 			// Disable drop of hidden items
 			for(uint i=0, iMax=items.length(); i<iMax; i++)
 			{
-				::Item@ item=items[i];
+				Item@ item=items[i];
 				if(validEngineObject(item))
 				{
 					if( items[ i ].GetProtoId( ) == Content::Item::EXP_COLLAR )
 					{
-						::DeleteItem( item );
+						DeleteItem( item );
 						@items[ i ] = null;
 						continue;
 					}
@@ -729,7 +729,7 @@ bool MainCritterDead( ::Critter@ cr, ::Critter@ killer )
 
 	if(validEngineObject(killer) && killer.IsPlayer() && killer.Perk[PE_FORTUNE_FINDER]!=0 && cr.IsNpc() && IsHumanoid(cr))
 	{
-		_CritAddItem(cr,Content::Item::BOTTLE_CAPS,::Random(50,100)+cr.Stat[ST_MAX_LIFE] * 0.5);
+		_CritAddItem(cr,Content::Item::BOTTLE_CAPS, int( Random( 50, 100 ) + cr.Stat[ST_MAX_LIFE] * 0.5 ) );
 		if(::Random(0,20)==1) 
 		{
 			const ::array<uint16> Pids_MiscAnturage={Content::Item::DERMAL_PIP_BOY_DISK,Content::Item::LIGHTER,Content::Item::NECKLACE,Content::Item::SMALL_STATUETTE,Content::Item::ANNA_GOLD_LOCKET,Content::Item::CORNELIUS_GOLD_WATCH,Content::Item::TALISMAN,Content::Item::COSMETIC_CASE,Content::Item::DICE,Content::Item::LOADED_DICE,Content::Item::MAGIC_8_BALL,Content::Item::SPECTACLES,Content::Item::MIRROR_SHADES,Content::Item::DECK_OF_CARDS,Content::Item::MARKED_DECK_OF_CARDS};

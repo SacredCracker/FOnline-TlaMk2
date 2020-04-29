@@ -128,19 +128,19 @@ void ClearBase( ::Map@ map)
 			NpcMenegeLib::_CritterDead(npcs[i], null);
 }
 
-uint e_BaseRefresh(::array<uint>@ values)
+uint e_BaseRefresh( uint[]@ values)
 {
-	if(!valid(values))
+	if( values is null )
 		return 0;
 		
-	::Map@ map = ::GetMap(values[0]);
-	if(!validEngineObject(map)) 
+	Map@ map = GetMap( values[0] );
+	if( !validEngineObject( map ) ) 
 		return 0;
 	
-	int level=map.GetData(LEVEL_BASE),
-		stage=map.GetData(STAGE_BASE),
-		base=map.GetData(INDEX_BASE),
-		org=map.GetData(ORG_BASE);
+	int level = map.GetData( LEVEL_BASE ),
+		stage = map.GetData( STAGE_BASE ),
+		base = map.GetData( INDEX_BASE ),
+		org = map.GetData( ORG_BASE );
 
 	//Если база контролируется игроком, запускается новый цикл удержания.
 	// Количество этапов увеличивается на единицу, после каждых четырех удержаний. 
@@ -150,14 +150,14 @@ uint e_BaseRefresh(::array<uint>@ values)
 		return 0;
 	}
 	
-	uint timeout = BASE_REFRESH_TIME / (BASE_NUMBER_OF_CYCLES + level * 0.25);
+	uint timeout = BASE_REFRESH_TIME / uint( BASE_NUMBER_OF_CYCLES + level * 0.25 );
 	
 	// Если на карте есть живые штурмовики, то просто добавить ещё пустой цикл
 	if(TrooperInMap(map))
 		return timeout;
 
 	// Если спавнить машину ещё не пора, то следующая волна.
-	if( stage < ( BASE_NUMBER_OF_CYCLES+level * 0.25 ) )
+	if( stage < int( BASE_NUMBER_OF_CYCLES + level * 0.25 ) )
 	{
 		SetupWaves(base, org, level);
 		map.SetData(STAGE_BASE, stage+1);
@@ -800,9 +800,9 @@ int GetBagTerm(int level)
 }
 
 // Атака на собор.
-void SetupCathedralWaves(int8 bosWave, int level)
+void SetupCathedralWaves( int8 bosWave, int level )
 {
-	::Map@ map = ::GetMapByPid(MAP_cath_enter,0);
+	Map@ map = GetMapByPid(MAP_cath_enter,0);
 	if (!validEngineObject(map)) return;
 
 	if (!FractionInMap(map))
@@ -813,9 +813,9 @@ void SetupCathedralWaves(int8 bosWave, int level)
 
 	if(bosWave!=ORG_MOB)
 	{
-		::array<::Critter@> trooper = {}, snipper = {};
+		array<Critter@> trooper = {}, snipper = {};
 		//Critter@[] slayer;
-		::array<int>	paramsTrooper = {
+		array<int>	paramsTrooper = {
 				ST_TEAM_ID, (bosWave!=ORG_BOS?TEAM_BoSTrooper:TEAM_EnclaveTrooper), 
 				ST_BAG_ID, (GetBagTerm(level)),
 				ST_CRITICAL_RESISTANCE, 70,
@@ -845,10 +845,10 @@ void SetupCathedralWaves(int8 bosWave, int level)
 	
 		// Группа штурмовиков.
 		trooper = NpcMenegeLib::addGroupNpc(map, (bosWave==ORG_BOS?NPCPID_EnclaveTrooper:NPCPID_BosTrooper), paramsTrooper, 147, 89, 100, 5, 
-				  bosWave!=ORG_BOS?(::Random(1,3)+level * 0.33):(::Random(1,3)+level * 0.33), "pattern_term@_CritterInit");
+				  bosWave!=ORG_BOS? int( Random( 1, 3 ) + level * 0.33 ) : int( Random( 1, 3 ) + level * 0.33 ), "pattern_term@_CritterInit");
 		// Группа снайперов.
 		snipper = NpcMenegeLib::addGroupNpc(map, (bosWave==ORG_BOS?NPCPID_EnclaveSniper:NPCPID_BosSniper), paramsSniper, 147, 89, 100, 5, 
-				  bosWave!=ORG_BOS?(::Random(1,2)+level * 0.33):(::Random(1,2)+level * 0.33), "pattern_sniper@_CritterInit");
+				  bosWave!=ORG_BOS? int( Random( 1, 2 ) + level * 0.33) : int( Random( 1, 2 ) + level * 0.33 ), "pattern_sniper@_CritterInit");
 
 		NpcMenegeLib::GroupInit(trooper);
 		NpcMenegeLib::GroupInit(snipper);
@@ -908,7 +908,7 @@ void SetupCathedralWaves(int8 bosWave, int level)
 // Атака на Сиерру.
 void SetupSierraWaves(int8 bosWave, int level)
 {
-	::Map@ map = ::GetMapByPid(MAP_sad_enter,0);
+	Map@ map = GetMapByPid(MAP_sad_enter,0);
 	if (!validEngineObject(map))	return;
 
 	if (!FractionInMap(map))
@@ -950,10 +950,10 @@ void SetupSierraWaves(int8 bosWave, int level)
 
 		// Группа штурмовиков.
 		trooper = NpcMenegeLib::addGroupNpc(map, (bosWave==ORG_BOS?NPCPID_EnclaveTrooper:NPCPID_BosTrooper), paramsTrooper, 84, 84, 100, 5, 
-				  bosWave!=ORG_BOS?(::Random(2,4)+level * 0.5):(::Random(2,4)+level * 0.5), "pattern_term@_CritterInit");
+				  bosWave != ORG_BOS ? int( Random( 2, 4 ) + level * 0.5 ) : int( Random( 2, 4 ) + level * 0.5 ), "pattern_term@_CritterInit");
 		// Группа снайперов.
 		snipper = NpcMenegeLib::addGroupNpc(map, (bosWave==ORG_BOS?NPCPID_EnclaveSniper:NPCPID_BosSniper), paramsSniper, 84, 84, 100, 5, 
-				  bosWave!=ORG_BOS?(::Random(1,2)+level * 0.5):(::Random(1,2)+level * 0.5), "pattern_sniper@_CritterInit");
+				  bosWave != ORG_BOS ? int( Random( 1, 2 ) + level * 0.5 ) : int( Random( 1, 2 ) + level * 0.5 ), "pattern_sniper@_CritterInit");
 
 		NpcMenegeLib::GroupInit(trooper);
 		NpcMenegeLib::GroupInit(snipper);
@@ -994,7 +994,7 @@ void SetupSierraWaves(int8 bosWave, int level)
 				ST_ROLE_CITY, CITY_BASE_ATACKER};
 
 		FloatingEyeballs = NpcMenegeLib::addGroupNpc(map, NPCPID_RoboEye, paramFloatingEyeballs, 84, 84, 100, 5, ::Random(2,4)+level, "pattern_slayer@_CritterInit");
-		SentryBots = NpcMenegeLib::addGroupNpc(map, NPCPID_SentryRobot, paramSentryBots, 84, 84, 100, 5, ::Random(1,2)+level * 0.5, "pattern_term@_CritterInit");
+		SentryBots = NpcMenegeLib::addGroupNpc(map, NPCPID_SentryRobot, paramSentryBots, 84, 84, 100, 5, int( Random( 1, 2 ) + level * 0.5 ), "pattern_term@_CritterInit");
 
 		NpcMenegeLib::GroupInit(FloatingEyeballs);
 		NpcMenegeLib::GroupInit(SentryBots);
@@ -1053,9 +1053,11 @@ void SetupMariposaWaves(int8 bosWave, int level)
 				ST_ROLE_CITY, CITY_BASE_ATACKER};
 
 		// Группа штурмовиков.
-		trooper = NpcMenegeLib::addGroupNpc(map, (bosWave==ORG_BOS?NPCPID_EnclaveTrooper:NPCPID_BosTrooper), paramsTrooper, 84, 84, 100, 5, bosWave!=ORG_BOS?(::Random(1,3)+level * 0.33):(::Random(1,3)+level * 0.33), "pattern_term@_CritterInit");
+		trooper = NpcMenegeLib::addGroupNpc(map, (bosWave==ORG_BOS?NPCPID_EnclaveTrooper:NPCPID_BosTrooper), paramsTrooper, 84, 84, 100, 5, 
+				  bosWave != ORG_BOS ? int( Random( 1, 3 ) + level * 0.33 ) : int( Random( 1, 3 ) + level * 0.33 ), "pattern_term@_CritterInit");
 		// Группа снайперов.
-		snipper = NpcMenegeLib::addGroupNpc(map, (bosWave==ORG_BOS?NPCPID_EnclaveSniper:NPCPID_BosSniper), paramsSniper, 84, 84, 100, 5, bosWave!=ORG_BOS?(::Random(1,2)+level * 0.33):(::Random(1,2)+level * 0.33), "pattern_sniper@_CritterInit");
+		snipper = NpcMenegeLib::addGroupNpc(map, (bosWave==ORG_BOS?NPCPID_EnclaveSniper:NPCPID_BosSniper), paramsSniper, 84, 84, 100, 5, 
+				  bosWave != ORG_BOS ? int( Random( 1, 2 ) + level * 0.33 ) : int( Random( 1, 2 ) + level * 0.33 ), "pattern_sniper@_CritterInit");
 
 		NpcMenegeLib::GroupInit(trooper);
 		NpcMenegeLib::GroupInit(snipper);

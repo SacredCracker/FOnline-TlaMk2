@@ -39,13 +39,13 @@ import void InitRandomisationItem( Item& item, bool isCrafted, Critter& cr, stri
 
 void _MapRespawnItemInContainers( Map& map, bool firstTime )
 {
-    CreateTimeEvent( __FullSecond + TABLE_REFRESH_HOUR( getMapIndex( map ) ) * ( Random( 100 - REFRESH_TIME_RANGE, REFRESH_TIME_RANGE + 100 ) * 0.01 ), "e_RespawnItem", map.Id, true );
+    CreateTimeEvent( __FullSecond + TABLE_REFRESH_HOUR( getMapIndex( map ) ) * uint( Random( 100 - REFRESH_TIME_RANGE, REFRESH_TIME_RANGE + 100 ) * 0.01 ), "e_RespawnItem", map.Id, true );
 }
 
 void _MapRespawnItemInEntire( Map& map, bool firstTime, int entire )
 {
     int[] values = { map.Id, entire };
-    CreateTimeEvent( __FullSecond + TABLE_REFRESH_HOUR( getMapIndex( map ) ) * ( Random( 100 - REFRESH_TIME_RANGE, REFRESH_TIME_RANGE + 100 ) * 0.01 ), "e_RespawnItem", values, true );
+    CreateTimeEvent( __FullSecond + TABLE_REFRESH_HOUR( getMapIndex( map ) ) * uint( Random( 100 - REFRESH_TIME_RANGE, REFRESH_TIME_RANGE + 100 ) * 0.01 ), "e_RespawnItem", values, true );
 }
 
 uint e_RespawnItem( uint[] @ values )
@@ -56,8 +56,8 @@ uint e_RespawnItem( uint[] @ values )
     Item@[] containers = getAllContainer( map );
     uint mapIndex = getMapIndex( map );
     respItem( map, containers, values[ 1 ], false );
-    Log( "TIME=" + ( TABLE_REFRESH_HOUR( mapIndex ) * ( Random( 100 - REFRESH_TIME_RANGE, REFRESH_TIME_RANGE + 100 ) * 0.01 ) ) );
-    return TABLE_REFRESH_HOUR( mapIndex ) * ( Random( 100 - REFRESH_TIME_RANGE, REFRESH_TIME_RANGE + 100 ) * 0.01 );
+    Log( "TIME=" + ( TABLE_REFRESH_HOUR( mapIndex ) * uint( Random( 100 - REFRESH_TIME_RANGE, REFRESH_TIME_RANGE + 100 ) * 0.01 ) ) );
+    return TABLE_REFRESH_HOUR( mapIndex ) * uint( Random( 100 - REFRESH_TIME_RANGE, REFRESH_TIME_RANGE + 100 ) * 0.01 );
 }
 
 // Респавн предметов
@@ -70,7 +70,7 @@ void respItem( Map& map, Item@[] containers, int entire, bool deleteOldItems )
     uint countContainers = containers.length();         // Количество контейнеров на карте
     if( entire == 0 )
     {
-        if( countContainers < 1 )
+        if( countContainers == 0 )
             return;
 
         // Если нужно очистить контейнеры от старых предметов, то удаляем их
@@ -103,7 +103,7 @@ void respItem( Map& map, Item@[] containers, int entire, bool deleteOldItems )
         // rifleman17 23/08/13. Добавлено назначение размера стака
         int              addingCount = 1;
         const ProtoItem@ proto = GetProtoItem( pid );
-        if( valid( proto ) )
+        if( proto !is null )
         {
             addingCount = needCount;
             needCount = 1;
@@ -122,43 +122,43 @@ void respItem( Map& map, Item@[] containers, int entire, bool deleteOldItems )
                 // bydloCode on
                 if( pid == PID_MOTIVATOR )
                 {
-                    GameVar@ timeout_motivator = GetGlobalVar( GVAR_timeout_motivator );
-                    if( valid( timeout_motivator ) )
-                        if( uint( timeout_motivator.GetValue() ) < __FullSecond )
-                        {
-                            timeout_motivator = __FullSecond + REAL_HOUR( Random( 72, 120 ) );
-                        }
+                    GameVar@ timeout_var = GetGlobalVar( GVAR_timeout_motivator );
+                    if( timeout_var !is null )
+					{
+                        if( uint( timeout_var.GetValue() ) < __FullSecond )
+                            timeout_var = __FullSecond + REAL_HOUR( Random( 72, 120 ) );
                         else
-                            continue;
+							continue;
+					}
                 }
                 else if( pid == PID_K9_MOTIVATOR )
                 {
-                    GameVar@ timeout_motivator_k9 = GetGlobalVar( GVAR_timeout_motivator_k9 );
-                    if( valid( timeout_motivator_k9 ) )
-                        if( uint( timeout_motivator_k9.GetValue() ) < __FullSecond )
-                        {
-                            timeout_motivator_k9 = __FullSecond + REAL_HOUR( Random( 96, 144 ) );
-                        }
+                    GameVar@ timeout_var = GetGlobalVar( GVAR_timeout_motivator_k9 );
+                    if( timeout_var !is null )
+					{
+                        if( uint( timeout_var.GetValue() ) < __FullSecond )
+                            timeout_var = __FullSecond + REAL_HOUR( Random( 96, 144 ) );
                         else
                             continue;
+					}
                 }
                 else if( pid == PID_OIL_CAN_TRUE )
                 {
-                    GameVar@ timeout_oil_can = GetGlobalVar( GVAR_timeout_oil_can );
-                    if( valid( timeout_oil_can ) )
-                        if( uint( timeout_oil_can.GetValue() ) < __FullSecond )
-                        {
-                            timeout_oil_can = __FullSecond + REAL_HOUR( Random( 8, 10 ) );
-                        }
+                    GameVar@ timeout_var = GetGlobalVar( GVAR_timeout_oil_can );
+                    if( timeout_var !is null )
+					{
+                        if( uint( timeout_var.GetValue() ) < __FullSecond )
+                            timeout_var = __FullSecond + REAL_HOUR( Random( 8, 10 ) );
                         else
                             continue;
+					}
                 }
                 // bydloCode off
 
                 Item@ item = null, last_cont;
                 if( entire == 0 )
                 {
-                    @ last_cont = containers[ Random( 0, countContainers - 1 ) ];
+                    @last_cont = containers[ Random( 0, countContainers - 1 ) ];
                     if( validEngineObject( last_cont ) )
                         @item = last_cont.AddItem( pid, 1, 0 );                          // Добавляем предмет
                 }
@@ -170,7 +170,7 @@ void respItem( Map& map, Item@[] containers, int entire, bool deleteOldItems )
                     if( map.GetEntireCoords( entire, Random( 0, entNum - 1 ), XSpawn, YSpawn ) )
                     {
                         const ProtoItem@ protoItem = GetProtoItem( pid );
-                        if( valid( protoItem ) )
+                        if( protoItem !is null )
                             map.AddItem( XSpawn, YSpawn, pid, addingCount );
                         else
                         {
@@ -241,11 +241,11 @@ bool GetConstantValue( const int& in constCollection, string@ name, int& out val
     value = ::GetConstantValue( constCollection, name );
     return ( value != -1 );
 }
-
+ 
 void FarmItemBagsItemsLineCompil( const string& in line, array< SlotBags@ >& inout slots, dictionary& in libItemSets, array< string@ >& inout includes, uint blockf, uint linei, string@ defName )
 {
     array< string@ > memSt = splitEx( line, " " ), varStr, varStr0,
-                     itemsStr, itemsParam, secondStr, blueprintStr, mStr;
+                     itemsStr, itemsParam, secondStr, blueprintStr;
 
     string@ tempStr = null, tempStr2 = null;
     int     mem = -1,
@@ -271,14 +271,14 @@ void FarmItemBagsItemsLineCompil( const string& in line, array< SlotBags@ >& ino
             StrToInt( itemsStr[ 1 ], percent );
 
         varStr = splitEx( itemsStr[ 0 ], "+" );
-        for( uint t = 0, tMax = varStr.length(); t < tMax; t++ )
+        for( uint iline0 = 0, iline0_max = varStr.length(); iline0 < iline0_max; iline0++ )
         {
             array< FarmItem@ > its;
-            itemsStr = splitEx( varStr[ t ], "||" );
-            for( uint t = 0, tMax = itemsStr.length(); t < tMax; t++ )
+            itemsStr = splitEx( varStr[ iline0 ], "||" );
+            for( uint iline1 = 0, iline1_max = itemsStr.length(); iline1 < iline1_max; iline1++ )
             {
                 array< FarmItem@ > subIts;
-                @ tempStr = itemsStr[ t ];
+                @ tempStr = itemsStr[ iline1 ];
                 @ tempStr2 = null;
                 array< string@ > mStr = splitEx( tempStr, ")" );
 
@@ -291,9 +291,9 @@ void FarmItemBagsItemsLineCompil( const string& in line, array< SlotBags@ >& ino
                     @ tempStr = mStr[ 0 ] + tempStr2;
 
                     varStr0 = splitEx( mStr[ 1 ], "," );
-                    for( uint t = 0, tMax = varStr0.length(); t < tMax; t++ )
+                    for( uint iline2 = 0, iline2_max = varStr0.length(); iline2 < iline2_max; iline2++ )
                     {
-                        itemsParam = splitEx( varStr0[ t ], "^" );
+                        itemsParam = splitEx( varStr0[ iline2 ], "^" );
                         ItemSlot = SLOT_INV;
                         noSlot = ( itemsParam.length() == 1 );
                         if( not noSlot )
@@ -332,7 +332,7 @@ void FarmItemBagsItemsLineCompil( const string& in line, array< SlotBags@ >& ino
                                              argsMems;
                             for( uint t = 0, tMax = formatArgs.length(); t < tMax; t++ )
                             {
-                                if( valid( formatArgs[ t ] ) )
+                                if( formatArgs[ t ] !is null )
                                 {
                                     argsMems = splitEx( formatArgs[ t ], "=" );
                                     if( argsMems.length() == 2 )
@@ -429,7 +429,7 @@ void FarmItemBagsItemsLineCompil( const string& in line, array< SlotBags@ >& ino
                                      argsMems;
                     for( uint t = 0, tMax = formatArgs.length(); t < tMax; t++ )
                     {
-                        if( valid( formatArgs[ t ] ) )
+                        if( formatArgs[ t ] !is null )
                         {
                             argsMems = splitEx( formatArgs[ t ], "=" );
                             if( argsMems.length() == 2 )
@@ -557,7 +557,7 @@ void FarmItemBagsBlockCompil( const string& in Dataf, dictionary& inout libItemS
                     pid = mem;
             }
             else if( temp[ 0 ] == "Items" )
-                FarmItemBagsItemsLineCompil( formatTxt, slots, libItemSets, incl, blockf, i, ( valid( defName ) ? defName : "" ) );
+                FarmItemBagsItemsLineCompil( formatTxt, slots, libItemSets, incl, blockf, i, ( defName !is null ? defName : "" ) );
             else if( temp[ 0 ] == "DefName" )
             {
                 if( not libItemSets.exists( formatTxt ) )
@@ -575,12 +575,12 @@ void FarmItemBagsBlockCompil( const string& in Dataf, dictionary& inout libItemS
     // FarmBags protoBags( pid, slots );
     @ Farm::AllBags[ pid - 1 ] = FarmBags( pid, slots );
     FarmBags@ bags = ( Farm::AllBags[ pid - 1 ] );
-    if( valid( bags ) )
+    if( bags !is null )
     {
         @ bags.DefName = defName;
         if( percent != 0 )
             bags.MaxPercent = percent;
-        if( valid( defName ) )
+        if( defName !is null )
             libItemSets.set( defName, pid );
     }
     else
@@ -588,7 +588,7 @@ void FarmItemBagsBlockCompil( const string& in Dataf, dictionary& inout libItemS
 }
 
 void InitializeFarmLocation()
-{
+{ 
     file       f;
     dictionary libItemSets;
 
@@ -616,15 +616,15 @@ void InitializeFarmLocation()
                 if( StrToInt( temp[ 1 ], mem ) )
                 {
                     Farm::AllBags.resize( mem );
-                    for( uint f = 1; f < iEnd; f++ )
-                        FarmItemBagsBlockCompil( data1[ f ], libItemSets, f );
+                    for( uint ibags = 1; ibags < iEnd; ibags++ )
+                        FarmItemBagsBlockCompil( data1[ ibags ], libItemSets, ibags );
                 }
             }
         }
     }
 
     for( uint i = 0, iEnd = Farm::AllBags.length(); i < iEnd; i++ )
-        if( valid( Farm::AllBags[ i ] ) )
+        if( Farm::AllBags[ i ] !is null )
             ( Farm::AllBags[ i ] ).Initialize();
 
     {
@@ -645,7 +645,8 @@ void InitializeFarmLocation()
                 line = splitEx( data1.first(), "\n" );
 
                 mem = 0;
-                for( uint i = 0, iEnd = line.length(); i < iEnd; i++ )
+				iEnd = line.length();
+                for( uint i = 0; i < iEnd; i++ )
                 {
                     temp = splitEx( line[ i ], "=" );
                     if( temp.length() > 1 )
@@ -672,12 +673,12 @@ void InitializeFarmLocation()
                                 {
                                     lineS = splitEx( blockStringArr[ 0 ], "\n" );
                                     int memS = 0;
-                                    for( uint i = 0, iEndS = lineS.length(); i < iEndS; i++ )
+                                    for( uint iline = 0, ilineEnd = lineS.length(); iline < ilineEnd; iline++ )
                                         if( tempS.length() > 1 && tempS[ 0 ] == "MaxFarmCritter" && StrToInt( tempS[ 1 ], memS ) )
                                             countMob += memS;
 
-                                    for( uint i = 1, iEnd = blockStringArr.length(); i < iEnd; i++ )
-                                        data1.insertLast( blockStringArr[ i ] );
+                                    for( uint iline = 1; iline < iEndS; iline++ )
+                                        data1.insertLast( blockStringArr[ iline ] );
                                 }
                             }
                         }
@@ -696,17 +697,17 @@ void InitializeFarmLocation()
                 for( uint i = 1; i < iEnd; i++ )
                 {
                     mobParam.resize( 0 );
-                    for( uint i = 0; i < uint( Farm::Constant::Mob::Data::CountData ); i++ )
-                        memData[ i ] = 0;
+                    for( uint iline = 0; iline < Farm::Constant::Mob::Data::CountData; iline++ )
+                        memData[ iline ] = 0;
                     @ aiScript = null;
                     line = splitEx( data1[ i ], "\n" );
-                    for( uint i = 0, iEnd = line.length(); i < iEnd; i++ )
+                    for( uint iline = 0, ilineEnd = line.length(); iline < ilineEnd; iline++ )
                     {
-                        if( valid( line[ i ] ) && line[ i ].length() > 0 )
+                        if( line[ iline ] !is null && line[ iline ].length() > 0 )
                         {
-                            if( line[ i ][ 0 ] == '#' )
+                            if( line[ iline ][ 0 ] == '#' )
                                 continue;
-                            temp = splitEx( line[ i ], "=" );
+                            temp = splitEx( line[ iline ], "=" );
                             if( temp[ 0 ] == "Pid" )
                             {
                                 if( StrToInt( temp[ 1 ], mem ) )
@@ -805,8 +806,8 @@ void InitializeFarmLocation()
                 listName.writeString( "void LoadFarmNames( string@[]&out n, const string&in l )\n{\n" );
 
                 listName.writeString( "\tif( l == \"russ\" )\n\t{\n\t\tstring@[] arr = \n\t\t{\n\t\t\t" );
-                #define defWriteFirst    # (s) listName.writeString( valid( s ) ? ( "\"" + s + "\"" ) : "null" )
-                #define defWrite         # (s) listName.writeString( valid( s ) ? ( " , \"" + s + "\"" ) : " , null" )
+                #define defWriteFirst    # (s) listName.writeString( s !is null ? ( "\"" + s + "\"" ) : "null" )
+                #define defWrite         # (s) listName.writeString( s !is null ? ( " , \"" + s + "\"" ) : " , null" )
                 defWriteFirst( AllNameR[ 0 ] );
                 for( uint i = 1; i < countMob + 1; i++ )
                 {
@@ -888,9 +889,9 @@ void InitializeFarmLocation()
                         isStatic = false;
 
                         line = splitEx( data1[ i ], "\n" );
-                        for( uint i = 0, iEnd = line.length(); i < iEnd; i++ )
+                        for( uint iline0 = 0, iline0End = line.length(); iline0 < iline0End; iline0++ )
                         {
-                            temp = splitEx( line[ i ], "=" );
+                            temp = splitEx( line[ iline0 ], "=" );
                             if( temp[ 0 ] == "Pid" )
                             {
                                 if( StrToInt( temp[ 1 ], mem ) )
@@ -986,9 +987,9 @@ void InitializeFarmLocation()
                         for( uint m = 0; m < uint( Farm::Constant::Container::Data::CountData ); m++ )
                             memData[ m ] = 0;
                         line = splitEx( data1[ i ], "\n" );
-                        for( uint i = 0, iEnd = line.length(); i < iEnd; i++ )
+                        for( uint iline0 = 0, iline0End = line.length(); iline0 < iline0End; iline0++ )
                         {
-                            temp = splitEx( line[ i ], "=" );
+                            temp = splitEx( line[ iline0 ], "=" );
                             if( temp[ 0 ] != "" && temp[ 0 ].length() > 0 )
                             {
                                 if( temp[ 0 ] == "Pid" )
@@ -1010,9 +1011,9 @@ void InitializeFarmLocation()
                                     {
                                         array< uint > bag;
                                         array< string@ > memSt0 = splitEx( temp[ 1 ], "||" );
-                                        for( uint j = 0, jMax = memSt0.length(); j < jMax; j++ )
-                                        {
-                                            if( StrToInt( memSt0[ j ], mem ) )
+                                        for( uint j0 = 0, j0Max = memSt0.length(); j0 < j0Max; j0++ )
+                                        { 
+                                            if( StrToInt( memSt0[ j0 ], mem ) )
                                                 bag.insertLast( mem );
                                         }
                                         bags.insertLast( bag );
@@ -1075,7 +1076,7 @@ void InitializeFarmLocation()
                 {
                     uint countLoc = mem;
                     Farm::AllLocs.resize( countLoc );
-                    array< string@ > memSt;
+                    array< string@ >@ memSt;
                     for( uint i = 1; i < iEnd; i++ )
                     {
                         uint pid = 0;
@@ -1084,9 +1085,9 @@ void InitializeFarmLocation()
                         teamIds( 0 ), conids( 0 ), pids( 0 );
                         line = splitEx( data1[ i ], "\n" );
                         string@ nameLoc = null;
-                        for( uint i = 0, iEnd = line.length(); i < iEnd; i++ )
+                        for( uint iline0 = 0, iline0End = line.length(); iline0 < iline0End; iline0++ )
                         {
-                            temp = splitEx( line[ i ], "=" );
+                            temp = splitEx( line[ iline0 ], "=" );
                             if( temp[ 0 ] == "Pid" )
                             {
                                 if( StrToInt( temp[ 1 ], mem ) )
@@ -1094,7 +1095,7 @@ void InitializeFarmLocation()
                             }
                             else if( temp[ 0 ] == "Time" )
                             {
-                                array< string@ > memSt = splitEx( temp[ 1 ], "-" );
+                                @memSt = splitEx( temp[ 1 ], "-" );
                                 if( memSt.length() > 0 )
                                 {
                                     if( StrToInt( memSt[ 0 ], mem ) )
@@ -1142,21 +1143,21 @@ void InitializeFarmLocation()
                             }
                             else if( temp[ 0 ] == "LocationPid" )
                             {
-                                array< string@ > memSt = splitEx( temp[ 1 ], " " );
+                                @memSt = splitEx( temp[ 1 ], " " );
                                 for( uint j = 0, jMax = memSt.length(); j < jMax; j++ )
                                     if( StrToInt( memSt[ j ], mem ) )
                                         pids.insertLast( mem );
                             }
                             else if( temp[ 0 ] == "TeamMobs" )
                             {
-                                memSt = splitEx( temp[ 1 ], " " );
+                                @memSt = splitEx( temp[ 1 ], " " );
                                 for( uint j = 0, jMax = memSt.length(); j < jMax; j++ )
                                     if( StrToInt( memSt[ j ], mem ) )
                                         teamIds.insertLast( mem );
                             }
                             else if( temp[ 0 ] == "Containers" )
                             {
-                                memSt = splitEx( temp[ 1 ], " " );
+                                @memSt = splitEx( temp[ 1 ], " " );
                                 for( uint j = 0, jMax = memSt.length(); j < jMax; j++ )
                                     if( StrToInt( memSt[ j ], mem ) )
                                         conids.insertLast( mem );
@@ -1169,11 +1170,11 @@ void InitializeFarmLocation()
                             else if( temp[ 0 ] == "ProtectMask" )
                             {
                                 const uint lenStr = temp[ 1 ].length();
-                                for( uint i = 0; i < lenStr; i++ )
+                                for( uint iline1 = 0; iline1 < lenStr; iline1++ )
                                 {
-                                    if( temp[ 1 ][ i ] == '0' )
+                                    if( temp[ 1 ][ iline1 ] == '0' )
                                         ProtectMask.insertLast( 0 );
-                                    else if( temp[ 1 ][ i ] == '1' )
+                                    else if( temp[ 1 ][ iline1 ] == '1' )
                                         ProtectMask.insertLast( 1 );
                                     else
                                         Log( "Error - ProtectMask" );
@@ -1191,7 +1192,7 @@ void InitializeFarmLocation()
 
                         @Farm::AllLocs[ pid - 1 ] = FarmLocation( pid );
                         ( Farm::AllLocs[ pid - 1 ] ).Initialize( pids, memData, teamIds, conids, ProtectMask );
-                        if( valid( nameLoc ) )
+                        if( nameLoc !is null )
                             Farm::AllLocs[ pid - 1 ].Name = nameLoc;
                     }
                 }
@@ -1256,11 +1257,8 @@ final class FarmMob : Farm::Mob
             return null;
         array< int > items;
 
-        if( not valid( ( Farm::AllBags[ BagId - 1 ] ).Slots ) )
-            return null;
-
-        SlotBags@ slot = ( Farm::AllBags[ BagId - 1 ] ).getSlot();
-        if( not valid( slot ) || not valid( slot.Items ) )
+        SlotBags@ slot = Farm::AllBags[ BagId - 1 ].getSlot();
+        if( slot is null || slot.Items is null )
             return null;
 
         uint endItems = 0;
@@ -1269,7 +1267,7 @@ final class FarmMob : Farm::Mob
         {
             FarmItem@ fi = slot.Items[ i ][ Random( 0, slot.Items[ i ].length() - 1 ) ];
 
-            if( valid( fi ) )
+            if( fi !is null )
             {
                 rand = Random( 1, 100 );
                 if( rand <= fi.Percent || fi.Percent == 0 )
@@ -1306,24 +1304,24 @@ final class FarmMob : Farm::Mob
         if( BagId != 0 && BagId <= Farm::AllBags.length() )
         {
             FarmBags@ bag = ( Farm::AllBags[ BagId - 1 ] );
-            if( valid( bag ) )
+            if( bag !is null )
             {
                 SlotBags@ slot = bag.getSlot();
-                if( valid( slot ) )
+                if( slot !is null )
                 {
                     array< FarmItem@ >@ Its = null;
                     array< array< FarmItem@ > >@ Items = slot.Items;
                     FarmItem@ fi = null;
 
-                    if( valid( Items ) )
+                    if( Items !is null )
                     {
                         for( uint i = 0, iEnd = Items.length(); i < iEnd; i++ )
                         {
                             @ Its = Items[ i ];
-                            if( valid( Its ) && Its.length() > 0  )
+                            if( Its !is null && Its.length() > 0  )
                             {
                                 @ fi = Its[ Random( 0, Its.length() - 1 ) ];
-                                if( valid( fi ) )
+                                if( fi !is null )
                                     fi.AddItem( mob, additemFlag );
                             }
                         }
@@ -1358,26 +1356,21 @@ final class FarmTeamMob : Farm::TeamMobs
     {
         FarmMob@ mob = null;
         Critter@ cr = null;
-        array< int > params;
+        // array< int > params;
 
         uint mapId = map.Id;
 
         uint16 hexX = 0, hexY = 0, hx = 0, hy = 0;
         uint CountMob = 0, ui0 = 0, ui1 = 0, ui2 = 0, maxMob = CountMobs.Max, Radius = 0;
         int xDelta = 0, yDelta = 0;
+		
+        if( !StaticCount )
+			Farm::FixValue( maxMob, countPlayer, 30 );
 
-        if( countPlayer > 1 && not StaticCount )
-        {
-            const float fmm = ( float(countPlayer) - 1 ) * ( ( float(maxMob) / 100 ) * 30 );
-            maxMob += fmm;
-            if( fmm - int(fmm) > 0 )
-                maxMob++;
-        }
-
-        const int mapWidth =  map.GetWidth() - 5,
+        const uint16 mapWidth =  map.GetWidth() - 5,
                   mapHeight =  map.GetHeight() - 5;
         array< int > paramsSpawn;
-        const uint      ui0End = GetFarmEntire( map, paramsSpawn, SPAWN_ENTIRE_PID_MOB, EntireSpawn );
+        const uint ui0End = GetFarmEntire( map, paramsSpawn, SPAWN_ENTIRE_PID_MOB, EntireSpawn );
         // endMapMobUID = mapMobUID + maxMob * ui0End;
 
         while( ui0 < ui0End )
@@ -1407,7 +1400,7 @@ final class FarmTeamMob : Farm::TeamMobs
                     CountMob--;
 
                     /*@ mob = (Farm::AllMobs[ Critters[ Random( 0, CrittersCount - 1 ) ] - 1 ]);
-                       if( valid( mob ) )
+                       if( mob !is null )
                        {
                             params.resize( 0 );
                             params.insertLast( ST_IS_FARM_CRITTER );
@@ -1427,7 +1420,7 @@ final class FarmTeamMob : Farm::TeamMobs
                                     params.insertLast( GeneralParams[ ui1 ].GetValue( countPlayer ) );
                             }
                             @ cr = map.AddNpc( mob.ProtoId, hexX, hexY, Random( 0, 5 ), params, null, mob.AiScript );
-                            if( valid( cr ) )
+                            if( cr !is null )
                                     mob.InitCritter( cr );
                             CountMob--;
                        }*/
@@ -1448,9 +1441,9 @@ final class FarmTeamMob : Farm::TeamMobs
                     {
                         xDelta = Random( 0 - Radius, Radius );
                         yDelta = Random( 0 - Radius, Radius );
-                        uint Length = map.GetPathLength( hx, hy, hx + xDelta, hy + yDelta, 0 );
+                        uint length = map.GetPathLength( hx, hy, hx + xDelta, hy + yDelta, 0 );
                         if( map.IsHexPassed( hx + xDelta, hy + yDelta ) &&
-                            ( ( xDelta == 0 && yDelta == 0 ) || ( Length != 0 && Length < Radius * 2 ) ) )
+                            ( ( xDelta == 0 && yDelta == 0 ) || ( length != 0 && length < Radius * 2 ) ) )
                         {
                             // Log("Length" + Length +" Radius" +Radius);
                             values.insertLast( mapId );
@@ -1461,7 +1454,7 @@ final class FarmTeamMob : Farm::TeamMobs
                             values.insertLast( countPlayer );
 
                             /*@ mob = (Farm::AllMobs[ Critters[ Random( 0, CrittersCount - 1 ) ] - 1 ]);
-                               if( valid( mob ) )
+                               if( mob !is null )
                                {
                                     params.resize( 0 );
                                     params.insertLast( ST_IS_FARM_CRITTER );
@@ -1481,7 +1474,7 @@ final class FarmTeamMob : Farm::TeamMobs
                                             params.insertLast( GeneralParams[ ui1 ].GetValue( countPlayer ) );
                                     }
                                     @ cr = map.AddNpc( mob.ProtoId, hx + xDelta, hy + yDelta, Random( 0, 5 ), params, null, mob.AiScript );
-                                    if( valid( cr ) )
+                                    if( cr !is null )
                                             mob.InitCritter( cr );
                                }*/
                             break;
@@ -1493,7 +1486,7 @@ final class FarmTeamMob : Farm::TeamMobs
             ui0++;
         }
         // mapMobUID = endMapMobUID;
-    }
+    } 
 }
 
 final class FarmBags // : Farm::CProto
@@ -1579,6 +1572,9 @@ final class FarmBags // : Farm::CProto
 
     SlotBags@ getSlot() final
     {
+		if( Slots is null )
+			return null;
+			
         int Percent = Random( 1, MaxPercent ), oldP = 0;
         uint iEnd = Slots.length();
         if( iEnd == 0 )
@@ -1639,13 +1635,13 @@ final class FarmItem
         FuncCreatedId = 0;
         FuncIsCreatedId = 0;
 
-        if( valid( funcCreated ) )
+        if( funcCreated !is null )
         {
             array< string@ > Createds = splitEx( funcCreated, "@" );
             if( Createds.length() == 2 )
                 FuncCreatedId = BindFarmScript( Createds[ 0 ], Createds[ 1 ] );
         }
-        if( valid( funcIsCreated ) )
+        if( funcIsCreated !is null )
         {
             array< string@ > IsCreateds = splitEx( funcIsCreated, "@" );
             if( IsCreateds.length() == 2 )
@@ -1659,37 +1655,33 @@ final class FarmItem
         uint count = 0;
         if( Random( 1, 100 ) <= Percent || Percent == 0 )
         {
-            bool isCretaed = true;
-            if( isCretaed )
+            Item@ it = null;
+            if( IsBluePrint )
+                @it = Farm::AddBlueprint( cr, BluePrint_Pid, BluePrint_Count );
+            else
+                @it = cr.AddItem( ItemPid, Random( Count.Min, Count.Max ) );
+
+            if( it !is null )
             {
-                Item@ it = null;
-                if( IsBluePrint )
-                    @ it = Farm::AddBlueprint( cr, BluePrint_Pid, BluePrint_Count );
-                else
-                    @ it = cr.AddItem( ItemPid, Random( Count.Min, Count.Max ) );
+                GameVar@ var = GetLocalVar( LIVAR_IsFarmGenerated, it.Id );
+                if( var !is null )
+                    var = cr.GetMap().GetLocation().Id;
 
-                if( validEngineObject( it ) )
-                {
-                    GameVar@ var = GetLocalVar( LIVAR_IsFarmGenerated, it.Id );
-                    if( valid( var ) )
-                        var = cr.GetMap().GetLocation().Id;
+                it.LockerId = KeyId;
 
-                    it.LockerId = KeyId;
-
-                    count++;
-                    if( FARM_ADDITEM_FLAG_NO_SLOT != flag )
-                    {
-                        cr.MoveItem( it.Id, it.GetCount(), ItemSlot );
-						#ifndef __NO_FAVORIT_ITEMS
-                        if( ItemSlot > SLOT_INV && ItemSlot < SLOT_GROUND )
-                            cr.SetFavoriteItem( ItemSlot, ItemPid );
-						#endif
-                    }
-                    if( valid( SubItems ) && not isSub )
-                        for( uint i = 0, iEnd = SubItems.length(); i < iEnd; i++ )
-                            count += SubItems[ i ].AddItem( cr, flag, true );
-                }
-            }
+                count++;
+                if( FARM_ADDITEM_FLAG_NO_SLOT != flag )
+				{
+					cr.MoveItem( it.Id, it.GetCount(), ItemSlot );
+#ifndef __NO_FAVORIT_ITEMS
+					if( ItemSlot > SLOT_INV && ItemSlot < SLOT_GROUND )
+						cr.SetFavoriteItem( ItemSlot, ItemPid );
+#endif
+				}
+				if( SubItems !is null && !isSub )
+					for( uint i = 0, iEnd = SubItems.length(); i < iEnd; i++ )
+						count += SubItems[ i ].AddItem( cr, flag, true );
+			}
         }
         return count;
     }
@@ -1698,50 +1690,33 @@ final class FarmItem
     {
         uint count = 0;
         int perc = Percent;
-        if( countPlayer > 1 )
-        {
-            const float fmm = ( float(countPlayer) - 1 ) * ( ( float(perc) * 0.01 ) * 30 );
-            perc += fmm;
-            if( fmm - int(fmm) > 0 )
-                perc++;
-        }
+        Farm::FixValue( perc, countPlayer, 30 );
 
         if( Random( 1, 100 ) <= perc || Percent == 0 )
         {
             Item@ it = null;
             uint maxCount = Count.Max;
-            if( countPlayer > 1 && maxCount > 1 )
-            {
-                const float fmm = ( float(countPlayer) - 1 ) * ( ( float(maxCount) * 0.01 ) * 30 );
-                maxCount += fmm;
-                if( fmm - int(fmm) > 0 )
-                    maxCount++;
-            }
+            if( maxCount > 1 )
+				Farm::FixValue( maxCount, countPlayer, 30 );
 
-            bool isCretaed = true;
-            if( isCretaed )
-            {
+            if( IsBluePrint )
+				@ it = Farm::AddBlueprint( cont, BluePrint_Pid, BluePrint_Count );
+			else
+				@ it = cont.AddItem( ItemPid, Random( Count.Min, maxCount ), 0 );
 
-                if( IsBluePrint )
-                    @ it = Farm::AddBlueprint( cont, BluePrint_Pid, BluePrint_Count );
-                else
-                    @ it = cont.AddItem( ItemPid, Random( Count.Min, maxCount ), 0 );
+			if( it !is null )
+			{
+				uint16 temp = 0;
+				GameVar@ var = GetLocalVar( LIVAR_IsFarmGenerated, it.Id );
+				if( var !is null )
+					var = cont.GetMapPosition( temp, temp ).GetLocation().Id;
+				it.LockerId = KeyId;
 
-                if( valid( it ) )
-                {
-                    uint16 temp = 0;
-                    GameVar@ var = GetLocalVar( LIVAR_IsFarmGenerated, it.Id );
-                    if( valid( var ) )
-                        var = cont.GetMapPosition( temp, temp ).GetLocation().Id;
-                    it.LockerId = KeyId;
-
-                    count++;
-                    if( valid( SubItems ) && not isSub )
-                        for( uint i = 0, iEnd = SubItems.length(); i < iEnd; i++ )
-                            count += SubItems[ i ].AddItem( cont, countPlayer, true );
-                }
-
-            }
+				count++;
+				if( SubItems !is null && !isSub )
+					for( uint i = 0, iEnd = SubItems.length(); i < iEnd; i++ )
+						count += SubItems[ i ].AddItem( cont, countPlayer, true );
+			}
         }
         return count;
     }
@@ -1750,47 +1725,31 @@ final class FarmItem
     {
         uint count = 0;
         int perc = Percent;
-        if( countPlayer > 1 )
-        {
-            const float fmm = ( float(countPlayer) - 1 ) * ( ( float(perc) * 0.01 ) * 30 );
-            perc += fmm;
-            if( fmm - int(fmm) > 0 )
-                perc++;
-        }
+        Farm::FixValue( perc, countPlayer, 30 );
 
         if( Random( 1, 100 ) <= perc || Percent == 0 )
         {
             Item@ it = null;
             uint maxCount = Count.Max;
-            if( countPlayer > 1 && maxCount > 1 )
-            {
-                const float fmm = ( float(countPlayer) - 1 ) * ( ( float(maxCount) * 0.01 ) * 30 );
-                maxCount += fmm;
-                if( fmm - int(fmm) > 0 )
-                    maxCount++;
-            }
+            if( maxCount > 1 )
+				Farm::FixValue( maxCount, countPlayer, 30 );
 
+			if( IsBluePrint )
+				@ it = Farm::AddBlueprint( map, hexX, hexY, BluePrint_Pid, BluePrint_Count );
+			else
+				@ it = map.AddItem( hexX, hexY, ItemPid, Random( Count.Min, maxCount ) );
 
-            bool isCretaed = true;
-            if( isCretaed )
-            {
-                if( IsBluePrint )
-                    @ it = Farm::AddBlueprint( map, hexX, hexY, BluePrint_Pid, BluePrint_Count );
-                else
-                    @ it = map.AddItem( hexX, hexY, ItemPid, Random( Count.Min, maxCount ) );
-
-                if( valid( it ) )
-                {
-                    GameVar@ var = GetLocalVar( LIVAR_IsFarmGenerated, it.Id );
-                    if( valid( var ) )
-                        var = map.GetLocation().Id;
-                    it.LockerId = KeyId;
-                    count++;
-                    if( valid( SubItems ) && not isSub )
-                        for( uint i = 0, iEnd = SubItems.length(); i < iEnd; i++ )
-                            count += SubItems[ i ].AddItem( map, hexX, hexY, countPlayer, true );
-                }
-            }
+			if( it !is null )
+			{
+				GameVar@ var = GetLocalVar( LIVAR_IsFarmGenerated, it.Id );
+				if( var !is null )
+					var = map.GetLocation().Id;
+				it.LockerId = KeyId;
+				count++;
+				if( SubItems !is null && !isSub )
+					for( uint i = 0, iEnd = SubItems.length(); i < iEnd; i++ )
+						count += SubItems[ i ].AddItem( map, hexX, hexY, countPlayer, true );
+			}
         }
         return count;
     }
@@ -1862,7 +1821,6 @@ final class FarmContainer // : Farm::CProto
 
         for( uint i = 0, iEnd = GetFarmEntire( map, paramsSpawn, SPAWN_ENTIRE_PID_CONT, EntireSpawn ); i < iEnd; i++ )
         {
-
             #ifdef __DEBUG
             cickle++;
             #endif
@@ -1901,7 +1859,7 @@ final class FarmContainer // : Farm::CProto
                 }
 
                 FarmBags@ bag = ( Farm::AllBags[ bagId - 1 ] );
-                if( not valid( bag ) )
+                if( bag is null )
                 {
                     DL( "Сумка не созданна." );
                     continue;
@@ -1915,7 +1873,7 @@ final class FarmContainer // : Farm::CProto
                     Item@[] its;
                     for( uint c = 0, cm = map.GetItems( hexX, hexY, its ); c < cm; c++ )
                     {
-                        if( valid( its[ c ] ) && its[ c ].GetType() == ITEM_TYPE_CONTAINER )
+                        if( its[ c ] !is null && its[ c ].GetType() == ITEM_TYPE_CONTAINER )
                         {
                             @ cont  = its[ c ];
                             isCont = true;
@@ -1923,7 +1881,7 @@ final class FarmContainer // : Farm::CProto
                         }
                     }
                     #ifdef __DEBUG
-                    if( valid( cont ) )
+                    if( cont !is null )
                         DL( "Success." );
                     else
                         DL( "Fail." );
@@ -1935,30 +1893,31 @@ final class FarmContainer // : Farm::CProto
                     isCont = true;
                 }
 
-                if( valid( cont ) && valid( Script ) )
+                if( cont !is null && Script !is null )
                     cont.SetScript( Script );
 
                 if( isCont )
                 {
-                    if( valid( cont ) )
+                    if( cont !is null )
                     {
                         cont.OffsetX = OffX;
                         cont.OffsetY = OffY;
                         @ slot = bag.getSlot();
-                        if( not valid( slot ) )
+                        if( slot is null )
                             continue;
 
                         @ Items = slot.Items;
-                        if( valid( Items ) )
-                            for( uint i = 0, iEnd = Items.length(); i < iEnd; i++ )
+                        if( Items !is null )
+						{
+                            for( uint item_index = 0, item_index_end = Items.length(); item_index < item_index_end; item_index++ )
                             {
-                                @ Its = Items[ i ];
-                                DL( " iEnd " + iEnd + " Its.length( ) " + Its.length() );
-                                if( valid( Its )  && Its.length() > 0 )
+                                @Its = Items[ item_index ];
+                                DL( " item_index_end " + item_index_end + " Its.length( ) " + Its.length() );
+                                if( Its !is null  && Its.length() > 0 )
                                 {
                                     uint rand = Random( 0, Its.length() - 1 );
                                     @ fi = Its[ rand ];
-                                    if( valid( fi ) )
+                                    if( fi !is null )
                                     {
                                         #ifdef __DEBUG
                                         countGen +=
@@ -1967,25 +1926,27 @@ final class FarmContainer // : Farm::CProto
                                     }
                                 }
                             }
+						}
                     }
                 }
                 else
                 {
                     @ slot = bag.getSlot();
-                    if( not valid( slot ) )
+                    if( slot is null )
                         continue;
 
                     @ Items = slot.Items;
-                    if( valid( Items ) )
-                        for( uint i = 0, iEnd = Items.length(); i < iEnd; i++ )
+                    if( Items !is null )
+					{
+                        for( uint item_index = 0, item_index_end = Items.length(); item_index < item_index_end; item_index++ )
                         {
-                            @ Its = Items[ i ];
-                            DL( " iEnd " + iEnd + " Its.length( ) " + Its.length() );
-                            if( valid( Its )  && Its.length() > 0 )
+                            @ Its = Items[ item_index ];
+                            DL( " item_index_end " + item_index_end + " Its.length( ) " + Its.length() );
+                            if( Its !is null  && Its.length() > 0 )
                             {
                                 uint rand = Random( 0, Its.length() - 1 );
                                 @ fi = Its[ rand ];
-                                if( valid( fi ) )
+                                if( fi !is null )
                                 {
                                     #ifdef __DEBUG
                                     countGen +=
@@ -1994,7 +1955,8 @@ final class FarmContainer // : Farm::CProto
                                 }
                             }
                         }
-                }
+					}
+				}
             }
             #ifdef __DEBUG
             else if( NoCreate )
@@ -2097,7 +2059,7 @@ class FarmLocation
     Location@ CreateHideLoc( const uint& in worldX, const uint& in worldY ) final
     {
         Location@ loc = Create( worldX, worldY );
-        if( valid( loc ) )
+        if( loc !is null )
             loc.Visible = false;
         return loc;
     }
@@ -2109,18 +2071,17 @@ class FarmLocation
             array< uint > values;
 
             uint locPid = ProtoId[ Random( 0, ProtoId.length() - 1 ) ],
-                 countPlayer = valid( players ) ? players.length() : 0,
+                 countPlayer = players !is null ? players.length() : 0,
                  locId = locPid != 0 ? CreateLocation( locPid, worldX, worldY, players ) : 0;
 
             Location@ loc = null;
-
             if( locId != 0 )
                 @ loc = GetLocation( locId );
-            if( valid( loc ) )
+            if( loc !is null )
             {
                 GlobalTimeouts_Timer = __FullSecond + REAL_MINUTE( GlobalTimeouts );
                 loc.FarmLocPId = Id;
-                if( valid( players ) )
+                if( players !is null )
                     loc.Visible = false;
                 else
                     loc.Visible = true;
@@ -2139,7 +2100,7 @@ class FarmLocation
                     {
                         @ m = maps[ index ];
 
-                        if( valid( m ) )
+                        if( m !is null )
                         {
                             if( countPlayer < 0 )
                             {
@@ -2156,7 +2117,7 @@ class FarmLocation
                             uint mapMobUID = 0;
                             for( t = 0; t < countTeam; t++ )
                             {
-                                if( valid( Farm::AllTeamMobs[ TeamMobIds[ t ] - 1 ] ) )
+                                if( Farm::AllTeamMobs[ TeamMobIds[ t ] - 1 ] !is null )
                                     ( Farm::AllTeamMobs[ TeamMobIds[ t ] - 1 ] ).Generate( m, countPlayer, mapMobUID, values );
                                 else
                                     ClearLog( "Не валидная фарм команда " + TeamMobIds[ t ] + " фармлокация " + Name );
@@ -2165,7 +2126,7 @@ class FarmLocation
                             for( t = 0; t < countContainer; t++ )
                             {
                                 @ farmCont = ( Farm::AllFarmContainer[ ContainerIds[ t ] - 1 ] );
-                                if( valid( farmCont ) )
+                                if( farmCont !is null )
                                     farmCont.Generate( m, countPlayer );
                             }
 
@@ -2242,7 +2203,7 @@ class FarmLocation
         for( uint i = 0, iEnd = crs.length(); i < iEnd; i++ )
         {
             @ cr = crs[ i ];
-            if( valid( cr ) )
+            if( cr !is null )
             {
                 if( PrivateTimeouts != 0 && PrivateTimeouts_Timer.exists( "" + cr.Id ) )
                 {
@@ -2283,7 +2244,7 @@ class FarmLocation
 
     void SetTimeouts( Critter@& inout cr )
     {
-        if( valid( cr ) )
+        if( cr !is null )
             PrivateTimeouts_Timer.set( "" + cr.Id, __FullSecond + REAL_MINUTE( PrivateTimeouts ) );
     }
 
@@ -2364,7 +2325,7 @@ uint dlg_OutTeamPlayer( Critter& player, Critter@ npc, string@ lexems )
     {
         array< Critter@ > crs;
         Critter@ outCr = GetPlayer( lexems );
-        if( valid( outCr ) )
+        if( outCr !is null )
         {
             const uint outId = outCr.Id,
                        id = player.Id;
@@ -2384,17 +2345,20 @@ uint dlg_OutTeamPlayer( Critter& player, Critter@ npc, string@ lexems )
 
 uint e_DeleteFarmLocation( array< uint >@ values )
 {
-    if( valid( values ) )
+    if( values !is null )
     {
         Location@ loc = GetLocation( values[ 0 ] );
         if( validEngineObject( loc ) )
+		{
             for( uint i = 0, iEnd = loc.GetMapCount(); i < iEnd; i++ )
-                if( loc.GetMapByIndex( i ).GetCritters( 0, FIND_ONLY_PLAYERS, null ) != 0 )
+            {
+				if( loc.GetMapByIndex( i ).GetCritters( 0, FIND_ONLY_PLAYERS, null ) != 0 )
                 {
-                    for( uint i = 0, iEnd = loc.GetMapCount(); i < iEnd; i++ )
-                        loc.GetMapByIndex( i ).SetEvent( MAP_EVENT_OUT_CRITTER, "_FarmLocation_OutPlayerDelete" );
+                    for( uint imap = 0, imapEnd = loc.GetMapCount(); imap < imapEnd; imap++ )
+                        loc.GetMapByIndex( imap ).SetEvent( MAP_EVENT_OUT_CRITTER, "_FarmLocation_OutPlayerDelete" );
                     return 0;
                 }
+		}	}
         DeleteLocation( values[ 0 ] );
     }
     return 0;
@@ -2402,7 +2366,7 @@ uint e_DeleteFarmLocation( array< uint >@ values )
 
 uint e_RefreshFarmLocation2( array< uint >@ values )
 {
-    if( valid( values ) )
+    if( values !is null )
     {
         Location@ loc = GetLocation( values[ 0 ] );
         if( validEngineObject( loc ) )
@@ -2413,8 +2377,8 @@ uint e_RefreshFarmLocation2( array< uint >@ values )
             for( uint i = 0, iEnd = loc.GetMapCount(); i < iEnd; i++ )
                 if( loc.GetMapByIndex( i ).GetCritters( 0, FIND_ONLY_PLAYERS, null ) != 0 )
                 {
-                    for( uint i = 0, iEnd = loc.GetMapCount(); i < iEnd; i++ )
-                        loc.GetMapByIndex( i ).SetEvent( MAP_EVENT_OUT_CRITTER, "_FarmLocation_OutPlayerRefresh" );
+                    for( uint imap = 0, imapEnd = loc.GetMapCount(); imap < imapEnd; imap++ )
+                        loc.GetMapByIndex( imap ).SetEvent( MAP_EVENT_OUT_CRITTER, "_FarmLocation_OutPlayerRefresh" );
                     return 0;
                 }
 
@@ -2430,7 +2394,7 @@ uint e_RefreshFarmLocation2( array< uint >@ values )
 
 uint e_RefreshFarmLocation( array< uint >@ values )
 {
-    if( valid( values ) )
+    if( values !is null )
     {
         Location@ loc = GetLocation( values[ 0 ] );
         if( validEngineObject( loc ) )
@@ -2441,14 +2405,12 @@ uint e_RefreshFarmLocation( array< uint >@ values )
             array< Critter@ > players;
 
             for( uint i = 0, iEnd = loc.GetMapCount(); i < iEnd; i++ )
-                for( uint i = 0, iEnd = loc.GetMapByIndex( i ).GetCritters( 0, FIND_ONLY_PLAYERS, players ); i < iEnd; i++ )
+                for( uint imap = 0, imapEnd = loc.GetMapByIndex( imap ).GetCritters( 0, FIND_ONLY_PLAYERS, players ); imap < imapEnd; imap++ )
                 {
-                    Map@ map = players[ i ].GetMap();
+                    Map@ map = players[ imap ].GetMap();
                     if( validEngineObject( map ) )
-                    {
-                        map.EventOutCritter( players[ i ] );
-                    }
-                    players[ i ].TransitToGlobal( false );
+                        map.EventOutCritter( players[ imap ] );
+                    players[ imap ].TransitToGlobal( false );
                 }
             ( Farm::AllLocs[ values[ 1 ] - 1 ] ).Refresh( values[ 0 ], WorldX, WorldY );
         }
@@ -2522,10 +2484,10 @@ void GenerateFarmLocation()
         for( uint i = 0, iEnd = Data1.length(); i < iEnd; i++ )
         {
             temp = splitEx( Data1[ i ], "@" );
-            for( uint i = 0, iEnd = temp.length(); i < iEnd; i++ )
+            for( uint itemp = 0, itempEnd = temp.length(); itemp < itempEnd; itemp++ )
             {
-                temp1 = splitEx( temp[ i ], "#" );
-                if( temp1.length() > 0 && valid( temp1[ 0 ] ) && temp1[ 0 ].length() > 0 )
+                temp1 = splitEx( temp[ itemp ], "#" );
+                if( temp1.length() > 0 && temp1[ 0 ] !is null && temp1[ 0 ].length() > 0 )
                 {
                     temp1 = splitEx( temp1[ 0 ], " " );
                     if( temp1.length() >= 3 && StrToInt( temp1[ 0 ], mem0 ) && StrToInt( temp1[ 1 ], mem1 ) && StrToInt( temp1[ 2 ], mem2 ) )
@@ -2546,7 +2508,7 @@ void CreateFarmLocationOneCritter( Critter& cr, uint farmLocId, uint x, uint y )
 void CreateFarmLocationTeamCritter( Critter& cr, uint farmLocId, uint x, uint y )
 {
     FarmLocation@ fl = ( Farm::AllLocs[ farmLocId - 1 ] );
-    if( valid( fl ) )
+    if( fl !is null )
     {
         array< Critter@ > crs = { cr };
         uint count = cr.GetFollowGroup( FIND_LIFE | FIND_ONLY_PLAYERS, crs );
@@ -2576,7 +2538,7 @@ void r_CreateFarmLocation( Critter&, Critter@, int x, int y, int farmLocPid )
 uint r_CreateFarmLocationTeamCritter( Critter& master, Critter@ slave, int pid, int x, int y, int rad, int res )
 {
     FarmLocation@ fl = ( Farm::AllLocs[ pid - 1 ] );
-    if( valid( fl ) )
+    if( fl !is null )
     {
         array< Critter@ > crs = { master };
         uint count = master.GetFollowGroup( FIND_LIFE | FIND_ONLY_PLAYERS, crs );
@@ -2606,7 +2568,7 @@ uint r_CreateFarmLocationTeamCritter( Critter& master, Critter@ slave, int pid, 
                         break;
                     }
 
-                if( isFree && valid( fl.Create( worldX, worldY, crs ) ) )
+                if( isFree && fl.Create( worldX, worldY, crs ) !is null )
                 {
                     for( uint i = 0, iEnd = crs.length(); i < iEnd; i++ )
                         fl.SetTimeouts( crs[ i ] );
@@ -2636,7 +2598,7 @@ uint r_CreateFarmLocationTeamCritter( Critter& master, Critter@ slave, int pid, 
 bool ItemIsFarmGenerated( Item& it, uint& out locId ) // Export
 {
     GameVar@ var = GetLocalVar( LIVAR_IsFarmGenerated, it.Id );
-    if( valid( var ) )
+    if( var !is null )
     {
         locId = var.GetValue();
         return locId != 0;
@@ -2647,7 +2609,7 @@ bool ItemIsFarmGenerated( Item& it, uint& out locId ) // Export
 bool ItemIsFarmGenerated( Item& it, uint& out locId, uint& out farmId, array< uint >& out info ) // Export
 {
     GameVar@ var = GetLocalVar( LIVAR_IsFarmGenerated, it.Id );
-    if( valid( var ) )
+    if( var !is null )
     {
         locId = var.GetValue();
 
@@ -2676,10 +2638,10 @@ void CheckGlobalFarmLocation()
         for( uint i = 0, iEnd = Data1.length(); i < iEnd; i++ )
         {
             temp = splitEx( Data1[ i ], "@" );
-            for( uint i = 0, iEnd = temp.length(); i < iEnd; i++ )
+            for( uint itemp = 0, itempEnd = temp.length(); itemp < itempEnd; itemp++ )
             {
-                temp1 = splitEx( temp[ i ], "#" );
-                if( temp1.length() > 0 && valid( temp1[ 0 ] ) && temp1[ 0 ].length() > 0 )
+                temp1 = splitEx( temp[ itemp ], "#" );
+                if( temp1.length() > 0 && temp1[ 0 ] !is null && temp1[ 0 ].length() > 0 )
                 {
                     id = x = y = time = 0;
                     temp1 = splitEx( temp1[ 0 ], " " );
@@ -2690,9 +2652,9 @@ void CheckGlobalFarmLocation()
                         Location@[] locations;
                         bool Free = true;
                         const uint countLoc = GetLocations( x, y, 50, locations );
-                        for( uint i = 0; i < countLoc; i++ )
+                        for( uint iloc = 0; iloc < countLoc; iloc++ )
                         {
-                            uint16 pidLoc =  locations[ i ].GetProtoId();
+                            uint16 pidLoc =  locations[ iloc ].GetProtoId();
                             for( uint p = 0, pMax = ( Farm::AllLocs[ id - 1 ] ).ProtoId.length(); p < pMax; p++ )
                             {
                                 if( pidLoc == ( Farm::AllLocs[ id - 1 ] ).ProtoId[ p ] )
@@ -2748,7 +2710,7 @@ uint e_CreateFarmLocation( array< uint >@ values )
 
 bool SpawnMobs( array< uint >@ values, uint tick )
 {
-	if( valid( values ) && values.length() >= COUNT_ADD_MOB_VALUES && values.length() % COUNT_ADD_MOB_VALUES == 0 )
+	if( values !is null && values.length() >= COUNT_ADD_MOB_VALUES && values.length() % COUNT_ADD_MOB_VALUES == 0 )
     {
         uint currentPos = values.length() / COUNT_ADD_MOB_VALUES,
 			mapId = 0,
@@ -2769,7 +2731,7 @@ bool SpawnMobs( array< uint >@ values, uint tick )
         while( currentPos-- != 0 )
         {
             @ mob = ( Farm::AllMobs[ values[ currentPos * COUNT_ADD_MOB_VALUES + 1 ] ] );
-            if( valid( mob ) )
+            if( mob !is null )
             {
 				countplayer = values[ currentPos * COUNT_ADD_MOB_VALUES + 5 ];
                 params[1] = mob.Id;
@@ -2787,7 +2749,7 @@ bool SpawnMobs( array< uint >@ values, uint tick )
                     params[paramneedsize++] = mob.Param[ ui1 ].GetValue( countplayer );
                 }
                 @ teamMobs = Farm::AllTeamMobs[ values[ currentPos * COUNT_ADD_MOB_VALUES + 2 ] - 1 ];
-                if( valid( teamMobs ) )
+                if( teamMobs !is null )
 				{
 					countparams = teamMobs.GeneralParamsLength;
 					if( paramneedsize + countparams * 2 != paramsize )
@@ -2855,7 +2817,7 @@ void SetFarmItem( Item& it, bool isSet )
     if( isSet )
     {
         GameVar@ var = GetLocalVar( LIVAR_IsFarmGenerated, it.Id );
-        if( valid( var ) )
+        if( var !is null )
         {
             uint16 temp = 0;
             var = it.GetMapPosition( temp, temp ).GetLocation().Id;

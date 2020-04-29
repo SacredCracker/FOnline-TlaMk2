@@ -48,10 +48,10 @@ int AddPenaltyCity( ::Critter@ cr, int penalty, const uint locPid, int info = 0,
 			addStat = 0 - info;
 			break;
 		case City::PenaltyListing::Steal:
-			addStat = ( ( info ) * 0.01 * addStat );
+			addStat = int( info * 0.01 * addStat );
 		default: 
 			if( CrIsSneak(cr))
-				addStat = MAX(addStat, addStat * City::Penalty::Sneak * 0.01);
+				addStat = MAX(addStat, int( addStat * City::Penalty::Sneak * 0.01 ) );
 			break;
 	}
 
@@ -61,19 +61,19 @@ int AddPenaltyCity( ::Critter@ cr, int penalty, const uint locPid, int info = 0,
 			{
 				if( addStat > 0 )
 				{
-					addStat += addStat * 0.01 * cr.CityRole[ CITY_ROLE_PENALTY_MODULE ];
+					addStat += int( addStat * 0.01 * cr.CityRole[ CITY_ROLE_PENALTY_MODULE ] );
 					cr.CityRoleBase[ CITY_ROLE_PENALTY_MODULE ] += City::Penalty::NextPenaltyModule;
 				}
 				if( cr.IsNpc( ) )
 				{
 					if( cr.Merc[ MERC_MASTER_ID ] != 0 )
 					{
-						::Critter@ master = ::GetCritter( cr.Merc[MERC_MASTER_ID] );
+						Critter@ master = GetCritter( cr.Merc[MERC_MASTER_ID] );
 						if( validEngineObject( master ) )
 							 @cr = master;
 						else
 						{
-							::OffClient@ offMaster = ::GetOffClient( cr.Merc[ MERC_MASTER_ID ] );
+							OffClient@ offMaster = ::GetOffClient( cr.Merc[ MERC_MASTER_ID ] );
 							if( valid( offMaster ) )
 							{
 								offMaster.SetParam( City::Penalty::PragmaBegin + locPid, offMaster.GetParam( City::Penalty::PragmaBegin + locPid ) + addStat );
@@ -99,7 +99,7 @@ int AddPenaltyCity( ::Critter@ cr, int penalty, const uint locPid, int info = 0,
 				cr.CityPenaltyBase[ locPid ] += addStat;
 				if( cr.CityPenalty[ locPid ] < 0 ) cr.CityPenaltyBase[ locPid ] = 0;
 				if( addStat < 0) addStat = 0 - addStat;
-						::string lexems = "$count" + addStat;
+				string lexems = "$count" + addStat;
 				if(validEngineObject(infoCr))
 				{
 					if(infoCr.IsPlayer())
@@ -887,7 +887,7 @@ class ManageMap
 						continue;
 					
 					bool isCont = false;
-					for( uint j = 0, jMax = map.GetPathLength( hexx, hexy, player.HexX, player.HexY, 1 ); j < jMax; j++)
+					for( uint path_len = 0, path_len_max = map.GetPathLength( hexx, hexy, player.HexX, player.HexY, 1 ); path_len < path_len_max; path_len++)
 					{
 						map.MoveHexByDir (moveX, moveY, ::GetDirection( moveX, moveY, hexx, hexy ), 1);
 						if( !map.IsHexRaked (moveX, moveY) )
@@ -1057,7 +1057,7 @@ class ManageMap
 						::Critter@ gu = null;
 						
 						const int timeBonus = GetTimeBonus( ),
-							crStealAndLuck50 = cr.Skill[ SK_STEAL ] * cr.Stat[ ST_LUCK ] * 0.2;
+							crStealAndLuck50 = int( cr.Skill[ SK_STEAL ] * cr.Stat[ ST_LUCK ] * 0.2 );
 						
 						uint16 crX = cr.HexX, crY = cr.HexY;
 						
@@ -1068,7 +1068,7 @@ class ManageMap
 							{
 								Distantion = ::GetDistantion( crX, crY, gu.HexX, gu.HexY );
 								if( Distantion <= 20 &&	
-								::Random( 1, 100 ) < int( CLAMP( ( ( 50 + ( 16 - Distantion * 0.5 ) ) - timeBonus ) - crStealAndLuck50, 5, 50 ))) 
+								::Random( 1, 100 ) < int( CLAMP( ( ( 50 + ( 16 - int( Distantion * 0.5 ) ) ) - timeBonus ) - crStealAndLuck50, 5, 50 ))) 
 								{
 									isGuard = true;
 									GuardAttack( cr );
@@ -1229,9 +1229,9 @@ class ManageMap
 		array<::Critter@> critters;
 		uint crlen = player.GetCritters( true, FIND_LIFE_AND_KO | FIND_ONLY_NPC, critters );
 		::Critter@ gu = null;
-		for( uint i = 0; i < crlen; i++ )
+		for( uint icritter = 0; icritter < crlen; icritter++ )
 		{
-			@ gu = critters[ i ];
+			@ gu = critters[ icritter ];
 			if( validEngineObject( gu ) )
 			{
 				if( IsMyGuard( gu ) && gu.IsLife() )
@@ -1482,22 +1482,22 @@ void ReturnAllLoot( ::Critter& cr )
 		}
 }
 
-void ReturnLootByIndex( ::Critter& cr, const uint&in bagsIndex )
+void ReturnLootByIndex( Critter& cr, const uint&in bagsIndex )
 {
-	::Map@ m = cr.GetMap( );
+	Map@ m = cr.GetMap( );
 	if( not validEngineObject( m ) ) 
 		return;
 	
-	::Location@ loc = m.GetLocation( );
+	Location@ loc = m.GetLocation( );
 	if( validEngineObject( loc ) )
 	{
-		::array<CityGuard::BagsDeadPlayers@> bags;
-		uint countBags = 0, bagInd = 0, index = 0;
+		array<CityGuard::BagsDeadPlayers@> bags;
+		uint countBags = 0, bagInd = 0;
 		bool IsNewbie = false;
 		
-		for( uint i = 0, iEnd = loc.GetMapCount( ), index = 0; i < iEnd; i++ )
+		for( uint i = 0, iEnd = loc.GetMapCount( ); i < iEnd; i++ )
 		{
-			::Map@ map = loc.GetMapByIndex( i );
+			Map@ map = loc.GetMapByIndex( i );
 			if( validEngineObject( map ) )
 			{
 				CityGuard::ManageMap@ man = GetManager( map );

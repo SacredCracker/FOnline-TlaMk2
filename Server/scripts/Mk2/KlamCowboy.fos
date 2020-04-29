@@ -41,8 +41,8 @@
 
 //Для удобства ребалансировки
 uint GetTimeSpawn() { return ::Random(30, 40) * 60; } //Время между атаками (это время и еще +10)
-uint GetMobLevel(uint playerLevel) { playerLevel *=0.5; return CLAMP(playerLevel, 2, 30); } //Уровень мобов
-uint GetMobCount(uint playerLevel) { return playerLevel * 0.33 + 3; } //Количество мобов за одну атаку
+uint GetMobLevel(uint playerLevel) { playerLevel = uint( playerLevel * 0.5 ); return CLAMP(playerLevel, 2, 30); } //Уровень мобов
+uint GetMobCount(uint playerLevel) { return uint( playerLevel * 0.33 ) + 3; } //Количество мобов за одну атаку
 uint GetExp(uint cowDead) //Опыта за выполнение
 {
 	uint bonus=0;

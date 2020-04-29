@@ -117,15 +117,15 @@ void moveGroupsNpc ( ::Map& map, ::array<::Critter@> group, uint x, uint y, int 
 // Добавляет игроков в враги группе.
 // 
 // 
-void addEnemyGroupsNpc ( ::Map& map, ::array<::Critter@> group) 
+void addEnemyGroupsNpc ( Map& map, array<Critter@> group) 
 {
-	::array<::Critter@> enemy = {};
+	array<Critter@> enemy = {};
 	if(map.GetCritters(0,FIND_LIFE_AND_KO, enemy)>0)
 	{
 		for(uint i=0, iMax=group.length(); i<iMax; i++)
 		{
-			::Critter@ cr=group[i];
-			for(uint j=0, iMax=enemy.length(); j<iMax; j++) 
+			Critter@ cr=group[i];
+			for(uint j=0, jMax=enemy.length(); j<jMax; j++) 
 			{
 				if(enemy[j].IsNpc() && enemy[j].StatBase[ST_TEAM_ID] == cr.StatBase[ST_TEAM_ID])
 					continue;

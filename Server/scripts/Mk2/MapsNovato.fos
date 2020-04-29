@@ -251,14 +251,14 @@ uint cte_DeleteSelf(::Critter& cr, int identifier, int& rate, int&)
 
 //Диалог с Бартом(включая ремонт)
 
-uint r_AskFix(::Critter& master, ::Critter@ slave)
+uint r_AskFix( Critter& master, Critter@ slave )
 {
-	::array<::Item@> items = {};
+	array<Item@> items = {};
 	if(master.GetItems(SLOT_HAND1, items)>0)
 	{
 		if(items[0].IsDeteriorable())
 		{
-			int maxRepairCount = (items[0].Proto.MaxRepairCount>0)?((items[0].Proto.MaxRepairCount+10)*10):DEFAULT_MAX_REPAIR_COUNT;
+			uint maxRepairCount = (items[0].Proto.MaxRepairCount>0)?((items[0].Proto.MaxRepairCount+10)*10):DEFAULT_MAX_REPAIR_COUNT;
 			if(FLAG(items[0].BrokenFlags, BI_ETERNAL) || FLAG(items[0].BrokenFlags, BI_NOTRESC) || items[0].RadioChannel>=maxRepairCount) return 15;
 			if(items[0].Deterioration<100) return 16;
 			return 8;

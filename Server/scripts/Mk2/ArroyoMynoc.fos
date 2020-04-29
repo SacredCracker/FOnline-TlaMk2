@@ -19,7 +19,7 @@ const uint ArroyoPosX
 {
 	get
 	{
-		return (4 * ::__GlobalMapZoneLength - ::__GlobalMapZoneLength * 0.5);
+		return uint( 4 * __GlobalMapZoneLength - __GlobalMapZoneLength * 0.5 );
 	}
 }
 
@@ -27,7 +27,7 @@ const uint ArroyoPosY
 {
 	get
 	{
-		return (3 * ::__GlobalMapZoneLength - ::__GlobalMapZoneLength * 0.5);
+		return uint( 3 * __GlobalMapZoneLength - __GlobalMapZoneLength * 0.5 );
 	}
 }
 
@@ -384,22 +384,22 @@ uint e_TimeExpired( ::array<uint>@ values )
 }
 
 // Локация 2 "Рейдеры атакующие караван" для второй части квеста.
-::Location@ _GetRaidersForce( ::array<::Critter@> group)
+Location@ _GetRaidersForce( Critter@[] group)
 {
-	int x = ::Random(1, 2),
-		y = ::Random(-1, 2);
-	uint locId= ::CreateLocation(
+	int x = Random( 1, 2 ),
+		y = Random( -1, 2 );
+	uint locId= CreateLocation(
 		LOCATION_arroyo_mynoc_defence2,
-		(ArroyoPosX + x * ::__GlobalMapZoneLength + ::Random(-(::__GlobalMapZoneLength * 0.5),(::__GlobalMapZoneLength * 0.5))),
-		(ArroyoPosY + y * ::__GlobalMapZoneLength + ::Random(-(::__GlobalMapZoneLength * 0.5),(::__GlobalMapZoneLength * 0.5))),
+		( ArroyoPosX + x * __GlobalMapZoneLength + Random(int((-__GlobalMapZoneLength) * 0.5),int(__GlobalMapZoneLength * 0.5))),
+		( ArroyoPosY + y * __GlobalMapZoneLength + Random(int((-__GlobalMapZoneLength) * 0.5),int(__GlobalMapZoneLength * 0.5))),
 		group);
-	if(locId==0) return null;
-	::Location@ camp = ::GetLocation(locId);
-	if(!validEngineObject(camp)) return null;
+	if( locId == 0 ) return null;
+	Location@ camp = GetLocation( locId );
+	if( !validEngineObject( camp ) ) return null;
 	// Это должно быть установлено в CITY.TXT
-	camp.Visible=false;
-	camp.AutoGarbage=false;
-	camp.Radius=6;
+	camp.Visible = false;
+	camp.AutoGarbage = false;
+	camp.Radius = 6;
 	//camp.Color=0x3CFF0000;
 	return camp;
 }

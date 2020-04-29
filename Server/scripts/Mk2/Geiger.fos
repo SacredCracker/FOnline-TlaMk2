@@ -19,13 +19,13 @@ enum Define
     StrGeigerCurCharge     = 10357
 }
 
-bool UseGeiger( ::Critter& cr, ::Item& geiger ) // Export
+bool UseGeiger( Critter& cr, Item& geiger ) // Export
 {
     if( geiger.Val1 == 1 )
     {
         geiger.Val1 = 0;
         if( geiger.Val3 != 0 )
-            ::EraseTimeEvent( geiger.Val3 );
+            EraseTimeEvent( uint( geiger.Val3 ) );
         cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, Geiger::Define::StrGeigerOff );
     }
     else
@@ -47,7 +47,7 @@ bool UseGeiger( ::Critter& cr, ::Item& geiger ) // Export
         {
             // Turn on and loop
             geiger.Val1 = 1;
-            geiger.Val3 = ::CreateTimeEvent( ::__FullSecond + Geiger::Define::GeigerDuration, "Geiger::e_Geiger", geiger.Id, true );
+            geiger.Val3 = int( CreateTimeEvent( __FullSecond + uint( Geiger::Define::GeigerDuration ), "Geiger::e_Geiger", geiger.Id, true ) );
             cr.PlaySound( "GEIGER.ACM", true );
         }
     }

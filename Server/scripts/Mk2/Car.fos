@@ -87,7 +87,7 @@ bool UseItemOnCar( ::Critter& cr, ::Item& car, ::Item& item ) // Export
     return true;
 }
 
-bool UseSkillOnCar( ::Critter& cr, ::Item& car, int skill ) // Export
+bool UseSkillOnCar( Critter& cr, Item& car, int skill ) // Export
 {
     switch( skill )
     {
@@ -150,7 +150,7 @@ bool UseSkillOnCar( ::Critter& cr, ::Item& car, int skill ) // Export
             cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_SKILL_LOCKPICK_FAIL );
             return true;
         }
-        uint timeout = ( 400 - cr.Skill[ SK_LOCKPICK ] ) * 0.05;
+        uint timeout = uint( ( 400 - cr.Skill[ SK_LOCKPICK ] ) * 0.05 );
         cr.AddTimeEvent( "Car::cte_CarLock", REAL_SECOND( timeout ), CTE_CAR_LOCKPICK, car.Id );
         if( cr.IsPlayer() )
             cr.RunClientScript( "Mk2@Car::_RunCarLockpick", timeout, 0, 0, null, null );
@@ -195,7 +195,7 @@ uint cte_CarLock( ::Critter& cr, int, int& carId, int& )
             cr.DeleteItem( Content::Item::EXP_LOCKPICK_SET, 1 );
     }
 
-    int minChance = cr.Stat[ ST_LUCK ] * 0.5;
+    int minChance = int( cr.Stat[ ST_LUCK ] * 0.5 );
     base = CLAMP( base, minChance, 95 );
     if( base >= ::Random( 1, 100 ) && car.LockerId != 1 )
     {

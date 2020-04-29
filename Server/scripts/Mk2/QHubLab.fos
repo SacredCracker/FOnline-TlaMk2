@@ -124,27 +124,27 @@ int _HonomerPlaneEnd(::Critter& cr, ::NpcPlane& plane, int reason, ::Critter@ so
 	return PLANE_RUN_GLOBAL;
 }
 
-void _HonomerDead(::Critter& cr, ::Critter@ killer)
+void _HonomerDead(Critter& cr, Critter@ killer)
 {
 	_HonomerIdle(cr);
 }
 
-bool _HonomerGlobalProcess(::Critter& cr, int type, ::Item@ car, float& x, float& y, float& toX, float& toY, float& speed, uint& encounterDescriptor, bool& waitForAnswer)
+bool _HonomerGlobalProcess(Critter& cr, int type, Item@ car, float& x, float& y, float& toX, float& toY, float& speed, uint& encounterDescriptor, bool& waitForAnswer)
 {	
 	if(type !=GLOBAL_PROCESS_START_FAST && type !=GLOBAL_PROCESS_START)
 	{
 		bool ok=false;
-		::array<::Critter@>@ group=cr.GetGlobalGroup();
-		::GameVar@ playerId=::GetLocalVar(LVAR_sf_honomer_playerid, cr.Id);
+		Critter@[]@ group=cr.GetGlobalGroup();
+		GameVar@ playerId=GetLocalVar(LVAR_sf_honomer_playerid, cr.Id);
 
-		if(valid(playerId)) // Проверка что игрок в группе с нпц
+		if( playerId !is null ) // Проверка что игрок в группе с нпц
 		{
-			::Critter@ player=::GetCritter(playerId.GetValue());
-			if(validEngineObject(player) && valid(group))
+			Critter@ player = GetCritter(playerId.GetValue());
+			if( validEngineObject(player) && group !is null )
 			{
 				for(uint i=0, iMax=group.length(); i<iMax; i++)
 				{
-					if(group[i].Id==player.Id)
+					if( group[i].Id == player.Id )
 					{
 						ok=true;
 						break;
@@ -155,26 +155,26 @@ bool _HonomerGlobalProcess(::Critter& cr, int type, ::Item@ car, float& x, float
 		if (!ok)
 		{		
 			// Нет игрока в группе
-			::DeleteNpc(cr);
+			DeleteNpc(cr);
 			return true;
 		}
 	}
 	
 	if(type !=GLOBAL_PROCESS_MOVE)
 	{
-		::GameVar@ locId=::GetLocalVar(LVAR_q_sf_escort_location, cr.Id);
-		if(valid(locId))
+		GameVar@ locId=GetLocalVar(LVAR_q_sf_escort_location, cr.Id);
+		if( locId !is null )
 		{
-			::Location@ loc=::GetLocation(locId.GetValue());
+			Location@ loc = GetLocation(locId.GetValue());
 			if(validEngineObject(loc))
 			{
-				if(loc.WorldX==x && loc.WorldY==y)
+				if( loc.WorldX == uint16( x ) && loc.WorldY == uint16( y ) )
 				{
-					::Map@ map=loc.GetMapByIndex(1);
+					Map@ map=loc.GetMapByIndex(1);
 					cr.TransitToMap(map.Id, QHubLab::Defines::EntireLabEnter, true);
 					loc.AutoGarbage=true;
 					cr.SetEvent(CRITTER_EVENT_IDLE, "QHubLab::_HonomerIdle");
-					::GameVar@ pId=::GetLocalVar(LVAR_sf_honomer_playerid, cr.Id);
+					GameVar@ pId=GetLocalVar(LVAR_sf_honomer_playerid, cr.Id);
 					if(valid(pId) && pId.GetValue() > 0)
 					{
 						::GameVar@ qVar=::GetLocalVar(LVAR_q_sf_ahs7_escort, pId.GetValue());
@@ -301,22 +301,22 @@ void r_Travel(::Critter& player, ::Critter@ npc)
 	npc.TransitToGlobal(grp);		
 }
 
-void AttackPlayer(::Critter& target)
+void AttackPlayer( Critter& target )
 {
-	::Map@ map=target.GetMap();
+	Map@ map = target.GetMap();
 	if (!validEngineObject(map))
 		return;
-	::Location@ loc=map.GetLocation();
-	uint maps=loc.GetMapCount();
-	::array<::Critter@> critters;
-	for(uint i=0; i<maps; i++)
+	Location@ loc = map.GetLocation();
+	uint maps = loc.GetMapCount();
+	Critter@[] critters;
+	for(uint imap = 0; imap < maps; imap++ )
 	{
-		@map=loc.GetMapByIndex(i);
-		@critters;
+		@map = loc.GetMapByIndex(imap);
+		critters.resize(0);
 		map.GetCritters(0, FIND_ALL|FIND_ONLY_NPC, critters);
-		for(uint i=0, iMax=critters.length(); i<iMax; i++)
+		for( uint i = 0, iMax = critters.length(); i < iMax; i++ )
 		{
-			::Critter@ cr=critters[i];
+			Critter@ cr = critters[i];
 			if(validEngineObject(cr) && NpcRevenge::IsLocalNpc(cr, map) && !cr.CheckEnemyInStack(target.Id))
 			{
 				cr.AddEnemyInStack(target.Id);

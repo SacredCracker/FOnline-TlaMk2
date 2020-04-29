@@ -284,7 +284,7 @@ class Bonus
 			return 0;
 		lastId = item.Id;
 		
-		if( Random(0,100) > chance[_chance] )
+		if( uint8(Random(0,100)) > chance[_chance] )
 			return 0;
 			
 		if( border != 0 )
@@ -311,24 +311,27 @@ class Bonus
 	uint statistic;
 }
 
-void InitRandomisationItem( ::Item& item, bool isCrafted, ::Critter& cr, ::string sufix)
+void InitRandomisationItem( Item& item, bool isCrafted, Critter& cr, string sufix )
 {	
-	if(not validEngineObject(item)) return;
+	if( !validEngineObject( item ) )
+		return;
 	
-	uint8 randomisable=item.Proto.Randomisable;
-	if(randomisable==0) return;
+	uint8 randomisable = item.Proto.Randomisable;
+	if( randomisable == 0 )
+		return;
 		
-	if(item.GetType()!=ITEM_TYPE_WEAPON && item.GetType()!=ITEM_TYPE_ARMOR) 
+	if( item.GetType() != ITEM_TYPE_WEAPON && item.GetType() != ITEM_TYPE_ARMOR ) 
 	{
 		InitRandomisationTools(item);
 		return;
 	}
 	
 	//if(item.IsStackable()) return;
-	const ::ProtoItem@ pItem = ::GetProtoItem(item.GetProtoId());
-	if(!valid(pItem) ) return;
+	const ProtoItem@ pItem = GetProtoItem( item.GetProtoId( ) );
+	if( pItem is null )
+		return;
 
-	::string prefix="$p",
+	string prefix="$p",
 	//		 sufix=sufix,
 			 bonuses="$b ",
 			 crafter="";
@@ -336,48 +339,46 @@ void InitRandomisationItem( ::Item& item, bool isCrafted, ::Critter& cr, ::strin
 	uint8 count=0;
 	uint8 countBonusInfo=0;
 	uint8 rollValue=0; 
-	uint16 costForBonusArmor=item.Proto.Cost*0.5;
-	uint16 costForBonusWeapon=item.Proto.Cost*0.16;
+	uint16 costForBonusArmor = uint16( item.Proto.Cost * 0.5 );
+	uint16 costForBonusWeapon = uint16( item.Proto.Cost * 0.16 );
 		
 	if(randomisable<6)
 	{
 		armorBonuses.drop();
-
-		uint roll= ::Random(0,1000+cr.Industrial[IN_CHANCE_BONUS_RANDOMISATION]*20+cr.Industrial[IN_ARMOR_MASTER]*40);
-		
+		uint roll = Random(0,1000+cr.Industrial[IN_CHANCE_BONUS_RANDOMISATION]*20+cr.Industrial[IN_ARMOR_MASTER]*40);
 		if(isCrafted)
 		{
-			if(roll<230) 	  {roll=0;}
-			else if(roll<430) {roll=1;}
-			else if(roll<580) {roll=2;}
-			else if(roll<690) {roll=3;}
-			else if(roll<785) {roll=4;}
-			else if(roll<859) {roll=5;}
-			else if(roll<915) {roll=6;}
-			else if(roll<945) {roll=7;}
-			else if(roll<966) {roll=8;}
-			else if(roll<976) {roll=9;}
-			else if(roll<985) {roll=10;}
-			else if(roll<992) {roll=11;}
-			else if(roll<997) {roll=12;}
-			else {roll=13;}
+			if(roll<230) 	  roll=0;
+			else if(roll<430) roll=1;
+			else if(roll<580) roll=2;
+			else if(roll<690) roll=3;
+			else if(roll<785) roll=4;
+			else if(roll<859) roll=5;
+			else if(roll<915) roll=6;
+			else if(roll<945) roll=7;
+			else if(roll<966) roll=8;
+			else if(roll<976) roll=9;
+			else if(roll<985) roll=10;
+			else if(roll<992) roll=11;
+			else if(roll<997) roll=12;
+			else 			  roll=13;
 		}
 		else
 		{
-			if(roll<420) 	  {roll=0;}
-			else if(roll<610) {roll=1;}
-			else if(roll<730) {roll=2;}
-			else if(roll<800) {roll=3;}
-			else if(roll<865) {roll=4;}
-			else if(roll<920) {roll=5;}
-			else if(roll<965) {roll=6;}
-			else if(roll<984) {roll=7;}
-			else if(roll<990) {roll=8;}
-			else if(roll<995) {roll=9;}
-			else if(roll<997) {roll=10;}
-			else if(roll<998) {roll=11;}
-			else if(roll<999) {roll=12;}
-			else {roll=13;}
+			if(roll<420) 	  roll=0;
+			else if(roll<610) roll=1;
+			else if(roll<730) roll=2;
+			else if(roll<800) roll=3;
+			else if(roll<865) roll=4;
+			else if(roll<920) roll=5;
+			else if(roll<965) roll=6;
+			else if(roll<984) roll=7;
+			else if(roll<990) roll=8;
+			else if(roll<995) roll=9;
+			else if(roll<997) roll=10;
+			else if(roll<998) roll=11;
+			else if(roll<999) roll=12;
+			else 			  roll=13;
 		}
 		
 		for(uint i=0; i<roll; i++)
@@ -389,7 +390,7 @@ void InitRandomisationItem( ::Item& item, bool isCrafted, ::Critter& cr, ::strin
 			uint number = bonus.check( item, randomisable-1, countBonusInfo, count, bonuses );
 			if( number != 0 )
 			{
-				uint8 rollValue=GetRollValue(cr, item);
+				rollValue = GetRollValue(cr, item);
 				uint8 offset=(randomisable-1)*RandomParametersItems::Define::BonusValueOffset+rollValue;
 				switch( number )
 				{
@@ -516,7 +517,7 @@ void InitRandomisationItem( ::Item& item, bool isCrafted, ::Critter& cr, ::strin
 					break;
 				}
 				
-				item.Cost+=costForBonusArmor*(rollValue+1)*(randomisable*0.5+1);
+				item.Cost += costForBonusArmor * ( rollValue + 1 ) * ( uint( randomisable * 0.5 ) + 1 );
 			}
 			else i--;
 		}
@@ -530,7 +531,7 @@ void InitRandomisationItem( ::Item& item, bool isCrafted, ::Critter& cr, ::strin
 		else prefix +=" @msg game "+STR_UNIQUE+"@";
 		
 		// Статистика Мастера брони
-		if(isCrafted && count>1) ScoreMk2::ChangePlayerScore( cr, SCORE_ARMOR_MASTER, count*0.5+item.Cost*0.003);
+		if(isCrafted && count>1) ScoreMk2::ChangePlayerScore( cr, SCORE_ARMOR_MASTER, uint( count * 0.5 + item.Cost * 0.003 ) );
 	}
 	else if (randomisable<20)
 	{
@@ -569,7 +570,7 @@ void InitRandomisationItem( ::Item& item, bool isCrafted, ::Critter& cr, ::strin
 			rollValue=GetRollValue(cr, item);
 			uint8 offset=(randomisable-6)*RandomParametersItems::Define::BonusValueOffset+rollValue;
 			uint number=::Random(0, varBonusWeapon.length()-1);
-			if(varBonusWeapon[number]!=0 && ::Random(0,100)<chanceBonusWeapon[number+((randomisable-6)*varBonusWeapon.length())])
+			if( varBonusWeapon[ number ] != 0 && uint8( Random( 0, 100 ) ) < chanceBonusWeapon[ number + ( ( randomisable - 6 ) * varBonusWeapon.length( ) ) ] )
 			{
 				if(varBonusWeapon[number]==RandomParametersItems::Define::MinDamage)
 				{
@@ -624,7 +625,7 @@ void InitRandomisationItem( ::Item& item, bool isCrafted, ::Critter& cr, ::strin
 		prefix +="";
 		
 		// Статистика Мастера оружия
-		if(isCrafted && validEngineObject(cr) && count>0) ScoreMk2::ChangePlayerScore( cr, SCORE_WEAPON_MASTER, count+item.Cost*0.002);
+		if(isCrafted && validEngineObject(cr) && count>0) ScoreMk2::ChangePlayerScore( cr, SCORE_WEAPON_MASTER, uint( count + item.Cost * 0.002 ) );
 	}
 
 	if(isCrafted && validEngineObject(cr) && cr.IsPlayer())	
@@ -870,7 +871,7 @@ void setBonusWeapon(::Item& item, uint8 bonusType, int rollValue, bool reloadDes
 			break;
 	}
 	if(reloadDescription) regenLexWeapon(item);
-	item.Cost +=(item.Cost==0?item.Proto.Cost:0) + (item.Proto.Cost*0.16)*(rollValue+1);	
+	item.Cost +=(item.Cost==0?item.Proto.Cost:0) + uint(item.Proto.Cost*0.16)*(rollValue+1);	
 }
 
 // Проверка, есть ли оружие в руках у криттера

@@ -184,8 +184,8 @@ uint LineTracerSquare( uint16 hx, uint16 hy, uint16 tx, uint16 ty, uint dist, IT
         dx /= abs( dy );
         dy = ( dy > 0 ? 1.0f : -1.0f );
     }
-    uint16 x1 = float(hx) + 0.5f,
-           y1 = float(hy) + 0.5f,
+    uint16 x1 = uint16( float(hx) + 0.5f ),
+           y1 = uint16( float(hy) + 0.5f ),
     #ifdef __SERVER
            maxx = map.GetWidth(),
            maxy = map.GetHeight(),
@@ -198,8 +198,8 @@ uint LineTracerSquare( uint16 hx, uint16 hy, uint16 tx, uint16 ty, uint dist, IT
 
     for( uint i = 1; i <= dist; i++ )
     {
-        x1 += dx;
-        y1 += dy;
+        x1 += uint16( dx );
+        y1 += uint16( dy );
         cx = uint16( floor( x1 ) );
         cy = uint16( floor( y1 ) );
         if( cx >= maxx || cy >= maxy )

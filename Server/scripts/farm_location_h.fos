@@ -2,34 +2,35 @@
 namespace Farm
 {
 
-    #ifdef __SERVER
-    import::Item@ AddBlueprint( ::Item& cont, const uint16& in pid, const uint16& in count ) from "fix_boy";
-    import::Item@ AddBlueprint( ::Map& map, const uint16& in  hexX, const uint16& in  hexY, const uint16& in pid, const uint16& in count ) from "fix_boy";
-    import::Item@ AddBlueprint( ::Critter& cr, const uint16& in pid, const uint16& in count ) from "fix_boy";
+#ifdef __SERVER
+    import Item@ AddBlueprint( Item& cont, const uint16& in pid, const uint16& in count ) from "fix_boy";
+    import Item@ AddBlueprint( Map& map, const uint16& in  hexX, const uint16& in  hexY, const uint16& in pid, const uint16& in count ) from "fix_boy";
+    import Item@ AddBlueprint( Critter& cr, const uint16& in pid, const uint16& in count ) from "fix_boy";
 
-    # ifdef _MODULE_FARM_MAIN
-    ::dictionary LibraryContent;
-    ::FarmMob@[] AllMobs;
-    ::FarmLocation@[] AllLocs;
-    ::FarmTeamMob@[] AllTeamMobs;
-    ::FarmBags@[] AllBags;
-    ::FarmContainer@[] AllFarmContainer;
+#ifdef _MODULE_FARM_MAIN
+    dictionary LibraryContent;
+    FarmMob@[] AllMobs;
+    FarmLocation@[] AllLocs;
+    FarmTeamMob@[] AllTeamMobs;
+    FarmBags@[] AllBags;
+    FarmContainer@[] AllFarmContainer;
 	
-    void AddDefineItems( ::array< array< FarmItem@ > >& inout its, const uint& in pid )
+    void AddDefineItems( FarmItem@[][]&inout its, const uint& in pid )
     {
         if( pid <= AllBags.length() )
         {
-            ::SlotBags@[] @ other = cast< ::FarmBags >( @AllBags[ pid - 1 ] ).Slots;
-            if( valid( other ) )
-                if( other.length() > 0 )
-                    for( uint i = 0, iEnd = other[ 0 ].Items.length(); i < iEnd; i++ )
-                        its.insertLast( other[ 0 ].Items[ i ] );
+            SlotBags@[]@ other = cast< FarmBags >( AllBags[ pid - 1 ] ).Slots;
+            if( other !is null && other.length() > 0 )
+			{
+                for( uint i = 0, iEnd = other[ 0 ].Items.length(); i < iEnd; i++ )
+				{
+					its.insertLast( other[ 0 ].Items[ i ] );
+				}
+			}
         }
     }
-    # endif
-    #endif
-    #ifndef _MODULE_FARM_MAIN
-    #endif
+#endif
+#endif
 
     namespace Constant
     {
@@ -276,19 +277,35 @@ namespace Farm
 
         int GetValue( const uint& in countPlayer )
         {
-            if( countPlayer > 1 && PercentPlayer != 0 )
-            {
-                const float fmm = ( float(countPlayer) - 1 ) * ( ( float(Value) * 0.01 ) * PercentPlayer );
-                Value += fmm;
-                if( fmm - int(fmm) > 0 )
-                    Value++;
-            }
-            return Value;
+            int value = Value;
+			FixValue( value, countPlayer, PercentPlayer );
+            return value;
         }
 
         uint Index;
         uint PercentPlayer;
-        int  Value;
+        private int  Value;
     }
 
+	shared void FixValue( int&inout value, const uint& in countPlayer, const uint&in percent  )
+	{
+		if( countPlayer > 1 && percent != 0 )
+        {
+            const float fix = ( countPlayer - 1 ) * ( ( value * 0.01 ) * percent );
+            value += int(fix);
+            if( fix - int(fix) > 0 )
+                value++;
+        }
+	}
+
+	shared void FixValue( uint&inout value, const uint& in countPlayer, const uint&in percent  )
+	{
+		if( countPlayer > 1 && percent != 0 )
+        {
+            const float fix = ( countPlayer - 1 ) * ( ( value * 0.01 ) * percent );
+            value += uint(fix);
+            if( fix - uint(fix) > 0.0f )
+                value++;
+        }
+	}
 }

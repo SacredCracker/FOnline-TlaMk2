@@ -79,14 +79,14 @@ class NpcDescriptor : Critter::CritterDescriptor, Mk2::NpcPacket, Dialog::Interl
 			return false;
 			
 		// ST_KILL_EXPERIENCE
-		int allExp = npc.Stat[ST_KILL_EXPERIENCE], expDamage =  ExpDamage, exp = 0;
+		int allExp = npc.Stat[ST_KILL_EXPERIENCE], exp = 0;
+		float expDamage = ExpDamage;
 		for(uint i=0, iMax=CrittersToDamage.length(); i<iMax; i++)
 		{
 			::Critter@ player=::GetCritter(CrittersToDamage[i].A);
-			
 			if(validEngineObject(player))
 			{
-				exp = CrittersToDamage[i].B * expDamage;
+				exp = int( CrittersToDamage[i].B * expDamage );
 				if( exp > allExp )
 					exp = allExp;
 				player.StatBase[ST_EXPERIENCE] += exp;
@@ -115,7 +115,7 @@ class NpcDescriptor : Critter::CritterDescriptor, Mk2::NpcPacket, Dialog::Interl
 			uint countPlane = npc.GetPlanes( planes );
 			for( uint i = 0; i<countPlane; i++)
 			{
-				if(valid(planes[i]) && planes[i].Type==AI_PLANE_WALK && planes[i].Walk_TypeWalkReason == AI_PLANE_WALK_HEAL && planes[i].Walk_Reason_CritterId == npc.Id )
+				if( planes[i] !is null && planes[i].Type==AI_PLANE_WALK && planes[i].Walk_TypeWalkReason == AI_PLANE_WALK_HEAL && planes[i].Walk_Reason_CritterId == npc.Id )
 					return true;
 			}
 			
@@ -190,7 +190,7 @@ class NpcDescriptor : Critter::CritterDescriptor, Mk2::NpcPacket, Dialog::Interl
 							child.Walk_Reason_CritterId = RealCr.Id;
 							child.Walk_TypeWalkReason = AI_PLANE_WALK_HEAL;
 							::NpcPlane@ curPlan = RealCr.GetCurPlane(); 
-							if( valid(curPlan))
+							if( curPlan !is null )
 								curPlan.SetChild(child);
 							else
 								RealCr.AddPlane(child);
@@ -219,7 +219,7 @@ class NpcDescriptor : Critter::CritterDescriptor, Mk2::NpcPacket, Dialog::Interl
 							child.Walk_Reason_CritterId = RealCr.Id;
 							child.Walk_TypeWalkReason = AI_PLANE_WALK_HEAL;
 							::NpcPlane@ curPlan = RealCr.GetCurPlane(); 
-							if( valid(curPlan))
+							if( curPlan !is null )
 								curPlan.SetChild(child);
 							else
 								RealCr.AddPlane(child);
@@ -237,7 +237,7 @@ class NpcDescriptor : Critter::CritterDescriptor, Mk2::NpcPacket, Dialog::Interl
 				uint r0 = combatData.Attacker.Id;
 				uint r1 = totalDmg;
 				uint r2 = 0;
-				if( valid(curPlane) && ::__EventNpcPlaneRun.Raise( RealCr, curPlane, REASON_ATTACK_IM_DAMAGE, r0, r1, r2) )
+				if( curPlane !is null && ::__EventNpcPlaneRun.Raise( RealCr, curPlane, REASON_ATTACK_IM_DAMAGE, r0, r1, r2) )
 				{
 					::array<::NpcPlane@> planes;
 					uint count=RealCr.GetPlanes(planes);
@@ -251,7 +251,7 @@ class NpcDescriptor : Critter::CritterDescriptor, Mk2::NpcPacket, Dialog::Interl
 						}
 					}
 				}
-				else if(!valid(curPlane))
+				else if( curPlane is null )
 					RefreshPriorPlaneAttack( curPlane, combatData.Attacker);
 			}
 		}
@@ -292,7 +292,7 @@ class NpcDescriptor : Critter::CritterDescriptor, Mk2::NpcPacket, Dialog::Interl
 
 		Npc::TargetAttackPriority prior(RealCr);
 			
-		if(!valid(plane))
+		if( plane is null )
 			@plane = RealCr.GetCurPlane();
 								
 		::array<::NpcPlane@> planes;
@@ -306,7 +306,7 @@ class NpcDescriptor : Critter::CritterDescriptor, Mk2::NpcPacket, Dialog::Interl
 				
 		for( uint i = 0; i<forEnd; i++)
 		{
-			if(valid(planes[i]) && planes[i].Type==AI_PLANE_ATTACK )
+			if( planes[i] !is null && planes[i].Type==AI_PLANE_ATTACK )
 			{
 				::Critter@ targeti = ::GetCritter(planes[i].Attack_TargId);
 				if(!validEngineObject(targeti) || !validEngineObject(targeti.GetMap()) || targeti.GetMap().Id!= RealCr.GetMap().Id || !RealCr.IsSee (targeti)) continue;
@@ -395,9 +395,9 @@ class NpcDescriptor : Critter::CritterDescriptor, Mk2::NpcPacket, Dialog::Interl
 			}
 		}
 		
-		if(valid(priorAttack) && changePrior)
+		if( priorAttack !is null && changePrior)
 		{
-			if(valid(plane) )
+			if( plane !is null )
 			{		
 				plane.GetChild(0);
 				if(plane.GetChildIndex(priorAttack) != 0)
@@ -483,7 +483,7 @@ class NpcDescriptor : Critter::CritterDescriptor, Mk2::NpcPacket, Dialog::Interl
 			int use=0;
 			uint wpnDist=1;
 			const ::ProtoItem@ weapon=npc.GetSlotProto(SLOT_HAND1,mode);
-			if(valid(weapon))
+			if(weapon !is null)
 			{
 				RadiusDamage = 0;
 				use=_WeaponModeUse(mode);
@@ -494,7 +494,7 @@ class NpcDescriptor : Critter::CritterDescriptor, Mk2::NpcPacket, Dialog::Interl
 			uint visibleDist = npc.Stat[ST_VISIBLE_DIST];
 			if(visibleDist<wpnDist)
 				wpnDist = visibleDist;
-			const ::ProtoItem@ ammo=(valid(weapon) && weapon.Weapon_MaxAmmoCount>0 && weapon.Weapon_Caliber!=0?::GetProtoItem(_CritGetItemHand(npc).AmmoPid):null);
+			const ::ProtoItem@ ammo=(weapon !is null && weapon.Weapon_MaxAmmoCount>0 && weapon.Weapon_Caliber!=0?::GetProtoItem(_CritGetItemHand(npc).AmmoPid):null);
 
 			bool isRadiusDamage = RadiusDamage != 0;
 				
@@ -502,7 +502,7 @@ class NpcDescriptor : Critter::CritterDescriptor, Mk2::NpcPacket, Dialog::Interl
 			const ::ProtoItem@ targetWeapon=target.GetSlotProto(SLOT_HAND1,targetMode);
 			int targetUse=0;
 			uint targetWpnDist=1;
-			if(valid(targetWeapon))
+			if(targetWeapon !is null)
 			{
 				targetUse=_WeaponModeUse(targetMode);
 				targetWpnDist=_WeaponMaxDist(targetWeapon,targetUse);
@@ -552,16 +552,9 @@ class NpcDescriptor : Critter::CritterDescriptor, Mk2::NpcPacket, Dialog::Interl
 						if( not isGrip )
 							isGrip = validEngineObject( map.GetDoor (npc.HexX, npc.HexY) );
 						if( isGrip ) 
-						{
-						
-							uint16 baseHx=npc.HexX;
-							uint16 baseHy=npc.HexY;
-							
+						{							
 							if(wpnDist > 1)
-							{
-								uint16 baseHx=target.HexX;
-								uint16 baseHy=target.HexY;
-								
+							{								
 								uint16 yMax = target.HexY + wpnDist;
 								uint16 yMin = target.HexY - wpnDist;
 								
@@ -670,7 +663,7 @@ class NpcDescriptor : Critter::CritterDescriptor, Mk2::NpcPacket, Dialog::Interl
 							uint16 x = 0, y = 0;
 							for( uint j = attackedDir+1, jMax = j+6; j < jMax; j++) // Движемся по часовой стрелке, и ищeм свободный гекс. Выбираем самый дальний.
 							{
-								uint8 currDir = j%6;
+								//uint8 currDir = j%6;
 								// 
 								moveX = target.HexX; moveY = target.HexY;
 								map.MoveHexByDir (moveX, moveY, j%6 , 1);
@@ -819,12 +812,12 @@ class NpcDescriptor : Critter::CritterDescriptor, Mk2::NpcPacket, Dialog::Interl
 							
 						HashWeaponDistantion.Best = dist;
 								
-						if( valid( weapon ) && ( _WeaponSkill(weapon,use) == SK_BIG_GUNS || _WeaponSkill(weapon,use) == SK_ENERGY_WEAPONS ) && _WeaponRound(weapon, use) > 2 )
+						if( weapon !is null && ( _WeaponSkill(weapon,use) == SK_BIG_GUNS || _WeaponSkill(weapon,use) == SK_ENERGY_WEAPONS ) && _WeaponRound(weapon, use) > 2 )
 						{
 							if(npc.Stat[ST_CURRENT_HP] == MaxHp)
 								HashWeaponDistantion.Best = HashWeaponDistantion.Min;
 						}
-						else if( HashWeaponDistantion.Min <= 3 && valid(targetWeapon) && ( _WeaponSkill(targetWeapon,targetUse) == SK_BIG_GUNS || _WeaponSkill(targetWeapon,targetUse) == SK_ENERGY_WEAPONS ) && _WeaponRound(weapon, targetUse) > 2 )
+						else if( HashWeaponDistantion.Min <= 3 && targetWeapon !is null && ( _WeaponSkill(targetWeapon,targetUse) == SK_BIG_GUNS || _WeaponSkill(targetWeapon,targetUse) == SK_ENERGY_WEAPONS ) && _WeaponRound(weapon, targetUse) > 2 )
 						{
 							HashWeaponDistantion.Min = 5;
 						}
@@ -861,7 +854,7 @@ class NpcDescriptor : Critter::CritterDescriptor, Mk2::NpcPacket, Dialog::Interl
 	
 	const float get_ExpDamage( )
 	{
-		float exp = float(RealCr.Stat[ST_KILL_EXPERIENCE]) / float(MaxHp);
+		float exp = RealCr.Stat[ST_KILL_EXPERIENCE] / MaxHp;
 		if( exp < 0.1 )
 			return 0.1;
 		return uint( exp );
@@ -882,7 +875,7 @@ class NpcDescriptor : Critter::CritterDescriptor, Mk2::NpcPacket, Dialog::Interl
 
 class TargetAttackPriority : Ai::Priority
 {
-	::string debugNameTarget = "";
+	string debugNameTarget = "";
 	uint MapId = 0;
 	
 	int targetWpnDist = 0;
@@ -913,22 +906,22 @@ class TargetAttackPriority : Ai::Priority
 	
 	bool isPenetrate = false;
 	
-	TargetAttackPriority( ::Critter& npc )
+	TargetAttackPriority( Critter& npc )
 	{
 		debugNameTarget = "";
 		
-		::Map@ map = npc.GetMap();
+		Map@ map = npc.GetMap();
 		MapId = validEngineObject(map) ? map.Id : 0;
 			
 		uint8 mode=0;
 		targetMode = 0;
 		
-		const ::ProtoItem@ weapon=npc.GetSlotProto(SLOT_HAND1,mode);
+		const ProtoItem@ weapon=npc.GetSlotProto(SLOT_HAND1,mode);
 		
-		if(valid(weapon))
+		if( weapon !is null )
 		{
-			const ::ProtoItem@ ammo=(weapon.Weapon_MaxAmmoCount>0 && weapon.Weapon_Caliber!=0?::GetProtoItem(_CritGetItemHand(npc).AmmoPid):null);
-			if(valid(ammo))
+			const ProtoItem@ ammo=(weapon.Weapon_MaxAmmoCount>0 && weapon.Weapon_Caliber!=0?GetProtoItem(_CritGetItemHand(npc).AmmoPid):null);
+			if( ammo !is null )
 			{
 				Ammo_DrMod = ammo.Ammo_DrMod;
 				dmgMul=ammo.Ammo_DmgMult; // technically, should be *2
@@ -961,21 +954,21 @@ class TargetAttackPriority : Ai::Priority
 		hp = 0;
 	}
 	
-	int Get( ::Critter& npc, ::Critter& target )
+	int Get( Critter& npc, ::Critter& target )
 	{
 		if(MapId==0) return -1;
 		if( target.IsPlayer() )
-			debugNameTarget = ::GetPlayerName( target.Id );
-		else debugNameTarget = "Npc_" + target.Id;	
+			debugNameTarget = GetPlayerName( target.Id );
+		else debugNameTarget = "Npc_" + target.Id;
 		
-		::Map@ map = ::GetMap( MapId );
-		const ::ProtoItem@ targetWeapon=target.GetSlotProto(SLOT_HAND1,targetMode);
+		Map@ map = GetMap( MapId );
+		const ProtoItem@ targetWeapon=target.GetSlotProto(SLOT_HAND1,targetMode);
 		
 		int targetUse=0;
 		targetWpnDist=1;
 		isTargetUnarmed = 0;
 			
-		if(valid(targetWeapon))
+		if( targetWeapon !is null )
 		{
 			targetUse=_WeaponModeUse(targetMode);
 			targetWpnDist=_WeaponMaxDist(targetWeapon,targetUse);
@@ -990,41 +983,40 @@ class TargetAttackPriority : Ai::Priority
 		
 		bt=target.Stat[ST_BODY_TYPE];
 							
-		if(isPenetrate) targetDT*=0.2;
+		if(isPenetrate) targetDT = int( targetDT * 0.2 );
 		targetDR+=((npc.Trait[TRAIT_FINESSE]!=0)?30:0);
 		if(npc.Perk[PE_PYROMANIAC]!=0 && dmgType==DAMAGE_FIRE) totalDmg+=15;
 		targetDR+=Ammo_DrMod;
 		targetDR=CLAMP(targetDR,0,100);
 						
-		totalDmg=(dmgMax+dmgMin + 2*npc.Perk[PE_BONUS_RANGED_DAMAGE])*0.5;
+		totalDmg = int((dmgMax+dmgMin + 2*npc.Perk[PE_BONUS_RANGED_DAMAGE])*0.5);
 		totalDmg*=dmgMul;
 		if(dmgDiv!=0) totalDmg/=dmgDiv;
 		totalDmg-=targetDT;
-		totalDmg-=(totalDmg*targetDR)*0.01;
+		totalDmg -= int((totalDmg*targetDR)*0.01);
 		totalDmg*=ammoCount;
 		if(totalDmg<0) totalDmg=0;
-		if(npc.Perk[PE_LIVING_ANATOMY]!=0 &&  !(bt==BT_ALIEN || bt==BT_ROBOT)) totalDmg+=15;
+		if(npc.Perk[PE_LIVING_ANATOMY]!=0 && !(bt==BT_ALIEN || bt==BT_ROBOT)) totalDmg+=15;
 		if(npc.Perk[PE_PYROMANIAC]!=0 && dmgType==DAMAGE_FIRE) totalDmg+=20;
-		totalDmg-=(totalDmg*npc.Perk[PE_TOUGHNESS]*5)*0.01;
+		totalDmg-=int((totalDmg*npc.Perk[PE_TOUGHNESS]*5)*0.01);
 				
 		DeadHitPoints=target.Stat[ST_DEAD_HIT_POINTS];
-		if( (DeadHitPoints == ::__DeadHitPoints && ( bt != BT_MEN && bt != BT_WOMEN 
+		if( (DeadHitPoints == __DeadHitPoints && ( bt != BT_MEN && bt != BT_WOMEN 
 			&& bt != BT_CHILDREN && bt != BT_SUPER_MUTANT && bt != BT_GHOUL && bt!=BT_BRAHMIN && bt!=BT_DOG))
 				|| target.Mode[MODE_NO_KNOCK]!=0) 
 					DeadHitPoints=0;
 				
 		hp = target.Stat[ ST_CURRENT_HP ] + DeadHitPoints;
 		int Value0 = 0;
-		
 		if(npc.IsSee (target))
 		{
 			if( isRadiusDamage && RadiusDamage > 0)			
 			{
 				int Value1 = totalDmg;
-				::array<::Critter@> critters;
+				Critter@[] critters;
 				for( int i = 0, iEnd = map.GetCrittersHex (target.HexX, target.HexY, RadiusDamage, FIND_LIFE_AND_KO, critters); i < iEnd; i++)
 				{
-					::Critter@ targetc = critters[i];
+					Critter@ targetc = critters[i];
 					if(!validEngineObject(targetc)) continue;
 							
 					totalDmg = 0;
@@ -1034,22 +1026,22 @@ class TargetAttackPriority : Ai::Priority
 					
 					bt=targetc.Stat[ST_BODY_TYPE];
 										
-					if(isPenetrate) targetDT*=0.2;
+					if(isPenetrate) targetDT = int( targetDT * 0.2 );
 					targetDR+=((npc.Trait[TRAIT_FINESSE]!=0)?30:0);
 					if(npc.Perk[PE_PYROMANIAC]!=0 && dmgType==DAMAGE_FIRE) totalDmg+=15;
 					targetDR+=Ammo_DrMod;
 					targetDR=CLAMP(targetDR,0,100);
 										
-					totalDmg=(dmgMax+dmgMin + 2*npc.Perk[PE_BONUS_RANGED_DAMAGE])*0.5;
+					totalDmg=int( ( dmgMax + dmgMin + 2*npc.Perk[PE_BONUS_RANGED_DAMAGE] ) * 0.5);
 					totalDmg*=dmgMul;
 					if(dmgDiv!=0) totalDmg/=dmgDiv;
 					totalDmg-=targetDT;
-					totalDmg-=(totalDmg*targetDR)*0.01;
+					totalDmg-=int( totalDmg * targetDR * 0.01 );
 					totalDmg*=ammoCount;
 					if(totalDmg<0) totalDmg=0;
 					if(npc.Perk[PE_LIVING_ANATOMY]!=0 &&  !(bt==BT_ALIEN || bt==BT_ROBOT)) totalDmg+=15;
 					if(npc.Perk[PE_PYROMANIAC]!=0 && dmgType==DAMAGE_FIRE) totalDmg+=20;
-					totalDmg-=(totalDmg*npc.Perk[PE_TOUGHNESS]*5)*0.01;
+					totalDmg-=int((totalDmg*npc.Perk[PE_TOUGHNESS]*5)*0.01);
 									
 					if( targetc.IsNpc() && npc.Stat[ST_TEAM_ID] == targetc.Stat[ST_TEAM_ID] && targetc.Stat[ST_TEAM_ID] != 0)
 						Value1-=totalDmg;
@@ -1073,7 +1065,7 @@ class TargetAttackPriority : Ai::Priority
 					Value0 *= 100;
 					
 					if( Zone_Attack(target, npc.HexX, npc.HexY,SLOT_HAND1 ) )
-						Value0 *= 0.5; 
+						Value0 = int( Value0 * 0.5 ); 
 				}
 			}	
 		}

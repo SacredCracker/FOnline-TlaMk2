@@ -21,7 +21,7 @@ bool CritterCheckMoveItem(::CritterMutual@ cr, ::ItemMutual@ item, uint8 toSlot,
 	
 	if( ( toSlot == SLOT_ARMOR || fromSlot == SLOT_ARMOR ) && cr.Mode[MODE_ONLY_ARMOR_PID] != 0 )
 	{
-		if( pid == cr.Mode[MODE_ONLY_ARMOR_PID])
+		if( pid == uint16( cr.Mode[MODE_ONLY_ARMOR_PID] ) )
 			return toSlot == SLOT_ARMOR;
 	}
 	

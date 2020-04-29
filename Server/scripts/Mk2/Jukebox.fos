@@ -45,7 +45,7 @@ void _JukeBoxInit( ::Item& item, bool firstTime )
     item.SetEvent( ITEM_EVENT_USE_ON_ME, "Jukebox::_UseOnJukeBox" );
 }
 
-bool _UseOnJukeBox( ::Item& item, ::Critter& cr, ::Item@ usedItem )
+bool _UseOnJukeBox( Item& item, Critter& cr, Item@ usedItem )
 {
     if( valid( usedItem ) && usedItem.GetProtoId() == uint( Content::Item::BOTTLE_CAPS ) )
     {
@@ -57,7 +57,7 @@ bool _UseOnJukeBox( ::Item& item, ::Critter& cr, ::Item@ usedItem )
         }
         else
         {
-            ::GameVar@ lastTimeUsed = ::GetLocalVar( LIVAR_last_used, item.Id );
+            ::GameVar@ lastTimeUsed = GetLocalVar( LIVAR_last_used, item.Id );
             if( valid( lastTimeUsed ) && lastTimeUsed > 0 && uint( lastTimeUsed.GetValue() ) + SilenceTime > ::__FullSecond )
             {
                 // Недавно использовался
@@ -73,16 +73,12 @@ bool _UseOnJukeBox( ::Item& item, ::Critter& cr, ::Item@ usedItem )
                 {
                     SETFLAG( item.Flags, ITEM_SHOW_ANIM );
                     item.Update();
-                    ::CreateTimeEvent( ::__FullSecond + REAL_SECOND( 30 ), "Jukebox::e_OffJukeBox", item.Id, true );
-                    ::array<::Critter@> critters;
+                    CreateTimeEvent( __FullSecond + REAL_SECOND( 30 ), "Jukebox::e_OffJukeBox", item.Id, true );
+                    array<Critter@> critters;
                     _SubItem( usedItem, 10 );
-                    lastTimeUsed = ::__FullSecond;
+                    lastTimeUsed = __FullSecond;
                     for( uint i = 0, l = map.GetCrittersHex( x, y, Jukebox::Define::PlayRadius, FIND_ALL | FIND_ONLY_PLAYERS, critters ); i < l; i++ )
-                    {
-                        ::Critter@ cr = critters[ i ];
-                        if( valid( cr ) )
-                            Media::PlayMusic( cr, trackList[ idx ], 0, 0 );
-                    }
+                        Media::PlayMusic( critters[ i ], trackList[ idx ], 0, 0 );
                     return true;
                 }
             }

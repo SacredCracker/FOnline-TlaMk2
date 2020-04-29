@@ -9,7 +9,7 @@ enum Define
 	DefaultMaxRepairCount = 300
 }
 
-bool TryRepairItem( ::Critter& cr, ::Item& item ) // Export
+bool TryRepairItem( Critter& cr, Item& item ) // Export
 {
     if( !item.IsDeteriorable() )
         return true;
@@ -28,7 +28,7 @@ bool TryRepairItem( ::Critter& cr, ::Item& item ) // Export
         return true;
     }
 
-    cr.TimeoutBase[ TO_SK_REPAIR ] = cr.Timeout[ TO_SK_REPAIR ] + ::__FullSecond + REAL_SECOND( 30 );
+    cr.TimeoutBase[ TO_SK_REPAIR ] = cr.Timeout[ TO_SK_REPAIR ] + __FullSecond + REAL_SECOND( 30 );
 
     // Ремонт
     const int tmpDet = item.Deterioration;    // Предыдущее состояние износа
@@ -41,7 +41,7 @@ bool TryRepairItem( ::Critter& cr, ::Item& item ) // Export
         return true;
     }
 
-    int maxRepairCount = ( item.Proto.MaxRepairCount > 0 ) ? ( ( item.Proto.MaxRepairCount + 10 ) * 10 ) : Repair::Define::DefaultMaxRepairCount;
+    uint maxRepairCount = ( item.Proto.MaxRepairCount > 0 ) ? ( ( item.Proto.MaxRepairCount + 10 ) * 10 ) : Repair::Define::DefaultMaxRepairCount;
 
     // Больше ремонтировать этот предмет не выйдет (максимум ремонтов)
     if( item.RadioChannel >= maxRepairCount )
@@ -53,7 +53,7 @@ bool TryRepairItem( ::Critter& cr, ::Item& item ) // Export
     // Repair
     int              repair = cr.Skill[ SK_REPAIR ];
     uint8            mode = 0;
-    const ::ProtoItem@ bonusProto = cr.GetSlotProto( SLOT_BONUS, mode );
+    const ProtoItem@ bonusProto = cr.GetSlotProto( SLOT_BONUS, mode );
     const uint16     activePid = cr.GetSlotProto( SLOT_HAND1, mode ).ProtoId,
                      bonusPid = valid( bonusProto ) ? bonusProto.ProtoId : 0;
 
@@ -61,13 +61,13 @@ bool TryRepairItem( ::Critter& cr, ::Item& item ) // Export
     if( activePid == Content::Item::SUPER_TOOL_KIT || bonusPid == Content::Item::SUPER_TOOL_KIT )
     {
         repair += 50;
-        if( ::Random( 0, 30 ) == 0 )
+        if( Random( 0, 30 ) == 0 )
             cr.DeleteItem( Content::Item::SUPER_TOOL_KIT, 1 );
     }
     else if( activePid == Content::Item::MULTI_TOOL || bonusPid == Content::Item::MULTI_TOOL )
     {
         repair += 25;
-        if( ::Random( 0, 30 ) == 0 )
+        if( Random( 0, 30 ) == 0 )
             cr.DeleteItem( Content::Item::MULTI_TOOL, 1 );
     }
 
@@ -92,7 +92,7 @@ bool TryRepairItem( ::Critter& cr, ::Item& item ) // Export
         repair = CLAMP( repair, 6, 95 );
         // cr.Say(SAY_NETMSG, "repair="+repair+"\n MAX_BROKENS="+MAX_BROKENS+"\n BrokenCount="+item.BrokenCount+"\n RadioChannel="+item.RadioChannel);
 
-        if( repair >= ::Random( 1, 100 ) )
+        if( repair >= Random( 1, 100 ) )
         {
 
             if( FLAG( repair_item.BrokenFlags, BI_HIGHBROKEN ) )
@@ -123,18 +123,18 @@ bool TryRepairItem( ::Critter& cr, ::Item& item ) // Export
         repair -= repair_item.BrokenCount * 50 / MAX_BROKENS;
         repair = CLAMP( repair, 6, 95 );
 
-        if( repair >= ::Random( 1, 100 ) )
+        if( repair >= Random( 1, 100 ) )
         {
             SETFLAG( repair_item.BrokenFlags, BI_SERVICE );
 
-            if( uint( repair_item.Deterioration * 0.01 ) > uint( maxRepairCount - repair_item.RadioChannel ) )
+            if( uint( repair_item.Deterioration * 0.01 ) > maxRepairCount - repair_item.RadioChannel )
             {
                 repair_item.Deterioration = repair_item.Deterioration - 100 * ( maxRepairCount - repair_item.RadioChannel );
                 repair_item.RadioChannel = maxRepairCount;
             }
             else
             {
-                repair_item.RadioChannel += repair_item.Deterioration * 0.01;
+                repair_item.RadioChannel += uint( repair_item.Deterioration * 0.01 );
                 repair_item.Deterioration = 0;
             }
 
@@ -206,8 +206,8 @@ void SetDeterioration( ::Item& item, int deteriorationProcent ) // Export
         return;
     UNSETFLAG( item.BrokenFlags, BI_BROKEN );
     deteriorationProcent = CLAMP( deteriorationProcent, 0, 100 );
-    item.Deterioration = MAX_DETERIORATION * deteriorationProcent * 0.01;
-    item.BrokenCount = MAX_BROKENS * deteriorationProcent * 0.01;
+    item.Deterioration = uint( MAX_DETERIORATION * deteriorationProcent * 0.01 );
+    item.BrokenCount = uint( MAX_BROKENS * deteriorationProcent * 0.01 );
     if( deteriorationProcent == 100 )
         SETFLAG( item.BrokenFlags, BI_BROKEN );
     item.Update();

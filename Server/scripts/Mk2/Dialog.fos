@@ -2113,19 +2113,17 @@ class ScreenAnswer : IGUI::ElementCallbackDrawPos, IGUI::ElementCallbackKeyPress
 	
 	void OnKeyPress( uint8 key, uint8 letter, bool& result ) override
 	{
-		::string txt = " ";
+		string txt = " ";
 		txt[0] = letter;
 		int value = 0;
-		if( ::StrToInt( txt, value ) )
+		if( StrToInt( txt, value ) )
 		{
-			value += -1 + Dialog::GUI::Master.ScreenOpt.ElementOpt["Listing"].ListingShift;
+			value += -1 + int( Dialog::GUI::Master.ScreenOpt.ElementOpt["Listing"].ListingShift );
 			if( uint( value ) < List.length() )
 			{
 				Dialog::Answer@ answer = cast<Dialog::Answer>(@List[value]);
-				if( @answer !is null )
-				{
+				if( answer !is null )
 					answer.ClickUp( MOUSE_CLICK_LEFT );
-				}
 			}
 		}
 		//else if( key == DIK_ESCAPE )

@@ -53,19 +53,19 @@ bool UseOnMe( ::Item& item, ::Critter& cr, ::Item@ usedItem )
     return false;
 }
 
-uint e_Awake( ::array<uint>@ values )
+uint e_Awake( array<uint>@ values )
 {
     DL( "Rat awaken" );
-    ::Item@ item = ::GetItem( values[ 0 ] );
+    Item@ item = GetItem( values[ 0 ] );
     if( validEngineObject( item ) )
     {
         item.Val1 = 0;
         if( item.CritId > 0 )
         {
-            ::Critter@ cr = ::GetCritter( item.CritId );
+            Critter@ cr = GetCritter( item.CritId );
             if( validEngineObject( cr ) )
             {
-                ::Map@ map = cr.GetMap();
+                Map@ map = cr.GetMap();
                 if( validEngineObject( map ) )
                 {
                     cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_AWAKE_MAP );
@@ -73,8 +73,8 @@ uint e_Awake( ::array<uint>@ values )
                     if( GetFreeHex( map, 2, x, y ) )
                     {
                         uint8    dir = ::GetDirection( x, y, cr.HexX, cr.HexY );
-                        ::array<int> values = { ST_VAR3, item.GetProtoId(), ST_VAR4, item.CritId };
-                        ::Critter@ rat = map.AddNpc( NPC_PID_RegularRat, x, y, dir, values, null, "RatGrenade::_RatInit" );
+						int[] rat_params = { ST_VAR3, item.GetProtoId(), ST_VAR4, item.CritId };
+                        Critter@ rat = map.AddNpc( NPC_PID_RegularRat, x, y, dir, rat_params, null, "RatGrenade::_RatInit" );
                         if( validEngineObject( rat ) )
                         {
                             NpcPlanes::AddAttackPlane( rat, 0, cr );
@@ -85,7 +85,7 @@ uint e_Awake( ::array<uint>@ values )
                 {
                     cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_AWAKE_GLOBAL );
                 }
-                ::DeleteItem( item );
+                DeleteItem( item );
             }
         }
     }
@@ -117,27 +117,27 @@ bool Attack( ::Item& item, ::Critter& cr, ::Critter& target )
     return false;
 }
 
-uint e_RatAttack( ::array<uint>@ values )
+uint e_RatAttack( array<uint>@ values )
 {
-    ::Critter@ target = ::GetCritter( values[ 1 ] );
-    ::Item@    item = ::GetItem( values[ 2 ] );
+    Critter@ target = GetCritter( values[ 1 ] );
+    Item@ item = GetItem( values[ 2 ] );
     if( validEngineObject( item ) && validEngineObject( target ) )
     {
         uint16 hX = target.HexX, hY = target.HexY;
         if( item.MapId > 0 )
         {
-            ::Map@ map = item.GetMapPosition( hX, hY );
+            Map@ map = item.GetMapPosition( hX, hY );
             if( validEngineObject( map ) )
             {
                 if( GetFreeHex( map, 2, hX, hY ) )
                 {
-                    uint8    dir = ::GetDirection( hX, hY, target.HexX, target.HexY );
-                    ::array<int> values = { ST_VAR3, item.GetProtoId(), ST_VAR4, item.CritId };
-                    ::Critter@ rat = map.AddNpc( NPC_PID_RegularRat, hX, hY, dir, values, null, "RatGrenade::_RatInit" );
+                    uint8    dir = GetDirection( hX, hY, target.HexX, target.HexY );
+                    array<int> rat_params = { ST_VAR3, item.GetProtoId(), ST_VAR4, item.CritId };
+                    Critter@ rat = map.AddNpc( NPC_PID_RegularRat, hX, hY, dir, rat_params, null, "RatGrenade::_RatInit" );
                     if( validEngineObject( rat ) )
                     {
                         NpcPlanes::AddAttackPlane( rat, 0, target );
-                        ::DeleteItem( item );
+                        DeleteItem( item );
                     }
                 }
             }
@@ -148,7 +148,7 @@ uint e_RatAttack( ::array<uint>@ values )
             {
                 DL( "Rat in inventory" );
                 values[ 3 ] = 2;
-                ::CreateTimeEvent( ::__FullSecond + 2, "RatGrenade::e_RatAttack", values, true );
+                CreateTimeEvent( __FullSecond + 2, "RatGrenade::e_RatAttack", values, true );
             }
         }
     }

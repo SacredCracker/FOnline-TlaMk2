@@ -183,31 +183,31 @@ bool CorrectName( ::string& str )
     return true;
 }
 
-void create_Org( ::Critter& admin, uint answerI, ::string& answerS )
+void create_Org( Critter& admin, uint answerI, string& answerS )
 {
-    ::string@[] strs = ::splitEx( answerS, "@" );
+    string@[] strs = splitEx( answerS, "@" );
     if( strs.length() != 2 )
     {
         admin.Say( SAY_NETMSG, "Неверный формат текста, придерживайтесь формату: ''имя_фракции@имя_игрока''." );
         return;
     }
     answerS = strs[ 0 ];
-    ::Critter@ cr = ::GetPlayer( strs[ 1 ] );
+    Critter@ cr = GetPlayer( strs[ 1 ] );
     if( !valid( cr ) )
     {
         admin.Say( SAY_NETMSG, "Игрок не валиден - юзаем модуль _offplayer" );
-        ::OffClient@ cr = ::GetOffClient( strs[ 1 ] );
-        if( !valid( cr ) )
+        OffClient@ offCr = GetOffClient( strs[ 1 ] );
+        if( offCr is null )
         {
             admin.Say( SAY_NETMSG, "Оппа-ча, и в оффлайне не виден. Ну и хрен с ним." );
             return;
         }
-        if( cr.GetParam( ST_FACTION ) != 0 )
+        if( offCr.GetParam( ST_FACTION ) != 0 )
         {
             admin.Say( SAY_NETMSG, "Error! ::Critter is already in fraction!" );
             return;
         }
-        if( cr.GetParam( ST_LEVEL ) < 15 )
+        if( offCr.GetParam( ST_LEVEL ) < 15 )
         {
             admin.SayMsg( SAY_NETMSG, TEXTMSG_GAME, 14068 );
             return;
@@ -219,13 +219,13 @@ void create_Org( ::Critter& admin, uint answerI, ::string& answerS )
                 admin.SayMsg( SAY_NETMSG, TEXTMSG_GAME, 14044 );
                 return;
             }
-            if( !CorrectName( ::strupr( answerS ) ) )
+            if( !CorrectName( strupr( answerS ) ) )
             {
                 admin.SayMsg( SAY_NETMSG, TEXTMSG_GAME, 14075 );
                 return;
             }
             admin.Say( SAY_NETMSG, answerS + " успешно создана." );
-            Fractions::AddFraction( answerS, cr.Id );
+            Fractions::AddFraction( answerS, offCr.Id );
         }
         else
             admin.SayMsg( SAY_NETMSG, TEXTMSG_GAME, 14046 );
@@ -434,18 +434,18 @@ bool AddFactionRating(int index, int val)
 	return str;
 }
 
-void LoadFractions( ::string@ txt )
+void LoadFractions( string@ txt )
 {
-	::string@[] lines = ::splitEx( txt, "\n" );
-	::string@ currentLine = null;
-	::string@[]@ data = null, check = null;
-	::Fraction @fraction = null;
+	string@[] lines = splitEx( txt, "\n" );
+	string@ currentLine = null;
+	string@[]@ data = null, check = null;
+	Fraction@ fraction = null;
 	int tempi = -1;
 	uint tempu = 0, countLine = lines.length();
-	::string@ name = null;
-	for( uint i = 0; i < countLine; i++ )
+	string@ name = null;
+	for( uint iline = 0; iline < countLine; iline++ )
 	{
-		@currentLine = lines[i];
+		@currentLine = lines[iline];
 		if( currentLine is null || currentLine.length() == 0  )
 			continue;
 		if( currentLine[0] == '#' )

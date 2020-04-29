@@ -964,16 +964,14 @@ void dlg_FinishSalvQuests( ::Critter& player, ::Critter@ Salv, ::string@ lexems 
     if( not IS_DIALOG_GENERATED( lexems ) )
         return;
     ::Fraction@ fr = Fractions::Get( player.Stat[ ST_FACTION ] );
-    if( !valid( fr ) )
+    if( fr is null )
         return;
     uint[] players = Fractions::GetPlayersByFraction( player.Param[ ST_FACTION ] );
     for( uint n = 0, nMax = players.length(); n < nMax; n++ )
     {
-        ::Critter@ player = ::GetCritter( players[ n ] );
-        if( valid( player ) )
-        {
-            player.ParamBase[ KARMA_MAN_SALVATORE ] = 1;
-        }
+        ::Critter@ nplayer = ::GetCritter( players[ n ] );
+        if( nplayer !is null )
+            nplayer.ParamBase[ KARMA_MAN_SALVATORE ] = 1;
     }
     fr.Stats[ FR_NR_FAMILY ] = 6;
 }

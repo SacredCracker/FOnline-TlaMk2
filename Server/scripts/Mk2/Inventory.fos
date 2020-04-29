@@ -78,7 +78,7 @@ class InventoryScreen : GuiKit::GUIScreenPattern, IGUI::ScreenCallbackShow, IGUI
 	void UpdateItem( ItemCl& item )
 	{		
 		for( uint i = 0, iEnd = Slots.length(); i < iEnd; i++ )
-			if( Slots[i].SlotIndex == item.CritSlot )
+			if( uint( Slots[i].SlotIndex ) == item.CritSlot )
 				Slots[i].UpdateItem( item );
 			else Slots[i].DeleteItem( item );
 	}
@@ -348,8 +348,8 @@ class Slot : Item::ItemLocation, GuiKit::IGuiKitElement, IGUI::ListingElementOpt
 	{
 		for( uint i = 0, iEnd = Items.length(); i < iEnd; i++ )
 		{
-			::ItemCl@ item = ::GetItem( cast<ThisModule::ItemInfo@>(@Items[i]).Id );
-			if( @item !is null && ( item.CritSlot != cast<ThisModule::ItemInfo@>(@Items[i]).CritSlot || item.CritSlot != SlotIndex ) )
+			ItemCl@ item = GetItem( cast<ThisModule::ItemInfo@>(@Items[i]).Id );
+			if( item !is null && ( item.CritSlot != uint( cast<ThisModule::ItemInfo@>(@Items[i]).CritSlot ) || item.CritSlot != uint( SlotIndex ) ) )
 				return true;
 		}
 		return false;
@@ -366,16 +366,15 @@ class Slot : Item::ItemLocation, GuiKit::IGuiKitElement, IGUI::ListingElementOpt
 		}
 		
 		CritterId = crId;
-		::CritterCl@ critter = ::GetCritter( CritterId );
-		if( @critter is null )
+		CritterCl@ critter = ::GetCritter( CritterId );
+		if( critter is null )
 			return;
 			
-		if( @this.Items is null )
+		if( this.Items is null )
 			return;
 			
-		::ItemCl@[] items;
-		::ItemCl@[] result_items;
-		uint temp = 0;
+		ItemCl@[] items;
+		ItemCl@[] result_items;
 		this.Items.resize( 0 );
 		
 		//SortValue
@@ -424,19 +423,21 @@ class Slot : Item::ItemLocation, GuiKit::IGuiKitElement, IGUI::ListingElementOpt
 	void UpdateItem( ItemCl& item )
 	{
 		for( uint i = 0, iEnd = this.Items.length(); i < iEnd; i++ )
-			if( @this.Items[i] !is null && cast<ThisModule::ItemInfo@>(@Items[i]).Id == item.Id )
+		{
+			if( this.Items[i] !is null && cast<ThisModule::ItemInfo@>(@Items[i]).Id == item.Id )
 			{
 				ThisModule::ItemInfo info( item, @this );
 				info.DrawSlotName = false;
 				@Items[i] = @info;
 				return;
 			}
+		}
 		// AddItem( item );
 	}
 	
 	bool AddItem( ItemCl& item )
 	{
-		if( SlotIndex == item.CritSlot )
+		if( uint( SlotIndex ) == item.CritSlot )
 		{
 			ThisModule::ItemInfo info( item, @this );
 			info.DrawSlotName = false;

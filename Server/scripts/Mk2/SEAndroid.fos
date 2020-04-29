@@ -121,19 +121,18 @@ bool UseDoor(::Item& door, ::Critter& cr, int skill)
 	return (valid(playerIn) && playerIn.GetValue()==1);
 }
 
-void t_Transit(::Critter& player, ::Scenery& trigger, bool entered, uint8 dir)
+void t_Transit( Critter& player, Scenery& trigger, bool entered, uint8 dir)
 {
-	::Map@ map=player.GetMap();
-	::Location@ loc=map.GetLocation();
-	::GameVar@ playerIn=::GetLocalVar(LLVAR_se_android_player_in, loc.Id);
+	Map@ map=player.GetMap();
+	Location@ loc=map.GetLocation();
+	GameVar@ playerIn=::GetLocalVar(LLVAR_se_android_player_in, loc.Id);
 	if(valid(playerIn) && playerIn==0)
 	{
 		// Переносим игрока в подвал, кладем в нокаут
-		::Map@ basement=loc.GetMapByIndex(1);
-		::GameVar@ playerId=::GetLocalVar(LLVAR_se_android_player_id, loc.Id);
+		Map@ basement=loc.GetMapByIndex(1);
+		GameVar@ playerId=::GetLocalVar(LLVAR_se_android_player_id, loc.Id);
 		uint16 x=0;
 		uint16 y=0;
-		uint8 dir=0;
 		if(validEngineObject(basement) && valid(playerId))
 		{
 			basement.GetEntireCoords(SEAndroid::Defines::EntireKnockout, 0, x, y);
@@ -144,15 +143,15 @@ void t_Transit(::Critter& player, ::Scenery& trigger, bool entered, uint8 dir)
 			player.AddTimeEvent("SEAndroid::cte_CheckPlayerKnockOut", ::__TimeMultiplier*60*30, 0); // Подстраховка
 			player.ToKnockout(KNOCKOUT_ANIM2_DEFAULT(true), 100000, player.HexX, player.HexY);
 			// Все вещи игрока перекладываем в разные ящики
-			::array<::Item@> items = {};
+			array<Item@> items = {};
 			if(player.GetItems(-1, items) > 0)
 			{
 				if(basement.GetEntireCoords(SEAndroid::Defines::EntireContainer, 0, x, y))
 				{
-					::Item@ cont=basement.GetItem(x, y, SEAndroid::Defines::PidContainer);
+					Item@ cont=basement.GetItem(x, y, SEAndroid::Defines::PidContainer);
 					if(validEngineObject(cont))
 					{
-						::MoveItems(items, cont, 0);
+						MoveItems(items, cont, 0);
 						items.resize(0);
 						if(cont.GetItems(0, items)>0)
 						{
@@ -163,8 +162,8 @@ void t_Transit(::Critter& player, ::Scenery& trigger, bool entered, uint8 dir)
 									::DeleteItem(items[i]);
 							}
 						}
-						::Item@ item=cont.AddItem( uint( Content::Item::POT ), 1, 0);
-						item.SetLexems("$text" + ::GetPlayerName(player.Id));
+						Item@ item=cont.AddItem( uint( Content::Item::POT ), 1, 0);
+						item.SetLexems("$text" + GetPlayerName(player.Id));
 					}
 				
 				}

@@ -60,7 +60,7 @@ class ItemDescriptor : Mk2::Descriptor, Mk2::ItemPacket, UpgradeItem::UpgradeDes
 				break;
 				
 			case 2:
-				isForTypeUpgr = ( base.GetProtoId() >= upgrade_proto.Upgrade_TypeValue0 && base.GetProtoId() <= upgrade_proto.Upgrade_TypeValue1 );
+				isForTypeUpgr = ( base.GetProtoId() >= uint16( upgrade_proto.Upgrade_TypeValue0 ) && base.GetProtoId() <= uint16( upgrade_proto.Upgrade_TypeValue1 ) );
 				break;
 				
 			default: break;
@@ -939,7 +939,7 @@ class Interface : IGUIListingElement, IGUIDragAndDropElement, Splitter::SplitRes
 	
 	void Draw( int x, int y ) override
 	{
-		Image.Draw( x - Image.Width * 0.5 , y - Image.Height * 0.5 );
+		Image.Draw( x - int( Image.Width * 0.5 ) , y - int( Image.Height * 0.5 ) );
 		ThisModule::Interface@ swapItem = cast<ThisModule::Interface@>(@GUI_GetFocusListingElement( ));
 		if( this is swapItem )
 			@swapItem = null;

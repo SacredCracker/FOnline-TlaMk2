@@ -238,7 +238,7 @@ class CritterDescriptor : Mk2::Descriptor, Mk2::CritterPacket, Mk2::CombatTarget
 					if( RealCr.AddTimeEvent("Critter::cte_SlowEMP",REAL_SECOND(combatData.ArmorTarget.Proto.Emp_TimeSlow) ,CTE_REFRESH_SPEED,combatData.ArmorTarget.Proto.Emp_SlowEffect, 0, true) )
 					{
 						RealCr.StatBase[ST_BONUS_WALK_TIME] -= combatData.ArmorTarget.Proto.Emp_SlowEffect;
-						RealCr.StatBase[ST_BONUS_RUN_TIME] -= combatData.ArmorTarget.Proto.Emp_SlowEffect*0.5;
+						RealCr.StatBase[ST_BONUS_RUN_TIME] -= int( combatData.ArmorTarget.Proto.Emp_SlowEffect * 0.5 );
 					} else Log( "Error slow" );
 				}
 				
@@ -525,6 +525,6 @@ bool NewDescriptor( ::Critter& critter, Mk2::Descriptor@ new )
 uint cte_SlowEMP(::Critter& cr, int, int& slow, int&)
 {
 	cr.StatBase[ST_BONUS_WALK_TIME] += slow;
-	cr.StatBase[ST_BONUS_RUN_TIME] += slow*0.5;
+	cr.StatBase[ST_BONUS_RUN_TIME] += int( slow * 0.5 );
 	return 0;
 }

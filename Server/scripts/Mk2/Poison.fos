@@ -20,7 +20,7 @@ void Affect(::Critter& cr, int value) // Export
 
 	int levelVal=cr.Stat[ST_POISONING_LEVEL];
 
-	if(value>0) value-=(value*cr.Stat[ST_POISON_RESISTANCE])*0.01;
+	if(value>0) value-=int((value*cr.Stat[ST_POISON_RESISTANCE])*0.01);
 	else if(levelVal==0) return;
 	cr.StatBase[ST_POISONING_LEVEL]=CLAMP(levelVal+value,0,2000);
 	levelVal=cr.Stat[ST_POISONING_LEVEL];
@@ -69,7 +69,7 @@ uint cte_Poison(::Critter& cr, int identifier, int& rate, int&)
 	{
 		cr.SayMsg(SAY_NETMSG,TEXTMSG_GAME,STR_POISON_PROCESS);
 		cr.StatBase[ST_POISONING_LEVEL]=CLAMP(levelVal-4,0,2000);
-		cr.StatBase[ST_CURRENT_HP]-=levelVal*0.4>0?levelVal*0.4:1;
+		cr.StatBase[ST_CURRENT_HP]-=levelVal*0.4>0?int( levelVal*0.4 ):1;
 		if(cr.Stat[ST_CURRENT_HP]<=0) cr.ToDead(::Random(0,1)==0?ANIM2_DEAD_FRONT:ANIM2_DEAD_BACK,null);
 	}
 

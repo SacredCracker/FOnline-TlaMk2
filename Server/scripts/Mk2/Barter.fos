@@ -123,7 +123,7 @@ bool IsOffer( ::Critter& player, ::Critter& cr, int[]& data )
 
 uint GetCost( int skillChosen, int skillSeller, uint baseCost, bool isSell )
 {
-	skillChosen = ( skillSeller - skillChosen ) * 0.5;
+	skillChosen = int( ( skillSeller - skillChosen ) * 0.5 );
 	
 	if( isSell )
 		skillChosen = 100 - CLAMP( skillChosen, 10, 75 );

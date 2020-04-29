@@ -300,16 +300,16 @@ bool _AnimalAttacked( ::Critter& cr, ::Critter& target)
 	return true;
 }
 
-bool BrahminAnimalAttack( ::Critter& npc, ::Critter& target)
+bool BrahminAnimalAttack( Critter& npc, Critter& target)
 {
-	::NpcPlane@ plane = ::CreatePlane();
+	NpcPlane@ plane = CreatePlane();
 	if(target.StatBase[ST_LEVEL]<=3 && target.IsPlayer())
 	{
-		if(::Random(0,5)==0) npc.SayMsg(SAY_NORM_ON_HEAD,TEXTMSG_TEXT,MooStr);
+		if(Random(0,5)==0) npc.SayMsg(SAY_NORM_ON_HEAD,TEXTMSG_TEXT,MooStr);
 		plane.Type=AI_PLANE_ATTACK;
 		plane.Priority=AI_PLANE_ATTACK_PRIORITY;
 		plane.Attack_TargId=target.Id;
-		plane.Attack_MinHp= ::__DeadHitPoints;
+		plane.Attack_MinHp= __DeadHitPoints;
 		plane.Attack_IsGag=false;
 		plane.Attack_GagHexX=0;
 		plane.Attack_GagHexY=0;
@@ -328,9 +328,9 @@ bool BrahminAnimalAttack( ::Critter& npc, ::Critter& target)
 		npc.SayMsg(SAY_SHOUT_ON_HEAD,TEXTMSG_TEXT,MooStr);
 		plane.Type=AI_PLANE_WALK;
 		plane.Priority=AI_PLANE_WALK_PRIORITY;
-		plane.Walk_HexX= ::Random((target.HexX+(5*(-1))), (target.HexX+5));
-		plane.Walk_HexY= ::Random((target.HexY+(5*(-1))), (target.HexY+5));
-		plane.Walk_Dir= ::GetDirection(plane.Walk_HexX, plane.Walk_HexY, target.HexX, target.HexY);
+		plane.Walk_HexX= Random( int( target.HexX ) + 5 * (-1) , target.HexX + 5 );
+		plane.Walk_HexY= Random( int( target.HexY ) + 5 * (-1) , target.HexY + 5 );
+		plane.Walk_Dir= GetDirection(plane.Walk_HexX, plane.Walk_HexY, target.HexX, target.HexY);
 		plane.Run=true;
 		plane.Walk_Cut=0;
 	}

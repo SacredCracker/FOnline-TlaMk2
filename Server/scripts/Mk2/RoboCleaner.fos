@@ -185,12 +185,12 @@ void TryPickItems(::array<::Item@> items, ::Critter& cr)
 	}
 }
 
-void TryRepairItems(::array<::Item@> items)
+void TryRepairItems( array<Item@> items)
 {
 	for(uint n=0, nMax=items.length();n<nMax;n++)
 	{
-		if(!items[n].IsDeteriorable() || FLAG(items[n].BrokenFlags,BI_ETERNAL) || FLAG(items[n].BrokenFlags,BI_NOTRESC)) continue;
-		int maxRepairCount = (items[n].Proto.MaxRepairCount>0)?((items[n].Proto.MaxRepairCount+10)*10):DEFAULT_MAX_REPAIR_COUNT;
+		if( !items[n].IsDeteriorable() || FLAG(items[n].BrokenFlags,BI_ETERNAL) || FLAG(items[n].BrokenFlags,BI_NOTRESC) ) continue;
+		uint maxRepairCount = (items[n].Proto.MaxRepairCount>0)?((items[n].Proto.MaxRepairCount+10)*10):DEFAULT_MAX_REPAIR_COUNT;
 		if(items[n].RadioChannel>=maxRepairCount) continue;
 		SETFLAG(items[n].BrokenFlags,BI_SERVICE);
 		UNSETFLAG(items[n].BrokenFlags,BI_BROKEN);
@@ -201,7 +201,7 @@ void TryRepairItems(::array<::Item@> items)
 		}
 		else
 		{
-			items[n].RadioChannel+=items[n].Deterioration*0.01;
+			items[n].RadioChannel += uint( items[n].Deterioration*0.01 );
 			items[n].Deterioration=0;
 		}
 		items[n].Update();
@@ -408,20 +408,20 @@ uint r_AskRepair(::Critter& master, ::Critter@ npc)
 	return 4;
 }
 
-void dlg_Repair(::Critter& master, ::Critter@ npc, ::string@ lexems)
+void dlg_Repair( Critter& master, Critter@ npc, string@ lexems)
 {
 	if(!IS_DIALOG_GENERATED(lexems)) return;
 	lexems="$fixdetails";
-	::array<::Item@>  slotItems = {};
-	master.GetItems(SLOT_HAND1, slotItems);
-	master.GetItems(SLOT_HAND2, slotItems);
-	master.GetItems(SLOT_ARMOR, slotItems);
-	for(uint n=0; n<slotItems.length(); n++)
+	array<Item@>  slotItems = {};
+	uint countItems = master.GetItems(SLOT_HAND1, slotItems);
+	countItems += master.GetItems(SLOT_HAND2, slotItems);
+	countItems += master.GetItems(SLOT_ARMOR, slotItems);
+	for( uint n = 0; n < countItems; n++ )
 	{
-		if(!slotItems[n].IsDeteriorable()) continue;
-		lexems+="@msg item "+(slotItems[n].GetProtoId()*100)+"@ - ";
-		int maxRepairCount = (slotItems[n].Proto.MaxRepairCount>0)?((slotItems[n].Proto.MaxRepairCount+10)*10):DEFAULT_MAX_REPAIR_COUNT;
-		if(FLAG(slotItems[n].BrokenFlags,BI_ETERNAL) || FLAG(slotItems[n].BrokenFlags,BI_NOTRESC) || slotItems[n].RadioChannel>=maxRepairCount) 		lexems+="@msg text 2659@\n";
+		if( !slotItems[ n ].IsDeteriorable( ) ) continue;
+		lexems += "@msg item " + ( slotItems[ n ].GetProtoId( ) * 100 ) + "@ - ";
+		uint maxRepairCount = (slotItems[n].Proto.MaxRepairCount>0)?((slotItems[n].Proto.MaxRepairCount+10)*10):DEFAULT_MAX_REPAIR_COUNT;
+		if(FLAG(slotItems[n].BrokenFlags,BI_ETERNAL) || FLAG(slotItems[n].BrokenFlags,BI_NOTRESC) || slotItems[n].RadioChannel>=maxRepairCount) lexems+="@msg text 2659@\n";
 		else if(slotItems[n].Deterioration<=50) lexems+="@msg text 2660@\n";
 		else lexems+="@msg text 2658@\n";
 	}
