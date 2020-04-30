@@ -134,7 +134,9 @@ BuilderCall::BuilderCall()
 				int enumTypeId = enumInfo->GetTypeId();
 				const char *nameSpace = enumInfo->GetNamespace();
 				out.str("");
-				out << "void " << enumName << "Init(string&inout, " << enumName << ")"; 
+				if(!CharIsWord("",nameSpace))
+					out << "void " << enumName << "Init(string&inout, " << nameSpace << "::" << enumName << ")"; 
+				else out << "void " << enumName << "Init(string&inout, " << enumName << ")";
 				
 				for( uint iFunc = 0, funcEnd = mk2Module->GetFunctionCount(); iFunc < funcEnd; iFunc++ )
 				{
