@@ -2404,13 +2404,13 @@ uint e_RefreshFarmLocation( array< uint >@ values )
 
             array< Critter@ > players;
 
-            for( uint i = 0, iEnd = loc.GetMapCount(); i < iEnd; i++ )
-                for( uint imap = 0, imapEnd = loc.GetMapByIndex( imap ).GetCritters( 0, FIND_ONLY_PLAYERS, players ); imap < imapEnd; imap++ )
+            for( uint imap = 0, imapEnd = loc.GetMapCount(); imap < imapEnd; imap++ )
+                for( uint icritter = 0, icritterEnd = loc.GetMapByIndex( imap ).GetCritters( 0, FIND_ONLY_PLAYERS, players ); icritter < icritterEnd; icritter++ )
                 {
-                    Map@ map = players[ imap ].GetMap();
+                    Map@ map = players[ icritter ].GetMap();
                     if( validEngineObject( map ) )
-                        map.EventOutCritter( players[ imap ] );
-                    players[ imap ].TransitToGlobal( false );
+                        map.EventOutCritter( players[ icritter ] );
+                    players[ icritter ].TransitToGlobal( false );
                 }
             ( Farm::AllLocs[ values[ 1 ] - 1 ] ).Refresh( values[ 0 ], WorldX, WorldY );
         }
