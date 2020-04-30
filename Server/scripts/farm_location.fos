@@ -2412,11 +2412,16 @@ uint e_RefreshFarmLocation( array< uint >@ values )
                         map.EventOutCritter( players[ icritter ] );
                     players[ icritter ].TransitToGlobal( false );
                 }
-            ( Farm::AllLocs[ values[ 1 ] - 1 ] ).Refresh( values[ 0 ], WorldX, WorldY );
+            Farm::AllLocs[ values[ 1 ] - 1 ].Refresh( values[ 0 ], WorldX, WorldY );
         }
         else
         {
-            ( Farm::AllLocs[ values[ 1 ] - 1 ] ).Create( values[ 2 ], values[ 3 ] );
+			if( values.length() != 4  )
+			{
+				Log( "Error create farmlocation: values incorrect <" + Farm::AllLocs[ values[ 1 ] - 1 ].Name + ">" );
+				return 0;
+			}
+            Farm::AllLocs[ values[ 1 ] - 1 ].Create( values[ 2 ], values[ 3 ] );
         }
     }
     return 0;
