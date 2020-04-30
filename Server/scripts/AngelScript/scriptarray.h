@@ -28,16 +28,16 @@ public:
 #ifdef FONLINE_DLL
 	static CScriptArray& Create(const char* type)
 	{
-		CScriptArray* scriptArray = (CScriptArray*)ASEngine->CreateScriptObject(ASEngine->GetObjectTypeByDecl(std::string(type).append("[]").c_str()));
+		CScriptArray* scriptArray = (CScriptArray*)ASEngine->CreateScriptObject(ASEngine->GetTypeInfoByDecl(std::string(type).append("[]").c_str()));
 		return *scriptArray;
 	}
 protected:
 #endif
 
 	// Constructors
-	CScriptArray(asIObjectType *ot, void *initBuf); // Called from script when initialized with list
-	CScriptArray(asUINT length, asIObjectType *ot);
-	CScriptArray(asUINT length, void *defVal, asIObjectType *ot);
+	CScriptArray(asITypeInfo *ot, void *initBuf); // Called from script when initialized with list
+	CScriptArray(asUINT length, asITypeInfo *ot);
+	CScriptArray(asUINT length, void *defVal, asITypeInfo *ot);
 	CScriptArray(const CScriptArray &other);
 	virtual ~CScriptArray();
 
@@ -45,10 +45,10 @@ protected:
 	static void SetMemoryFunctions(asALLOCFUNC_t allocFunc, asFREEFUNC_t freeFunc);
 
 	// Factory functions
-	static CScriptArray *Create(asIObjectType *ot);
-	static CScriptArray *Create(asIObjectType *ot, asUINT length);
-	static CScriptArray *Create(asIObjectType *ot, asUINT length, void *defaultValue);
-	static CScriptArray *Create(asIObjectType *ot, void *listBuffer);
+	static CScriptArray *Create(asITypeInfo *ot);
+	static CScriptArray *Create(asITypeInfo *ot, asUINT length);
+	static CScriptArray *Create(asITypeInfo *ot, asUINT length, void *defaultValue);
+	static CScriptArray *Create(asITypeInfo *ot, void *listBuffer);
 
 public:
 	// Memory management
@@ -56,7 +56,7 @@ public:
 	virtual void Release() const;
 
 	// Type information
-	virtual asIObjectType *GetArrayObjectType() const;
+	virtual asITypeInfo *GetArrayObjectType() const;
 	virtual int            GetArrayTypeId() const;
 	virtual int            GetElementTypeId() const;
 	virtual int            GetElementSize() const;
@@ -115,7 +115,7 @@ public:
 protected:
 	mutable int       refCount;
 	mutable bool      gcFlag;
-	asIObjectType    *objType;
+	asITypeInfo    *objType;
 	SArrayBuffer     *buffer;
 	int               elementSize;
 	int               subTypeId;

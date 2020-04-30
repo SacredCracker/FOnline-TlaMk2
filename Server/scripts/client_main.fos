@@ -672,7 +672,7 @@ bool main_render_iface( uint layer )
 				}
 
 				uint8            handWeaponMode = 0;
-				const ProtoItem@ handWeaponChosen = chosen.GetSlotProto( SLOT_HAND1, handWeaponMode );
+				ProtoItem@ handWeaponChosen = chosen.GetSlotProto( SLOT_HAND1, handWeaponMode );
 					
 				if( AttackZone::Option::ToDoConvert::IsShow )
 				{
@@ -860,7 +860,7 @@ bool main_render_iface( uint layer )
 				}
 				
 				for( uint i = 0, iEnd = Marker::All.length(); i < iEnd; i++ )
-					Marker::All[i].Render( @handWeaponChosen, handWeaponMode );
+					Marker::All[i].Render( handWeaponChosen, handWeaponMode );
 				
 				for( uint n = 0; n < Selection::Critters.length(); n++ )
 				{

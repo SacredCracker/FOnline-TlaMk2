@@ -517,7 +517,7 @@ int CScriptBuilder::Build()
 					it = classMetadataMap.find(typeId);
 				}
 
-				asIObjectType *type = engine->GetObjectTypeById(typeId);
+				asITypeInfo *type = engine->GetTypeInfoById(typeId);
 				asIScriptFunction *func = type->GetMethodByDecl(decl->declaration.c_str());
 				if( func )
 					it->second.funcMetadataMap.insert(map<int, string>::value_type(func->GetId(), decl->metadata));
@@ -546,7 +546,7 @@ int CScriptBuilder::Build()
 					it = classMetadataMap.find(typeId);
 				}
 
-				asIObjectType *type = engine->GetObjectTypeById(typeId);
+				asITypeInfo *type = engine->GetTypeInfoById(typeId);
 				asIScriptFunction *func = type->GetMethodByName(("get_" + decl->declaration).c_str());
 				if( func )
 					it->second.funcMetadataMap.insert(map<int, string>::value_type(func->GetId(), decl->metadata));
@@ -578,7 +578,7 @@ int CScriptBuilder::Build()
 				}
 
 				// Add the variable to class
-				asIObjectType *objectType = engine->GetObjectTypeById(typeId);
+				asITypeInfo *objectType = engine->GetTypeInfoById(typeId);
 				int idx = -1;
 
 				// Search through all properties to get proper declaration

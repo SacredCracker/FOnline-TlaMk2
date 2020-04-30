@@ -126,16 +126,16 @@ BuilderCall::BuilderCall()
 		
 		for( uint index = 0, iEnd = mk2Module->GetEnumCount(); index < iEnd; index++ )
         {
-			int enumTypeId = -1;
-			const char *nameSpace = 0;
-			
-			const char *enumName = mk2Module->GetEnumByIndex( index, &enumTypeId, &nameSpace );
-			if( enumName )
+			//const char *enumName = mk2Module->GetEnumByIndex( index, &enumTypeId, &nameSpace );
+			asITypeInfo* enumInfo = mk2Module->GetEnumByIndex( index ); // , &TypeId, &NameSpace );
+			if( enumInfo )
 			{
+				const char *enumName = enumInfo->GetName();
+				int enumTypeId = enumInfo->GetTypeId();
+				const char *nameSpace = enumInfo->GetNamespace();
 				out.str("");
-				if(!CharIsWord("",nameSpace))
-					out << "void " << enumName << "Init(string&inout, " << nameSpace << "::" << enumName << ")"; 
-				else out << "void " << enumName << "Init(string&inout, " << enumName << ")";
+				out << "void " << enumName << "Init(string&inout, " << enumName << ")"; 
+				
 				for( uint iFunc = 0, funcEnd = mk2Module->GetFunctionCount(); iFunc < funcEnd; iFunc++ )
 				{
 					asIScriptFunction* func = mk2Module->GetFunctionByIndex( iFunc );
@@ -145,12 +145,12 @@ BuilderCall::BuilderCall()
 					func->GetParam( 1, &typeId );
 					if( func && CharIsWord( out.str().c_str(), func->GetDeclaration( false ) ) && typeId == enumTypeId )
 					{
-						for( int value = 0, valueCount = mk2Module->GetEnumValueCount(enumTypeId); value < valueCount; value++ )
+						for( int value = 0, valueCount = enumInfo->GetEnumValueCount(); value < valueCount; value++ )
 						{
 							if( ctx->Prepare(func) >= 0 ) // FOnline->ScriptPrepare( funcId ) )
 							{    
 								int outValue = -1;
-								ScriptString& nameValue = ScriptString::Create( mk2Module->GetEnumValueByIndex( enumTypeId, value, &outValue) );
+								ScriptString& nameValue = ScriptString::Create( enumInfo->GetEnumValueByIndex( value, &outValue) );
 								ctx->SetArgAddress( 0, &nameValue );
 								ctx->SetArgDWord( 1, outValue );
 								if( ctx->Execute() != asEXECUTION_FINISHED )

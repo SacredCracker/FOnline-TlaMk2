@@ -67,7 +67,7 @@ EXPORT CritterCl* GetMonCrExt( int x, int y )
 				if( f->Crit )
 				{
 					CritterCl* cr = const_cast< CritterCl* >( f->Crit );
-					ASEngine->AddRefScriptObject( cr, ASEngine->GetObjectTypeByName( "CritterCl" ) );
+					ASEngine->AddRefScriptObject( cr, ASEngine->GetTypeInfoByName( "CritterCl" ) );
 					return cr;
 				}
 			}

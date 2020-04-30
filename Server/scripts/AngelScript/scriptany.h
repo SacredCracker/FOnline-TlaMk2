@@ -9,7 +9,7 @@ public:
     #ifdef FONLINE_DLL
     static ScriptAny& Create()
     {
-        ScriptAny* scriptAny = (ScriptAny*) ASEngine->CreateScriptObject( ASEngine->GetObjectTypeByName( "any" ) );
+        ScriptAny* scriptAny = (ScriptAny*) ASEngine->CreateScriptObject( ASEngine->GetTypeInfoByName( "any" ) );
         return *scriptAny;
     }
 protected:

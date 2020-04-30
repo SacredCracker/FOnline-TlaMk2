@@ -15,14 +15,14 @@ public:
 	// Constructors
 	CScriptHandle();
 	CScriptHandle(const CScriptHandle &other);
-	CScriptHandle(void *ref, asIObjectType *type);
+	CScriptHandle(void *ref, asITypeInfo *type);
 	~CScriptHandle();
 
 	// Copy the stored value from another any object
 	CScriptHandle &operator=(const CScriptHandle &other);
 
 	// Set the reference
-	void Set(void *ref, asIObjectType *type);
+	void Set(void *ref, asITypeInfo *type);
 
 	// Compare equalness
 	bool operator==(const CScriptHandle &o) const;
@@ -33,7 +33,7 @@ public:
 	void Cast(void **outRef, int typeId);
 
 	// Returns the type of the reference held
-	asIObjectType *GetType();
+	asITypeInfo *GetType();
 	
 	ScriptString* script_TypeName();
 	ScriptString* script_TypeNamespace();
@@ -60,7 +60,7 @@ protected:
 	CScriptHandle &HandleAssign(void *ref, int typeId);
 
 	void          *m_ref;
-	asIObjectType *m_type;
+	asITypeInfo *m_type;
 	
 	int 		   RefCount;
 };

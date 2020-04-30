@@ -50,16 +50,19 @@ ScriptEnum::ScriptEnum( const string& nameSpace, const string& name, const strin
 		Index = 0;
 		for( uint indexEnd = Module->GetEnumCount(); Index < indexEnd; Index++ )
 		{
-			Name = Module->GetEnumByIndex( Index, &TypeId, &NameSpace );
+			EnumInfo = Module->GetEnumByIndex( Index ); // , &TypeId, &NameSpace );
+			TypeId = EnumInfo->GetTypeId();
+			Name = EnumInfo->GetName();
+			NameSpace = EnumInfo->GetNamespace();
 			if( Name && NameSpace )
 			{
 				if( CharIsWord( nameSpace.c_str(), NameSpace ) && CharIsWord( name.c_str(), Name ) )
 				{
-					ValueCount = Module->GetEnumValueCount( TypeId );
+					ValueCount = EnumInfo->GetEnumValueCount( );
 					for( uint i = 0; i < ValueCount; i++ )
 					{
 						int value = 0;
-						string nameValue = Module->GetEnumValueByIndex( TypeId, i, &value );
+						string nameValue = EnumInfo->GetEnumValueByIndex( i, &value );
 						ValueNames[nameValue] = value;
 						if( CharIsWord( nameValue.c_str(), "None" ) )
 							NoneIndex = value;
@@ -77,10 +80,10 @@ ScriptEnum::ScriptEnum( const string& nameSpace, const string& name, const strin
 
 int ScriptEnum::GetValueById( uint id )
 {
-	if( Module )
+	if( EnumInfo )
     {
 		int out = 0;
-		Module->GetEnumValueByIndex( TypeId, id, &out );
+		EnumInfo->GetEnumValueByIndex( id, &out );
 		return out;
 	}
 	return NoneIndex;
@@ -107,6 +110,7 @@ int ScriptEnum::GetValueByName( ScriptString& valueName )
 
 void ScriptEnum::Registration()
 {
+	Log( "kdslk\n" );
 	RegScriptEnum( ASEngine->RegisterObjectType( "Enum", sizeof( ScriptEnum ), asOBJ_REF ) );
     RegScriptEnum( ASEngine->RegisterObjectBehaviour( "Enum", asBEHAVE_FACTORY, "Enum@ f( ::string&, ::string&, ::string@ )", asFUNCTION( ScriptEnum::Factory ), asCALL_CDECL ) );
     RegScriptEnum( ASEngine->RegisterObjectBehaviour( "Enum", asBEHAVE_ADDREF, "void f()", asMETHOD( ScriptEnum, AddRef ), asCALL_THISCALL ) );

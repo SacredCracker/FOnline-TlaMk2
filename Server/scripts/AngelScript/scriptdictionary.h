@@ -17,7 +17,7 @@ public:
     #ifdef FONLINE_DLL
     static ScriptDictionary& Create()
     {
-        ScriptDictionary* scriptDictionary = (ScriptDictionary*) ASEngine->CreateScriptObject( ASEngine->GetObjectTypeByName( "dictionary" ) );
+        ScriptDictionary* scriptDictionary = (ScriptDictionary*) ASEngine->CreateScriptObject( ASEngine->GetTypeInfoByName( "dictionary" ) );
         return *scriptDictionary;
     }
 protected:

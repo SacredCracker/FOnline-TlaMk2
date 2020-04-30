@@ -99,7 +99,7 @@ namespace Marker
 {
 	class Pattern
 	{
-		void Render( const ::ProtoItem@ handWeaponChosen, uint8 handWeaponMode ){ };
+		void Render( ProtoItem@ handWeaponChosen, uint8 handWeaponMode ){ };
 		
 		Sprite@ Image = null;
 		string Name; // Для команд имя коммандира
@@ -107,7 +107,7 @@ namespace Marker
 	
 	class Critter : Marker::Pattern
 	{
-		void Render( const ::ProtoItem@ handWeaponChosen, uint8 handWeaponMode ) override
+		void Render( ProtoItem@ handWeaponChosen, uint8 handWeaponMode ) override
 		{
 			@ Image = CritterMarker::Option::Assist::Image;
 		}
@@ -124,7 +124,7 @@ namespace Marker
 			Y = y;
 		}
 
-		void Render( const ::ProtoItem@ handWeaponChosen, uint8 handWeaponMode ) override
+		void Render( ProtoItem@ handWeaponChosen, uint8 handWeaponMode ) override
 		{
 			int w = HexMarker::Option::Assist::Width == 0 ? this.Image.Width : HexMarker::Option::Assist::Width,
 				  h = HexMarker::Option::Assist::Height == 0 ? this.Image.Height : HexMarker::Option::Assist::Height;
@@ -1052,7 +1052,7 @@ class ClassRender
 																  int( Assist::Option::GUI::Width / __SpritesZoom ), int( Assist::Option::GUI::Height / __SpritesZoom ), true, false, Assist::Option::GUI::Image.Color );
 					
 					uint8            handWeaponMode = 0;
-					const ProtoItem@ handWeaponChosen = GetChosen().GetSlotProto( SLOT_HAND1, handWeaponMode );
+					ProtoItem@ handWeaponChosen = GetChosen().GetSlotProto( SLOT_HAND1, handWeaponMode );
 				
 					if( valid( handWeaponChosen ) )
 					{

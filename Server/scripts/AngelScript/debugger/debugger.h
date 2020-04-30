@@ -20,7 +20,7 @@ public:
 
 	// Register callbacks to handle to-string conversions of application types
 	typedef std::string (*ToStringCallback)(void *obj, bool expandMembers, CDebugger *dbg);
-	virtual void RegisterToStringCallback(const asIObjectType *ot, ToStringCallback callback);
+	virtual void RegisterToStringCallback(const asITypeInfo *ot, ToStringCallback callback);
 
 	// User interaction
 	virtual void TakeCommands(asIScriptContext *ctx);
@@ -69,7 +69,7 @@ protected:
 	std::vector<BreakPoint> m_breakPoints;
 
 	// Registered callbacks for converting objects to strings
-	std::map<const asIObjectType*, ToStringCallback> m_toStringCallbacks;
+	std::map<const asITypeInfo*, ToStringCallback> m_toStringCallbacks;
 };
 
 END_AS_NAMESPACE

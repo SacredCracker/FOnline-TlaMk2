@@ -23,7 +23,7 @@ CScriptHandle::CScriptHandle(const CScriptHandle &other)
 	AddRefHandle();
 }
 
-CScriptHandle::CScriptHandle(void *ref, asIObjectType *type)
+CScriptHandle::CScriptHandle(void *ref, asITypeInfo *type)
 {
 	m_ref  = ref;
 	m_type = type;
@@ -79,7 +79,7 @@ CScriptHandle &CScriptHandle::operator =(const CScriptHandle &other)
 	return *this;
 }
 
-void CScriptHandle::Set(void *ref, asIObjectType *type)
+void CScriptHandle::Set(void *ref, asITypeInfo *type)
 {
 	if( m_ref == ref ) return;
 
@@ -91,7 +91,7 @@ void CScriptHandle::Set(void *ref, asIObjectType *type)
 	AddRefHandle();
 }
 
-asIObjectType *CScriptHandle::GetType()
+asITypeInfo *CScriptHandle::GetType()
 {
 	return m_type;
 }
@@ -120,7 +120,7 @@ CScriptHandle &CScriptHandle::Assign(void *ref, int typeId)
 
 	// Get the object type
 	asIScriptContext *ctx    = ScriptGetActiveContext();
-	asIObjectType    *type   = ASEngine->GetObjectTypeById(typeId);
+	asITypeInfo    *type   = ASEngine->GetTypeInfoById(typeId);
 
 	Set(ref, type);
 
@@ -181,7 +181,7 @@ void CScriptHandle::Cast(void **outRef, int typeId)
 
 	// Compare the type id of the actual object
 	typeId &= ~asTYPEID_OBJHANDLE;
-	asIObjectType    *type   = ASEngine->GetObjectTypeById(typeId);
+	asITypeInfo    *type   = ASEngine->GetTypeInfoById(typeId);
 
 	*outRef = 0;
 
@@ -245,7 +245,7 @@ CScriptHandle* CreateScriptHandle( ScriptString* typeName )
 			int typeId = module->GetTypeIdByDecl( typeName->c_str() );
 			if( typeId > 0 )
 			{
-				asIObjectType *type = ASEngine->GetObjectTypeByName( typeName->c_str() );
+				asITypeInfo *type = ASEngine->GetTypeInfoByName( typeName->c_str() );
 				if( type )
 				{
 					string factoryName = typeName->c_str();

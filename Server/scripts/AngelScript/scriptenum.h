@@ -36,6 +36,7 @@ public:
 	const char* 		Name;
 	const char*			NameSpace;
 	int					NoneIndex;
+	asITypeInfo*		EnumInfo;
 	
 protected:
 	asIScriptModule* 	Module;

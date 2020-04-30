@@ -62,7 +62,7 @@ string CDebugger::ToString(void *value, asUINT typeId, bool expandMembers, asISc
 		s << *(asUINT*)value;
 
 		// Check if the value matches one of the defined enums
-		for( int n = engine->GetEnumValueCount(typeId); n-- > 0; )
+		/*for( int n = engine->GetEnumValueCount(typeId); n-- > 0; )
 		{
 			int enumVal;
 			const char *enumName = engine->GetEnumValueByIndex(typeId, n, &enumVal);
@@ -71,7 +71,7 @@ string CDebugger::ToString(void *value, asUINT typeId, bool expandMembers, asISc
 				s << ", " << enumName;
 				break;
 			}
-		}
+		}*/
 	}
 	else if( typeId & asTYPEID_SCRIPTOBJECT )
 	{
@@ -87,7 +87,7 @@ string CDebugger::ToString(void *value, asUINT typeId, bool expandMembers, asISc
 		// Print the members
 		if( obj && expandMembers )
 		{
-			asIObjectType *type = obj->GetObjectType();
+			asITypeInfo *type = obj->GetObjectType();
 			for( asUINT n = 0; n < obj->GetPropertyCount(); n++ )
 			{
 				s << endl << "  " << type->GetPropertyDeclaration(n) << " = " << ToString(obj->GetAddressOfProperty(n), obj->GetPropertyTypeId(n), false, engine);
@@ -102,21 +102,21 @@ string CDebugger::ToString(void *value, asUINT typeId, bool expandMembers, asISc
 
 		// Print the address for reference types so it will be
 		// possible to see when handles point to the same object
-		asIObjectType *type = engine->GetObjectTypeById(typeId);
+		asITypeInfo *type = engine->GetTypeInfoById(typeId);
 		if( type->GetFlags() & asOBJ_REF )
 			s << "{" << value << "}";
 
 		if( value )
 		{
 			// Check if there is a registered to-string callback
-			map<const asIObjectType*, ToStringCallback>::iterator it = m_toStringCallbacks.find(type);
+			map<const asITypeInfo*, ToStringCallback>::iterator it = m_toStringCallbacks.find(type);
 			if( it == m_toStringCallbacks.end() )
 			{
 				// If the type is a template instance, there might be a
 				// to-string callback for the generic template type
 				if( type->GetFlags() & asOBJ_TEMPLATE )
 				{
-					asIObjectType *tmplType = engine->GetObjectTypeByName(type->GetName());
+					asITypeInfo *tmplType = engine->GetTypeInfoByName(type->GetName());
 					it = m_toStringCallbacks.find(tmplType);
 				}
 			}
@@ -140,10 +140,10 @@ string CDebugger::ToString(void *value, asUINT typeId, bool expandMembers, asISc
 	return s.str();
 }
 
-void CDebugger::RegisterToStringCallback(const asIObjectType *ot, ToStringCallback callback)
+void CDebugger::RegisterToStringCallback(const asITypeInfo *ot, ToStringCallback callback)
 {
 	if( m_toStringCallbacks.find(ot) == m_toStringCallbacks.end() )
-		m_toStringCallbacks.insert(map<const asIObjectType*, ToStringCallback>::value_type(ot, callback));
+		m_toStringCallbacks.insert(map<const asITypeInfo*, ToStringCallback>::value_type(ot, callback));
 }
 
 void CDebugger::LineCallback(asIScriptContext *ctx)
@@ -527,7 +527,7 @@ void CDebugger::PrintValue(const std::string &expr, asIScriptContext *ctx)
 			}
 			else
 			{
-				asIObjectType *type = engine->GetObjectTypeById(ctx->GetThisTypeId());
+				asITypeInfo *type = engine->GetTypeInfoById(ctx->GetThisTypeId());
 				for( asUINT n = 0; n < type->GetPropertyCount(); n++ )
 				{
 					const char *propName = 0;

@@ -679,10 +679,6 @@ FONLINE_DLL_ENTRY( isCompiler )
     ASEngine->RegisterInterface( "CombatProccessPacket" );
 	
     ASEngine->SetDefaultNamespace( defName );
-
-	ASEngine->RegisterFuncdef( "bool FuncdefEventCritterInit( ::Critter@ critter, bool firstTime )" );
-	ASEngine->RegisterFuncdef( "bool FuncdefEventCritterInit( ::Critter@ critter, bool firstTime )" );
-	ASEngine->RegisterFuncdef( "bool FuncdefEventCritterInit( ::Critter@ critter, bool firstTime )" );
 	
 	ASEngine->RegisterFuncdef( "bool FuncdefEventCritterInit( ::Critter@ critter, bool firstTime )" );
     ASEngine->RegisterFuncdef( "bool FuncdefEventCritterFinish( ::Critter@ critter, bool toDelete )" );
@@ -708,10 +704,6 @@ FONLINE_DLL_ENTRY( isCompiler )
     ASEngine->RegisterFuncdef( "bool FuncdefEventCritterHideMe( ::Critter@ critter, ::Critter@ opponent )" );
 
     ASEngine->RegisterFuncdef( "bool FuncdefEventCritterMessage( ::Critter@ critter, Mk2::MessagePacket@ message )" );
-	
-	ASEngine->RegisterFuncdef( "void FuncdefEventResultCritterInit( ::Critter@ critter, bool firstTime )" );
-	ASEngine->RegisterFuncdef( "void FuncdefEventResultCritterInit( ::Critter@ critter, bool firstTime )" );
-	ASEngine->RegisterFuncdef( "void FuncdefEventResultCritterInit( ::Critter@ critter, bool firstTime )" );
 	
 	ASEngine->RegisterFuncdef( "void FuncdefEventResultCritterInit( ::Critter@ critter, bool firstTime )" );
     ASEngine->RegisterFuncdef( "void FuncdefEventResultCritterFinish( ::Critter@ critter, bool toDelete )" );
@@ -2265,7 +2257,7 @@ uint GetDialogDemandFunctionId( ScriptString& module, ScriptString& func, CScrip
 #include "fonline_scriptpreprocessormk2.cpp"
 #endif
 
-asIObjectType* GetTypeByTypeId( asIScriptModule* module, int typeId )
+asITypeInfo* GetTypeByTypeId( asIScriptModule* module, int typeId )
 {
 	uint len = module->GetObjectTypeCount();
 	for( uint a = 0; a < len; a++)
@@ -2297,7 +2289,7 @@ string GetTypeName( int typeId, asIScriptModule* module )
 		{
 			if( module )
 			{
-				asIObjectType* typeObj = GetTypeByTypeId( module, typeId );
+				asITypeInfo* typeObj = GetTypeByTypeId( module, typeId );
 				if(!typeObj)
 					return "";
 				
@@ -2343,7 +2335,7 @@ bool RunOptionInModule( uint index, ScriptString& arg, asIScriptModule* moduleVa
 			if( moduleRun == moduleVar )
 			{
 				declaration = ASEngine->GetTypeDeclaration( typeId );
-				asIObjectType* objType = ASEngine->GetObjectTypeById( typeId );	
+				asITypeInfo* objType = ASEngine->GetTypeInfoById( typeId );	
 				if( objType && !strcmp( objType->GetName(), "array" ) )
 				{
 					ostringstream out;
