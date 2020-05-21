@@ -145,10 +145,7 @@ shared void runTree( CombatRes[]& combatResults, int ptr )
 
 # pragma funcdef "uint GetHitAimFuncdef ( int hitLocation ) "
 
-shared interface iCombatProccessContext
-{
-
-}
+shared interface iCombatProccessContext{}
 
 shared class LeonHash
 {
@@ -232,7 +229,186 @@ shared class LeonHash
 	bool ischeck = true;
 }
 
-shared class CombatProccess : Mk2::CombatProccessPacket
+shared enum TargetDataType
+{
+	none,
+	critter,
+	hex
+}
+
+shared class TargetDataCritter : TargetData
+{
+	Critter@ Critter;
+    Item@ Armor;
+	
+	TargetDataCritter( Critter& critter )
+	{
+		@Critter = critter;
+		@Armor = _CritGetItemArmor( Critter );
+		Type = TargetDataType::critter;
+	}
+	
+	Critter@ logic_GetTargetCritter()
+	{
+		return Critter;
+	}
+	
+	uint16 HexX{ get override{ return Critter.HexX; } }
+	uint16 HexY{ get override{ return Critter.HexY; } }
+}
+
+shared class TargetDataHex : TargetData
+{
+	uint16 X;
+	uint16 Y;
+	
+	uint16 HexX{ get override{ return X; } }
+	uint16 HexY{ get override{ return Y; } }
+}
+
+shared class TargetData
+{
+    TargetData@ get_Real()
+	{
+		if( IsChange() )
+			return Expected.Real;
+		return this;
+	}
+	
+	uint16 HexX{ get{ return 0; } }
+	uint16 HexY{ get{ return 0; } }
+
+    TargetData@ Expected;
+
+	TargetDataType Type;
+	
+	bool IsChange( )
+	{
+		return Expected !is null;
+	}
+	
+	Critter@ get_TargetCritter( uint index )
+	{
+		if( index == uint( -1 ) )
+			return Real.logic_GetTargetCritter();
+		else if( index == 0 )
+			return logic_GetTargetCritter();
+		else
+			return Expected.TargetCritter[--index];
+	}
+	
+	Critter@ logic_GetTargetCritter()
+	{
+		return null;
+	}
+	
+	void Add( TargetData@ data )
+	{
+		@Real.Expected = data;
+	}
+}
+
+mixin class CombatProccessTargetData
+{
+    Item@ ArmorTarget;
+	
+	TargetData@ Target;
+	
+    int      TargetDT;
+    int      TargetDR;
+    uint     TargetId;
+	
+	void ClearTargetData( )
+	{
+		@ArmorTarget = null;
+		@Target = null;
+		TargetDT = 0;
+		TargetDR = 0;
+		TargetId = 0;
+	}
+	
+	bool IsChangeTarget( )
+	{
+		return Target.IsChange();
+	}
+	
+	Critter@ get_RealTarget()
+	{
+		return Target.TargetCritter[-1];
+	}
+	
+	bool IsTargetCritter()
+	{
+		if( Target is null )
+			return false;
+		if( Target.Type != TargetDataType::critter )
+			return false;
+		return true;
+	}
+	
+	bool IsTargetHex()
+	{
+		if( Target is null )
+			return false;
+		if( Target.Type != TargetDataType::hex )
+			return false;
+		return true;
+	}
+
+	void ChangeTarget( Critter& critter )
+	{
+		TargetDataCritter new( critter );
+		ChangeTarget( new );
+	}
+	
+	void ChangeTarget( uint16 hexx, uint16 hexy )
+	{
+		TargetDataHex new( );
+		new.X = hexx;
+		new.Y = hexy;
+		new.Type = TargetDataType::hex;
+		ChangeTarget( new );
+	}
+	
+	void ChangeTarget( TargetData@ new )
+	{
+		if( Target is null )
+			@Target = new;
+		else
+			Target.Add( new );		
+	}
+	
+	bool IsDamage( Critter& target )
+	{	
+		if( target.IsDead() || !( validEngineObject( Map ) ) )
+			return false;
+
+		if( !__NewbieLocationIsPvp && validEngineObject( Attacker ) && Attacker.IsPlayer() && target.IsPlayer() && Map.GetLocation().GetProtoId() == LOCATION_NewbieLocation )
+		{
+			Attacker.Say( SAY_NETMSG, "Oh-oh! Not this time, my friend!" );
+			return false; // ÍîÏâï â Íóáêå.
+		}
+	
+		return true;
+	}
+}
+
+mixin class CombatProccessCallbacks
+{
+	void ToHitCalculated( Critter@ target, uint16 targethx, uint16 targethy, int aim ) // override
+	{
+	
+	}
+	
+	int GetResult()
+	{
+		return 0;
+	}
+	
+	void SetCombatTimeout( Critter& critter ){}
+}
+
+shared class CombatProccess : Mk2::CombatProccessPacket, CombatProccessTargetData, CombatProccessCallbacks
 {
     CombatProccess()
 	{
@@ -240,37 +416,45 @@ shared class CombatProccess : Mk2::CombatProccessPacket
 		@Context = null;
 		Clear();		
 	}
+
+	uint16 TargetHx
+	{
+		get
+		{
+			return RealTarget.HexX;
+		}
+	}
+
+	uint16 TargetHy
+	{
+		get
+		{
+			return RealTarget.HexY;
+		}
+	}
 	
 	void Clear()
 	{
 		DropDamage();
-			
+		ClearTargetData();
+		
 		TypeDamage = -1;
-		TargetDT = 0;
-		TargetDR = 0;
 
 		IsCritical = false;
-		@ArmorTarget = null;
 		@RealWeapon = null;
 		@Attacker = null;
-		@Target = null;
 		@Ammo = null;
-		@RealTarget = null;
 
 		Hx = 0;
 		Hy = 0;
-		TargetHx = 0;
-		TargetHy = 0;
 		Aim = HIT_LOCATION_UNCALLED;
-		IsBurst = false;
 		BloodyMess = false;
 		CombatMessage = false;
-		ScoreUnarmed = false;
 		WeaponSubtype = 0;
 		DmgMin = 0;
 		DmgMax = 0;
 		BonusDmg = 0;
-		DmgMul = 2;
+		DmgMul = 1;
 		DRMod = 0;
 		TDMod = 1;
 		DMMod = 1;
@@ -279,7 +463,6 @@ shared class CombatProccess : Mk2::CombatProccessPacket
 		WeaponPid = 0;
 
 		TypeAttack = 0;
-		TargetId = 0;
 		TargetHit = false;
 		ForceFlags = 0;
 		ShowHitAnimForce = false;
@@ -287,7 +470,6 @@ shared class CombatProccess : Mk2::CombatProccessPacket
 		WeaponUse = 0;
 		
 		UseHex = false;
-		UseNormal = false;
 		
 		@Results = null;
 		@GetHitAim = null;
@@ -296,7 +478,6 @@ shared class CombatProccess : Mk2::CombatProccessPacket
 		WeaponSkill = 0;
 		WeaponAmmoRound = 0;
 		
-		@RealTarget = null;
 		CriticalChance = 0;
 		
 		IsHit = false;
@@ -315,19 +496,17 @@ shared class CombatProccess : Mk2::CombatProccessPacket
 		
 		IsAim = false;
 		
-		@WeaponPerks = int[]();
-	}
-	
-	bool IsChangeTarget( )
-	{
-		return RealTarget !is Target;
+		@AttackPerks = int[]();
+		@TargetPerks = int[]();
+		
+		AttackerSkill = 0;
 	}
 	
 	bool IsSilentAtack( Critter& target )
 	{
-		if( RealTarget is null )
+		if( !IsTargetCritter() )
 			return false;
-		if( !IsWeaponPerk( WEAPON_PERK_SOUNDLESS ) )
+		if( !IsAttackPerk( WEAPON_PERK_SOUNDLESS ) )
 			return false;
 		if( Distantion > 5 )
 			return false;
@@ -342,15 +521,26 @@ shared class CombatProccess : Mk2::CombatProccessPacket
 			critter.ModeBase[ MODE_HIDE ] = 0;
 	}
     
-	bool IsWeaponPerk( int number )
+	bool IsAttackPerk( int number )
 	{
-		return WeaponPerks.find( number ) != -1;
+		return AttackPerks.find( number ) != -1;
 	}
 	
-	void AddWeaponPerk( int perk )
+	void AddAttackPerk( int perk )
 	{
 		if( perk != 0 && perk != -1 )
-			WeaponPerks.insertLast( perk );
+			AttackPerks.insertLast( perk );
+	}
+    
+	bool IsTargetPerk( int number )
+	{
+		return TargetPerks.find( number ) != -1;
+	}
+	
+	void AddTargetPerk( int perk )
+	{
+		if( perk != 0 && perk != -1 )
+			TargetPerks.insertLast( perk );
 	}
 	
     int get_TotalDamage()
@@ -367,7 +557,7 @@ shared class CombatProccess : Mk2::CombatProccessPacket
 			AllDamage[i] = 0;
 	}
 	
-    int  get_Damage()
+    int get_Damage()
 	{
 		if( TypeDamage >= DAMAGE_TYPE_COUNT || TypeDamage < 0 )
 			return get_TotalDamage();
@@ -426,9 +616,6 @@ shared class CombatProccess : Mk2::CombatProccessPacket
 		return GetDistantion( Hx, Hy, TargetHx, TargetHy );
 	}
 	
-	void ToHitCalculated( Critter@ target, uint16 targethx, uint16 targethy, int aim ) // override
-	{}
-	
 	int GetWeaponMaxDistance()
 	{
 		if( WeaponSkill == SK_THROWING )
@@ -472,9 +659,9 @@ shared class CombatProccess : Mk2::CombatProccessPacket
 	{
 		if( IsBurst )
 			return HIT_LOCATION_UNCALLED;
-		if( Target is null )
+		if( !IsTargetCritter() )
 			return HIT_LOCATION_UNCALLED;
-		if( _WeaponModeAim( WeaponMode ) == HIT_LOCATION_EYES && ( Attacker.Dir + 3 ) % 6 != Target.Dir )
+		if( _WeaponModeAim( WeaponMode ) == HIT_LOCATION_EYES && ( Attacker.Dir + 3 ) % 6 != RealTarget.Dir )
 			return HIT_LOCATION_HEAD;
 		return _WeaponModeAim( WeaponMode );
 	}
@@ -489,14 +676,16 @@ shared class CombatProccess : Mk2::CombatProccessPacket
 		return Attacker.Trait[ TRAIT_BLOODY_MESS ] != 0;
 	}
 	
-	void Debug( string& log )
+	void Debug( string& log, bool onlyPlayer = true )
 	{
 		if( Attacker.IsPlayer() )
 		{
-			Log( "<" + GetPlayerName( Attacker.Id ) + ">: " + log );
+			ClearLog( "CombatDebug<" + GetPlayerName( Attacker.Id ) + ">: " + log );
 			if( Attacker.GetAccess() == ACCESS_ADMIN )
 				Attacker.Say( SAY_NETMSG, log );
 		}
+		else if( !onlyPlayer )
+			ClearLog( "CombatDebug<" + Attacker.Id + ">: " + log );
 	}
 	
 	int HitClamp( int hit )
@@ -514,31 +703,93 @@ shared class CombatProccess : Mk2::CombatProccessPacket
 		return HitMinBorder;
 	}
 	
-	int GetResult()
+	bool ScoreUnarmed
 	{
-		return 0;
+		get
+		{
+			return WeaponSubtype == WS_UNARMED;
+		}
 	}
+	
+	void DropWeapon( Critter& critter )
+	{
+		Item@ realWeaponTarget = _CritGetItemHand( critter );
+		if( validEngineObject( realWeaponTarget ) )
+		{
+			if( FLAG( realWeaponTarget.Flags, ITEM_GAG ) )
+				DeleteItem( realWeaponTarget );
+			else
+			{
+				MoveItem( realWeaponTarget, 1, Map, critter.HexX, critter.HexY );
+				realWeaponTarget.EventDrop( critter );
+				if( critter.IsNpc() )
+				{
+					NpcPlane@ plane = CreatePlane();
+					NpcPlane@[] crPlanes( 0 );
+					if( critter.GetPlanes( crPlanes ) > 0 )
+						plane.Priority = crPlanes[ 0 ].Priority + 1;
+					else
+						plane.Priority = 70;
+					plane.Type = AI_PLANE_PICK;
+					plane.Pick_HexX = realWeaponTarget.HexX;
+					plane.Pick_HexY = realWeaponTarget.HexY;
+					plane.Pick_Pid = realWeaponTarget.GetProtoId();
+					plane.Pick_UseItemId = 0;
+					plane.Pick_ToOpen = false;
+					plane.Run = true;
+					critter.AddPlane( plane );
+				}
+			}
+		}
+	}
+	
+	void ProccessArmorClass( int armorClass, uint& rounds )
+	{
+		if( Ammo !is null )
+			armorClass +=  -Ammo.Ammo_AcMod;
+			
+		uint countMissAc = 0;
+        for( uint i = 0; i < rounds; i++ )
+            if( Random( 0, 99 ) < armorClass )
+			{
+                rounds--;
+				i--;
+			}
+	}
+	
+	void SetSneakTimeout( Critter& critter )
+	{
+		if( critter.IsNpc() || critter.GetAccess() != ACCESS_ADMIN )
+			critter.TimeoutBase[ TO_SNEAK ] = SNEAK_TIMEOUT( critter );
+	}
+	
+    bool IsBurst 
+	{ 
+		get
+		{ 
+			return ( WeaponAmmoRound > 1 ) && _WeaponNoBrust( Weapon, WeaponUse ) == 0; 
+		} 
+	}
+
+	private int[]@ AttackPerks;
+	private int[]@ TargetPerks;
 
     uint16   WeaponPid;
     uint16   Hx;
     uint16   Hy;
-    uint16   TargetHx;
-    uint16   TargetHy;
 
     uint8    Aim;
     uint8    WeaponSubtype;
     uint8    WeaponMode;
     uint8    WeaponUse;
 
-    bool     IsBurst;
     bool     BloodyMess;
     bool     CombatMessage;
-    bool     ScoreUnarmed;
+	
     bool     TargetHit;
     bool     ShowHitAnimForce;
     bool     IsCritical;
 
-	int[]@	 WeaponPerks;
     int      DmgMin;
     int      DmgMax;
     int      DmgType;
@@ -550,30 +801,22 @@ shared class CombatProccess : Mk2::CombatProccessPacket
     int      TDMod;
     int      TypeAttack;
     int      TypeDamage;
-    int      TargetDT;
-    int      TargetDR;
 
     int[]      AllDamage;
-	
-    uint     TargetId;
-    uint     ForceFlags;
-    uint     AmmoPid;
-	
-    Item@ ArmorTarget;
-    Item@ RealWeapon;
-    ProtoItem@ Ammo;
 
-	int AttackerSkill;
+    uint     ForceFlags;
 
     Critter@ Attacker;
-    Critter@ Target;
-    Critter@ RealTarget;
+	int AttackerSkill;
 	
 	iCombatProccessContext@ Context;
 	
 	Map@ Map;
 
+    Item@ RealWeapon;
 	ProtoItem@ Weapon;
+    ProtoItem@ Ammo;
+    uint AmmoPid;
 	uint WeaponAmmoRound;
 	int WeaponSkill;
 	
@@ -585,7 +828,6 @@ shared class CombatProccess : Mk2::CombatProccessPacket
 	bool IsAim;
 	
 	bool UseHex;
-	bool UseNormal;
 
     CombatRes[]@ Results;
 	

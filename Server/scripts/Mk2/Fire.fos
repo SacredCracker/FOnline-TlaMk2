@@ -227,7 +227,7 @@ void CheckCombustion(::Critter& target, ::CombatProccess& attack)
 	uint16 flamerPid=GetInflamableItem(target);
 	if(flamerPid==0) return;
 	uint attackerId=0;
-	int roll=::Random(0,90)+(attack.IsWeaponPerk(WEAPON_PERK_BETTER_CRITICALS)?10:0);
+	int roll=::Random(0,90)+(attack.IsAttackPerk(WEAPON_PERK_BETTER_CRITICALS)?10:0);
 	if(validEngineObject(attack.Attacker))
 	{
 		roll+=(attack.Attacker.Perk[PE_BETTER_CRITICALS]!=0?10:0)-

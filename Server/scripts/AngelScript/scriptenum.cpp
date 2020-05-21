@@ -110,7 +110,6 @@ int ScriptEnum::GetValueByName( ScriptString& valueName )
 
 void ScriptEnum::Registration()
 {
-	Log( "kdslk\n" );
 	RegScriptEnum( ASEngine->RegisterObjectType( "Enum", sizeof( ScriptEnum ), asOBJ_REF ) );
     RegScriptEnum( ASEngine->RegisterObjectBehaviour( "Enum", asBEHAVE_FACTORY, "Enum@ f( ::string&, ::string&, ::string@ )", asFUNCTION( ScriptEnum::Factory ), asCALL_CDECL ) );
     RegScriptEnum( ASEngine->RegisterObjectBehaviour( "Enum", asBEHAVE_ADDREF, "void f()", asMETHOD( ScriptEnum, AddRef ), asCALL_THISCALL ) );

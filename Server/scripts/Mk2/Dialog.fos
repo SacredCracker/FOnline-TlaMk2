@@ -841,9 +841,18 @@ class Dialog : DialogPacket
 		
 	}
 	
-	void Debug( const string&in txt )
+	string GetCritterName( Critter@ critter )
 	{
-		Log( txt + " : <" + Name + ">" );
+		if( critter is null )
+			return "";
+		if( critter.IsPlayer() )
+			return " player:" + GetPlayerName( critter.Id );
+		return " npc:npcid_" + critter.Id;
+	}
+	
+	void Debug( const string&in txt, Critter@ player = null, Critter@ npc = null )
+	{
+		Log( txt + " : <dialog_name:" + Name + "" + GetCritterName( player ) + "" + GetCritterName( npc ) + ">" );
 	}
 	
 	Dialog::Branch@ GetBranch( uint index )
@@ -944,28 +953,32 @@ class Dialog : DialogPacket
 			if( number == 1 && @branch !is null )
 			{
 				Dialog::Answer@ answer = branch.GetFirstAnswer( cr, @npc );
-				if( @answer !is null )
+				if( answer !is null )
 				{
-					@ branch = @GetBranch( answer.Result( cr, @npc )  );
+					
+					@branch = @GetBranch( answer.Result( cr, @npc )  );
 				}
+				else
+					Debug( "answer dont found", cr, npc );
 			}
 			
 			if( @branch !is null )
 			{
+				::string@ lexems = "";
+				if( branch.FuncId != 0 )
+					ScriptInfo::RunDialogBranchFunctionId( cr, @npc, branch.FuncId, @lexems, branch.IsReturnValue );
+					
 				if( branch.Result == DIALOG_ATTACK )
 				{
 					if( @npc !is null )
 					{
+						npc.SayMsg( SAY_NORM_ON_HEAD, TEXTMSG_DLG, branch.Number, lexems );
 						npc.StatBase[ ST_NPC_ATTACK_PLAYER_ID ] = cr.Id;
 						NpcPlanes::AddAttackPlane( npc, 0, cr );
 					}
 					cr.Say( SAY_DIALOG_HIDE, " " );
 					return true;
 				}
-			
-				::string@ lexems = "";
-				if( branch.FuncId != 0 )
-					ScriptInfo::RunDialogBranchFunctionId( cr, @npc, branch.FuncId, @lexems, branch.IsReturnValue );
 				
 				Dialog::Answer@[] answers = branch.GetAnswers( cr, @npc );
 				
@@ -989,12 +1002,17 @@ class Dialog : DialogPacket
 					if( branch.FuncId != 0 )
 					{
 						ScriptInfo::RunDialogBranchFunctionId( cr, @npc, branch.FuncId, null, branch.IsReturnValue );
+						npc.SayMsg( SAY_NORM_ON_HEAD, TEXTMSG_DLG, branch.Number, lexems );
 						return true;
 					}
 				}
+				Debug( "-number: " + number, cr, npc );
+				Debug( "-branch.Index: " + branch.Index, cr, npc );
 			}
-			else Debug( "No found branch");
+			else Debug( "No found branch", cr, npc );
 		}
+		else Debug( "Run, dialog master nullptr", cr, npc );
+		Debug( "Ошибка, необработанный диалог", cr, npc );
 		return false;
 	}
 	
@@ -1133,19 +1151,24 @@ class Answer
 		return false;
 	}
 	
-	bool IsDemand( ::Critter& cr, ::Critter@ npc )
+	bool IsDemand( uint index, ::Critter& cr, ::Critter@ npc )
 	{
-		for( uint j = 0, jEnd = Demands.length(); j < jEnd; j++ )
-		{	
-			for( uint i = 0, iEnd = Demands[j].length(); i < iEnd; i++ )
+		for( uint i = 0, iEnd = Demands[index].length(); i < iEnd; i++ )
+		{
+			if( !Demands[index][i].IsAllow( cr, @npc ) )
 			{
-				if( !Demands[j][i].IsAllow( cr, @npc ) )
-				{
-					return false;
-				}
+				return false;
 			}
 		}		
 		return true;
+	}
+	
+	bool IsDemand( ::Critter& cr, ::Critter@ npc )
+	{
+		for( uint i = 0, iEnd = Demands.length(); i < iEnd; i++ )
+			if( IsDemand( i, cr, npc ) )
+				return true;
+		return false;
 	}
 	
 	uint Result( ::Critter& cr, ::Critter@ npc ) const
