@@ -408,7 +408,7 @@ mixin class CombatProccessCallbacks
 	void SetCombatTimeout( Critter& critter ){}
 }
 
-shared class CombatProccess : Mk2::CombatProccessPacket, CombatProccessTargetData, CombatProccessCallbacks
+shared class CombatProccess : Mk2::CombatProccessPacket, CombatProccessTargetData, CombatProccessCallbacks, EventDataPacket
 {
     CombatProccess()
 	{
@@ -421,7 +421,7 @@ shared class CombatProccess : Mk2::CombatProccessPacket, CombatProccessTargetDat
 	{
 		get
 		{
-			return RealTarget.HexX;
+			return Target.Real.HexX;
 		}
 	}
 
@@ -429,7 +429,7 @@ shared class CombatProccess : Mk2::CombatProccessPacket, CombatProccessTargetDat
 	{
 		get
 		{
-			return RealTarget.HexY;
+			return Target.Real.HexY;
 		}
 	}
 	
@@ -766,8 +766,8 @@ shared class CombatProccess : Mk2::CombatProccessPacket, CombatProccessTargetDat
     bool IsBurst 
 	{ 
 		get
-		{ 
-			return ( WeaponAmmoRound > 1 ) && _WeaponNoBrust( Weapon, WeaponUse ) == 0; 
+		{
+			return _WeaponRound( Weapon, WeaponUse ) > 1 && _WeaponNoBrust( Weapon, WeaponUse ) == 0; 
 		} 
 	}
 
@@ -809,8 +809,6 @@ shared class CombatProccess : Mk2::CombatProccessPacket, CombatProccessTargetDat
     Critter@ Attacker;
 	int AttackerSkill;
 	
-	iCombatProccessContext@ Context;
-	
 	Map@ Map;
 
     Item@ RealWeapon;
@@ -837,8 +835,6 @@ shared class CombatProccess : Mk2::CombatProccessPacket, CombatProccessTargetDat
 	int DistanceMod1;
 	int DistanceMod2;
 	
-	GetHitAimFuncdef@ GetHitAim;
-	
 	int Hit;
 	int HitPenalty;
 	int HitResult;
@@ -847,6 +843,10 @@ shared class CombatProccess : Mk2::CombatProccessPacket, CombatProccessTargetDat
 	int HitMinBorder;
 	
 	float HitModule;
+	
+	GetHitAimFuncdef@ GetHitAim;
+	
+	iCombatProccessContext@ Context;
 }
 
 shared void NotifyOops( Critter& cr, Critter& t1, Critter@ t2, CombatRes[]& results )

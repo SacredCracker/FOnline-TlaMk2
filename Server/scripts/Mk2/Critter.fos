@@ -1,7 +1,7 @@
 // FOS Server
 // Дефолтный Descriptor для криттера
 
-class CritterDescriptor : Mk2::Descriptor, Mk2::CritterPacket, Mk2::CombatTargetPacket, Ai::LifeObject, Dialog::Master
+class CritterDescriptor : Mk2::Descriptor, Mk2::CritterPacket, Mk2::CombatTargetPacket, Ai::LifeObject, Dialog::Master, CombatAttackerPacket
 {
 	CritterDescriptor()
 	{
@@ -507,6 +507,8 @@ class CritterDescriptor : Mk2::Descriptor, Mk2::CritterPacket, Mk2::CombatTarget
 	Dialog::Answer@[]@ Answers;
 	
 	uint CritterBarterId;
+	
+	array<PerkPacket@>@ GetAttackerPerks ( ) { return null; }
 }
 
 bool NewDescriptor( ::Critter& critter, Mk2::Descriptor@ new )

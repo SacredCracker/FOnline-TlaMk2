@@ -185,7 +185,7 @@ class BonusManager
 	{
 		if( freebouns == 0 )
 			return null;
-		
+			
 		ThisModule::Bonus@ result = allBonus[ Random( 0, lastBonusIndex ) ];
 		while( busyBonus.find( @result ) != -1 )
 			@ result = allBonus[ Random( 0, lastBonusIndex ) ];
@@ -247,6 +247,12 @@ ArmorBonusManager armorBonuses;
 
 class Bonus
 {
+	
+	bool opEquals( Bonus@ other )
+	{
+		return this is other;
+	}
+	
 	Bonus( uint16 _number, uint16 _lexem, uint8 _chance0, uint8 _chance1, uint8 _chance2, uint8 _chance3, uint8 _chance4, uint8 _border = 0, uint8 _borderadd = 0, uint8 _countadd = 1 )
 	{
 		number = _number;

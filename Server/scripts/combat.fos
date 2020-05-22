@@ -970,7 +970,7 @@ class Combat : CombatProccess, MixinToHitProccess, MixinFlamerProccess
 			case WS_GUN:
 				if( IsBurst )
 					@result = CombatAlgoritm_Burst();
-				else	@result = CombatAlgoritm_GunNormal();
+				else @result = CombatAlgoritm_GunNormal();
 				break;
 			
 			case WS_THROWING:
@@ -999,20 +999,17 @@ class Combat : CombatProccess, MixinToHitProccess, MixinFlamerProccess
 	}
 	
 	void ShootEffect()
-	{
-		if( IsHexAttack || Attacker.IsNpc() )
-		{
-			PlayShot();			
-			Attacker.Animate( 0, _WeaponAnim2( Weapon, WeaponUse ), null, true, false );
+    {
+        PlayShot();
+        Attacker.Animate( 0, _WeaponAnim2( Weapon, WeaponUse ), null, true, false );
+        if( _WeaponEffect( Weapon, WeaponUse ) != 0 )
+        {
+            if( UseHex )
+                Map.RunFlyEffect( _WeaponEffect( Weapon, WeaponUse ), Attacker, null, Hx, Hy, TargetHx, TargetHy, ExplodeId | Radius << 16 );  // yeah, the target can be null (see: grenades, rocket launcher)
+            else
+                Map.RunFlyEffect( _WeaponEffect( Weapon, WeaponUse ), Attacker, RealTarget, Hx, Hy, TargetHx, TargetHy, ExplodeId | Radius << 16 );
         }
-		else if( _WeaponEffect( Weapon, WeaponUse ) != 0 )
-		{
-			if( UseHex )
-				Map.RunFlyEffect( _WeaponEffect( Weapon, WeaponUse ), Attacker, null, Hx, Hy, TargetHx, TargetHy, ExplodeId | Radius << 16 );  // yeah, the target can be null (see: grenades, rocket launcher)
-			else
-				Map.RunFlyEffect( _WeaponEffect( Weapon, WeaponUse ), Attacker, RealTarget, Hx, Hy, TargetHx, TargetHy, ExplodeId | Radius << 16 );
-		}
-	}
+    }
 	
 	void AmmoRemove()
 	{
