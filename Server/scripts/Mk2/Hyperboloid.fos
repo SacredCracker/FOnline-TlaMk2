@@ -1,25 +1,25 @@
 // FOS Common
 
-class HyperboloidDescriptor : Item::WeaponDescriptor
+class HyperboloidDescriptor : ItemWeapon::WeaponDescriptor
 {
-	HyperboloidDescriptor( ::ItemMutual@ item )
+	HyperboloidDescriptor( ItemMutual@ item, uint16 pid )
 	{
-		super( @item );
+		super( @item, pid );
 	}
 	
-	Mk2::Descriptor@ Copy( ::ItemMutual@ item ) override
+	Mk2::Descriptor@ Copy( ItemMutual@ item ) override
 	{
-		return @ThisModule::HyperboloidDescriptor( @item );
+		return @ThisModule::HyperboloidDescriptor( @item, Pid );
 	}
 
 	::string@ get_Name( ) override
 	{
-		return "Hyperboloid_" + ( @RealIt !is null ?"" + RealIt.Id : "Null");
+		return "Hyperboloid_" + StringId();
 	}
 }
 
 void ModuleInit()
 {
-	Item::Defaults.set( "" + Content::Item::HYPERBOLOID, @ThisModule::HyperboloidDescriptor( null ) );
-	Item::Defaults.set( "" + Content::Item::HYPERBOLOID_MK2, @ThisModule::HyperboloidDescriptor( null ) );
+	Item::Defaults.set( "" + Content::Item::HYPERBOLOID, @ThisModule::HyperboloidDescriptor( null, Content::Item::HYPERBOLOID ) );
+	Item::Defaults.set( "" + Content::Item::HYPERBOLOID_MK2, @ThisModule::HyperboloidDescriptor( null, Content::Item::HYPERBOLOID_MK2 ) );
 }

@@ -379,9 +379,16 @@
 shared void NullFunction(){}
 
 # pragma interface "CombatAttackerPacket"
+# pragma interface "CombatWeaponPacket"
+# pragma interface "CombatAlgoritmPacket"
 # pragma interface "PerkPacket"
 # pragma interface "EventDataPacket"
+# pragma interface "CombatProccessContext"
 
 # pragma interface "CombatAttackerPacket array<PerkPacket@>@ GetAttackerPerks ( )"
 
+# ifdef __SERVER
+# pragma interface "CombatWeaponPacket CombatAlgoritmPacket@ get_WeaponAlgoritm ( uint8 use )"
+# endif
 
+# pragma funcdef "uint GetHitAimFuncdef ( int hitLocation ) "

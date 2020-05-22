@@ -459,7 +459,6 @@ FONLINE_DLL_ENTRY( isCompiler )
     ASEngine->RegisterInterface( "ItemPacket" );
     ASEngine->RegisterInterface( "UpgradedItemPacket" );
 	
-    ASEngine->RegisterInterface( "CombatWeaponPacket" );
     ASEngine->RegisterInterface( "CombatArmorPacket" );
 	
     ASEngine->RegisterInterfaceMethod( "Descriptor", "uint get_Priority( )" );

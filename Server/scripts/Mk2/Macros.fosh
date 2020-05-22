@@ -84,7 +84,11 @@
 #define _WeaponModeAim  #(weaponMode) (((weaponMode)>>4)&0xF)
 #define _WeaponModeMake #(use,aim)    ((((aim)<<4)|((use)&0xF))&0xFF)
 #define _WeaponeIsPerk	#(proto,ammo,perk)	(proto.Weapon_Perk==perk || proto.Weapon_SecondPerk==perk || ( valid( ammo ) && ammo.Ammo_Perk == perk ))
-#define _WeaponAttackType  #(proto,use) ( ( (use)==0 ) ? proto.Weapon_TypeAttack_0 : ( (use)==1 ? proto.Weapon_TypeAttack_1 : ( (use)==2 ? proto.Weapon_TypeAttack_2 : 0 ) ) )
+#define _WeaponAttackType            # ( proto, use )( ( ( use ) == 0 ) ? proto.Weapon_TypeAttack_0 : ( ( use ) == 1 ? proto.Weapon_TypeAttack_1 : ( ( use ) == 2 ? proto.Weapon_TypeAttack_2 : 0 ) ) )
+#define _WeaponBreakAttack           # ( proto, use )( ( ( use ) == 0 ) ? proto.Weapon_BreakTime_0 : ( ( use ) == 1 ? proto.Weapon_BreakTime_1 : ( ( use ) == 2 ? proto.Weapon_BreakTime_2 : 0 ) ) )
+#define _WeaponTimeAttack            # ( proto, use )( ( ( use ) == 0 ) ? proto.Weapon_TimeAttack_0 : ( ( use ) == 1 ? proto.Weapon_TimeAttack_1 : ( ( use ) == 2 ? proto.Weapon_TimeAttack_2 : 0 ) ) )
+#define _WeaponAngleEffective        # ( proto, use )( ( ( use ) == 0 ) ? proto.Weapon_AngleEffective_0 : ( ( use ) == 1 ? proto.Weapon_AngleEffective_1 : ( ( use ) == 2 ? proto.Weapon_AngleEffective_2 : 0 ) ) )
+#define _WeaponAngleSecond           # ( proto, use )( ( ( use ) == 0 ) ? proto.Weapon_AngleSecond_0 : ( ( use ) == 1 ? proto.Weapon_AngleSecond_1 : ( ( use ) == 2 ? proto.Weapon_AngleSecond_2 : 0 ) ) )
 
 // Locker
 #define _LockerIsOpen  #(door) ((door.LockerCondition&LOCKER_ISOPEN)!=0)

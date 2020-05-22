@@ -1,0 +1,457 @@
+// FOS Common Sort 100 
+#ifdef __SERVER
+import void lightning_attack( Critter& critter, Critter& target, ProtoItem& weapon, uint8 weaponMode ) from "lightning_weapon";
+#endif
+
+class WeaponDescriptor : Item::ItemDescriptor, CombatWeaponPacket, CombatWeaponData
+{
+	WeaponDescriptor( ItemMutual@ item, uint16 pid )
+	{
+		super( @item, pid );
+		
+#ifdef __SERVER
+		if( item is null )
+		{
+			ProtoItem@ proto = GetProtoItem( Pid );
+			if( proto !is null )
+			{
+				if( _WeaponIsPrimaryAviable( proto ) )
+					ParseCombatAlgoritm( proto, 0 );
+				if( _WeaponIsSecondaryAviable( proto ) )
+					ParseCombatAlgoritm( proto, 1 );
+				if( _WeaponIsThirdAviable( proto ) )
+					ParseCombatAlgoritm( proto, 2 );
+			}
+		}
+#endif
+	}
+	
+	Mk2::Descriptor@ Copy( ItemMutual@ item ) override
+	{
+		WeaponDescriptor copy( item, Pid );
+#ifdef __SERVER
+		@copy.Algoritms = @Algoritms;
+#endif
+		return copy;
+	}
+
+	string@ get_Name( ) override
+	{
+		return "Weapon_" + ( RealIt !is null ? "" + RealIt.Id : "Proto");
+	}
+	
+#ifdef __SERVER
+	CombatAlgoritm@[]@ Algoritms = { null, null, null };
+		
+	void ParseCombatAlgoritm( ProtoItem@ proto, uint8 use )
+	{
+		switch( GetWeaponSubType( _WeaponSkill( proto, use ) ) )
+		{
+			case WS_GUN:
+				if( _WeaponRound( proto, use ) > 1 && _WeaponNoBrust( proto, use ) == 0 )
+					@Algoritms[use] = CombatAlgoritm_Burst();
+				else @Algoritms[use] = CombatAlgoritm_GunNormal();
+				break;
+			
+			case WS_THROWING:
+				@Algoritms[use] = CombatAlgoritm_Throwing();
+				break;
+				
+			case WS_UNARMED:
+			{
+				@Algoritms[use] = CombatAlgoritm_Unarmed();
+				break;
+			}
+				
+			default: break;
+		}
+	}
+	
+	void DebugAlgoritm( )
+	{	
+		if( Algoritms[0] is null )
+			Log( "<" + Name + "> Error: mode algoritm nullptr. Use: 0" );
+		if( Algoritms[1] is null )
+			Log( "<" + Name + "> Error: mode algoritm nullptr. Use: 1" );
+		if( Algoritms[2] is null )
+			Log( "<" + Name + "> Error: mode algoritm nullptr. Use: 2" );
+	}
+	
+	CombatAlgoritmPacket@ get_WeaponAlgoritm ( uint8 use )
+	{
+		if( Algoritms[use] is null )
+			Log( "<" + Name + "> Error: mode algoritm nullptr. Use: " + use );
+		return Algoritms[use];
+	}
+#endif
+}
+
+#ifdef __SERVER
+class CombatAlgoritm_GunNormal : CombatAlgoritm
+{
+	bool CheckLightning()
+	{
+		if( proccess.IsAttackPerk( WEAPON_PERK_LIGHTNING_WEAPON ) )
+		{
+			lightning_attack( proccess.Attacker, proccess.RealTarget, proccess.Weapon, proccess.WeaponMode );
+			return true;
+		}
+		return false;
+	}
+
+	void Proccess()
+	{
+        if( proccess.IsHit || proccess.IsChangeTarget() )
+            HitProccess();
+        else // standard miss here
+            MissProccess( );
+	}
+	
+	void HitProccess( )
+	{
+		if( CheckLightning() || !proccess.IsLeon( proccess.RealTarget, proccess.Distantion ) )
+        {
+            if( proccess.TypeDamage == DAMAGE_EXPLODE )
+                proccess.Map.RunEffect( Content::Item::EXPLODE_ROCKET, proccess.RealTarget.HexX, proccess.RealTarget.HexY, 0, 0 );
+            proccess.ApplyDamage( proccess.RealTarget, proccess.IsCritical && proccess.IsHit, !proccess.IsChangeTarget() );
+        }
+        else
+            proccess.startLeon( proccess.RealTarget, proccess.Results );
+	}
+	
+	void MissProccess( )
+	{
+		Critter@[] critsLine;
+		Critter@ target = null; 
+		for( int i = 0, iMax = proccess.Map.GetCrittersPath( proccess.Hx, proccess.Hy, proccess.TargetHx, proccess.TargetHy, 0.0f, proccess.GetWeaponMaxDistance(), FIND_LIFE_AND_KO, critsLine ); i < iMax; i++ )
+		{
+			@target = critsLine[ i ];
+			if( target is proccess.RealTarget )
+				continue;
+				
+			if( proccess.IsLeon( target, GetDistantion( proccess.Hx, proccess.Hy, target.HexX, target.HexY ) ) )
+			{
+				proccess.startLeon( target, proccess.Results );
+				continue;
+			}
+			
+			proccess.ToHitCalculated( target, target.HexX, target.HexY, HIT_LOCATION_UNCALLED );
+			if( Random( 1, 100 ) <= int( proccess.HitResult / 3 ) )
+				break;
+
+			@target = null;
+		}
+		
+		if( target !is null )
+		{
+			proccess.ChangeTarget( target );
+			
+			NotifyOops( proccess.Attacker, proccess.Target.TargetCritter[0], target, proccess.Results );
+			proccess.ApplyDamage( target );
+			NotifyMiss( proccess.Attacker, proccess.Results );
+		}
+	}
+}
+
+class CombatAlgoritm_Throwing : CombatAlgoritm
+{
+	void Proccess()
+	{
+		if( proccess.IsLeon( proccess.RealTarget, proccess.Distantion ) )
+            proccess.startLeon( proccess.RealTarget, proccess.Results );
+        else if( proccess.IsHit || proccess.IsChangeTarget() )
+            proccess.ApplyDamage( proccess.RealTarget, proccess.IsCritical && proccess.IsHit, !proccess.IsChangeTarget() );
+        else
+        {
+            uint16 bx = 0,
+                   by = 0,
+                   pbx = 0,
+                   pby = 0;
+            Critter@[] critsLine;
+			Critter@ crForI = null;
+			Critter@ target = null;
+            for( uint i = 0, iMax = proccess.Map.GetCrittersPath( proccess.Hx, proccess.Hy, proccess.TargetHx, proccess.TargetHy, 0.0f, proccess.GetWeaponMaxDistance(), FIND_LIFE_AND_KO, critsLine, pbx, pby, bx, by ); i < iMax; i++ )
+            {
+                @crForI = critsLine[ i ];
+
+                if( crForI is proccess.RealTarget )
+                    continue;
+				
+                if( proccess.IsLeon( crForI, GetDistantion( proccess.Hx, proccess.Hy, crForI.HexX, crForI.HexY ) ) )
+                {
+                    proccess.startLeon( crForI, proccess.Results );
+                    continue;
+                }
+				
+				proccess.ToHitCalculated( crForI, crForI.HexX, crForI.HexY, HIT_LOCATION_UNCALLED );
+                if( Random( 1, 100 ) <= int( proccess.HitResult * 0.33 ) )
+                    @target = crForI;
+            }
+            if( target !is null )
+            {
+				proccess.ChangeTarget( target );
+                NotifyOops( proccess.Attacker, proccess.Target.TargetCritter[0], target, proccess.Results );
+                proccess.ApplyDamage( target );
+            }
+            else
+            {
+				proccess.ChangeTarget( pbx, pby );
+                NotifyMiss( proccess.Attacker, proccess.Results );
+            }
+        }                                     // miss
+	}
+}
+
+class CombatAlgoritm_Unarmed : CombatAlgoritm
+{
+	void Proccess()
+	{
+		if( proccess.IsLeon( proccess.RealTarget, proccess.Distantion ) )
+            proccess.startLeon( proccess.RealTarget, proccess.Results );  // TabaK. Уворот от рукопашной атаки. хз, надо ли.
+        else if( proccess.IsHit )
+        {
+            if( proccess.Attacker.Mode[ MODE_HIDE ] != 0 && proccess.IsSilentAtack( proccess.RealTarget ) )
+            {
+                proccess.UnSneak( proccess.Attacker );
+                proccess.DmgMul *= 2;
+            }
+            proccess.ApplyDamage( proccess.RealTarget, proccess.IsCritical && proccess.IsHit, true, 1 );
+        }
+        else
+        {
+            if( proccess.IsChangeTarget() )
+                proccess.ApplyDamage( proccess.RealTarget, false, false, 1 );
+            else
+                NotifyMiss( proccess.Attacker, proccess.Results );
+        }
+	}
+}
+
+class BurstHitData
+{
+	uint rounds = 0;
+	uint leon = 0;
+}
+
+class CombatAlgoritm_Burst : CombatAlgoritm
+{
+	uint countHitTargets;
+	Critter@[] critsHit;
+    BurstHitData@[] critsHitBullets;
+
+	uint StartRounds;
+		
+	CombatAlgoritm_Burst( )
+	{
+		Clear( );
+	}
+		
+
+	int FindCritterInArray( Critter& critter )
+	{
+		uint crId = critter.Id;
+		for( uint i = 0, iMax = critsHit.length(); i < iMax; i++ )
+			if( critsHit[ i ].Id == crId )
+				return i;
+		return -1;
+	}
+
+	void Clear( )
+	{
+		countHitTargets = 0;
+		StartRounds = 0;
+		critsHit.resize(0);
+		critsHitBullets.resize(0);
+	}
+		
+	void AddTarget( Critter& critter, BurstHitData& data )
+	{
+		critsHit.insertFirst( @critter );
+        critsHitBullets.insertFirst( @data );
+        countHitTargets++;
+		proccess.WeaponAmmoRound -= data.rounds;
+	}
+	
+	bool CritterIsTarget( Critter& critter )
+	{
+		return FindCritterInArray( critter ) != -1;
+	}
+
+	void Proccess( )
+	{
+		Clear();
+        bool criticalHit = proccess.IsCritical && proccess.IsHit;
+			
+		StartRounds = proccess.WeaponAmmoRound;
+
+        if( proccess.RealTarget !is null )
+		{
+			if( !ParseTarget( proccess.RealTarget, true ) )
+				criticalHit = false;
+		}
+		
+		int angle_effect = _WeaponAngleEffective( proccess.Weapon, proccess.WeaponUse );
+		int angle_second = _WeaponAngleSecond( proccess.Weapon, proccess.WeaponUse );
+		
+		int wpnMaxDist = proccess.GetWeaponMaxDistance();
+		ParseAngle( 0 - angle_effect, angle_effect, wpnMaxDist, true );
+		if( angle_second > angle_effect )
+		{
+			ParseAngle( Random( 0 - angle_second, -1 - angle_effect ), 0 - angle_effect, wpnMaxDist, false );
+			ParseAngle( angle_effect, Random( angle_effect + 1, angle_second ), wpnMaxDist, false );
+		}
+        Damage( criticalHit );
+		
+        if( !proccess.TargetHit && proccess.TargetId != 0 )
+            NotifyMiss( proccess.Attacker, proccess.Results );
+			
+		proccess.WeaponAmmoRound = StartRounds;
+	}
+
+	void ParseAngle( int angleBegin, int angleEnd, int distance, bool isEffect )
+	{
+		Critter@[] sTargets;
+		
+		angleEnd++;
+		for( int angle = angleBegin; angle < angleEnd; angle++ )
+			proccess.Map.GetCrittersPath( proccess.Hx, proccess.Hy, proccess.TargetHx, proccess.TargetHy, float( angle ), distance, FIND_LIFE_AND_KO, sTargets );
+		
+        Parse( sTargets, isEffect );
+	}
+	
+	void Damage( bool criticalHit )
+	{
+		Critter@ crForI = null;
+		Critter@ target = proccess.Target.TargetCritter[0];
+		DebugTraccer traccer;
+		traccer.AttackerId = proccess.Attacker.Id;
+		traccer.CountRounds = StartRounds;
+        for( uint i = 0; i < countHitTargets; i++ )
+        {
+            @crForI = critsHit[ i ];
+            if( proccess.TypeDamage == DAMAGE_EXPLODE )
+                proccess.Map.RunEffect( Content::Item::EXPLODE_ROCKET, crForI.HexX, crForI.HexY, 0, 0 );
+
+			BurstHitData@ data = critsHitBullets[ i ];
+			traccer.TargetId = crForI.Id;
+			traccer.HitRounds = data.rounds;
+			traccer.LeonRounds = data.leon;
+			
+			if( proccess.Attacker.IsPlayer() )
+				proccess.Attacker.Send( traccer );
+			if( crForI.IsPlayer() )
+				crForI.Send( traccer );
+			
+			if( data.rounds != 0 )
+			{
+				if( target is crForI ) proccess.TargetHit = true;
+				proccess.ApplyDamage( crForI, ( target is crForI ) && criticalHit, ( proccess.Attacker.IsPlayer() && !proccess.IsChangeTarget() ) || ( !proccess.Attacker.IsPlayer() && target is crForI ), data.rounds );
+			}
+        }
+	}
+	
+	bool ParseTarget( Critter& target, bool isEffect )
+	{
+		if( CritterIsTarget( target) )
+			return false;
+
+		int distantion = GetDistantion( proccess.Hx, proccess.Hy, target.HexX, target.HexY );
+		
+        proccess.ToHitCalculated( target, target.HexX, target.HexY, HIT_LOCATION_UNCALLED );
+		if( !isEffect ) 
+		{
+			if( proccess.HitModule != DeadZone_PenaltySecondTargets )
+				proccess.Hit = int( proccess.Hit * DeadZone_PenaltySecondTargets );
+			else proccess.HitMaxBorder = int( proccess.HitMaxBorder * DeadZone_MaxHitModule );
+		}
+		uint curRounds = 0;
+		BurstHitData data;
+		LeonHash leon( target, distantion );
+		//proccess.Debug( "proccess.Hit " + proccess.Hit + " hitModule " + hitModule );
+		for( ;curRounds < proccess.WeaponAmmoRound;)
+		{
+			curRounds++;
+			int hit = proccess.Hit - GetBulletHitPenalty( curRounds );
+			int random = Random( 1, 100 );
+			int result = proccess.HitClamp( hit );
+			//proccess.Debug( "hit " + hit + " " + proccess.HitPenalty );
+			//proccess.Debug( "random " + random + " result " + result );
+			if( random <= result )
+			{
+				if( !leon.Is( ) )
+					data.rounds++;
+				else data.leon++;
+			}
+			else if( !isEffect )
+				break;
+		}
+		//proccess.Debug( "data.rounds " + data.rounds );
+			
+		if( data.rounds != 0 || data.leon != 0 )
+		{
+			AddTarget( target, data );
+			return true;
+		}
+		return false;
+	}
+	
+	uint GetBulletHitPenalty( int round )
+	{
+		return uint(( 35 - proccess.AttackerSkill * 0.1 ) * round );
+	}
+	
+	void Parse( Critter@[]& sTargets, bool isEffect )
+	{
+		uint countTargets = sTargets.length();
+		Critter@ crForI = null;
+        for( uint i = Random( 0, countTargets - 1 ); countTargets > 0 && proccess.WeaponAmmoRound > 0; i = Random( 0, countTargets - 1 ) )
+        {
+            @crForI = sTargets[ i ];
+			sTargets.removeAt(i);
+			countTargets--;
+			ParseTarget( crForI, isEffect);
+        }
+	}
+}
+#endif
+
+class DebugTraccer : MutualObject
+{
+	uint AttackerId;
+	uint TargetId;
+	uint HitRounds;
+	uint CountRounds;
+	uint LeonRounds;
+	
+	void Update( uint critterId )
+	{
+	#ifdef __CLIENT
+		if( ThisModule::AttackHex::Option::Combat::BurstDebug )
+		{
+			CritterCl@ chosen = GetChosen();
+			if( chosen.Id == AttackerId )
+			{
+				Message( "Попало " + ( HitRounds + LeonRounds ) + " из " + CountRounds + " пуль." + 
+				( ( LeonRounds != 0 ) ? ( " Увернулся от " + LeonRounds ) : "" ) );
+			}
+			else
+			{
+				Message( "В вас попало " + ( HitRounds + LeonRounds ) + " из " + CountRounds + " пуль." + 
+				( ( LeonRounds != 0 ) ? ( " Увернулся от " + LeonRounds ) : "" ) );
+			}
+		}
+	#endif
+	}
+	
+}
+
+namespace AttackHex
+{ 
+	namespace Option
+	{
+		namespace Combat
+		{
+			bool BurstDebug = true;
+		}
+	}
+}

@@ -23,9 +23,10 @@ class ItemDescriptor : Mk2::Descriptor, Mk2::ItemPacket, UpgradeItem::UpgradeDes
 #endif
 	}
 
-	ItemDescriptor( ItemMutual@ item )
+	ItemDescriptor( ItemMutual@ item, uint16 pid )
 	{
 		@RealIt = item;
+		Pid = pid;
 	}
 	
 	uint get_Priority( )
@@ -40,12 +41,17 @@ class ItemDescriptor : Mk2::Descriptor, Mk2::ItemPacket, UpgradeItem::UpgradeDes
 	
 	Mk2::Descriptor@ Copy( ItemMutual@ item )
 	{
-		return Item::ItemDescriptor( item );
+		return Item::ItemDescriptor( item, Pid );
+	}
+	
+	string StringId()
+	{
+		return ( RealIt !is null ?"" + RealIt.Id : "Proto_" + Pid);
 	}
 	
 	string@ get_Name( )
 	{
-		return "Item_" + ( RealIt !is null ?"" + RealIt.Id : "Null");
+		return "Item_" + StringId();
 	}
 	
 	bool IsUpgrade( ItemMutual& base, ItemMutual& upgrade ) override
@@ -229,315 +235,335 @@ class ItemDescriptor : Mk2::Descriptor, Mk2::ItemPacket, UpgradeItem::UpgradeDes
 #endif
 	uint PriorityDescriptor = 0;
 	ItemMutual@ RealIt = null;
-}
-
-class WeaponDescriptor : Item::ItemDescriptor, Mk2::CombatWeaponPacket
-{
-	WeaponDescriptor( ItemMutual@ item )
-	{
-		super( item );
-	}
-	
-	Mk2::Descriptor@ Copy( ItemMutual@ item ) override
-	{
-		return Item::WeaponDescriptor( item );
-	}
-
-	string@ get_Name( ) override
-	{
-		return "Weapon_" + ( RealIt !is null ? "" + RealIt.Id : "Null");
-	}
+	uint16 Pid = 0;
 }
 
 class ArmorDescriptor : Item::ItemDescriptor, Mk2::CombatArmorPacket
 {
-	ArmorDescriptor( ItemMutual@ item )
+	ArmorDescriptor( ItemMutual@ item, uint16 pid )
 	{
-		super( item );
+		super( item, pid );
 	}
 	
 	Mk2::Descriptor@ Copy( ItemMutual@ item ) override
 	{
-		return Item::ArmorDescriptor( item );
+		return Item::ArmorDescriptor( item, Pid );
 	}
 
 	string@ get_Name( ) override
 	{
-		return "Armor_" + ( RealIt !is null ?"" + RealIt.Id : "Null");
+		return "Armor_" + StringId();
 	}
 }
 
 class DrugDescriptor : Item::ItemDescriptor
 {
-	DrugDescriptor( ItemMutual@ item )
+	DrugDescriptor( ItemMutual@ item, uint16 pid )
 	{
-		super( item );
+		super( item, pid );
 	}
 	
 	Mk2::Descriptor@ Copy( ItemMutual@ item ) override
 	{
-		return Item::DrugDescriptor( item );
+		return Item::DrugDescriptor( item, Pid );
 	}
 
 	string@ get_Name( ) override
 	{
-		return "Drug_" + ( RealIt !is null ?"" + RealIt.Id : "Null");
+		return "Drug_" + StringId();
 	}
 }
 
 class AmmoDescriptor : Item::ItemDescriptor
 {
-	AmmoDescriptor( ItemMutual@ item )
+	AmmoDescriptor( ItemMutual@ item, uint16 pid )
 	{
-		super( item );
+		super( item, pid );
 	}
 	
 	Mk2::Descriptor@ Copy( ItemMutual@ item ) override
 	{
-		return Item::AmmoDescriptor( item );
+		return Item::AmmoDescriptor( item, Pid );
 	}
 
 	string@ get_Name( ) override
 	{
-		return "Ammo_" + ( RealIt !is null ?"" + RealIt.Id : "Null");
+		return "Ammo_" + StringId();
 	}
 }
 
 class MiscDescriptor : Item::ItemDescriptor
 {
-	MiscDescriptor( ItemMutual@ item )
+	MiscDescriptor( ItemMutual@ item, uint16 pid )
 	{
-		super( item );
+		super( item, pid );
 	}
 	
 	Mk2::Descriptor@ Copy( ItemMutual@ item ) override
 	{
-		return Item::MiscDescriptor( item );
+		return Item::MiscDescriptor( item, Pid );
 	}
 
 	string@ get_Name( ) override
 	{
-		return "Misc_" + ( RealIt !is null ?"" + RealIt.Id : "Null");
+		return "Misc_" + StringId();
 	}
 }
 
 class Misc2Descriptor : Item::ItemDescriptor
 {
-	Misc2Descriptor( ItemMutual@ item )
+	Misc2Descriptor( ItemMutual@ item, uint16 pid )
 	{
-		super( item );
+		super( item, pid );
 	}
 	
 	Mk2::Descriptor@ Copy( ItemMutual@ item ) override
 	{
-		return Item::Misc2Descriptor( item );
+		return Item::Misc2Descriptor( item, Pid );
 	}
 
 	string@ get_Name( ) override
 	{
-		return "Misc2_" + ( RealIt !is null ?"" + RealIt.Id : "Null");
+		return "Misc2_" + StringId();
 	}
 }
 
 class KeyDescriptor : Item::ItemDescriptor
 {
-	KeyDescriptor( ItemMutual@ item )
+	KeyDescriptor( ItemMutual@ item, uint16 pid )
 	{
-		super( item );
+		super( item, pid );
 	}
 	
 	Mk2::Descriptor@ Copy( ItemMutual@ item ) override
 	{
-		return Item::KeyDescriptor( item );
+		return Item::KeyDescriptor( item, Pid );
 	}
 
 	string@ get_Name( ) override
 	{
-		return "Key_" + ( RealIt !is null ?"" + RealIt.Id : "Null");
+		return "Key_" + StringId();
 	}
 }
 
 class ContainerDescriptor : Item::ItemDescriptor
 {
-	ContainerDescriptor( ItemMutual@ item )
+	ContainerDescriptor( ItemMutual@ item, uint16 pid )
 	{
-		super( item );
+		super( item, pid );
 	}
 	
 	Mk2::Descriptor@ Copy( ItemMutual@ item ) override
 	{
-		return Item::ContainerDescriptor( item );
+		return Item::ContainerDescriptor( item, Pid );
 	}
 
 	string@ get_Name( ) override
 	{
-		return "Container_" + ( RealIt !is null ?"" + RealIt.Id : "Null");
+		return "Container_" + StringId();
 	}
 }
 
 class DoorDescriptor : Item::ItemDescriptor
 {
-	DoorDescriptor( ItemMutual@ item )
+	DoorDescriptor( ItemMutual@ item, uint16 pid )
 	{
-		super( item );
+		super( item, pid );
 	}
 	
 	Mk2::Descriptor@ Copy( ItemMutual@ item ) override
 	{
-		return Item::DoorDescriptor( item );
+		return Item::DoorDescriptor( item, Pid );
 	}
 
 	string@ get_Name( ) override
 	{
-		return "Door_" + ( RealIt !is null ?"" + RealIt.Id : "Null");
+		return "Door_" + StringId();
 	}
 }
 
 class GridDescriptor : Item::ItemDescriptor
 {
-	GridDescriptor( ItemMutual@ item )
+	GridDescriptor( ItemMutual@ item, uint16 pid )
 	{
-		super( item );
+		super( item, pid );
 	}
 	
 	Mk2::Descriptor@ Copy( ItemMutual@ item ) override
 	{
-		return Item::GridDescriptor( item );
+		return Item::GridDescriptor( item, Pid );
 	}
 
 	string@ get_Name( ) override
 	{
-		return "Grid_" + ( RealIt !is null ?"" + RealIt.Id : "Null");
+		return "Grid_" + StringId();
 	}
 }
 
 class GenericDescriptor : Item::ItemDescriptor
 {
-	GenericDescriptor( ItemMutual@ item )
+	GenericDescriptor( ItemMutual@ item, uint16 pid )
 	{
-		super( item );
+		super( item, pid );
 	}
 	
 	Mk2::Descriptor@ Copy( ItemMutual@ item ) override
 	{
-		return Item::GenericDescriptor( item );
+		return Item::GenericDescriptor( item, Pid );
 	}
 
 	string@ get_Name( ) override
 	{
-		return "Generic_" + ( RealIt !is null ?"" + RealIt.Id : "Null");
+		return "Generic_" + StringId();
 	}
 }
 
 class WallDescriptor : Item::ItemDescriptor
 {
-	WallDescriptor( ItemMutual@ item )
+	WallDescriptor( ItemMutual@ item, uint16 pid )
 	{
-		super( item );
+		super( item, pid );
 	}
 	
 	Mk2::Descriptor@ Copy( ItemMutual@ item ) override
 	{
-		return Item::WallDescriptor( item );
+		return Item::WallDescriptor( item, Pid );
 	}
 
 	string@ get_Name( ) override
 	{
-		return "Wall_" + ( RealIt !is null ?"" + RealIt.Id : "Null");
+		return "Wall_" + StringId();
 	}
 }
 
 class CarDescriptor : Item::ItemDescriptor
 {
-	CarDescriptor( ItemMutual@ item )
+	CarDescriptor( ItemMutual@ item, uint16 pid )
 	{
-		super( item );
+		super( item, pid );
 	}
 	
 	Mk2::Descriptor@ Copy( ItemMutual@ item ) override
 	{
-		return Item::CarDescriptor( item );
+		return Item::CarDescriptor( item, Pid );
 	}
 
 	string@ get_Name( ) override
 	{
-		return "Car_" + ( RealIt !is null ?"" + RealIt.Id : "Null");
+		return "Car_" + StringId();
 	}
 }
 
 class AnimalDescriptor : Item::ItemDescriptor
 {
-	AnimalDescriptor( ItemMutual@ item )
+	AnimalDescriptor( ItemMutual@ item, uint16 pid )
 	{
-		super( item );
+		super( item, pid );
 	}
 	
 	Mk2::Descriptor@ Copy( ItemMutual@ item ) override
 	{
-		return Item::AnimalDescriptor( item );
+		return Item::AnimalDescriptor( item, Pid );
 	}
 
 	string@ get_Name( ) override
 	{
-		return "Animal_" + ( RealIt !is null ?"" + RealIt.Id : "Null");
+		return "Animal_" + StringId();
 	}
+}
+
+void item_init( ItemMutual& item, bool isFirstTime )
+{
+
+}
+
+void item_proto_init( ProtoItem& proto )
+{
+	GetDeafultItemDescriptor( proto );
+}
+
+Mk2::Descriptor@ GetDeafultItemDescriptor( ProtoItem@ proto )
+{
+	return GetDeafultItemDescriptor( null, proto );
 }
 
 Mk2::Descriptor@ GetDeafultItemDescriptor( ItemMutual@ item )
 {
+	return GetDeafultItemDescriptor( item, GetProtoItem( item.GetProtoId() ) );
+}
+
+Mk2::Descriptor@ GetDeafultItemDescriptor( ItemMutual@ item, ProtoItem@ proto )
+{
 #ifdef __MAPPER
-	if( item.MapObjType == 0 )
+	if( item is null || item.MapObjType == 0 )
 		return null;
 #endif
 
-	ProtoItem@ proto = GetProtoItem( item.GetProtoId() );
-
 	Item::ItemDescriptor@ def = null;
-	string key = "" + item.GetProtoId();
+	string key = "" + proto.ProtoId;
 
-	if( Defaults.exists( key ) && Defaults.get( key, def ) ) return def.Copy( item );
+	if( Defaults.exists( key ) && Defaults.get( key, @def ) ) return @def.Copy( item );
+	if( item !is null )
+		Log( "Error, item descriptor dont prepare" );
+	
 	switch( proto.GetType() )
 	{
 		case ITEM_TYPE_NONE:
-			return Item::ItemDescriptor( item );			
+			@def = Item::ItemDescriptor( item, proto.ProtoId );
+			break;
 		case ITEM_TYPE_ARMOR:
-			return Item::ArmorDescriptor( item );
+			@def = Item::ArmorDescriptor( item, proto.ProtoId );
+			break;
 		case ITEM_TYPE_DRUG:
-			return Item::DrugDescriptor( item );
+			@def = Item::DrugDescriptor( item, proto.ProtoId );
+			break;
 		case ITEM_TYPE_WEAPON:
-			return Item::WeaponDescriptor( item );
+			@def = ItemWeapon::WeaponDescriptor( item, proto.ProtoId );
+			break;
 		case ITEM_TYPE_AMMO:
-			return Item::AmmoDescriptor( item );
+			@def = Item::AmmoDescriptor( item, proto.ProtoId );
+			break;
 		case ITEM_TYPE_MISC:
-			return Item::MiscDescriptor( item );
+			@def = Item::MiscDescriptor( item, proto.ProtoId );
+			break;
 		case ITEM_TYPE_MISC2:
-			return Item::Misc2Descriptor( item );
+			@def = Item::Misc2Descriptor( item, proto.ProtoId );
+			break;
 		case ITEM_TYPE_KEY:
-			return Item::KeyDescriptor( item );
+			@def = Item::KeyDescriptor( item, proto.ProtoId );
+			break;
 		case ITEM_TYPE_CONTAINER:
-			return Item::ContainerDescriptor( item );
+			@def = Item::ContainerDescriptor( item, proto.ProtoId );
+			break;
 		case ITEM_TYPE_DOOR:
-			return Item::DoorDescriptor( item );
+			@def = Item::DoorDescriptor( item, proto.ProtoId );
+			break;
 		case ITEM_TYPE_GRID:
-			return Item::GridDescriptor( item );
+			@def = Item::GridDescriptor( item, proto.ProtoId );
+			break;
 		case ITEM_TYPE_GENERIC:
-			return Item::GenericDescriptor( item );
+			@def = Item::GenericDescriptor( item, proto.ProtoId );
+			break;
 		case ITEM_TYPE_WALL:
-			return Item::WallDescriptor( item );
+			@def = Item::WallDescriptor( item, proto.ProtoId );
+			break;
 		case ITEM_TYPE_CAR:
-			return Item::CarDescriptor( item );
+			@def = Item::CarDescriptor( item, proto.ProtoId );
+			break;
 		case ITEM_TYPE_ANIMAL:
-			return Item::AnimalDescriptor( item );
+			@def = Item::AnimalDescriptor( item, proto.ProtoId );
+			break;
 		default:
 		{
 			Log( "Warning, uknow protoitem type " + proto.GetType() );
-			return Item::ItemDescriptor( item );
+			@def = Item::ItemDescriptor( item, proto.ProtoId );
+			break;
 		}
 	}
-	return null;
+	
+	Defaults.set( key, @def );
+	return def;
 }
-
-
 
 bool IsUpgrade( ItemMutual& item, ItemMutual& upgrade )
 {

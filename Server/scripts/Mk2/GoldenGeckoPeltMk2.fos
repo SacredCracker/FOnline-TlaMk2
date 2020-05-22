@@ -2,12 +2,12 @@
 
 class GoldenGeckoPeltMk2 : Item::ItemDescriptor
 {
-	GoldenGeckoPeltMk2( ::ItemMutual@ item )
+	GoldenGeckoPeltMk2( ::ItemMutual@ item, uint16 pid )
 	{
-		super( @item );
-		if( @item !is null )
+		super( item, pid );
+		if( item !is null )
 		{
-			const ::ProtoItem@  proto = ::GetProtoItem( item.GetProtoId( ) );
+			const ProtoItem@ proto = GetProtoItem( pid );
 			TypeDamage = proto.Upgrade_TriggerValue0;
 			DamageBorder = proto.Upgrade_TriggerValue1;
 		}
@@ -15,12 +15,13 @@ class GoldenGeckoPeltMk2 : Item::ItemDescriptor
 	
 	Mk2::Descriptor@ Copy( ::ItemMutual@ item ) override
 	{
-		return @ThisModule::GoldenGeckoPeltMk2( @item );
+		GoldenGeckoPeltMk2@ new_copy = ThisModule::GoldenGeckoPeltMk2( @item, Pid );
+		return @new_copy;
 	}
 
 	::string@ get_Name( ) override
 	{
-		return "GoldenGeckoPeltMk2_" + ( @RealIt !is null ?"" + RealIt.Id : "Null");
+		return "GoldenGeckoPeltMk2_" + StringId();
 	}
 	
 #ifdef __SERVER
@@ -56,7 +57,7 @@ class GoldenGeckoPeltMk2 : Item::ItemDescriptor
 
 void ModuleInit()
 {
-	Item::Defaults.set( "" + Content::Item::GOLDEN_GECKO_PELT_MK2, @ThisModule::GoldenGeckoPeltMk2( null ) );
+	Item::Defaults.set( "" + Content::Item::GOLDEN_GECKO_PELT_MK2, @ThisModule::GoldenGeckoPeltMk2( null, Content::Item::GOLDEN_GECKO_PELT_MK2 ) );
 }
 
 //GoldenGeckoPeltMk2

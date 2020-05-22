@@ -51,6 +51,17 @@ uint loop( )
 	return 1;
 }
 
+
+void item_proto_init( ProtoItem& proto )
+{
+	Item::item_proto_init( proto );
+}
+
+void item_init( ItemMutual& item, bool isFirstTime )
+{
+	Item::item_init( item, isFirstTime );
+}
+
 class EventLoop
 {
 	void Subscribe( FuncdefEventLoop@ func, uint tick = 0 )

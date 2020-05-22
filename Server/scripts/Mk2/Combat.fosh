@@ -143,10 +143,6 @@ shared void runTree( CombatRes[]& combatResults, int ptr )
         runTree( combatResults, combatResults[ ptr ].Right );
 }
 
-# pragma funcdef "uint GetHitAimFuncdef ( int hitLocation ) "
-
-shared interface iCombatProccessContext{}
-
 shared class LeonHash
 {
 	LeonHash( Critter& critter, uint distance )
@@ -408,7 +404,7 @@ mixin class CombatProccessCallbacks
 	void SetCombatTimeout( Critter& critter ){}
 }
 
-shared class CombatProccess : Mk2::CombatProccessPacket, CombatProccessTargetData, CombatProccessCallbacks, EventDataPacket
+shared class CombatProccess : Mk2::CombatProccessPacket, CombatProccessTargetData, CombatProccessCallbacks, EventDataPacket, CombatWeaponData
 {
     CombatProccess()
 	{
@@ -500,6 +496,11 @@ shared class CombatProccess : Mk2::CombatProccessPacket, CombatProccessTargetDat
 		@TargetPerks = int[]();
 		
 		AttackerSkill = 0;
+	}
+	
+	int GetWeaponSubType( )
+	{
+		return GetWeaponSubType( WeaponSkill );
 	}
 	
 	bool IsSilentAtack( Critter& target )
@@ -631,25 +632,6 @@ shared class CombatProccess : Mk2::CombatProccessPacket, CombatProccessTargetDat
 			TypeDamage =  Ammo.Ammo_DmgType;
 	}
 	
-	int GetWeaponSubType()
-	{
-		switch( WeaponSkill )
-		{
-			case SK_DOCTOR:
-			case SK_SMALL_GUNS:
-			case SK_BIG_GUNS:
-			case SK_ENERGY_WEAPONS:
-				return WS_GUN;
-				
-			case SK_THROWING:
-				return WS_THROWING;
-				
-			default: 
-				return WS_UNARMED;
-		}
-		return 0;
-	}
-	
 	bool WeaponIsGrenade()
 	{
 		return WeaponSubtype == WS_THROWING && TypeDamage != DAMAGE_NORMAL;
@@ -770,6 +752,11 @@ shared class CombatProccess : Mk2::CombatProccessPacket, CombatProccessTargetDat
 			return _WeaponRound( Weapon, WeaponUse ) > 1 && _WeaponNoBrust( Weapon, WeaponUse ) == 0; 
 		} 
 	}
+	
+	void ApplyDamage( Critter& target, bool isCritical = false, bool intentionally = false, uint rounds = uint(-1) )
+	{
+		
+	}
 
 	private int[]@ AttackPerks;
 	private int[]@ TargetPerks;
@@ -846,7 +833,13 @@ shared class CombatProccess : Mk2::CombatProccessPacket, CombatProccessTargetDat
 	
 	GetHitAimFuncdef@ GetHitAim;
 	
-	iCombatProccessContext@ Context;
+	CombatProccessContext@ Context;
+}
+
+shared class CombatAlgoritm : CombatAlgoritmPacket
+{
+	void Proccess( ){}
+	CombatProccess@ proccess;
 }
 
 shared void NotifyOops( Critter& cr, Critter& t1, Critter@ t2, CombatRes[]& results )
@@ -904,4 +897,41 @@ shared void NotifyMissAc( Critter& cr, CombatRes[]& results )
 
 #endif
 
+#ifdef __COMBAT_MAIN
+const float get_DeadZone_PenaltySecondTargets(){ return _DeadZone_PenaltySecondTargets; };
+const float get_DeadZone_PenaltyEffectTargets(){ return _DeadZone_PenaltyEffectTargets; };
+const float get_DeadZone_MaxHitModule(){ return _DeadZone_MaxHitModule; };
+#endif
+
+#ifndef __COMBAT_MAIN
+import const float get_DeadZone_PenaltySecondTargets() from "combat";
+import const float get_DeadZone_PenaltyEffectTargets() from "combat";
+import const float get_DeadZone_MaxHitModule() from "combat";
+#endif
+
+
+
+mixin class CombatWeaponData
+{
+	int GetWeaponSubType( int weaponSkill )
+	{
+		switch( weaponSkill )
+		{
+			case SK_DOCTOR:
+			case SK_SMALL_GUNS:
+			case SK_BIG_GUNS:
+			case SK_ENERGY_WEAPONS:
+				return WS_GUN;
+				
+			case SK_THROWING:
+				return WS_THROWING;
+				
+			default: 
+				return WS_UNARMED;
+		}
+		return 0;
+	}
+}
+
 #endif // _COMBAT_H_
+

@@ -2,19 +2,19 @@
 
 class FuelCellController : Item::ItemDescriptor
 {
-	FuelCellController( ::ItemMutual@ item )
+	FuelCellController( ::ItemMutual@ item, uint16 pid )
 	{
-		super( @item );
+		super( @item, pid );
 	}
 	
 	Mk2::Descriptor@ Copy( ::ItemMutual@ item ) override
 	{
-		return @ThisModule::FuelCellController( @item );
+		return @ThisModule::FuelCellController( @item, Pid );
 	}
 
 	::string@ get_Name( ) override
 	{
-		return "FuelCellController_" + ( @RealIt !is null ?"" + RealIt.Id : "Null");
+		return "FuelCellController_" + StringId();
 	}
 	
 #ifdef __SERVER
@@ -40,6 +40,6 @@ class FuelCellController : Item::ItemDescriptor
 
 void ModuleInit()
 {
-	Item::Defaults.set( "" + Content::Item::CAR_FUEL_CELL_CONTROLLER, @ThisModule::FuelCellController( null ) );
+	Item::Defaults.set( "" + Content::Item::CAR_FUEL_CELL_CONTROLLER, @ThisModule::FuelCellController( null, Content::Item::CAR_FUEL_CELL_CONTROLLER ) );
 }
 
