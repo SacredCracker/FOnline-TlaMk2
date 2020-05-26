@@ -103,7 +103,7 @@ enum CombatResult
 	end
 }
 
-class Combat : CombatProccess, MixinToHitProccess, MixinFlamerProccess
+class Combat : CombatProccess, MixinToHitProccess, MixinFlamerProccess, MixinApplyDamage, MixinProccessPerks
 {
 	private bool unprepare;
 
@@ -1002,7 +1002,7 @@ class Combat : CombatProccess, MixinToHitProccess, MixinFlamerProccess
 	{
 		if( rounds == uint(-1) )
 			rounds = WeaponAmmoRound;
-		::ApplyDamage( this, target, rounds, false, false, Results );
+		ProccessApplyDamage( target, rounds, false, false );
 	}
 }
 
@@ -1075,799 +1075,815 @@ bool CombatAttack( Critter& attacker, Critter& target, ProtoItem& weapon, uint8 
     return CombatAttack( Combat( attacker, target, weapon, weaponMode, ammo ) );
 }
 
-void ApplyDamage( CombatProccess& proccess, Critter& target, uint rounds, bool isCritical, bool intentionally, CombatRes[]& results )
+mixin class MixinProccessPerks
 {
-	if( !proccess.IsDamage( target ) )
-		return;
-
-	proccess.DropDamage();
-    if( validEngineObject( proccess.Attacker ) && intentionally && target.Id != proccess.TargetId )
-        target.EventAttacked( proccess.Attacker );
-
-    proccess.SetCombatTimeout( target );
-    if( !isCritical )
-    {
-		proccess.ProccessArmorClass( target.Stat[ ST_ARMOR_CLASS ], rounds );
-
-        if( rounds == 0 )
-        {
-            NotifyMissAc( target, results );
-            return;
-        }
-    }
-
-    uint eff = 0;
-    uint msgEff = 0;
-    uint extraMessage = 0;
-    uint CountOfCriticalsBulets = 0;
-
-    @proccess.ArmorTarget = _CritGetItemArmor( target );
-
-    uint8 flyingDistance = validEngineObject( proccess.RealWeapon ) ? proccess.RealWeapon.Proto.Weapon_FlyingDistance : 0;
-
-    bool isPowerArmor = (  target.Stat[ ST_CURRENT_ARMOR_PERK ] == ARMOR_PERK_POWERED ||
-                            target.Stat[ ST_CURRENT_ARMOR_PERK ] == ARMOR_PERK_POWERED_II ||
-                            target.Stat[ ST_CURRENT_ARMOR_PERK ] == ARMOR_PERK_ADVANCED_I ||
-                            target.Stat[ ST_CURRENT_ARMOR_PERK ] == ARMOR_PERK_ADVANCED_II ||
-                            target.Stat[ ST_CURRENT_ARMOR_PERK ] == ARMOR_PERK_SENTRY_BOTS || target.Perk[ PE_STONEWALL ] != 0 );
-
-    if( target.IsNpc() && ( target.Stat[ ST_BASE_CRTYPE ] == CRTYPE_PA || target.Stat[ ST_BASE_CRTYPE ] == CRTYPE_PA_NO_HEAD || target.Stat[ ST_BASE_CRTYPE ] == CRTYPE_APA ) )
-        isPowerArmor = true;
-
-	if( target.Id == proccess.TargetId )
-		proccess.TargetHit = true;
 	
-    // Check no PvP
-    if( target.IsPlayer() )
-    {
-        if( validEngineObject( proccess.Attacker ) )
-        {
-            if( proccess.Attacker.IsPlayer() && ( proccess.Attacker.Mode[ MODE_NO_PVP ] != 0 || target.Mode[ MODE_NO_PVP ] != 0 ) )
-            {
-                proccess.Attacker.Say( SAY_NETMSG, "No PvP." );
-                target.Say( SAY_NETMSG, "No PvP." );
-                return;
-            }
-        }
-    }
+}
 
-	proccess.UnSneak( target );
+mixin class MixinApplyDamage
+{
+	bool CheckNoPvp( Critter& target )
+	{
+		if( target.IsNpc() )
+			return true;
+		if( !validEngineObject( Attacker ) )
+			return true;
+		if( Attacker.IsPlayer() && ( Attacker.Mode[ MODE_NO_PVP ] != 0 || target.Mode[ MODE_NO_PVP ] != 0 ) )
+			return false;
+		return true;
+	}
 
-    if( rounds > 1 && intentionally )
-    {		// определение количества критических попаданий в очереди
-	    int critChance = proccess.Attacker.Stat[ ST_CRITICAL_CHANCE ];
-        
-		if( validEngineObject( proccess.RealWeapon ) )
-			critChance += proccess.RealWeapon.WeaponBonus_CritChance + proccess.RealWeapon.Proto.Weapon_CriticalBonus;
-		int antiCritRes = target.Stat[ ST_CRITICAL_RESISTANCE ] - ( critChance > 100 ? critChance - 100 : 0 );
-        for( uint i = 0; i < rounds; i++ )
-        {
-            if( Random( 1, 100 ) <= critChance && Random( 1, 100 ) > antiCritRes )
-                CountOfCriticalsBulets++;
-        }
-        if( CountOfCriticalsBulets > 0 )
-            isCritical = true;
-    }
-    else if( isCritical )
-        CountOfCriticalsBulets = 1;
-
-    uint[] dmgMulForCriticalsHits( CountOfCriticalsBulets, 1 );    // массив множителей урона, для каждой пули в очереди
-    /*for( uint i = 0; i < CountOfCriticalsBulets; i++ )
-    {
-        dmgMulForCriticalsHits[ i ] = 1;
-    }*/
-
-    if( target.Mode[ MODE_INVULNERABLE ] != 0 )
-        isCritical = false;
-    else if( isCritical || proccess.ForceFlags != 0 )
-    {
-        if( isCritical )
-        {
-            int aim_ = proccess.Aim,
-                roll = 0;
-            if( aim_ == HIT_LOCATION_NONE )
-                aim_ = HIT_LOCATION_UNCALLED;
-            aim_--;
-            uint offset = 0;
-
-            for( uint i = 0; i < CountOfCriticalsBulets; i++ )
-            {
-                roll = Random( 0, 90 ) + ( validEngineObject( proccess.Attacker ) ? ( ( proccess.Attacker.Perk[ PE_BETTER_CRITICALS ] != 0 ? 10 : 0 ) +
-                                                                                    ( ( proccess.Attacker.Trait[ TRAIT_FAST_SHOT ] != 0 && proccess.WeaponSubtype == WS_GUN ) ? -25 : 0 ) +
-                                                                                    ( proccess.Attacker.Trait[ TRAIT_HEAVY_HANDED ] != 0 ? -15 : 0 ) +
-                                                                                    ( proccess.IsAttackPerk( WEAPON_PERK_BETTER_CRITICALS ) ? 10 : 0 ) ) : 0 ) - target.Perk[ PE_TOUGHNESS ] * 4;
-                if( validEngineObject( proccess.Attacker ) )
-                {
-                    if( validEngineObject( proccess.RealWeapon ) )
-                    {
-                        roll += proccess.RealWeapon.WeaponBonus_Critroll + proccess.RealWeapon.Proto.Weapon_BonusCritRoll;
-                        uint use = 0;
-                        int  skillWeapon = _WeaponSkill( proccess.RealWeapon.Proto, use );
-                        switch( skillWeapon )
-                        {
-                        case SK_UNARMED:
-                        case SK_THROWING:
-                            roll += proccess.Attacker.BookBonus[ BB_MELEE_AND_THROWING_CRIT_ROLL ];
-                            break;
-                        case SK_ENERGY_WEAPONS:
-                        case SK_SMALL_GUNS:
-                        case SK_BIG_GUNS:
-                            roll += proccess.Attacker.BookBonus[ BB_RANGED_CRIT_ROLL ];
-                            break;
-                        default:
-                            break;
-                        }
-                    }
-                    else if( proccess.ScoreUnarmed )
-                        roll += proccess.Attacker.BookBonus[ BB_MELEE_AND_THROWING_CRIT_ROLL ];
-                }
-                if( roll <= 20 )
-                    roll = 0;
-                else if( roll <= 45 )
-                    roll = 1;
-                else if( roll <= 70 )
-                    roll = 2;
-                else if( roll <= 90 )
-                    roll = 3;
-                else if( roll <= 100 )
-                    roll = 4;
-                else
-                    roll = 5;
-                offset = target.Stat[ ST_BODY_TYPE ] * 9 * 6 * 7 + aim_ * 6 * 7 + roll * 7;
-                dmgMulForCriticalsHits[ i ] = CriticalTable[ offset ];
-            }
-
-// 0x00000001 - knockout
-// 0x00000002 - knockdown
-// 0x00000004 - crippled left leg
-// 0x00000008 - crippled right leg
-// 0x00000010 - crippled left arm
-// 0x00000020 - crippled right arm
-// 0x00000040 - blinded
-// 0x00000080 - death
-// 0x00000400 !- on fire - triggers the 'flamedance' animation, but not if the hit is fatal (probably a bug) // not used now
-// 0x00000800 - bypass armor
-// 0x00004000 - dropped weapon (doesn't work) // haha, really?
-// 0x00008000 - lose next turn
-// 0x00200000 - random
-
-            eff = CriticalTable[ offset + 1 ];
-            int stat = CriticalTable[ offset + 2 ],
-                statMod = CriticalTable[ offset + 3 ];
-
-            uint cMessage = CriticalTable[ offset + 5 ],
-                 cFailureMessage = CriticalTable[ offset + 6 ];
-
-            extraMessage = cMessage;
-
-            if( stat != -1 && ( Random( 1, 10 ) > ( target.Stat[ stat ] + statMod ) ) )
-            {
-                eff |= CriticalTable[ offset + 4 ];
-                extraMessage = cFailureMessage;
-            }
-
-            if( target.Mode[ MODE_NO_KNOCK ] != 0 )
-                UNSETFLAG( eff, HF_KNOCKDOWN );
-        }
-
-        if( proccess.ForceFlags != 0 )
-        {
-            eff |= proccess.ForceFlags;
-            isCritical = true;
-        }
-
-        // in the following: in no lose limbs, then clear the effects and set msgEff
-        // otherwise set msgEff first, then check for HF_RANDOM
-        if( target.Mode[ MODE_NO_LOOSE_LIMBS ] != 0 )
-        {
-            UNSETFLAG( eff, ( HF_CRIPPLED_LEFT_LEG | HF_CRIPPLED_RIGHT_LEG | HF_CRIPPLED_LEFT_ARM | HF_CRIPPLED_RIGHT_ARM | HF_RANDOM ) );
-            msgEff = eff;
-        }
-        else
-        {
-            msgEff = eff;
-
-            if( FLAG( eff, HF_RANDOM ) )
-            {
-                UNSETFLAG( eff, HF_RANDOM );
-                switch( Random( 1, 4 ) )
-                {
-                case 1:
-                    SETFLAG( eff, HF_CRIPPLED_LEFT_LEG );
-                    break;
-                case 2:
-                    SETFLAG( eff, HF_CRIPPLED_RIGHT_LEG );
-                    break;
-                case 3:
-                    SETFLAG( eff, HF_CRIPPLED_LEFT_ARM );
-                    break;
-                case 4:
-                    SETFLAG( eff, HF_CRIPPLED_RIGHT_ARM );
-                    break;
-                default:
-                    break;
-                }
-            }
-        }
-
-        if( validEngineObject( proccess.Attacker ) && proccess.Attacker.IsPlayer() )
-            ChangePlayerScore( proccess.Attacker, SCORE_SNIPER, 1 );
-    }     // end isCritical
-
-
-    if( proccess.TypeDamage == DAMAGE_EMP && target.Stat[ ST_BODY_TYPE ] == BT_ROBOT )
-    {
-        proccess.TargetDR = 0;
-        proccess.TargetDT = 0;
-    }
-    else
-    {
-		proccess.TargetDR = target.Stat[ ST_NORMAL_RESIST + proccess.TypeDamage - 1 ];
-		proccess.TargetDT = target.Stat[ ST_NORMAL_ABSORB + proccess.TypeDamage - 1 ];
-		
-        if( proccess.IsAttackPerk( WEAPON_PERK_PENETRATE ) )
-            proccess.TargetDR -= 15;
-        if( FLAG( eff, HF_BYPASS_ARMOR ) && proccess.TypeDamage != DAMAGE_EMP )
-        {
-            proccess.TargetDT /= 5;
-            proccess.TargetDR /= 2;
-            proccess.TargetDR -= ( validEngineObject( proccess.Attacker ) ? ( proccess.Attacker.Trait[ TRAIT_FINESSE ] != 0 ? 30 : 0 ) : 0 );
-        }
-        if( proccess.WeaponIsGrenade() && validEngineObject( proccess.Attacker ) && proccess.Attacker.Perk[ PE_ARMOR_BUSTER ] != 0 )
-            proccess.TargetDR -= 25;
-
-        proccess.TargetDR += ( validEngineObject( proccess.Attacker ) ? ( proccess.Attacker.Trait[ TRAIT_FINESSE ] != 0 ? 30 : 0 ) : 0 );
-        if( proccess.IsAttackPerk( WEAPON_PERK_FLAMEBOY ) )
-            proccess.TargetDR -= 10;
-        // Log("targetDR1="+targetDR);
-        proccess.TargetDR += proccess.DRMod;       // always
-        // Log("targetDR2="+targetDR);
-		proccess.TargetDR = CLAMP( proccess.TargetDR, 0, 100 );
-		if( proccess.TDMod != 0 )
-			proccess.TargetDT /= proccess.TDMod;
-    }
-
-    proccess.DmgMin += proccess.BonusDmg;
-    proccess.DmgMax += proccess.BonusDmg;
-    int rawDmg = 0,
-        typeDamage = proccess.TypeDamage,
-        totalDmg = 0;
-
-	Mk2::CombatTargetPacket@ scriptTarget = cast<Mk2::CombatTargetPacket>(@target.ScriptDescriptor);		
-    {
-        // некритические попадания в очереди
-        bool argIsCrit = false;
-        uint damageMulCrit = 1;
-
-        for( uint i = 0; i < ( rounds - CountOfCriticalsBulets ); i++ )
-        {
-            typeDamage = proccess.TypeDamage;
-
-            {
-                if( !scriptTarget.FormatDamage( proccess, rawDmg, typeDamage, argIsCrit, damageMulCrit, i ) )
-                    break;
-            }
-
-            if( rawDmg > 0 )
-            {
-                proccess.Damage[ typeDamage ] = proccess.Damage[ typeDamage ] + rawDmg;
-                // totalDmg+=rawDmg;
-            }
-        }
-
-        uint bulleti = rounds - CountOfCriticalsBulets;
-        // критические попадания в очереди
-        argIsCrit = true;
-        for( uint i = 0; i < CountOfCriticalsBulets; i++ )
-        {
-            typeDamage = proccess.TypeDamage;
-
-            {
-                if( !scriptTarget.FormatDamage( proccess, rawDmg, typeDamage, argIsCrit, dmgMulForCriticalsHits[ i ], bulleti++ ) )
-                    break;
-            }
-
-            if( rawDmg > 0 )
-                proccess.Damage[ typeDamage ] = proccess.Damage[ typeDamage ] + rawDmg;
-        }
-    }
-
-    // 0x00000001 - knockout
-    // 0x00000002 - knockdown
-    // 0x00000004 - crippled left leg
-    // 0x00000008 - crippled right leg
-    // 0x00000010 - crippled left arm
-    // 0x00000020 - crippled right arm
-    // 0x00000040 - blinded
-    // 0x00000080 - death
-    // 0x00000400 !- on fire - triggers the 'flamedance' animation, but not if the hit is fatal (probably a bug)
-    // 0x00000800 - bypass armor
-    // 0x00004000 !- dropped weapon (doesn't work)
-    // 0x00008000 - lose next turn
-
-    // code for dropping weapon, adapted from critical failures
-
-    bool isKo = false,
-         knockDown = false,
-         knockOut = false,
-         isDead = false,
-         loseTurn = false,
-         isBelow = false;
-
-    if( target.Mode[ MODE_INVULNERABLE ] != 0 )
-        eff = 0;
-    // Knock down
-    if( FLAG( eff, HF_KNOCKDOWN ) )
-    {
-        isKo = true;
-        knockDown = true;
-    }
-    else if( ( proccess.TypeDamage == DAMAGE_EXPLODE && proccess.Damage[ DAMAGE_EXPLODE ] > 9 ) || ( proccess.IsAttackPerk( WEAPON_PERK_SHOTGUN ) && proccess.Distantion < 8 ) )
-        isKo = true;
-
-    // Clipped LLeg
-    if( FLAG( eff, HF_CRIPPLED_LEFT_LEG ) )
-        target.DamageBase[ DAMAGE_LEFT_LEG ] = 1;
-    // Clipped RLeg
-    if( FLAG( eff, HF_CRIPPLED_RIGHT_LEG ) )
-        target.DamageBase[ DAMAGE_RIGHT_LEG ] = 1;
-    // Clipped LArm
-    if( FLAG( eff, HF_CRIPPLED_LEFT_ARM ) )
-        target.DamageBase[ DAMAGE_LEFT_ARM ] = 1;
-    // Clipped RArm
-    if( FLAG( eff, HF_CRIPPLED_RIGHT_ARM ) )
-        target.DamageBase[ DAMAGE_RIGHT_ARM ] = 1;
-    // Blinded
-    if( FLAG( eff, HF_BLINDED ) )
-        target.DamageBase[ DAMAGE_EYE ] = 1;
-
-    // Lose turn
-    if( FLAG( eff, HF_LOST_NEXT_TURN ) )
-    {
-        isKo = true;
-        loseTurn = true;
-    }
-    // Knock out
-    if( FLAG( eff, HF_KNOCKOUT ) )
-    {
-		if( !isPowerArmor || Random( 1, 100 ) >= 40 )
+	void ProccessApplyDamage( Critter& target, uint rounds, bool isCritical, bool intentionally )
+	{
+		if( !IsDamage( target ) )
+			return;
+			
+		// Check no PvP
+		if( !CheckNoPvp( target ) )
 		{
-			isKo = false;
-			knockDown = false;
-			knockOut = false;
-			loseTurn = false;
+			Attacker.Say( SAY_NETMSG, "No PvP." );
+			target.Say( SAY_NETMSG, "No PvP." );
+			return;
+		}
+
+		DropDamage();
+		if( validEngineObject( Attacker ) && intentionally && target.Id != TargetId )
+			target.EventAttacked( Attacker );
+
+		SetCombatTimeout( target );
+		if( !isCritical )
+		{
+			ProccessArmorClass( target.Stat[ ST_ARMOR_CLASS ], rounds );
+
+			if( rounds == 0 )
+			{
+				NotifyMissAc( target, Results );
+				return;
+			}
+		}
+
+		uint eff = 0;
+		uint msgEff = 0;
+		uint extraMessage = 0;
+		uint CountOfCriticalsBulets = 0;
+
+		@ArmorTarget = _CritGetItemArmor( target );
+
+		uint8 flyingDistance = validEngineObject( RealWeapon ) ? RealWeapon.Proto.Weapon_FlyingDistance : 0;
+
+		bool isStoneWall = (  target.Stat[ ST_CURRENT_ARMOR_PERK ] == ARMOR_PERK_POWERED ||
+								target.Stat[ ST_CURRENT_ARMOR_PERK ] == ARMOR_PERK_POWERED_II ||
+								target.Stat[ ST_CURRENT_ARMOR_PERK ] == ARMOR_PERK_ADVANCED_I ||
+								target.Stat[ ST_CURRENT_ARMOR_PERK ] == ARMOR_PERK_ADVANCED_II ||
+								target.Stat[ ST_CURRENT_ARMOR_PERK ] == ARMOR_PERK_SENTRY_BOTS || target.Perk[ PE_STONEWALL ] != 0 );
+		if( !isStoneWall )
+		{
+			if( target.IsNpc() && ( target.Stat[ ST_BASE_CRTYPE ] == CRTYPE_PA || target.Stat[ ST_BASE_CRTYPE ] == CRTYPE_PA_NO_HEAD || target.Stat[ ST_BASE_CRTYPE ] == CRTYPE_APA ) )
+				isStoneWall = true;
+		}
+		
+		TargetHit = target.Id == TargetId;
+
+		UnSneak( target );
+
+		if( rounds > 1 && intentionally )
+		{		// определение количества критических попаданий в очереди
+			int critChance = Attacker.Stat[ ST_CRITICAL_CHANCE ];
+			
+			if( validEngineObject( RealWeapon ) )
+				critChance += RealWeapon.WeaponBonus_CritChance + RealWeapon.Proto.Weapon_CriticalBonus;
+			int antiCritRes = target.Stat[ ST_CRITICAL_RESISTANCE ] - ( critChance > 100 ? critChance - 100 : 0 );
+			for( uint i = 0; i < rounds; i++ )
+			{
+				if( Random( 1, 100 ) <= critChance && Random( 1, 100 ) > antiCritRes )
+					CountOfCriticalsBulets++;
+			}
+			if( CountOfCriticalsBulets > 0 )
+				isCritical = true;
+		}
+		else if( isCritical )
+			CountOfCriticalsBulets = 1;
+
+		uint[] dmgMulForCriticalsHits( CountOfCriticalsBulets, 1 );    // массив множителей урона, для каждой пули в очереди
+		/*for( uint i = 0; i < CountOfCriticalsBulets; i++ )
+		{
+			dmgMulForCriticalsHits[ i ] = 1;
+		}*/
+
+		if( target.Mode[ MODE_INVULNERABLE ] != 0 )
+			isCritical = false;
+		else if( isCritical || ForceFlags != 0 )
+		{
+			if( isCritical )
+			{
+				int aim_ = Aim,
+					roll = 0;
+				if( aim_ == HIT_LOCATION_NONE )
+					aim_ = HIT_LOCATION_UNCALLED;
+				aim_--;
+				uint offset = 0;
+
+				for( uint i = 0; i < CountOfCriticalsBulets; i++ )
+				{
+					roll = Random( 0, 90 ) + ( validEngineObject( Attacker ) ? ( ( Attacker.Perk[ PE_BETTER_CRITICALS ] != 0 ? 10 : 0 ) +
+																						( ( Attacker.Trait[ TRAIT_FAST_SHOT ] != 0 && WeaponSubtype == WS_GUN ) ? -25 : 0 ) +
+																						( Attacker.Trait[ TRAIT_HEAVY_HANDED ] != 0 ? -15 : 0 ) +
+																						( IsAttackPerk( WEAPON_PERK_BETTER_CRITICALS ) ? 10 : 0 ) ) : 0 ) - target.Perk[ PE_TOUGHNESS ] * 4;
+					if( validEngineObject( Attacker ) )
+					{
+						if( validEngineObject( RealWeapon ) )
+						{
+							roll += RealWeapon.WeaponBonus_Critroll + RealWeapon.Proto.Weapon_BonusCritRoll;
+							uint use = 0;
+							int  skillWeapon = _WeaponSkill( RealWeapon.Proto, use );
+							switch( skillWeapon )
+							{
+							case SK_UNARMED:
+							case SK_THROWING:
+								roll += Attacker.BookBonus[ BB_MELEE_AND_THROWING_CRIT_ROLL ];
+								break;
+							case SK_ENERGY_WEAPONS:
+							case SK_SMALL_GUNS:
+							case SK_BIG_GUNS:
+								roll += Attacker.BookBonus[ BB_RANGED_CRIT_ROLL ];
+								break;
+							default:
+								break;
+							}
+						}
+						else if( ScoreUnarmed )
+							roll += Attacker.BookBonus[ BB_MELEE_AND_THROWING_CRIT_ROLL ];
+					}
+					if( roll <= 20 )
+						roll = 0;
+					else if( roll <= 45 )
+						roll = 1;
+					else if( roll <= 70 )
+						roll = 2;
+					else if( roll <= 90 )
+						roll = 3;
+					else if( roll <= 100 )
+						roll = 4;
+					else
+						roll = 5;
+					offset = target.Stat[ ST_BODY_TYPE ] * 9 * 6 * 7 + aim_ * 6 * 7 + roll * 7;
+					dmgMulForCriticalsHits[ i ] = CriticalTable[ offset ];
+				}
+
+	// 0x00000001 - knockout
+	// 0x00000002 - knockdown
+	// 0x00000004 - crippled left leg
+	// 0x00000008 - crippled right leg
+	// 0x00000010 - crippled left arm
+	// 0x00000020 - crippled right arm
+	// 0x00000040 - blinded
+	// 0x00000080 - death
+	// 0x00000400 !- on fire - triggers the 'flamedance' animation, but not if the hit is fatal (probably a bug) // not used now
+	// 0x00000800 - bypass armor
+	// 0x00004000 - dropped weapon (doesn't work) // haha, really?
+	// 0x00008000 - lose next turn
+	// 0x00200000 - random
+
+				eff = CriticalTable[ offset + 1 ];
+				int stat = CriticalTable[ offset + 2 ],
+					statMod = CriticalTable[ offset + 3 ];
+
+				uint cMessage = CriticalTable[ offset + 5 ],
+					 cFailureMessage = CriticalTable[ offset + 6 ];
+
+				extraMessage = cMessage;
+
+				if( stat != -1 && ( Random( 1, 10 ) > ( target.Stat[ stat ] + statMod ) ) )
+				{
+					eff |= CriticalTable[ offset + 4 ];
+					extraMessage = cFailureMessage;
+				}
+
+				if( target.Mode[ MODE_NO_KNOCK ] != 0 )
+					UNSETFLAG( eff, HF_KNOCKDOWN );
+			}
+
+			if( ForceFlags != 0 )
+			{
+				eff |= ForceFlags;
+				isCritical = true;
+			}
+
+			// in the following: in no lose limbs, then clear the effects and set msgEff
+			// otherwise set msgEff first, then check for HF_RANDOM
+			if( target.Mode[ MODE_NO_LOOSE_LIMBS ] != 0 )
+			{
+				UNSETFLAG( eff, ( HF_CRIPPLED_LEFT_LEG | HF_CRIPPLED_RIGHT_LEG | HF_CRIPPLED_LEFT_ARM | HF_CRIPPLED_RIGHT_ARM | HF_RANDOM ) );
+				msgEff = eff;
+			}
+			else
+			{
+				msgEff = eff;
+
+				if( FLAG( eff, HF_RANDOM ) )
+				{
+					UNSETFLAG( eff, HF_RANDOM );
+					switch( Random( 1, 4 ) )
+					{
+					case 1:
+						SETFLAG( eff, HF_CRIPPLED_LEFT_LEG );
+						break;
+					case 2:
+						SETFLAG( eff, HF_CRIPPLED_RIGHT_LEG );
+						break;
+					case 3:
+						SETFLAG( eff, HF_CRIPPLED_LEFT_ARM );
+						break;
+					case 4:
+						SETFLAG( eff, HF_CRIPPLED_RIGHT_ARM );
+						break;
+					default:
+						break;
+					}
+				}
+			}
+
+			if( validEngineObject( Attacker ) && Attacker.IsPlayer() )
+				ChangePlayerScore( Attacker, SCORE_SNIPER, 1 );
+		}     // end isCritical
+
+
+		if( TypeDamage == DAMAGE_EMP && target.Stat[ ST_BODY_TYPE ] == BT_ROBOT )
+		{
+			TargetDR = 0;
+			TargetDT = 0;
 		}
 		else
 		{
-			isKo = true;
-			knockOut = true;
-			loseTurn = false;       // overridden
-		}
-    }
-
-    if( target.Mode[ MODE_NO_DROP ] != 0 )
-    {
-        UNSETFLAG( eff, HF_DROPPED_WEAPON );
-        UNSETFLAG( msgEff, HF_DROPPED_WEAPON );
-    }
-
-    if( validEngineObject( proccess.Attacker ) )
-    {
-        if( proccess.IsAttackPerk( WEAPON_PERK_SHOTGUN ) && proccess.Distantion < 5 )
-            proccess.Damage = int( proccess.Damage * 1.4 );                                                                                                                                        // Усиленный урон дробовиком
-        if( proccess.Attacker.Perk[ PE_LIVING_ANATOMY ] != 0 &&  !( target.Stat[ ST_BODY_TYPE ] == BT_ALIEN || target.Stat[ ST_BODY_TYPE ] == BT_ROBOT ) )
-            proccess.Damage = proccess.Damage + Random( 10, 20 );                                                                                                                           // yes, pulse grenade works
-        if( proccess.Attacker.Perk[ PE_PYROMANIAC ] != 0 && ( proccess.TypeDamage == DAMAGE_FIRE || proccess.Damage[ DAMAGE_FIRE ] > 0 ) )
-            proccess.Damage[ DAMAGE_FIRE ] = proccess.Damage[ DAMAGE_FIRE ] + Random( 10, 30 );
-    }
-	
-	totalDmg = proccess.TotalDamage;
-    if( totalDmg > 0 )
-    {
-        if( target.Mode[ MODE_INVULNERABLE ] == 0 )
-        {
-            if( validEngineObject( proccess.Attacker ) )
-            {
-                if( validEngineObject( proccess.RealWeapon ) )
-                {
-                    int skillWeapon = _WeaponSkill( proccess.RealWeapon.Proto, proccess.RealWeapon.Mode );
-                    switch( skillWeapon )
-                    {
-                    case SK_UNARMED:
-                    case SK_THROWING:
-                        proccess.Damage = proccess.Damage + proccess.Attacker.BookBonus[ BB_MELEE_AND_THROWING_DAMAGE ];
-                        break;
-                    case SK_ENERGY_WEAPONS:
-                        proccess.Damage = proccess.Damage + int(totalDmg * 0.01 * proccess.Attacker.BookBonus[ BB_ENERGY_DAMAGE ]);
-                        break;
-                    case SK_SMALL_GUNS:
-                        proccess.Damage = proccess.Damage + int(totalDmg * 0.01 * proccess.Attacker.BookBonus[ BB_SMALL_DAMAGE ]);
-                        break;
-                    case SK_BIG_GUNS:
-                        proccess.Damage = proccess.Damage + int(totalDmg * 0.01 * proccess.Attacker.BookBonus[ BB_BIG_DAMAGE ]);
-                        break;
-
-                    default:
-                        break;
-                    }
-                }
-                else if( proccess.ScoreUnarmed )
-                    proccess.Damage = proccess.Damage + proccess.Attacker.BookBonus[ BB_MELEE_AND_THROWING_DAMAGE ];
-            }
-           
-            proccess.IsCritical = isCritical;
-
-            if( scriptTarget !is null )
-                scriptTarget.TakeDamage( proccess, 1, totalDmg );
-
-            if( target.Stat[ ST_CURRENT_HP ] < 1 )
-            {
-                isKo = true;
-                isBelow = true;
-
-                int DeadHitPoints = target.Stat[ ST_DEAD_HIT_POINTS ];
-                if( ( DeadHitPoints == __DeadHitPoints && ( target.Stat[ ST_BODY_TYPE ] != BT_MEN && target.Stat[ ST_BODY_TYPE ] != BT_WOMEN &&
-                                                            target.Stat[ ST_BODY_TYPE ] != BT_CHILDREN && target.Stat[ ST_BODY_TYPE ] != BT_SUPER_MUTANT && target.Stat[ ST_BODY_TYPE ] != BT_GHOUL && target.Stat[ ST_BODY_TYPE ] != BT_BRAHMIN && target.Stat[ ST_BODY_TYPE ] != BT_DOG ) ) ||
-                    target.Mode[ MODE_NO_KNOCK ] != 0 )
-                    DeadHitPoints = 0;
-                if( target.Stat[ ST_CURRENT_HP ] <= DeadHitPoints )
-                    isDead = true;
-            }
-        }
-        // Score
-        if( proccess.ScoreUnarmed && validEngineObject( proccess.Attacker ) && proccess.Attacker.IsPlayer() )
-            ChangePlayerScore( proccess.Attacker, SCORE_UNARMED_DAMAGE, totalDmg );
-    }
-    else
-    {
-        proccess.IsCritical = isCritical;
+			TargetDR = target.Stat[ ST_NORMAL_RESIST + TypeDamage - 1 ];
+			TargetDT = target.Stat[ ST_NORMAL_ABSORB + TypeDamage - 1 ];
 			
-        if( scriptTarget !is null )
-            scriptTarget.TakeDamage( proccess, 2, totalDmg );
-    }
-	
-    bool attackFront = true;
-    {
-        uint dir = GetDirection( proccess.Hx, proccess.Hy, target.HexX, target.HexY );
-        if( ( dir == target.Dir || ( ( dir + 1 ) % 6 ) == target.Dir || ( ( dir + 5 ) % 6 ) == target.Dir ) )
-            attackFront = false;
-    }
+			if( IsAttackPerk( WEAPON_PERK_PENETRATE ) )
+				TargetDR -= 15;
+			if( FLAG( eff, HF_BYPASS_ARMOR ) && TypeDamage != DAMAGE_EMP )
+			{
+				TargetDT /= 5;
+				TargetDR /= 2;
+				TargetDR -= ( validEngineObject( Attacker ) ? ( Attacker.Trait[ TRAIT_FINESSE ] != 0 ? 30 : 0 ) : 0 );
+			}
+			if( WeaponIsGrenade() && validEngineObject( Attacker ) && Attacker.Perk[ PE_ARMOR_BUSTER ] != 0 )
+				TargetDR -= 25;
 
-    if( validEngineObject( proccess.ArmorTarget ) && target.IsPlayer() )
-        DeteriorateItem( target, proccess.ArmorTarget, int( ( ( ( ( 100 - ( target.Stat[ ST_NORMAL_RESIST + proccess.TypeDamage - 1 ] ) ) * rounds + ( totalDmg < 10 ? 10 : totalDmg ) ) / 3 ) * ( 65 + proccess.ArmorTarget.Proto.BrokenCoefficient ) ) * 0.01 )  );
+			TargetDR += ( validEngineObject( Attacker ) ? ( Attacker.Trait[ TRAIT_FINESSE ] != 0 ? 30 : 0 ) : 0 );
+			if( IsAttackPerk( WEAPON_PERK_FLAMEBOY ) )
+				TargetDR -= 10;
+			// Log("targetDR1="+targetDR);
+			TargetDR += DRMod;       // always
+			// Log("targetDR2="+targetDR);
+			TargetDR = CLAMP( TargetDR, 0, 100 );
+			if( TDMod != 0 )
+				TargetDT /= TDMod;
+		}
 
-    if( proccess.IsAttackPerk( WEAPON_PERK_ELECTRIC_SHOCK ) )
-        target.StatBase[ ST_CURRENT_AP ] -= Random( 1, 2 ) * 100;
+		DmgMin += BonusDmg;
+		DmgMax += BonusDmg;
+		int rawDmg = 0,
+			typeDamage = TypeDamage,
+			totalDmg = 0;
 
-    // Dead
-    if( isDead )
-    {
-        bool  burst = proccess.IsBurst;
-        uint8 anim2Dead = 0;
+		Mk2::CombatTargetPacket@ scriptTarget = cast<Mk2::CombatTargetPacket>(@target.ScriptDescriptor);		
+		{
+			// некритические попадания в очереди
+			bool argIsCrit = false;
+			uint damageMulCrit = 1;
 
-        if( target.IsKnockout() && proccess.TypeDamage != DAMAGE_EXPLODE )
-        {
-            if( target.Anim2Knockout == ANIM2_IDLE_PRONE_FRONT )
-                anim2Dead = ANIM2_DEAD_PRONE_FRONT;
-            else
-                anim2Dead = ANIM2_DEAD_PRONE_BACK;
-        }
-        else
-        {
-            anim2Dead = attackFront ? ANIM2_DEAD_FRONT : ANIM2_DEAD_BACK;
+			for( uint i = 0; i < ( rounds - CountOfCriticalsBulets ); i++ )
+			{
+				typeDamage = TypeDamage;
 
-            switch( proccess.TypeDamage )
-            {
-            case DAMAGE_UNCALLED:
-                break;
-            case DAMAGE_NORMAL:
-                if( burst )
-                {
-                    if( isCritical || proccess.BloodyMess )
-                        anim2Dead = ANIM2_DEAD_BLOODY_BURST;
-                    else
-                        anim2Dead = ANIM2_DEAD_BURST;
-                }
-                else if( isCritical || proccess.BloodyMess )
-                    anim2Dead = ANIM2_DEAD_BLOODY_SINGLE;
-                else
-                {
-                    if( isKo || ( flyingDistance != 0 && !isPowerArmor ) )
-                    {
-                        if( ( isBelow || knockOut || ( ( flyingDistance != 0 || knockDown || proccess.IsAttackPerk( WEAPON_PERK_SHOTGUN ) )  && !isPowerArmor ) ) && !target.IsKnockout() && target.Mode[ MODE_NO_KNOCK ] == 0 )
-                        {
-                            int knockDist = totalDmg;
-                            if( ( ( proccess.WeaponPid >= PID_CLUB && proccess.WeaponPid <= PID_SUPER_SLEDGE ) || ( proccess.IsAttackPerk( WEAPON_PERK_SHOTGUN ) && proccess.Distantion < 8 ) || flyingDistance != 0 || proccess.TypeDamage == DAMAGE_EXPLODE ) && target.IsCanWalk() )
-                            {
-                                if( proccess.IsAttackPerk( WEAPON_PERK_KNOCKBACK ) )
-                                    knockDist /= 5;
-                                else if( flyingDistance != 0 )
-                                {
-                                    knockDist /= 3;
-                                    if( knockDist > int( flyingDistance ) )
-                                        knockDist = flyingDistance;
-                                }
-                                else if( proccess.IsAttackPerk( WEAPON_PERK_SHOTGUN ) )
-                                {
-                                    knockDist /= 6;
-                                    if( knockDist > 7 )
-                                        knockDist = 7;
-                                }
-                                else
-                                    knockDist /= 10;
-                                knockDist--;
-                                if( knockDist > 10 && flyingDistance == 0 )
-                                    knockDist = 10;
-                                uint16 knockHx = proccess.Hx,
-                                       knockHy = proccess.Hy;
-                                if( knockDist > 0 )
-                                {
-                                    if( knockHx == target.HexX && knockHy == target.HexY && validEngineObject( proccess.Attacker ) )
-                                    {
-                                        knockHx = proccess.Attacker.HexX;
-                                        knockHy = proccess.Attacker.HexY;
-                                    }
-                                    proccess.Map.GetHexCoordWall( target.HexX, target.HexY, knockHx, knockHy, 180.0f, knockDist );
-                                    target.ToKnockout( KNOCKOUT_ANIM2_DEFAULT( attackFront ), 0, knockHx, knockHy );
-                                }
-                                else
-                                    target.ToKnockout( KNOCKOUT_ANIM2_DEFAULT( attackFront ), 0, target.HexX, target.HexY );
-                            }
-                            else
-                                target.ToKnockout( KNOCKOUT_ANIM2_DEFAULT( attackFront ), 0, target.HexX, target.HexY );
-                        }
-                    }
-                }
-                break;
-            case DAMAGE_LASER:
-                anim2Dead = ANIM2_DEAD_LASER;
-                break;
-            case DAMAGE_FIRE:
-                if( proccess.BloodyMess || Random( 0, 1 ) == 0 )
-                    anim2Dead = ANIM2_DEAD_BURN_RUN;
-                else
-                    anim2Dead = ANIM2_DEAD_BURN;
-                break;
-            case DAMAGE_PLASMA:
-                anim2Dead = ANIM2_DEAD_FUSED;
-                break;
-            case DAMAGE_ELECTR:
-                if( Random( 0, 1 ) == 0 )
-                    anim2Dead = ANIM2_DEAD_PULSE;
-                else
-                    anim2Dead = ANIM2_DEAD_PULSE_DUST;
-                break;
-            case DAMAGE_EXPLODE:
-                anim2Dead = ANIM2_DEAD_EXPLODE;
-                break;
-            default:
-                break;
-            }
-        }
+				{
+					if( !scriptTarget.FormatDamage( this, rawDmg, typeDamage, argIsCrit, damageMulCrit, i ) )
+						break;
+				}
 
-        if( target.IsPlayer() )
-            ChangePlayerScore( target, SCORE_ZOMBY, 1 );
+				if( rawDmg > 0 )
+				{
+					Damage[ typeDamage ] = Damage[ typeDamage ] + rawDmg;
+					// totalDmg+=rawDmg;
+				}
+			}
 
-        if( validEngineObject( proccess.Attacker ) )
-        {
-            if( proccess.Attacker.IsPlayer() )
-            {
-                ChangePlayerScore( proccess.Attacker, SCORE_KILLER, 1 );
-                if( target.IsPlayer() )
-                    ChangePlayerScore( proccess.Attacker, SCORE_MANIAC, 1 );
-                else if( target.Id == proccess.TargetId )
-                    target.AddEnemyInStack( proccess.Attacker.Id );
-            }
-            else
-                proccess.Attacker.EraseEnemyFromStack( target.Id );
+			uint bulleti = rounds - CountOfCriticalsBulets;
+			// критические попадания в очереди
+			argIsCrit = true;
+			for( uint i = 0; i < CountOfCriticalsBulets; i++ )
+			{
+				typeDamage = TypeDamage;
 
-            // if(target.ModeBase[MODE_ENCAUNTER_MOB]!=1) attacker.StatBase[ST_EXPERIENCE]+=target.Stat[ST_KILL_EXPERIENCE];
-            if( target.IsPlayer() )
-                proccess.Attacker.KillBase[ KILL_PLAYERS ]++;
-            proccess.Attacker.KillBase[ KILL_BEGIN + target.Stat[ ST_BODY_TYPE ] ]++;
-        }
-        target.ToDead( anim2Dead, proccess.Attacker );
-    }
-    else if( isKo || ( flyingDistance != 0 && !isPowerArmor ) )
-    {
-        int maxAp = target.Stat[ ST_ACTION_POINTS ],
-            currentAp = target.Stat[ ST_CURRENT_AP ],
-            targetAp = currentAp;
+				{
+					if( !scriptTarget.FormatDamage( this, rawDmg, typeDamage, argIsCrit, dmgMulForCriticalsHits[ i ], bulleti++ ) )
+						break;
+				}
 
-        if( loseTurn )
-        {
-            targetAp = -target.Perk[ PE_QUICK_RECOVERY ] != 0 ? int( maxAp * 0.5 ) : maxAp;
-            target.StatBase[ ST_MOVE_AP ] = 0;
-        }
-        if( knockOut )
-            targetAp = -Random( maxAp, 2 * maxAp - target.Perk[ PE_QUICK_RECOVERY ] != 0 ? int( maxAp * 0.5 ) : 0 );
-        if( knockDown && !( target.IsKnockout() && proccess.Map.IsTurnBased() ) )
-            targetAp -= ( target.Perk[ PE_QUICK_RECOVERY ] != 0 ? 1 : 3 );
-        if( ( isBelow || knockOut || ( ( flyingDistance != 0 || knockDown || proccess.IsAttackPerk( WEAPON_PERK_SHOTGUN ) || proccess.TypeDamage == DAMAGE_EXPLODE )  && !isPowerArmor ) ) && !target.IsKnockout() && target.Mode[ MODE_NO_KNOCK ] == 0 )
-        {
-            int knockDist = totalDmg;
-            if( ( ( proccess.WeaponPid >= PID_CLUB && proccess.WeaponPid <= PID_SUPER_SLEDGE ) || ( proccess.IsAttackPerk( WEAPON_PERK_SHOTGUN ) && proccess.Distantion < 8 ) || flyingDistance != 0 || proccess.TypeDamage == DAMAGE_EXPLODE ) && target.IsCanWalk() )
-            {
-                if( proccess.IsAttackPerk( WEAPON_PERK_KNOCKBACK ) )
-                    knockDist /= 5;
-                else if( flyingDistance != 0 )
-                {
-                    knockDist /= 3;
-                    if( knockDist > int( flyingDistance ) )
-                        knockDist = flyingDistance;
-                }
-                else if( proccess.IsAttackPerk( WEAPON_PERK_SHOTGUN ) )
-                {
-                    knockDist /= 6;
-                    if( knockDist > 7 )
-                        knockDist = 7;
-                }
-                else
-                    knockDist /= 10;
-                knockDist--;
-                if( knockDist > 10 && flyingDistance == 0 )
-                    knockDist = 10;
-                uint16 knockHx = proccess.Hx,
-                       knockHy = proccess.Hy;
-                if( knockDist > 0 )
-                {
-                    if( knockHx == target.HexX && knockHy == target.HexY && validEngineObject( proccess.Attacker ) )
-                    {
-                        knockHx = proccess.Attacker.HexX;
-                        knockHy = proccess.Attacker.HexY;
-                    }
-                    proccess.Map.GetHexCoordWall( target.HexX, target.HexY, knockHx, knockHy, 180.0f, knockDist );
-                    target.ToKnockout( KNOCKOUT_ANIM2_DEFAULT( attackFront ), 0, knockHx, knockHy );
-                }
-                else
-                    target.ToKnockout( KNOCKOUT_ANIM2_DEFAULT( attackFront ), 0, target.HexX, target.HexY );
-            }
-            else
-                target.ToKnockout( KNOCKOUT_ANIM2_DEFAULT( attackFront ), 0, target.HexX, target.HexY );
-        }
-        if( targetAp < currentAp )
-            target.StatBase[ ST_CURRENT_AP ] = 100 * targetAp;
-    }
-    
-    // TabaK. Добавил проверку на смерть. Дюп пофикшен???
-    if( FLAG( eff, HF_DROPPED_WEAPON ) || ( ( target.Stat[ ST_CURRENT_HP ] < 1 ) && target.IsPlayer() && target.Mode[ MODE_NO_DROP ] == 0 && !isDead ) )
-        proccess.DropWeapon( target );
+				if( rawDmg > 0 )
+					Damage[ typeDamage ] = Damage[ typeDamage ] + rawDmg;
+			}
+		}
 
-    // Damage
-    else if( !target.IsKnockout() )
-    {
-        // Animate hit
-        if( proccess.ShowHitAnimForce )
-            target.Action( ACTION_DAMAGE_FORCE, attackFront ? 0 : 1, null );
-        else
-            target.Action( ACTION_DAMAGE, attackFront ? 0 : 1, null );
+		// 0x00000001 - knockout
+		// 0x00000002 - knockdown
+		// 0x00000004 - crippled left leg
+		// 0x00000008 - crippled right leg
+		// 0x00000010 - crippled left arm
+		// 0x00000020 - crippled right arm
+		// 0x00000040 - blinded
+		// 0x00000080 - death
+		// 0x00000400 !- on fire - triggers the 'flamedance' animation, but not if the hit is fatal (probably a bug)
+		// 0x00000800 - bypass armor
+		// 0x00004000 !- dropped weapon (doesn't work)
+		// 0x00008000 - lose next turn
 
-        // Npc hit message
-        if( proccess.CombatMessage && proccess.TypeDamage != DAMAGE_UNCALLED && target.IsNpc() )
-        {
-            switch( proccess.Aim )
-            {
-            case HIT_LOCATION_NONE:
-            case HIT_LOCATION_UNCALLED:
-            case HIT_LOCATION_TORSO:
-                AI_TrySayCombatText( target, COMBAT_TEXT_HIT_TORSO );
-                break;
-            case HIT_LOCATION_EYES:
-                AI_TrySayCombatText( target, COMBAT_TEXT_HIT_EYES );
-                break;
-            case HIT_LOCATION_HEAD:
-                AI_TrySayCombatText( target, COMBAT_TEXT_HIT_HEAD );
-                break;
-            case HIT_LOCATION_LEFT_ARM:
-                AI_TrySayCombatText( target, COMBAT_TEXT_HIT_LEFT_ARM );
-                break;
-            case HIT_LOCATION_RIGHT_ARM:
-                AI_TrySayCombatText( target, COMBAT_TEXT_HIT_RIGHT_ARM );
-                break;
-            case HIT_LOCATION_GROIN:
-                AI_TrySayCombatText( target, COMBAT_TEXT_HIT_GROIN );
-                break;
-            case HIT_LOCATION_RIGHT_LEG:
-                AI_TrySayCombatText( target, COMBAT_TEXT_HIT_RIGHT_LEG );
-                break;
-            case HIT_LOCATION_LEFT_LEG:
-                AI_TrySayCombatText( target, COMBAT_TEXT_HIT_LEFT_LEG );
-                break;
-            default:
-                break;
-            }
-        }
-    }
+		// code for dropping weapon, adapted from critical failures
 
-    bool isAimed = ( proccess.Aim != HIT_LOCATION_NONE ) && ( proccess.Aim != HIT_LOCATION_TORSO ) && ( proccess.Aim != HIT_LOCATION_UNCALLED );
+		bool isKo = false,
+			 knockDown = false,
+			 knockOut = false,
+			 isDead = false,
+			 loseTurn = false,
+			 isBelow = false;
 
-    uint mainMsg = CMSG_HIT,
-         length = 3;
+		if( target.Mode[ MODE_INVULNERABLE ] != 0 )
+			eff = 0;
+		// Knock down
+		if( FLAG( eff, HF_KNOCKDOWN ) )
+		{
+			isKo = true;
+			knockDown = true;
+		}
+		else if( ( TypeDamage == DAMAGE_EXPLODE && Damage[ DAMAGE_EXPLODE ] > 9 ) || ( IsAttackPerk( WEAPON_PERK_SHOTGUN ) && Distantion < 8 ) )
+			isKo = true;
 
-    if( isCritical )
-    {
-        mainMsg += 2;
-        length += 2;
-    }
-    if( isDead )
-    {
-        mainMsg += 4;
-        if( isCritical )
-            length -= 1;
-    }
-    if( isAimed )
-    {
-        mainMsg += 1;
-        length += 1;
-    }
+		// Clipped LLeg
+		if( FLAG( eff, HF_CRIPPLED_LEFT_LEG ) )
+			target.DamageBase[ DAMAGE_LEFT_LEG ] = 1;
+		// Clipped RLeg
+		if( FLAG( eff, HF_CRIPPLED_RIGHT_LEG ) )
+			target.DamageBase[ DAMAGE_RIGHT_LEG ] = 1;
+		// Clipped LArm
+		if( FLAG( eff, HF_CRIPPLED_LEFT_ARM ) )
+			target.DamageBase[ DAMAGE_LEFT_ARM ] = 1;
+		// Clipped RArm
+		if( FLAG( eff, HF_CRIPPLED_RIGHT_ARM ) )
+			target.DamageBase[ DAMAGE_RIGHT_ARM ] = 1;
+		// Blinded
+		if( FLAG( eff, HF_BLINDED ) )
+			target.DamageBase[ DAMAGE_EYE ] = 1;
 
-    uint[] sendEff( length );
-    sendEff[ 0 ] = mainMsg;
-    sendEff[ 1 ] = target.Id;
-    uint now = 2;
+		// Lose turn
+		if( FLAG( eff, HF_LOST_NEXT_TURN ) )
+		{
+			isKo = true;
+			loseTurn = true;
+		}
+		// Knock out
+		if( FLAG( eff, HF_KNOCKOUT ) )
+		{
+			if( !isStoneWall || Random( 1, 100 ) >= 40 )
+			{
+				isKo = false;
+				knockDown = false;
+				knockOut = false;
+				loseTurn = false;
+			}
+			else
+			{
+				isKo = true;
+				knockOut = true;
+				loseTurn = false;       // overridden
+			}
+		}
 
-    if( isAimed )
-    {
-        sendEff[ 2 ] = proccess.Aim;
-        now++;
-    }
+		if( target.Mode[ MODE_NO_DROP ] != 0 )
+		{
+			UNSETFLAG( eff, HF_DROPPED_WEAPON );
+			UNSETFLAG( msgEff, HF_DROPPED_WEAPON );
+		}
 
-    sendEff[ now ] = totalDmg;
-    now++;
+		if( validEngineObject( Attacker ) )
+		{
+			if( IsAttackPerk( WEAPON_PERK_SHOTGUN ) && Distantion < 5 )
+				Damage = int( Damage * 1.4 );                                                                                                                                        // Усиленный урон дробовиком
+			if( Attacker.Perk[ PE_LIVING_ANATOMY ] != 0 &&  !( target.Stat[ ST_BODY_TYPE ] == BT_ALIEN || target.Stat[ ST_BODY_TYPE ] == BT_ROBOT ) )
+				Damage = Damage + Random( 10, 20 );                                                                                                                           // yes, pulse grenade works
+			if( Attacker.Perk[ PE_PYROMANIAC ] != 0 && ( TypeDamage == DAMAGE_FIRE || Damage[ DAMAGE_FIRE ] > 0 ) )
+				Damage[ DAMAGE_FIRE ] = Damage[ DAMAGE_FIRE ] + Random( 10, 30 );
+		}
+		
+		totalDmg = TotalDamage;
+		if( totalDmg > 0 )
+		{
+			if( target.Mode[ MODE_INVULNERABLE ] == 0 )
+			{
+				if( validEngineObject( Attacker ) )
+				{
+					if( validEngineObject( RealWeapon ) )
+					{
+						int skillWeapon = _WeaponSkill( RealWeapon.Proto, RealWeapon.Mode );
+						switch( skillWeapon )
+						{
+						case SK_UNARMED:
+						case SK_THROWING:
+							Damage = Damage + Attacker.BookBonus[ BB_MELEE_AND_THROWING_DAMAGE ];
+							break;
+						case SK_ENERGY_WEAPONS:
+							Damage = Damage + int(totalDmg * 0.01 * Attacker.BookBonus[ BB_ENERGY_DAMAGE ]);
+							break;
+						case SK_SMALL_GUNS:
+							Damage = Damage + int(totalDmg * 0.01 * Attacker.BookBonus[ BB_SMALL_DAMAGE ]);
+							break;
+						case SK_BIG_GUNS:
+							Damage = Damage + int(totalDmg * 0.01 * Attacker.BookBonus[ BB_BIG_DAMAGE ]);
+							break;
 
-    if( isCritical )
-    {
-        if( !isDead )
-        {
-            sendEff[ now ] = msgEff;
-            now++;
-        }
+						default:
+							break;
+						}
+					}
+					else if( ScoreUnarmed )
+						Damage = Damage + Attacker.BookBonus[ BB_MELEE_AND_THROWING_DAMAGE ];
+				}
+			   
+				IsCritical = isCritical;
 
-        sendEff[ now ] = extraMessage;
-    }
+				if( scriptTarget !is null )
+					scriptTarget.TakeDamage( this, 1, totalDmg );
 
-    Critter@[] crits;
+				if( target.Stat[ ST_CURRENT_HP ] < 1 )
+				{
+					isKo = true;
+					isBelow = true;
 
-    for( uint i = 0, iMax = target.GetCritters( true, FIND_ALL | FIND_ONLY_PLAYERS, crits ); i < iMax; i++ )
-        if( crits[ i ].Id != target.Id )
-            AddEff( crits[ i ], sendEff, results );
+					int DeadHitPoints = target.Stat[ ST_DEAD_HIT_POINTS ];
+					if( ( DeadHitPoints == __DeadHitPoints && ( target.Stat[ ST_BODY_TYPE ] != BT_MEN && target.Stat[ ST_BODY_TYPE ] != BT_WOMEN &&
+																target.Stat[ ST_BODY_TYPE ] != BT_CHILDREN && target.Stat[ ST_BODY_TYPE ] != BT_SUPER_MUTANT && target.Stat[ ST_BODY_TYPE ] != BT_GHOUL && target.Stat[ ST_BODY_TYPE ] != BT_BRAHMIN && target.Stat[ ST_BODY_TYPE ] != BT_DOG ) ) ||
+						target.Mode[ MODE_NO_KNOCK ] != 0 )
+						DeadHitPoints = 0;
+					if( target.Stat[ ST_CURRENT_HP ] <= DeadHitPoints )
+						isDead = true;
+				}
+			}
+			// Score
+			if( ScoreUnarmed && validEngineObject( Attacker ) && Attacker.IsPlayer() )
+				ChangePlayerScore( Attacker, SCORE_UNARMED_DAMAGE, totalDmg );
+		}
+		else
+		{
+			IsCritical = isCritical;
+				
+			if( scriptTarget !is null )
+				scriptTarget.TakeDamage( this, 2, totalDmg );
+		}
+		
+		bool attackFront = true;
+		{
+			uint dir = GetDirection( Hx, Hy, target.HexX, target.HexY );
+			if( ( dir == target.Dir || ( ( dir + 1 ) % 6 ) == target.Dir || ( ( dir + 5 ) % 6 ) == target.Dir ) )
+				attackFront = false;
+		}
 
-    if( isCritical )
-        sendEff[ now ] = extraMessage + 1500;            // men_player - men_npc
+		if( validEngineObject( ArmorTarget ) && target.IsPlayer() )
+			DeteriorateItem( target, ArmorTarget, int( ( ( ( ( 100 - ( target.Stat[ ST_NORMAL_RESIST + TypeDamage - 1 ] ) ) * rounds + ( totalDmg < 10 ? 10 : totalDmg ) ) / 3 ) * ( 65 + ArmorTarget.Proto.BrokenCoefficient ) ) * 0.01 )  );
 
-    AddEff( target, sendEff, results );
+		if( IsAttackPerk( WEAPON_PERK_ELECTRIC_SHOCK ) )
+			target.StatBase[ ST_CURRENT_AP ] -= Random( 1, 2 ) * 100;
 
-    // poisoning and irradiating:
-    if( validEngineObject( proccess.Attacker ) )
-    {
-        int poison = ( proccess.IsAttackPerk( WEAPON_PERK_TOXIC ) ) ? 50 : proccess.Attacker.Stat[ ST_TOXIC ],
-            radiation = proccess.Attacker.Stat[ ST_RADIOACTIVE ];
+		// Dead
+		if( isDead )
+		{
+			bool  burst = IsBurst;
+			uint8 anim2Dead = 0;
 
-        if( proccess.AmmoPid == PID_50_CAL || proccess.AmmoPid == PID_HN_AP_NEEDLER_CARTRIDGE )
-            radiation += rounds * 50;
+			if( target.IsKnockout() && TypeDamage != DAMAGE_EXPLODE )
+			{
+				if( target.Anim2Knockout == ANIM2_IDLE_PRONE_FRONT )
+					anim2Dead = ANIM2_DEAD_PRONE_FRONT;
+				else
+					anim2Dead = ANIM2_DEAD_PRONE_BACK;
+			}
+			else
+			{
+				anim2Dead = attackFront ? ANIM2_DEAD_FRONT : ANIM2_DEAD_BACK;
 
-        if( poison != 0 || radiation != 0 )
-        {
-            if( Random( 2, 16 ) > target.Stat[ ST_LUCK ] )
-            {
-                if( poison > 0 )
-                    AffectPoison( target, Random( poison / 3, poison ) );
-                if( radiation > 0 )
-                    AffectRadiation( target, Random( radiation / 3, radiation ) );
-            }
-        }
+				switch( TypeDamage )
+				{
+				case DAMAGE_UNCALLED:
+					break;
+				case DAMAGE_NORMAL:
+					if( burst )
+					{
+						if( isCritical || BloodyMess )
+							anim2Dead = ANIM2_DEAD_BLOODY_BURST;
+						else
+							anim2Dead = ANIM2_DEAD_BURST;
+					}
+					else if( isCritical || BloodyMess )
+						anim2Dead = ANIM2_DEAD_BLOODY_SINGLE;
+					else
+					{
+						if( isKo || ( flyingDistance != 0 && !isStoneWall ) )
+						{
+							if( ( isBelow || knockOut || ( ( flyingDistance != 0 || knockDown || IsAttackPerk( WEAPON_PERK_SHOTGUN ) )  && !isStoneWall ) ) && !target.IsKnockout() && target.Mode[ MODE_NO_KNOCK ] == 0 )
+							{
+								int knockDist = totalDmg;
+								if( ( ( WeaponPid >= PID_CLUB && WeaponPid <= PID_SUPER_SLEDGE ) || ( IsAttackPerk( WEAPON_PERK_SHOTGUN ) && Distantion < 8 ) || flyingDistance != 0 || TypeDamage == DAMAGE_EXPLODE ) && target.IsCanWalk() )
+								{
+									if( IsAttackPerk( WEAPON_PERK_KNOCKBACK ) )
+										knockDist /= 5;
+									else if( flyingDistance != 0 )
+									{
+										knockDist /= 3;
+										if( knockDist > int( flyingDistance ) )
+											knockDist = flyingDistance;
+									}
+									else if( IsAttackPerk( WEAPON_PERK_SHOTGUN ) )
+									{
+										knockDist /= 6;
+										if( knockDist > 7 )
+											knockDist = 7;
+									}
+									else
+										knockDist /= 10;
+									knockDist--;
+									if( knockDist > 10 && flyingDistance == 0 )
+										knockDist = 10;
+									uint16 knockHx = Hx,
+										   knockHy = Hy;
+									if( knockDist > 0 )
+									{
+										if( knockHx == target.HexX && knockHy == target.HexY && validEngineObject( Attacker ) )
+										{
+											knockHx = Attacker.HexX;
+											knockHy = Attacker.HexY;
+										}
+										Map.GetHexCoordWall( target.HexX, target.HexY, knockHx, knockHy, 180.0f, knockDist );
+										target.ToKnockout( KNOCKOUT_ANIM2_DEFAULT( attackFront ), 0, knockHx, knockHy );
+									}
+									else
+										target.ToKnockout( KNOCKOUT_ANIM2_DEFAULT( attackFront ), 0, target.HexX, target.HexY );
+								}
+								else
+									target.ToKnockout( KNOCKOUT_ANIM2_DEFAULT( attackFront ), 0, target.HexX, target.HexY );
+							}
+						}
+					}
+					break;
+				case DAMAGE_LASER:
+					anim2Dead = ANIM2_DEAD_LASER;
+					break;
+				case DAMAGE_FIRE:
+					if( BloodyMess || Random( 0, 1 ) == 0 )
+						anim2Dead = ANIM2_DEAD_BURN_RUN;
+					else
+						anim2Dead = ANIM2_DEAD_BURN;
+					break;
+				case DAMAGE_PLASMA:
+					anim2Dead = ANIM2_DEAD_FUSED;
+					break;
+				case DAMAGE_ELECTR:
+					if( Random( 0, 1 ) == 0 )
+						anim2Dead = ANIM2_DEAD_PULSE;
+					else
+						anim2Dead = ANIM2_DEAD_PULSE_DUST;
+					break;
+				case DAMAGE_EXPLODE:
+					anim2Dead = ANIM2_DEAD_EXPLODE;
+					break;
+				default:
+					break;
+				}
+			}
 
-        if( proccess.Attacker.Stat[ ST_BODY_TYPE ] == BT_CENTAUR && Random( 2, 16 ) > target.Stat[ ST_LUCK ] )
-            AffectRadiation( target, Random( 10, 20 ) );
-    }
+			if( target.IsPlayer() )
+				ChangePlayerScore( target, SCORE_ZOMBY, 1 );
 
-    if( proccess.ArmorTarget !is null && target.Stat[ ST_CURRENT_ARMOR_PERK ] == ARMOR_PERK_TESLA && ( proccess.TypeDamage == DAMAGE_ELECTR || proccess.TypeDamage == DAMAGE_LASER || proccess.TypeDamage == DAMAGE_PLASMA ) )
-    {
-        int cunsumedDmg = proccess.DmgMax - totalDmg;
-        if( cunsumedDmg > 0 )
-            proccess.ArmorTarget.Charge = CLAMP( proccess.ArmorTarget.Charge + cunsumedDmg, 0, 100 );
-    }
+			if( validEngineObject( Attacker ) )
+			{
+				if( Attacker.IsPlayer() )
+				{
+					ChangePlayerScore( Attacker, SCORE_KILLER, 1 );
+					if( target.IsPlayer() )
+						ChangePlayerScore( Attacker, SCORE_MANIAC, 1 );
+					else if( target.Id == TargetId )
+						target.AddEnemyInStack( Attacker.Id );
+				}
+				else
+					Attacker.EraseEnemyFromStack( target.Id );
+
+				// if(target.ModeBase[MODE_ENCAUNTER_MOB]!=1) attacker.StatBase[ST_EXPERIENCE]+=target.Stat[ST_KILL_EXPERIENCE];
+				if( target.IsPlayer() )
+					Attacker.KillBase[ KILL_PLAYERS ]++;
+				Attacker.KillBase[ KILL_BEGIN + target.Stat[ ST_BODY_TYPE ] ]++;
+			}
+			target.ToDead( anim2Dead, Attacker );
+		}
+		else if( isKo || ( flyingDistance != 0 && !isStoneWall ) )
+		{
+			int maxAp = target.Stat[ ST_ACTION_POINTS ],
+				currentAp = target.Stat[ ST_CURRENT_AP ],
+				targetAp = currentAp;
+
+			if( loseTurn )
+			{
+				targetAp = -target.Perk[ PE_QUICK_RECOVERY ] != 0 ? int( maxAp * 0.5 ) : maxAp;
+				target.StatBase[ ST_MOVE_AP ] = 0;
+			}
+			if( knockOut )
+				targetAp = -Random( maxAp, 2 * maxAp - target.Perk[ PE_QUICK_RECOVERY ] != 0 ? int( maxAp * 0.5 ) : 0 );
+			if( knockDown && !( target.IsKnockout() && Map.IsTurnBased() ) )
+				targetAp -= ( target.Perk[ PE_QUICK_RECOVERY ] != 0 ? 1 : 3 );
+			if( ( isBelow || knockOut || ( ( flyingDistance != 0 || knockDown || IsAttackPerk( WEAPON_PERK_SHOTGUN ) || TypeDamage == DAMAGE_EXPLODE )  && !isStoneWall ) ) && !target.IsKnockout() && target.Mode[ MODE_NO_KNOCK ] == 0 )
+			{
+				int knockDist = totalDmg;
+				if( ( ( WeaponPid >= PID_CLUB && WeaponPid <= PID_SUPER_SLEDGE ) || ( IsAttackPerk( WEAPON_PERK_SHOTGUN ) && Distantion < 8 ) || flyingDistance != 0 || TypeDamage == DAMAGE_EXPLODE ) && target.IsCanWalk() )
+				{
+					if( IsAttackPerk( WEAPON_PERK_KNOCKBACK ) )
+						knockDist /= 5;
+					else if( flyingDistance != 0 )
+					{
+						knockDist /= 3;
+						if( knockDist > int( flyingDistance ) )
+							knockDist = flyingDistance;
+					}
+					else if( IsAttackPerk( WEAPON_PERK_SHOTGUN ) )
+					{
+						knockDist /= 6;
+						if( knockDist > 7 )
+							knockDist = 7;
+					}
+					else
+						knockDist /= 10;
+					knockDist--;
+					if( knockDist > 10 && flyingDistance == 0 )
+						knockDist = 10;
+					uint16 knockHx = Hx,
+						   knockHy = Hy;
+					if( knockDist > 0 )
+					{
+						if( knockHx == target.HexX && knockHy == target.HexY && validEngineObject( Attacker ) )
+						{
+							knockHx = Attacker.HexX;
+							knockHy = Attacker.HexY;
+						}
+						Map.GetHexCoordWall( target.HexX, target.HexY, knockHx, knockHy, 180.0f, knockDist );
+						target.ToKnockout( KNOCKOUT_ANIM2_DEFAULT( attackFront ), 0, knockHx, knockHy );
+					}
+					else
+						target.ToKnockout( KNOCKOUT_ANIM2_DEFAULT( attackFront ), 0, target.HexX, target.HexY );
+				}
+				else
+					target.ToKnockout( KNOCKOUT_ANIM2_DEFAULT( attackFront ), 0, target.HexX, target.HexY );
+			}
+			if( targetAp < currentAp )
+				target.StatBase[ ST_CURRENT_AP ] = 100 * targetAp;
+		}
+		
+		// TabaK. Добавил проверку на смерть. Дюп пофикшен???
+		if( FLAG( eff, HF_DROPPED_WEAPON ) || ( ( target.Stat[ ST_CURRENT_HP ] < 1 ) && target.IsPlayer() && target.Mode[ MODE_NO_DROP ] == 0 && !isDead ) )
+			DropWeapon( target );
+
+		// Damage
+		else if( !target.IsKnockout() )
+		{
+			// Animate hit
+			if( ShowHitAnimForce )
+				target.Action( ACTION_DAMAGE_FORCE, attackFront ? 0 : 1, null );
+			else
+				target.Action( ACTION_DAMAGE, attackFront ? 0 : 1, null );
+
+			// Npc hit message
+			if( CombatMessage && TypeDamage != DAMAGE_UNCALLED && target.IsNpc() )
+			{
+				switch( Aim )
+				{
+				case HIT_LOCATION_NONE:
+				case HIT_LOCATION_UNCALLED:
+				case HIT_LOCATION_TORSO:
+					AI_TrySayCombatText( target, COMBAT_TEXT_HIT_TORSO );
+					break;
+				case HIT_LOCATION_EYES:
+					AI_TrySayCombatText( target, COMBAT_TEXT_HIT_EYES );
+					break;
+				case HIT_LOCATION_HEAD:
+					AI_TrySayCombatText( target, COMBAT_TEXT_HIT_HEAD );
+					break;
+				case HIT_LOCATION_LEFT_ARM:
+					AI_TrySayCombatText( target, COMBAT_TEXT_HIT_LEFT_ARM );
+					break;
+				case HIT_LOCATION_RIGHT_ARM:
+					AI_TrySayCombatText( target, COMBAT_TEXT_HIT_RIGHT_ARM );
+					break;
+				case HIT_LOCATION_GROIN:
+					AI_TrySayCombatText( target, COMBAT_TEXT_HIT_GROIN );
+					break;
+				case HIT_LOCATION_RIGHT_LEG:
+					AI_TrySayCombatText( target, COMBAT_TEXT_HIT_RIGHT_LEG );
+					break;
+				case HIT_LOCATION_LEFT_LEG:
+					AI_TrySayCombatText( target, COMBAT_TEXT_HIT_LEFT_LEG );
+					break;
+				default:
+					break;
+				}
+			}
+		}
+
+		bool isAimed = ( Aim != HIT_LOCATION_NONE ) && ( Aim != HIT_LOCATION_TORSO ) && ( Aim != HIT_LOCATION_UNCALLED );
+
+		uint mainMsg = CMSG_HIT,
+			 length = 3;
+
+		if( isCritical )
+		{
+			mainMsg += 2;
+			length += 2;
+		}
+		if( isDead )
+		{
+			mainMsg += 4;
+			if( isCritical )
+				length -= 1;
+		}
+		if( isAimed )
+		{
+			mainMsg += 1;
+			length += 1;
+		}
+
+		uint[] sendEff( length );
+		sendEff[ 0 ] = mainMsg;
+		sendEff[ 1 ] = target.Id;
+		uint now = 2;
+
+		if( isAimed )
+		{
+			sendEff[ 2 ] = Aim;
+			now++;
+		}
+
+		sendEff[ now ] = totalDmg;
+		now++;
+
+		if( isCritical )
+		{
+			if( !isDead )
+			{
+				sendEff[ now ] = msgEff;
+				now++;
+			}
+
+			sendEff[ now ] = extraMessage;
+		}
+
+		Critter@[] crits;
+
+		for( uint i = 0, iMax = target.GetCritters( true, FIND_ALL | FIND_ONLY_PLAYERS, crits ); i < iMax; i++ )
+			if( crits[ i ].Id != target.Id )
+				AddEff( crits[ i ], sendEff, Results );
+
+		if( isCritical )
+			sendEff[ now ] = extraMessage + 1500;            // men_player - men_npc
+
+		AddEff( target, sendEff, Results );
+
+		// poisoning and irradiating:
+		if( validEngineObject( Attacker ) )
+		{
+			int poison = ( IsAttackPerk( WEAPON_PERK_TOXIC ) ) ? 50 : Attacker.Stat[ ST_TOXIC ],
+				radiation = Attacker.Stat[ ST_RADIOACTIVE ];
+
+			if( AmmoPid == PID_50_CAL || AmmoPid == PID_HN_AP_NEEDLER_CARTRIDGE )
+				radiation += rounds * 50;
+
+			if( poison != 0 || radiation != 0 )
+			{
+				if( Random( 2, 16 ) > target.Stat[ ST_LUCK ] )
+				{
+					if( poison > 0 )
+						AffectPoison( target, Random( poison / 3, poison ) );
+					if( radiation > 0 )
+						AffectRadiation( target, Random( radiation / 3, radiation ) );
+				}
+			}
+
+			if( Attacker.Stat[ ST_BODY_TYPE ] == BT_CENTAUR && Random( 2, 16 ) > target.Stat[ ST_LUCK ] )
+				AffectRadiation( target, Random( 10, 20 ) );
+		}
+
+		if( ArmorTarget !is null && target.Stat[ ST_CURRENT_ARMOR_PERK ] == ARMOR_PERK_TESLA && ( TypeDamage == DAMAGE_ELECTR || TypeDamage == DAMAGE_LASER || TypeDamage == DAMAGE_PLASMA ) )
+		{
+			int cunsumedDmg = DmgMax - totalDmg;
+			if( cunsumedDmg > 0 )
+				ArmorTarget.Charge = CLAMP( ArmorTarget.Charge + cunsumedDmg, 0, 100 );
+		}
+	}
 }
+
+
 
 void CriticalFailure( Critter& attacker, ProtoItem& weapon, uint8 weaponUse, ProtoItem@ ammo, uint eff, CombatRes[]& results )
 {
@@ -2075,10 +2091,9 @@ void InjureCritter( Critter& critter, uint damage, uint damageType, uint8 dir, u
     if( damageType > DAMAGE_EXPLODE )
         return;
 
-    CombatRes[] results;
-    ApplyDamage( combat, critter, 1, false, true, results );
+    combat.ApplyDamage( critter, false, true, 1 );
 
-    FlushResults( results );
+    FlushResults( combat.Results );
 }
 
 void InjureCritter( Critter& critter, uint damage, uint damageType, uint8 dir, uint attackerId ) // Export
@@ -2106,10 +2121,9 @@ void InjureCritter( Critter& critter, uint damage, uint damageType, uint8 dir, u
     proccess.TargetId = critter.Id;
     proccess.ShowHitAnimForce = true;
 
-    CombatRes[] results;
-    ApplyDamage( proccess, critter, 1, false, true, results );
+    proccess.ApplyDamage( critter, false, true, 1 );
 
-    FlushResults( results );
+    FlushResults( proccess.Results );
 }
 
 void InjureCritter( Critter& critter, uint damage, uint damageType, uint8 dir, uint attackerId, uint forceFlags ) // Export
@@ -2138,10 +2152,9 @@ void InjureCritter( Critter& critter, uint damage, uint damageType, uint8 dir, u
     proccess.ForceFlags = forceFlags;
     proccess.ShowHitAnimForce = true;
 
-    CombatRes[] results;
-    ApplyDamage( proccess, critter, 1, false, true, results );
+    proccess.ApplyDamage( critter, false, true, 1 );
 
-    FlushResults( results );
+    FlushResults( proccess.Results );
 }
 
 // client only, possible use by AI
@@ -2411,10 +2424,9 @@ void DamageHex( CombatProccess& proccess, Map& map, uint16 radius, bool _quakeSc
 							isCritical = false;
 					}
 					EventSmthAttack( proccess.Attacker, critter );
-                    CombatRes[] results;
                     critter_attack( proccess.Attacker, critter );
-                    ApplyDamage( proccess, critter, 1, isCritical, true, results );
-                    FlushResults( results );
+                    proccess.ApplyDamage( critter, isCritical, true, 1 );
+                    FlushResults( proccess.Results );
                 }
             }
         }
@@ -3216,7 +3228,6 @@ class CTraceLineIgnoredRaked : ITraceContext
                             isCritical = false;
 		
 						EventSmthAttack( critter, target );
-                        CombatRes[] results;
 
                         if( !proccess.IsLeon( target, 4 ) )
                         {
@@ -3224,11 +3235,11 @@ class CTraceLineIgnoredRaked : ITraceContext
                             proccess.DmgMin = minDamage[ i + 1 ];
                             proccess.DmgMax = maxDamage[ i + 1 ];
 
-                            ApplyDamage( proccess, target, 1, isCritical, true, results );
-                            FlushResults( results );
+                            proccess.ApplyDamage( target, isCritical, true, 1 );
+                            FlushResults( proccess.Results );
                         }
                         else
-                            proccess.startLeon( target, results );
+                            proccess.startLeon( target, proccess.Results );
                     }
                     map.GetItems( memHexX, memHexY, items );
 
@@ -3643,6 +3654,8 @@ void InitHexCombat()
 {
 	AttackHex::Option::Combat::HexSprite.Load( "geometry/fallout_hex1.png", PT_ART );
 	AttackHex::Option::Combat::SpriteBurstTarget.Load( "geometry/fallout_hex1.png", PT_ART );
+	
+	SetEffect( true, "BurstZone", "BurstZone" + ( __OpenGLRendering ? ".glsl" : ".fx" ) );
 }
 
 void render_hit_hex( uint layer )
@@ -3714,7 +3727,7 @@ void render_hit_hex( uint layer )
 					for( uint i = 0, iEnd = ZoneAttack.length(); i < iEnd; i++ )
 					{
 						if( ZoneAttack[ i ].length() == 3 && GetHexPos( ZoneAttack[ i ][ 0 ], ZoneAttack[ i ][ 1 ], x2, y2 ) )
-							DrawSprite( AttackHex::Option::Combat::HexSprite.Id, 0, x2 - int( w * 0.5 ), y2 - int( h * 0.5 ), w, h, true, true, ZoneAttack[ i ][ 2 ] );
+							DrawSprite( AttackHex::Option::Combat::HexSprite.Id, 0, x2 - int( w * 0.5 ), y2 - int( h * 0.5 ), w, h, true, true, ZoneAttack[ i ][ 2 ], false, "BurstZone" );
 					}
 				}
 				else
@@ -3722,7 +3735,7 @@ void render_hit_hex( uint layer )
 					for( uint i = 0, iEnd = ZoneAttack.length(); i < iEnd; i++ )
 					{
 						if( ZoneAttack[ i ].length() > 0 )
-							DrawPrimitive( DRAW_PRIMITIVE_LINESTRIP, ZoneAttack[ i ] );
+							DrawPrimitive( DRAW_PRIMITIVE_LINESTRIP, ZoneAttack[ i ], "BurstZone" );
 					}
 				}
 			}

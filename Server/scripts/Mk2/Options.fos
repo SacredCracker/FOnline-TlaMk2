@@ -202,7 +202,9 @@ void LoadOptions( ::string@ name )
 				
 				if( s == "load")
 				{
-					LoadOptions( "options/" + temp[1] + ".option" );
+					if( splitEx( temp[1], "." ).length() == 2 )
+						LoadOptions( "options/" + temp[1] );
+					else LoadOptions( "options/" + temp[1] + ".option" );
 					continue;
 				}
 				

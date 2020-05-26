@@ -382,7 +382,7 @@ mixin class CombatProccessTargetData
 		if( !__NewbieLocationIsPvp && validEngineObject( Attacker ) && Attacker.IsPlayer() && target.IsPlayer() && Map.GetLocation().GetProtoId() == LOCATION_NewbieLocation )
 		{
 			Attacker.Say( SAY_NETMSG, "Oh-oh! Not this time, my friend!" );
-			return false; // ÕÓœ‚Ô ‚ ÕÛ·ÍÂ.
+			return false; // –ù–æ–ü–≤–ø –≤ –ù—É–±–∫–µ.
 		}
 	
 		return true;
@@ -467,7 +467,7 @@ shared class CombatProccess : Mk2::CombatProccessPacket, CombatProccessTargetDat
 		
 		UseHex = false;
 		
-		@Results = null;
+		@Results = CombatRes[]();
 		@GetHitAim = null;
 		
 		@Weapon = null;
