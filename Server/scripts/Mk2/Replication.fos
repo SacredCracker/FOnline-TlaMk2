@@ -1,11 +1,47 @@
 // FOS Server
 // Author: cvet
 
-const ::array<uint16> ReplicatorsMapPids={ MAP_replication1,MAP_replication2,MAP_replication3,MAP_replication4};
-
-::Map@ GetStartReplicatorMap()
+const array<Replication@> Replicators = { 	Replication( MAP_replication1 ).AddKnowLocation( LOCATION_Den ).AddKnowLocation( LOCATION_Klamath ),
+											Replication( LOCATION_Replication2 ).AddKnowLocation( LOCATION_Modoc ),
+											Replication( LOCATION_Replication3 ).AddKnowLocation( LOCATION_Redding ),
+											Replication( LOCATION_Replication4 ).AddKnowLocation( LOCATION_BrokenHills ).AddKnowLocation( LOCATION_NewReno )
+										};
+class Replication
 {
-	return ::GetMapByPid(ReplicatorsMapPids[0],0);
+	Replication( uint pid )
+	{
+		ProtoId = pid;
+	}
+	
+	Replication@ AddKnowLocation( uint pid )
+	{
+		LocKnowPids.insertLast( pid );
+		return this;
+	}
+	
+	void SetKnown( Critter& critter ) const
+	{
+		for( uint i = 0, iend = LocKnowPids.length(); i < iend; i++ )
+			critter.SetKnownLoc(false,LocKnowPids[i]);
+	}
+	
+	Map@ get_Map( ) const
+	{
+		return GetMapByPid( ProtoId, 0 );
+	}
+	
+	Location@ get_Location() const
+	{
+		return Map.GetLocation();
+	}
+	
+	private uint[] LocKnowPids;
+	private uint ProtoId;
+}
+
+const Replication@ GetStartReplication()
+{
+	return Replicators[0];
 }
 
 ::Map@ GetNearReplicatorMap(::Critter& cr)
@@ -15,9 +51,9 @@ const ::array<uint16> ReplicatorsMapPids={ MAP_replication1,MAP_replication2,MAP
 	
 	if(cr.Stat[ST_REPLICATION_MONEY]>0)
 	{
-		for(uint i=0, iMax=ReplicatorsMapPids.length(); i<iMax; i++)
+		for(uint i=0, iMax=Replicators.length(); i<iMax; i++)
 		{
-			::Map@ map=::GetMapByPid(ReplicatorsMapPids[i],0);
+			Map@ map = Replicators[i].Map;
 			if(validEngineObject(map))
 			{
 				::Location@ loc=map.GetLocation();
@@ -56,10 +92,10 @@ const ::array<uint16> ReplicatorsMapPids={ MAP_replication1,MAP_replication2,MAP
 	return nearMap;
 }
 
-void SetStartLocation(::Critter& cr) // Export
+void GetStartLocation( Critter& cr, uint&out mapId, int&out entire ) // Export
 {
-	::Map@ replicator=GetStartReplicatorMap();
-	if( !validEngineObject(replicator)) return;
+	const Replication@ replication = GetStartReplication();
+	Location@ replicator = replication.Location;
 	uint zoneX=cr.WorldX/::__GlobalMapZoneLength;
 	uint zoneY=cr.WorldY/::__GlobalMapZoneLength;
 	cr.SetFog(zoneX  ,zoneY  ,FOG_FULL);
@@ -72,31 +108,11 @@ void SetStartLocation(::Critter& cr) // Export
 	cr.SetFog(zoneX  ,zoneY+1,FOG_FULL);
 	cr.SetFog(zoneX+1,zoneY+1,FOG_FULL);
 
-	cr.TransitToMap(replicator.Id,Entires::Type::Replication);
+	cr.SetKnownLoc(true,replicator.Id);
+	replication.SetKnown( cr );
 
-	cr.SetKnownLoc(true,replicator.GetLocation().Id);
-	uint16 replPid=replicator.GetLocation().GetProtoId();
-	if(replPid==LOCATION_Replication1)
-	{
-		cr.SetKnownLoc(false,LOCATION_Den);
-		cr.SetKnownLoc(false,LOCATION_Klamath);
-	}
-	else if(replPid==LOCATION_Replication2)
-	{
-		cr.SetKnownLoc(false,LOCATION_Modoc);
-	}
-	else if(replPid==LOCATION_Replication3)
-	{
-		cr.SetKnownLoc(false,LOCATION_Redding);
-	}
-	else if(replPid==LOCATION_Replication4)
-	{
-		cr.SetKnownLoc(false,LOCATION_BrokenHills);
-		cr.SetKnownLoc(false,LOCATION_NewReno);
-	}
-
-	zoneX=cr.WorldX/::__GlobalMapZoneLength;
-	zoneY=cr.WorldY/::__GlobalMapZoneLength;
+	zoneX=replicator.WorldX/::__GlobalMapZoneLength;
+	zoneY=replicator.WorldY/::__GlobalMapZoneLength;
 	cr.SetFog(zoneX  ,zoneY  ,FOG_NONE);
 	cr.SetFog(zoneX-1,zoneY-1,FOG_HALF);
 	cr.SetFog(zoneX  ,zoneY-1,FOG_HALF);
@@ -106,6 +122,9 @@ void SetStartLocation(::Critter& cr) // Export
 	cr.SetFog(zoneX-1,zoneY+1,FOG_HALF);
 	cr.SetFog(zoneX  ,zoneY+1,FOG_HALF);
 	cr.SetFog(zoneX+1,zoneY+1,FOG_HALF);
+	
+	mapId = replication.Map.Id;
+	entire = Entires::Type::Replication;
 }
 
 void SetReplicationTime(::Critter& cr) // Export

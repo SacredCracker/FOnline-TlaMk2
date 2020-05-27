@@ -23,7 +23,7 @@ import void CityGuard_SneakCritter( Critter& cr, const bool& in InSneak ) from "
 import bool OnUseExplode( ::Critter& cr, ::Item& explode, ::Critter@ targetCr, ::Item@ targetItem, ::Scenery@ targetScen, uint timer ) from "explode";
 import bool UseItemOnCar( ::Critter& cr, ::Item& car, ::Item& item ) from "Mk2";
 import bool UseSkillOnCar( ::Critter& cr, ::Item& car, int skill ) from "Mk2";
-import void SetStartLocation( ::Critter& cr ) from "Mk2";
+import void GetStartLocation( ::Critter& cr, uint&out, int&out ) from "Mk2";
 
 import void ReplicateCritter( ::Critter& cr ) from "Mk2";
 import bool TryRepairItem( ::Critter& cr, ::Item& item ) from "Mk2";
@@ -461,7 +461,7 @@ bool critter_use_item_logic( ::Critter& cr, ::Item& item, ::Critter@ targetCr, :
 // //////////////////////////////////////////////////////////////////////////////////////////////////
 // Call on something critter use skill.
 bool main_critter_use_skill( ::Critter@ cr, int skill, ::Critter@ targetCr, ::Item@ targetItem, ::Scenery@ targetScen )
-{	
+{
     if( skill == SKILL_CHECK_ENEMY )
         return false;
 
@@ -797,6 +797,14 @@ void critter_reload_weapon( ::Critter& cr, ::Item& weapon, ::Item@ ammo )
     weapon.Update();
 }
 
+void StartLocationProccess( Critter@ critter )
+{
+	int entire = 0;
+	uint mapId = 0;
+	GetStartLocation( critter, mapId, entire );
+	critter.TransitToMap(mapId,entire);
+}
+
 void main_critter_init( ::Critter& cr, bool firstTime )
 {
     if( cr.IsPlayer() )
@@ -1020,9 +1028,10 @@ void main_critter_init( ::Critter& cr, bool firstTime )
         player_data_generate( cr );
 
         cr.StatBase[ ST_CURRENT_HP ] = cr.Stat[ ST_MAX_LIFE ];
+        cr.StatBase[ ST_CURRENT_AP ] = cr.Stat[ ST_ACTION_POINTS ] * 100;
+
         if( cr.IsNpc() )
             cr.StatBase[ ST_CURRENT_HP ] += cr.StatBase[ ST_STRENGTH ] + cr.StatBase[ ST_ENDURANCE ] * 2;
-        cr.StatBase[ ST_CURRENT_AP ] = cr.Stat[ ST_ACTION_POINTS ] * 100;
 
         if( cr.IsPlayer() )
         {
@@ -1035,10 +1044,10 @@ void main_critter_init( ::Critter& cr, bool firstTime )
             cr.StatBase[ ST_TEAM_ID ] = 1;
             cr.StatBase[ ST_DAMAGE_TYPE ] = DAMAGE_NORMAL;
             if( !::__NewbieLocationIsActive )
-                SetStartLocation( cr );
+				StartLocationProccess( cr );
         }
         else
-        {
+        {			
             ::Map@ map = cr.GetMap();
             if( validEngineObject( map ) )
             {
