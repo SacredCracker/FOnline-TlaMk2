@@ -587,48 +587,55 @@ void FarmItemBagsBlockCompil( const string& in Dataf, dictionary& inout libItemS
         Log( "Error!" );
 }
 
-void InitializeFarmLocation()
-{ 
-    file       f;
+void InitializeBags( string path )
+{
+	file       f;
     dictionary libItemSets;
 
     string     str = "";
-    string@[] data1, temp, line;
+    string@[] data1, temp;
     int        mem = -1;
+
+    if( f.open( path, "r" ) != -1 )
     {
-        if( f.open( "data\\farm_locations\\Bags.fofarmloc", "r" ) != -1 )
-        {
-            str = "";
+		str = "";
 
-            f.readString( uint( f.getSize() ), str );
-            f.close();
+		f.readString( uint( f.getSize() ), str );
+		f.close();
 
-            data1 = splitEx( str, "[FarmBag]" );
+		data1 = splitEx( str, "[FarmBag]" );
 
-            str = "";
+		str = "";
 
-            uint iEnd = data1.length();
-            if( iEnd != 0 )
-            {
-                temp = splitEx( data1.first(), "=" );
-                mem = 0;
+		uint iEnd = data1.length();
+		if( iEnd != 0 )
+		{
+			temp = splitEx( data1.first(), "=" );
+			mem = 0;
 
-                if( StrToInt( temp[ 1 ], mem ) )
-                {
-                    Farm::AllBags.resize( mem );
-                    for( uint ibags = 1; ibags < iEnd; ibags++ )
-                        FarmItemBagsBlockCompil( data1[ ibags ], libItemSets, ibags );
-                }
-            }
-        }
-    }
+			if( StrToInt( temp[ 1 ], mem ) )
+			{
+				Farm::AllBags.resize( mem );
+				for( uint ibags = 1; ibags < iEnd; ibags++ )
+					FarmItemBagsBlockCompil( data1[ ibags ], libItemSets, ibags );
+			}
+		}
+	}
 
     for( uint i = 0, iEnd = Farm::AllBags.length(); i < iEnd; i++ )
         if( Farm::AllBags[ i ] !is null )
             ( Farm::AllBags[ i ] ).Initialize();
+}
+
+void InitializeCritters( string path )
+{
+	file       f;
+    string     str = "";
+    string@[] data1, temp, line;
+    int        mem = -1;
 
     {
-        if( f.open( "data\\farm_locations\\Critter.fofarmloc", "r" ) != -1 )
+        if( f.open( path, "r" ) != -1 )
         {
             array< string@ > AllNameR, AllNameE, AllNameU;
             str = "";
@@ -639,7 +646,7 @@ void InitializeFarmLocation()
             uint countMob = 0;
 
             uint iEnd = data1.length();
-            if( iEnd != 0 )
+            if( iEnd > 1 )
             {
                 string@ namer, namee, nameu;
                 line = splitEx( data1.first(), "\n" );
@@ -693,7 +700,7 @@ void InitializeFarmLocation()
                 uint                           pid = 0;
                 array< uint > memData( Farm::Constant::Mob::Data::CountData );
                 array< Farm::Param@ > mobParam;
-                string@                        aiScript = null;
+                string@ aiScript = null;
                 for( uint i = 1; i < iEnd; i++ )
                 {
                     mobParam.resize( 0 );
@@ -845,9 +852,17 @@ void InitializeFarmLocation()
             ClearLog( "Generation client farm names: " + ( GetTick() - genTick ) + "ms." );
         }
     }
+}
 
-    {
-        if( f.open( "data\\farm_locations\\TeamCritter.fofarmloc", "r" ) != -1 )
+void InitializeTeamCritters( string path )
+{
+	file       f;
+
+    string     str = "";
+    string@[] data1, temp, line;
+    int        mem = -1;
+	{
+        if( f.open( path, "r" ) != -1 )
         {
             str = "";
 
@@ -858,7 +873,7 @@ void InitializeFarmLocation()
             str = "";
 
             uint iEnd = data1.length();
-            if( iEnd != 0 )
+            if( iEnd > 1 )
             {
                 temp = splitEx( data1[ 0 ], "=" );
                 mem = 0;
@@ -953,9 +968,17 @@ void InitializeFarmLocation()
             }
         }
     }
+}
 
-    {
-        if( f.open( "data\\farm_locations\\Container.fofarmloc", "r" ) != -1 )
+void InitializeContainers( string path )
+{
+	file       f;
+
+    string     str = "";
+    string@[] data1, temp, line;
+    int        mem = -1;
+	{
+        if( f.open( path, "r" ) != -1 )
         {
             str = "";
             f.readString( uint( f.getSize() ), str );
@@ -964,7 +987,7 @@ void InitializeFarmLocation()
             str = "";
 
             uint iEnd = data1.length();
-            if( iEnd != 0 )
+            if( iEnd > 1 )
             {
                 temp = splitEx( data1[ 0 ], "=" );
                 mem = 0;
@@ -1057,9 +1080,18 @@ void InitializeFarmLocation()
             }
         }
     }
+}
 
-    {
-        if( f.open( "data\\farm_locations\\Locations.fofarmloc", "r" ) != -1 )
+void InitializeLocations( string path )
+{
+	file       f;
+
+    string     str = "";
+    string@[] data1, temp, line;
+    int        mem = -1;
+	
+	{
+        if( f.open( path, "r" ) != -1 )
         {
             str = "";
             f.readString( uint( f.getSize() ), str );
@@ -1068,7 +1100,7 @@ void InitializeFarmLocation()
             str = "";
 
             uint iEnd = data1.length();
-            if( iEnd != 0 )
+            if( iEnd > 1 )
             {
                 temp = splitEx( data1[ 0 ], "=" );
                 mem = 0;
@@ -1201,8 +1233,20 @@ void InitializeFarmLocation()
     }
 }
 
-#define FARM_ADDITEM_FLAG_NONE       0
-#define FARM_ADDITEM_FLAG_NO_SLOT    1
+void InitializeFarmLocation()
+{
+	InitializeBags( "data\\farm_locations\\Bags.fofarmloc" );
+	InitializeCritters( "data\\farm_locations\\Critter.fofarmloc" );
+	InitializeTeamCritters( "data\\farm_locations\\TeamCritter.fofarmloc" );
+	InitializeContainers( "data\\farm_locations\\Container.fofarmloc" );
+	InitializeLocations( "data\\farm_locations\\Locations.fofarmloc" );
+}
+
+enum FarmAddItemFlag
+{
+	None,
+	NoSlot
+}
 
 final class FarmMob : Farm::Mob
 {
@@ -1290,12 +1334,12 @@ final class FarmMob : Farm::Mob
         if( mob.GetScriptId() == 0 && ( mob.Stat[ ST_TEAM_ID ] == 0 || ( mob.Stat[ ST_TEAM_ID ] >= 24 && mob.Stat[ ST_TEAM_ID ] <= 33 ) || mob.Stat[ ST_TEAM_ID ] == TEAM_FarmMobs ) )
             mob.SetScript( "Mk2@Mob::_MobInit" );
 
-        uint additemFlag = FARM_ADDITEM_FLAG_NONE;
+        uint additemFlag = FarmAddItemFlag::None;
 
         if( Type == uint( Farm::Constant::Mob::E_Type::Dead ) )
         {
             mob.ToDead( TypeVar, null );
-            additemFlag = FARM_ADDITEM_FLAG_NO_SLOT;
+            additemFlag = FarmAddItemFlag::NoSlot;
         }
 
         mob.FarmProtoMobId = Id;
@@ -1670,7 +1714,7 @@ final class FarmItem
                 it.LockerId = KeyId;
 
                 count++;
-                if( FARM_ADDITEM_FLAG_NO_SLOT != flag )
+                if( flag != FarmAddItemFlag::NoSlot )
 				{
 					cr.MoveItem( it.Id, it.GetCount(), ItemSlot );
 #ifndef __NO_FAVORIT_ITEMS
@@ -2875,6 +2919,7 @@ void GetLocationTime( Critter& cr, int, int, int )
 }
 // ~run farm_location SetLocationRefreshTime 0 0 0
 // ~run farm_location SetLocationRefreshTime realMinute 0 0
+
 void SetLocationRefreshTime( Critter& cr, int time, int, int )
 {
     uint duration = 0;
@@ -2916,4 +2961,9 @@ void SetLocationRefreshTime( Critter& cr, int time, int, int )
     }
     else
         cr.Say( SAY_NETMSG, "Ќе найдено событие на обновление локации" );
+}
+
+void create( Critter& cr, int id, int x, int y )
+{
+	( Farm::AllLocs[ id - 1 ] ).Create( x, y );
 }
