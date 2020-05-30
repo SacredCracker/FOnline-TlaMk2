@@ -1329,7 +1329,7 @@ final class FarmMob : Farm::Mob
         return items;
     }
 
-    void InitCritter( Critter& inout mob ) override
+    void InitCritter( Critter& inout mob, uint locId ) override
     {
         if( mob.GetScriptId() == 0 && ( mob.Stat[ ST_TEAM_ID ] == 0 || ( mob.Stat[ ST_TEAM_ID ] >= 24 && mob.Stat[ ST_TEAM_ID ] <= 33 ) || mob.Stat[ ST_TEAM_ID ] == TEAM_FarmMobs ) )
             mob.SetScript( "Mk2@Mob::_MobInit" );
@@ -1366,7 +1366,7 @@ final class FarmMob : Farm::Mob
                             {
                                 @ fi = Its[ Random( 0, Its.length() - 1 ) ];
                                 if( fi !is null )
-                                    fi.AddItem( mob, additemFlag );
+                                    fi.AddItem( mob, additemFlag, locId );
                             }
                         }
                     }
@@ -1694,7 +1694,7 @@ final class FarmItem
         @SubItems = sub;
     }
 
-    uint AddItem( Critter& inout cr, const uint& in flag, const bool& in isSub = false ) final
+    uint AddItem( Critter& inout cr, const uint& in flag, uint locId, const bool& in isSub = false ) final
     {
         uint count = 0;
         if( Random( 1, 100 ) <= Percent || Percent == 0 )
@@ -1709,7 +1709,7 @@ final class FarmItem
             {
                 GameVar@ var = GetLocalVar( LIVAR_IsFarmGenerated, it.Id );
                 if( var !is null )
-                    var = cr.GetMap().GetLocation().Id;
+                    var = locId;
 
                 it.LockerId = KeyId;
 
@@ -1724,13 +1724,13 @@ final class FarmItem
 				}
 				if( SubItems !is null && !isSub )
 					for( uint i = 0, iEnd = SubItems.length(); i < iEnd; i++ )
-						count += SubItems[ i ].AddItem( cr, flag, true );
+						count += SubItems[ i ].AddItem( cr, flag, locId, true );
 			}
         }
         return count;
     }
 
-    uint AddItem( Item& inout cont, const uint& in countPlayer, const bool& in isSub = false  ) final
+    uint AddItem( Item& inout cont, const uint& in countPlayer, uint locId, const bool& in isSub = false  ) final
     {
         uint count = 0;
         int perc = Percent;
@@ -1746,26 +1746,44 @@ final class FarmItem
             if( IsBluePrint )
 				@ it = Farm::AddBlueprint( cont, BluePrint_Pid, BluePrint_Count );
 			else
+			{			
+#ifdef __DEBUG
+				uint _count = Random( Count.Min, maxCount );
+				Item@ beforeit = cont.GetItem( ItemPid, 0 );
+				uint before = 0;
+				if( beforeit !is null ) before += beforeit.GetCount();
+				@ it = cont.AddItem( ItemPid, _count, 0 );
+				if( it.GetCount() > Count.Max + before )
+				{
+					Log( "Test " + it.GetCount() + " - " + Count.Max + " _count " + _count );
+					Farm::FixValue( _count, countPlayer, 30 );
+					Log( "fixcount " + _count + " " + countPlayer );
+					Log( "before " + ( beforeit is it ) + " " + before );
+				}
+#endif
+#ifndef __DEBUG
 				@ it = cont.AddItem( ItemPid, Random( Count.Min, maxCount ), 0 );
-
+#endif
+			}
+			
 			if( it !is null )
 			{
 				uint16 temp = 0;
 				GameVar@ var = GetLocalVar( LIVAR_IsFarmGenerated, it.Id );
 				if( var !is null )
-					var = cont.GetMapPosition( temp, temp ).GetLocation().Id;
+					var = locId;
 				it.LockerId = KeyId;
 
 				count++;
 				if( SubItems !is null && !isSub )
 					for( uint i = 0, iEnd = SubItems.length(); i < iEnd; i++ )
-						count += SubItems[ i ].AddItem( cont, countPlayer, true );
+						count += SubItems[ i ].AddItem( cont, countPlayer, locId, true );
 			}
         }
         return count;
     }
 
-    uint AddItem( Map& inout map, const uint16& in hexX, const uint16& in hexY, const uint& in countPlayer, const bool& in isSub = false  ) final
+    uint AddItem( Map& inout map, const uint16& in hexX, const uint16& in hexY, const uint& in countPlayer, uint locId, const bool& in isSub = false  ) final
     {
         uint count = 0;
         int perc = Percent;
@@ -1787,12 +1805,12 @@ final class FarmItem
 			{
 				GameVar@ var = GetLocalVar( LIVAR_IsFarmGenerated, it.Id );
 				if( var !is null )
-					var = map.GetLocation().Id;
+					var = locId;
 				it.LockerId = KeyId;
 				count++;
 				if( SubItems !is null && !isSub )
 					for( uint i = 0, iEnd = SubItems.length(); i < iEnd; i++ )
-						count += SubItems[ i ].AddItem( map, hexX, hexY, countPlayer, true );
+						count += SubItems[ i ].AddItem( map, hexX, hexY, countPlayer, locId, true );
 			}
         }
         return count;
@@ -1840,6 +1858,7 @@ final class FarmContainer // : Farm::CProto
         uint countGen = 0, cickle = 0;
         #endif
 
+		uint locId = map.GetLocation().Id;
         uint16 hexX = 0, hexY = 0;
         Item@ cont = null;
         SlotBags@ slot = null;
@@ -1966,7 +1985,7 @@ final class FarmContainer // : Farm::CProto
                                         #ifdef __DEBUG
                                         countGen +=
                                         #endif
-                                        fi.AddItem( cont, countPlayer );
+                                        fi.AddItem( cont, countPlayer, locId );
                                     }
                                 }
                             }
@@ -1995,7 +2014,7 @@ final class FarmContainer // : Farm::CProto
                                     #ifdef __DEBUG
                                     countGen +=
                                     #endif
-                                    fi.AddItem( map, hexX, hexY, countPlayer );
+                                    fi.AddItem( map, hexX, hexY, countPlayer, locId );
                                 }
                             }
                         }
@@ -2763,6 +2782,7 @@ bool SpawnMobs( array< uint >@ values, uint tick )
     {
         uint currentPos = values.length() / COUNT_ADD_MOB_VALUES,
 			mapId = 0,
+			locId = 0,
 			ui1 = 0,
 			countplayer = 0,
 			countparams = 0,
@@ -2836,12 +2856,12 @@ bool SpawnMobs( array< uint >@ values, uint tick )
                         map.MoveHexByDir( HexX, HexY, dir++, 1 );
                         if( map.IsHexPassed( HexX, HexY ) )
                         {
-							mob.InitCritter( map.AddNpc( mob.ProtoId, HexX, HexY, 0, params, null, mob.AiScript ) );
+							mob.InitCritter( map.AddNpc( mob.ProtoId, HexX, HexY, 0, params, null, mob.AiScript ), locId );
                             break;
                         }
                     }
 				}
-                else mob.InitCritter( map.AddNpc( mob.ProtoId, baseHx, baseHy, 0, params, null, mob.AiScript ) );
+                else mob.InitCritter( map.AddNpc( mob.ProtoId, baseHx, baseHy, 0, params, null, mob.AiScript ), locId );
             }
 			
             if( tick != 0 && GetTick() - tick >= 250 )
