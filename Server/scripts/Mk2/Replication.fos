@@ -4,13 +4,28 @@
 const array<Replication@> Replicators = { 	Replication( MAP_replication1 ).AddKnowLocation( LOCATION_Den ).AddKnowLocation( LOCATION_Klamath ),
 											Replication( LOCATION_Replication2 ).AddKnowLocation( LOCATION_Modoc ),
 											Replication( LOCATION_Replication3 ).AddKnowLocation( LOCATION_Redding ),
-											Replication( LOCATION_Replication4 ).AddKnowLocation( LOCATION_BrokenHills ).AddKnowLocation( LOCATION_NewReno )
+											Replication( LOCATION_Replication4 ).AddKnowLocation( LOCATION_BrokenHills ).AddKnowLocation( LOCATION_NewReno ).SetBlockCallback( @ReplicationBlock )
 										};
+										
+funcdef bool IsReplicationBlockFuncdef( );
+
+bool ReplicationBlock( )
+{
+	GameVar@ status = GetGlobalVar( GVAR_ge_repl_station_status );
+	return ( valid( status ) && status == 1 );
+}
+
 class Replication
 {
 	Replication( uint pid )
 	{
 		ProtoId = pid;
+		@IsReplicationBlock = IsReplicationBlockFuncdef( this.NoBlock );
+	}
+	
+	bool NoBlock( )
+	{
+		return false;
 	}
 	
 	Replication@ AddKnowLocation( uint pid )
@@ -19,10 +34,31 @@ class Replication
 		return this;
 	}
 	
+	Replication@ SetBlockCallback( IsReplicationBlockFuncdef@ callback )
+	{
+		@IsReplicationBlock = callback;
+		return this;
+	}
+	
 	void SetKnown( Critter& critter ) const
 	{
 		for( uint i = 0, iend = LocKnowPids.length(); i < iend; i++ )
 			critter.SetKnownLoc(false,LocKnowPids[i]);
+			
+		Location@ replicator = this.Location;
+		critter.SetKnownLoc(true,replicator.Id);
+	
+		uint zoneX=replicator.WorldX/__GlobalMapZoneLength;
+		uint zoneY=replicator.WorldY/__GlobalMapZoneLength;
+		critter.SetFog(zoneX  ,zoneY  ,FOG_NONE);
+		critter.SetFog(zoneX-1,zoneY-1,FOG_HALF);
+		critter.SetFog(zoneX  ,zoneY-1,FOG_HALF);
+		critter.SetFog(zoneX+1,zoneY-1,FOG_HALF);
+		critter.SetFog(zoneX-1,zoneY  ,FOG_HALF);
+		critter.SetFog(zoneX+1,zoneY  ,FOG_HALF);
+		critter.SetFog(zoneX-1,zoneY+1,FOG_HALF);
+		critter.SetFog(zoneX  ,zoneY+1,FOG_HALF);
+		critter.SetFog(zoneX+1,zoneY+1,FOG_HALF);
 	}
 	
 	Map@ get_Map( ) const
@@ -35,6 +71,7 @@ class Replication
 		return Map.GetLocation();
 	}
 	
+	IsReplicationBlockFuncdef@ IsReplicationBlock;
 	private uint[] LocKnowPids;
 	private uint ProtoId;
 }
@@ -44,49 +81,44 @@ const Replication@ GetStartReplication()
 	return Replicators[0];
 }
 
-::Map@ GetNearReplicatorMap(::Critter& cr)
+Map@ GetNearReplicatorMap(Critter& cr)
 {
-	::Map@ nearMap=null;
-	int nearDist=0;
+	Map@ nearMap = null;
+	int nearDist = 0;
 	
-	if(cr.Stat[ST_REPLICATION_MONEY]>0)
+	if( cr.Stat[ST_REPLICATION_MONEY] > 0 )
 	{
-		for(uint i=0, iMax=Replicators.length(); i<iMax; i++)
+		for( uint i = 0, iMax = Replicators.length(); i < iMax; i++ )
 		{
-			Map@ map = Replicators[i].Map;
+			Replication@ replication = Replicators[i];
+			Map@ map = replication.Map;
 			if(validEngineObject(map))
 			{
-				::Location@ loc=map.GetLocation();
-				int dx=int(cr.WorldX)-int(loc.WorldX);
-				int dy=int(cr.WorldY)-int(loc.WorldY);
-				int dist=int(::sqrt(dx*dx+dy*dy));
-
 				// game_event_replicator.fos Restrict replication4 when event is on
-				if( loc.GetProtoId() == LOCATION_Replication4 )
-				{
-					::GameVar@ status = ::GetGlobalVar( GVAR_ge_repl_station_status );
-					if( valid( status ) && status == 1 )
-						continue;
-				}
+				if( replication.IsReplicationBlock() )
+					continue;
+					
+				Location@ location = map.GetLocation();
+				int dx = int( cr.WorldX ) - int( location.WorldX );
+				int dy = int( cr.WorldY ) - int( location.WorldY );
+				int dist = int( sqrt( dx * dx + dy * dy ) );
 
-				if( !validEngineObject(nearMap) || dist<nearDist)
+				if( !validEngineObject( nearMap ) || dist < nearDist )
 				{
-					@nearMap=map;
-					nearDist=dist;
+					@nearMap = map;
+					nearDist = dist;
 				}
 			}
 		}
 	}
 	else
 	{
-		::Map@ map=::GetMapByPid(MAP_replication_hell,0);
+		Map@ map=GetMapByPid(MAP_replication_hell,0);
 		if(validEngineObject(map))
 		{
-			::Location@ loc=map.GetLocation();
+			Location@ loc=map.GetLocation();
 			if(!validEngineObject(nearMap))
-			{
 				@nearMap=map;
-			}		
 		}	
 	}
 	return nearMap;
@@ -95,9 +127,8 @@ const Replication@ GetStartReplication()
 void GetStartLocation( Critter& cr, uint&out mapId, int&out entire ) // Export
 {
 	const Replication@ replication = GetStartReplication();
-	Location@ replicator = replication.Location;
-	uint zoneX=cr.WorldX/::__GlobalMapZoneLength;
-	uint zoneY=cr.WorldY/::__GlobalMapZoneLength;
+	uint zoneX=cr.WorldX/__GlobalMapZoneLength;
+	uint zoneY=cr.WorldY/__GlobalMapZoneLength;
 	cr.SetFog(zoneX  ,zoneY  ,FOG_FULL);
 	cr.SetFog(zoneX-1,zoneY-1,FOG_FULL);
 	cr.SetFog(zoneX  ,zoneY-1,FOG_FULL);
@@ -108,20 +139,7 @@ void GetStartLocation( Critter& cr, uint&out mapId, int&out entire ) // Export
 	cr.SetFog(zoneX  ,zoneY+1,FOG_FULL);
 	cr.SetFog(zoneX+1,zoneY+1,FOG_FULL);
 
-	cr.SetKnownLoc(true,replicator.Id);
 	replication.SetKnown( cr );
-
-	zoneX=replicator.WorldX/::__GlobalMapZoneLength;
-	zoneY=replicator.WorldY/::__GlobalMapZoneLength;
-	cr.SetFog(zoneX  ,zoneY  ,FOG_NONE);
-	cr.SetFog(zoneX-1,zoneY-1,FOG_HALF);
-	cr.SetFog(zoneX  ,zoneY-1,FOG_HALF);
-	cr.SetFog(zoneX+1,zoneY-1,FOG_HALF);
-	cr.SetFog(zoneX-1,zoneY  ,FOG_HALF);
-	cr.SetFog(zoneX+1,zoneY  ,FOG_HALF);
-	cr.SetFog(zoneX-1,zoneY+1,FOG_HALF);
-	cr.SetFog(zoneX  ,zoneY+1,FOG_HALF);
-	cr.SetFog(zoneX+1,zoneY+1,FOG_HALF);
 	
 	mapId = replication.Map.Id;
 	entire = Entires::Type::Replication;

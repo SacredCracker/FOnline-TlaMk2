@@ -1,0 +1,14 @@
+// FOS Client
+
+void ModuleInit( )
+{
+	__EventInMessage.Subscribe( @InMessBox );
+}
+
+void InMessBox( string& message, int& sayType, uint& critterId, uint& delay )
+{
+	if( sayType == SAY_LOG_STREAM )
+	{
+		message = "|" + COLOR_GRAY + "" + message;
+	}
+}

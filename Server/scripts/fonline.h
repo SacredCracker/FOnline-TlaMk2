@@ -922,6 +922,8 @@ struct NpcPlane
     const uint      IdentifierExt;
     const NpcPlane* ChildPlane;
     const bool      IsMove;
+	const uint		Delay;
+	const bool		IsNotProccess;
 
     union
     {
@@ -2318,7 +2320,7 @@ inline void static_asserts()
     # endif
 
     STATIC_ASSERT( offsetof( TemplateVar, Flags )              == 68   );
-    STATIC_ASSERT( offsetof( NpcPlane, RefCounter )            == 88   );
+    STATIC_ASSERT( offsetof( NpcPlane, RefCounter )            == 96   );
     STATIC_ASSERT( offsetof( GlobalMapGroup, EncounterForce )  == 64   );
     STATIC_ASSERT( offsetof( Item, IsNotValid )                == 30 + 236  );
     STATIC_ASSERT( offsetof( CritterTimeEvent, ClientSignal )  == 20   );
