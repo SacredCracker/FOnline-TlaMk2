@@ -210,7 +210,7 @@ class CombatAlgoritm_Unarmed : CombatAlgoritm
             proccess.startLeon( proccess.RealTarget, proccess.Results );  // TabaK. Уворот от рукопашной атаки. хз, надо ли.
         else if( proccess.IsHit )
         {
-            if( proccess.Attacker.Mode[ MODE_HIDE ] != 0 && proccess.IsSilentAtack( proccess.RealTarget ) )
+            if( proccess.Attacker.Mode[ MODE_HIDE ] != 0 && proccess.IsSilentDeath( proccess.RealTarget ) )
             {
                 proccess.UnSneak( proccess.Attacker );
                 proccess.DmgMul *= 2;

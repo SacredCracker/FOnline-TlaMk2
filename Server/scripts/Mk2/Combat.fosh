@@ -496,6 +496,8 @@ shared class CombatProccess : Mk2::CombatProccessPacket, CombatProccessTargetDat
 		@TargetPerks = int[]();
 		
 		AttackerSkill = 0;
+		
+		@WeaponPacket = null;
 	}
 	
 	int GetWeaponSubType( )
@@ -503,17 +505,29 @@ shared class CombatProccess : Mk2::CombatProccessPacket, CombatProccessTargetDat
 		return GetWeaponSubType( WeaponSkill );
 	}
 	
-	bool IsSilentAtack( Critter& target )
+	bool IsSoundLess( )
 	{
-		if( !IsTargetCritter() )
-			return false;
-		if( !IsAttackPerk( WEAPON_PERK_SOUNDLESS ) )
-			return false;
-		if( Distantion > 5 )
+		return IsAttackPerk( WEAPON_PERK_SOUNDLESS ) && Distantion < 5;
+	}
+	
+	bool IsSilentDeath( Critter& target )
+	{
+		if( !ScoreUnarmed )
 			return false;
 		if( Attacker.Perk[ PE_SILENT_DEATH ] == 0 )
 			return false;
 		return ( Attacker.Dir == target.Dir || ( ( Attacker.Dir + 1 ) % 6 ) == target.Dir || ( ( Attacker.Dir + 5 ) % 6 ) == target.Dir );
+	}
+	
+	bool IsSilentAtack( Critter& target )
+	{
+		if( !IsTargetCritter() )
+			return false;
+		if( IsSoundLess() )
+			return true;
+		if( IsSilentDeath( target ) )
+			return true;
+		return false;
 	}
 	
 	void UnSneak( Critter& critter )
@@ -834,6 +848,7 @@ shared class CombatProccess : Mk2::CombatProccessPacket, CombatProccessTargetDat
 	GetHitAimFuncdef@ GetHitAim;
 	
 	CombatProccessContext@ Context;
+	CombatWeaponPacket@ WeaponPacket;
 }
 
 shared class CombatAlgoritm : CombatAlgoritmPacket

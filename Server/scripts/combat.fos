@@ -49,7 +49,7 @@ import void SmokeBlast( Map& map, uint16 hexX, uint16 hexY, uint16 smokePid, uin
 import void Explode( Map@ map, uint16 hexX, uint16 hexY, Critter@ critter, uint16 explodePid, uint ownerId, int bonusDamage, int bonusRadius ) from "explode";
 import void ChangePlayerScore( Critter& player, uint scoreIndex, int value ) from "Mk2";
 import void SetFire( Map& map, uint16 hx, uint16 hy, uint16 radius, uint16 damage, Critter@ critter ) from "Mk2";
-
+import Mk2::Descriptor@ GetDeafultItemDescriptor( ProtoItem@ proto ) from "Mk2";
 // CTE_END_BATTLE
 uint cte_EndBattle( Critter& critter, int identifier, int& rate, int& )
 {
@@ -322,6 +322,7 @@ class Combat : CombatProccess, MixinToHitProccess, MixinFlamerProccess, MixinApp
 		@RealWeapon = Attacker.GetItem( 0, slot );
 		if( RealWeapon !is null )
 		{
+			@WeaponPacket = cast<CombatWeaponPacket@>(@RealWeapon.ScriptDescriptor);
 			DmgMin += RealWeapon.WeaponBonus_MinDamage;
 			DmgMax += RealWeapon.WeaponBonus_MaxDamage;
 			
@@ -333,6 +334,11 @@ class Combat : CombatProccess, MixinToHitProccess, MixinFlamerProccess, MixinApp
 					WeaponAmmoRound = RealWeapon.AmmoCount;
 			}
 		}
+		else if( Weapon !is null )
+			@WeaponPacket = cast<CombatWeaponPacket@>(@GetDeafultItemDescriptor( Weapon ));
+		
+		if( WeaponPacket is null )
+			Debug( "WeaponPacket dont find", true );
 	}
 	
 	void SetWeaponMode( uint8 weaponMode )
@@ -638,23 +644,7 @@ class Combat : CombatProccess, MixinToHitProccess, MixinFlamerProccess, MixinApp
 	
 	CombatAlgoritm@ GetCombatAlgoritm( )
 	{
-		if( RealWeapon is null )
-		{
-			Debug( "Error: RealWeapon nullptr");
-			return null;
-		}
-		if( RealWeapon.ScriptDescriptor is null )
-		{
-			Debug( "Error: weapon descriptor nullptr");
-			return null;
-		}
-		CombatWeaponPacket@ weaponPacket = cast<CombatWeaponPacket@>(@RealWeapon.ScriptDescriptor);
-		if( weaponPacket is null )
-		{
-			Debug( "Error: weapon packet nullptr");
-			return null;
-		}
-		CombatAlgoritm@ algoritm = cast<CombatAlgoritm@>( @weaponPacket.WeaponAlgoritm[ WeaponUse ] );
+		CombatAlgoritm@ algoritm = cast<CombatAlgoritm@>( @WeaponPacket.WeaponAlgoritm[ WeaponUse ] );
 		if( algoritm is null )
 		{
 			Debug( "Error: combat algoritm nullptr. WeaponUse - " + WeaponUse + " " + RealWeapon.ScriptDescriptor.Name );
