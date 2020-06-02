@@ -850,6 +850,33 @@ namespace Option
 			@ThisModule::CombinationTemplate = Sprite::Sprite( CombinationTemplate, PT_ART_INTRFACE );
 		}
 	}
+	
+	namespace Description
+	{
+		string MaskOnlyName = "%look_item_name";
+		string MaskFullDescription = "\n%item_name\n%item_description\n%item_weight\n%weapon_ammo\n%item_deteriorable\n%item_keyid\n%item_upgrade";
+		
+		string MaskArmorOnlyName = "%look_item_name";
+		string MaskArmorFullDescription = "\n%item_name\n%item_description\n%item_weight\n%item_deteriorable";
+		
+		string MaskDrugOnlyName = "%look_item_name";
+		string MaskDrugFullDescription = "\n%item_name\n%item_description\n%item_weight";
+		
+		string MaskWeaponOnlyName = "%look_item_name";
+		string MaskWeaponFullDescription = "\n%item_name\n%item_description\n%item_weight\n%weapon_ammo\n%item_deteriorable";
+		
+		string MaskAmmoOnlyName = "%look_item_name";
+		string MaskAmmoFullDescription = "\n%item_name\n%item_description\n%item_weight";
+		
+		string MaskMiscOnlyName = "%look_item_name";
+		string MaskMiscFullDescription = "\n%item_name\n%item_description\n%item_weight\n%item_upgrade";
+		
+		string MaskKeyOnlyName = "%look_item_name";
+		string MaskKeyFullDescription = "\n%item_name\n%item_description\n%item_weight\n%item_keyid";
+		
+		string MaskOtherOnlyName = "%look_item_name";
+		string MaskOtherFullDescription = "\n%item_name\n%item_description\n%item_weight";
+	}
 }
 
 Interface@ lmenu_show_item = null;
@@ -953,9 +980,13 @@ class Interface : IGUIListingElement, IGUIDragAndDropElement, Splitter::SplitRes
 		Type = Type;
 	}
 	
+	ProtoItem@ refProtoItem;
+	
 	ProtoItem@ get_ProtoItem( )
 	{
-		return GetProtoItem( Proto );
+		if( refProtoItem is null )
+			@refProtoItem = GetProtoItem( Proto );
+		return refProtoItem;
 	}
 	
 	void after_Draw( Item::Interface@ swapItem, int x, int y )
@@ -1033,88 +1064,204 @@ class Interface : IGUIListingElement, IGUIDragAndDropElement, Splitter::SplitRes
 			SetItemInformer( LookType, GetDescription( Count, LookType ), Item, Item.Lexems, Item.Info, Proto, this );
 	}
 	
+	void FormatName( string&inout text )
+	{
+		text = ReplaceText( text, "%item_name", GetProtoName( Proto, Item.Info ) );
+	}
+	
+	void FormatDescription( string&inout text )
+	{
+		string result = "";
+		if( Proto == uint( Content::Item::HOLODISK ) && Item.HolodiskNumber != 0 )
+			result += GetMsgStr( TEXTMSG_HOLO, STR_HOLO_INFO_NAME( Item.HolodiskNumber ) );
+		else
+			result += GetProtoName( Proto, Item.Info + 1 );
+		text = ReplaceText( text, "%item_description", result );
+	}
+	
+	void FormatLookName( string&inout text )
+	{
+		text = ReplaceText( text, "%look_item_name", ReplaceText( GetMsgStr( TEXTMSG_GAME, STR_ITEM_LOOK ), "NAME", GetProtoName( Proto, Item.Info ) ) );
+	}
+	
+	void FormatWeight( string&inout text )
+	{
+		text = ReplaceText( text, "%item_weight", ReplaceText( GetMsgStr( TEXTMSG_GAME, STR_ITEM_WEIGHT_GRAMM ), "VALUE", ProtoItem.Weight * Count ) );
+	}
+	
+	void FormatUpgrade( string&inout text )
+	{
+		string result = "";
+		if( ProtoItem.Upgrade_Type != 0 )
+			result += GetUpgradeDescription( );
+		text = ReplaceText( text, "%item_upgrade", result );
+	}
+	
+	void FormatKeyId( string&inout text )
+	{
+		text = ReplaceText( text, "%item_keyid", ReplaceText( GetMsgStr( TEXTMSG_GAME, STR_INV_KEY_NUMBER ), "KEY_ID", Item.LockerId ) );
+	}
+	
+	void FormatAmmo( string&inout text )
+	{
+		string result = "";
+		if( ProtoItem.Weapon_MaxAmmoCount > 0 )
+		{
+			string str = GetMsgStr( TEXTMSG_GAME, STR_INV_HAS_SHOTS );
+			str = ReplaceText( str, "VALUE",     Item.AmmoCount );
+			str = ReplaceText( str, "MAX_VALUE", ProtoItem.Weapon_MaxAmmoCount );
+			str = ReplaceText( str, "AMMO",      GetMsgStr( TEXTMSG_GAME, STR_CALIBER( ProtoItem.Weapon_Caliber ) ) );
+			result += str;
+		}
+		text = ReplaceText( text, "%weapon_ammo", result );
+	}
+	
+	void FormatDeteriorable( string&inout text )
+	{
+		string result = "";
+		if( ProtoItem.Deteriorable )
+		{
+			// Broken level, procent
+			uint8 brokenFlags = Item.BrokenFlags;
+			if( FLAG( brokenFlags, BI_NOTRESC ) )
+				result += GetMsgStr( TEXTMSG_GAME, STR_DETERIORATION_NO_RESC );
+			else if( FLAG( brokenFlags, BI_LOWBROKEN ) )
+				result += GetMsgStr( TEXTMSG_GAME, STR_DETERIORATION_BROKEN_LOW );
+			else if( FLAG( brokenFlags, BI_NORMBROKEN ) )
+				result += GetMsgStr( TEXTMSG_GAME, STR_DETERIORATION_BROKEN_NORM );
+			else if( FLAG( brokenFlags, BI_HIGHBROKEN ) )
+				result += GetMsgStr( TEXTMSG_GAME, STR_DETERIORATION_BROKEN_HIGH );
+			else
+				result += ReplaceText( GetMsgStr( TEXTMSG_GAME, STR_DETERIORATION_PROCENT ), "VALUE", Item.Deterioration * 100 / MAX_DETERIORATION );
+			result += ( " / " + ( ( ( ( ProtoItem.MaxRepairCount > 0 ) ? ( ProtoItem.MaxRepairCount ) : 30 ) + 10 ) * 10 - Item.RadioChannel ) + "%" );
+			
+			// Service
+			if( FLAG( brokenFlags, BI_SERVICE ) )
+				result += "\n" + GetMsgStr( TEXTMSG_GAME, STR_DETERIORATION_SERVICE );
+				// Service ext
+			if( FLAG( brokenFlags, BI_SERVICE_EXT ) )
+				result += "\n" + GetMsgStr( TEXTMSG_GAME, STR_DETERIORATION_SERVICE_EXT );
+				// Broken count
+			CritterCl@ chosen = GetChosen();
+			if( chosen !is null && chosen.Perk[ PE_MR_FIXIT ] != 0 )
+				result += "\n" + ReplaceText( GetMsgStr( TEXTMSG_GAME, STR_DETERIORATION_BROKEN_COUNT ), "VALUE", Item.BrokenCount );
+		}
+		text = ReplaceText( text, "%item_deteriorable", result );
+	}
+	
+	string FormatMaskDescription( string mask )
+	{
+		FormatName( mask );
+		FormatLookName( mask );
+		FormatDescription( mask );
+		FormatWeight( mask );
+		FormatAmmo( mask );
+		FormatKeyId( mask );
+		FormatDeteriorable( mask );
+		FormatUpgrade( mask );
+		if( Item.Lexems != "" )
+			mask = FormatTags( mask, Item.Lexems );
+		mask = ReplaceText( mask, "\n\n", "\n" );
+		return mask;
+	}
+	
+	string GetProtoName( uint16 protoId, uint info )
+	{
+		return GetMsgStr( TEXTMSG_ITEM, protoId * 100 + info );
+	}
+	
 	string@ GetDescription( uint count, int lookType )
-	{	
-		ProtoItem@ proto = this.ProtoItem;
-
-		ItemCl@ item = Item;
-		if( item is null ) return "";
+	{
+		if( Item is null ) return "Error, item nullptr";
 		// Default error text
-		if( !IsMsgStr( TEXTMSG_ITEM, Proto * 100 + item.Info + 1 ) )
+		if( !IsMsgStr( TEXTMSG_ITEM, Proto * 100 + Item.Info + 1 ) )
 			return GetMsgStr( TEXTMSG_GAME, STR_ITEM_LOOK_NOTHING );
 		
 		string result = "";
-
-		if( lookType == ITEM_LOOK_ONLY_NAME )
-			result += ReplaceText( GetMsgStr( TEXTMSG_GAME, STR_ITEM_LOOK ), "NAME", GetMsgStr( TEXTMSG_ITEM, Proto * 100 + item.Info ) );
-		else
+		switch( ProtoItem.GetType() )
 		{
-		   result += GetMsgStr( TEXTMSG_ITEM, Proto * 100 + item.Info ) + "\n";
-
-			if( Proto == uint( Content::Item::HOLODISK ) && item.HolodiskNumber != 0 )
-				result += GetMsgStr( TEXTMSG_HOLO, STR_HOLO_INFO_NAME( item.HolodiskNumber ) );
-			else
-				result += GetMsgStr( TEXTMSG_ITEM, Proto * 100 + item.Info + 1 );
-
-			// Weight
-			result += "\n" + ReplaceText( GetMsgStr( TEXTMSG_GAME, STR_ITEM_WEIGHT_GRAMM ), "VALUE", proto.Weight * count );
-
-			// Ammo load
-			if( proto.Type == ITEM_TYPE_WEAPON && proto.Weapon_MaxAmmoCount > 0 )
+			case ITEM_TYPE_ARMOR:
+				if( lookType == ITEM_LOOK_ONLY_NAME )
+					result += FormatMaskDescription( ThisModule::Option::Description::MaskArmorOnlyName );
+				else result += FormatMaskDescription( ThisModule::Option::Description::MaskArmorFullDescription );
+				break;
+			case ITEM_TYPE_DRUG:
+				if( lookType == ITEM_LOOK_ONLY_NAME )
+					result += FormatMaskDescription( ThisModule::Option::Description::MaskDrugOnlyName );
+				else result += FormatMaskDescription( ThisModule::Option::Description::MaskDrugFullDescription );
+				break;
+			case ITEM_TYPE_WEAPON:
+				if( lookType == ITEM_LOOK_ONLY_NAME )
+					result += FormatMaskDescription( ThisModule::Option::Description::MaskWeaponOnlyName );
+				else result += FormatMaskDescription( ThisModule::Option::Description::MaskWeaponFullDescription );
+				break;
+			case ITEM_TYPE_AMMO:
+				if( lookType == ITEM_LOOK_ONLY_NAME )
+					result += FormatMaskDescription( ThisModule::Option::Description::MaskAmmoOnlyName );
+				else result += FormatMaskDescription( ThisModule::Option::Description::MaskAmmoFullDescription );
+				break;
+			case ITEM_TYPE_MISC:
+			case ITEM_TYPE_MISC2:
+				if( lookType == ITEM_LOOK_ONLY_NAME )
+					result += FormatMaskDescription( ThisModule::Option::Description::MaskMiscOnlyName );
+				else result += FormatMaskDescription( ThisModule::Option::Description::MaskMiscFullDescription );
+				break;
+			case ITEM_TYPE_KEY:
+				if( lookType == ITEM_LOOK_ONLY_NAME )
+					result += FormatMaskDescription( ThisModule::Option::Description::MaskKeyOnlyName );
+				else result += FormatMaskDescription( ThisModule::Option::Description::MaskKeyFullDescription );
+				break;
+			case ITEM_TYPE_CONTAINER:
+			case ITEM_TYPE_DOOR:
+			case ITEM_TYPE_GRID:
+			case ITEM_TYPE_GENERIC:
+			case ITEM_TYPE_WALL:
+			case ITEM_TYPE_CAR:
+			case ITEM_TYPE_ANIMAL:
+			case ITEM_TYPE_NONE:
+			default:
 			{
-				result += "\n";
-				string str = GetMsgStr( TEXTMSG_GAME, STR_INV_HAS_SHOTS );
-				str = ReplaceText( str, "VALUE",     item.AmmoCount );
-				str = ReplaceText( str, "MAX_VALUE", proto.Weapon_MaxAmmoCount );
-				str = ReplaceText( str, "AMMO",      GetMsgStr( TEXTMSG_GAME, STR_CALIBER( proto.Weapon_Caliber ) ) );
-				result += str;
+				if( lookType == ITEM_LOOK_ONLY_NAME )
+					result += FormatMaskDescription( ThisModule::Option::Description::MaskOtherOnlyName );
+				else result += FormatMaskDescription( ThisModule::Option::Description::MaskOtherFullDescription );
+				break;
 			}
-
-			if( proto.Deteriorable )
-			{
-				// Broken level, procent
-				uint8 brokenFlags = item.BrokenFlags;
-				result += "\n";
-				if( FLAG( brokenFlags, BI_NOTRESC ) )
-					result += GetMsgStr( TEXTMSG_GAME, STR_DETERIORATION_NO_RESC );
-				else if( FLAG( brokenFlags, BI_LOWBROKEN ) )
-					result += GetMsgStr( TEXTMSG_GAME, STR_DETERIORATION_BROKEN_LOW );
-				else if( FLAG( brokenFlags, BI_NORMBROKEN ) )
-					result += GetMsgStr( TEXTMSG_GAME, STR_DETERIORATION_BROKEN_NORM );
-				else if( FLAG( brokenFlags, BI_HIGHBROKEN ) )
-					result += GetMsgStr( TEXTMSG_GAME, STR_DETERIORATION_BROKEN_HIGH );
-				else
-					result += ReplaceText( GetMsgStr( TEXTMSG_GAME, STR_DETERIORATION_PROCENT ), "VALUE", item.Deterioration * 100 / MAX_DETERIORATION );
-				result += ( " / " + ( ( ( ( proto.MaxRepairCount > 0 ) ? ( proto.MaxRepairCount ) : 30 ) + 10 ) * 10 - item.RadioChannel ) + "%" );
-				
-				// Service
-				if( FLAG( brokenFlags, BI_SERVICE ) )
-					result += "\n" + GetMsgStr( TEXTMSG_GAME, STR_DETERIORATION_SERVICE );
-
-				// Service ext
-				if( FLAG( brokenFlags, BI_SERVICE_EXT ) )
-					result += "\n" + GetMsgStr( TEXTMSG_GAME, STR_DETERIORATION_SERVICE_EXT );
-
-				// Broken count
-				CritterCl@ chosen = GetChosen();
-				if( chosen !is null && chosen.Perk[ PE_MR_FIXIT ] != 0 )
-					result += "\n" + ReplaceText( GetMsgStr( TEXTMSG_GAME, STR_DETERIORATION_BROKEN_COUNT ), "VALUE", item.BrokenCount );
-			}
-
-			// Key id
-			if( proto.Type == ITEM_TYPE_KEY )
-				result += "\n" + ReplaceText( GetMsgStr( TEXTMSG_GAME, STR_INV_KEY_NUMBER ), "KEY_ID", item.LockerId );
-			result += "\n          ";
 		}
 
-		// Format tags
-		if( item.Lexems != "" )
-			result = FormatTags( result, item.Lexems );
-
-		while( result.length() != 0 && ( substring( result, result.length() - 1, 1 ) == "\n" || substring( result, result.length() - 1, 1 ) == " " ) )
-			result = substring( result, 0, result.length() - 1 );
-
 		return result;
+	}
+	
+	string GetUpgradeDescription( )
+	{
+		ProtoItem@ proto = this.ProtoItem;
+		string result = "Можно усилить предметы" + ": " + GetUpgradeTypeName( proto.Upgrade_Type ) + "\n";
+		result += " Требования предмета:\n";
+		switch( proto.Upgrade_Type )
+		{
+			case 1:
+				result += "  Материал: " + GetMaterialName( proto.Material );
+				break;
+				
+			case 2:
+				result += "  Только для: " + GetListItemName( uint16( proto.Upgrade_TypeValue0 ), uint16( proto.Upgrade_TypeValue1 ) );
+				break;
+			default: break;
+		}
+		
+		return result;
+	}
+	
+	string GetListItemName( uint16 startProtoId, uint16 endProtoId )
+	{
+		string result = GetProtoName( startProtoId, 0 );
+		while( ++startProtoId <= endProtoId )
+			result += ", " + GetProtoName( startProtoId, 0 );
+		return result;
+	}
+	
+	string GetUpgradeTypeName( int Upgrade_Type  )
+	{
+		return "%UpgradeTypeName_" + Upgrade_Type;
 	}
 	
 	void LoseFocus( ) override
@@ -1191,6 +1338,24 @@ class Interface : IGUIListingElement, IGUIDragAndDropElement, Splitter::SplitRes
 	ItemLocation@ Here;
 	TransferData@ Transfer = null;
 	
+}
+
+enum Material
+{
+	None = -1,
+	MaterialGlass,
+	MaterialMetal,
+	MaterialPlastic,
+	MaterialWood,
+	MaterialDirt,
+	MaterialStone,
+	MaterialCement,
+	MaterialLeather
+}
+
+string GetMaterialName( uint8 material )
+{
+	return ScriptInfo::Enum( "Item", "Material", "Mk2" ).ValueName[material];
 }
 
 class TransferData

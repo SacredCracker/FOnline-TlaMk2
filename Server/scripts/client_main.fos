@@ -1010,58 +1010,31 @@ bool main_render_iface( uint layer )
 		
         if( !IsLMenu() && Informer::Txt != "" && ( Informer::RealDelay == -1 || Informer::Delay > 0 ) )
         {
-            string@[] linesTxt = split( Informer::Txt, "\n" );
             int  flags = FT_CENTERY | FT_BORDERED;
             int  posx = __MouseX, posy = __MouseY;
-			if( Informer::Delay > 0 )
-			{
-				posx = Informer::MousePosX; 
-				posy = Informer::MousePosY; 
-            }
-			int  w = 0;
-            int  wMax = Informer::Option::GUI::Width;
-            int  hMax = 0;
-            int  h = 0, hStand = 0;
-            uint linesCount = linesTxt.length();
-            int  lines = 0;
-            GetTextInfo( "L", 0, 0, FONT_FALLOUT, flags, w, hStand, lines );
-            hStand += 2;
+			if( Informer::MousePosX != 0 )
+				posx = Informer::MousePosX;
+			if( Informer::MousePosY != 0 )
+				posy = Informer::MousePosY;
 			
-            hMax = hStand * ( linesCount + 1 );
-            for( uint i = 0; i < linesCount; i++ )
-            {
-                GetTextInfo( linesTxt[ i ], 0, 0, FONT_FALLOUT, flags, w, h, lines );
-                if( w > wMax )
-                {
-                    string@[] wordTxt = split( linesTxt[ i ], " " );
-                    int wx = 0, wxt = 0;
-                    for( uint wi = 0; wi < wordTxt.length(); wi++ )
-                    {
-                        GetTextInfo( wordTxt[ wi ], 0, 0, FONT_FALLOUT, flags, wx, h, lines );
-                        if( ( wxt + wx ) >= wMax )
-                        {
-                            wxt = 0;
-                            hMax += hStand;
-                        }
-                        else
-                            wxt += wx;
-                    }
-
-                    hMax += hStand;
-                }
-            }
-
-            if( posx - wMax >= 0 )
+			int  wMax = 0;
+			int  hMax = 0;
+            int  lines = 0;
+			
+			GetTextInfo( Informer::Txt, Informer::Option::GUI::Width, 0, FONT_FALLOUT, flags, wMax, hMax, lines );
+			
+            if( posx - wMax + Informer::Option::GUI::BorderSizeAdding >= 0 )
 			    posx = posx - wMax;
                 
-            if( posy - hMax >= 0 )
+            if( posy - hMax + Informer::Option::GUI::BorderSizeAdding >= 0 )
                 posy = posy - hMax;    
-				
-			int[] frame;
-			FormatBorder( frame, posx, posy, wMax + 5, hMax, Informer::Option::GUI::BorderColor );
-            Informer::Option::GUI::Image.Pattern( posx, posy, wMax + 5, hMax );
-            DrawText( Informer::Txt, posx + 5, posy, wMax, hMax, Informer::TextColor, FONT_FALLOUT, flags );
-            DrawPrimitive( DRAW_PRIMITIVE_LINESTRIP, frame );
+			
+			
+			int[] borders;
+			FormatBorder( borders, posx, posy, wMax + Informer::Option::GUI::BorderSizeAdding, hMax + Informer::Option::GUI::BorderSizeAdding, Informer::Option::GUI::BorderColor );
+            Informer::Option::GUI::Image.Pattern( posx, posy, wMax + Informer::Option::GUI::BorderSizeAdding, hMax + Informer::Option::GUI::BorderSizeAdding );
+            DrawText( Informer::Txt, posx + Informer::Option::GUI::BorderSizeAdding, posy + Informer::Option::GUI::BorderSizeAdding, wMax, hMax, Informer::TextColor, FONT_FALLOUT, flags );
+            DrawPrimitive( DRAW_PRIMITIVE_LINESTRIP, borders );
         }
     }
     else if( layer == 4 )

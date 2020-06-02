@@ -1781,6 +1781,17 @@ class ResultEntity_item : ResultEntity
 		return @(this = count);
 	}
 	
+	Item@[]@ Get( )
+	{
+		Item@[] items, result;
+		for( uint i = 0, iend = Master.GetItems( -1, items ); i < iend; i++ )
+		{
+			if( items[i].GetProtoId() == Proto.ProtoId )
+				result.insertLast( items[i] );
+		}
+		return result;
+	}
+	
 	Dialog::ResultEntity@ opAssign( int value ) override
 	{
 		int oldCount = Count;
@@ -1789,12 +1800,34 @@ class ResultEntity_item : ResultEntity
 		{
 			if( oldCount > value )
 			{
-				::Item@ item = Master.GetItem( Proto.ProtoId, -1 );
-				if( @item !is null )
+				Item@[]@ items = Get( );
+				int different = oldCount - value;
+				for( uint i = 0, iend = items.length(); i < iend; i++ )
 				{
+					Item@ item = items[i];
 					if( value == 0 )
-						::DeleteItem( item );
-					else item.SetCount( value );
+					{
+						Log( "ÓÄÎËÈÒÜ" );
+						DeleteItem( item );
+					}
+					else 
+					{
+						uint count = item.GetCount();
+						if( different < item.GetCount() )
+						{
+							Log( "ÓÌÅÍÜØÈÒÜ - value " + different + " " + count + " " + ( count - different ) );
+							item.SetCount( count - different );
+							break;
+						}
+						else 
+						{
+							Log( "ÓÄÎËÈÒÜ - value " + different + " " + count + " " + ( different - count ) );
+							DeleteItem( item );
+							different -= count;
+						}
+						if( different == 0 )
+							break;
+					}
 				}
 			}
 			else

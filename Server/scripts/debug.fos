@@ -4282,6 +4282,12 @@ void CheckArmor( Critter& critter, int, int, int )
 	// Log( "AntiCrit proto " + armor.ArmorBonus_CriticalResist );
 }
 
+void BagItemStack( Critter& critter, int value, int, int )
+{
+	Item@ item = critter.GetItem( 0, SLOT_HAND1 );
+	item.RadioFlags = value;
+}
+
 void CheckItemStack( Critter& critter, int, int, int )
 {
 	Item@ item = critter.GetItem( 0, SLOT_HAND1 );
