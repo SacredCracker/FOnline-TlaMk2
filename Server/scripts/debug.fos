@@ -4360,3 +4360,24 @@ void CheckItemStack( Critter& critter, int, int, int )
 	CHECK_ITEM_STACK_DATA( ArmorBonus_DeteriorateResist );
 #undef CHECK_ITEM_STACK_DATA
 }
+
+void SetHandLight( Critter& cr, int, int distance, int intensity )
+{
+	Item@[]items;
+    cr.GetItems( SLOT_HAND1, items );
+    Item@ item = items[0];
+    item.LightIntensity = intensity;
+    item.LightDistance = distance;
+    SETFLAG( item.Flags, ITEM_LIGHT );
+    item.Update();
+}
+
+void SetHandColor( Critter& cr, int r, int g, int b )
+{
+	Item@[]items;
+    cr.GetItems( SLOT_HAND1, items );
+    Item@ item = items[0];
+    item.LightColor =  COLOR_RGB( r, g, b );
+    SETFLAG( item.Flags, ITEM_LIGHT );
+    item.Update();
+}

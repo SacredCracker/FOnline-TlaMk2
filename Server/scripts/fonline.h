@@ -1504,6 +1504,7 @@ struct Critter
     const int                 LockMapTransfers;
     const Critter*            ThisPtr[ MAX_PARAMETERS_ARRAYS ];
     const uint                AllowedToDownloadMap;
+	const bool	   			  IdleProccess;
     const bool                ParamsIsChanged[ MAX_PARAMS ];
     const IntVec              ParamsChanged;
     const int                 ParamLocked;
@@ -2322,9 +2323,9 @@ inline void static_asserts()
     STATIC_ASSERT( offsetof( GlobalMapGroup, EncounterForce )  == 64   );
     STATIC_ASSERT( offsetof( Item, IsNotValid )                == 30 + 236  );
     STATIC_ASSERT( offsetof( CritterTimeEvent, ClientSignal )  == 20   );
-    STATIC_ASSERT( offsetof( Critter, RefCounter )             == 9388 );
-    STATIC_ASSERT( offsetof( Client, LanguageMsg )             == 9456 );
-    STATIC_ASSERT( offsetof( Npc, Reserved )                   == 9408 );
+    STATIC_ASSERT( offsetof( Critter, RefCounter )             == 9392 );
+    STATIC_ASSERT( offsetof( Client, LanguageMsg )             == 9460 );
+    STATIC_ASSERT( offsetof( Npc, Reserved )                   == 9412 );
     STATIC_ASSERT( offsetof( CritterCl, MoveSteps )            == 5708 );
     STATIC_ASSERT( offsetof( MapEntire, Dir )                  == 8    );
     STATIC_ASSERT( offsetof( SceneryToClient, Reserved1 )      == 30   );
