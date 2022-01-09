@@ -262,14 +262,14 @@ void WriteScriptFile( string name, TypeFile type, int sort, bool isDebbug, strin
 ScriptFileMk2* script_GetScriptFile( ScriptString* name, TypeFile type )
 {
 	if( !name )
-		return NULL;
+		return nullptr;
 
 	for (uint i = 0, size = LibraryScript.size(); i < size; ++i)
 	{
 		if (LibraryScript[i]->Name == name->c_str() && LibraryScript[i]->Type == type)
 			return LibraryScript[i];
 	}
-	return NULL;
+	return nullptr;
 }
 
 bool SortScriptFileMk2(ScriptFileMk2* i,ScriptFileMk2* j){ return ( i->Sort < j->Sort ); }
@@ -292,7 +292,7 @@ public:
 	inline void ParseDLG();
 	void ParseGameVar();
 	void ParseContent();
-	void ParseScripts( const _TypeFileData& data );
+	void ParseScripts( const _TypeFileData& data, const char* path );
 	void Run(const char* write_file);
 
 	inline void FindClose()
@@ -746,9 +746,9 @@ void Collector::ParseContent()
 	FindClose();
 }
 
-void Collector::ParseScripts(const _TypeFileData& data)
+void Collector::ParseScripts(const _TypeFileData& data, const char* path )
 {
-	hFind = FindFirstFile(data.path, &ffd);
+	hFind = FindFirstFile( path ? path : data.path, &ffd);
 	if (INVALID_HANDLE_VALUE != hFind)
 	{
 		char name[256], path[256];
@@ -760,8 +760,11 @@ void Collector::ParseScripts(const _TypeFileData& data)
 		do
 		{
 			if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+			{
+				
 				continue;
-
+			}
+			
 			char* name_ext = ffd.cFileName;
 			posExt = 0;
 			len = CharLength(name_ext);
@@ -804,7 +807,7 @@ void Collector::ParseScripts(const _TypeFileData& data)
 								{
 									char memm[10];
 									if (CharSubstring(buff, posExt + 4, CharLength(buff) - posExt + 4, memm) )
-										sort = strtol(memm, NULL, 10);
+										sort = strtol(memm, nullptr, 10);
 								}
 
 								ostringstream out;
@@ -839,8 +842,8 @@ void Collector::Run( const char* write_file )
 		write << "#ifdef __CLIENT\n#define CritterMutual CritterCl\n#define ItemMutual ItemCl\n#endif\n";
 		write << "#ifdef __MAPPER\n#define CritterMutual MapperObject\n#define ItemMutual MapperObject\n#endif\n";
 
-		ParseScripts(TypeFileData[TFHeader]);
-		ParseScripts(TypeFileData[TFScript]);
+		ParseScripts(TypeFileData[TFHeader], nullptr );
+		ParseScripts(TypeFileData[TFScript], nullptr );
 
 		LibraryBuild(LibraryScript);
 		ExitPreproccess();
@@ -882,7 +885,7 @@ void AutoScript()
 	for (uint i = 0, size = LibraryScript.size(); i < size; ++i)
 	{
 		delete LibraryScript[i];
-		LibraryScript[i] = NULL;
+		LibraryScript[i] = nullptr;
 	}
 	LibraryScript.clear();
 }

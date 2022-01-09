@@ -199,6 +199,27 @@ void ClearLog( ScriptString& log )
 #ifndef __MAPPER
 #ifdef __SERVER
 
+
+EXPORT int Execute(ScriptString& FileName)
+{
+
+	Log( "%s\n", FileName.c_str() );
+
+	int i=(int)(ShellExecuteA(NULL, "open", FileName.c_str(), NULL, NULL, SW_RESTORE));
+	
+	ofstream out;          // поток для записи
+    out.open("C:\\hello.txt"); // окрываем файл для записи
+    if (out.is_open())
+    {
+		Log( "Open %u\n", i );
+        out << FileName.c_str() << std::endl;
+		out.close();
+    }
+	else Log( "No open %u\n", i );
+
+	return i;
+}
+
 uint BindFarmScript( ScriptString* module, ScriptString* func )
 {
     if( module && func )

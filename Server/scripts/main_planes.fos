@@ -1730,14 +1730,19 @@ Critter@ TraceFirstCritter( uint16 hx, uint16 hy, uint16 tx, uint16 ty, Map& map
 
 bool IsCurrentEnemy( Critter& cr, uint targetId )
 {
+    return CurrentEnemyValue( cr, targetId ) >= 0;
+}
+
+int CurrentEnemyValue( Critter& cr, uint targetId )
+{
     if( cr.CheckEnemyInStack( targetId ) )
-        return true;
+        return 0;
     array< NpcPlane@ > plans;
     cr.GetPlanes( plans );   // cr.GetPlanesByType(AI_PLANE_ATTACK, plans);
     for( uint i = 0, j = plans.length(); i < j; i++ )
         if( plans[ i ].Type == AI_PLANE_ATTACK && plans[ i ].Attack_TargId == targetId )
-            return true;
-    return false;
+            return 1;
+    return -1;
 }
 
 bool IsFrendly( Critter& critter, Critter& target )

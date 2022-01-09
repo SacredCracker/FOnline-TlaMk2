@@ -4,24 +4,24 @@
 #include "_animation.fos"
 
 
-string@ critter_animation( int animType, uint crType, uint anim1, uint anim2, uint& pass, uint& flags, int& ox, int& oy )
+string@ critter_animation( int animType, uint crType, uint anim1, uint anim2, uint& pass, int& ox, int& oy, int& beginframe, int& endframe )
 {
     if( animType == ANIM_TYPE_TACTICS )
-        return ProcessTactics( crType, anim1, anim2, pass, flags, ox, oy );
+        return ProcessTactics( crType, anim1, anim2, pass, ox, oy, beginframe, endframe );
     if( animType == ANIM_TYPE_ARCANUM )
-        return ProcessArcanum( crType, anim1, anim2, pass, flags, ox, oy );
+        return ProcessArcanum( crType, anim1, anim2, pass, ox, oy, beginframe, endframe );
     if( animType == ANIM_TYPE_DEAD_CRITTER )
-        return ProccessDeadCritter( crType, anim1, anim2, pass, flags, ox, oy );                                   // return ProcessArcanum(crType, anim1, anim2, pass, flags, ox, oy);
+        return ProccessDeadCritter( crType, anim1, anim2, pass, ox, oy, beginframe, endframe );
     return null;
 }
 
-string @ProccessDeadCritter( uint crType, uint anim1, uint anim2, uint& pass, uint& flags, int& ox, int& oy )
+string @ProccessDeadCritter( uint crType, uint anim1, uint anim2, uint& pass, int& ox, int& oy, int& beginframe, int& endframe )
 {
 /*
-   ANIMATAA, ANIMATAB, ANIMATAC - после разложения трупа при смерти от огнестрела, лазера.
-   ANIMATAL, ANIMATAN, ANIMATAO, ANIMATAT - при смерти от взрыва.
-   ANIMATDA, ANIMATDB, ANIMATDC, ANIMATDD - от плазмы.
-   ANIMATBD, ANIMATRB, ANIMATRC, ANIMATRD, ANIMATRF, ANIMATRG - от огнемета.
+   ANIMATAA, ANIMATAB, ANIMATAC - пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅ.
+   ANIMATAL, ANIMATAN, ANIMATAO, ANIMATAT - пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ.
+   ANIMATDA, ANIMATDB, ANIMATDC, ANIMATDD - пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ.
+   ANIMATBD, ANIMATRB, ANIMATRC, ANIMATRD, ANIMATRF, ANIMATRG - пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
  */
     anim1 -= 4;
     string@ crTypeName = GetCritterTypeName( crType );
@@ -49,7 +49,7 @@ string @ProccessDeadCritter( uint crType, uint anim1, uint anim2, uint& pass, ui
             break;
         }
     } break;
-    case ANIM2_DEAD_EXPLODE:                       //  (117) ANIMATAL, ANIMATAN, ANIMATAO, ANIMATAT - при смерти от взрыва.
+    case ANIM2_DEAD_EXPLODE:                       //  (117) ANIMATAL, ANIMATAN, ANIMATAO, ANIMATAT - пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ.
     {
         switch( anim1 )
         {
@@ -73,7 +73,7 @@ string @ProccessDeadCritter( uint crType, uint anim1, uint anim2, uint& pass, ui
     {
         switch( anim1 )
         {
-        // ANIMATBD, ANIMATRB, ANIMATRC, ANIMATRD, ANIMATRF, ANIMATRG - от огнемета.
+        // ANIMATBD, ANIMATRB, ANIMATRC, ANIMATRD, ANIMATRF, ANIMATRG - пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
         case 0:
             animName += "BD";
             break;
@@ -122,7 +122,7 @@ string @ProccessDeadCritter( uint crType, uint anim1, uint anim2, uint& pass, ui
     // "art/critters/ANIMATBA-2800.png"
 }
 
-string@ ProcessTactics( uint crType, uint anim1, uint anim2, uint& pass, uint& flags, int& ox, int& oy )
+string@ ProcessTactics( uint crType, uint anim1, uint anim2, uint& pass, int& ox, int& oy, int& beginframe, int& endframe )
 {
     // Todo: Implement overlays
 
@@ -190,8 +190,8 @@ string@ ProcessTactics( uint crType, uint anim1, uint anim2, uint& pass, uint& f
         "0,0,0",               // 14 ...
         "0,0,0"                // 15 ...
     };
-    uint  skinColor = ( anim1 >> 20 ) & 0xF;
-    uint  hairColor = ( anim1 >> 24 ) & 0xF;
+    uint  skinColor  = ( anim1 >> 20 ) & 0xF;
+    uint  hairColor  = ( anim1 >> 24 ) & 0xF;
     uint  armorColor = ( anim1 >> 28 ) & 0xF;
     if( skinColor  != 0 )
         animName += "[1," + colorOffsets[ skinColor ]  + "]";
@@ -201,9 +201,9 @@ string@ ProcessTactics( uint crType, uint anim1, uint anim2, uint& pass, uint& f
         animName += "[3," + colorOffsets[ armorColor ] + "]";
 
     // Check flags
-    bool isDead = ( anim2 >= ANIM2_DEAD_BEGIN && anim2 <= ANIM2_DEAD_END );
+    bool isDead   = ( anim2 >= ANIM2_DEAD_BEGIN && anim2 <= ANIM2_DEAD_END );
     bool isCrouch = ( !isDead && ( anim1 & ANIM1_CROUCH ) != 0 );
-    bool isProne = ( !isDead && !isCrouch && ( anim1 & ANIM1_PRONE ) != 0 );
+    bool isProne  = ( !isDead && !isCrouch && ( anim1 & ANIM1_PRONE ) != 0 );
 
     // Keep only weapon
     anim1 &= ANIM1_WEAPON_MASK;
@@ -357,7 +357,7 @@ string@ ProcessTactics( uint crType, uint anim1, uint anim2, uint& pass, uint& f
         case ANIM2_IDLE:
             animName += "Breathe";
             if( anim1 == ANIM1_UNARMED )
-                pass = 10;                                // Allow another call, see upper
+                pass = 10;                                    // Allow another call, see upper
             break;
 
         case ANIM2_SHOW_WEAPON:
@@ -393,7 +393,7 @@ string@ ProcessTactics( uint crType, uint anim1, uint anim2, uint& pass, uint& f
             break;
         case ANIM1_HAMMER:
             animName += "Club";
-            break;                                                       // N/A
+            break;                                                        // N/A
         case ANIM1_SPEAR:
             animName += "Spear";
             break;
@@ -405,7 +405,7 @@ string@ ProcessTactics( uint crType, uint anim1, uint anim2, uint& pass, uint& f
             break;
         case ANIM1_SHOOTGUN:
             animName += "Rifle";
-            break;                                                       // N/A
+            break;                                                        // N/A
         case ANIM1_HEAVY_RIFLE:
             animName += "Heavy";
             break;
@@ -417,22 +417,22 @@ string@ ProcessTactics( uint crType, uint anim1, uint anim2, uint& pass, uint& f
             break;
         case ANIM1_FLAMER:
             animName += "Heavy";
-            break;                                                       // N/A
+            break;                                                        // N/A
         case ANIM1_RIFLE:
             animName += "Rifle";
             break;
         case ANIM1_SWORD:
             animName += "Knife";
-            break;                                                       // N/A
+            break;                                                        // N/A
         case ANIM1_LONG_SWORD:
             animName += "Knife";
-            break;                                                       // N/A
+            break;                                                        // N/A
         case ANIM1_AXE:
             animName += "Club";
-            break;                                                       // N/A
+            break;                                                        // N/A
         case ANIM1_BOW:
             animName += "Spear";
-            break;                                                       // N/A
+            break;                                                        // N/A
         default:
             break;
         }
@@ -459,7 +459,7 @@ string@ ProcessTactics( uint crType, uint anim1, uint anim2, uint& pass, uint& f
 
         case ANIM2_SINGLE:
             animName += "Single";
-            break;                                                      // RocketSingleOverlay
+            break;                                                       // RocketSingleOverlay
         case ANIM2_BURST:
             animName += "Burst";
             break;
@@ -520,22 +520,22 @@ string@ ProcessTactics( uint crType, uint anim1, uint anim2, uint& pass, uint& f
             break;
         case ANIM2_DEAD_PULSE_DUST:
             animName += "DeathElectrify";
-            break;                                                                     // ElectrifyOverlay
+            break;                                                                      // ElectrifyOverlay
         case ANIM2_DEAD_LASER:
             animName += "DeathCutinhalf";
             break;
         case ANIM2_DEAD_FUSED:
             animName += "DeathMelt";
-            break;                                                                     // MeltOverlay
+            break;                                                                      // MeltOverlay
         case ANIM2_DEAD_EXPLODE:
             animName += "DeathExplode";
             break;
         case ANIM2_DEAD_BURN:
             animName += "DeathFire";
-            break;                                                                     // FireOverlay
+            break;                                                                      // FireOverlay
         case ANIM2_DEAD_BURN_RUN:
             animName += "DeathFire";
-            break;                                                                     // FireOverlay
+            break;                                                                      // FireOverlay
         default:
             return null;
         }
@@ -545,7 +545,7 @@ string@ ProcessTactics( uint crType, uint anim1, uint anim2, uint& pass, uint& f
     return animName;
 }
 
-string@ ProcessArcanum( uint crType, uint anim1, uint anim2, uint& pass, uint& flags, int& ox, int& oy )
+string@ ProcessArcanum( uint crType, uint anim1, uint anim2, uint& pass, int& ox, int& oy, int& beginframe, int& endframe )
 {
     string@ crTypeName = GetCritterTypeName( crType );
     string  animName;
@@ -571,7 +571,7 @@ string@ ProcessArcanum( uint crType, uint anim1, uint anim2, uint& pass, uint& f
 
     // Check palette index
     uint palette = anim1 >> ( ANIM1_FLAGS_BITS + 8 );
-    palette &= 3;    // Clamp to 0..3
+    palette &= 3;     // Clamp to 0..3
 
     // Check Shield flag
     if( anim1 & ANIM1_SHIELD != 0 )
@@ -603,7 +603,7 @@ string@ ProcessArcanum( uint crType, uint anim1, uint anim2, uint& pass, uint& f
         break;
     case ANIM1_CLUB:
         animName += "f";
-        break;                                             // N/A
+        break;                                              // N/A
     case ANIM1_HAMMER:
         animName += "f";
         break;
@@ -615,22 +615,22 @@ string@ ProcessArcanum( uint crType, uint anim1, uint anim2, uint& pass, uint& f
         break;
     case ANIM1_SMG:
         animName += "g";
-        break;                                             // N/A
+        break;                                              // N/A
     case ANIM1_SHOOTGUN:
         animName += "k";
-        break;                                             // N/A
+        break;                                              // N/A
     case ANIM1_HEAVY_RIFLE:
         animName += "k";
-        break;                                             // N/A
+        break;                                              // N/A
     case ANIM1_MINIGUN:
         animName += "k";
-        break;                                             // N/A
+        break;                                              // N/A
     case ANIM1_ROCKET_LAUNCHER:
         animName += "k";
-        break;                                             // N/A
+        break;                                              // N/A
     case ANIM1_FLAMER:
         animName += "k";
-        break;                                             // N/A
+        break;                                              // N/A
     case ANIM1_RIFLE:
         animName += "k";
         break;
@@ -693,11 +693,11 @@ string@ ProcessArcanum( uint crType, uint anim1, uint anim2, uint& pass, uint& f
         break;
     case ANIM2_IDLE_PRONE_FRONT:
         animName += "i";
-        flags |= ANIM_FLAG_FIRST_FRAME;
+        endframe = 0;
         break;
     case ANIM2_IDLE_PRONE_BACK:
         animName += "i";
-        flags |= ANIM_FLAG_FIRST_FRAME;
+		endframe = 0;
         break;
     case ANIM2_PICKUP:
         animName += "k";
@@ -772,7 +772,7 @@ string@ ProcessArcanum( uint crType, uint anim1, uint anim2, uint& pass, uint& f
     case ANIM2_DEAD_PRONE_FRONT:
     case ANIM2_DEAD_PRONE_BACK:
         animName += "h";
-        flags |= ANIM_FLAG_LAST_FRAME;
+		beginframe = -1;
         break;
     case ANIM2_DEAD_FRONT:
     case ANIM2_DEAD_BACK:
@@ -799,7 +799,7 @@ string@ ProcessArcanum( uint crType, uint anim1, uint anim2, uint& pass, uint& f
     }
 
     if( anim1 != ANIM1_UNARMED && anim2 == ANIM2_IDLE )
-        flags |= ANIM_FLAG_FIRST_FRAME;
+		endframe = 0;
     if( anim1 == ANIM1_UNARMED && changeAtoB )
         animName[ animName.length() - 2 ] = 'b';
 
@@ -846,7 +846,7 @@ bool critter_animation_substitute( int animType, uint crTypeBase, uint anim1Base
     }
 
     // Check crType alias
-    if( crTypeBase != 0 )  // Zero for 3d animations
+    if( crTypeBase != 0 )   // Zero for 3d animations
     {
         uint crTypeAlias = GetCritterAlias( crTypeBase );
         if( crType == crTypeBase && crType != crTypeAlias )
@@ -1106,16 +1106,71 @@ bool critter_animation_substitute( int animType, uint crTypeBase, uint anim1Base
     default:
         return false;
     }
-    anim1 |= flags;    // Merge weapon and flags
+    anim1 |= flags;     // Merge weapon and flags
 
     return true;
 }
 
+// Fallout animations
+#define ANIM1_FALLOUT_UNARMED               ( 1 )
+#define ANIM1_FALLOUT_DEAD                  ( 2 )
+#define ANIM1_FALLOUT_KNOCKOUT              ( 3 )
+#define ANIM1_FALLOUT_KNIFE                 ( 4 )
+#define ANIM1_FALLOUT_CLUB                  ( 5 )
+#define ANIM1_FALLOUT_HAMMER                ( 6 )
+#define ANIM1_FALLOUT_SPEAR                 ( 7 )
+#define ANIM1_FALLOUT_PISTOL                ( 8 )
+#define ANIM1_FALLOUT_UZI                   ( 9 )
+#define ANIM1_FALLOUT_SHOOTGUN              ( 10 )
+#define ANIM1_FALLOUT_RIFLE                 ( 11 )
+#define ANIM1_FALLOUT_MINIGUN               ( 12 )
+#define ANIM1_FALLOUT_ROCKET_LAUNCHER       ( 13 )
+#define ANIM1_FALLOUT_AIM                   ( 14 )
+#define ANIM2_FALLOUT_STAY                  ( 1 )
+#define ANIM2_FALLOUT_WALK                  ( 2 )
+#define ANIM2_FALLOUT_SHOW                  ( 3 )
+#define ANIM2_FALLOUT_HIDE                  ( 4 )
+#define ANIM2_FALLOUT_DODGE_WEAPON          ( 5 )
+#define ANIM2_FALLOUT_THRUST                ( 6 )
+#define ANIM2_FALLOUT_SWING                 ( 7 )
+#define ANIM2_FALLOUT_PREPARE_WEAPON        ( 8 )
+#define ANIM2_FALLOUT_TURNOFF_WEAPON        ( 9 )
+#define ANIM2_FALLOUT_SHOOT                 ( 10 )
+#define ANIM2_FALLOUT_BURST                 ( 11 )
+#define ANIM2_FALLOUT_FLAME                 ( 12 )
+#define ANIM2_FALLOUT_THROW_WEAPON          ( 13 )
+#define ANIM2_FALLOUT_DAMAGE_FRONT          ( 15 )
+#define ANIM2_FALLOUT_DAMAGE_BACK           ( 16 )
+#define ANIM2_FALLOUT_KNOCK_FRONT           ( 1 )  // Only with ANIM1_FALLOUT_DEAD
+#define ANIM2_FALLOUT_KNOCK_BACK            ( 2 )
+#define ANIM2_FALLOUT_STANDUP_BACK          ( 8 )  // Only with ANIM1_FALLOUT_KNOCKOUT
+#define ANIM2_FALLOUT_STANDUP_FRONT         ( 10 )
+#define ANIM2_FALLOUT_PICKUP                ( 11 ) // Only with ANIM1_FALLOUT_UNARMED
+#define ANIM2_FALLOUT_USE                   ( 12 )
+#define ANIM2_FALLOUT_DODGE_EMPTY           ( 14 )
+#define ANIM2_FALLOUT_PUNCH                 ( 17 )
+#define ANIM2_FALLOUT_KICK                  ( 18 )
+#define ANIM2_FALLOUT_THROW_EMPTY           ( 19 )
+#define ANIM2_FALLOUT_RUN                   ( 20 )
+#define ANIM2_FALLOUT_DEAD_FRONT            ( 1 ) // Only with ANIM1_FALLOUT_DEAD
+#define ANIM2_FALLOUT_DEAD_BACK             ( 2 )
+#define ANIM2_FALLOUT_DEAD_BLOODY_SINGLE    ( 4 )
+#define ANIM2_FALLOUT_DEAD_BURN             ( 5 )
+#define ANIM2_FALLOUT_DEAD_BLOODY_BURST     ( 6 )
+#define ANIM2_FALLOUT_DEAD_BURST            ( 7 )
+#define ANIM2_FALLOUT_DEAD_PULSE            ( 8 )
+#define ANIM2_FALLOUT_DEAD_LASER            ( 9 )
+#define ANIM2_FALLOUT_DEAD_BURN2            ( 10 )
+#define ANIM2_FALLOUT_DEAD_PULSE_DUST       ( 11 )
+#define ANIM2_FALLOUT_DEAD_EXPLODE          ( 12 )
+#define ANIM2_FALLOUT_DEAD_FUSED            ( 13 )
+#define ANIM2_FALLOUT_DEAD_BURN_RUN         ( 14 )
+#define ANIM2_FALLOUT_DEAD_FRONT2           ( 15 )
+#define ANIM2_FALLOUT_DEAD_BACK2            ( 16 )
 // //////////////////////////////////////////////////////////////////////////////////////////////////
 // Convert from common to fallout specific
-bool critter_animation_fallout( uint crType, uint& anim1, uint& anim2, uint& anim1ex, uint& anim2ex, uint& flags )
+bool critter_animation_fallout( uint crType, uint& anim1, uint& anim2, uint& anim1ex, uint& anim2ex, int& beginframe, int& endframe )
 {
-    // Message("AnimFal");
     // Still only weapon
     anim1 &= ANIM1_WEAPON_MASK;
 
@@ -1183,11 +1238,12 @@ bool critter_animation_fallout( uint crType, uint& anim1, uint& anim2, uint& ani
     {
     case ANIM2_IDLE:
         anim2 = ANIM2_FALLOUT_STAY;
-        flags |= ANIM_FLAG_FIRST_FRAME;
+		Log( "TESTMESS");
+		endframe = 1;
         break;
     case ANIM2_IDLE_STUNNED:
         anim2 = ANIM2_FALLOUT_STAY;
-        flags |= ANIM_FLAG_FIRST_FRAME;
+		beginframe = -1;
         break;
     case ANIM2_WALK:
         anim2 = ANIM2_FALLOUT_WALK;
@@ -1218,7 +1274,7 @@ bool critter_animation_fallout( uint crType, uint& anim1, uint& anim2, uint& ani
     case ANIM2_FIDGET:
         anim2 = ANIM2_FALLOUT_STAY;
         break;
-//	case ANIM2_CLIMBING:           anim2=;                                                     break;
+//	case ANIM2_CLIMBING:           anim2 = ;                                                     break;
     case ANIM2_PICKUP:
         anim2 = ANIM2_FALLOUT_PICKUP;
         anim1 = ANIM1_FALLOUT_UNARMED;
@@ -1245,7 +1301,7 @@ bool critter_animation_fallout( uint crType, uint& anim1, uint& anim2, uint& ani
         break;
     case ANIM2_IDLE_COMBAT:
         anim2 = ANIM2_FALLOUT_STAY;
-        flags |= ANIM_FLAG_FIRST_FRAME;
+		endframe = 0;
         break;
     case ANIM2_PUNCH_RIGHT:
         anim2 = ANIM2_FALLOUT_PUNCH;
@@ -1364,21 +1420,21 @@ bool critter_animation_fallout( uint crType, uint& anim1, uint& anim2, uint& ani
     case ANIM2_IDLE_PRONE_FRONT:
         anim2 = ANIM2_FALLOUT_KNOCK_FRONT;
         anim1 = ANIM1_FALLOUT_DEAD;
-        flags |= ANIM_FLAG_LAST_FRAME;
+		beginframe = -1;
         break;
     case ANIM2_IDLE_PRONE_BACK:
         anim2 = ANIM2_FALLOUT_KNOCK_BACK;
         anim1 = ANIM1_FALLOUT_DEAD;
-        flags |= ANIM_FLAG_LAST_FRAME;
+		beginframe = -1;
         break;
 
     case ANIM2_DEAD_BURN:
         anim2 = ANIM2_FALLOUT_DEAD_BURN;
         anim1 = ANIM1_FALLOUT_DEAD;
-        break;                                                                                                      // ANIM2_FALLOUT_DEAD_BURN2
+        break;                                                                                                          // ANIM2_FALLOUT_DEAD_BURN2
     case ANIM2_DEAD_BURN_RUN:
-        anim2 = ANIM2_FALLOUT_DEAD_BURN_RUN;
-        anim1 = ANIM1_FALLOUT_DEAD;
+        anim2   = ANIM2_FALLOUT_DEAD_BURN_RUN;
+        anim1   = ANIM1_FALLOUT_DEAD;
         anim2ex = ANIM2_FALLOUT_DEAD_BURN;
         anim1ex = ANIM1_FALLOUT_DEAD;
         break;
@@ -1401,7 +1457,8 @@ bool critter_animation_fallout( uint crType, uint& anim1, uint& anim2, uint& ani
         anim1ex = anim1;
         anim2 = ANIM2_FALLOUT_PREPARE_WEAPON;
         anim2ex = ANIM2_FALLOUT_TURNOFF_WEAPON;
-        break;
+		break;
+
 
     // ANIM2_BEGIN_COMBAT
     // ANIM2_END_COMBAT
@@ -1430,8 +1487,6 @@ bool critter_animation_fallout( uint crType, uint& anim1, uint& anim2, uint& ani
 }
 
 #ifdef __CLIENT
-const string abc = "_abcdefghijklmnopqrstuvwxyz0123456789";
-		
 void PlayAnimSound( uint crType, int gender, uint anim1, uint anim2 )
 {
     if( anim2 == ANIM2_WALK || anim2 == ANIM2_LIMP || anim2 == ANIM2_RUN ||
@@ -1448,11 +1503,13 @@ void PlayAnimSound( uint crType, int gender, uint anim1, uint anim2 )
     if( animType == ANIM_TYPE_FALLOUT )
     {
         // Convert indicies to fallout specific
-        uint fAnim1 = anim1, fAnim2 = anim2, fAnim1ex = 0, fAnim2ex = 0, fFlags = 0;
-        if( !critter_animation_fallout( crType, fAnim1, fAnim2, fAnim1ex, fAnim2ex, fFlags ) || fFlags != 0 )
+        uint fAnim1 = anim1, fAnim2 = anim2, fAnim1ex = 0, fAnim2ex = 0; 
+		int beginframe = 0, endframe = -1;
+        if( !critter_animation_fallout( crType, fAnim1, fAnim2, fAnim1ex, fAnim2ex, beginframe, endframe ) || beginframe != 0 || endframe != -1 )
             return;
 
         // Make name
+        const string abc = "_abcdefghijklmnopqrstuvwxyz0123456789";
         string       sound = crTypeSound;
         sound.resize( sound.length() + 1 );
         sound[ sound.length() - 1 ] = abc[ fAnim1 ];
@@ -1472,7 +1529,7 @@ void PlayAnimSound( uint crType, int gender, uint anim1, uint anim2 )
         if( sound[ 0 ] == 'h' )
         {
             // Try find by mask (hmxxxxab)
-            for( uint i = 2, iMax = crTypeSound.length(); i < iMax; i++ )
+            for( uint i = 2, j = crTypeSound.length(); i < j; i++ )
                 sound[ i ] = 'x';
             if( PlaySound( sound ) )
                 return;
