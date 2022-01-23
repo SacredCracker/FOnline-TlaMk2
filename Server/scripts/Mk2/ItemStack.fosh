@@ -2,7 +2,9 @@
 
 bool item_check_stackable( ItemMutual& item, ItemMutual@ other, uint pid )
 {
-	if( @other is null  ) return item.GetProtoId() == pid;
+	if( item.GetProtoId() != pid )
+		return false;
+    if( @other is null  ) return true;
 #ifdef __MAPPER
 	return true;
 #endif
